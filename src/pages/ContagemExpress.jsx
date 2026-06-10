@@ -101,11 +101,10 @@ export default function ContagemExpress() {
         setConferenciaId(draft.conferenciaId);
         setSessionId(draft.sessionId || createContagemExpressSessionId());
         setItens(draft.itens || []);
-        setView('contagem');
       } else {
         setSessionId(createContagemExpressSessionId());
-        setView('sessoes');
       }
+      setView('sessoes');
       setLoading(false);
     };
     init();

@@ -16,13 +16,11 @@ import {
 } from '@/components/ui/p38-mobile-line';
 import ContagemExpressFiltroPeriodo from '@/components/estoque/contagem-express/ContagemExpressFiltroPeriodo';
 import ContagemExpressConsultaTotal from '@/components/estoque/contagem-express/ContagemExpressConsultaTotal';
-import ContagemExpressConsultaMovimento from '@/components/estoque/contagem-express/ContagemExpressConsultaMovimento';
 import {
   contarProdutosSessao,
   criarSessaoContagemExpress,
   filtrarPorPeriodo,
   getPeriodoMesAtual,
-  listarMovimentosContagemExpress,
   listarSessoesConcluidasContagemExpress,
   listarSessoesContagemExpress,
 } from '@/lib/contagemExpressSessao';
@@ -32,7 +30,7 @@ function HubTab({ active, onClick, children }) {
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 rounded-xl px-3 py-2 text-xs font-medium transition-colors sm:px-4 sm:py-2.5 sm:text-sm ${
+      className={`flex-1 shrink-0 rounded-xl px-3 py-2 text-xs font-medium transition-colors sm:py-2.5 sm:text-sm ${
         active ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'
       }`}
     >
@@ -54,7 +52,6 @@ export default function ContagemExpressPainelSessoes({
 
   const [sessoesAguardando, setSessoesAguardando] = useState([]);
   const [sessoesConcluidas, setSessoesConcluidas] = useState([]);
-  const [movimentos, setMovimentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [criando, setCriando] = useState(false);
   const [nomeNova, setNomeNova] = useState('');
@@ -63,14 +60,12 @@ export default function ContagemExpressPainelSessoes({
   const carregar = async () => {
     setLoading(true);
     try {
-      const [aguardando, concluidas, movs] = await Promise.all([
+      const [aguardando, concluidas] = await Promise.all([
         listarSessoesContagemExpress(base44),
         listarSessoesConcluidasContagemExpress(base44),
-        listarMovimentosContagemExpress(base44),
       ]);
       setSessoesAguardando(aguardando);
       setSessoesConcluidas(concluidas);
-      setMovimentos(movs);
     } catch (error) {
       console.error(error);
     }
@@ -84,11 +79,6 @@ export default function ContagemExpressPainelSessoes({
   const sessoesConcluidasPeriodo = useMemo(
     () => filtrarPorPeriodo(sessoesConcluidas, { dataInicio, dataFim }, 'data_fim'),
     [sessoesConcluidas, dataInicio, dataFim],
-  );
-
-  const movimentosPeriodo = useMemo(
-    () => filtrarPorPeriodo(movimentos, { dataInicio, dataFim }, 'created_date'),
-    [movimentos, dataInicio, dataFim],
   );
 
   const handlePeriodoChange = ({ dataInicio: inicio, dataFim: fim }) => {
@@ -108,8 +98,6 @@ export default function ContagemExpressPainelSessoes({
     }
     setCriando(false);
   };
-
-  const mostraFiltro = hubView === 'total' || hubView === 'movimento';
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -153,20 +141,15 @@ export default function ContagemExpressPainelSessoes({
 
       <div className="shrink-0 border-b border-border/40 px-3 py-2">
         <div className="flex items-center gap-2">
-          <div className="min-w-0 flex-1 overflow-x-auto no-scrollbar">
-            <div className="flex w-max min-w-full gap-1 rounded-2xl bg-muted/50 p-1">
-              <HubTab active={hubView === 'aguardando'} onClick={() => setHubView('aguardando')}>
-                <span className="sm:hidden">Pausa ({sessoesAguardando.length})</span>
-                <span className="hidden sm:inline">Aguardando ({sessoesAguardando.length})</span>
-              </HubTab>
-              <HubTab active={hubView === 'total'} onClick={() => setHubView('total')}>
-                Total ({sessoesConcluidasPeriodo.length})
-              </HubTab>
-              <HubTab active={hubView === 'movimento'} onClick={() => setHubView('movimento')}>
-                <span className="sm:hidden">Mov. ({movimentosPeriodo.length})</span>
-                <span className="hidden sm:inline">Movimento ({movimentosPeriodo.length})</span>
-              </HubTab>
-            </div>
+          <div className="flex min-w-0 flex-1 gap-1 rounded-2xl bg-muted/50 p-1">
+            <HubTab active={hubView === 'aguardando'} onClick={() => setHubView('aguardando')}>
+              <span className="sm:hidden">Pausa ({sessoesAguardando.length})</span>
+              <span className="hidden sm:inline">Aguardando ({sessoesAguardando.length})</span>
+            </HubTab>
+            <HubTab active={hubView === 'total'} onClick={() => setHubView('total')}>
+              <span className="sm:hidden">Consulta ({sessoesConcluidasPeriodo.length})</span>
+              <span className="hidden sm:inline">Consulta ({sessoesConcluidasPeriodo.length})</span>
+            </HubTab>
           </div>
           <button
             type="button"
@@ -181,7 +164,7 @@ export default function ContagemExpressPainelSessoes({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        {mostraFiltro && (
+        {hubView === 'total' && (
           <div className="sticky top-0 z-10 border-b border-border/40 bg-background/95 px-3 py-2 backdrop-blur-sm">
             <ContagemExpressFiltroPeriodo
               dataInicio={dataInicio}
@@ -201,6 +184,9 @@ export default function ContagemExpressPainelSessoes({
               <div className="py-16 text-center">
                 <ClipboardList className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
                 <p className="text-sm text-muted-foreground">Nenhuma contagem em pausa</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Toque em <strong>Nova</strong> para iniciar ou consulte contagens concluídas.
+                </p>
               </div>
             ) : (
               <P38MobileLineList allViewports className="rounded-lg">
@@ -236,13 +222,11 @@ export default function ContagemExpressPainelSessoes({
                 })}
               </P38MobileLineList>
             )
-          ) : hubView === 'total' ? (
+          ) : (
             <ContagemExpressConsultaTotal
               sessoes={sessoesConcluidasPeriodo}
               produtos={produtos}
             />
-          ) : (
-            <ContagemExpressConsultaMovimento movimentos={movimentosPeriodo} />
           )}
         </div>
       </div>

@@ -8,7 +8,7 @@ import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { formatCountQuantity } from '@/lib/inventoryCountUnits';
-import { agregarContagensPorProduto, resumoSessaoConcluida } from '@/lib/contagemExpressSessao';
+import { agregarContagensPorProduto, extrairReferenciaSessao, resumoSessaoConcluida } from '@/lib/contagemExpressSessao';
 import { reimprimirRelatorioSessaoContagemExpress } from '@/lib/contagemExpressReport';
 
 function ProdutoRow({ nome, quantidade, unidade, meta, striped }) {
@@ -37,7 +37,7 @@ function ProdutoRow({ nome, quantidade, unidade, meta, striped }) {
 }
 
 export default function ContagemExpressConsultaTotal({ sessoes = [], produtos = [] }) {
-  const [modo, setModo] = useState('produto');
+  const [modo, setModo] = useState('comprovante');
   const [imprimindoId, setImprimindoId] = useState(null);
 
   const handleImprimirSessao = async (sessao) => {
@@ -100,10 +100,10 @@ export default function ContagemExpressConsultaTotal({ sessoes = [], produtos = 
           </button>
           <button
             type="button"
-            onClick={() => setModo('sessao')}
-            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${modo === 'sessao' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
+            onClick={() => setModo('comprovante')}
+            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${modo === 'comprovante' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
           >
-            Por sessão
+            Por comprovante
           </button>
         </div>
       </div>
@@ -129,6 +129,7 @@ export default function ContagemExpressConsultaTotal({ sessoes = [], produtos = 
             const dataFmt = data
               ? format(new Date(data), "dd/MM/yy HH:mm", { locale: ptBR })
               : '';
+            const numeroMovimento = extrairReferenciaSessao(sessao);
 
             const imprimindo = imprimindoId === sessao.id;
 
@@ -138,16 +139,21 @@ export default function ContagemExpressConsultaTotal({ sessoes = [], produtos = 
                   type="button"
                   onClick={() => handleImprimirSessao(sessao)}
                   disabled={imprimindo}
-                  className="flex w-full items-start justify-between gap-3 px-4 py-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors disabled:opacity-60"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 border-b border-border/40 text-left hover:bg-muted/30 transition-colors disabled:opacity-60"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {sessao.nome_conferencia || 'Contagem Express'}
+                    <p className={`${p38Table.mobileLineTitle} truncate`}>
+                      {numeroMovimento || 'Contagem Express'}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className={`${p38Table.mobileLineSubtitle} mt-1 truncate`}>
                       {sessao.responsavel_nome || 'Operador'}
                       {dataFmt ? ` · ${dataFmt}` : ''}
-                      {` · ${qtdProd} prod. · ${itens} ent.`}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {qtdProd} prod. · {itens} ent.
+                      {sessao.nome_conferencia && sessao.nome_conferencia !== numeroMovimento
+                        ? ` · ${sessao.nome_conferencia}`
+                        : ''}
                     </p>
                   </div>
                   <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground">
