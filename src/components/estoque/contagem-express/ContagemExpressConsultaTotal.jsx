@@ -151,9 +151,6 @@ export default function ContagemExpressConsultaTotal({ sessoes = [], produtos = 
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {qtdProd} prod. · {itens} ent.
-                      {sessao.nome_conferencia && sessao.nome_conferencia !== numeroMovimento
-                        ? ` · ${sessao.nome_conferencia}`
-                        : ''}
                     </p>
                   </div>
                   <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground">

@@ -1,6 +1,7 @@
 import { invokeRecalcularEstoqueProduto } from '@/lib/p38StockRecalc';
 import { calcularSaldoMovimentacoes, parseEstoqueCadastro } from '@/lib/movimentacaoEstoqueSaldo';
 import { formatCountQuantity, getEntryBaseQuantity } from '@/lib/inventoryCountUnits';
+import { createContagemExpressSessionId } from '@/lib/contagemExpressStorage';
 
 export const REFERENCIA_CONTAGEM_EXPRESS = 'ContagemExpress';
 
@@ -71,7 +72,7 @@ export async function aplicarContagemExpress(base44, {
 }) {
   const grupos = agruparItensContagem(itens, produtos);
   const mapaProdutos = Object.fromEntries((produtos || []).map((p) => [p.id, p]));
-  const referenciaNumero = sessionId || `CE-${Date.now()}`;
+  const referenciaNumero = sessionId || createContagemExpressSessionId();
   const responsavel = usuarioNome || 'Sistema';
   const responsavelId = usuarioEmail || usuarioNome || 'Sistema';
   const dataFim = new Date().toISOString();
@@ -88,7 +89,7 @@ export async function aplicarContagemExpress(base44, {
     await base44.entities.ConferenciaEstoque.update(conferenciaId, conferenciaPayload);
   } else {
     const conferencia = await base44.entities.ConferenciaEstoque.create({
-      nome_conferencia: `Contagem Express ${referenciaNumero}`,
+      nome_conferencia: referenciaNumero,
       tipo_conferencia: 'Contagem Express',
       responsavel_id: responsavelId,
       responsavel_nome: responsavel,

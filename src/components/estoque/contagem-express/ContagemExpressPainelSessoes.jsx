@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   ArrowLeft, ClipboardList, Loader2, Play, Plus, RefreshCw, Trash2,
 } from 'lucide-react';
@@ -21,6 +20,7 @@ import {
   cancelarSessaoContagemExpress,
   contarProdutosSessao,
   criarSessaoContagemExpress,
+  extrairReferenciaSessao,
   filtrarPorPeriodo,
   getPeriodoMesAtual,
   listarSessoesConcluidasContagemExpress,
@@ -58,8 +58,6 @@ export default function ContagemExpressPainelSessoes({
   const [sessoesConcluidas, setSessoesConcluidas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [criando, setCriando] = useState(false);
-  const [nomeNova, setNomeNova] = useState('');
-  const [mostrarNome, setMostrarNome] = useState(false);
   const [cancelandoId, setCancelandoId] = useState(null);
 
   const carregar = async () => {
@@ -100,9 +98,9 @@ export default function ContagemExpressPainelSessoes({
   };
 
   const handleCancelar = async (sessao) => {
-    const nome = sessao.nome_conferencia || 'esta contagem';
+    const codigo = extrairReferenciaSessao(sessao) || 'esta contagem';
     const ok = window.confirm(
-      `Descartar "${nome}"?\n\nOs itens em pausa não serão lançados. Esta ação não desfaz movimentos de estoque já gravados.`,
+      `Descartar a contagem ${codigo}?\n\nOs itens em pausa não serão lançados. Esta ação não desfaz movimentos de estoque já gravados.`,
     );
     if (!ok) return;
 
@@ -122,9 +120,7 @@ export default function ContagemExpressPainelSessoes({
   const handleNova = async () => {
     setCriando(true);
     try {
-      const nova = await criarSessaoContagemExpress(base44, usuario, nomeNova);
-      setNomeNova('');
-      setMostrarNome(false);
+      const nova = await criarSessaoContagemExpress(base44, usuario);
       onContinuar(nova);
     } catch (error) {
       console.error(error);
@@ -149,7 +145,7 @@ export default function ContagemExpressPainelSessoes({
           <Button
             type="button"
             size="sm"
-            onClick={() => (mostrarNome ? handleNova() : setMostrarNome(true))}
+            onClick={handleNova}
             disabled={criando}
             className="h-9 shrink-0 rounded-xl px-3"
           >
@@ -157,20 +153,6 @@ export default function ContagemExpressPainelSessoes({
           </Button>
         </div>
       </div>
-
-      {mostrarNome && (
-        <div className="flex shrink-0 gap-2 border-b border-border/40 px-3 py-3">
-          <Input
-            placeholder="Nome (opcional)"
-            value={nomeNova}
-            onChange={(e) => setNomeNova(e.target.value)}
-            className="h-10 rounded-xl border-0 bg-muted/50"
-          />
-          <Button type="button" onClick={handleNova} disabled={criando} className="h-10 shrink-0 rounded-xl px-4">
-            Iniciar
-          </Button>
-        </div>
-      )}
 
       <div className="shrink-0 border-b border-border/40 px-3 py-2">
         <div className="flex items-center gap-2">
@@ -260,8 +242,8 @@ export default function ContagemExpressPainelSessoes({
                       )}
                     >
                       <div className="min-w-0">
-                        <p className="text-sm font-medium leading-snug text-foreground break-words whitespace-normal">
-                          {sessao.nome_conferencia || 'Contagem Express'}
+                        <p className="text-sm font-medium leading-snug text-foreground break-words whitespace-normal font-din-1451 tracking-wide">
+                          {extrairReferenciaSessao(sessao) || 'Contagem Express'}
                         </p>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
                           <P38StatusLabel tone={tone}>Em pausa</P38StatusLabel>

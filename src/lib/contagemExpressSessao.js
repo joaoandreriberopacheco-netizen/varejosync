@@ -10,12 +10,16 @@ import {
 
 export const TIPO_CONTAGEM_EXPRESS = 'Contagem Express';
 const PREFIXO_NOME_CONTAGEM_EXPRESS = 'Contagem Express ';
+export const CODIGO_SESSAO_CONTAGEM_EXPRESS_REGEX = /^[A-Z0-9]{6}$/;
 
 export function extrairReferenciaSessao(sessao) {
   const nome = String(sessao?.nome_conferencia || '').trim();
   if (!nome) return sessao?.id || '';
+  if (CODIGO_SESSAO_CONTAGEM_EXPRESS_REGEX.test(nome)) return nome;
   if (nome.startsWith(PREFIXO_NOME_CONTAGEM_EXPRESS)) {
-    return nome.slice(PREFIXO_NOME_CONTAGEM_EXPRESS.length).trim();
+    const rest = nome.slice(PREFIXO_NOME_CONTAGEM_EXPRESS.length).trim();
+    if (CODIGO_SESSAO_CONTAGEM_EXPRESS_REGEX.test(rest)) return rest;
+    return rest;
   }
   const match = nome.match(/CE-[A-Z0-9-]+/i);
   if (match) return match[0];
@@ -134,11 +138,11 @@ export async function cancelarSessaoContagemExpress(base44, conferenciaId) {
   });
 }
 
-export async function criarSessaoContagemExpress(base44, usuario, nome) {
-  const referencia = createContagemExpressSessionId();
+export async function criarSessaoContagemExpress(base44, usuario) {
+  const codigo = createContagemExpressSessionId();
   const responsavel = usuario?.full_name || usuario?.nome || usuario?.email || 'Operador';
   return base44.entities.ConferenciaEstoque.create({
-    nome_conferencia: nome?.trim() || `Contagem Express ${referencia}`,
+    nome_conferencia: codigo,
     tipo_conferencia: TIPO_CONTAGEM_EXPRESS,
     status: 'Em Andamento',
     data_inicio: new Date().toISOString(),

@@ -31,7 +31,13 @@ export function clearContagemExpressDraft() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
+const CODIGO_SESSAO_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+/** Código aleatório de 6 caracteres alfanuméricos (A–Z, 0–9). */
 export function createContagemExpressSessionId() {
-  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
-  return `CE-${stamp}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+  let code = '';
+  for (let i = 0; i < 6; i += 1) {
+    code += CODIGO_SESSAO_CHARS[Math.floor(Math.random() * CODIGO_SESSAO_CHARS.length)];
+  }
+  return code;
 }
