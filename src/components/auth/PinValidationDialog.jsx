@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Shield, CheckCircle, AlertCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { gerenciarPin } from '@/functions/gerenciarPin';
+import { allowProgrammaticFocusBriefly, focusField } from '@/lib/focusPolicy';
 import { OPERACAO_AUTH_ENABLED } from './operacaoAuthFlags';
 
 /**
@@ -29,6 +31,8 @@ export default function PinValidationDialog({
   operationName = 'Operação Crítica',
   /** Quando true, exige PIN mesmo com auth global desligada (ex.: salvar pedido de compra). */
   forceEnabled = false,
+  /** Teclado nativo do sistema (sem teclado virtual na tela). */
+  useNativeKeyboard = false,
 }) {
   const authActive = forceEnabled || OPERACAO_AUTH_ENABLED;
   const [pin, setPin] = useState('');
@@ -47,8 +51,12 @@ export default function PinValidationDialog({
     }
     if (authActive) {
       setPin(''); setErro(''); setEmailEnviado(false);
-      setTimeout(() => inputRef.current?.focus(), 150);
-      return;
+      allowProgrammaticFocusBriefly();
+      const timer = window.setTimeout(() => {
+        allowProgrammaticFocusBriefly();
+        focusField(inputRef.current, { preventScroll: true });
+      }, 150);
+      return () => window.clearTimeout(timer);
     }
     if (bypassedForOpen.current) return;
     bypassedForOpen.current = true;
@@ -112,61 +120,81 @@ export default function PinValidationDialog({
         </DialogHeader>
 
         <div className="py-4 space-y-5">
-          {/* Dots indicator */}
-          <div className="flex justify-center gap-3">
-            {dots.map((filled, i) => (
-              <div
-                key={i}
-                className={`w-3 h-3 rounded-full transition-all duration-150 ${
-                  filled
-                    ? 'bg-primary dark:bg-card scale-110'
-                    : 'bg-muted'
-                }`}
-              />
-            ))}
-          </div>
+          {useNativeKeyboard ? (
+            <Input
+              ref={inputRef}
+              type="password"
+              inputMode="numeric"
+              enterKeyHint="done"
+              autoComplete="one-time-code"
+              value={pin}
+              onChange={(e) => {
+                setErro('');
+                setPin(e.target.value.replace(/\D/g, '').slice(0, 6));
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleValidar()}
+              placeholder="6 dígitos"
+              maxLength={6}
+              className="h-14 text-center text-2xl font-din-1451 tracking-[0.35em]"
+            />
+          ) : (
+            <>
+              <div className="flex justify-center gap-3">
+                {dots.map((filled, i) => (
+                  <div
+                    key={i}
+                    className={`w-3 h-3 rounded-full transition-all duration-150 ${
+                      filled
+                        ? 'bg-primary dark:bg-card scale-110'
+                        : 'bg-muted'
+                    }`}
+                  />
+                ))}
+              </div>
 
-          {/* Input oculto para capturar teclado físico */}
-          <input autoComplete="off"
-            ref={inputRef}
-            type="password"
-            inputMode="numeric"
-            value={pin}
-            onChange={e => {
-              setErro('');
-              setPin(e.target.value.replace(/\D/g, '').slice(0, 6));
-            }}
-            onKeyDown={e => e.key === 'Enter' && handleValidar()}
-            className="absolute opacity-0 w-0 h-0"
-            maxLength={6}
-          />
-
-          {/* Teclado numérico visual */}
-          <div className="grid grid-cols-3 gap-2 px-4">
-            {[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((key, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  if (key === '⌫') {
-                    setPin(p => p.slice(0, -1));
-                  } else if (key !== '') {
-                    const next = (pin + key).slice(0, 6);
-                    setPin(next);
-                    setErro('');
-                  }
+              <input
+                autoComplete="off"
+                ref={inputRef}
+                type="password"
+                inputMode="numeric"
+                value={pin}
+                onChange={(e) => {
+                  setErro('');
+                  setPin(e.target.value.replace(/\D/g, '').slice(0, 6));
                 }}
-                className={`h-12 rounded-xl text-lg font-medium transition-all active:scale-95 ${
-                  key === ''
-                    ? 'pointer-events-none'
-                    : key === '⌫'
-                    ? 'bg-muted text-muted-foreground text-sm'
-                    : 'bg-muted/50 text-foreground hover:bg-muted'
-                }`}
-              >
-                {key}
-              </button>
-            ))}
-          </div>
+                onKeyDown={(e) => e.key === 'Enter' && handleValidar()}
+                className="absolute opacity-0 w-0 h-0"
+                maxLength={6}
+              />
+
+              <div className="grid grid-cols-3 gap-2 px-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '⌫'].map((key, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      if (key === '⌫') {
+                        setPin((p) => p.slice(0, -1));
+                      } else if (key !== '') {
+                        const next = (pin + key).slice(0, 6);
+                        setPin(next);
+                        setErro('');
+                      }
+                    }}
+                    className={`h-12 rounded-xl text-lg font-medium transition-all active:scale-95 ${
+                      key === ''
+                        ? 'pointer-events-none'
+                        : key === '⌫'
+                          ? 'bg-muted text-muted-foreground text-sm'
+                          : 'bg-muted/50 text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    {key}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {erro && (
             <div className="flex items-center justify-center gap-1.5 text-red-500 text-xs">

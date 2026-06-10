@@ -75,7 +75,8 @@ export default function ContagemExpress() {
   const [loadingComparativo, setLoadingComparativo] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
   const [imprimindo, setImprimindo] = useState(false);
-  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [pinAutorizado, setPinAutorizado] = useState(false);
+  const [showPinEntrada, setShowPinEntrada] = useState(false);
 
   const persistItens = useCallback(async (novosItens, sid = sessionId, confId = conferenciaId) => {
     setItens(novosItens);
@@ -88,6 +89,12 @@ export default function ContagemExpress() {
       }
     }
   }, [sessionId, conferenciaId]);
+
+  useEffect(() => {
+    if (!loading && !pinAutorizado) {
+      setShowPinEntrada(true);
+    }
+  }, [loading, pinAutorizado]);
 
   useEffect(() => {
     const init = async () => {
@@ -284,7 +291,7 @@ export default function ContagemExpress() {
 
   const handleSalvarClick = () => {
     if (itens.length === 0) return;
-    setShowPinDialog(true);
+    void handleSalvarContagem();
   };
 
   const handleImprimir = async () => {
@@ -309,8 +316,7 @@ export default function ContagemExpress() {
     setImprimindo(false);
   };
 
-  const handlePinConfirmado = async () => {
-    setShowPinDialog(false);
+  const handleSalvarContagem = async () => {
     setFinalizando(true);
     try {
       const comparativoPre = await buildComparativoContagem(base44, itens, produtos);
@@ -361,6 +367,24 @@ export default function ContagemExpress() {
     );
   }
 
+  if (!pinAutorizado) {
+    return (
+      <div className="flex min-h-dvh flex-col bg-background font-din-1451">
+        <PinValidationDialog
+          forceEnabled
+          useNativeKeyboard
+          isOpen={showPinEntrada}
+          onClose={() => navigate(createPageUrl('Dashboard'))}
+          onSuccess={() => {
+            setPinAutorizado(true);
+            setShowPinEntrada(false);
+          }}
+          operationName="Acesso ao Contagem Express"
+        />
+      </div>
+    );
+  }
+
   if (view === 'sessoes') {
     return (
       <div className="flex h-dvh flex-col overflow-hidden bg-background font-din-1451">
@@ -396,13 +420,6 @@ export default function ContagemExpress() {
               quantidadeInicial: grupo.display?.quantidade ?? grupo.totalBase,
             });
           }}
-        />
-        <PinValidationDialog
-          forceEnabled
-          isOpen={showPinDialog}
-          onClose={() => setShowPinDialog(false)}
-          onSuccess={handlePinConfirmado}
-          operationName="Lançar Contagem Express"
         />
       </div>
     );
@@ -540,14 +557,6 @@ export default function ContagemExpress() {
         loading={finalizando}
         totalItens={itensAgrupados.length}
         onClick={handleSalvarClick}
-      />
-
-      <PinValidationDialog
-        forceEnabled
-        isOpen={showPinDialog}
-        onClose={() => setShowPinDialog(false)}
-        onSuccess={handlePinConfirmado}
-        operationName="Lançar Contagem Express"
       />
 
       <ProductUnitSelectorDialog
