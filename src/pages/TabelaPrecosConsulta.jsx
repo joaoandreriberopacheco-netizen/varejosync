@@ -84,9 +84,6 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
             <span className="text-[10px] font-normal text-muted-foreground ml-0.5">/{siglaVitrine}</span>
           </div>
         )}
-        {e <= 0 && (
-          <div className="text-[10px] text-red-400 whitespace-nowrap mt-0.5 shrink-0">s/ estoque</div>
-        )}
       </div>
     </div>
   );
@@ -151,80 +148,59 @@ export default function TabelaPrecosConsulta() {
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden w-full bg-card relative">
 
-      {/* Header fixo */}
-      <div className="flex-none bg-card border-b border-border/40 px-4 py-3 space-y-3">
+      {/* Área rolável: título/chips sobem; busca fica colada no topo */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-4">
 
-        {/* Título + contagem */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-foreground font-glacial">Tabela de Preços</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
-              {searchTerm && ` · "${searchTerm}"`}
-            </p>
+        <div className="px-4 pt-3 pb-2 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold text-foreground font-glacial">Tabela de Preços</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''}
+                {searchTerm && ` · "${searchTerm}"`}
+              </p>
+            </div>
+            <span className="shrink-0 px-3 py-2 rounded-2xl text-xs font-medium bg-muted text-muted-foreground">
+              Ordem alfabética (A→Z)
+            </span>
           </div>
-          <span className="px-3 py-2 rounded-2xl text-xs font-medium bg-muted text-muted-foreground">
-            Ordem alfabética (A→Z)
-          </span>
+
+          {tabelas.length > 0 && (
+            <div className="flex gap-2 flex-wrap">
+              {tabelas.map((tabela) => (
+                <button
+                  key={tabela.id}
+                  onClick={() => setTabelaSelecionada(tabela)}
+                  className={cn(
+                    tabelaSelecionada?.id === tabela.id ? p38Mobile.filterChipActive : p38Mobile.filterChip,
+                    'cursor-pointer active:scale-95'
+                  )}
+                >
+                  {tabela.nome_tabela}
+                  {tabela.fator_ajuste !== 1 && (
+                    <span className="ml-1 opacity-70">
+                      ({tabela.fator_ajuste > 1 ? '+' : ''}{((tabela.fator_ajuste - 1) * 100).toFixed(0)}%)
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Seletor de tabela */}
-         {tabelas.length > 0 && (
-           <div className="flex gap-2 flex-wrap">
-             {tabelas.map(tabela => (
-               <button
-                 key={tabela.id}
-                 onClick={() => setTabelaSelecionada(tabela)}
-                 className={cn(
-                   tabelaSelecionada?.id === tabela.id ? p38Mobile.filterChipActive : p38Mobile.filterChip,
-                   'cursor-pointer active:scale-95'
-                 )}
-               >
-                {tabela.nome_tabela}
-                {tabela.fator_ajuste !== 1 && (
-                  <span className="ml-1 opacity-70">
-                    ({tabela.fator_ajuste > 1 ? '+' : ''}{((tabela.fator_ajuste - 1) * 100).toFixed(0)}%)
-                  </span>
-                )}
-              </button>
-            ))}
+        <div className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b border-border/40 px-4 py-2.5 shadow-sm">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Nome ou código (espaço ou ; para combinar termos)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={cn(p38Mobile.searchInput, 'text-sm pl-10 w-full')}
+              aria-label="Buscar produto por nome ou código"
+            />
           </div>
-        )}
-
-        {/* Busca */}
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder="Nome ou código (espaço ou ; para combinar termos)..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className={cn(p38Mobile.searchInput, "text-sm pl-10 w-full")}
-          />
         </div>
-      </div>
 
-      {/* FAB Orçamento */}
-      <button
-        onClick={() => setShowOrcamento(true)}
-        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-background shadow-xl transition-all hover:bg-primary/90 active:scale-95 dark:bg-muted dark:hover:bg-muted p38-bottom-fab1 lg:right-6"
-        title="Novo Orçamento"
-      >
-        <Calculator className="w-6 h-6 text-white dark:text-foreground" />
-      </button>
-
-      {/* Orçamento Sheet */}
-      <OrcamentoSheet
-        isOpen={showOrcamento}
-        onClose={() => setShowOrcamento(false)}
-        produtos={produtos}
-        tabelaSelecionada={tabelaSelecionada}
-        calcularPreco={calcularPreco}
-        nomeTabela={tabelaSelecionada?.nome_tabela}
-        empresa={empresa}
-      />
-
-      {/* Lista simples em ordem alfabética */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-4">
         {produtosFiltrados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center mb-3">
@@ -236,7 +212,7 @@ export default function TabelaPrecosConsulta() {
         ) : (
           <P38MobileLineList
             allViewports
-            className="rounded-none border-0 bg-transparent desktop-layout:rounded-lg desktop-layout:border desktop-layout:border-border/40 desktop-layout:bg-background"
+            className="overflow-visible max-h-none h-auto rounded-none border-0 bg-transparent desktop-layout:rounded-lg desktop-layout:border desktop-layout:border-border/40 desktop-layout:bg-background"
           >
             {produtosFiltrados.map((produto, index) => (
               <SkuCard
@@ -250,6 +226,24 @@ export default function TabelaPrecosConsulta() {
           </P38MobileLineList>
         )}
       </div>
+
+      <button
+        onClick={() => setShowOrcamento(true)}
+        className="fixed right-4 z-[55] flex h-14 w-14 items-center justify-center rounded-2xl bg-background shadow-xl transition-all hover:bg-primary/90 active:scale-95 dark:bg-muted dark:hover:bg-muted p38-bottom-fab1 lg:right-6"
+        title="Novo Orçamento"
+      >
+        <Calculator className="w-6 h-6 text-white dark:text-foreground" />
+      </button>
+
+      <OrcamentoSheet
+        isOpen={showOrcamento}
+        onClose={() => setShowOrcamento(false)}
+        produtos={produtos}
+        tabelaSelecionada={tabelaSelecionada}
+        calcularPreco={calcularPreco}
+        nomeTabela={tabelaSelecionada?.nome_tabela}
+        empresa={empresa}
+      />
     </div>
   );
 }
