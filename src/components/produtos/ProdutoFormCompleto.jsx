@@ -35,6 +35,7 @@ import {
 } from '@/lib/produtoEmbalagensEntity';
 import { embalagensRowsToLegacyProdutoPatch, legacyProdutoToEmbalagensRows } from '@/lib/produtoEmbalagensAdapter';
 import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embalagensPlanilhaUtils';
+import { cn } from '@/components/utils';
 
 const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
 const P38_FORM_HEADER = 'flex-none border-b border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]';
@@ -175,6 +176,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const [tagInput, setTagInput] = useState('');
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState('descritivo');
   const [temAlteracoesNaoSalvas, setTemAlteracoesNaoSalvas] = useState(false);
   const { toast } = useToast();
   
@@ -1217,7 +1219,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
         </div>
       )}
 
-      <Tabs defaultValue="descritivo" className="flex-1 flex flex-col min-h-0 overflow-hidden">
+      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <TabsList className={P38_TAB_LIST}>
           <TabsTrigger value="descritivo" className={P38_TAB_TRIGGER}>
             <Package className={P38_TAB_ICON} />
@@ -1241,7 +1243,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           </TabsTrigger>
         </TabsList>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-8 py-6 md:py-8 pb-24 md:pb-8">
+        <div
+          className={cn(
+            'flex-1 min-h-0 px-4 md:px-8 py-6 md:py-8 pb-24 md:pb-8',
+            abaAtiva === 'historico'
+              ? 'flex flex-col overflow-hidden'
+              : 'overflow-y-auto overscroll-contain'
+          )}
+        >
           {/* ABA IDENTIFICAÇÃO — `descritivo` no estado interno das abas */}
           <TabsContent value="descritivo" className="space-y-6 mt-0">
             {!produto?.id && (
@@ -1942,7 +1951,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
           </TabsContent>
 
           {/* ABA HISTÓRICO — extrato PDV */}
-          <TabsContent value="historico" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden px-1 pb-2 pt-2 sm:px-2">
+          <TabsContent value="historico" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden px-0 pb-0 pt-2 data-[state=inactive]:hidden">
             <ProdutoHistoricoEstoqueTab
               movimentacoes={movimentacoes}
               estoqueAtual={formData.estoque_atual}

@@ -1,4 +1,5 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { format } from 'date-fns';
 import {
   History,
@@ -23,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import {
   P38MobileLine,
   P38MobileLineList,
@@ -31,12 +32,27 @@ import {
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
 import {
+  agruparLinhasPorDia,
+  buildExtratoItensVirtuais,
   calcularExtratoComSaldo,
   deltaQuantidadeMovimento,
   movimentacaoPassaFiltros,
   textoReferenciaTipo,
 } from '@/components/produtos/produtoHistoricoEstoque';
 import { formatEstoqueApresentacao, normalizeAlternativeUnits } from '@/lib/productUnits';
+import { p38Accent } from '@/lib/p38ThemeSurfaces';
+import { p38Table } from '@/lib/p38TableSurfaces';
+import {
+  getVirtualPadding,
+  measureVirtualItem,
+  P38_VIRTUAL_MIN_ROWS,
+  P38_VIRTUAL_OVERSCAN,
+} from '@/lib/p38VirtualList';
+
+const P38_FIELD =
+  'h-11 rounded-lg border-0 bg-secondary/80 shadow-none focus-visible:ring-1 focus-visible:ring-border/60 dark:bg-[#26262e]';
+const P38_BTN =
+  'h-11 rounded-lg border border-border/40 bg-card font-medium shadow-sm dark:border-white/10 dark:bg-[#26262e]';
 
 /** Larguras + posições left (px) para colunas sticky alinhadas */
 const STICKY_COL = {
@@ -46,6 +62,10 @@ const STICKY_COL = {
   docLeft: 124,
   saldoLeft: 124 + 132,
 };
+
+const VIRTUAL_DAY_ESTIMATE = 64;
+const VIRTUAL_MOV_ESTIMATE = 92;
+const VIRTUAL_TABLE_ROW_ESTIMATE = 44;
 
 function formatQtd(n) {
   if (n === null || n === undefined || Number.isNaN(n)) return '0';
@@ -66,32 +86,390 @@ function descricaoMovimento(mov) {
   return mov.referencia_numero || mov.documento_referencia || mov.referencia_id || textoReferenciaTipo(mov);
 }
 
-function agruparLinhasPorDia(linhas, ordemLista) {
-  const grupos = new Map();
-  for (const linha of linhas) {
-    const dia = linha.mov?.created_date
-      ? format(new Date(linha.mov.created_date), 'yyyy-MM-dd')
-      : 'sem-data';
-    if (!grupos.has(dia)) grupos.set(dia, []);
-    grupos.get(dia).push(linha);
+function formatDiaLabel(dia) {
+  if (dia === 'sem-data') return 'Sem data';
+  return format(new Date(`${dia}T12:00:00`), "dd 'de' MMM yyyy");
+}
+
+function ExtratoDiaHeader({ dia, count, saldoFimDia }) {
+  return (
+    <div className={p38Table.catalogMobileHeader}>
+      <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-foreground">{formatDiaLabel(dia)}</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">
+            {count} movimento{count === 1 ? '' : 's'}
+          </p>
+        </div>
+        {saldoFimDia != null ? (
+          <div className="shrink-0 text-right">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Saldo no dia</p>
+            <p className={`font-glacial text-base font-bold tabular-nums ${p38Accent.success.text}`}>
+              {formatQtd(saldoFimDia)}
+            </p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ExtratoMovimentoLine({ mov, saldoApos, striped, estoqueAuxiliar, fatorAuxiliar }) {
+  const isEntrada = mov.tipo === 'Entrada';
+  const delta = deltaQuantidadeMovimento(mov);
+  const origem = textoReferenciaTipo(mov);
+  const clienteNome = mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '';
+  const documento = descricaoMovimento(mov);
+  const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
+  const qtdShow =
+    estoqueAuxiliar && fatorAuxiliar
+      ? `${formatQtd((Number(mov.quantidade) || 0) / fatorAuxiliar)} ${estoqueAuxiliar.sigla}`
+      : null;
+
+  const metaParts = [
+    <P38StatusLabel key="tipo" tone={movimentoAccent(mov.tipo)}>
+      {mov.tipo}
+    </P38StatusLabel>,
+  ];
+  if (origem && origem !== mov.tipo) {
+    metaParts.push(
+      <span key="origem" className="truncate text-[10px] text-muted-foreground">
+        {origem}
+      </span>
+    );
+  }
+  if (clienteNome) {
+    metaParts.push(
+      <span key="cli" className="truncate text-[10px] text-muted-foreground">
+        {clienteNome}
+      </span>
+    );
+  }
+  if (mov.usuario_responsavel) {
+    metaParts.push(
+      <span key="resp" className="truncate text-[10px] text-muted-foreground">
+        {mov.usuario_responsavel}
+      </span>
+    );
   }
 
-  const dias = [...grupos.keys()].sort((a, b) => {
-    if (a === 'sem-data') return 1;
-    if (b === 'sem-data') return -1;
-    return ordemLista === 'asc' ? a.localeCompare(b) : b.localeCompare(a);
-  });
+  const subtitleParts = [formatDataHoraMov(mov)];
+  if (total > 0) {
+    subtitleParts.push(`R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+  }
+  if (qtdShow) subtitleParts.push(qtdShow);
 
-  return dias.map((dia) => {
-    const linhasDia = [...grupos.get(dia)];
-    linhasDia.sort((a, b) => {
-      const ta = new Date(a.mov?.created_date || 0).getTime();
-      const tb = new Date(b.mov?.created_date || 0).getTime();
-      const cmp = ta - tb;
-      return ordemLista === 'asc' ? cmp : -cmp;
-    });
-    return { dia, linhas: linhasDia };
+  return (
+    <P38MobileLine
+      striped={striped}
+      accent={p38AccentKeyFromTone(movimentoAccent(mov.tipo))}
+      title={documento}
+      subtitle={subtitleParts.join(' · ')}
+      meta={metaParts}
+      value={
+        <span className={`font-semibold tabular-nums ${isEntrada ? p38Accent.success.text : p38Accent.danger.text}`}>
+          {delta >= 0 ? '+' : ''}
+          {formatQtd(delta)}
+        </span>
+      }
+      valueSub={
+        <span className="text-[10px] font-medium tabular-nums text-muted-foreground">
+          Saldo {saldoApos != null ? formatQtd(saldoApos) : '—'}
+        </span>
+      }
+    />
+  );
+}
+
+function ExtratoMobileScroll({ children, parentRef, className }) {
+  return (
+    <P38MobileLineList
+      ref={parentRef}
+      className={`min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain rounded-none border-0 bg-transparent [-webkit-overflow-scrolling:touch] ${className || ''}`}
+    >
+      {children}
+    </P38MobileLineList>
+  );
+}
+
+function ExtratoMobileLista({ itensVirtuais, estoqueAuxiliar, fatorAuxiliar }) {
+  return (
+    <ExtratoMobileScroll>
+      {itensVirtuais.map((item, index) =>
+        item.kind === 'day' ? (
+          <ExtratoDiaHeader
+            key={item.key}
+            dia={item.dia}
+            count={item.count}
+            saldoFimDia={item.saldoFimDia}
+          />
+        ) : (
+          <ExtratoMovimentoLine
+            key={item.key}
+            mov={item.mov}
+            saldoApos={item.saldoApos}
+            striped={item.idx % 2 === 1}
+            estoqueAuxiliar={estoqueAuxiliar}
+            fatorAuxiliar={fatorAuxiliar}
+          />
+        )
+      )}
+    </ExtratoMobileScroll>
+  );
+}
+
+function ExtratoMobileVirtualizado({ itensVirtuais, estoqueAuxiliar, fatorAuxiliar }) {
+  const parentRef = useRef(null);
+  const rowVirtualizer = useVirtualizer({
+    count: itensVirtuais.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: (index) => (itensVirtuais[index]?.kind === 'day' ? VIRTUAL_DAY_ESTIMATE : VIRTUAL_MOV_ESTIMATE),
+    getItemKey: (index) => itensVirtuais[index]?.key ?? index,
+    measureElement: measureVirtualItem,
+    overscan: P38_VIRTUAL_OVERSCAN,
   });
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
+  return (
+    <ExtratoMobileScroll parentRef={parentRef}>
+      <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
+        {virtualItems.map((virtualRow) => {
+          const item = itensVirtuais[virtualRow.index];
+          return (
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              className="absolute left-0 top-0 w-full"
+              style={{ transform: `translateY(${virtualRow.start}px)` }}
+            >
+              {item.kind === 'day' ? (
+                <ExtratoDiaHeader
+                  dia={item.dia}
+                  count={item.count}
+                  saldoFimDia={item.saldoFimDia}
+                />
+              ) : (
+                <ExtratoMovimentoLine
+                  mov={item.mov}
+                  saldoApos={item.saldoApos}
+                  striped={item.idx % 2 === 1}
+                  estoqueAuxiliar={estoqueAuxiliar}
+                  fatorAuxiliar={fatorAuxiliar}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </ExtratoMobileScroll>
+  );
+}
+
+function ExtratoTabelaDesktop({ linhasParaExibir, estoqueAuxiliar, fatorAuxiliar }) {
+  return (
+    <div className="min-h-0 flex-1 overflow-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
+      <table className="w-max min-w-[920px] border-collapse text-left text-[11px] sm:text-xs">
+        <TableHeader className={`sticky top-0 z-30 ${p38Table.header}`}>
+          <TableRow className="border-b hover:bg-transparent">
+            <TableHead
+              className={`sticky top-0 z-[45] h-10 whitespace-nowrap border-b px-2 py-2 ${p38Table.head}`}
+              style={{ left: 0, minWidth: STICKY_COL.dataW, width: STICKY_COL.dataW }}
+            >
+              Data
+            </TableHead>
+            <TableHead
+              className={`sticky top-0 z-[45] h-10 whitespace-nowrap border-b px-2 py-2 ${p38Table.head}`}
+              style={{ left: STICKY_COL.docLeft, minWidth: STICKY_COL.docW, width: STICKY_COL.docW }}
+            >
+              Documento
+            </TableHead>
+            <TableHead
+              className={`sticky top-0 z-[45] h-10 border-b border-r border-border/40 px-2 py-2 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.2)] dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)] ${p38Table.head}`}
+              style={{ left: STICKY_COL.saldoLeft, minWidth: STICKY_COL.saldoW, width: STICKY_COL.saldoW }}
+            >
+              Saldo após
+            </TableHead>
+            <TableHead className={`h-10 min-w-[5.5rem] whitespace-nowrap border-b px-2 py-2 ${p38Table.head}`}>
+              Origem
+            </TableHead>
+            <TableHead className={`h-10 min-w-[7rem] border-b px-2 py-2 ${p38Table.head}`}>Cliente / terceiro</TableHead>
+            <TableHead className={`h-10 min-w-[3.25rem] border-b px-2 py-2 ${p38Table.head}`}>Tipo</TableHead>
+            <TableHead className={`h-10 min-w-[4rem] border-b px-2 py-2 text-right ${p38Table.head}`}>Movimento</TableHead>
+            <TableHead className={`h-10 min-w-[4.5rem] border-b px-2 py-2 text-right ${p38Table.head}`}>P. un.</TableHead>
+            <TableHead className={`h-10 min-w-[4.5rem] border-b px-2 py-2 text-right ${p38Table.head}`}>Total R$</TableHead>
+            <TableHead className={`h-10 min-w-[6rem] border-b px-2 py-2 ${p38Table.head}`}>Responsável</TableHead>
+            <TableHead className={`h-10 min-w-[3.25rem] border-b px-2 py-2 text-right ${p38Table.head}`}>Qtd</TableHead>
+            <TableHead className={`h-10 min-w-[7rem] border-b px-2 py-2 text-right ${p38Table.head}`}>Qtd (show)</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {linhasParaExibir.map(({ mov, saldoApos }, idx) => (
+            <ExtratoTabelaLinha
+              key={mov.id != null ? mov.id : `mov-${idx}`}
+              mov={mov}
+              saldoApos={saldoApos}
+              estoqueAuxiliar={estoqueAuxiliar}
+              fatorAuxiliar={fatorAuxiliar}
+            />
+          ))}
+        </TableBody>
+      </table>
+    </div>
+  );
+}
+
+function ExtratoTabelaLinha({ mov, saldoApos, estoqueAuxiliar, fatorAuxiliar }) {
+  const isEntrada = mov.tipo === 'Entrada';
+  const delta = deltaQuantidadeMovimento(mov);
+  const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
+  const documento = mov.referencia_numero || mov.documento_referencia || mov.referencia_id || '—';
+  const clienteNome = mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '—';
+  const origem = textoReferenciaTipo(mov);
+  const stickyBg = 'bg-background group-hover:bg-secondary/25 dark:group-hover:bg-secondary/30';
+
+  return (
+    <TableRow className={`group ${p38Table.row}`}>
+      <TableCell
+        className={`sticky z-20 whitespace-nowrap border-b border-border/40 px-2 py-2 tabular-nums ${stickyBg}`}
+        style={{ left: 0, minWidth: STICKY_COL.dataW, width: STICKY_COL.dataW }}
+      >
+        {formatDataHoraMov(mov)}
+      </TableCell>
+      <TableCell
+        className={`sticky z-20 max-w-[132px] truncate border-b border-border/40 px-2 py-2 font-medium ${stickyBg}`}
+        style={{ left: STICKY_COL.docLeft, minWidth: STICKY_COL.docW, width: STICKY_COL.docW }}
+        title={String(documento)}
+      >
+        {documento}
+      </TableCell>
+      <TableCell
+        className={`sticky z-20 border-b border-r border-border/40 px-2 py-2 text-right font-glacial text-sm font-bold tabular-nums shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.45)] ${p38Table.cellAccent} ${stickyBg}`}
+        style={{ left: STICKY_COL.saldoLeft, minWidth: STICKY_COL.saldoW, width: STICKY_COL.saldoW }}
+      >
+        {saldoApos != null ? formatQtd(saldoApos) : '—'}
+      </TableCell>
+      <TableCell className="border-b border-border/40 px-2 py-2">
+        <Badge
+          className={`max-w-[8rem] truncate rounded-full border-0 text-[9px] ${
+            isEntrada
+              ? 'bg-[#4a5240]/10 text-[#4a5240] dark:bg-[#a4ce33]/15 dark:text-[#a4ce33]'
+              : 'bg-red-500/10 text-red-700 dark:bg-red-950/40 dark:text-red-400'
+          }`}
+          title={origem}
+        >
+          {origem}
+        </Badge>
+      </TableCell>
+      <TableCell className="max-w-[10rem] truncate border-b border-border/40 px-2 py-2 text-muted-foreground" title={clienteNome}>
+        {clienteNome}
+      </TableCell>
+      <TableCell className="whitespace-nowrap border-b border-border/40 px-2 py-2">{mov.tipo}</TableCell>
+      <TableCell
+        className={`border-b border-border/40 px-2 py-2 text-right font-semibold tabular-nums ${
+          isEntrada ? p38Accent.success.text : p38Accent.danger.text
+        }`}
+      >
+        {delta >= 0 ? '+' : ''}
+        {formatQtd(delta)}
+      </TableCell>
+      <TableCell className="border-b border-border/40 px-2 py-2 text-right tabular-nums">
+        {mov.custo_unitario > 0
+          ? `R$ ${Number(mov.custo_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+          : '—'}
+      </TableCell>
+      <TableCell
+        className={`border-b border-border/40 px-2 py-2 text-right tabular-nums ${
+          isEntrada ? p38Accent.success.text : p38Accent.danger.text
+        }`}
+      >
+        {total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
+      </TableCell>
+      <TableCell className="max-w-[7rem] truncate border-b border-border/40 px-2 py-2 text-muted-foreground">
+        {mov.usuario_responsavel || '—'}
+      </TableCell>
+      <TableCell className="border-b border-border/40 px-2 py-2 text-right tabular-nums">
+        {formatQtd(mov.quantidade)}
+      </TableCell>
+      <TableCell className="border-b border-border/40 px-2 py-2 text-right tabular-nums text-muted-foreground">
+        {estoqueAuxiliar && fatorAuxiliar
+          ? `${formatQtd((Number(mov.quantidade) || 0) / fatorAuxiliar)} ${estoqueAuxiliar.sigla}`
+          : '—'}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function ExtratoTabelaVirtualizada({ linhasParaExibir, estoqueAuxiliar, fatorAuxiliar }) {
+  const parentRef = useRef(null);
+  const rowVirtualizer = useVirtualizer({
+    count: linhasParaExibir.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => VIRTUAL_TABLE_ROW_ESTIMATE,
+    getItemKey: (index) => linhasParaExibir[index]?.mov?.id ?? index,
+    measureElement: measureVirtualItem,
+    overscan: P38_VIRTUAL_OVERSCAN,
+  });
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const { paddingTop, paddingBottom } = getVirtualPadding(virtualItems, rowVirtualizer.getTotalSize());
+
+  return (
+    <div
+      ref={parentRef}
+      className="min-h-0 flex-1 overflow-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
+    >
+      <P38TableShell className="overflow-visible">
+        <table className="w-max min-w-[920px] border-collapse text-left text-[11px] sm:text-xs">
+          <TableHeader className={`sticky top-0 z-30 ${p38Table.header}`}>
+            <TableRow className="border-b hover:bg-transparent">
+              <TableHead className={`sticky top-0 z-[45] h-10 whitespace-nowrap border-b px-2 py-2 ${p38Table.head}`} style={{ left: 0, minWidth: STICKY_COL.dataW, width: STICKY_COL.dataW }}>
+                Data
+              </TableHead>
+              <TableHead className={`sticky top-0 z-[45] h-10 whitespace-nowrap border-b px-2 py-2 ${p38Table.head}`} style={{ left: STICKY_COL.docLeft, minWidth: STICKY_COL.docW, width: STICKY_COL.docW }}>
+                Documento
+              </TableHead>
+              <TableHead className={`sticky top-0 z-[45] h-10 border-b border-r border-border/40 px-2 py-2 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.2)] dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)] ${p38Table.head}`} style={{ left: STICKY_COL.saldoLeft, minWidth: STICKY_COL.saldoW, width: STICKY_COL.saldoW }}>
+                Saldo após
+              </TableHead>
+              <TableHead className={`h-10 min-w-[5.5rem] whitespace-nowrap border-b px-2 py-2 ${p38Table.head}`}>Origem</TableHead>
+              <TableHead className={`h-10 min-w-[7rem] border-b px-2 py-2 ${p38Table.head}`}>Cliente / terceiro</TableHead>
+              <TableHead className={`h-10 min-w-[3.25rem] border-b px-2 py-2 ${p38Table.head}`}>Tipo</TableHead>
+              <TableHead className={`h-10 min-w-[4rem] border-b px-2 py-2 text-right ${p38Table.head}`}>Movimento</TableHead>
+              <TableHead className={`h-10 min-w-[4.5rem] border-b px-2 py-2 text-right ${p38Table.head}`}>P. un.</TableHead>
+              <TableHead className={`h-10 min-w-[4.5rem] border-b px-2 py-2 text-right ${p38Table.head}`}>Total R$</TableHead>
+              <TableHead className={`h-10 min-w-[6rem] border-b px-2 py-2 ${p38Table.head}`}>Responsável</TableHead>
+              <TableHead className={`h-10 min-w-[3.25rem] border-b px-2 py-2 text-right ${p38Table.head}`}>Qtd</TableHead>
+              <TableHead className={`h-10 min-w-[7rem] border-b px-2 py-2 text-right ${p38Table.head}`}>Qtd (show)</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paddingTop > 0 ? (
+              <tr aria-hidden>
+                <td colSpan={12} style={{ height: paddingTop, padding: 0, border: 0 }} />
+              </tr>
+            ) : null}
+            {virtualItems.map((virtualRow) => {
+              const linha = linhasParaExibir[virtualRow.index];
+              return (
+                <ExtratoTabelaLinha
+                  key={linha.mov?.id ?? virtualRow.key}
+                  mov={linha.mov}
+                  saldoApos={linha.saldoApos}
+                  estoqueAuxiliar={estoqueAuxiliar}
+                  fatorAuxiliar={fatorAuxiliar}
+                />
+              );
+            })}
+            {paddingBottom > 0 ? (
+              <tr aria-hidden>
+                <td colSpan={12} style={{ height: paddingBottom, padding: 0, border: 0 }} />
+              </tr>
+            ) : null}
+          </TableBody>
+        </table>
+      </P38TableShell>
+    </div>
+  );
 }
 
 export default function ProdutoHistoricoEstoqueTab({
@@ -144,6 +522,14 @@ export default function ProdutoHistoricoEstoqueTab({
     [linhasParaExibir, ordem]
   );
 
+  const itensVirtuaisMobile = useMemo(
+    () => buildExtratoItensVirtuais(diasExtratoMobile),
+    [diasExtratoMobile]
+  );
+
+  const shouldVirtualizeMobile = itensVirtuaisMobile.length >= P38_VIRTUAL_MIN_ROWS;
+  const shouldVirtualizeDesktop = linhasParaExibir.length >= P38_VIRTUAL_MIN_ROWS;
+
   const temFiltrosExtras =
     tipoFiltro !== 'todos' || refTipo !== 'todos' || Boolean(dataIni) || Boolean(dataFim);
 
@@ -164,50 +550,45 @@ export default function ProdutoHistoricoEstoqueTab({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
-      {/* Resumo PDV — mobile first */}
-      <div className="shrink-0 rounded-[24px] bg-[#f0f2f5] p-3 shadow-sm dark:bg-[#1a1f2e]">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <div className="rounded-2xl bg-card px-3 py-2.5 shadow-sm dark:bg-[#151a26]">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Estoque (sistema)
-            </p>
-            <p className="mt-0.5 flex items-center gap-1.5 font-glacial text-xl font-semibold tabular-nums text-foreground dark:text-foreground">
-              <Wallet className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              {formatQtd(estoqueAtual)}
-            </p>
-            {estoqueAuxiliar && (
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                ~{formatQtd(estoqueAuxiliar.quantidade)} {estoqueAuxiliar.sigla}{estoqueAuxiliar.rotulo ? ` (${estoqueAuxiliar.rotulo})` : ''}
+      {/* Resumo P38 */}
+      <div className="p38-panel shrink-0">
+        <div className="p38-panel__accent-bar" aria-hidden />
+        <div className="p38-panel__body">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="min-w-0">
+              <p className={p38Table.mobileMicroLabel}>Estoque (sistema)</p>
+              <p className={`mt-1 flex items-center gap-1.5 font-glacial text-xl font-semibold tabular-nums ${p38Accent.success.text}`}>
+                <Wallet className="h-4 w-4 shrink-0" />
+                {formatQtd(estoqueAtual)}
               </p>
-            )}
+              {estoqueAuxiliar ? (
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  ~{formatQtd(estoqueAuxiliar.quantidade)} {estoqueAuxiliar.sigla}
+                  {estoqueAuxiliar.rotulo ? ` (${estoqueAuxiliar.rotulo})` : ''}
+                </p>
+              ) : null}
+            </div>
+            <div className="min-w-0">
+              <p className={p38Table.mobileMicroLabel}>Movimentos</p>
+              <p className="mt-1 font-glacial text-xl font-semibold tabular-nums text-foreground">
+                {linhasParaExibir.length}
+                <span className="text-xs font-normal text-muted-foreground"> / {movimentacoes.length}</span>
+              </p>
+            </div>
+            <div className="col-span-2 min-w-0 sm:col-span-1">
+              <p className={p38Table.mobileMicroLabel}>Saldo antes (est.)</p>
+              <p className="mt-1 font-glacial text-xl font-semibold tabular-nums text-foreground">
+                {formatQtd(extrato.saldoInicial)}
+              </p>
+            </div>
           </div>
-          <div className="rounded-2xl bg-card px-3 py-2.5 shadow-sm dark:bg-[#151a26]">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Movimentos
+          {Math.abs(extrato.divergencia) > 0.0001 ? (
+            <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] leading-snug text-amber-800 dark:text-amber-200">
+              Atenção: a soma das movimentações não fecha exatamente com o estoque atual. Pode haver
+              ajustes manuais ou registros antigos fora do histórico.
             </p>
-            <p className="mt-0.5 font-glacial text-xl font-semibold tabular-nums text-foreground dark:text-foreground">
-              {linhasParaExibir.length}
-              <span className="text-xs font-normal text-muted-foreground">
-                {' '}
-                / {movimentacoes.length}
-              </span>
-            </p>
-          </div>
-          <div className="col-span-2 rounded-2xl bg-card px-3 py-2.5 shadow-sm sm:col-span-1 dark:bg-[#151a26]">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Saldo antes (est.)
-            </p>
-            <p className="mt-0.5 font-glacial text-xl font-semibold tabular-nums text-foreground dark:text-foreground">
-              {formatQtd(extrato.saldoInicial)}
-            </p>
-          </div>
+          ) : null}
         </div>
-        {Math.abs(extrato.divergencia) > 0.0001 && (
-          <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-[11px] leading-snug text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
-            Atenção: a soma das movimentações não fecha exatamente com o estoque atual. Pode haver
-            ajustes manuais ou registros antigos fora do histórico.
-          </p>
-        )}
       </div>
 
       {/* Barra busca + ações */}
@@ -218,12 +599,12 @@ export default function ProdutoHistoricoEstoqueTab({
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Documento, cliente, origem…"
-            className="h-11 rounded-2xl border-0 bg-muted pl-9 pr-3 text-sm shadow-inner dark:bg-[#151a26] dark:text-foreground"
+            className={`${P38_FIELD} pl-9 pr-9`}
           />
           {busca ? (
             <button
               type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:text-muted-foreground"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:text-foreground"
               onClick={() => setBusca('')}
               aria-label="Limpar busca"
             >
@@ -232,52 +613,35 @@ export default function ProdutoHistoricoEstoqueTab({
           ) : null}
         </div>
         <div className="flex shrink-0 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 flex-1 rounded-2xl border-0 bg-muted px-3 font-medium shadow-sm dark:bg-[#151a26] sm:flex-initial"
-            onClick={() => setOrdem((o) => (o === 'asc' ? 'desc' : 'asc'))}
-          >
+          <Button type="button" variant="outline" className={`${P38_BTN} flex-1 sm:flex-initial`} onClick={() => setOrdem((o) => (o === 'asc' ? 'desc' : 'asc'))}>
             {ordem === 'asc' ? <ArrowUp className="mr-1.5 h-4 w-4" /> : <ArrowDown className="mr-1.5 h-4 w-4" />}
             {ordem === 'asc' ? 'Antigo' : 'Recente'}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="relative h-11 flex-1 rounded-2xl border-0 bg-muted px-3 font-medium shadow-sm dark:bg-[#151a26] sm:flex-initial"
-            onClick={() => setFiltrosAbertos(true)}
-          >
+          <Button type="button" variant="outline" className={`relative ${P38_BTN} flex-1 sm:flex-initial`} onClick={() => setFiltrosAbertos(true)}>
             <SlidersHorizontal className="mr-1.5 h-4 w-4" />
             Filtros
             {temFiltrosExtras ? (
-              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+              <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#4a5240] text-[8px] font-bold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]">
                 ·
               </span>
             ) : null}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 rounded-2xl border-0 bg-muted px-3 shadow-sm dark:bg-[#151a26]"
-            onClick={() => onRefresh?.()}
-            disabled={loading}
-            aria-label="Atualizar extrato"
-          >
+          <Button type="button" variant="outline" className={P38_BTN} onClick={() => onRefresh?.()} disabled={loading} aria-label="Atualizar extrato">
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>
 
       <Drawer open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
-        <DrawerContent className="rounded-t-[24px] border-0 bg-card px-4 pb-8 dark:bg-[#0f1218]">
+        <DrawerContent className="rounded-t-2xl border-0 bg-card px-4 pb-8 dark:bg-[#2d333b]">
           <DrawerHeader className="px-0 pb-2 text-left">
-            <DrawerTitle className="font-glacial text-foreground dark:text-foreground">Filtros do extrato</DrawerTitle>
+            <DrawerTitle className="font-glacial text-foreground">Filtros do extrato</DrawerTitle>
           </DrawerHeader>
           <div className="max-h-[65vh] space-y-4 overflow-y-auto">
             <div>
               <Label className="text-xs text-muted-foreground">Tipo</Label>
               <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
-                <SelectTrigger className="mt-1 h-12 rounded-2xl border-0 bg-muted dark:bg-[#151a26]">
+                <SelectTrigger className={`mt-1 h-12 ${P38_FIELD}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -290,7 +654,7 @@ export default function ProdutoHistoricoEstoqueTab({
             <div>
               <Label className="text-xs text-muted-foreground">Origem (referência)</Label>
               <Select value={refTipo} onValueChange={setRefTipo}>
-                <SelectTrigger className="mt-1 h-12 rounded-2xl border-0 bg-muted dark:bg-[#151a26]">
+                <SelectTrigger className={`mt-1 h-12 ${P38_FIELD}`}>
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -306,33 +670,22 @@ export default function ProdutoHistoricoEstoqueTab({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground">De</Label>
-                <Input
-                  type="date"
-                  value={dataIni}
-                  onChange={(e) => setDataIni(e.target.value)}
-                  className="mt-1 h-12 rounded-2xl border-0 bg-muted dark:bg-[#151a26]"
-                />
+                <Input type="date" value={dataIni} onChange={(e) => setDataIni(e.target.value)} className={`mt-1 h-12 ${P38_FIELD}`} />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Até</Label>
-                <Input
-                  type="date"
-                  value={dataFim}
-                  onChange={(e) => setDataFim(e.target.value)}
-                  className="mt-1 h-12 rounded-2xl border-0 bg-muted dark:bg-[#151a26]"
-                />
+                <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className={`mt-1 h-12 ${P38_FIELD}`} />
               </div>
             </div>
             <div className="flex gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-12 flex-1 rounded-2xl border-0 bg-muted dark:bg-[#252a38]"
-                onClick={limparFiltros}
-              >
+              <Button type="button" variant="outline" className={`h-12 flex-1 ${P38_BTN}`} onClick={limparFiltros}>
                 Limpar
               </Button>
-              <Button type="button" className="h-12 flex-1 rounded-2xl" onClick={() => setFiltrosAbertos(false)}>
+              <Button
+                type="button"
+                className="h-12 flex-1 rounded-lg bg-[#4a5240] text-white hover:bg-[#4a5240]/90 dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:hover:bg-[#a4ce33]/90"
+                onClick={() => setFiltrosAbertos(false)}
+              >
                 Aplicar
               </Button>
             </div>
@@ -345,8 +698,8 @@ export default function ProdutoHistoricoEstoqueTab({
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : linhasParaExibir.length === 0 ? (
-        <div className="flex min-h-[12rem] flex-1 flex-col justify-center rounded-[28px] bg-muted/40 py-14 text-center dark:bg-[#151a26]">
-          <History className="mx-auto mb-3 h-12 w-12 text-muted-foreground dark:text-muted-foreground" />
+        <div className="flex min-h-[12rem] flex-1 flex-col justify-center rounded-xl border border-border/40 bg-muted/30 py-14 text-center dark:border-white/10">
+          <History className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
           <p className="text-sm font-medium text-foreground/90">
             {movimentacoes.length === 0 ? 'Nenhuma movimentação registrada' : 'Nenhum resultado com estes filtros'}
           </p>
@@ -358,281 +711,42 @@ export default function ProdutoHistoricoEstoqueTab({
         </div>
       ) : (
         <>
-        {/* Extrato mobile — movimento + saldo (estilo extrato bancário) */}
-        <div className="desktop-layout:hidden flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm dark:border-white/10 dark:bg-[#0f1218]">
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
-            <div className="space-y-3 p-2">
-              {diasExtratoMobile.map(({ dia, linhas: linhasDia }) => {
-                const saldoFimDia = linhasDia.reduce((acc, l) => {
-                  const t = new Date(l.mov?.created_date || 0).getTime();
-                  const best = acc?.t ?? -Infinity;
-                  return t >= best ? { t, saldo: l.saldoApos } : acc;
-                }, null)?.saldo;
-
-                return (
-                  <div
-                    key={dia}
-                    className="overflow-hidden rounded-xl border border-border/40 bg-card dark:border-white/10 dark:bg-[#151a26]"
-                  >
-                    <div className="flex items-center justify-between border-b border-border/40 bg-muted/30 px-3 py-2.5 dark:border-white/5 dark:bg-[#1a1f2e]">
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">
-                          {dia === 'sem-data'
-                            ? 'Sem data'
-                            : format(new Date(`${dia}T12:00:00`), "dd 'de' MMM yyyy")}
-                        </p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          {linhasDia.length} movimento{linhasDia.length === 1 ? '' : 's'}
-                        </p>
-                      </div>
-                      {saldoFimDia != null ? (
-                        <div className="text-right">
-                          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                            Saldo no dia
-                          </p>
-                          <p className="font-glacial text-base font-bold tabular-nums text-foreground">
-                            {formatQtd(saldoFimDia)}
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <P38MobileLineList>
-                      {linhasDia.map(({ mov, saldoApos }, idx) => {
-                        const isEntrada = mov.tipo === 'Entrada';
-                        const delta = deltaQuantidadeMovimento(mov);
-                        const origem = textoReferenciaTipo(mov);
-                        const clienteNome =
-                          mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '';
-                        const documento = descricaoMovimento(mov);
-                        const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
-                        const qtdShow =
-                          estoqueAuxiliar && fatorAuxiliar
-                            ? `${formatQtd((Number(mov.quantidade) || 0) / fatorAuxiliar)} ${estoqueAuxiliar.sigla}`
-                            : null;
-                        const rowKey = mov.id != null ? mov.id : `mov-m-${dia}-${idx}`;
-
-                        const metaParts = [
-                          <P38StatusLabel key="tipo" tone={movimentoAccent(mov.tipo)}>
-                            {mov.tipo}
-                          </P38StatusLabel>,
-                        ];
-                        if (origem && origem !== mov.tipo) {
-                          metaParts.push(
-                            <span key="origem" className="truncate text-[10px] text-muted-foreground">
-                              {origem}
-                            </span>
-                          );
-                        }
-                        if (clienteNome) {
-                          metaParts.push(
-                            <span key="cli" className="truncate text-[10px] text-muted-foreground">
-                              {clienteNome}
-                            </span>
-                          );
-                        }
-                        if (mov.usuario_responsavel) {
-                          metaParts.push(
-                            <span key="resp" className="truncate text-[10px] text-muted-foreground">
-                              {mov.usuario_responsavel}
-                            </span>
-                          );
-                        }
-
-                        const subtitleParts = [formatDataHoraMov(mov)];
-                        if (total > 0) {
-                          subtitleParts.push(
-                            `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                          );
-                        }
-                        if (qtdShow) subtitleParts.push(qtdShow);
-
-                        return (
-                          <P38MobileLine
-                            key={rowKey}
-                            striped={idx % 2 === 1}
-                            accent={p38AccentKeyFromTone(movimentoAccent(mov.tipo))}
-                            title={documento}
-                            subtitle={subtitleParts.join(' · ')}
-                            meta={metaParts}
-                            value={
-                              <span
-                                className={
-                                  isEntrada
-                                    ? 'font-semibold text-emerald-600 dark:text-emerald-400'
-                                    : 'font-semibold text-red-600 dark:text-red-300'
-                                }
-                              >
-                                {delta >= 0 ? '+' : ''}
-                                {formatQtd(delta)}
-                              </span>
-                            }
-                            valueSub={
-                              <span className="text-[10px] font-medium tabular-nums text-muted-foreground">
-                                Saldo {saldoApos != null ? formatQtd(saldoApos) : '—'}
-                              </span>
-                            }
-                          />
-                        );
-                      })}
-                    </P38MobileLineList>
-                  </div>
-                );
-              })}
-            </div>
+          {/* Extrato mobile — único scroll (virtualizado quando ≥50 itens) */}
+          <div className={`${p38Table.shellFlat} desktop-layout:hidden flex min-h-0 flex-1 flex-col overflow-hidden`}>
+            {shouldVirtualizeMobile ? (
+              <ExtratoMobileVirtualizado
+                itensVirtuais={itensVirtuaisMobile}
+                estoqueAuxiliar={estoqueAuxiliar}
+                fatorAuxiliar={fatorAuxiliar}
+              />
+            ) : (
+              <ExtratoMobileLista
+                itensVirtuais={itensVirtuaisMobile}
+                estoqueAuxiliar={estoqueAuxiliar}
+                fatorAuxiliar={fatorAuxiliar}
+              />
+            )}
           </div>
-        </div>
 
-        {/* Tabela desktop — colunas fixas + scroll horizontal */}
-        <div className="hidden desktop-layout:flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/40/90 bg-card shadow-sm dark:border-white/10 dark:bg-[#0f1218]">
-          <p className="shrink-0 border-b border-border/40 bg-muted/40 px-3 py-2 text-[10px] leading-snug text-muted-foreground dark:border-white/5 dark:bg-[#1a1f2e] dark:text-muted-foreground">
-            Colunas fixas: data, documento e saldo. Deslize para a direita para ver origem, valores e responsável.
-          </p>
-          <div className="min-h-0 flex-1 overflow-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
-            <table className="w-max min-w-[920px] border-collapse text-left text-[11px] sm:text-xs">
-              <TableHeader className="sticky top-0 z-30 bg-muted shadow-sm dark:bg-[#252a38] [&_tr]:border-border/40 dark:[&_tr]:border-border/40">
-                <TableRow className="border-b hover:bg-transparent">
-                  <TableHead
-                    className={`sticky top-0 z-[45] h-10 whitespace-nowrap border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90`}
-                    style={{ left: 0, minWidth: STICKY_COL.dataW, width: STICKY_COL.dataW }}
-                  >
-                    Data
-                  </TableHead>
-                  <TableHead
-                    className="sticky top-0 z-[45] h-10 whitespace-nowrap border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90"
-                    style={{ left: STICKY_COL.docLeft, minWidth: STICKY_COL.docW, width: STICKY_COL.docW }}
-                  >
-                    Documento
-                  </TableHead>
-                  <TableHead
-                    className="sticky top-0 z-[45] h-10 border-b border-r border-border/40 bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground shadow-[4px_0_12px_-4px_rgba(0,0,0,0.2)] dark:border-border/40 dark:bg-[#252a38] dark:text-foreground/90 dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.5)]"
-                    style={{ left: STICKY_COL.saldoLeft, minWidth: STICKY_COL.saldoW, width: STICKY_COL.saldoW }}
-                  >
-                    Saldo após
-                  </TableHead>
-                  <TableHead className="h-10 min-w-[5.5rem] whitespace-nowrap border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
-                    Origem
-                  </TableHead>
-                  <TableHead className="h-10 min-w-[7rem] border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
-                    Cliente / terceiro
-                  </TableHead>
-                  <TableHead className="h-10 min-w-[3.25rem] border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
-                    Tipo
-                  </TableHead>
-                  <TableHead className="h-10 min-w-[4rem] border-b bg-muted px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
-                    Movimento
-                  </TableHead>
-                  <TableHead className="h-10 min-w-[4.5rem] border-b bg-muted px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
-                    P. un.
-                  </TableHead>
-                  <TableHead className="h-10 min-w-[4.5rem] border-b bg-muted px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
-                    Total R$
-                  </TableHead>
-                  <TableHead className="h-10 min-w-[6rem] border-b bg-muted px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
-                    Responsável
-                  </TableHead>
-                  <TableHead className="h-10 min-w-[3.25rem] border-b bg-muted px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
-                    Qtd
-                  </TableHead>
-                  <TableHead className="h-10 min-w-[7rem] border-b bg-muted px-2 py-2 text-right text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-[#252a38] dark:text-foreground/90">
-                    Qtd (show)
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {linhasParaExibir.map(({ mov, saldoApos }, idx) => {
-                  const isEntrada = mov.tipo === 'Entrada';
-                  const delta = deltaQuantidadeMovimento(mov);
-                  const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
-                  const documento = mov.referencia_numero || mov.documento_referencia || mov.referencia_id || '—';
-                  const clienteNome = mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '—';
-                  const origem = textoReferenciaTipo(mov);
-                  const rowKey = mov.id != null ? mov.id : `mov-${idx}`;
-                  const stickyBg =
-                    'bg-card group-hover:bg-muted/40 dark:bg-[#151a26] dark:group-hover:bg-[#1c2230]';
-
-                  return (
-                    <TableRow key={rowKey} className="group border-border/40">
-                      <TableCell
-                        className={`sticky z-20 whitespace-nowrap border-b border-border/40 px-2 py-2 tabular-nums text-foreground/90 dark:border-border/40 dark:text-foreground ${stickyBg}`}
-                        style={{ left: 0, minWidth: STICKY_COL.dataW, width: STICKY_COL.dataW }}
-                      >
-                        {mov.created_date
-                          ? `${format(new Date(mov.created_date), 'dd/MM/yy')} ${format(new Date(mov.created_date), 'HH:mm')}`
-                          : '—'}
-                      </TableCell>
-                      <TableCell
-                        className={`sticky z-20 max-w-[132px] truncate border-b border-border/40 px-2 py-2 font-medium text-foreground dark:border-border/40 dark:text-foreground ${stickyBg}`}
-                        style={{ left: STICKY_COL.docLeft, minWidth: STICKY_COL.docW, width: STICKY_COL.docW }}
-                        title={String(documento)}
-                      >
-                        {documento}
-                      </TableCell>
-                      <TableCell
-                        className={`sticky z-20 border-b border-r border-border/40 px-2 py-2 text-right font-glacial text-sm font-bold tabular-nums text-foreground shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:border-border/40 dark:text-white dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.45)] ${stickyBg}`}
-                        style={{ left: STICKY_COL.saldoLeft, minWidth: STICKY_COL.saldoW, width: STICKY_COL.saldoW }}
-                      >
-                        {saldoApos != null ? formatQtd(saldoApos) : '—'}
-                      </TableCell>
-                      <TableCell className="border-b border-border/40 px-2 py-2 dark:border-border/40">
-                        <Badge
-                          className={`max-w-[8rem] truncate rounded-full border-0 text-[9px] ${
-                            isEntrada
-                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/35 dark:text-emerald-200'
-                              : 'bg-red-100 text-red-800 dark:bg-red-900/35 dark:text-red-200'
-                          }`}
-                          title={origem}
-                        >
-                          {origem}
-                        </Badge>
-                      </TableCell>
-                      <TableCell
-                        className="max-w-[10rem] truncate border-b border-border/40 px-2 py-2 text-muted-foreground dark:border-border/40 dark:text-foreground/90"
-                        title={clienteNome}
-                      >
-                        {clienteNome}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap border-b border-border/40 px-2 py-2 text-foreground/90 dark:border-border/40 dark:text-foreground">
-                        {mov.tipo}
-                      </TableCell>
-                      <TableCell
-                        className={`border-b border-border/40 px-2 py-2 text-right font-semibold tabular-nums dark:border-border/40 ${
-                          isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-300'
-                        }`}
-                      >
-                        {delta >= 0 ? '+' : ''}
-                        {formatQtd(delta)}
-                      </TableCell>
-                      <TableCell className="border-b border-border/40 px-2 py-2 text-right tabular-nums text-foreground/90 dark:border-border/40 dark:text-foreground">
-                        {mov.custo_unitario > 0
-                          ? `R$ ${Number(mov.custo_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                          : '—'}
-                      </TableCell>
-                      <TableCell
-                        className={`border-b border-border/40 px-2 py-2 text-right tabular-nums dark:border-border/40 ${
-                          isEntrada ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-300'
-                        }`}
-                      >
-                        {total > 0 ? `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
-                      </TableCell>
-                      <TableCell className="max-w-[7rem] truncate border-b border-border/40 px-2 py-2 text-foreground/90 dark:border-border/40 dark:text-foreground/90">
-                        {mov.usuario_responsavel || '—'}
-                      </TableCell>
-                      <TableCell className="border-b border-border/40 px-2 py-2 text-right tabular-nums text-foreground dark:border-border/40 dark:text-foreground">
-                        {formatQtd(mov.quantidade)}
-                      </TableCell>
-                      <TableCell className="border-b border-border/40 px-2 py-2 text-right tabular-nums text-foreground/90 dark:border-border/40 dark:text-foreground/90">
-                        {estoqueAuxiliar && fatorAuxiliar
-                          ? `${formatQtd((Number(mov.quantidade) || 0) / fatorAuxiliar)} ${estoqueAuxiliar.sigla}`
-                          : '—'}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </table>
+          {/* Tabela desktop */}
+          <div className={`${p38Table.shellFlat} hidden min-h-0 flex-1 flex-col overflow-hidden desktop-layout:flex`}>
+            <p className="shrink-0 border-b border-border/40 bg-muted/40 px-3 py-2 text-[10px] leading-snug text-muted-foreground dark:border-white/10">
+              Colunas fixas: data, documento e saldo. Deslize para a direita para ver origem, valores e responsável.
+            </p>
+            {shouldVirtualizeDesktop ? (
+              <ExtratoTabelaVirtualizada
+                linhasParaExibir={linhasParaExibir}
+                estoqueAuxiliar={estoqueAuxiliar}
+                fatorAuxiliar={fatorAuxiliar}
+              />
+            ) : (
+              <ExtratoTabelaDesktop
+                linhasParaExibir={linhasParaExibir}
+                estoqueAuxiliar={estoqueAuxiliar}
+                fatorAuxiliar={fatorAuxiliar}
+              />
+            )}
           </div>
-        </div>
         </>
       )}
     </div>

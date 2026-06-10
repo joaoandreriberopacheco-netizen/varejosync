@@ -2,6 +2,15 @@
  * Extrato de estoque: saldo após cada movimentação reconciliado com estoque_atual do produto.
  */
 
+function localDateKey(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return 'sem-data';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 /** Delta em unidades (positivo = entrada no estoque). */
 export function deltaQuantidadeMovimento(mov) {
   const q = Number(mov?.quantidade) || 0;
@@ -58,6 +67,70 @@ export function calcularExtratoComSaldo(movimentacoes, estoqueAtual) {
 
 export function textoReferenciaTipo(mov) {
   return mov?.referencia_tipo || mov?.motivo || mov?.tipo || '—';
+}
+
+export function saldoFimDiaLinhas(linhasDia) {
+  const result = (linhasDia || []).reduce((acc, l) => {
+    const t = new Date(l.mov?.created_date || 0).getTime();
+    const best = acc?.t ?? -Infinity;
+    return t >= best ? { t, saldo: l.saldoApos } : acc;
+  }, null);
+  return result?.saldo ?? null;
+}
+
+/** Agrupa linhas do extrato por dia (yyyy-MM-dd). */
+export function agruparLinhasPorDia(linhas, ordemLista) {
+  const grupos = new Map();
+  for (const linha of linhas || []) {
+    const dia = linha.mov?.created_date ? localDateKey(linha.mov.created_date) : 'sem-data';
+    if (!grupos.has(dia)) grupos.set(dia, []);
+    grupos.get(dia).push(linha);
+  }
+
+  const dias = [...grupos.keys()].sort((a, b) => {
+    if (a === 'sem-data') return 1;
+    if (b === 'sem-data') return -1;
+    return ordemLista === 'asc' ? a.localeCompare(b) : b.localeCompare(a);
+  });
+
+  return dias.map((dia) => {
+    const linhasDia = [...grupos.get(dia)];
+    linhasDia.sort((a, b) => {
+      const ta = new Date(a.mov?.created_date || 0).getTime();
+      const tb = new Date(b.mov?.created_date || 0).getTime();
+      const cmp = ta - tb;
+      return ordemLista === 'asc' ? cmp : -cmp;
+    });
+    return { dia, linhas: linhasDia };
+  });
+}
+
+/**
+ * Lista plana para virtualização: cabeçalho de dia + movimentos.
+ * @returns {{ kind: 'day' | 'mov', key: string, ... }[]}
+ */
+export function buildExtratoItensVirtuais(diasExtratoMobile) {
+  const items = [];
+  for (const { dia, linhas: linhasDia } of diasExtratoMobile || []) {
+    items.push({
+      kind: 'day',
+      key: `day-${dia}`,
+      dia,
+      count: linhasDia.length,
+      saldoFimDia: saldoFimDiaLinhas(linhasDia),
+    });
+    linhasDia.forEach((linha, idx) => {
+      items.push({
+        kind: 'mov',
+        key: linha.mov?.id != null ? String(linha.mov.id) : `mov-${dia}-${idx}`,
+        mov: linha.mov,
+        saldoApos: linha.saldoApos,
+        dia,
+        idx,
+      });
+    });
+  }
+  return items;
 }
 
 export function movimentacaoPassaFiltros(mov, { busca, tipoFiltro, refTipo, dataIni, dataFim }) {
