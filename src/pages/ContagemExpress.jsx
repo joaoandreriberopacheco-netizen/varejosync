@@ -33,6 +33,7 @@ import {
 import { aplicarContagemExpress, buildComparativoContagem } from '@/lib/contagemExpressApply';
 import { imprimirRelatorioContagemExpress, publicarRelatorioContagemExpress } from '@/lib/contagemExpressReport';
 import { sincronizarSessaoContagemExpress } from '@/lib/contagemExpressSessao';
+import { allowProgrammaticFocusBriefly } from '@/lib/focusPolicy';
 import { toast } from 'sonner';
 
 async function carregarSaldoProduto(produtoId) {
@@ -171,7 +172,8 @@ export default function ContagemExpress() {
     }
   }, []);
 
-  const iniciarSelecao = async (produto, { modo = 'adicionar', quantidadeInicial = '' } = {}) => {
+  const iniciarSelecao = (produto, { modo = 'adicionar', quantidadeInicial = '' } = {}) => {
+    allowProgrammaticFocusBriefly();
     const entry = buildCountEntry(produto, 1);
     setProdutoSelecionado(produto);
     setModoContagem(modo);
@@ -179,7 +181,7 @@ export default function ContagemExpress() {
     setEntradaPendente(entry);
     setBusca('');
     setProdutosFiltrados([]);
-    await carregarSaldoSelecionado(produto.id);
+    void carregarSaldoSelecionado(produto.id);
     setTimeout(() => buscaRef.current?.blur(), 50);
   };
 
@@ -473,7 +475,10 @@ export default function ContagemExpress() {
                 <button
                   key={prod.id}
                   type="button"
-                  onClick={() => iniciarSelecao(prod)}
+                  onClick={() => {
+                    allowProgrammaticFocusBriefly();
+                    iniciarSelecao(prod);
+                  }}
                   className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
                 >
                   <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">

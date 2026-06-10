@@ -1,5 +1,7 @@
+import { useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Boxes, CheckCircle2, Loader2, Minus, Plus, X } from 'lucide-react';
+import { allowProgrammaticFocusBriefly, focusField } from '@/lib/focusPolicy';
 import { formatCountQuantity, getGroupDisplayFromBase } from '@/lib/inventoryCountUnits';
 
 function CelulaInfo({ label, valor, unidade, tone = 'default' }) {
@@ -36,7 +38,25 @@ export default function ContagemExpressPainelContagem({
   onCancelar,
   confirmLabel = 'Confirmar',
 }) {
+  const quantidadeRef = useRef(null);
   const qtdNum = parseFloat(quantidade) || 0;
+
+  useEffect(() => {
+    if (!produto?.id) return undefined;
+
+    allowProgrammaticFocusBriefly();
+    const timer = window.setTimeout(() => {
+      const el = quantidadeRef.current;
+      if (!el) return;
+      allowProgrammaticFocusBriefly();
+      focusField(el, { preventScroll: true });
+      if (el.value && typeof el.select === 'function') {
+        el.select();
+      }
+    }, 50);
+
+    return () => window.clearTimeout(timer);
+  }, [produto?.id]);
   const contadoTotalBase = totalNoCarrinhoBase + pendenteBase;
   const saldo = saldoInfo?.saldoExtrato ?? null;
   const diferencaBase = saldo != null ? contadoTotalBase - saldo : null;
@@ -92,6 +112,7 @@ export default function ContagemExpressPainelContagem({
 
           <div className="min-w-[7rem]">
             <Input
+              ref={quantidadeRef}
               type="number"
               inputMode="decimal"
               enterKeyHint="go"
@@ -105,7 +126,6 @@ export default function ContagemExpressPainelContagem({
               }}
               placeholder="Qtd"
               className="h-14 border-0 bg-transparent text-center text-3xl font-bold font-glacial shadow-none focus-visible:ring-0"
-              autoFocus
             />
             <button
               type="button"
