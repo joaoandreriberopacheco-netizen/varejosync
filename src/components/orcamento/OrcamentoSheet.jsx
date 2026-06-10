@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import OrcamentoCupom from './OrcamentoCupom';
 import LostSalesForm from '@/components/vendas/LostSalesForm';
+import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { buildSaleUnitOptions, formatEstoqueApresentacao, pickDefaultSaleUnit } from '@/lib/productUnits';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -232,15 +233,7 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
 
   const filtrados = useMemo(() => {
     if (!search.trim()) return [];
-    const t = search.toLowerCase();
-    return produtos
-      .filter(p =>
-        p.nome?.toLowerCase().includes(t) ||
-        p.codigo_interno?.toLowerCase().includes(t) ||
-        p.codigo_barras?.toLowerCase().includes(t)
-      )
-      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-      .slice(0, 60);
+    return filterAndSortProducts(produtos, search, { limit: 60 });
   }, [produtos, search]);
 
   const totalItens = itens.reduce((s, i) => s + i.qtd, 0);
@@ -278,7 +271,7 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
           <Input
             ref={searchRef}
-            placeholder="Buscar produto, código..."
+            placeholder="Nome ou código (espaço ou ; para combinar termos)..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="border-none bg-muted h-12 text-base pl-11 rounded-2xl shadow-none focus-visible:ring-0 w-full"

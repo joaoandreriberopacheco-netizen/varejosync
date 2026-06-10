@@ -10,7 +10,7 @@ import { p38Mobile } from '@/lib/p38MobileSurfaces';
 import { P38MobileLineList, P38StatusDot } from '@/components/ui/p38-mobile-line';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { cn } from '@/components/utils';
-import { produtoMatchesSearchTerm } from '@/lib/filterProdutos';
+import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -125,11 +125,8 @@ export default function TabelaPrecosConsulta() {
   };
 
   const produtosFiltrados = useMemo(() => {
-    let lista = produtos;
-    if (searchTerm.trim()) {
-      lista = lista.filter((p) => produtoMatchesSearchTerm(p, searchTerm));
-    }
-    return [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
+    if (!searchTerm.trim()) return sortProductsAlphabetically(produtos);
+    return filterAndSortProducts(produtos, searchTerm);
   }, [produtos, searchTerm]);
 
   const calcularPreco = useCallback(
