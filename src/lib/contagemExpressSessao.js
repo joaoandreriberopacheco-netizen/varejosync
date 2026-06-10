@@ -213,14 +213,9 @@ export async function renomearSessoesLegadasContagemExpress(base44) {
         }),
       );
 
-      try {
-        const { loadContagemExpressDraft, saveContagemExpressDraft } = await import('@/lib/contagemExpressStorage');
-        const draft = loadContagemExpressDraft();
-        if (draft.conferenciaId === sessao.id) {
-          saveContagemExpressDraft(codigo, draft.itens || [], sessao.id);
-        }
-      } catch {
-        /* rascunho local opcional */
+      const draft = loadContagemExpressDraft();
+      if (draft.conferenciaId === sessao.id) {
+        saveContagemExpressDraft(codigo, draft.itens || [], sessao.id);
       }
     }),
   );
