@@ -38,6 +38,8 @@ import {
   deltaQuantidadeMovimento,
   movimentacaoPassaFiltros,
   textoReferenciaTipo,
+  textoTerceiroEnvolvido,
+  rotuloTerceiroEnvolvido,
 } from '@/components/produtos/produtoHistoricoEstoque';
 import { formatEstoqueApresentacao, normalizeAlternativeUnits } from '@/lib/productUnits';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
@@ -118,7 +120,8 @@ function ExtratoMovimentoLine({ mov, saldoApos, striped, estoqueAuxiliar, fatorA
   const isEntrada = mov.tipo === 'Entrada';
   const delta = deltaQuantidadeMovimento(mov);
   const origem = textoReferenciaTipo(mov);
-  const clienteNome = mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '';
+  const terceiro = textoTerceiroEnvolvido(mov);
+  const rotuloTerceiro = rotuloTerceiroEnvolvido(mov);
   const documento = descricaoMovimento(mov);
   const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
   const qtdShow =
@@ -135,13 +138,6 @@ function ExtratoMovimentoLine({ mov, saldoApos, striped, estoqueAuxiliar, fatorA
     metaParts.push(
       <span key="origem" className="truncate text-[10px] text-muted-foreground">
         {origem}
-      </span>
-    );
-  }
-  if (clienteNome) {
-    metaParts.push(
-      <span key="cli" className="truncate text-[10px] text-muted-foreground">
-        {clienteNome}
       </span>
     );
   }
@@ -163,7 +159,19 @@ function ExtratoMovimentoLine({ mov, saldoApos, striped, estoqueAuxiliar, fatorA
     <P38MobileLine
       striped={striped}
       accent={p38AccentKeyFromTone(movimentoAccent(mov.tipo))}
-      title={documento}
+      title={
+        <>
+          <span className="uppercase">{documento}</span>
+          {terceiro ? (
+            <span className="mt-1 block text-sm font-medium normal-case tracking-normal text-foreground">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {rotuloTerceiro}:{' '}
+              </span>
+              {terceiro}
+            </span>
+          ) : null}
+        </>
+      }
       subtitle={subtitleParts.join(' · ')}
       meta={metaParts}
       value={
@@ -324,7 +332,7 @@ function ExtratoTabelaLinha({ mov, saldoApos, estoqueAuxiliar, fatorAuxiliar }) 
   const delta = deltaQuantidadeMovimento(mov);
   const total = (mov.quantidade || 0) * (mov.custo_unitario || 0);
   const documento = mov.referencia_numero || mov.documento_referencia || mov.referencia_id || '—';
-  const clienteNome = mov.cliente_nome || mov.terceiro_nome || mov.referencia_cliente_nome || '—';
+  const terceiro = textoTerceiroEnvolvido(mov) || '—';
   const origem = textoReferenciaTipo(mov);
   const stickyBg = 'bg-background group-hover:bg-secondary/25 dark:group-hover:bg-secondary/30';
 
@@ -361,8 +369,8 @@ function ExtratoTabelaLinha({ mov, saldoApos, estoqueAuxiliar, fatorAuxiliar }) 
           {origem}
         </Badge>
       </TableCell>
-      <TableCell className="max-w-[10rem] truncate border-b border-border/40 px-2 py-2 text-muted-foreground" title={clienteNome}>
-        {clienteNome}
+      <TableCell className="max-w-[10rem] truncate border-b border-border/40 px-2 py-2 text-muted-foreground" title={terceiro}>
+        {terceiro}
       </TableCell>
       <TableCell className="whitespace-nowrap border-b border-border/40 px-2 py-2">{mov.tipo}</TableCell>
       <TableCell

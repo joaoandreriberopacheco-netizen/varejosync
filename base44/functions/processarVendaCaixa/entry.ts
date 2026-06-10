@@ -234,6 +234,13 @@ Deno.serve(async (req) => {
         referencia_tipo: 'PedidoVenda',
         referencia_id: pedidoVenda.id,
         referencia_numero: numeroPedido,
+        ...(rascunho.cliente_nome
+          ? {
+              cliente_nome: rascunho.cliente_nome,
+              referencia_cliente_nome: rascunho.cliente_nome,
+              terceiro_nome: rascunho.cliente_nome,
+            }
+          : {}),
         observacoes: item.unidade_medida ? `Venda em ${item.unidade_medida} (${item.quantidade} ${item.unidade_medida})` : undefined,
         usuario_responsavel: user.full_name,
       });

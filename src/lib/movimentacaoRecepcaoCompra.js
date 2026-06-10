@@ -55,6 +55,7 @@ export function buildMovimentacaoRecepcaoCompraPayload({
     /** Liga o movimento ao embarque na UI (aba Recepção) e no painel Base44. */
     documento_referencia: embCodigo || undefined,
     observacoes,
+    ...(pedido?.fornecedor_nome ? { fornecedor_nome: pedido.fornecedor_nome, terceiro_nome: pedido.fornecedor_nome } : {}),
   };
 }
 

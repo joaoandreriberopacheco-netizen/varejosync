@@ -519,6 +519,13 @@ export default function DevolucaoTrocaPage() {
           referencia_tipo: 'PedidoVenda',
           referencia_id: pedido.id,
           referencia_numero: pedido.numero,
+          ...(pedido.cliente_nome
+            ? {
+                cliente_nome: pedido.cliente_nome,
+                referencia_cliente_nome: pedido.cliente_nome,
+                terceiro_nome: pedido.cliente_nome,
+              }
+            : {}),
           usuario_responsavel: user?.full_name,
         });
       }

@@ -69,6 +69,28 @@ export function textoReferenciaTipo(mov) {
   return mov?.referencia_tipo || mov?.motivo || mov?.tipo || '—';
 }
 
+/** Nome do cliente, fornecedor ou outro terceiro ligado ao movimento. */
+export function textoTerceiroEnvolvido(mov) {
+  const candidatos = [
+    mov?.cliente_nome,
+    mov?.terceiro_nome,
+    mov?.referencia_cliente_nome,
+    mov?.fornecedor_nome,
+    mov?.nome_terceiro,
+  ];
+  const nome = candidatos.find((v) => v && String(v).trim());
+  return nome ? String(nome).trim() : '';
+}
+
+/** Rótulo contextual (Cliente, Fornecedor, etc.) para o terceiro do movimento. */
+export function rotuloTerceiroEnvolvido(mov) {
+  const ref = String(mov?.referencia_tipo || mov?.motivo || '').toLowerCase();
+  if (ref.includes('compra') || ref.includes('pedidocompra') || ref.includes('embarque')) return 'Fornecedor';
+  if (ref.includes('venda') || ref.includes('pedidovenda') || ref.includes('devolu')) return 'Cliente';
+  if (ref.includes('consumo')) return 'Destino';
+  return 'Terceiro';
+}
+
 export function saldoFimDiaLinhas(linhasDia) {
   const result = (linhasDia || []).reduce((acc, l) => {
     const t = new Date(l.mov?.created_date || 0).getTime();
@@ -143,6 +165,8 @@ export function movimentacaoPassaFiltros(mov, { busca, tipoFiltro, refTipo, data
       mov?.cliente_nome,
       mov?.terceiro_nome,
       mov?.referencia_cliente_nome,
+      mov?.fornecedor_nome,
+      mov?.nome_terceiro,
       mov?.produto_nome,
       mov?.referencia_tipo,
       mov?.motivo,
