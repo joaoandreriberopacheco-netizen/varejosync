@@ -71,7 +71,6 @@ export default function PinValidationDialog({
       const res = await gerenciarPin({ operacao: 'verify_pin', pin });
       if (res.data?.sucesso) {
         onSuccess?.();
-        onClose();
       } else {
         setErro(res.data?.error || 'PIN incorreto.');
         setPin('');
@@ -102,7 +101,7 @@ export default function PinValidationDialog({
   if (!authActive) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose?.(); }}>
       <DialogContent className="sm:max-w-xs bg-card border-none shadow-xl text-center">
         <DialogHeader>
           <div className="flex justify-center mb-1">

@@ -52,6 +52,7 @@ async function carregarSaldoProduto(produtoId) {
 export default function ContagemExpress() {
   const navigate = useNavigate();
   const buscaRef = useRef(null);
+  const pinEntradaOkRef = useRef(false);
 
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -393,8 +394,14 @@ export default function ContagemExpress() {
           forceEnabled
           useNativeKeyboard
           isOpen={showPinEntrada}
-          onClose={() => navigate(createPageUrl('Dashboard'))}
+          onClose={() => {
+            setShowPinEntrada(false);
+            if (!pinEntradaOkRef.current) {
+              navigate(createPageUrl('Dashboard'));
+            }
+          }}
           onSuccess={() => {
+            pinEntradaOkRef.current = true;
             setPinAutorizado(true);
             setShowPinEntrada(false);
           }}
