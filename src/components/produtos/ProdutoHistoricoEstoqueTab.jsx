@@ -55,6 +55,9 @@ const P38_FIELD =
   'h-11 rounded-lg border-0 bg-secondary/80 shadow-none focus-visible:ring-1 focus-visible:ring-border/60 dark:bg-[#26262e]';
 const P38_BTN =
   'h-11 rounded-lg border border-border/40 bg-card font-medium shadow-sm dark:border-white/10 dark:bg-[#26262e]';
+/** Acima do Drawer (z-310) para o dropdown não ficar atrás do painel de filtros */
+const FILTRO_SELECT_CONTENT =
+  'z-[320] max-h-[min(50vh,20rem)] border border-border/40 bg-popover shadow-lg dark:border-white/10 dark:bg-[#2d333b]';
 
 /** Larguras + posições left (px) para colunas sticky alinhadas */
 const STICKY_COL = {
@@ -652,7 +655,7 @@ export default function ProdutoHistoricoEstoqueTab({
                 <SelectTrigger className={`mt-1 h-12 ${P38_FIELD}`}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={FILTRO_SELECT_CONTENT}>
                   <SelectItem value="todos">Entrada e saída</SelectItem>
                   <SelectItem value="Entrada">Somente entrada</SelectItem>
                   <SelectItem value="Saída">Somente saída</SelectItem>
@@ -665,7 +668,7 @@ export default function ProdutoHistoricoEstoqueTab({
                 <SelectTrigger className={`mt-1 h-12 ${P38_FIELD}`}>
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className={FILTRO_SELECT_CONTENT}>
                   <SelectItem value="todos">Todas</SelectItem>
                   {tiposRefUnicos.map((t) => (
                     <SelectItem key={t} value={t}>
