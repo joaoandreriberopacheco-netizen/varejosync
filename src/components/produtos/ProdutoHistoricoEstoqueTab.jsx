@@ -54,7 +54,6 @@ import {
   P38_VIRTUAL_OVERSCAN,
 } from '@/lib/p38VirtualList';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { cn } from '@/components/utils';
 
 const P38_FIELD =
@@ -495,6 +494,7 @@ export default function ProdutoHistoricoEstoqueTab({
   produto = null,
   loading = false,
   onRefresh,
+  chromeExpanded = true,
 }) {
   const [busca, setBusca] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState('todos');
@@ -505,7 +505,6 @@ export default function ProdutoHistoricoEstoqueTab({
   const [sortAlpha, setSortAlpha] = useState('az');
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const isMobile = useCompactShell();
-  const chromeExpanded = useBottomNavScrollVisibility(isMobile);
 
   const filtros = useMemo(
     () => ({ busca, tipoFiltro, refTipo, dataIni, dataFim }),

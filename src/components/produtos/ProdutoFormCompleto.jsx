@@ -36,6 +36,8 @@ import {
 import { embalagensRowsToLegacyProdutoPatch, legacyProdutoToEmbalagensRows } from '@/lib/produtoEmbalagensAdapter';
 import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embalagensPlanilhaUtils';
 import { cn } from '@/components/utils';
+import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 
 const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
 const P38_FORM_HEADER = 'flex-none border-b border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]';
@@ -177,6 +179,9 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [loadingMovimentacoes, setLoadingMovimentacoes] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('descritivo');
+  const isMobile = useCompactShell();
+  const historicoChromeExpanded = useBottomNavScrollVisibility(isMobile && abaAtiva === 'historico');
+  const collapseHistoricoShell = isMobile && abaAtiva === 'historico';
   const [temAlteracoesNaoSalvas, setTemAlteracoesNaoSalvas] = useState(false);
   const { toast } = useToast();
   
@@ -1102,125 +1107,133 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
   return (
     <div className={P38_FORM_ROOT}>
-      {/* Header */}
-      <div className={P38_FORM_HEADER}>
-        <div className="p-4 md:p-6">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <h2 className="text-lg md:text-xl font-medium text-foreground truncate">
-                {produto?.id ? 'Editar:' : 'Novo Produto'}
-              </h2>
-              <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
-                {formData.nome || 'Sem nome'}
-              </p>
-            </div>
-            <div className="flex gap-2 flex-shrink-0">
-              {produto?.id && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleChange('ativo', !formData.ativo)}
-                  disabled={isSaving}
-                  className={`h-10 w-10 ${formData.ativo ? 'text-red-500' : 'text-green-500'}`}
-                  title={formData.ativo ? 'Inativar produto' : 'Reativar produto'}
-                >
-                  <Trash2 className="w-5 h-5" />
-                </Button>
-              )}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleUndo} 
-                disabled={isSaving || historyIndex <= 0}
-                className="h-10 w-10"
-                title="Desfazer (Ctrl+Z)"
-              >
-                <Undo2 className="w-5 h-5 text-muted-foreground" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleRedo} 
-                disabled={isSaving || historyIndex >= history.length - 1}
-                className="h-10 w-10"
-                title="Refazer (Ctrl+Y / F4)"
-              >
-                <Redo2 className="w-5 h-5 text-muted-foreground" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10">
-                <X className="w-5 h-5 text-muted-foreground" />
-              </Button>
-              <Button size="icon" onClick={handleSave} disabled={isSaving} className={P38_SAVE_BTN}>
-                <Save className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {vendasUnitOptions.length > 0 && (
-        <div
-          className="flex-none border-b border-border/40 dark:border-white/10 bg-[#26262e]/20 dark:bg-[#26262e]/50 px-4 md:px-6 py-3"
-          title="Escolhe qual unidade a precificação segue — o mesmo critério do botão «Outra unidade» no PDV."
-        >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Estação de venda
-              </span>
-              <span className="text-sm font-semibold text-foreground dark:text-foreground">
-                {precoCatalogo.sigla}
-              </span>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                R$ {formatarNumero(precoCatalogo.valor)}
-              </span>
-              <span className="text-[11px] text-muted-foreground hidden sm:inline max-w-md truncate">
-                Precificação e custo na embalagem escolhida; gravação continua na unidade base (fator 1).
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              {vendasUnitOptions.map((opt) => {
-                const exibNorm = normalizeSigla(formData.unidade_exibicao_sigla || '');
-                const catalogoEhPrincipal = !exibNorm;
-                const active = catalogoEhPrincipal
-                  ? Boolean(opt.is_primary)
-                  : normalizeSigla(opt.unidade) === exibNorm;
-                return (
-                  <button
-                    key={opt.unidade}
-                    type="button"
-                    onClick={() => aplicarUnidadeCatalogoDesdeOpcao(opt)}
-                    title={opt.is_primary ? 'Precificação na unidade base' : `Precificação em ${opt.unidade}`}
-                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
-                      active
-                        ? 'border-[#4a5240]/40 bg-[#4a5240] text-white dark:border-[#a4ce33]/40 dark:bg-[#a4ce33] dark:text-[#1f1d22]'
-                        : 'border-border/40 bg-card dark:bg-[#26262e] text-foreground/90 hover:border-[#4a5240]/30 dark:hover:border-[#a4ce33]/30'
-                    }`}
-                  >
-                    {opt.unidade}
-                  </button>
-                );
-              })}
-              {vendasUnitOptions.length > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-9 gap-1.5 rounded-xl border-border/40 bg-card shadow-sm dark:border-border/40 dark:bg-background"
-                  onClick={() => setUnitSelectorOpen(true)}
-                  title="Lista completa com conversão e preço sugerido"
-                >
-                  <Boxes className="h-4 w-4 shrink-0" aria-hidden />
-                  <span className="hidden sm:inline">Todas</span>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <TabsList className={P38_TAB_LIST}>
+        <div
+          className={cn(
+            'flex-none overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
+            'desktop-layout:max-h-none desktop-layout:opacity-100',
+            collapseHistoricoShell && (historicoChromeExpanded ? 'max-h-[22rem] opacity-100' : 'max-h-0 opacity-0')
+          )}
+          aria-hidden={collapseHistoricoShell && !historicoChromeExpanded}
+        >
+          {/* Header */}
+          <div className={P38_FORM_HEADER}>
+            <div className="p-4 md:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg md:text-xl font-medium text-foreground truncate">
+                    {produto?.id ? 'Editar:' : 'Novo Produto'}
+                  </h2>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
+                    {formData.nome || 'Sem nome'}
+                  </p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  {produto?.id && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleChange('ativo', !formData.ativo)}
+                      disabled={isSaving}
+                      className={`h-10 w-10 ${formData.ativo ? 'text-red-500' : 'text-green-500'}`}
+                      title={formData.ativo ? 'Inativar produto' : 'Reativar produto'}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleUndo}
+                    disabled={isSaving || historyIndex <= 0}
+                    className="h-10 w-10"
+                    title="Desfazer (Ctrl+Z)"
+                  >
+                    <Undo2 className="w-5 h-5 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleRedo}
+                    disabled={isSaving || historyIndex >= history.length - 1}
+                    className="h-10 w-10"
+                    title="Refazer (Ctrl+Y / F4)"
+                  >
+                    <Redo2 className="w-5 h-5 text-muted-foreground" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} className="h-10 w-10">
+                    <X className="w-5 h-5 text-muted-foreground" />
+                  </Button>
+                  <Button size="icon" onClick={handleSave} disabled={isSaving} className={P38_SAVE_BTN}>
+                    <Save className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {vendasUnitOptions.length > 0 && (
+            <div
+              className="flex-none border-b border-border/40 dark:border-white/10 bg-[#26262e]/20 dark:bg-[#26262e]/50 px-4 md:px-6 py-3"
+              title="Escolhe qual unidade a precificação segue — o mesmo critério do botão «Outra unidade» no PDV."
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Estação de venda
+                  </span>
+                  <span className="text-sm font-semibold text-foreground dark:text-foreground">
+                    {precoCatalogo.sigla}
+                  </span>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    R$ {formatarNumero(precoCatalogo.valor)}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline max-w-md truncate">
+                    Precificação e custo na embalagem escolhida; gravação continua na unidade base (fator 1).
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  {vendasUnitOptions.map((opt) => {
+                    const exibNorm = normalizeSigla(formData.unidade_exibicao_sigla || '');
+                    const catalogoEhPrincipal = !exibNorm;
+                    const active = catalogoEhPrincipal
+                      ? Boolean(opt.is_primary)
+                      : normalizeSigla(opt.unidade) === exibNorm;
+                    return (
+                      <button
+                        key={opt.unidade}
+                        type="button"
+                        onClick={() => aplicarUnidadeCatalogoDesdeOpcao(opt)}
+                        title={opt.is_primary ? 'Precificação na unidade base' : `Precificação em ${opt.unidade}`}
+                        className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition-all border shadow-sm ${
+                          active
+                            ? 'border-[#4a5240]/40 bg-[#4a5240] text-white dark:border-[#a4ce33]/40 dark:bg-[#a4ce33] dark:text-[#1f1d22]'
+                            : 'border-border/40 bg-card dark:bg-[#26262e] text-foreground/90 hover:border-[#4a5240]/30 dark:hover:border-[#a4ce33]/30'
+                        }`}
+                      >
+                        {opt.unidade}
+                      </button>
+                    );
+                  })}
+                  {vendasUnitOptions.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 gap-1.5 rounded-xl border-border/40 bg-card shadow-sm dark:border-border/40 dark:bg-background"
+                      onClick={() => setUnitSelectorOpen(true)}
+                      title="Lista completa com conversão e preço sugerido"
+                    >
+                      <Boxes className="h-4 w-4 shrink-0" aria-hidden />
+                      <span className="hidden sm:inline">Todas</span>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <TabsList className={P38_TAB_LIST}>
           <TabsTrigger value="descritivo" className={P38_TAB_TRIGGER}>
             <Package className={P38_TAB_ICON} />
             <span className={P38_TAB_LABEL}>Identificação</span>
@@ -1241,13 +1254,14 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <Settings className={P38_TAB_ICON} />
             <span className={P38_TAB_LABEL}>Avançado</span>
           </TabsTrigger>
-        </TabsList>
+          </TabsList>
+        </div>
 
         <div
           className={cn(
             'flex-1 min-h-0 px-4 md:px-8 py-6 md:py-8 pb-24 md:pb-8',
             abaAtiva === 'historico'
-              ? 'flex flex-col overflow-hidden'
+              ? 'flex flex-col overflow-hidden px-4 py-2 pb-4 md:px-8 md:py-8 md:pb-8'
               : 'overflow-y-auto overscroll-contain'
           )}
         >
@@ -1958,6 +1972,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               produto={formData}
               loading={loadingMovimentacoes}
               onRefresh={loadMovimentacoes}
+              chromeExpanded={historicoChromeExpanded}
             />
           </TabsContent>
 
