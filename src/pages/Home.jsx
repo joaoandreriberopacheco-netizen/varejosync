@@ -76,7 +76,11 @@ export default function HomePage() {
     );
   }, [currentUser, permissoes]);
 
-  const { kpis } = useKPIsCache({ enabled: podeVerResumoVendas || podeVerResumoVendasEarly });
+  const { kpis, loadKPIs } = useKPIsCache({ enabled: podeVerResumoVendas || podeVerResumoVendasEarly });
+
+  useEffect(() => {
+    if (podeVerResumoVendas) loadKPIs();
+  }, [podeVerResumoVendas, loadKPIs]);
 
   useEffect(() => {
     const loadUser = async () => {

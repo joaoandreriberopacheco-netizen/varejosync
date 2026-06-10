@@ -2,12 +2,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import {
-  dataHoje,
-  fimDiaSistemaISO,
-  inicioDiaSistemaISO,
-  toLocalDateKey,
-} from '@/components/utils/dateUtils';
+import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
+
+function valorPedidoVenda(pedido) {
+  return Number(pedido?.valor_total ?? pedido?.total ?? 0) || 0;
+}
 
 const entityQueryDefaults = {
   staleTime: P38_STALE_TIME,
@@ -35,9 +34,6 @@ export function fetchRascunhosPedidoVendaList(sort = '-created_date') {
 }
 
 export async function fetchHomeKpis(dateKey, queryClient) {
-  const inicioDia = inicioDiaSistemaISO(dateKey);
-  const fimDia = fimDiaSistemaISO(dateKey);
-
   const produtosPromise = queryClient
     ? queryClient.fetchQuery({
         queryKey: p38Keys.produtos(),
@@ -46,17 +42,21 @@ export async function fetchHomeKpis(dateKey, queryClient) {
       })
     : fetchProdutosList();
 
-  const [vendasHojeRows, pedidosPendentes, produtos] = await Promise.all([
-    base44.entities.PedidoVenda.filter({
-      created_date: { $gte: inicioDia, $lte: fimDia },
-    }),
-    base44.entities.PedidoVenda.filter({ status: 'Aguardando Caixa' }),
-    produtosPromise,
-  ]);
+  const pedidosPromise = queryClient
+    ? queryClient.fetchQuery({
+        queryKey: p38Keys.pedidosVenda(),
+        queryFn: () => fetchPedidosVendaList('-created_date'),
+        staleTime: P38_STALE_TIME,
+      })
+    : fetchPedidosVendaList('-created_date');
 
-  const vendasHoje = (vendasHojeRows || []).filter(
+  const [allPedidos, produtos] = await Promise.all([pedidosPromise, produtosPromise]);
+  const pedidos = Array.isArray(allPedidos) ? allPedidos : [];
+
+  const vendasHoje = pedidos.filter(
     (v) => v?.created_date && toLocalDateKey(v.created_date) === dateKey
   );
+  const pedidosPendentes = pedidos.filter((p) => p.status === 'Aguardando Caixa');
   const produtosAlerta = (produtos || []).filter(
     (p) => (p.estoque_atual || 0) <= (p.estoque_minimo || 0)
   );
@@ -64,10 +64,10 @@ export async function fetchHomeKpis(dateKey, queryClient) {
   return {
     vendasHoje: vendasHoje.length,
     valorVendasHoje: roundToTwoDecimals(
-      vendasHoje.reduce((sum, v) => sum + (v.valor_total || 0), 0)
+      vendasHoje.reduce((sum, v) => sum + valorPedidoVenda(v), 0)
     ),
     estoqueAlerta: produtosAlerta.length,
-    pedidosPendentes: (pedidosPendentes || []).length,
+    pedidosPendentes: pedidosPendentes.length,
   };
 }
 
@@ -131,7 +131,10 @@ export function useHomeKpisQuery(options = {}) {
     queryKey: p38Keys.homeKpis(dateKey),
     queryFn: () => fetchHomeKpis(dateKey, queryClient),
     enabled,
-    ...entityQueryDefaults,
+    staleTime: 30 * 1000,
+    gcTime: P38_GC_TIME,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     ...rest,
   });
 }

@@ -32,6 +32,14 @@ function decorateRow(row, entityName, mapping) {
     }
   }
 
+  if ('extras' in out && out.extras && typeof out.extras === 'object') {
+    const extras = out.extras;
+    delete out.extras;
+    for (const [k, v] of Object.entries(extras)) {
+      if (!(k in out)) out[k] = v;
+    }
+  }
+
   if (entityName === 'TargetFlare') {
     if ('flare_line' in out) out.line = out.flare_line;
     if ('flare_column' in out) out.column = out.flare_column;
