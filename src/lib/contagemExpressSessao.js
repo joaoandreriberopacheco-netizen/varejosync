@@ -1,4 +1,8 @@
-import { createContagemExpressSessionId } from '@/lib/contagemExpressStorage';
+import {
+  createContagemExpressSessionId,
+  loadContagemExpressDraft,
+  saveContagemExpressDraft,
+} from '@/lib/contagemExpressStorage';
 import { REFERENCIA_CONTAGEM_EXPRESS, agruparItensContagem } from '@/lib/contagemExpressApply';
 import { getEntryBaseQuantity, getGroupDisplayFromBase } from '@/lib/inventoryCountUnits';
 import {
@@ -11,6 +15,42 @@ import {
 export const TIPO_CONTAGEM_EXPRESS = 'Contagem Express';
 const PREFIXO_NOME_CONTAGEM_EXPRESS = 'Contagem Express ';
 export const CODIGO_SESSAO_CONTAGEM_EXPRESS_REGEX = /^[A-Z0-9]{6}$/;
+
+export function sessaoTemCodigoPadrao(sessao) {
+  const nome = String(sessao?.nome_conferencia || '').trim();
+  return CODIGO_SESSAO_CONTAGEM_EXPRESS_REGEX.test(nome);
+}
+
+function coletarCodigosEmUso(conferencias) {
+  const usados = new Set();
+  for (const sessao of conferencias || []) {
+    const nome = String(sessao?.nome_conferencia || '').trim();
+    if (CODIGO_SESSAO_CONTAGEM_EXPRESS_REGEX.test(nome)) {
+      usados.add(nome);
+    }
+  }
+  return usados;
+}
+
+function gerarCodigoUnicoContagemExpress(codigosUsados) {
+  for (let tentativa = 0; tentativa < 64; tentativa += 1) {
+    const codigo = createContagemExpressSessionId();
+    if (!codigosUsados.has(codigo)) {
+      codigosUsados.add(codigo);
+      return codigo;
+    }
+  }
+  throw new Error('Não foi possível gerar código único para contagem express');
+}
+
+function substituirReferenciasEmTexto(texto, refsAntigas, codigoNovo) {
+  let resultado = String(texto ?? '');
+  for (const ref of refsAntigas) {
+    if (!ref || ref === codigoNovo) continue;
+    resultado = resultado.split(ref).join(codigoNovo);
+  }
+  return resultado;
+}
 
 export function extrairReferenciaSessao(sessao) {
   const nome = String(sessao?.nome_conferencia || '').trim();
@@ -128,6 +168,64 @@ export async function repararSessoesOrfasContagemExpress(base44) {
   );
 
   return orfas.length;
+}
+
+/**
+ * Sessões com nome legado (texto livre, CE-… ou "Contagem Express …")
+ * passam a usar código alfanumérico de 6 caracteres. Atualiza movimentos ligados.
+ */
+export async function renomearSessoesLegadasContagemExpress(base44) {
+  const [conferencias, movimentos] = await Promise.all([
+    base44.entities.ConferenciaEstoque.list('-created_date', 200),
+    listarMovimentosContagemExpress(base44),
+  ]);
+
+  const codigosUsados = coletarCodigosEmUso(conferencias);
+  const legadas = conferencias.filter(
+    (c) => isSessaoContagemExpress(c)
+      && c.status !== 'Cancelada'
+      && !sessaoTemCodigoPadrao(c),
+  );
+
+  if (!legadas.length) return 0;
+
+  await Promise.all(
+    legadas.map(async (sessao) => {
+      const refsAntigas = [...referenciasSessaoContagemExpress(sessao)];
+      const codigo = gerarCodigoUnicoContagemExpress(codigosUsados);
+
+      await base44.entities.ConferenciaEstoque.update(sessao.id, {
+        nome_conferencia: codigo,
+      });
+
+      const movsSessao = movimentos.filter((m) => movimentoPertenceSessaoContagemExpress(m, sessao));
+      await Promise.all(
+        movsSessao.map((mov) => {
+          const observacoes = substituirReferenciasEmTexto(mov.observacoes, refsAntigas, codigo);
+          const payload = {
+            referencia_numero: codigo,
+            referencia_id: codigo,
+          };
+          if (observacoes !== mov.observacoes) {
+            payload.observacoes = observacoes;
+          }
+          return base44.entities.MovimentacaoEstoque.update(mov.id, payload);
+        }),
+      );
+
+      try {
+        const { loadContagemExpressDraft, saveContagemExpressDraft } = await import('@/lib/contagemExpressStorage');
+        const draft = loadContagemExpressDraft();
+        if (draft.conferenciaId === sessao.id) {
+          saveContagemExpressDraft(codigo, draft.itens || [], sessao.id);
+        }
+      } catch {
+        /* rascunho local opcional */
+      }
+    }),
+  );
+
+  return legadas.length;
 }
 
 export async function cancelarSessaoContagemExpress(base44, conferenciaId) {

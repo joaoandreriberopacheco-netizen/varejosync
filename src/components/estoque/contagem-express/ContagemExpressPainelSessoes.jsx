@@ -25,6 +25,7 @@ import {
   getPeriodoMesAtual,
   listarSessoesConcluidasContagemExpress,
   listarSessoesContagemExpress,
+  renomearSessoesLegadasContagemExpress,
   repararSessoesOrfasContagemExpress,
 } from '@/lib/contagemExpressSessao';
 
@@ -63,13 +64,23 @@ export default function ContagemExpressPainelSessoes({
   const carregar = async () => {
     setLoading(true);
     try {
-      const reparadas = await repararSessoesOrfasContagemExpress(base44);
+      const [renomeadas, reparadas] = await Promise.all([
+        renomearSessoesLegadasContagemExpress(base44),
+        repararSessoesOrfasContagemExpress(base44),
+      ]);
       const [aguardando, concluidas] = await Promise.all([
         listarSessoesContagemExpress(base44),
         listarSessoesConcluidasContagemExpress(base44),
       ]);
       setSessoesAguardando(aguardando);
       setSessoesConcluidas(concluidas);
+      if (renomeadas > 0) {
+        toast.success(
+          renomeadas === 1
+            ? '1 contagem antiga recebeu código de 6 caracteres.'
+            : `${renomeadas} contagens antigas receberam código de 6 caracteres.`,
+        );
+      }
       if (reparadas > 0) {
         toast.success(
           reparadas === 1
