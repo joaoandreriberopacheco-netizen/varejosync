@@ -461,9 +461,75 @@ export default function ExtratoContaPage() {
     });
   };
 
+  const movimentacoesList = (
+    <>
+      {diasExibicao.length === 0 ? (
+        <div className="bg-card rounded-xl shadow-sm text-center py-16">
+          <p className="text-muted-foreground mb-2">Nenhuma movimentação encontrada</p>
+          <p className="text-sm text-muted-foreground">
+            Use o botão + para registrar movimentações
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {diasExibicao.map((diaData, diaIdx) => (
+            <div key={diaIdx} className="bg-card border border-border rounded-xl overflow-hidden">
+              <div className="bg-card px-4 py-3 border-b border-border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {format(new Date(diaData.dia), "dd 'de' MMMM 'de' yyyy")}
+                    </p>
+                    <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
+                      <span className="text-[#4A5D23] dark:text-[#a4ce33]">
+                        ↑ {formatCurrency(diaData.totalEntradas)}
+                      </span>
+                      <span className="text-red-600 dark:text-red-400">
+                        ↓ {formatCurrency(diaData.totalSaidas)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Saldo Final</p>
+                    <p className="text-lg font-semibold text-foreground tabular-nums">
+                      {formatCurrency(diaData.saldoFinal)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <P38MobileLineList>
+                {diaData.movimentacoes.map((mov, idx) => {
+                  const entrada = mov.tipo === 'Receita' || mov.tipo === 'Reforço';
+                  const hora = format(new Date(getDataMovimento(mov)), 'HH:mm');
+                  const subtitle = mov.categoria ? `${hora} · ${mov.categoria}` : hora;
+                  return (
+                    <P38MobileLine
+                      key={idx}
+                      striped={idx % 2 === 1}
+                      accent={p38AccentKeyFromTone(extratoMovAccent(mov.tipo))}
+                      title={mov.descricao || mov.tipo}
+                      subtitle={subtitle}
+                      meta={<P38StatusLabel tone={extratoMovAccent(mov.tipo)}>{mov.tipo}</P38StatusLabel>}
+                      value={
+                        <span className={entrada ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-600 dark:text-red-400'}>
+                          {entrada ? '+' : '-'}{formatCurrency(mov.valor)}
+                        </span>
+                      }
+                    />
+                  );
+                })}
+              </P38MobileLineList>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="h-full min-h-0 desktop-layout:min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-border/40 dark:border-white"></div>
       </div>
     );
@@ -471,7 +537,7 @@ export default function ExtratoContaPage() {
 
   if (!conta) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="h-full min-h-0 desktop-layout:min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Conta não encontrada</p>
           <Button onClick={() => window.history.back()} className="gap-2">
@@ -483,9 +549,12 @@ export default function ExtratoContaPage() {
   }
 
   return (
-    <div id="extrato-print-root" className="min-h-screen bg-background font-glacial">
+    <div
+      id="extrato-print-root"
+      className="h-full min-h-0 flex flex-col bg-background font-glacial desktop-layout:min-h-screen desktop-layout:block"
+    >
       {/* Mobile — chrome colapsável ao descer; busca + filtro + ordem sempre visíveis */}
-      <div className="desktop-layout:hidden sticky top-0 z-20 bg-card/95 backdrop-blur-md border-b border-border/40 shadow-sm shrink-0">
+      <div className="desktop-layout:hidden z-20 bg-card/95 backdrop-blur-md border-b border-border/40 shadow-sm shrink-0">
         <div
           className={cn(
             'overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
@@ -586,70 +655,17 @@ export default function ExtratoContaPage() {
         </div>
       </div>
 
-      {/* Lista de movimentações por dia */}
-      <div className="max-w-7xl mx-auto w-full px-4 py-4 desktop-layout:py-6 pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-6">
-        {diasExibicao.length === 0 ? (
-          <div className="bg-card rounded-xl shadow-sm text-center py-16">
-            <p className="text-muted-foreground mb-2">Nenhuma movimentação encontrada</p>
-            <p className="text-sm text-muted-foreground">
-              Use o botão + para registrar movimentações
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {diasExibicao.map((diaData, diaIdx) => (
-              <div key={diaIdx} className="bg-card border border-border rounded-xl overflow-hidden">
-                {/* Header do dia */}
-                <div className="bg-card px-4 py-3 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {format(new Date(diaData.dia), "dd 'de' MMMM 'de' yyyy")}
-                      </p>
-                      <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
-                        <span className="text-[#4A5D23] dark:text-[#a4ce33]">
-                          ↑ {formatCurrency(diaData.totalEntradas)}
-                        </span>
-                        <span className="text-red-600 dark:text-red-400">
-                          ↓ {formatCurrency(diaData.totalSaidas)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Saldo Final</p>
-                      <p className="text-lg font-semibold text-foreground tabular-nums">
-                        {formatCurrency(diaData.saldoFinal)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <P38MobileLineList>
-                  {diaData.movimentacoes.map((mov, idx) => {
-                    const entrada = mov.tipo === 'Receita' || mov.tipo === 'Reforço';
-                    const hora = format(new Date(getDataMovimento(mov)), 'HH:mm');
-                    const subtitle = mov.categoria ? `${hora} · ${mov.categoria}` : hora;
-                    return (
-                      <P38MobileLine
-                        key={idx}
-                        striped={idx % 2 === 1}
-                        accent={p38AccentKeyFromTone(extratoMovAccent(mov.tipo))}
-                        title={mov.descricao || mov.tipo}
-                        subtitle={subtitle}
-                        meta={<P38StatusLabel tone={extratoMovAccent(mov.tipo)}>{mov.tipo}</P38StatusLabel>}
-                        value={
-                          <span className={entrada ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-600 dark:text-red-400'}>
-                            {entrada ? '+' : '-'}{formatCurrency(mov.valor)}
-                          </span>
-                        }
-                      />
-                    );
-                  })}
-                </P38MobileLineList>
-              </div>
-            ))}
-          </div>
+      {/* Lista — scroll interno no mobile para o colapso do header e do bottom nav */}
+      <div
+        className={cn(
+          'desktop-layout:max-w-7xl desktop-layout:mx-auto w-full',
+          isMobile && 'flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y'
         )}
+        style={isMobile ? { WebkitOverflowScrolling: 'touch' } : undefined}
+      >
+        <div className="max-w-7xl mx-auto w-full px-4 py-4 desktop-layout:py-6 pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-6">
+          {movimentacoesList}
+        </div>
       </div>
 
       {/* Filtro de período — mobile (sheet) */}
