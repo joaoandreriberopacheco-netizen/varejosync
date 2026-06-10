@@ -11,6 +11,7 @@ import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import ContagemExpressCarrinho from '@/components/estoque/contagem-express/ContagemExpressCarrinho';
 import ContagemExpressPainelContagem from '@/components/estoque/contagem-express/ContagemExpressPainelContagem';
 import ContagemExpressPainelSessoes from '@/components/estoque/contagem-express/ContagemExpressPainelSessoes';
+import ContagemExpressFabConcluir from '@/components/estoque/contagem-express/ContagemExpressFabConcluir';
 import {
   buildCountEntry,
   changeCountEntryUnit,
@@ -442,7 +443,13 @@ export default function ContagemExpress() {
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-[calc(var(--p38-bottom-nav-total,0px)+0.5rem)]">
+      <div
+        className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 ${
+          itens.length > 0
+            ? 'pb-[calc(var(--p38-bottom-nav-total,0px)+5.5rem)]'
+            : 'pb-[calc(var(--p38-bottom-nav-total,0px)+0.5rem)]'
+        }`}
+      >
         {produtoSelecionado ? (
           <ContagemExpressPainelContagem
             produto={produtoSelecionado}
@@ -511,6 +518,21 @@ export default function ContagemExpress() {
           </div>
         ) : null}
       </div>
+
+      <ContagemExpressFabConcluir
+        visivel={itens.length > 0}
+        loading={finalizando}
+        totalItens={itensAgrupados.length}
+        onClick={handleSalvarClick}
+      />
+
+      <PinValidationDialog
+        forceEnabled
+        isOpen={showPinDialog}
+        onClose={() => setShowPinDialog(false)}
+        onSuccess={handlePinConfirmado}
+        operationName="Lançar Contagem Express"
+      />
 
       <ProductUnitSelectorDialog
         open={unitSelector.open}
