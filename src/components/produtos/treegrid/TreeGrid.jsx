@@ -153,34 +153,19 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
     );
     case 'fornecedor':           return <span className="text-xs text-muted-foreground truncate max-w-[120px] block">{produto.fornecedor_padrao_codigo || '—'}</span>;
     case 'preco_venda':          return (
-      <span className="text-xs text-foreground/90 tabular-nums inline-flex flex-col leading-tight">
-        {cat.precoVenda > 0 ? (
-          <>
-            <span>R$ {fmtR(cat.precoVenda)}</span>
-            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
-          </>
-        ) : '—'}
+      <span className="text-xs text-foreground/90 tabular-nums">
+        {cat.precoVenda > 0 ? `R$ ${fmtR(cat.precoVenda)}` : '—'}
       </span>
     );
     case 'margem':               return <span className={`text-xs tabular-nums ${margem >= 30 ? 'p38-text-accent font-medium' : margem > 0 ? 'text-muted-foreground' : 'text-red-400'}`}>{margem > 0 ? fmtPct(margem) : '—'}</span>;
     case 'preco_custo':          return (
-      <span className="text-xs text-muted-foreground tabular-nums inline-flex flex-col leading-tight">
-        {cat.custoNaEmbalagem > 0 ? (
-          <>
-            <span>R$ {fmtR(cat.custoNaEmbalagem)}</span>
-            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
-          </>
-        ) : '—'}
+      <span className="text-xs text-muted-foreground tabular-nums">
+        {cat.custoNaEmbalagem > 0 ? `R$ ${fmtR(cat.custoNaEmbalagem)}` : '—'}
       </span>
     );
     case 'valor_compra':         return (
-      <span className="text-xs text-muted-foreground tabular-nums inline-flex flex-col leading-tight">
-        {cat.valorCompraNaEmbalagem > 0 ? (
-          <>
-            <span>R$ {fmtR(cat.valorCompraNaEmbalagem)}</span>
-            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
-          </>
-        ) : '—'}
+      <span className="text-xs text-muted-foreground tabular-nums">
+        {cat.valorCompraNaEmbalagem > 0 ? `R$ ${fmtR(cat.valorCompraNaEmbalagem)}` : '—'}
       </span>
     );
     case 'markup':               return (

@@ -80,31 +80,22 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
       return <TableCell key={col}>{fornecedorMap[produto.fornecedor_padrao_id] ? <div className="text-xs text-foreground/90">{fornecedorMap[produto.fornecedor_padrao_id]}</div> : <span className="text-xs text-muted-foreground">N/A</span>}</TableCell>;
     case 'preco_venda':
       return (
-        <TableCell key={col} className="text-xs text-foreground/90">
-          <div className="flex flex-col leading-tight">
-            <span>R$ {formatarNumero(cat.precoVenda)}</span>
-            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
-          </div>
+        <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
+          R$ {formatarNumero(cat.precoVenda)}
         </TableCell>
       );
     case 'margem':
       return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(margem)}%</TableCell>;
     case 'preco_custo':
       return (
-        <TableCell key={col} className="text-xs text-foreground/90">
-          <div className="flex flex-col leading-tight">
-            <span>R$ {formatarNumero(cat.custoNaEmbalagem)}</span>
-            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
-          </div>
+        <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
+          R$ {formatarNumero(cat.custoNaEmbalagem)}
         </TableCell>
       );
     case 'valor_compra':
       return (
-        <TableCell key={col} className="text-xs text-foreground/90">
-          <div className="flex flex-col leading-tight">
-            <span>R$ {formatarNumero(cat.valorCompraNaEmbalagem)}</span>
-            <span className="text-[10px] text-muted-foreground">/{cat.sigla}</span>
-          </div>
+        <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
+          R$ {formatarNumero(cat.valorCompraNaEmbalagem)}
         </TableCell>
       );
     case 'markup':
