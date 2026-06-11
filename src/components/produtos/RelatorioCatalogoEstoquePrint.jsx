@@ -56,7 +56,8 @@ function printPreco(valor) {
   return `R$ ${fmtR(valor)}`;
 }
 
-function printRowCells(style, cells, { firstCellPaddingLeft } = {}) {
+function printRowCells(style, cells, { firstCellPaddingLeft, tier = 'filho' } = {}) {
+  const cellPadding = tier === 'filho' ? '4px 6px' : '8px 6px';
   return cells.map((content, index) => (
     <td
       key={index}
@@ -64,7 +65,7 @@ function printRowCells(style, cells, { firstCellPaddingLeft } = {}) {
       style={{
         ...style,
         textAlign: index === 0 ? 'left' : 'right',
-        padding: '4px 6px',
+        padding: cellPadding,
         paddingLeft: index === 0 && firstCellPaddingLeft != null ? firstCellPaddingLeft : undefined,
         verticalAlign: 'middle',
         borderBottom: '1px solid #d1d5db',
@@ -192,7 +193,7 @@ function PlanaPrintBody({ produtos }) {
                 printPreco(cat.precoVenda),
                 lastro > 0 ? fmtR(lastro) : '—',
               ],
-              { firstCellPaddingLeft: 6 },
+              { firstCellPaddingLeft: 6, tier: 'solteiro' },
             )}
           </tr>
         );
@@ -244,7 +245,7 @@ function TreePrintBody({ rows }) {
                   row.precoMedio > 0 ? `~${fmtR(row.precoMedio)}` : '—',
                   row.lastroTotal > 0 ? fmtR(row.lastroTotal) : '—',
                 ],
-                { firstCellPaddingLeft: 6 + indent },
+                { firstCellPaddingLeft: 6 + indent, tier },
               )}
             </tr>
           );
@@ -279,7 +280,7 @@ function TreePrintBody({ rows }) {
                 printPreco(cat.precoVenda),
                 row.lastro > 0 ? fmtR(row.lastro) : '—',
               ],
-              { firstCellPaddingLeft: indent },
+              { firstCellPaddingLeft: indent, tier },
             )}
           </tr>
         );

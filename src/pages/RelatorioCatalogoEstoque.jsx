@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
@@ -117,12 +118,16 @@ export default function RelatorioCatalogoEstoque() {
           margin: 0 !important;
           padding: 0 !important;
           background: #fff !important;
+          height: auto !important;
+          max-height: none !important;
+          overflow: visible !important;
         }
-        body > * { visibility: hidden !important; }
-        body * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-        #relatorio-catalogo-estoque-print,
-        #relatorio-catalogo-estoque-print * {
-          visibility: visible !important;
+        body > *:not(#relatorio-catalogo-estoque-print) {
+          display: none !important;
+        }
+        body * {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
         }
         #relatorio-catalogo-estoque-print {
           display: block !important;
@@ -132,6 +137,23 @@ export default function RelatorioCatalogoEstoque() {
           padding: 0 !important;
           background: #fff !important;
           color: #111 !important;
+          height: auto !important;
+          max-height: none !important;
+          overflow: visible !important;
+        }
+        #relatorio-catalogo-estoque-print table {
+          page-break-inside: auto;
+        }
+        #relatorio-catalogo-estoque-print thead {
+          display: table-header-group;
+        }
+        #relatorio-catalogo-estoque-print tr {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        #relatorio-catalogo-estoque-print footer {
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
       }
     `}</style>
@@ -270,13 +292,18 @@ export default function RelatorioCatalogoEstoque() {
         </div>
       </div>
 
-      <RelatorioCatalogoEstoquePrint
-        produtos={filteredProdutos}
-        filtersSummary={filtersSummary}
-        totals={totals}
-        generatedAt={printGeneratedAt}
-        layoutMode={isPlana ? 'plana' : 'tree'}
-      />
+      {typeof document !== 'undefined'
+        ? createPortal(
+            <RelatorioCatalogoEstoquePrint
+              produtos={filteredProdutos}
+              filtersSummary={filtersSummary}
+              totals={totals}
+              generatedAt={printGeneratedAt}
+              layoutMode={isPlana ? 'plana' : 'tree'}
+            />,
+            document.body,
+          )
+        : null}
     </>
   );
 }
