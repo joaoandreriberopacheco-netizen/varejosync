@@ -4,6 +4,7 @@ import {
   flattenTree,
   mergeAdjacentDuplicateGroupHeaders,
   buildExpandedForLevel,
+  calcCusto,
 } from '@/components/produtos/treegrid/useTreeGrid';
 import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -77,18 +78,43 @@ function printRowCells(style, cells, { firstCellPaddingLeft } = {}) {
 /**
  * Layout só para impressão — tabela clara em fundo branco, sem chrome da UI.
  */
-export default function RelatorioCatalogoEstoquePrint({
-  produtos,
-  filtersSummary,
-  totals,
-  generatedAt,
-}) {
-  const rows = useMemo(() => {
-    const tree = buildTree(produtos || []);
-    const expanded = buildExpandedForLevel(tree, 98);
-    return mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expanded));
-  }, [produtos]);
+function PrintFooter({ totals }) {
+  return (
+    <footer
+      style={{
+        marginTop: '16px',
+        paddingTop: '12px',
+        borderTop: '1px solid #d1d5db',
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        gap: '16px',
+      }}
+    >
+      <p style={{ fontSize: '10pt', color: '#6b7280', maxWidth: '20rem', margin: 0 }}>
+        Totais dos SKUs filtrados: estoque (vitrine quando activa) × valor de compra, custo total ou preço de venda.
+      </p>
+      <div style={{ textAlign: 'right' }}>
+        {[
+          ['Inventário (valor de compra)', totals.totalCompra],
+          ['Inventário (custo total)', totals.totalCusto],
+          ['Inventário (preço de venda)', totals.totalVenda],
+        ].map(([label, value]) => (
+          <div key={label} style={{ marginBottom: '6px' }}>
+            <span style={{ fontSize: '10pt', color: '#6b7280', textTransform: 'uppercase' }}>
+              {label}
+            </span>
+            <div style={{ fontSize: '12pt', fontWeight: 700, color: '#111111' }} className="tabular-nums">
+              R$ {fmtR(roundToTwoDecimals(value))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </footer>
+  );
+}
 
+function PrintTableHeader({ firstColLabel, firstColWidth = '34%' }) {
   const headerCellStyle = {
     textAlign: 'left',
     padding: '6px 6px',
@@ -100,6 +126,182 @@ export default function RelatorioCatalogoEstoquePrint({
     borderBottom: '2px solid #374151',
     backgroundColor: '#f3f4f6',
   };
+
+  return (
+    <thead>
+      <tr>
+        <th style={{ ...headerCellStyle, width: firstColWidth }}>{firstColLabel}</th>
+        <th style={{ ...headerCellStyle, textAlign: 'right' }}>Estoque</th>
+        <th style={{ ...headerCellStyle, textAlign: 'right' }}>Vl. compra</th>
+        <th style={{ ...headerCellStyle, textAlign: 'right' }}>Custo total</th>
+        <th style={{ ...headerCellStyle, textAlign: 'right' }}>Preço venda</th>
+        <th style={{ ...headerCellStyle, textAlign: 'right' }}>Inventário R$</th>
+      </tr>
+    </thead>
+  );
+}
+
+function PlanaPrintBody({ produtos }) {
+  const palette = PRINT_TIER.solteiro;
+  const cellStyle = {
+    backgroundColor: palette.bg,
+    color: palette.text,
+    fontWeight: 600,
+  };
+
+  if (!produtos?.length) {
+    return (
+      <tbody>
+        <tr>
+          <td colSpan={6} style={{ padding: '32px 6px', textAlign: 'center', color: '#6b7280' }}>
+            Nenhum produto encontrado.
+          </td>
+        </tr>
+      </tbody>
+    );
+  }
+
+  return (
+    <tbody>
+      {produtos.map((p) => {
+        const cat = getCatalogoComercialView(p);
+        const lastro = calcCusto(p) * (p.estoque_atual || 0);
+        return (
+          <tr key={p.id}>
+            {printRowCells(
+              cellStyle,
+              [
+                <>
+                  <span style={{ textTransform: 'uppercase' }}>{p.nome || '—'}</span>
+                  {p.codigo_interno ? (
+                    <span
+                      style={{
+                        marginLeft: 4,
+                        fontFamily: 'monospace',
+                        fontSize: '10pt',
+                        color: palette.muted,
+                      }}
+                    >
+                      {p.codigo_interno}
+                    </span>
+                  ) : null}
+                </>,
+                printEstoqueCell(p),
+                printPreco(cat.valorCompraNaEmbalagem),
+                printPreco(cat.custoNaEmbalagem),
+                printPreco(cat.precoVenda),
+                lastro > 0 ? fmtR(lastro) : '—',
+              ],
+              { firstCellPaddingLeft: 6 },
+            )}
+          </tr>
+        );
+      })}
+    </tbody>
+  );
+}
+
+function TreePrintBody({ rows }) {
+  if (!rows.length) {
+    return (
+      <tbody>
+        <tr>
+          <td colSpan={6} style={{ padding: '32px 6px', textAlign: 'center', color: '#6b7280' }}>
+            Nenhum produto encontrado.
+          </td>
+        </tr>
+      </tbody>
+    );
+  }
+
+  return (
+    <tbody>
+      {rows.map((row) => {
+        const tier = getPrintRowTier(row);
+        const palette = PRINT_TIER[tier];
+        const cellStyle = {
+          backgroundColor: palette.bg,
+          color: palette.text,
+          fontWeight: tier === 'filho' ? 400 : 600,
+        };
+
+        if (row.type === 'group') {
+          const indent = (row.level - 1) * 12;
+          return (
+            <tr key={row.key}>
+              {printRowCells(
+                cellStyle,
+                [
+                  <>
+                    {row.label}
+                    <span style={{ fontWeight: 400, color: palette.muted, marginLeft: 4 }}>
+                      ({row.count})
+                    </span>
+                  </>,
+                  printGroupEstoque(row),
+                  row.valorCompraMedio > 0 ? `~${fmtR(row.valorCompraMedio)}` : '—',
+                  row.custoMedio > 0 ? `~${fmtR(row.custoMedio)}` : '—',
+                  row.precoMedio > 0 ? `~${fmtR(row.precoMedio)}` : '—',
+                  row.lastroTotal > 0 ? fmtR(row.lastroTotal) : '—',
+                ],
+                { firstCellPaddingLeft: 6 + indent },
+              )}
+            </tr>
+          );
+        }
+
+        const p = row.produto;
+        const cat = getCatalogoComercialView(p);
+        const indent = tier === 'filho' ? 8 + (row.level - 1) * 12 : 6;
+        return (
+          <tr key={row.key}>
+            {printRowCells(
+              cellStyle,
+              [
+                <>
+                  <span style={{ textTransform: 'uppercase' }}>{p.nome || '—'}</span>
+                  {p.codigo_interno ? (
+                    <span
+                      style={{
+                        marginLeft: 4,
+                        fontFamily: 'monospace',
+                        fontSize: '10pt',
+                        color: palette.muted,
+                      }}
+                    >
+                      {p.codigo_interno}
+                    </span>
+                  ) : null}
+                </>,
+                printEstoqueCell(p),
+                printPreco(cat.valorCompraNaEmbalagem),
+                printPreco(cat.custoNaEmbalagem),
+                printPreco(cat.precoVenda),
+                row.lastro > 0 ? fmtR(row.lastro) : '—',
+              ],
+              { firstCellPaddingLeft: indent },
+            )}
+          </tr>
+        );
+      })}
+    </tbody>
+  );
+}
+
+export default function RelatorioCatalogoEstoquePrint({
+  produtos,
+  filtersSummary,
+  totals,
+  generatedAt,
+  layoutMode = 'tree',
+}) {
+  const isPlana = layoutMode === 'plana';
+  const rows = useMemo(() => {
+    if (isPlana) return [];
+    const tree = buildTree(produtos || []);
+    const expanded = buildExpandedForLevel(tree, 98);
+    return mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expanded));
+  }, [produtos, isPlana]);
 
   return (
     <div
@@ -118,7 +320,7 @@ export default function RelatorioCatalogoEstoquePrint({
           Relatório de estoque
         </h1>
         <p style={{ fontSize: '11pt', color: '#4b5563', margin: '4px 0 0' }}>
-          Hierarquia do catálogo · {produtos?.length ?? 0} SKU(s) filtrado(s)
+          {isPlana ? 'Lista plana do catálogo' : 'Hierarquia do catálogo'} · {produtos?.length ?? 0} SKU(s) filtrado(s)
         </p>
         <p style={{ fontSize: '11pt', color: '#4b5563', margin: '2px 0 0' }}>
           Emitido em {generatedAt}
@@ -131,127 +333,14 @@ export default function RelatorioCatalogoEstoquePrint({
       </header>
 
       <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-        <thead>
-          <tr>
-            <th style={{ ...headerCellStyle, width: '34%' }}>Produto / grupo</th>
-            <th style={{ ...headerCellStyle, textAlign: 'right' }}>Estoque</th>
-            <th style={{ ...headerCellStyle, textAlign: 'right' }}>Vl. compra</th>
-            <th style={{ ...headerCellStyle, textAlign: 'right' }}>Custo total</th>
-            <th style={{ ...headerCellStyle, textAlign: 'right' }}>Preço venda</th>
-            <th style={{ ...headerCellStyle, textAlign: 'right' }}>Inventário R$</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 ? (
-            <tr>
-              <td colSpan={6} style={{ padding: '32px 6px', textAlign: 'center', color: '#6b7280' }}>
-                Nenhum produto encontrado.
-              </td>
-            </tr>
-          ) : (
-            rows.map((row) => {
-              const tier = getPrintRowTier(row);
-              const palette = PRINT_TIER[tier];
-              const cellStyle = {
-                backgroundColor: palette.bg,
-                color: palette.text,
-                fontWeight: tier === 'filho' ? 400 : 600,
-              };
-
-              if (row.type === 'group') {
-                const indent = (row.level - 1) * 12;
-                return (
-                  <tr key={row.key}>
-                    {printRowCells(
-                      cellStyle,
-                      [
-                        <>
-                          {row.label}
-                          <span style={{ fontWeight: 400, color: palette.muted, marginLeft: 4 }}>
-                            ({row.count})
-                          </span>
-                        </>,
-                        printGroupEstoque(row),
-                        row.valorCompraMedio > 0 ? `~${fmtR(row.valorCompraMedio)}` : '—',
-                        row.custoMedio > 0 ? `~${fmtR(row.custoMedio)}` : '—',
-                        row.precoMedio > 0 ? `~${fmtR(row.precoMedio)}` : '—',
-                        row.lastroTotal > 0 ? fmtR(row.lastroTotal) : '—',
-                      ],
-                      { firstCellPaddingLeft: 6 + indent },
-                    )}
-                  </tr>
-                );
-              }
-
-              const p = row.produto;
-              const cat = getCatalogoComercialView(p);
-              const indent = tier === 'filho' ? 8 + (row.level - 1) * 12 : 6;
-              return (
-                <tr key={row.key}>
-                  {printRowCells(
-                    cellStyle,
-                    [
-                      <>
-                        <span style={{ textTransform: 'uppercase' }}>{p.nome || '—'}</span>
-                        {p.codigo_interno ? (
-                          <span
-                            style={{
-                              marginLeft: 4,
-                              fontFamily: 'monospace',
-                              fontSize: '10pt',
-                              color: palette.muted,
-                            }}
-                          >
-                            {p.codigo_interno}
-                          </span>
-                        ) : null}
-                      </>,
-                      printEstoqueCell(p),
-                      printPreco(cat.valorCompraNaEmbalagem),
-                      printPreco(cat.custoNaEmbalagem),
-                      printPreco(cat.precoVenda),
-                      row.lastro > 0 ? fmtR(row.lastro) : '—',
-                    ],
-                    { firstCellPaddingLeft: indent },
-                  )}
-                </tr>
-              );
-            })
-          )}
-        </tbody>
+        <PrintTableHeader
+          firstColLabel={isPlana ? 'Produto' : 'Produto / grupo'}
+          firstColWidth={isPlana ? '38%' : '34%'}
+        />
+        {isPlana ? <PlanaPrintBody produtos={produtos} /> : <TreePrintBody rows={rows} />}
       </table>
 
-      <footer
-        style={{
-          marginTop: '16px',
-          paddingTop: '12px',
-          borderTop: '1px solid #d1d5db',
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          gap: '16px',
-        }}
-      >
-        <p style={{ fontSize: '10pt', color: '#6b7280', maxWidth: '20rem', margin: 0 }}>
-          Totais dos SKUs filtrados: estoque (vitrine quando activa) × valor de compra, custo total ou preço de venda.
-        </p>
-        <div style={{ textAlign: 'right' }}>
-          {[
-            ['Inventário (valor de compra)', totals.totalCompra],
-            ['Inventário (custo total)', totals.totalCusto],
-            ['Inventário (preço de venda)', totals.totalVenda],
-          ].map(([label, value]) => (
-            <div key={label} style={{ marginBottom: '6px' }}>
-              <span style={{ fontSize: '10pt', color: '#6b7280', textTransform: 'uppercase' }}>
-                {label}
-              </span>
-              <div style={{ fontSize: '12pt', fontWeight: 700, color: '#111111' }} className="tabular-nums">
-                R$ {fmtR(roundToTwoDecimals(value))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </footer>
+      <PrintFooter totals={totals} />
     </div>
   );
 }

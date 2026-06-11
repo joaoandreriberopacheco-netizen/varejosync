@@ -177,7 +177,17 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
   }
 }
 
-export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, handleEdit, setProdutoParaExcluir, formatarNumero, fornecedorMap, handleCreateSimilar }) {
+export default function ProdutosPlanaTable({
+  filteredProdutos,
+  visibleColumns,
+  handleEdit,
+  setProdutoParaExcluir,
+  formatarNumero,
+  fornecedorMap,
+  handleCreateSimilar,
+  readOnly = false,
+  embedded = false,
+}) {
   const scrollContainerRef = useRef(null);
   const virtualRows = useVirtualRows({
     itemCount: filteredProdutos.length,
@@ -186,16 +196,30 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
     scrollElementRef: scrollContainerRef,
   });
   const visibleProdutos = filteredProdutos.slice(virtualRows.startIndex, virtualRows.endIndex);
-  const colSpan = 3 + visibleColumns.length;
+  const leadingCols = readOnly ? 1 : 3;
+  const colSpan = leadingCols + visibleColumns.length;
+  const containerClass = embedded
+    ? 'w-full h-full overflow-auto bg-card'
+    : 'hidden desktop-layout:block w-full h-full overflow-auto border border-border/40 rounded bg-card';
 
   return (
-    <div ref={scrollContainerRef} className="hidden desktop-layout:block w-full h-full overflow-auto border border-border/40 rounded bg-card">
+    <div ref={scrollContainerRef} className={containerClass}>
       <Table>
         <TableHeader className="bg-muted/40 sticky top-0 z-20 dark:bg-muted">
           <TableRow>
-            <TableHead className="sticky left-0 z-30 bg-muted/50 text-foreground/90 w-[50px] border-r border-border/40 text-xs p-2" />
-            <TableHead className="sticky left-[50px] z-30 bg-muted/50 text-foreground/90 min-w-[60px] border-r border-border/40 text-xs text-center">Img</TableHead>
-            <TableHead className="sticky left-[110px] z-30 bg-muted/50 text-foreground/90 min-w-[220px] border-r border-border/40 text-xs">Produto</TableHead>
+            {!readOnly && (
+              <TableHead className="sticky left-0 z-30 bg-muted/50 text-foreground/90 w-[50px] border-r border-border/40 text-xs p-2" />
+            )}
+            {!readOnly && (
+              <TableHead className="sticky left-[50px] z-30 bg-muted/50 text-foreground/90 min-w-[60px] border-r border-border/40 text-xs text-center">Img</TableHead>
+            )}
+            <TableHead
+              className={`sticky z-30 bg-muted/50 text-foreground/90 min-w-[220px] border-r border-border/40 text-xs ${
+                readOnly ? 'left-0' : 'left-[110px]'
+              }`}
+            >
+              Produto
+            </TableHead>
             {visibleColumns.map(col => <TableHead key={col} className={`${widthMap[col] || 'min-w-[90px]'} text-foreground/90 text-xs`}>{headMap[col] || col}</TableHead>)}
           </TableRow>
         </TableHeader>
@@ -212,25 +236,29 @@ export default function ProdutosPlanaTable({ filteredProdutos, visibleColumns, h
             const cadastroStatus = isCadastroIncompleto(produto);
 
             return (
-              <TableRow key={produto.id} className="hover:bg-muted/40 dark:hover:bg-muted/50">
-                <TableCell className="sticky left-0 z-10 bg-card border-r border-border/40 p-1">
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-3.5 w-3.5 text-foreground/90 dark:text-muted-foreground" /></Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="z-50 dark:bg-muted dark:border-border/40" sideOffset={5}>
-                      <DropdownMenuItem onClick={() => handleEdit(produto)} className="dark:text-foreground dark:hover:bg-primary/90 text-xs"><Edit className="mr-2 h-3.5 w-3.5" />Editar</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleCreateSimilar(produto)} className="dark:text-foreground dark:hover:bg-primary/90 text-xs"><Copy className="mr-2 h-3.5 w-3.5" />Produto similar</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setProdutoParaExcluir(produto)} className="text-red-600 dark:text-red-400 dark:hover:bg-primary/90 text-xs"><Trash2 className="mr-2 h-3.5 w-3.5" />{produto.ativo ? 'Excluir / Inativar' : 'Reativar'}</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-                <TableCell className="sticky left-[50px] z-10 bg-card border-r border-border/40 p-1 text-center">
-                  <div className="w-10 h-10 mx-auto bg-muted rounded-md flex items-center justify-center overflow-hidden">
-                    {produto.imagem_url ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-muted-foreground" />}
-                  </div>
-                </TableCell>
-                <TableCell className="sticky left-[110px] z-10 bg-card border-r border-border/40">
+              <TableRow key={produto.id} className={readOnly ? undefined : 'hover:bg-muted/40 dark:hover:bg-muted/50'}>
+                {!readOnly && (
+                  <TableCell className="sticky left-0 z-10 bg-card border-r border-border/40 p-1">
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-3.5 w-3.5 text-foreground/90 dark:text-muted-foreground" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="z-50 dark:bg-muted dark:border-border/40" sideOffset={5}>
+                        <DropdownMenuItem onClick={() => handleEdit(produto)} className="dark:text-foreground dark:hover:bg-primary/90 text-xs"><Edit className="mr-2 h-3.5 w-3.5" />Editar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleCreateSimilar(produto)} className="dark:text-foreground dark:hover:bg-primary/90 text-xs"><Copy className="mr-2 h-3.5 w-3.5" />Produto similar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setProdutoParaExcluir(produto)} className="text-red-600 dark:text-red-400 dark:hover:bg-primary/90 text-xs"><Trash2 className="mr-2 h-3.5 w-3.5" />{produto.ativo ? 'Excluir / Inativar' : 'Reativar'}</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                )}
+                {!readOnly && (
+                  <TableCell className="sticky left-[50px] z-10 bg-card border-r border-border/40 p-1 text-center">
+                    <div className="w-10 h-10 mx-auto bg-muted rounded-md flex items-center justify-center overflow-hidden">
+                      {produto.imagem_url ? <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-muted-foreground" />}
+                    </div>
+                  </TableCell>
+                )}
+                <TableCell className={`sticky z-10 bg-card border-r border-border/40 ${readOnly ? 'left-0' : 'left-[110px]'}`}>
                   <div className="font-medium text-sm text-foreground/90 uppercase">{produto.nome}</div>
                   <div className="text-xs text-muted-foreground uppercase">{produto.codigo_interno}</div>
                 </TableCell>

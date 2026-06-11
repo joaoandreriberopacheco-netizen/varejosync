@@ -4,7 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/components/utils';
 import { Button } from '@/components/ui/button';
 import TreeGrid, { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
+import ProdutosPlanaTable from '@/components/produtos/ProdutosPlanaTable';
 import { ArrowLeft, Loader2, Printer } from 'lucide-react';
+import { formatCurrency } from '@/lib/financialUtils';
 import {
   filterProdutos,
   countActiveProdutoFilters,
@@ -27,6 +29,7 @@ export default function RelatorioCatalogoEstoque() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState(() => loadCatalogProdutoFilters());
   const [treeLevel, setTreeLevel] = useState(1);
+  const [viewMode, setViewMode] = useState('dinamica');
 
   const syncFiltersFromCatalog = useCallback(() => {
     setFilters(loadCatalogProdutoFilters());
@@ -94,6 +97,9 @@ export default function RelatorioCatalogoEstoque() {
     window.print();
   };
 
+  const formatarNumero = useCallback((numero) => formatCurrency(numero), []);
+  const isPlana = viewMode === 'plana';
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center bg-card">
@@ -142,7 +148,7 @@ export default function RelatorioCatalogoEstoque() {
             </Button>
             <div className="flex-1 min-w-0">
               <h1 className="text-sm font-semibold text-foreground font-glacial">
-                Relatório de estoque (Tree Grid)
+                Relatório de estoque ({isPlana ? 'Plana' : 'Tree Grid'})
               </h1>
               <p className="text-[11px] text-muted-foreground">
                 Espelha os filtros do catálogo · ajuste busca e filtros na página Produtos
@@ -183,20 +189,57 @@ export default function RelatorioCatalogoEstoque() {
           )}
         </div>
 
-        <div className="flex items-center justify-between px-3 py-2 flex-none border-b border-border/30 dark:border-border/40/80">
+        <div className="flex items-center justify-between px-3 py-2 flex-none border-b border-border/30 dark:border-border/40/80 gap-2">
           <span className="text-xs text-muted-foreground">
             {filteredProdutos.length} produto{filteredProdutos.length !== 1 ? 's' : ''} na grade
           </span>
-          <LevelControl level={treeLevel} onChange={setTreeLevel} />
+          <div className="flex items-center gap-2">
+            <div className="flex items-center bg-muted rounded p-0.5 gap-0.5">
+              <button
+                type="button"
+                onClick={() => setViewMode('dinamica')}
+                className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                  viewMode === 'dinamica'
+                    ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                Tree Grid
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('plana')}
+                className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                  viewMode === 'plana'
+                    ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                Plana
+              </button>
+            </div>
+            {!isPlana ? <LevelControl level={treeLevel} onChange={setTreeLevel} /> : null}
+          </div>
         </div>
 
         <div className="flex-1 min-h-0 overflow-hidden px-0 md:px-3">
-          <TreeGrid
-            produtos={filteredProdutos}
-            visibleColumns={REPORT_COLS}
-            masterLevel={treeLevel}
-            readOnly
-          />
+          {isPlana ? (
+            <ProdutosPlanaTable
+              filteredProdutos={filteredProdutos}
+              visibleColumns={REPORT_COLS}
+              formatarNumero={formatarNumero}
+              fornecedorMap={{}}
+              readOnly
+              embedded
+            />
+          ) : (
+            <TreeGrid
+              produtos={filteredProdutos}
+              visibleColumns={REPORT_COLS}
+              masterLevel={treeLevel}
+              readOnly
+            />
+          )}
         </div>
 
         <div className="flex-none border-t border-border/40 bg-muted/50/60 px-4 py-3">
@@ -204,7 +247,7 @@ export default function RelatorioCatalogoEstoque() {
             <div className="text-[11px] text-muted-foreground">
               Totais dos SKUs filtrados: <strong>estoque</strong> (vitrine comercial quando activa) ×{' '}
               <strong>valor de compra</strong>, <strong>custo total</strong> ou <strong>preço de venda</strong>,
-              como no Tree Grid do catálogo.
+              como no catálogo ({isPlana ? 'vista plana' : 'Tree Grid'}).
             </div>
             <div className="flex flex-wrap gap-6">
               <TotalKpi
@@ -232,6 +275,7 @@ export default function RelatorioCatalogoEstoque() {
         filtersSummary={filtersSummary}
         totals={totals}
         generatedAt={printGeneratedAt}
+        layoutMode={isPlana ? 'plana' : 'tree'}
       />
     </>
   );
