@@ -26,6 +26,11 @@ function printGroupEstoque(row) {
   return '—';
 }
 
+function printPrecoUnitario(valor, sigla) {
+  if (!(valor > 0)) return '—';
+  return sigla ? `R$ ${fmtR(valor)} /${sigla}` : `R$ ${fmtR(valor)}`;
+}
+
 /**
  * Layout só para impressão — tabela clara em fundo branco, sem chrome da UI.
  */
@@ -44,19 +49,22 @@ export default function RelatorioCatalogoEstoquePrint({
   return (
     <div
       id="relatorio-catalogo-estoque-print"
-      className="hidden print:block bg-card text-foreground text-[11px] leading-snug"
+      className="hidden print:block bg-card text-foreground"
+      style={{ fontSize: '12pt', lineHeight: 1.35 }}
       aria-hidden="true"
     >
       <header className="mb-4 pb-3 border-b border-border/40">
-        <h1 className="text-lg font-bold text-foreground m-0">Relatório de estoque</h1>
-        <p className="text-xs text-muted-foreground mt-1 mb-0">
+        <h1 className="font-bold text-foreground m-0" style={{ fontSize: '14pt' }}>
+          Relatório de estoque
+        </h1>
+        <p className="text-muted-foreground mt-1 mb-0" style={{ fontSize: '11pt' }}>
           Hierarquia do catálogo · {produtos?.length ?? 0} SKU(s) filtrado(s)
         </p>
-        <p className="text-xs text-muted-foreground mt-0.5 mb-0">
+        <p className="text-muted-foreground mt-0.5 mb-0" style={{ fontSize: '11pt' }}>
           Emitido em {generatedAt}
         </p>
         {filtersSummary ? (
-          <p className="text-xs text-foreground/90 mt-2 mb-0">
+          <p className="text-foreground/90 mt-2 mb-0" style={{ fontSize: '11pt' }}>
             <span className="font-semibold">Filtros:</span> {filtersSummary}
           </p>
         ) : null}
@@ -66,21 +74,39 @@ export default function RelatorioCatalogoEstoquePrint({
         <thead>
           <tr className="border-b-2 border-border/40">
             <th
-              className="text-left py-1.5 pr-2 font-semibold uppercase tracking-wide text-[10px]"
-              style={{ width: '42%' }}
+              className="text-left py-1.5 pr-2 font-semibold uppercase tracking-wide"
+              style={{ width: '30%', fontSize: '11pt' }}
             >
               Produto / grupo
             </th>
-            <th className="text-right py-1.5 px-1 font-semibold uppercase tracking-wide text-[10px]">
+            <th
+              className="text-right py-1.5 px-1 font-semibold uppercase tracking-wide"
+              style={{ fontSize: '11pt' }}
+            >
               Estoque
             </th>
-            <th className="text-right py-1.5 px-1 font-semibold uppercase tracking-wide text-[10px]">
+            <th
+              className="text-right py-1.5 px-1 font-semibold uppercase tracking-wide"
+              style={{ fontSize: '11pt' }}
+            >
               Vl. compra
             </th>
-            <th className="text-right py-1.5 px-1 font-semibold uppercase tracking-wide text-[10px]">
+            <th
+              className="text-right py-1.5 px-1 font-semibold uppercase tracking-wide"
+              style={{ fontSize: '11pt' }}
+            >
               Custo total
             </th>
-            <th className="text-right py-1.5 pl-1 font-semibold uppercase tracking-wide text-[10px]">
+            <th
+              className="text-right py-1.5 px-1 font-semibold uppercase tracking-wide"
+              style={{ fontSize: '11pt' }}
+            >
+              Preço venda
+            </th>
+            <th
+              className="text-right py-1.5 pl-1 font-semibold uppercase tracking-wide"
+              style={{ fontSize: '11pt' }}
+            >
               Inventário R$
             </th>
           </tr>
@@ -88,7 +114,7 @@ export default function RelatorioCatalogoEstoquePrint({
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={5} className="py-8 text-center text-muted-foreground">
+              <td colSpan={6} className="py-8 text-center text-muted-foreground">
                 Nenhum produto encontrado.
               </td>
             </tr>
@@ -109,6 +135,9 @@ export default function RelatorioCatalogoEstoquePrint({
                     <td className="text-right py-1 px-1 tabular-nums">
                       {row.custoMedio > 0 ? `~${fmtR(row.custoMedio)}` : '—'}
                     </td>
+                    <td className="text-right py-1 px-1 tabular-nums">
+                      {row.precoMedio > 0 ? `~${fmtR(row.precoMedio)}` : '—'}
+                    </td>
                     <td className="text-right py-1 pl-1 tabular-nums font-medium">
                       {row.lastroTotal > 0 ? fmtR(row.lastroTotal) : '—'}
                     </td>
@@ -124,15 +153,20 @@ export default function RelatorioCatalogoEstoquePrint({
                   <td className="py-0.5 pr-2 text-foreground/90" style={{ paddingLeft: indent }}>
                     <span className="uppercase">{p.nome || '—'}</span>
                     {p.codigo_interno ? (
-                      <span className="text-muted-foreground font-mono text-[10px] ml-1">{p.codigo_interno}</span>
+                      <span className="text-muted-foreground font-mono ml-1" style={{ fontSize: '10pt' }}>
+                        {p.codigo_interno}
+                      </span>
                     ) : null}
                   </td>
                   <td className="text-right py-0.5 px-1 tabular-nums">{printEstoqueCell(p)}</td>
                   <td className="text-right py-0.5 px-1 tabular-nums">
-                    {cat.valorCompraNaEmbalagem > 0 ? fmtR(cat.valorCompraNaEmbalagem) : '—'}
+                    {printPrecoUnitario(cat.valorCompraNaEmbalagem, cat.sigla)}
                   </td>
                   <td className="text-right py-0.5 px-1 tabular-nums">
-                    {cat.custoNaEmbalagem > 0 ? fmtR(cat.custoNaEmbalagem) : '—'}
+                    {printPrecoUnitario(cat.custoNaEmbalagem, cat.sigla)}
+                  </td>
+                  <td className="text-right py-0.5 px-1 tabular-nums">
+                    {printPrecoUnitario(cat.precoVenda, cat.sigla)}
                   </td>
                   <td className="text-right py-0.5 pl-1 tabular-nums">
                     {row.lastro > 0 ? fmtR(row.lastro) : '—'}
@@ -145,17 +179,33 @@ export default function RelatorioCatalogoEstoquePrint({
       </table>
 
       <footer className="mt-4 pt-3 border-t border-border/40 flex flex-wrap justify-between gap-4">
-        <p className="text-[10px] text-muted-foreground max-w-md m-0">
-          Totais dos SKUs filtrados: estoque (vitrine quando activa) × valor de compra ou custo total.
+        <p className="text-muted-foreground max-w-md m-0" style={{ fontSize: '10pt' }}>
+          Totais dos SKUs filtrados: estoque (vitrine quando activa) × valor de compra, custo total ou preço de venda.
         </p>
         <div className="text-right space-y-1">
           <div>
-            <span className="text-[10px] uppercase text-muted-foreground">Inventário (valor de compra)</span>
-            <div className="text-base font-bold tabular-nums">R$ {fmtR(roundToTwoDecimals(totals.totalCompra))}</div>
+            <span className="uppercase text-muted-foreground" style={{ fontSize: '10pt' }}>
+              Inventário (valor de compra)
+            </span>
+            <div className="font-bold tabular-nums" style={{ fontSize: '12pt' }}>
+              R$ {fmtR(roundToTwoDecimals(totals.totalCompra))}
+            </div>
           </div>
           <div>
-            <span className="text-[10px] uppercase text-muted-foreground">Inventário (custo total)</span>
-            <div className="text-base font-bold tabular-nums">R$ {fmtR(roundToTwoDecimals(totals.totalCusto))}</div>
+            <span className="uppercase text-muted-foreground" style={{ fontSize: '10pt' }}>
+              Inventário (custo total)
+            </span>
+            <div className="font-bold tabular-nums" style={{ fontSize: '12pt' }}>
+              R$ {fmtR(roundToTwoDecimals(totals.totalCusto))}
+            </div>
+          </div>
+          <div>
+            <span className="uppercase text-muted-foreground" style={{ fontSize: '10pt' }}>
+              Inventário (preço de venda)
+            </span>
+            <div className="font-bold tabular-nums" style={{ fontSize: '12pt' }}>
+              R$ {fmtR(roundToTwoDecimals(totals.totalVenda))}
+            </div>
           </div>
         </div>
       </footer>

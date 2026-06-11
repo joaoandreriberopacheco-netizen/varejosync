@@ -27,6 +27,13 @@ export function lineValorCustoTotal(produto) {
   return qtd * calcCusto(produto);
 }
 
+/** estoque × preço de venda (alinha coluna Preço de venda do TreeGrid). */
+export function lineValorVendaTotal(produto) {
+  const qtd = lineEstoqueQuantidade(produto);
+  const cat = getCatalogoComercialView(produto);
+  return qtd * (cat.precoVenda || 0);
+}
+
 /**
  * Totais do inventário filtrado (soma por SKU, sem duplicar grupos da árvore).
  * Com vitrine activa usa quantidade e preços da embalagem comercial; senão unidade base.
@@ -34,6 +41,7 @@ export function lineValorCustoTotal(produto) {
 export function sumCatalogStockTotals(produtos) {
   let totalCompra = 0;
   let totalCusto = 0;
+  let totalVenda = 0;
   let count = 0;
   const list = Array.isArray(produtos) ? produtos : [];
   for (const p of list) {
@@ -41,10 +49,12 @@ export function sumCatalogStockTotals(produtos) {
     count += 1;
     totalCompra += lineValorCompraTotal(p);
     totalCusto += lineValorCustoTotal(p);
+    totalVenda += lineValorVendaTotal(p);
   }
   return {
     count,
     totalCompra,
     totalCusto,
+    totalVenda,
   };
 }
