@@ -106,7 +106,12 @@ export default function RelatorioCatalogoEstoque() {
     <>
       <style>{`
       @media print {
-        @page { size: A4 portrait; margin: 12mm; }
+        @page { size: A4 portrait; margin: 16mm 14mm; }
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #fff !important;
+        }
         body > * { visibility: hidden !important; }
         body * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         #relatorio-catalogo-estoque-print,
@@ -115,11 +120,10 @@ export default function RelatorioCatalogoEstoque() {
         }
         #relatorio-catalogo-estoque-print {
           display: block !important;
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          padding: 0;
+          position: static !important;
+          width: auto !important;
+          margin: 0 !important;
+          padding: 0 !important;
           background: #fff !important;
           color: #111 !important;
         }
