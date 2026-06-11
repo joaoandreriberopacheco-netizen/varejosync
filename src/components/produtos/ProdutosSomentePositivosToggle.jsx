@@ -1,7 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Globe } from 'lucide-react';
 import { cn } from '@/components/utils';
-import { isSomentePositivosFilter } from '@/lib/filterProdutos';
+import {
+  CATALOG_SOMENTE_POSITIVOS_QUANTIDADE,
+  isSomentePositivosFilter,
+} from '@/lib/filterProdutos';
 
 /** Atalho entre a busca e o painel de filtros: alterna todos vs. estoque positivo (> 0). */
 export default function ProdutosSomentePositivosToggle({ filters, setFilters }) {
@@ -19,9 +22,7 @@ export default function ProdutosSomentePositivosToggle({ filters, setFilters }) 
     }
     setFilters((prev) => ({
       ...prev,
-      quantidadeOperador: 'gt',
-      quantidadeValor: '0',
-      quantidadeValorAte: '',
+      ...CATALOG_SOMENTE_POSITIVOS_QUANTIDADE,
     }));
   };
 

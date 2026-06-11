@@ -28,11 +28,12 @@ import ProdutosHeader from '../components/produtos/ProdutosHeader';
 import ProdutosCommandBar from '../components/produtos/ProdutosCommandBar';
 import ProdutosPlanaTable from '../components/produtos/ProdutosPlanaTable';
 import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
-import { filterProdutos, countActiveProdutoFilters } from '@/lib/filterProdutos';
 import {
-  loadCatalogProdutoFilters,
-  saveCatalogProdutoFilters,
-} from '@/lib/catalogProdutoFiltersStorage';
+  filterProdutos,
+  countActiveProdutoFilters,
+  getCatalogProdutoEntryFilters,
+} from '@/lib/filterProdutos';
+import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import {
   loadCatalogProdutoColumns,
   saveCatalogProdutoColumns,
@@ -111,7 +112,7 @@ function ProdutosPageContent() {
     abaixoMinimo: 0,
   });
 
-  const [filters, setFilters] = useState(() => loadCatalogProdutoFilters());
+  const [filters, setFilters] = useState(() => getCatalogProdutoEntryFilters());
   const [sortOrder, setSortOrder] = useState('az');
   const [viewMode, setViewMode] = useState('dinamica'); // 'dinamica' | 'plana'
 

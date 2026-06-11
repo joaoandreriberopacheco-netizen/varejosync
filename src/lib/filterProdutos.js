@@ -1,6 +1,13 @@
 import { isCadastroIncompleto } from '@/components/produtos/ProdutosHelpers';
 import { parseSearchTerms } from '@/lib/searchTokens';
 
+/** Filtro de quantidade do atalho «somente positivos» (estoque > 0). */
+export const CATALOG_SOMENTE_POSITIVOS_QUANTIDADE = {
+  quantidadeOperador: 'gt',
+  quantidadeValor: '0',
+  quantidadeValorAte: '',
+};
+
 export const DEFAULT_PRODUTO_FILTERS = {
   searchTerm: '',
   /** false = contém (substring); true = começa com (prefixo), ambos sem distinção de maiúsculas */
@@ -11,10 +18,13 @@ export const DEFAULT_PRODUTO_FILTERS = {
   tag: '',
   cadastroIncompleto: 'all',
   ativoStatus: 'ativos',
-  quantidadeOperador: 'all',
-  quantidadeValor: '',
-  quantidadeValorAte: '',
+  ...CATALOG_SOMENTE_POSITIVOS_QUANTIDADE,
 };
+
+/** Estado inicial sempre que o utilizador abre ou reabre o catálogo. */
+export function getCatalogProdutoEntryFilters() {
+  return { ...DEFAULT_PRODUTO_FILTERS };
+}
 
 function getSearchTokens(rawTerm) {
   return parseSearchTerms(rawTerm);
