@@ -20,7 +20,7 @@ const Input = React.forwardRef(({
 }, ref) => {
   const isSearch = variant === 'search'
   const resolvedType = isSearch ? (type ?? 'search') : type
-  const skipUppercase = isSearch || UPPERCASE_SKIP_INPUT_TYPES.has(resolvedType)
+  const skipUppercase = UPPERCASE_SKIP_INPUT_TYPES.has(resolvedType)
   // Teclado numérico nativo no mobile para campos numéricos
   const resolvedInputMode =
     inputMode ?? (isSearch ? 'search' : resolvedType === 'number' ? 'decimal' : undefined)

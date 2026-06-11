@@ -14,13 +14,11 @@ export const UPPERCASE_SKIP_INPUT_TYPES = new Set([
   'radio',
   'range',
   'color',
-  'search',
 ]);
 
 export function shouldUppercaseInputElement(el) {
   if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return false;
   if (el.closest('[data-preserve-case="true"]')) return false;
-  if (el.getAttribute('name') === 'p38-search-q') return false;
   if (el instanceof HTMLInputElement && UPPERCASE_SKIP_INPUT_TYPES.has(el.type)) return false;
   return true;
 }

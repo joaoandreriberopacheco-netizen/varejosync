@@ -4,6 +4,7 @@ import { ChevronRight, Search, X } from 'lucide-react';
 import { createPageUrl } from '@/components/utils';
 import { getP38ShellColors } from '@/lib/p38ShellColors';
 import { cn } from '@/components/utils';
+import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
 
 function filterSearchItems(items, query) {
   const trimmed = String(query || '').trim();
@@ -94,15 +95,17 @@ export default function GlobalSearchBar({
           type="search"
           autoComplete="off"
           enterKeyHint="search"
+          autoCapitalize="characters"
+          name="p38-search-q"
           placeholder={placeholder}
           value={query}
-          className="flex-1 bg-transparent text-sm outline-none min-w-0 font-din-1451"
+          className="p38-data-uppercase flex-1 bg-transparent text-sm outline-none min-w-0 font-din-1451"
           style={{ color: c.text }}
           onFocus={() => setFocused(true)}
-          onChange={(e) => {
+          onChange={createUppercaseInputChangeHandler((e) => {
             setQuery(e.target.value);
             setFocused(true);
-          }}
+          })}
         />
         {showClose && (query || focused) ? (
           <button

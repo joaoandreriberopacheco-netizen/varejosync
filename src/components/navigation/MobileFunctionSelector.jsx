@@ -61,7 +61,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
 
       {!activeGroup ? (
         /* Lista principal */
-        <div className="px-4 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 124px - env(safe-area-inset-bottom))' }}>
+        <div className="p38-nav-menu px-4 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 124px - env(safe-area-inset-bottom))' }}>
           <div className="rounded-[24px] p-4" style={{ background: c.cardBg, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <h3 className="text-base font-semibold mb-3" style={{ color: c.textMuted }}>Funções</h3>
             <div className="space-y-0.5">
@@ -106,7 +106,7 @@ export default function MobileFunctionSelector({ isOpen, onClose, menuItems = []
         </div>
       ) : (
         /* Submenu do grupo */
-        <div className="px-4 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 124px - env(safe-area-inset-bottom))' }}>
+        <div className="p38-nav-menu px-4 py-4 overflow-y-auto" style={{ height: 'calc(100vh - 124px - env(safe-area-inset-bottom))' }}>
           <div className="flex items-center gap-3 mb-5">
             <button
               onClick={() => setActiveGroup(null)}

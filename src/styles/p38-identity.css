@@ -247,10 +247,13 @@
     @apply uppercase tracking-wide;
   }
 
-  .caixa-screen input,
-  .caixa-screen textarea {
-    text-transform: none;
-    letter-spacing: normal;
+  /* Menu lateral e seletor mobile de funções */
+  .p38-sidebar nav button,
+  .p38-sidebar nav a[href],
+  .p38-nav-menu a[href],
+  .p38-nav-menu button {
+    text-transform: uppercase;
+    letter-spacing: var(--p38-tracking);
   }
 
   .p38-dot {
@@ -363,9 +366,28 @@
   .p38-app .normal-case,
   .p38-app input[type='email'],
   .p38-app input[type='url'],
-  .p38-app input[type='password'] {
+  .p38-app input[type='password'],
+  .p38-app input[type='number'],
+  .p38-app input[type='date'],
+  .p38-app input[type='time'],
+  .p38-app input[type='datetime-local'],
+  .p38-app input[type='month'],
+  .p38-app input[type='week'],
+  .p38-app input[type='hidden'],
+  .p38-app input[type='checkbox'],
+  .p38-app input[type='radio'],
+  .p38-app input[type='range'],
+  .p38-app input[type='color'],
+  .p38-app input[type='file'] {
     text-transform: none;
     letter-spacing: normal;
+  }
+
+  /* Inputs de texto — maiúsculas visuais (valor normalizado no onChange/blur) */
+  .p38-app input:not([type='email']):not([type='url']):not([type='password']):not([type='number']):not([type='date']):not([type='time']):not([type='datetime-local']):not([type='month']):not([type='week']):not([type='hidden']):not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']),
+  .p38-app textarea {
+    text-transform: uppercase;
+    letter-spacing: var(--p38-tracking);
   }
 
   /* Placeholders discretos — menos carga cognitiva */
