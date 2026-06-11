@@ -1,0 +1,8 @@
+# Registo do espelho P38 → A29
+# Preenche quando o espelho estiver completo.
+
+data_espelho=
+varejosync_commit_sha=
+varejosync_branch=main
+autor=
+notas=

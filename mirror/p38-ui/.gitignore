@@ -1,0 +1,4 @@
+# Depois de correr pack-from-varejosync.sh, não commitar segredos acidentalmente
+.env
+.env.*
+!.env.example
