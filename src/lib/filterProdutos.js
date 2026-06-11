@@ -1,5 +1,15 @@
 import { isCadastroIncompleto } from '@/components/produtos/ProdutosHelpers';
 import { parseSearchTerms } from '@/lib/searchTokens';
+import {
+  DEFAULT_CATALOG_METRIC_FILTER,
+  describeNumericComparison,
+  getProdutoNumericMetricValue,
+  hasActiveCatalogMetricFilter,
+  hasActiveNumericComparison,
+  matchesNumericComparison,
+  parseNumericFilterValue,
+  CATALOG_NUMERIC_METRIC_LABELS,
+} from '@/lib/catalogNumericFilters';
 
 /** Filtro de quantidade do atalho «somente positivos» (estoque > 0). */
 export const CATALOG_SOMENTE_POSITIVOS_QUANTIDADE = {
@@ -19,6 +29,7 @@ export const DEFAULT_PRODUTO_FILTERS = {
   cadastroIncompleto: 'all',
   ativoStatus: 'ativos',
   ...CATALOG_SOMENTE_POSITIVOS_QUANTIDADE,
+  ...DEFAULT_CATALOG_METRIC_FILTER,
 };
 
 /** Estado inicial sempre que o utilizador abre ou reabre o catálogo. */
@@ -30,28 +41,19 @@ function getSearchTokens(rawTerm) {
   return parseSearchTerms(rawTerm);
 }
 
-function parseQuantityFilterNumber(value) {
-  if (value === null || value === undefined || value === '') return null;
-  const parsed = Number(String(value).replace(',', '.'));
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 function hasActiveQuantityFilter(filters) {
-  if (!filters || filters.quantidadeOperador === 'all') return false;
-  if (filters.quantidadeOperador === 'between') {
-    return (
-      parseQuantityFilterNumber(filters.quantidadeValor) !== null ||
-      parseQuantityFilterNumber(filters.quantidadeValorAte) !== null
-    );
-  }
-  return parseQuantityFilterNumber(filters.quantidadeValor) !== null;
+  return hasActiveNumericComparison(
+    filters?.quantidadeOperador,
+    filters?.quantidadeValor,
+    filters?.quantidadeValorAte,
+  );
 }
 
 /** Atalho do catálogo: somente produtos com estoque > 0 (quantidade maior que zero). */
 export function isSomentePositivosFilter(filters) {
   if (!filters || filters.quantidadeOperador !== 'gt') return false;
   if (String(filters.quantidadeValorAte ?? '').trim()) return false;
-  const valor = parseQuantityFilterNumber(filters.quantidadeValor);
+  const valor = parseNumericFilterValue(filters.quantidadeValor);
   return valor === 0;
 }
 
@@ -101,26 +103,24 @@ export function filterProdutos(produtos, filters) {
     const quantidadeMatch = () => {
       if (!hasActiveQuantityFilter(filters)) return true;
       const estoque = Number(p.estoque_atual || 0);
-      const valor = parseQuantityFilterNumber(filters.quantidadeValor);
-      const valorAte = parseQuantityFilterNumber(filters.quantidadeValorAte);
+      return matchesNumericComparison(
+        estoque,
+        filters.quantidadeOperador,
+        filters.quantidadeValor,
+        filters.quantidadeValorAte,
+      );
+    };
 
-      switch (filters.quantidadeOperador) {
-        case 'gt':
-          return valor === null ? true : estoque > valor;
-        case 'gte':
-          return valor === null ? true : estoque >= valor;
-        case 'lt':
-          return valor === null ? true : estoque < valor;
-        case 'lte':
-          return valor === null ? true : estoque <= valor;
-        case 'between': {
-          const min = valor !== null ? valor : -Infinity;
-          const max = valorAte !== null ? valorAte : Infinity;
-          return estoque >= Math.min(min, max) && estoque <= Math.max(min, max);
-        }
-        default:
-          return true;
-      }
+    const metricaMatch = () => {
+      if (!hasActiveCatalogMetricFilter(filters)) return true;
+      const valor = getProdutoNumericMetricValue(p, filters.metricaCampo);
+      if (valor === null) return false;
+      return matchesNumericComparison(
+        valor,
+        filters.metricaOperador,
+        filters.metricaValor,
+        filters.metricaValorAte,
+      );
     };
 
     const statusMatch = () => {
@@ -151,6 +151,7 @@ export function filterProdutos(produtos, filters) {
       fornecedorMatch &&
       ativoMatch &&
       quantidadeMatch() &&
+      metricaMatch() &&
       statusMatch() &&
       cadastroMatch()
     );
@@ -169,6 +170,7 @@ export function countActiveProdutoFilters(filters) {
     hasActiveQuantityFilter(filters) &&
       !isSomentePositivosFilter(filters) &&
       filters.quantidadeOperador,
+    hasActiveCatalogMetricFilter(filters) && filters.metricaCampo,
   ].filter(Boolean).length;
 }
 
@@ -200,19 +202,22 @@ export function describeProdutoFilters(filters, { categorias = [], fornecedores 
   if (filters.ativoStatus === 'ativos') parts.push('somente ativos');
   if (filters.ativoStatus === 'inativos') parts.push('somente inativos');
   if (hasActiveQuantityFilter(filters)) {
-    const labels = {
-      gt: 'maior que',
-      gte: 'maior ou igual a',
-      lt: 'menor que',
-      lte: 'menor ou igual a',
-      between: 'entre',
-    };
-    const inicio = String(filters.quantidadeValor ?? '').trim();
-    const fim = String(filters.quantidadeValorAte ?? '').trim();
     parts.push(
-      filters.quantidadeOperador === 'between'
-        ? `quantidade entre ${inicio || '-∞'} e ${fim || '+∞'}`
-        : `quantidade ${labels[filters.quantidadeOperador] || filters.quantidadeOperador} ${inicio}`
+      `quantidade ${describeNumericComparison(
+        filters.quantidadeOperador,
+        filters.quantidadeValor,
+        filters.quantidadeValorAte,
+      )}`
+    );
+  }
+  if (hasActiveCatalogMetricFilter(filters)) {
+    const metricLabel = CATALOG_NUMERIC_METRIC_LABELS[filters.metricaCampo] || filters.metricaCampo;
+    parts.push(
+      `${metricLabel} ${describeNumericComparison(
+        filters.metricaOperador,
+        filters.metricaValor,
+        filters.metricaValorAte,
+      )}`
     );
   }
   return parts.length ? parts.join(' · ') : 'nenhum';

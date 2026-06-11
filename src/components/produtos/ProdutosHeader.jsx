@@ -9,6 +9,7 @@ import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizont
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
+import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import MassTagGenerator from '@/components/produtos/MassTagGenerator';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import { cn } from '@/components/utils';
@@ -396,6 +397,12 @@ export default function ProdutosHeader({
                 )}
               </div>
             </div>
+
+            <ProdutosNumericMetricFilter
+              filters={filters}
+              setFilters={setFilters}
+              handleFilterChange={handleFilterChange}
+            />
 
             <div className="flex items-center gap-2 pt-0.5 border-t border-border/30 desktop-layout:col-span-2 desktop-layout:border-0 desktop-layout:pt-0 min-w-0">
               <div className="flex-1 min-w-0">
