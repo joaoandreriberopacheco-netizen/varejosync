@@ -8,6 +8,7 @@ import { createPageUrl } from '@/components/utils';
 import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
+import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
 import MassTagGenerator from '@/components/produtos/MassTagGenerator';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import { cn } from '@/components/utils';
@@ -199,6 +200,7 @@ export default function ProdutosHeader({
               onChange={e => handleFilterChange('searchTerm', e.target.value)}
             />
           </div>
+          <ProdutosSomentePositivosToggle filters={filters} setFilters={setFilters} />
           <Button
             variant="ghost"
             size="icon"

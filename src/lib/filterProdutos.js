@@ -37,6 +37,14 @@ function hasActiveQuantityFilter(filters) {
   return parseQuantityFilterNumber(filters.quantidadeValor) !== null;
 }
 
+/** Atalho do catálogo: somente produtos com estoque > 0 (quantidade maior que zero). */
+export function isSomentePositivosFilter(filters) {
+  if (!filters || filters.quantidadeOperador !== 'gt') return false;
+  if (String(filters.quantidadeValorAte ?? '').trim()) return false;
+  const valor = parseQuantityFilterNumber(filters.quantidadeValor);
+  return valor === 0;
+}
+
 /** Busca por nome/descrição/códigos; espaço ou ";" exigem múltiplos termos. */
 export function produtoMatchesSearchTerm(produto, rawTerm, options = {}) {
   const terms = getSearchTokens(rawTerm);
@@ -148,7 +156,9 @@ export function countActiveProdutoFilters(filters) {
     filters.tag,
     filters.cadastroIncompleto !== 'all' && filters.cadastroIncompleto,
     filters.ativoStatus !== DEFAULT_PRODUTO_FILTERS.ativoStatus && filters.ativoStatus,
-    hasActiveQuantityFilter(filters) && filters.quantidadeOperador,
+    hasActiveQuantityFilter(filters) &&
+      !isSomentePositivosFilter(filters) &&
+      filters.quantidadeOperador,
   ].filter(Boolean).length;
 }
 
