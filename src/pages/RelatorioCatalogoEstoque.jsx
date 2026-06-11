@@ -15,7 +15,7 @@ import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import RelatorioCatalogoEstoquePrint from '@/components/produtos/RelatorioCatalogoEstoquePrint';
 
-const REPORT_COLS = ['estoque_atual', 'valor_compra', 'preco_custo', 'inventario_valorizado'];
+const REPORT_COLS = ['estoque_atual', 'valor_compra', 'preco_custo', 'preco_venda', 'inventario_valorizado'];
 
 function formatarMoeda(n) {
   return (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -106,7 +106,7 @@ export default function RelatorioCatalogoEstoque() {
     <>
       <style>{`
       @media print {
-        @page { size: A4 landscape; margin: 12mm; }
+        @page { size: A4 portrait; margin: 12mm; }
         body > * { visibility: hidden !important; }
         body * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         #relatorio-catalogo-estoque-print,
@@ -199,7 +199,8 @@ export default function RelatorioCatalogoEstoque() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="text-[11px] text-muted-foreground">
               Totais dos SKUs filtrados: <strong>estoque</strong> (vitrine comercial quando activa) ×{' '}
-              <strong>valor de compra</strong> ou <strong>custo total</strong>, como no Tree Grid do catálogo.
+              <strong>valor de compra</strong>, <strong>custo total</strong> ou <strong>preço de venda</strong>,
+              como no Tree Grid do catálogo.
             </div>
             <div className="flex flex-wrap gap-6">
               <TotalKpi
@@ -211,6 +212,11 @@ export default function RelatorioCatalogoEstoque() {
                 label="Inventário (custo total)"
                 value={roundToTwoDecimals(totals.totalCusto)}
                 hint="Σ estoque × custo total"
+              />
+              <TotalKpi
+                label="Inventário (preço de venda)"
+                value={roundToTwoDecimals(totals.totalVenda)}
+                hint="Σ estoque × preço de venda"
               />
             </div>
           </div>
