@@ -32,6 +32,33 @@ import {
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
+const etaMatchesFilter = (embarque, modo, dataRef, inicial, final) => {
+  if (!modo) return true;
+
+  const etaKey = embarque?.eta ? toLocalDateKey(embarque.eta) : '';
+  if (!etaKey) return false;
+
+  if (modo === 'antes') {
+    return !dataRef || etaKey <= dataRef;
+  }
+  if (modo === 'depois') {
+    return !dataRef || etaKey >= dataRef;
+  }
+  if (modo === 'entre') {
+    if (!inicial && !final) return true;
+    if (inicial && etaKey < inicial) return false;
+    if (final && etaKey > final) return false;
+    return true;
+  }
+  if (modo === 'personalizado') {
+    if (!inicial && !final) return true;
+    if (inicial && etaKey < inicial) return false;
+    if (final && etaKey > final) return false;
+    return true;
+  }
+  return true;
+};
+
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const isNecessidadeRenderizada = (embarque) => {
@@ -351,6 +378,10 @@ export default function PedidosCompraPage() {
   const [tagsSel, setTagsSel] = useState([]);
   const [dataInicial, setDataInicial] = useState('');
   const [dataFinal, setDataFinal] = useState('');
+  const [etaFiltroModo, setEtaFiltroModo] = useState('');
+  const [etaData, setEtaData] = useState('');
+  const [etaInicial, setEtaInicial] = useState('');
+  const [etaFinal, setEtaFinal] = useState('');
   const [showImportador, setShowImportador] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selecionadosIds, setSelecionadosIds] = useState([]);
@@ -668,9 +699,10 @@ export default function PedidosCompraPage() {
       if (tagsSel.length > 0 && !tagsSel.some((t) => (p.tags || []).includes(t))) return false;
       if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
       if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
+      if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
       return true;
     });
-  }, [cardsFonte, search, statusSel, fornecedorSel, tagsSel, dataInicial, dataFinal]);
+  }, [cardsFonte, search, statusSel, fornecedorSel, tagsSel, dataInicial, dataFinal, etaFiltroModo, etaData, etaInicial, etaFinal]);
 
   const calcularValorPendentePedido = (pedido) => {
     const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
@@ -798,7 +830,12 @@ export default function PedidosCompraPage() {
       });
   }, [pedidosVisiveisLista, groupBy, sortOrder]);
 
-  const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || statusSel.some(status => status !== '__nao_concluido__');
+  const hasEtaFilter = etaFiltroModo && (
+    (['antes', 'depois'].includes(etaFiltroModo) && etaData) ||
+    (etaFiltroModo === 'entre' && (etaInicial || etaFinal)) ||
+    (etaFiltroModo === 'personalizado' && (etaInicial || etaFinal))
+  );
+  const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter || statusSel.some(status => status !== '__nao_concluido__');
 
   return (
     <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>
@@ -825,6 +862,10 @@ export default function PedidosCompraPage() {
         todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
         dataInicial={dataInicial} onDataInicial={setDataInicial}
         dataFinal={dataFinal} onDataFinal={setDataFinal}
+        etaFiltroModo={etaFiltroModo} onEtaFiltroModo={setEtaFiltroModo}
+        etaData={etaData} onEtaData={setEtaData}
+        etaInicial={etaInicial} onEtaInicial={setEtaInicial}
+        etaFinal={etaFinal} onEtaFinal={setEtaFinal}
         hasActiveFilters={hasActiveFilters}
         onLimparFiltros={() => {
           setSearch('');
@@ -833,6 +874,10 @@ export default function PedidosCompraPage() {
           setTagsSel([]);
           setDataInicial('');
           setDataFinal('');
+          setEtaFiltroModo('');
+          setEtaData('');
+          setEtaInicial('');
+          setEtaFinal('');
         }}
       />
 
@@ -866,7 +911,7 @@ export default function PedidosCompraPage() {
         quantidadeSelecionados={selecionadosIds.length}
         enviandoLote={enviandoLote}
         pedidos={filtrados}
-        filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Fornecedores: ${fornecedorSel.length || 0} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'}`}
+        filtrosDesc={`Busca: ${search || 'todas'} · Status: ${statusSel.join(', ') || 'todos'} · Fornecedores: ${fornecedorSel.length || 0} · Tags: ${tagsSel.length || 0} · Período: ${dataInicial || '-'} até ${dataFinal || '-'} · ETA: ${etaFiltroModo || 'todos'}${etaFiltroModo === 'antes' || etaFiltroModo === 'depois' ? ` (${etaData || '-'})` : ''}${etaFiltroModo === 'entre' || etaFiltroModo === 'personalizado' ? ` (${etaInicial || '-'} até ${etaFinal || '-'})` : ''}`}
         kpis={{
           totalPedidos: pedidosVisiveisPendentes.length,
           totalGeral: valorTotal,

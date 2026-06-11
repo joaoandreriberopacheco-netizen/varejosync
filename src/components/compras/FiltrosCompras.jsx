@@ -5,6 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
 
+const ETA_FILTRO_MODOS = [
+  { value: 'antes', label: 'Antes de' },
+  { value: 'depois', label: 'Depois de' },
+  { value: 'entre', label: 'Entre' },
+  { value: 'personalizado', label: 'Personalizado' },
+];
+
 const STATUS_OPTIONS = [
   { codigo: '__nao_concluido__',    label: 'Ocultar concluídos',    cor: 'bg-primary text-white dark:bg-muted dark:text-foreground' },
   { codigo: 'Rascunho',             label: 'Rascunho',              cor: 'bg-muted text-foreground/90' },
@@ -31,6 +38,10 @@ export default function FiltrosCompras({
   todasTags, tagsSel, onTagsSel,
   dataInicial, onDataInicial,
   dataFinal, onDataFinal,
+  etaFiltroModo, onEtaFiltroModo,
+  etaData, onEtaData,
+  etaInicial, onEtaInicial,
+  etaFinal, onEtaFinal,
   hasActiveFilters, onLimparFiltros 
 }) {
   const [showFilters, setShowFilters] = useState(false);
@@ -84,6 +95,20 @@ export default function FiltrosCompras({
     } else {
       onTagsSel([...tagsSel, tag]);
     }
+  };
+
+  const selecionarModoEta = (modo) => {
+    if (etaFiltroModo === modo) {
+      onEtaFiltroModo('');
+      onEtaData('');
+      onEtaInicial('');
+      onEtaFinal('');
+      return;
+    }
+    onEtaFiltroModo(modo);
+    onEtaData('');
+    onEtaInicial('');
+    onEtaFinal('');
   };
 
   const fornecedoresSelecionadosNomes = fornecedorSel.length > 0
@@ -159,6 +184,72 @@ export default function FiltrosCompras({
                 onApply={(inicio, fim) => { onDataInicial(inicio); onDataFinal(fim); }}
                 onClear={() => { onDataInicial(''); onDataFinal(''); }}
               />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wide">Período da ETA</label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {ETA_FILTRO_MODOS.map((modo) => {
+                  const selected = etaFiltroModo === modo.value;
+                  return (
+                    <button
+                      key={modo.value}
+                      type="button"
+                      onClick={() => selecionarModoEta(modo.value)}
+                      className={`inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded-full transition-all ${selected ? 'bg-teal-600 dark:bg-teal-500 text-white font-medium shadow-sm' : 'bg-muted dark:bg-muted text-muted-foreground'}`}
+                    >
+                      {selected && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
+                      {modo.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {(etaFiltroModo === 'antes' || etaFiltroModo === 'depois') && (
+                <div>
+                  <label className="text-[11px] text-muted-foreground mb-1.5 block">
+                    {etaFiltroModo === 'antes' ? 'Até a data' : 'A partir da data'}
+                  </label>
+                  <Input
+                    type="date"
+                    value={etaData}
+                    onChange={(e) => onEtaData(e.target.value)}
+                    className="h-11 text-sm bg-muted dark:bg-muted border-0 shadow-sm rounded-2xl"
+                  />
+                </div>
+              )}
+
+              {etaFiltroModo === 'entre' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[11px] text-muted-foreground mb-1.5 block">De</label>
+                    <Input
+                      type="date"
+                      value={etaInicial}
+                      onChange={(e) => onEtaInicial(e.target.value)}
+                      className="h-11 text-sm bg-muted dark:bg-muted border-0 shadow-sm rounded-2xl"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-muted-foreground mb-1.5 block">Até</label>
+                    <Input
+                      type="date"
+                      value={etaFinal}
+                      onChange={(e) => onEtaFinal(e.target.value)}
+                      className="h-11 text-sm bg-muted dark:bg-muted border-0 shadow-sm rounded-2xl"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {etaFiltroModo === 'personalizado' && (
+                <MobileDateRangePicker
+                  startDate={etaInicial}
+                  endDate={etaFinal}
+                  onApply={(inicio, fim) => { onEtaInicial(inicio); onEtaFinal(fim); }}
+                  onClear={() => { onEtaInicial(''); onEtaFinal(''); }}
+                />
+              )}
             </div>
 
             <div>
