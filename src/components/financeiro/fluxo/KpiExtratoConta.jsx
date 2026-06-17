@@ -8,7 +8,7 @@ import {
   formatKpiValor,
 } from './FinanceiroKpiInline';
 
-export default function KpiExtratoConta({ kpis, layout = 'card' }) {
+export default function KpiExtratoConta({ kpis, layout = 'card', saldoLabel = 'Saldo' }) {
   const taxa = kpis.entradas > 0 ? (kpis.saidas / kpis.entradas * 100).toFixed(0) : 0;
 
   return (
@@ -29,7 +29,7 @@ export default function KpiExtratoConta({ kpis, layout = 'card' }) {
       />
       <FinanceiroKpiSaldo
         layout={layout}
-        label="Saldo"
+        label={saldoLabel}
         value={
           <>
             {kpis.saldo >= 0 ? '+' : '−'}

@@ -61,7 +61,13 @@ export default function ContaFinanceiraRow({
         </>
       }
       value={formatFinanceiroValor(saldo)}
-      valueSub={conta.agencia ? `Ag ${conta.agencia}` : undefined}
+      valueSub={
+        conta.is_caixa_pdv
+          ? 'Dinheiro na gaveta'
+          : conta.agencia
+            ? `Ag ${conta.agencia}`
+            : undefined
+      }
       trailing={
         <div className="flex items-center gap-0.5 shrink-0">
           {pendencias > 0 && <Clock className="h-3 w-3 text-amber-500" />}

@@ -7,8 +7,58 @@ export function lancamentoParticipaSaldo(l) {
   return l.status === 'Pago' || !!l.data_pagamento;
 }
 
+const FORMAS_NAO_DINHEIRO_FISICO = new Set([
+  'PIX',
+  'Cartão de Débito',
+  'Cartão de Crédito',
+  'Conta a Pagar',
+  'Vale Troca',
+]);
+
+/**
+ * Receitas que não representam dinheiro físico na gaveta do PDV (PIX, cartão, fiado, etc.).
+ * Despesas pagas na conta PDV sempre saem da gaveta e entram no saldo.
+ */
+export function formaPagamentoNaoDinheiroFisico(l) {
+  if (!l || l.tipo !== 'Receita') return false;
+
+  const fp = String(l.forma_pagamento || '').trim();
+  const fpt = String(l.forma_pagamento_tipo || '').trim();
+
+  if (fp === 'Dinheiro') return false;
+  if (FORMAS_NAO_DINHEIRO_FISICO.has(fp)) return true;
+  if (fpt === 'Cartão Débito' || fpt === 'Cartão Crédito' || fpt === 'Boleto') return true;
+
+  const tags = Array.isArray(l.tags) ? l.tags : [];
+  if (tags.includes('CARTAO') || tags.includes('FIADO')) return true;
+
+  // Receita com forma definida que não é Dinheiro (ex.: PIX legado na conta errada).
+  if (fp) return true;
+
+  return false;
+}
+
+/** Saldo da conta Caixa PDV no módulo financeiro: só dinheiro na gaveta. */
+export function lancamentoParticipaSaldoCaixaPDV(l) {
+  if (!lancamentoParticipaSaldo(l)) return false;
+  if (l.tipo === 'Despesa') return true;
+  if (l.tipo === 'Receita') return !formaPagamentoNaoDinheiroFisico(l);
+  return false;
+}
+
+export function lancamentoParticipaSaldoConta(conta, l) {
+  if (conta?.is_caixa_pdv === true) return lancamentoParticipaSaldoCaixaPDV(l);
+  return lancamentoParticipaSaldo(l);
+}
+
 export function deltaLancamentoSaldo(l) {
   if (!lancamentoParticipaSaldo(l)) return 0;
+  const valor = Number(l.valor || 0);
+  return l.tipo === 'Receita' ? valor : -valor;
+}
+
+export function deltaLancamentoSaldoConta(conta, l) {
+  if (!lancamentoParticipaSaldoConta(conta, l)) return 0;
   const valor = Number(l.valor || 0);
   return l.tipo === 'Receita' ? valor : -valor;
 }
@@ -37,6 +87,7 @@ export function filtrarMovimentosDaConta(contaId, todosMovimentos = []) {
 
 /**
  * Saldo canónico = saldo_inicial + lançamentos pagos (receita/despesa) + reforços/sangrias.
+ * Contas is_caixa_pdv: apenas dinheiro físico na gaveta (vendas em dinheiro, despesas, recolhimentos).
  * Fonte única para lista de contas, extrato e KPIs.
  */
 export function calcularSaldoContaFinanceira(conta, todosLancamentos = [], todosMovimentos = []) {
@@ -46,7 +97,7 @@ export function calcularSaldoContaFinanceira(conta, todosLancamentos = [], todos
   const movimentos = filtrarMovimentosDaConta(conta.id, todosMovimentos);
 
   let delta = 0;
-  lancamentos.forEach((l) => { delta += deltaLancamentoSaldo(l); });
+  lancamentos.forEach((l) => { delta += deltaLancamentoSaldoConta(conta, l); });
   movimentos.forEach((m) => { delta += deltaMovimentoCaixaSaldo(m); });
 
   return roundToTwoDecimals(saldoInicial + delta);
@@ -75,8 +126,20 @@ export function contaTemDivergenciaSaldo(conta, saldoCalculado) {
   return Math.abs(gravado - saldoCalculado) > 0.009;
 }
 
+function movimentoCaixaParticipaExtrato(mov) {
+  return mov?.tipo === 'Reforço' || mov?.tipo === 'Sangria';
+}
+
+/** Indica se o movimento compõe o saldo/extrato da conta (PDV usa regra de dinheiro físico). */
+export function movimentoParticipaExtrato(mov, conta = null) {
+  if (mov?.origem === 'movimento' || mov?.conta_id) {
+    return movimentoCaixaParticipaExtrato(mov);
+  }
+  return lancamentoParticipaSaldoConta(conta, mov);
+}
+
 /** Entradas e saídas de um conjunto de movimentos (extrato / período). */
-export function totaisEntradaSaidaMovimentos(movimentos = []) {
+export function totaisEntradaSaidaMovimentos(movimentos = [], conta = null) {
   let entradas = 0;
   let saidas = 0;
 
@@ -86,7 +149,7 @@ export function totaisEntradaSaidaMovimentos(movimentos = []) {
       else if (mov.tipo === 'Sangria') saidas += Number(mov.valor || 0);
       return;
     }
-    if (!lancamentoParticipaSaldo(mov)) return;
+    if (!lancamentoParticipaSaldoConta(conta, mov)) return;
     if (mov.tipo === 'Receita') entradas += Number(mov.valor || 0);
     else if (mov.tipo === 'Despesa') saidas += Number(mov.valor || 0);
   });
@@ -95,11 +158,4 @@ export function totaisEntradaSaidaMovimentos(movimentos = []) {
     entradas: roundToTwoDecimals(entradas),
     saidas: roundToTwoDecimals(saidas),
   };
-}
-
-export function movimentoParticipaExtrato(mov) {
-  if (mov?.origem === 'movimento') {
-    return mov.tipo === 'Reforço' || mov.tipo === 'Sangria';
-  }
-  return lancamentoParticipaSaldo(mov);
 }

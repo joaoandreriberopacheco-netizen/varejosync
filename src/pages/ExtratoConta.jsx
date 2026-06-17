@@ -232,13 +232,15 @@ export default function ExtratoContaPage() {
   };
 
   const getDataMovimento = (mov) => mov.data_pagamento || mov.data_vencimento || mov.created_date;
-  const participaDoSaldo = movimentoParticipaExtrato;
+  const participaDoSaldo = (mov) => movimentoParticipaExtrato(mov, conta);
 
-  // Combina e ordena movimentações
+  // Combina e ordena movimentações (PDV: só o que compõe dinheiro na gaveta)
   const todasMovimentacoes = [
     ...lancamentos.map(l => ({ ...l, origem: 'lancamento' })),
     ...movimentosCaixa.map(m => ({ ...m, origem: 'movimento' }))
-  ].sort((a, b) => new Date(getDataMovimento(a)) - new Date(getDataMovimento(b)));
+  ]
+    .filter((mov) => participaDoSaldo(mov))
+    .sort((a, b) => new Date(getDataMovimento(a)) - new Date(getDataMovimento(b)));
 
   // Aplica filtro de período
   const getDataRange = () => {
@@ -302,18 +304,22 @@ export default function ExtratoContaPage() {
 
   const totalEntradasAposPeriodo = totaisEntradaSaidaMovimentos(
     movimentacoesAposPeriodo.filter(participaDoSaldo),
+    conta,
   ).entradas;
   const totalSaidasAposPeriodo = totaisEntradaSaidaMovimentos(
     movimentacoesAposPeriodo.filter(participaDoSaldo),
+    conta,
   ).saidas;
 
   const saldoNoFimDoPeriodo = saldoReal - totalEntradasAposPeriodo + totalSaidasAposPeriodo;
 
   const totalEntradasPeriodo = totaisEntradaSaidaMovimentos(
     movimentacoesNoPeriodo.filter(participaDoSaldo),
+    conta,
   ).entradas;
   const totalSaidasPeriodo = totaisEntradaSaidaMovimentos(
     movimentacoesNoPeriodo.filter(participaDoSaldo),
+    conta,
   ).saidas;
 
   let saldoAcumulado = saldoNoFimDoPeriodo - totalEntradasPeriodo + totalSaidasPeriodo;
@@ -324,6 +330,7 @@ export default function ExtratoContaPage() {
 
     const { entradas: totalEntradas, saidas: totalSaidas } = totaisEntradaSaidaMovimentos(
       movimentacoesDia.filter(participaDoSaldo),
+      conta,
     );
 
     saldoAcumulado = saldoAcumulado + totalEntradas - totalSaidas;
@@ -451,7 +458,9 @@ export default function ExtratoContaPage() {
             </Button>
             <div className="min-w-0 flex-1">
               <p className="truncate text-lg font-semibold leading-none text-foreground font-glacial">{conta.nome}</p>
-              <p className="truncate text-[11px] text-muted-foreground">{conta.tipo}</p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {conta.is_caixa_pdv ? 'Dinheiro na gaveta' : conta.tipo}
+              </p>
             </div>
             <div className="flex shrink-0 gap-0.5 no-pdf-capture">
               <button
@@ -480,7 +489,11 @@ export default function ExtratoContaPage() {
               </button>
             </div>
           </div>
-          <KpiExtratoConta kpis={kpisExtrato} layout="stack" />
+          <KpiExtratoConta
+            kpis={kpisExtrato}
+            layout="stack"
+            saldoLabel={conta.is_caixa_pdv ? 'Saldo (dinheiro)' : 'Saldo'}
+          />
         </div>
 
         {/* Desktop */}
@@ -491,11 +504,17 @@ export default function ExtratoContaPage() {
             </Button>
             <div>
               <p className="text-2xl font-semibold leading-none text-foreground font-glacial">{conta.nome}</p>
-              <p className="text-xs text-muted-foreground">{conta.tipo}</p>
+              <p className="text-xs text-muted-foreground">
+                {conta.is_caixa_pdv ? 'Dinheiro na gaveta' : conta.tipo}
+              </p>
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <KpiExtratoConta kpis={kpisExtrato} layout="inline" />
+            <KpiExtratoConta
+              kpis={kpisExtrato}
+              layout="inline"
+              saldoLabel={conta.is_caixa_pdv ? 'Saldo (dinheiro)' : 'Saldo'}
+            />
           </div>
           <div className="flex shrink-0 gap-1 no-pdf-capture">
             <button
