@@ -5,42 +5,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   ArrowLeft,
   Plus,
-  ArrowUpCircle,
-  ArrowDownCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
   ArrowRightLeft,
-  Search,
   FileDown,
   Printer,
-  ListFilter,
-  ArrowDownAZ,
-  ArrowUpAZ,
 } from 'lucide-react';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, isWithinInterval, parseISO } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
-import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
-import { useCompactShell } from '@/hooks/use-breakpoint';
-import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
-import { cn } from '@/components/utils';
-
-const PERIODOS_EXTRATO = [
-  { value: 'hoje', label: 'Hoje' },
-  { value: 'ontem', label: 'Ontem' },
-  { value: 'semana', label: 'Semana' },
-  { value: 'mes', label: 'Mês' },
-  { value: 'todos', label: 'Tudo' },
-  { value: 'personalizado', label: 'Período' },
-];
-
-function extratoMovAccent(tipo) {
-  if (tipo === 'Receita' || tipo === 'Reforço') return 'success';
-  if (tipo === 'Despesa' || tipo === 'Sangria') return 'danger';
-  return 'muted';
-}
+import { dataHoje } from '@/components/utils/dateUtils';
+import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
+import KpiExtratoConta from '@/components/financeiro/fluxo/KpiExtratoConta';
+import FiltrosExtratoConta, { PERIODOS_EXTRATO } from '@/components/financeiro/fluxo/FiltrosExtratoConta';
+import ListaExtratoConta from '@/components/financeiro/fluxo/ListaExtratoConta';
+import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
+import { formatFinanceiroGrupoLabel } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 
 export default function ExtratoContaPage() {
   const [conta, setConta] = useState(null);
@@ -48,16 +31,13 @@ export default function ExtratoContaPage() {
   const [movimentosCaixa, setMovimentosCaixa] = useState([]);
   const [contas, setContas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showFAB, setShowFAB] = useState(false);
+  const [fabOpen, setFabOpen] = useState(false);
   const [dialogType, setDialogType] = useState(null);
   const [filtroPeriodo, setFiltroPeriodo] = useState('mes');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const [sortOrdem, setSortOrdem] = useState('az');
-  const isMobile = useCompactShell();
-  const chromeExpanded = useBottomNavScrollVisibility(isMobile);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const { toast } = useToast();
 
   const [formLancamento, setFormLancamento] = useState({
@@ -231,7 +211,7 @@ export default function ExtratoContaPage() {
 
   const openDialog = (type) => {
     setDialogType(type);
-    setShowFAB(false);
+    setFabOpen(false);
     
     if (type === 'receita' || type === 'despesa') {
       setFormLancamento({
@@ -376,59 +356,49 @@ export default function ExtratoContaPage() {
     };
   }).reverse();
 
+  const saldoCalculado = saldoReal;
+
   const diasExibicao = useMemo(() => {
     return diasComSaldo.map((diaData) => ({
       ...diaData,
-      movimentacoes: [...diaData.movimentacoes].sort((a, b) => {
-        const da = (a.descricao || a.tipo || '').toLocaleLowerCase('pt-BR');
-        const db = (b.descricao || b.tipo || '').toLocaleLowerCase('pt-BR');
-        const cmp = da.localeCompare(db, 'pt-BR');
-        return sortOrdem === 'az' ? cmp : -cmp;
-      }),
+      movimentacoes: sortLancamentosPorDescricao(diaData.movimentacoes),
     }));
-  }, [diasComSaldo, sortOrdem]);
+  }, [diasComSaldo]);
 
-  const saldoCalculado = saldoReal;
+  const normalizeMov = (mov) => {
+    const data = getDataMovimento(mov);
+    let tipo = mov.tipo;
+    if (tipo === 'Reforço') tipo = 'Receita';
+    if (tipo === 'Sangria') tipo = 'Despesa';
+    return {
+      ...mov,
+      tipo,
+      data_pagamento: data,
+      data_vencimento: data,
+      status: mov.status || 'Pago',
+    };
+  };
 
-  const searchRow = (
-    <div className="flex items-center gap-2 min-w-0">
-      <div className="relative flex-1 min-w-0">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        <Input
-          placeholder="Buscar movimentações..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 h-11 bg-muted/40 dark:bg-muted border-0 rounded-2xl"
-        />
-      </div>
-      <button
-        type="button"
-        onClick={() => setFilterSheetOpen(true)}
-        className={cn(
-          'h-11 w-11 shrink-0 rounded-2xl flex items-center justify-center transition-colors',
-          filtroPeriodo !== 'mes'
-            ? 'bg-primary/15 text-primary dark:bg-muted dark:text-foreground'
-            : 'bg-muted/60 text-muted-foreground hover:bg-muted'
-        )}
-        aria-label="Filtrar período"
-      >
-        <ListFilter className="w-4 h-4" />
-      </button>
-      <button
-        type="button"
-        onClick={() => setSortOrdem((o) => (o === 'az' ? 'za' : 'az'))}
-        className="h-11 w-11 shrink-0 rounded-full bg-muted/60 text-muted-foreground hover:bg-muted flex items-center justify-center transition-colors"
-        aria-label={sortOrdem === 'az' ? 'Ordenar Z–A' : 'Ordenar A–Z'}
-        title={sortOrdem === 'az' ? 'A–Z' : 'Z–A'}
-      >
-        {sortOrdem === 'az' ? (
-          <ArrowDownAZ className="w-4 h-4" />
-        ) : (
-          <ArrowUpAZ className="w-4 h-4" />
-        )}
-      </button>
-    </div>
-  );
+  const grupos = useMemo(() => {
+    const hStr = dataHoje();
+    const oStr = format(subDays(new Date(`${hStr}T12:00:00`), 1), 'yyyy-MM-dd');
+    return diasExibicao.map((diaData) => ({
+      k: diaData.dia,
+      label: formatFinanceiroGrupoLabel(diaData.dia, hStr, oStr),
+      items: diaData.movimentacoes.map(normalizeMov),
+      totais: { r: diaData.totalEntradas, d: diaData.totalSaidas },
+    }));
+  }, [diasExibicao]);
+
+  const totalMovimentacoes = movimentacoesFiltradas.length;
+  const kpisExtrato = useMemo(() => ({
+    entradas: totalEntradasPeriodo,
+    saidas: totalSaidasPeriodo,
+    saldo: saldoCalculado,
+  }), [totalEntradasPeriodo, totalSaidasPeriodo, saldoCalculado]);
+
+  const periodoLabel = PERIODOS_EXTRATO.find((p) => p.v === filtroPeriodo)?.l || 'Período';
+  const hasActiveFilters = filtroPeriodo !== 'mes' || !!dataInicio || !!dataFim;
 
   // Funções de exportação
   const exportarCSV = () => {
@@ -483,257 +453,154 @@ export default function ExtratoContaPage() {
   }
 
   return (
-    <div id="extrato-print-root" className="min-h-screen bg-background font-glacial">
-      {/* Mobile — chrome colapsável ao descer; busca + filtro + ordem sempre visíveis */}
-      <div className="desktop-layout:hidden sticky top-0 z-20 bg-card/95 backdrop-blur-md border-b border-border/40 shadow-sm shrink-0">
-        <div
-          className={cn(
-            'overflow-hidden transition-[max-height,opacity] duration-300 ease-out',
-            chromeExpanded ? 'max-h-[28rem] opacity-100' : 'max-h-0 opacity-0'
-          )}
-          aria-hidden={!chromeExpanded}
-        >
-          <div className="px-4 pt-3 pb-2">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => window.history.back()}
-                className="shrink-0 hover:bg-muted"
-                aria-label="Voltar"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <div className="flex-1 text-center min-w-0 px-1">
-                <h1 className="text-lg font-medium text-foreground truncate">{conta.nome}</h1>
-                <p className="text-xs text-muted-foreground">{conta.tipo}</p>
-              </div>
-              <div className="flex gap-1 shrink-0 no-pdf-capture">
-                <Button variant="ghost" size="icon" onClick={exportarCSV} title="Exportar CSV" className="h-10 w-10">
-                  <FileDown className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={imprimir} title="Imprimir" className="h-10 w-10">
-                  <Printer className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="bg-muted/40 dark:bg-muted px-4 py-2.5 rounded-xl mb-3">
-              <p className="text-[11px] text-muted-foreground mb-0.5">Saldo Atual</p>
-              <p className="text-xl font-semibold text-foreground tabular-nums">{formatCurrency(saldoCalculado)}</p>
-            </div>
-          </div>
-        </div>
-        <div className="px-4 py-2">{searchRow}</div>
-      </div>
-
-      {/* Desktop — header completo */}
-      <div className="hidden desktop-layout:block bg-card shadow-sm sticky top-0 z-10 shrink-0">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" onClick={() => window.history.back()} className="gap-2 hover:bg-muted">
-              <ArrowLeft className="w-5 h-5" />
-              <span>Voltar</span>
+    <div id="extrato-print-root" className="w-full min-w-0 max-w-full space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451 bg-background">
+      <div className="min-w-0 max-w-full space-y-1.5">
+        {/* Mobile */}
+        <div className="flex flex-col gap-1.5 md:hidden">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.history.back()}
+              className="h-8 w-8 shrink-0"
+              aria-label="Voltar"
+            >
+              <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-center flex-1">
-              <h1 className="text-2xl font-medium text-foreground">{conta.nome}</h1>
-              <p className="text-sm text-muted-foreground">{conta.tipo}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-lg font-semibold leading-none text-foreground font-glacial">{conta.nome}</p>
+              <p className="truncate text-[11px] text-muted-foreground">{conta.tipo}</p>
             </div>
-            <div className="flex gap-2 no-pdf-capture">
-              <Button variant="ghost" size="icon" onClick={exportarCSV} title="Exportar CSV">
-                <FileDown className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={imprimir} title="Imprimir">
-                <Printer className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-          <div className="bg-muted/40 dark:bg-muted px-6 py-3 rounded-xl mb-4">
-            <p className="text-xs text-muted-foreground mb-1">Saldo Atual</p>
-            <p className="text-2xl font-semibold text-foreground">{formatCurrency(saldoCalculado)}</p>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-4">
-            {PERIODOS_EXTRATO.map((filtro) => (
+            <div className="flex shrink-0 gap-0.5 no-pdf-capture">
               <button
-                key={filtro.value}
                 type="button"
-                onClick={() => setFiltroPeriodo(filtro.value)}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors',
-                  filtroPeriodo === filtro.value
-                    ? 'bg-primary dark:bg-muted text-white'
-                    : 'bg-card dark:bg-muted text-foreground/90 hover:bg-muted dark:hover:bg-muted'
-                )}
+                onClick={exportarCSV}
+                className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
+                aria-label="Exportar CSV"
               >
-                {filtro.label}
+                <FileDown className="h-4 w-4 text-foreground/90" />
               </button>
-            ))}
-          </div>
-          {filtroPeriodo === 'personalizado' && (
-            <div className="flex gap-2 mb-4">
-              <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="dark:bg-muted dark:border-border/40" />
-              <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="dark:bg-muted dark:border-border/40" />
+              <button
+                type="button"
+                onClick={imprimir}
+                className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
+                aria-label="Imprimir"
+              >
+                <Printer className="h-4 w-4 text-foreground/90" />
+              </button>
             </div>
-          )}
-          <div className="relative max-w-xl">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <Input
-              placeholder="Buscar movimentações..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-muted/40 dark:bg-muted border-0"
-            />
+          </div>
+          <KpiExtratoConta kpis={kpisExtrato} layout="stack" />
+        </div>
+
+        {/* Desktop */}
+        <div className="hidden min-w-0 items-center gap-3 md:flex">
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => window.history.back()} className="h-8 w-8" aria-label="Voltar">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <p className="text-2xl font-semibold leading-none text-foreground font-glacial">{conta.nome}</p>
+              <p className="text-xs text-muted-foreground">{conta.tipo}</p>
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <KpiExtratoConta kpis={kpisExtrato} layout="inline" />
+          </div>
+          <div className="flex shrink-0 gap-1 no-pdf-capture">
+            <button
+              type="button"
+              onClick={exportarCSV}
+              className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
+              aria-label="Exportar CSV"
+            >
+              <FileDown className="h-4 w-4 text-foreground/90" />
+            </button>
+            <button
+              type="button"
+              onClick={imprimir}
+              className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
+              aria-label="Imprimir"
+            >
+              <Printer className="h-4 w-4 text-foreground/90" />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Lista de movimentações por dia */}
-      <div className="max-w-7xl mx-auto w-full px-4 py-4 desktop-layout:py-6 pb-[var(--p38-scroll-pad-below-nav)] desktop-layout:pb-6">
-        {diasExibicao.length === 0 ? (
-          <div className="bg-card rounded-xl shadow-sm text-center py-16">
-            <p className="text-muted-foreground mb-2">Nenhuma movimentação encontrada</p>
-            <p className="text-sm text-muted-foreground">
-              Use o botão + para registrar movimentações
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {diasExibicao.map((diaData, diaIdx) => (
-              <div key={diaIdx} className="bg-card border border-border rounded-xl overflow-hidden">
-                {/* Header do dia */}
-                <div className="bg-card px-4 py-3 border-b border-border">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground">
-                        {format(new Date(diaData.dia), "dd 'de' MMMM 'de' yyyy")}
-                      </p>
-                      <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
-                        <span className="text-[#4A5D23] dark:text-[#a4ce33]">
-                          ↑ {formatCurrency(diaData.totalEntradas)}
-                        </span>
-                        <span className="text-red-600 dark:text-red-400">
-                          ↓ {formatCurrency(diaData.totalSaidas)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Saldo Final</p>
-                      <p className="text-lg font-semibold text-foreground tabular-nums">
-                        {formatCurrency(diaData.saldoFinal)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+      <FiltrosExtratoConta
+        search={searchTerm}
+        onSearch={setSearchTerm}
+        filtersOpen={filtersOpen}
+        onFiltersOpenChange={setFiltersOpen}
+        periodo={filtroPeriodo}
+        onPeriodo={setFiltroPeriodo}
+        cs={dataInicio}
+        ce={dataFim}
+        onCs={setDataInicio}
+        onCe={setDataFim}
+      />
 
-                <P38MobileLineList>
-                  {diaData.movimentacoes.map((mov, idx) => {
-                    const entrada = mov.tipo === 'Receita' || mov.tipo === 'Reforço';
-                    const hora = format(new Date(getDataMovimento(mov)), 'HH:mm');
-                    const subtitle = mov.categoria ? `${hora} · ${mov.categoria}` : hora;
-                    return (
-                      <P38MobileLine
-                        key={idx}
-                        striped={idx % 2 === 1}
-                        accent={p38AccentKeyFromTone(extratoMovAccent(mov.tipo))}
-                        title={mov.descricao || mov.tipo}
-                        subtitle={subtitle}
-                        meta={<P38StatusLabel tone={extratoMovAccent(mov.tipo)}>{mov.tipo}</P38StatusLabel>}
-                        value={
-                          <span className={entrada ? 'text-[#4A5D23] dark:text-[#a4ce33]' : 'text-red-600 dark:text-red-400'}>
-                            {entrada ? '+' : '-'}{formatCurrency(mov.valor)}
-                          </span>
-                        }
-                      />
-                    );
-                  })}
-                </P38MobileLineList>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <FinanceiroListaMeta
+        total={totalMovimentacoes}
+        totalLabel={totalMovimentacoes === 1 ? 'movimentação' : 'movimentações'}
+        hasActiveFilters={hasActiveFilters || !!searchTerm}
+        onLimparFiltros={() => {
+          setFiltroPeriodo('mes');
+          setDataInicio('');
+          setDataFim('');
+          setSearchTerm('');
+        }}
+        summaryChips={
+          <>
+            {filtroPeriodo !== 'mes' && <FinanceiroSummaryChip>{periodoLabel}</FinanceiroSummaryChip>}
+            {searchTerm && <FinanceiroSummaryChip>Busca</FinanceiroSummaryChip>}
+          </>
+        }
+      />
 
-      {/* Filtro de período — mobile (sheet) */}
-      <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-[28px] border-0 px-4 pb-8">
-          <SheetHeader className="text-left mb-4">
-            <SheetTitle className="font-glacial text-foreground">Período do extrato</SheetTitle>
-          </SheetHeader>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {PERIODOS_EXTRATO.map((filtro) => (
-              <button
-                key={filtro.value}
-                type="button"
-                onClick={() => {
-                  setFiltroPeriodo(filtro.value);
-                  if (filtro.value !== 'personalizado') setFilterSheetOpen(false);
-                }}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm transition-colors',
-                  filtroPeriodo === filtro.value
-                    ? 'bg-primary text-primary-foreground dark:bg-muted dark:text-foreground'
-                    : 'bg-muted text-foreground/90'
-                )}
-              >
-                {filtro.label}
-              </button>
-            ))}
-          </div>
-          {filtroPeriodo === 'personalizado' && (
-            <div className="flex flex-col gap-2 mb-4">
-              <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="h-11 rounded-2xl border-0 bg-muted" />
-              <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="h-11 rounded-2xl border-0 bg-muted" />
-              <Button type="button" className="h-11 rounded-2xl" onClick={() => setFilterSheetOpen(false)}>
-                Aplicar
-              </Button>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      <ListaExtratoConta grupos={grupos} loading={isLoading} />
 
-      {/* FAB Principal */}
-      <button
-        type="button"
-        onClick={() => setShowFAB(!showFAB)}
-        className={cn(
-          'fixed right-6 p38-bottom-fab1 z-[55] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all duration-300 hover:scale-110 hover:bg-background dark:bg-muted dark:hover:bg-muted',
-          isMobile && !chromeExpanded && 'translate-y-8 opacity-0 pointer-events-none'
-        )}
-      >
-        <Plus className={`w-6 h-6 transition-transform ${showFAB ? 'rotate-45' : ''}`} />
-      </button>
-
-      {/* FAB Expandido */}
-      {showFAB && (
-        <>
-          <div 
-            className="fixed inset-0 z-[54] bg-black/20"
-            onClick={() => setShowFAB(false)}
-          />
-          <div className="fixed right-6 z-[55] flex flex-col gap-3 p38-bottom-fab-mid">
-            <button
-              onClick={() => openDialog('receita')}
-              className="flex items-center gap-3 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105"
-            >
-              <ArrowUpCircle className="w-5 h-5" />
-              <span className="font-medium">Receita</span>
-            </button>
-            <button
-              onClick={() => openDialog('despesa')}
-              className="flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105"
-            >
-              <ArrowDownCircle className="w-5 h-5" />
-              <span className="font-medium">Despesa</span>
-            </button>
-            <button
-              onClick={() => openDialog('transferencia')}
-              className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-full shadow-lg transition-all hover:scale-105"
-            >
-              <ArrowRightLeft className="w-5 h-5" />
-              <span className="font-medium">Transferência</span>
-            </button>
-          </div>
-        </>
+      {fabOpen && (
+        <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />
       )}
+      <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
+        {fabOpen && (
+          <>
+            <button
+              type="button"
+              onClick={() => openDialog('receita')}
+              className="flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-lg whitespace-nowrap transition-transform active:scale-95 dark:bg-primary dark:text-primary-foreground"
+            >
+              <ArrowDownLeft className="h-4 w-4" />
+              Receita
+            </button>
+            <button
+              type="button"
+              onClick={() => openDialog('despesa')}
+              className="flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-lg whitespace-nowrap transition-transform active:scale-95 dark:bg-primary dark:text-primary-foreground"
+            >
+              <ArrowUpRight className="h-4 w-4" />
+              Despesa
+            </button>
+            <button
+              type="button"
+              onClick={() => openDialog('transferencia')}
+              className="flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-lg whitespace-nowrap transition-transform active:scale-95 dark:bg-primary dark:text-primary-foreground"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+              Transf.
+            </button>
+          </>
+        )}
+        <button
+          type="button"
+          onClick={() => setFabOpen((o) => !o)}
+          className={`flex h-[52px] w-[52px] items-center justify-center rounded-full shadow-xl transition-all active:scale-95 ${fabOpen ? 'rotate-45 bg-[#383e47]' : 'bg-[#4a5240] dark:bg-[#a4ce33]'}`}
+        >
+          <Plus className={`h-6 w-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
+        </button>
+      </div>
 
       {/* Dialog Receita/Despesa */}
       <Dialog open={dialogType === 'receita' || dialogType === 'despesa'} onOpenChange={() => setDialogType(null)}>
