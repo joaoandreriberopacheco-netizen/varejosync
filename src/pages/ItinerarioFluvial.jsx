@@ -9,7 +9,7 @@ import {
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, getFluvialPeriodLabel, getFluvialViewDate, isWithinFluvialPeriod } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, eventoTemDataNoPeriodo, getFluvialPeriodLabel, getFluvialTimelineDate } from '@/components/logistica-sandbox/fluvialDataUtils';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
@@ -37,13 +37,10 @@ export default function ItinerarioFluvial() {
   const todayRef = React.useRef(null);
   const queryClient = useQueryClient();
 
-  const { data: eventosLogisticos = [], isPending: eventosPending } = useLogisticaEventosQuery({
-    initialData: [],
-    periodoFiltro,
-  });
-  const { data: embarques = [], isPending: embarquesPending } = useLogisticaEmbarquesQuery({ initialData: [] });
-  const { data: lancamentosFinanceiros = [], isPending: lancamentosPending } = useLogisticaLancamentosFretesQuery({ initialData: [] });
-  const timelineCarregando = eventosPending || embarquesPending || lancamentosPending;
+  const { data: eventosLogisticos = [], isPending: eventosPending, isFetching: eventosFetching } = useLogisticaEventosQuery();
+  const { data: embarques = [], isPending: embarquesPending } = useLogisticaEmbarquesQuery();
+  const { data: lancamentosFinanceiros = [], isPending: lancamentosPending } = useLogisticaLancamentosFretesQuery();
+  const timelineCarregando = eventosPending || embarquesPending || lancamentosPending || (eventosFetching && eventosLogisticos.length === 0);
 
   useEffect(() => {
     const unsub = base44.entities.LancamentoFinanceiro.subscribe((ev) => {
@@ -115,8 +112,9 @@ export default function ItinerarioFluvial() {
     );
 
     return eventos
+      .filter((evento) => eventoTemDataNoPeriodo(evento, periodoFiltro))
       .map((evento) => {
-        const viewDate = getFluvialViewDate(evento, viewMode);
+        const viewDate = getFluvialTimelineDate(evento, viewMode);
         return {
           ...evento,
           visualizacao_data: viewDate,
@@ -125,7 +123,6 @@ export default function ItinerarioFluvial() {
       })
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
-        if (!isWithinFluvialPeriod(evento.visualizacao_data, periodoFiltro)) return false;
         const temVinculoEmbarque = eventosComEmbarque.has(evento.id);
         if (embarqueLinkFilter === 'com_vinculo' && !temVinculoEmbarque) return false;
         if (embarqueLinkFilter === 'sem_vinculo' && temVinculoEmbarque) return false;
@@ -143,6 +140,8 @@ export default function ItinerarioFluvial() {
     () => Object.values(groupedEventos).reduce((total, items) => total + items.length, 0),
     [groupedEventos],
   );
+
+  const totalViagensCarregadas = eventos.length;
 
   const timelineItems = useMemo(() => {
     return Object.entries(groupedEventos)
@@ -222,6 +221,7 @@ export default function ItinerarioFluvial() {
                embarqueLinkFilter={embarqueLinkFilter}
                onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
                totalViagens={totalViagensFiltradas}
+               totalCarregadas={totalViagensCarregadas}
              />
              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
                <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
@@ -248,9 +248,20 @@ export default function ItinerarioFluvial() {
                      />
                    </div>
                  )) : (
-                   <div className="rounded-3xl bg-card border border-border/40 shadow-sm p-6 text-sm text-muted-foreground text-center">
-                     Nenhuma viagem no período selecionado ({getFluvialPeriodLabel(periodoFiltro)}).
-                     {periodoFiltro !== 'todas' ? ' Tente ampliar o filtro para ver mais datas.' : ' Verifique se existem viagens cadastradas nas transportadoras.'}
+                   <div className="rounded-3xl bg-card border border-border/40 shadow-sm p-6 text-sm text-muted-foreground text-center space-y-2">
+                     <p>
+                       Nenhuma viagem no período selecionado ({getFluvialPeriodLabel(periodoFiltro)}).
+                       {periodoFiltro !== 'todas' ? ' Tente ampliar o filtro para ver mais datas.' : ''}
+                     </p>
+                     {totalViagensCarregadas > 0 ? (
+                       <p className="text-xs">
+                         Há {totalViagensCarregadas} viagem{totalViagensCarregadas !== 1 ? 's' : ''} na base, mas nenhuma cai neste recorte de datas.
+                       </p>
+                     ) : (
+                       <p className="text-xs">
+                         Nenhuma viagem foi carregada da base. Verifique se as transportadoras têm saída de referência e viagens geradas na aba Boats.
+                       </p>
+                     )}
                    </div>
                  )}
                </div>

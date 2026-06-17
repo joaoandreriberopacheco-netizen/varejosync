@@ -116,6 +116,39 @@ export function isWithinFluvialPeriod(dateStr, periodoId, referenceDate = new Da
   return normalized >= inicio && normalized <= fim;
 }
 
+export function getFluvialTimelineDate(evento, viewMode) {
+  return (
+    getFluvialViewDate(evento, viewMode)
+    || normalizeFluvialDateKey(evento.data_saida_origem)
+    || normalizeFluvialDateKey(evento.data_chegada_manaus)
+    || normalizeFluvialDateKey(evento.data_chegada_destino)
+    || normalizeFluvialDateKey(evento.data_referencia)
+  );
+}
+
+export function getFluvialEventDateCandidates(evento) {
+  return [
+    evento.data_saida_origem,
+    evento.data_referencia,
+    evento.data_saida,
+    evento.data_chegada_manaus,
+    evento.data_retorno_origem,
+    evento.previsao_retorno,
+    evento.data_chegada_destino,
+    evento.previsao_chegada,
+    evento.data_previsao_chegada,
+  ]
+    .map(normalizeFluvialDateKey)
+    .filter(Boolean);
+}
+
+export function eventoTemDataNoPeriodo(evento, periodoId) {
+  const datas = getFluvialEventDateCandidates(evento);
+  if (!datas.length) return false;
+  if (periodoId === 'todas') return true;
+  return datas.some((data) => isWithinFluvialPeriod(data, periodoId));
+}
+
 export function getFluvialPeriodLabel(periodoId) {
   return FLUVIAL_PERIOD_OPTIONS.find((item) => item.id === periodoId)?.label || '±30 dias';
 }

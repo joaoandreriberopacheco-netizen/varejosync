@@ -85,7 +85,7 @@ export default function BoatsTab() {
     isFetching,
   } = useTransportadorasFluvialQuery();
 
-  const { data: eventosData = [], isPending: eventosPending, isFetching: eventosFetching } = useLogisticaEventosQuery({ periodoFiltro: 'todas' });
+  const { data: eventosData = [], isPending: eventosPending, isFetching: eventosFetching } = useLogisticaEventosQuery();
   const { data: embarquesData = [], isPending: embarquesPending } = useLogisticaEmbarquesQuery();
   const { data: lancamentosFretesData = [], isPending: lancamentosPending } = useLogisticaLancamentosFretesQuery();
   const viagensCarregando = eventosPending || embarquesPending || lancamentosPending;

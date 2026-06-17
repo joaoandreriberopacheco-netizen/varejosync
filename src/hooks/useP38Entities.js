@@ -2,11 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
-import {
-  FLUVIAL_DEFAULT_PERIOD,
-  getFluvialFetchWindowDays,
-  unifyLogisticaEventos,
-} from '@/components/logistica-sandbox/fluvialDataUtils';
+import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
 
@@ -145,59 +141,59 @@ export function useHomeKpisQuery(options = {}) {
   });
 }
 
-export async function fetchLogisticaEventosList(periodoFiltro = FLUVIAL_DEFAULT_PERIOD) {
-  const dias = getFluvialFetchWindowDays(periodoFiltro);
-  const inicio = format(subDays(new Date(), dias), 'yyyy-MM-dd');
-  const fim = format(addDays(new Date(), dias), 'yyyy-MM-dd');
+function mergeEventoRows(arrays) {
+  const mapa = new Map();
+  arrays.flat().forEach((item) => {
+    const row = item?.data || item;
+    if (row?.id) mapa.set(row.id, row);
+  });
+  return Array.from(mapa.values());
+}
+
+export async function fetchLogisticaEventosList() {
+  const inicio = format(subDays(new Date(), 120), 'yyyy-MM-dd');
+  const fim = format(addDays(new Date(), 120), 'yyyy-MM-dd');
   const dateRange = { $gte: inicio, $lte: fim };
 
-  const [fromSandbox, fromProd] = await Promise.all([
-    base44.entities.EventoLogisticoSandbox.filter(
-      {
-        $or: [
-          { data_saida_origem: dateRange },
-          { data_chegada_manaus: dateRange },
-          { data_chegada_destino: dateRange },
-          { data_referencia: dateRange },
-        ],
-      },
-      'data_saida_origem',
-      500,
-    ).catch(() => []),
-    base44.entities.EventosLogisticos.filter(
-      {
-        $or: [
-          { data_saida: { $gte: `${inicio}T00:00:00.000Z`, $lte: `${fim}T23:59:59.999Z` } },
-          { data_previsao_chegada: { $gte: `${inicio}T00:00:00.000Z`, $lte: `${fim}T23:59:59.999Z` } },
-        ],
-      },
-      '-created_date',
-      300,
-    ).catch(() => base44.entities.EventosLogisticos.list('-created_date', 300).catch(() => [])),
+  const [
+    bySaida,
+    byManaus,
+    byDestino,
+    byReferencia,
+    listRecent,
+    listOldest,
+    fromProd,
+  ] = await Promise.all([
+    base44.entities.EventoLogisticoSandbox.filter({ data_saida_origem: dateRange }, 'data_saida_origem', 500).catch(() => []),
+    base44.entities.EventoLogisticoSandbox.filter({ data_chegada_manaus: dateRange }, 'data_saida_origem', 500).catch(() => []),
+    base44.entities.EventoLogisticoSandbox.filter({ data_chegada_destino: dateRange }, 'data_saida_origem', 500).catch(() => []),
+    base44.entities.EventoLogisticoSandbox.filter({ data_referencia: dateRange }, 'data_saida_origem', 500).catch(() => []),
+    base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 250).catch(() => []),
+    base44.entities.EventoLogisticoSandbox.list('data_saida_origem', 250).catch(() => []),
+    base44.entities.EventosLogisticos.list('-created_date', 300).catch(() => []),
   ]);
 
-  const eventos = unifyLogisticaEventos(fromSandbox, fromProd);
+  const sandboxRows = mergeEventoRows([bySaida, byManaus, byDestino, byReferencia, listRecent, listOldest]);
+  const eventos = unifyLogisticaEventos(sandboxRows, fromProd);
 
   if (eventos.length > 0) {
     return eventos;
   }
 
   const [sandboxFallback, prodFallback] = await Promise.all([
-    base44.entities.EventoLogisticoSandbox.list('-created_date', 200).catch(() => []),
-    base44.entities.EventosLogisticos.list('-created_date', 200).catch(() => []),
+    base44.entities.EventoLogisticoSandbox.list('-created_date', 300).catch(() => []),
+    base44.entities.EventosLogisticos.list('-created_date', 300).catch(() => []),
   ]);
 
   return unifyLogisticaEventos(sandboxFallback, prodFallback);
 }
 
 export function useLogisticaEventosQuery(options = {}) {
-  const { periodoFiltro = FLUVIAL_DEFAULT_PERIOD, ...queryOptions } = options;
-
   return useQuery({
-    queryKey: [...p38Keys.logistica.eventos(), periodoFiltro],
-    queryFn: () => fetchLogisticaEventosList(periodoFiltro),
+    queryKey: p38Keys.logistica.eventos(),
+    queryFn: () => fetchLogisticaEventosList(),
     ...entityQueryDefaults,
-    ...queryOptions,
+    ...options,
   });
 }
 

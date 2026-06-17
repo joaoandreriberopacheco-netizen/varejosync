@@ -5,7 +5,7 @@ import { useLogisticaEventosQuery, useLogisticaLancamentosFretesQuery } from '@/
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, getFluvialViewDate, isWithinFluvialPeriod } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, eventoTemDataNoPeriodo, getFluvialTimelineDate } from '@/components/logistica-sandbox/fluvialDataUtils';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
@@ -35,10 +35,7 @@ export default function ItinerarioFluvialMobile() {
   const todayRef = useRef(null);
   const queryClient = useQueryClient();
 
-  const { data: eventosLogisticos = [] } = useLogisticaEventosQuery({
-    initialData: [],
-    periodoFiltro,
-  });
+  const { data: eventosLogisticos = [] } = useLogisticaEventosQuery();
 
   const { data: embarques = [] } = useQuery({
     queryKey: ['embarques-logistica'],
@@ -116,8 +113,9 @@ export default function ItinerarioFluvialMobile() {
     );
 
     return eventos
+      .filter((evento) => eventoTemDataNoPeriodo(evento, periodoFiltro))
       .map((evento) => {
-        const viewDate = getFluvialViewDate(evento, viewMode);
+        const viewDate = getFluvialTimelineDate(evento, viewMode);
         return {
           ...evento,
           visualizacao_data: viewDate,
@@ -126,7 +124,6 @@ export default function ItinerarioFluvialMobile() {
       })
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
-        if (!isWithinFluvialPeriod(evento.visualizacao_data, periodoFiltro)) return false;
         const temVinculoEmbarque = eventosComEmbarque.has(evento.id);
         if (embarqueLinkFilter === 'com_vinculo' && !temVinculoEmbarque) return false;
         if (embarqueLinkFilter === 'sem_vinculo' && temVinculoEmbarque) return false;

@@ -31,9 +31,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
   const todayRef = useRef(null);
 
   const { data: eventosLogisticos = [] } = useLogisticaEventosQuery({
-    initialData: [],
     enabled: open,
-    periodoFiltro: 'todas',
   });
   const { data: embarques = [] } = useLogisticaEmbarquesQuery({ initialData: [], enabled: open });
   const { data: contasPrevistas = [] } = useLogisticaContasPrevistasQuery({ initialData: [], enabled: open });

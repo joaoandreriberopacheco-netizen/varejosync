@@ -30,13 +30,14 @@ export default function FluvialFilterBar({
   embarqueLinkFilter,
   onEmbarqueLinkFilterChange,
   totalViagens = 0,
+  totalCarregadas = 0,
 }) {
   return (
     <div className="rounded-3xl bg-card border border-border/40 shadow-sm p-4 space-y-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Filtros da timeline</p>
         <p className="text-xs text-muted-foreground">
-          {totalViagens} viagem{totalViagens !== 1 ? 's' : ''}
+          {totalViagens} de {totalCarregadas} viagem{totalCarregadas !== 1 ? 's' : ''}
         </p>
       </div>
 
