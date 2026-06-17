@@ -27,10 +27,7 @@ import { useProdutosListQuery, useTerceirosListQuery } from '@/hooks/useP38Entit
 import { addDays, format } from 'date-fns';
 import { agora, dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { registrarTransicao } from './transicaoHelper';
-import { runOperacaoAuthBypass } from '@/components/auth/runOperacaoAuthBypass';
-import PinValidationDialog from '@/components/auth/PinValidationDialog';
-import PinSetupDialog from '@/components/auth/PinSetupDialog';
-import { buildBypassAuthPayload, pedidoCompraSaveRequerPin } from '@/components/auth/operacaoAuthFlags';
+import { buildBypassAuthPayload } from '@/components/auth/operacaoAuthFlags';
 import MobileProductSelector from './MobileProductSelector';
 import AtualizarPrecosDialog from './AtualizarPrecosDialog';
 import PendenciasPedido from './PendenciasPedido';
@@ -148,9 +145,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
   const [lancamentosRefreshKey, setLancamentosRefreshKey] = useState(0);
-  const [showSavePinDialog, setShowSavePinDialog] = useState(false);
-  const [showPinSetupForSave, setShowPinSetupForSave] = useState(false);
-  const [pendingSaveOptions, setPendingSaveOptions] = useState(null);
   const { toast } = useToast();
 
   const pedidoAtual = pedidoLogistica || pedido;
@@ -757,35 +751,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       return;
     }
 
-    if (!pedidoCompraSaveRequerPin(saveOptions)) {
-      void executarSaveComAuth(saveOptions);
-      return;
-    }
-
-    try {
-      const u = await base44.auth.me();
-      if (!u?.pin_definido) {
-        setPendingSaveOptions(saveOptions);
-        setShowPinSetupForSave(true);
-        toast({
-          title: 'Cadastre seu PIN',
-          description: 'Defina um PIN de 6 dígitos para enviar pedidos ao financeiro.',
-        });
-        return;
-      }
-    } catch {
-      /* segue para o diálogo de PIN */
-    }
-
-    setPendingSaveOptions(saveOptions);
-    setShowSavePinDialog(true);
-  };
-
-  const handleSavePinConfirmado = () => {
-    const opts = pendingSaveOptions ?? {};
-    setShowSavePinDialog(false);
-    setPendingSaveOptions(null);
-    void executarSaveComAuth(opts);
+    void executarSaveComAuth(saveOptions);
   };
 
   const handleSolicitarEdicao = async () => {
@@ -1753,46 +1719,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
          </DialogContent>
        </Dialog>
 
-       <PinValidationDialog
-         forceEnabled
-         isOpen={showSavePinDialog}
-         onClose={() => {
-           setShowSavePinDialog(false);
-           setPendingSaveOptions(null);
-         }}
-         onSuccess={handleSavePinConfirmado}
-         operationName={
-           saveOptionsLabel(pendingSaveOptions) ||
-           `Salvar pedido${formData.numero ? ` ${formData.numero}` : ''}`
-         }
-       />
-
-       <PinSetupDialog
-         isOpen={showPinSetupForSave}
-         onClose={async () => {
-           setShowPinSetupForSave(false);
-           try {
-             const u = await base44.auth.me();
-             setCurrentUser(u);
-             if (u?.pin_definido && pendingSaveOptions != null) {
-               setShowSavePinDialog(true);
-             } else {
-               setPendingSaveOptions(null);
-             }
-           } catch {
-             setPendingSaveOptions(null);
-           }
-         }}
-         user={currentUser}
-       />
        </div>
        );
        }
-
-function saveOptionsLabel(saveOptions) {
-  if (!saveOptions?.status) return null;
-  if (saveOptions.status === 'Aguardando Aprovação Financeira') {
-    return 'Enviar pedido ao financeiro';
-  }
-  return `Salvar pedido (${saveOptions.status})`;
-}

@@ -9,11 +9,11 @@ export const OPERACAO_AUTH_PHOTO_ENABLED =
     String(import.meta.env.VITE_OPERACAO_AUTH_PHOTO_ENABLED ?? 'false').toLowerCase() === 'true';
 
 /**
- * Enviar pedido de compra ao financeiro — PIN sem foto (desligar: VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN=false).
- * Salvar rascunho não exige PIN; só o envio para "Aguardando Aprovação Financeira".
+ * Enviar pedido de compra ao financeiro — PIN desligado por defeito.
+ * Para reativar: VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN=true
  */
 export const PEDIDO_COMPRA_SAVE_AUTH_ENABLED =
-    String(import.meta.env.VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN ?? 'true').toLowerCase() !== 'false';
+    String(import.meta.env.VITE_PEDIDO_COMPRA_SAVE_AUTH_PIN ?? 'false').toLowerCase() === 'true';
 
 export const PEDIDO_COMPRA_STATUS_AGUARDANDO_FINANCEIRO = 'Aguardando Aprovação Financeira';
 
