@@ -113,11 +113,13 @@ export default function FinanceiroLancRow({
   dataField = 'auto',
   showPago = false,
   emSelecao = false,
+  selecionarPagos = false,
   selecionado = false,
   onToggleSelecionado,
 }) {
   const cancelado = l.status === 'Cancelado';
   const isPago = l.status === 'Pago' || !!l.data_pagamento;
+  const podeSelecionar = emSelecao && (selecionarPagos ? isPago : !isPago);
   const conc = l.status_conciliacao || 'N/A';
   const data =
     dataField === 'vencimento'
@@ -128,7 +130,7 @@ export default function FinanceiroLancRow({
 
   const trailing = (
     <>
-      {emSelecao && !isPago && (
+      {podeSelecionar && (
         <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado?.(l.id)} />
       )}
       {conc === 'Pendente' && <Clock className="h-2.5 w-2.5 text-muted-foreground" />}
@@ -155,7 +157,7 @@ export default function FinanceiroLancRow({
     trailing,
   };
 
-  if (emSelecao && !isPago) {
+  if (podeSelecionar) {
     return (
       <P38MobileLine
         {...commonProps}

@@ -8,6 +8,7 @@ export default function ListaContasAbertas({
   loading,
   onRow,
   emSelecao = false,
+  selecionarPagos = false,
   selecionados = [],
   onToggleSelecionado,
 }) {
@@ -33,10 +34,11 @@ export default function ListaContasAbertas({
               key={l.id}
               l={l}
               striped={index % 2 === 1}
-              dataField="vencimento"
+              dataField={selecionarPagos ? 'pagamento' : 'vencimento'}
               showPago
               onClick={onRow}
               emSelecao={emSelecao}
+              selecionarPagos={selecionarPagos}
               selecionado={selecionados.includes(l.id)}
               onToggleSelecionado={onToggleSelecionado}
             />
