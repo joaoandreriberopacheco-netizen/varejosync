@@ -9,7 +9,7 @@ import {
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, getFluvialViewDate, isWithinFluvialPeriod } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, getFluvialPeriodLabel, getFluvialViewDate, isWithinFluvialPeriod } from '@/components/logistica-sandbox/fluvialDataUtils';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
@@ -37,7 +37,10 @@ export default function ItinerarioFluvial() {
   const todayRef = React.useRef(null);
   const queryClient = useQueryClient();
 
-  const { data: eventosLogisticos = [], isPending: eventosPending } = useLogisticaEventosQuery({ initialData: [] });
+  const { data: eventosLogisticos = [], isPending: eventosPending } = useLogisticaEventosQuery({
+    initialData: [],
+    periodoFiltro,
+  });
   const { data: embarques = [], isPending: embarquesPending } = useLogisticaEmbarquesQuery({ initialData: [] });
   const { data: lancamentosFinanceiros = [], isPending: lancamentosPending } = useLogisticaLancamentosFretesQuery({ initialData: [] });
   const timelineCarregando = eventosPending || embarquesPending || lancamentosPending;
@@ -246,7 +249,8 @@ export default function ItinerarioFluvial() {
                    </div>
                  )) : (
                    <div className="rounded-3xl bg-card border border-border/40 shadow-sm p-6 text-sm text-muted-foreground text-center">
-                     Nenhuma viagem no período selecionado. Tente ampliar o filtro para ver mais datas.
+                     Nenhuma viagem no período selecionado ({getFluvialPeriodLabel(periodoFiltro)}).
+                     {periodoFiltro !== 'todas' ? ' Tente ampliar o filtro para ver mais datas.' : ' Verifique se existem viagens cadastradas nas transportadoras.'}
                    </div>
                  )}
                </div>

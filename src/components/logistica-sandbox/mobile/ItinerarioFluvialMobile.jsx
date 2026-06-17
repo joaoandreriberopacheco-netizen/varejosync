@@ -35,7 +35,10 @@ export default function ItinerarioFluvialMobile() {
   const todayRef = useRef(null);
   const queryClient = useQueryClient();
 
-  const { data: eventosLogisticos = [] } = useLogisticaEventosQuery({ initialData: [] });
+  const { data: eventosLogisticos = [] } = useLogisticaEventosQuery({
+    initialData: [],
+    periodoFiltro,
+  });
 
   const { data: embarques = [] } = useQuery({
     queryKey: ['embarques-logistica'],

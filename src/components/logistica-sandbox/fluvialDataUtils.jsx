@@ -2,6 +2,7 @@ import { format, subDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export const FLUVIAL_DEFAULT_PERIOD = '30d';
+export const FLUVIAL_FETCH_WINDOW_ALL_DAYS = 365;
 
 export const FLUVIAL_PERIOD_OPTIONS = [
   { id: '30d', label: '±30 dias', dias: 30 },
@@ -10,10 +11,79 @@ export const FLUVIAL_PERIOD_OPTIONS = [
   { id: 'todas', label: 'Todas', dias: null },
 ];
 
+export function normalizeFluvialDateKey(value) {
+  if (!value) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : format(value, 'yyyy-MM-dd');
+  }
+  if (typeof value === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : format(parsed, 'yyyy-MM-dd');
+  }
+  return null;
+}
+
+export function normalizeEventoLogisticoRecord(item) {
+  if (!item) return item;
+
+  const dataSaida = normalizeFluvialDateKey(
+    item.data_saida_origem || item.data_referencia || item.data_saida,
+  );
+  const chegadaDestino = normalizeFluvialDateKey(
+    item.data_chegada_destino || item.previsao_chegada || item.data_previsao_chegada,
+  );
+  const chegadaManaus = normalizeFluvialDateKey(
+    item.data_chegada_manaus || item.data_retorno_origem || item.previsao_retorno,
+  );
+
+  return {
+    ...item,
+    codigo: item.codigo || item.lancamento_financeiro_numero || (item.id ? String(item.id).slice(0, 8) : null),
+    embarcacao_nome: item.embarcacao_nome || item.nome || item.transportadora,
+    transportadora_nome: item.transportadora_nome || item.transportadora || item.embarcacao_nome,
+    data_saida_origem: dataSaida || item.data_saida_origem,
+    data_referencia: normalizeFluvialDateKey(item.data_referencia) || dataSaida,
+    data_chegada_destino: chegadaDestino || item.data_chegada_destino,
+    previsao_chegada: chegadaDestino || item.previsao_chegada,
+    data_chegada_manaus: chegadaManaus || item.data_chegada_manaus,
+    data_retorno_origem: normalizeFluvialDateKey(item.data_retorno_origem || item.previsao_retorno),
+    previsao_retorno: normalizeFluvialDateKey(item.previsao_retorno),
+  };
+}
+
+export function unifyLogisticaEventos(fromSandbox = [], fromProd = []) {
+  const mapa = new Map();
+
+  (fromSandbox || []).forEach((evento) => {
+    if (evento?.id) mapa.set(evento.id, normalizeEventoLogisticoRecord(evento));
+  });
+
+  (fromProd || []).forEach((evento) => {
+    if (evento?.id && !mapa.has(evento.id)) {
+      mapa.set(evento.id, normalizeEventoLogisticoRecord(evento));
+    }
+  });
+
+  return Array.from(mapa.values());
+}
+
+export function getFluvialFetchWindowDays(periodoId) {
+  const option = FLUVIAL_PERIOD_OPTIONS.find((item) => item.id === periodoId);
+  if (!option?.dias) return FLUVIAL_FETCH_WINDOW_ALL_DAYS;
+  return option.dias;
+}
+
 export function getFluvialViewDate(evento, viewMode) {
-  if (viewMode === 'chegada_tabatinga') return evento.data_chegada_destino;
-  if (viewMode === 'saida_manaus') return evento.data_saida_origem;
-  return evento.data_chegada_manaus;
+  if (viewMode === 'chegada_tabatinga') {
+    return normalizeFluvialDateKey(evento.data_chegada_destino || evento.previsao_chegada || evento.data_previsao_chegada);
+  }
+  if (viewMode === 'saida_manaus') {
+    return normalizeFluvialDateKey(evento.data_saida_origem || evento.data_referencia || evento.data_saida);
+  }
+  return normalizeFluvialDateKey(
+    evento.data_chegada_manaus || evento.data_retorno_origem || evento.previsao_retorno,
+  );
 }
 
 export function getFluvialPeriodBounds(periodoId, referenceDate = new Date()) {
@@ -39,10 +109,11 @@ export function getFluvialPeriodBounds(periodoId, referenceDate = new Date()) {
 }
 
 export function isWithinFluvialPeriod(dateStr, periodoId, referenceDate = new Date()) {
-  if (!dateStr) return false;
+  const normalized = normalizeFluvialDateKey(dateStr);
+  if (!normalized) return false;
   const { inicio, fim } = getFluvialPeriodBounds(periodoId, referenceDate);
   if (!inicio || !fim) return true;
-  return dateStr >= inicio && dateStr <= fim;
+  return normalized >= inicio && normalized <= fim;
 }
 
 export function getFluvialPeriodLabel(periodoId) {
