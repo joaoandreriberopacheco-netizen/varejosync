@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { format, parseISO, isToday, isPast, addDays } from 'date-fns';
+import { format, parseISO, isToday, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, AlertCircle, Clock, ChevronDown, ChevronUp, ArrowRightLeft, X, Check, Info } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ChevronDown, ChevronUp, ArrowRightLeft, Check, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  CONCILIACAO_LOTE_TAMANHO,
+  agruparPorContaFinanceira,
+  calcularValorReconciliadoItem,
+  deltaSaldoConciliacao,
+  processarEmLotes,
+} from '@/lib/conciliacaoEmLote';
 
 const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -20,8 +27,8 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   const [valorConfirmado, setValorConfirmado] = useState('');
   const [dataEfetiva, setDataEfetiva] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [processing, setProcessing] = useState(false);
-  const [contas, setContas] = useState([]);
-  const [contaBancariaDestino, setContaBancariaDestino] = useState('');
+  const [progressoLote, setProgressoLote] = useState({ atual: 0, total: 0 });
+  const [todasContas, setTodasContas] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,26 +37,27 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
 
   const loadPendentes = async () => {
     setIsLoading(true);
-    const [dados, todasContas] = await Promise.all([
+    const [dados, contasLista] = await Promise.all([
       contaId
         ? base44.entities.LancamentoFinanceiro.filter({
             conta_financeira_id: contaId,
-            status_conciliacao: 'Pendente'
+            status_conciliacao: 'Pendente',
           })
         : base44.entities.LancamentoFinanceiro.filter({
-            status_conciliacao: 'Pendente'
+            status_conciliacao: 'Pendente',
           }),
-      base44.entities.ContasFinanceiras.list()
+      base44.entities.ContasFinanceiras.filter({ ativo: true }),
     ]);
-    setLancamentos(dados.sort((a, b) => new Date(a.data_liquidacao_prevista) - new Date(b.data_liquidacao_prevista)));
-    setContas(todasContas.filter(c => c.id !== contaId && c.ativo));
+    setLancamentos(
+      dados.sort((a, b) => new Date(a.data_liquidacao_prevista) - new Date(b.data_liquidacao_prevista))
+    );
+    setTodasContas(contasLista);
     setIsLoading(false);
   };
 
-  // Agrupa por data de liquidação prevista
   const grupos = useMemo(() => {
     const mapa = {};
-    lancamentos.forEach(l => {
+    lancamentos.forEach((l) => {
       const chave = l.data_liquidacao_prevista || l.data_vencimento || 'sem-data';
       if (!mapa[chave]) mapa[chave] = [];
       mapa[chave].push(l);
@@ -58,27 +66,43 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   }, [lancamentos]);
 
   const toggleSelecionado = (id) => {
-    setSelecionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setSelecionados((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   const toggleGrupo = (data) => {
-    const ids = grupos.find(([d]) => d === data)?.[1].map(l => l.id) || [];
-    const todosSelecionados = ids.every(id => selecionados.includes(id));
-    if (todosSelecionados) {
-      setSelecionados(prev => prev.filter(id => !ids.includes(id)));
+    const ids = grupos.find(([d]) => d === data)?.[1].map((l) => l.id) || [];
+    const todosSelecionadosGrupo = ids.every((id) => selecionados.includes(id));
+    if (todosSelecionadosGrupo) {
+      setSelecionados((prev) => prev.filter((id) => !ids.includes(id)));
     } else {
-      setSelecionados(prev => [...new Set([...prev, ...ids])]);
+      setSelecionados((prev) => [...new Set([...prev, ...ids])]);
     }
   };
 
   const toggleExpandido = (data) => {
-    setExpandidos(prev => ({ ...prev, [data]: !prev[data] }));
+    setExpandidos((prev) => ({ ...prev, [data]: !prev[data] }));
   };
 
-  const selecionadosData = lancamentos.filter(l => selecionados.includes(l.id));
+  const selecionadosData = lancamentos.filter((l) => selecionados.includes(l.id));
   const totalSelecionado = selecionadosData.reduce((s, l) => s + (l.valor_liquido || l.valor || 0), 0);
-  const todosIds = lancamentos.map(l => l.id);
-  const todosSelecionados = todosIds.length > 0 && todosIds.every(id => selecionados.includes(id));
+  const todosIds = lancamentos.map((l) => l.id);
+  const todosSelecionados = todosIds.length > 0 && todosIds.every((id) => selecionados.includes(id));
+
+  const resumoContasSelecionadas = useMemo(() => {
+    const mapa = agruparPorContaFinanceira(selecionadosData);
+    return Object.entries(mapa)
+      .filter(([id]) => id !== '_sem_conta')
+      .map(([id, items]) => ({
+        id,
+        nome:
+          items[0]?.conta_financeira_nome ||
+          todasContas.find((c) => c.id === id)?.nome ||
+          'Conta',
+        total: items.reduce((s, l) => s + (l.valor_liquido || l.valor || 0), 0),
+        qtd: items.length,
+      }));
+  }, [selecionadosData, todasContas]);
+
   const toggleSelecionarTodos = () => {
     if (todosSelecionados) {
       setSelecionados([]);
@@ -92,6 +116,15 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
       toast({ title: 'Selecione ao menos um lançamento', variant: 'destructive' });
       return;
     }
+    const semConta = selecionadosData.filter((l) => !l.conta_financeira_id);
+    if (semConta.length > 0) {
+      toast({
+        title: 'Lançamentos sem conta vinculada',
+        description: `${semConta.length} item(ns) não têm conta financeira. Vincule antes de conciliar.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     setValorConfirmado(totalSelecionado.toFixed(2));
     setDialogConfirm(true);
   };
@@ -101,56 +134,88 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
     const itensSnapshot = lancamentos.filter((l) => idsSnapshot.includes(l.id));
     if (itensSnapshot.length === 0) return;
 
-    setProcessing(true);
-    try {
-      const valorReal = parseFloat(valorConfirmado);
-      const grupoId = `CONC-${Date.now()}`;
-      const dataEfetivaISO = dataEfetiva;
+    const valorReal = parseFloat(valorConfirmado);
+    if (!Number.isFinite(valorReal) || valorReal <= 0) {
+      toast({ title: 'Informe um valor válido', variant: 'destructive' });
+      return;
+    }
 
-      const atualizacoes = itensSnapshot.map(l => {
-        const status = Math.abs((l.valor_liquido || l.valor) - valorReal / itensSnapshot.length) > 0.01
-          ? 'Ajustado' : 'Conciliado';
-        return base44.entities.LancamentoFinanceiro.update(l.id, {
-          status_conciliacao: status,
-          data_liquidacao_efetiva: dataEfetivaISO,
-          status: 'Pago',
-          conciliacao_grupo_id: grupoId
-        });
+    setProcessing(true);
+    setProgressoLote({ atual: 0, total: itensSnapshot.length });
+
+    const grupoId = `CONC-${Date.now()}`;
+    const dataEfetivaISO = dataEfetiva;
+    const totalEsperado = totalSelecionado;
+
+    try {
+      const preparados = itensSnapshot.map((l) => {
+        const { valor, status } = calcularValorReconciliadoItem(l, valorReal, totalEsperado);
+        return { lancamento: l, valorReconciliado: valor, status };
       });
 
-      await Promise.all(atualizacoes);
+      const { erros, sucessos } = await processarEmLotes(
+        preparados,
+        CONCILIACAO_LOTE_TAMANHO,
+        async ({ lancamento, valorReconciliado, status }) => {
+          const eraAberto = lancamento.status !== 'Pago' && !lancamento.data_pagamento;
+          const payload = {
+            status_conciliacao: status,
+            data_liquidacao_efetiva: dataEfetivaISO,
+            conciliacao_grupo_id: grupoId,
+          };
+          if (eraAberto) {
+            payload.status = 'Pago';
+            payload.data_pagamento = dataEfetivaISO;
+          }
+          if (status === 'Ajustado') {
+            payload.valor_liquido = valorReconciliado;
+          }
+          await base44.entities.LancamentoFinanceiro.update(lancamento.id, payload);
+        },
+        (atual, total) => setProgressoLote({ atual, total })
+      );
 
-      if (contaBancariaDestino) {
-        const contaDestino = contas.find(c => c.id === contaBancariaDestino);
-        await base44.entities.LancamentoFinanceiro.create({
-          tipo: 'Receita',
-          descricao: `Conciliação ${grupoId} - ${contaNome} (${itensSnapshot.length} lançamentos)`,
-          valor: valorReal,
-          valor_liquido: valorReal,
-          conta_financeira_id: contaBancariaDestino,
-          conta_financeira_nome: contaDestino?.nome,
-          categoria: 'Transferência entre Contas',
-          status: 'Pago',
-          status_conciliacao: 'N/A',
-          data_vencimento: dataEfetivaISO,
-          data_pagamento: dataEfetivaISO,
-          referencia_tipo: 'Conciliacao',
-          referencia_numero: grupoId,
-          conciliacao_grupo_id: grupoId,
-          observacoes: `Consolidação de ${itensSnapshot.length} lançamentos de ${contaNome}`
-        });
+      if (sucessos.length === 0) {
+        throw new Error('Nenhum lançamento foi atualizado.');
+      }
 
-        if (contaDestino) {
-          await base44.entities.ContasFinanceiras.update(contaBancariaDestino, {
-            saldo_atual: (contaDestino.saldo_atual || 0) + valorReal
-          });
+      const contasMutaveis = todasContas.map((c) => ({ ...c }));
+      const deltaPorConta = {};
+
+      for (const item of sucessos) {
+        const { lancamento, valorReconciliado } = item;
+        const contaIdItem = lancamento.conta_financeira_id;
+        const delta = deltaSaldoConciliacao(lancamento, valorReconciliado);
+        if (delta !== 0 && contaIdItem) {
+          deltaPorConta[contaIdItem] = (deltaPorConta[contaIdItem] || 0) + delta;
         }
       }
 
+      const contasParaAtualizar = Object.entries(deltaPorConta);
+      for (let i = 0; i < contasParaAtualizar.length; i += CONCILIACAO_LOTE_TAMANHO) {
+        const loteContas = contasParaAtualizar.slice(i, i + CONCILIACAO_LOTE_TAMANHO);
+        await Promise.all(
+          loteContas.map(([idConta, delta]) => {
+            const conta = contasMutaveis.find((c) => c.id === idConta);
+            if (!conta) return Promise.resolve();
+            const novoSaldo = (conta.saldo_atual || 0) + delta;
+            conta.saldo_atual = novoSaldo;
+            return base44.entities.ContasFinanceiras.update(idConta, { saldo_atual: novoSaldo });
+          })
+        );
+      }
+
+      const qtdContas = Object.keys(deltaPorConta).length;
+      const descricaoSucesso =
+        erros.length > 0
+          ? `${sucessos.length} de ${itensSnapshot.length} conciliado(s) — ${erros.length} falha(s)`
+          : `${sucessos.length} lançamento(s) em ${qtdContas || resumoContasSelecionadas.length} conta(s) — ${fmt(valorReal)}`;
+
       toast({
-        title: 'Conciliação realizada',
-        description: `${itensSnapshot.length} lançamento(s) conciliado(s) — ${fmt(valorReal)}`,
-        className: 'bg-green-50 text-green-800'
+        title: erros.length > 0 ? 'Conciliação parcial' : 'Conciliação realizada',
+        description: descricaoSucesso,
+        className: erros.length > 0 ? undefined : 'bg-green-50 text-green-800',
+        variant: erros.length > 0 ? 'destructive' : 'default',
       });
 
       setDialogConfirm(false);
@@ -166,6 +231,7 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
       });
     } finally {
       setProcessing(false);
+      setProgressoLote({ atual: 0, total: 0 });
     }
   };
 
@@ -174,8 +240,10 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
     const d = parseISO(dataStr);
     if (isPast(d) && !isToday(d)) return { cor: 'text-red-500', label: 'Atrasado' };
     if (isToday(d)) return { cor: 'text-amber-500', label: 'Hoje' };
-    return { cor: 'text-muted-foreground', label: format(d, "dd/MM", { locale: ptBR }) };
+    return { cor: 'text-muted-foreground', label: format(d, 'dd/MM', { locale: ptBR }) };
   };
+
+  const mostrarContaNoItem = !contaId;
 
   if (isLoading) {
     return (
@@ -193,61 +261,70 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
         </div>
         <p className="font-medium text-foreground/90">Nada pendente</p>
         <p className="text-sm text-muted-foreground">Todos os lançamentos desta conta estão conciliados.</p>
-        <Button variant="ghost" size="sm" onClick={onClose}>Fechar</Button>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          Fechar
+        </Button>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
-    {/* Header Info */}
-    <div className="bg-muted/50/50 rounded-2xl p-4 mb-4 flex items-start gap-3 border border-border/40">
+      <div className="bg-muted/50/50 rounded-2xl p-4 mb-4 flex items-start gap-3 border border-border/40">
         <Info className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
         <div className="text-sm text-muted-foreground">
           <p className="font-medium mb-1 text-foreground/90">Como conciliar</p>
-          <p className="text-xs leading-relaxed">Selecione os lançamentos que você confirmou no extrato bancário. Você pode conciliar individualmente ou agrupar vários do mesmo dia. Se o valor real for diferente, informe o valor exato recebido.</p>
+          <p className="text-xs leading-relaxed">
+            Selecione os lançamentos confirmados no extrato. Cada pagamento será creditado na conta
+            financeira em que está vinculado. Operações grandes são processadas em lotes de{' '}
+            {CONCILIACAO_LOTE_TAMANHO}.
+          </p>
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-3 mb-3 px-1">
         <div>
           <p className="text-xs font-semibold text-foreground/90">{contaNome || 'Todas as contas'}</p>
-          <p className="text-[11px] text-muted-foreground">{lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''} pendente{lancamentos.length !== 1 ? 's' : ''}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {lancamentos.length} lançamento{lancamentos.length !== 1 ? 's' : ''} pendente
+            {lancamentos.length !== 1 ? 's' : ''}
+          </p>
         </div>
         <Button variant="ghost" size="sm" onClick={toggleSelecionarTodos} className="rounded-xl text-xs">
           {todosSelecionados ? 'Limpar tudo' : 'Selecionar tudo'}
         </Button>
       </div>
 
-      {/* Lista agrupada por data */}
       <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 pb-4">
         {grupos.map(([data, items]) => {
           const totalGrupo = items.reduce((s, l) => s + (l.valor_liquido || l.valor || 0), 0);
-          const idsDaData = items.map(l => l.id);
-          const todosSelecionados = idsDaData.every(id => selecionados.includes(id));
-          const algumSelecionado = idsDaData.some(id => selecionados.includes(id));
-          const isExpanded = expandidos[data] !== false; // expandido por padrão
+          const idsDaData = items.map((l) => l.id);
+          const todosSelecionadosGrupo = idsDaData.every((id) => selecionados.includes(id));
+          const algumSelecionado = idsDaData.some((id) => selecionados.includes(id));
+          const isExpanded = expandidos[data] !== false;
           const { cor, label } = getStatusData(data);
 
           return (
             <div key={data} className="bg-card rounded-2xl shadow-sm overflow-hidden border border-border/40">
-              {/* Header do grupo */}
               <div
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors"
                 onClick={() => toggleExpandido(data)}
               >
-                {/* Checkbox grupo */}
                 <button
-                  onClick={(e) => { e.stopPropagation(); toggleGrupo(data); }}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleGrupo(data);
+                  }}
                   className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
-                    todosSelecionados
+                    todosSelecionadosGrupo
                       ? 'bg-primary dark:bg-muted'
                       : algumSelecionado
                         ? 'bg-muted-foreground/40'
                         : 'border-2 border-border/40 dark:border-border/40'
                   }`}
                 >
-                  {(todosSelecionados || algumSelecionado) && (
+                  {(todosSelecionadosGrupo || algumSelecionado) && (
                     <Check className="w-3 h-3 text-white dark:text-foreground" />
                   )}
                 </button>
@@ -256,41 +333,55 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className={`text-xs font-medium ${cor}`}>{label}</span>
                     <span className="text-xs text-muted-foreground dark:text-muted-foreground">•</span>
-                    <span className="text-xs text-muted-foreground">{items.length} lançamento{items.length > 1 ? 's' : ''}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {items.length} lançamento{items.length > 1 ? 's' : ''}
+                    </span>
                   </div>
                   <p className="font-semibold text-foreground">{fmt(totalGrupo)}</p>
                 </div>
 
-                {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                {isExpanded ? (
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
               </div>
 
-              {/* Itens do grupo */}
               {isExpanded && (
                 <div className="border-t border-border/40">
-                  {items.map(l => {
+                  {items.map((l) => {
                     const isSel = selecionados.includes(l.id);
                     return (
                       <div
                         key={l.id}
                         onClick={() => toggleSelecionado(l.id)}
                         className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
-                          isSel ? 'bg-muted/40 dark:bg-muted/30' : 'hover:bg-muted/40/50 dark:hover:bg-primary/90/20'
+                          isSel
+                            ? 'bg-muted/40 dark:bg-muted/30'
+                            : 'hover:bg-muted/40/50 dark:hover:bg-primary/90/20'
                         }`}
                       >
-                        <div className={`w-4 h-4 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
-                          isSel ? 'bg-primary dark:bg-muted' : 'border-2 border-border/40'
-                        }`}>
+                        <div
+                          className={`w-4 h-4 rounded-md flex items-center justify-center flex-shrink-0 transition-colors ${
+                            isSel ? 'bg-primary dark:bg-muted' : 'border-2 border-border/40'
+                          }`}
+                        >
                           {isSel && <Check className="w-2.5 h-2.5 text-white dark:text-foreground" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground/90 truncate">{l.descricao}</p>
                           <p className="text-xs text-muted-foreground">
+                            {mostrarContaNoItem && l.conta_financeira_nome
+                              ? `${l.conta_financeira_nome} • `
+                              : ''}
                             {l.forma_pagamento || l.forma_pagamento_tipo || '—'}
                             {l.referencia_numero ? ` • ${l.referencia_numero}` : ''}
                           </p>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <p className="text-sm font-semibold text-foreground">{fmt(l.valor_liquido || l.valor)}</p>
+                          <p className="text-sm font-semibold text-foreground">
+                            {fmt(l.valor_liquido || l.valor)}
+                          </p>
                         </div>
                       </div>
                     );
@@ -302,11 +393,15 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
         })}
       </div>
 
-      {/* Footer com ação */}
       {selecionados.length > 0 && (
         <div className="bg-primary dark:bg-muted rounded-2xl p-4 flex items-center justify-between gap-4 shadow-lg">
           <div className="text-white">
-            <p className="text-xs text-muted-foreground dark:text-muted-foreground">{selecionados.length} selecionado{selecionados.length > 1 ? 's' : ''}</p>
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+              {selecionados.length} selecionado{selecionados.length > 1 ? 's' : ''}
+              {resumoContasSelecionadas.length > 1
+                ? ` · ${resumoContasSelecionadas.length} contas`
+                : ''}
+            </p>
             <p className="text-xl font-bold">{fmt(totalSelecionado)}</p>
           </div>
           <Button
@@ -319,7 +414,6 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
         </div>
       )}
 
-      {/* Dialog de confirmação */}
       <Dialog open={dialogConfirm} onOpenChange={setDialogConfirm}>
         <DialogContent className="dark:bg-muted dark:border-border/40 max-w-sm">
           <DialogHeader>
@@ -328,9 +422,26 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
 
           <div className="space-y-4 py-2">
             <div className="bg-muted/40 dark:bg-muted rounded-xl p-3 space-y-1">
-              <p className="text-xs text-muted-foreground">{selecionados.length} lançamento{selecionados.length > 1 ? 's' : ''} selecionado{selecionados.length > 1 ? 's' : ''}</p>
+              <p className="text-xs text-muted-foreground">
+                {selecionados.length} lançamento{selecionados.length > 1 ? 's' : ''} selecionado
+                {selecionados.length > 1 ? 's' : ''}
+              </p>
               <p className="text-sm font-medium text-foreground/90">Total esperado: {fmt(totalSelecionado)}</p>
             </div>
+
+            {resumoContasSelecionadas.length > 0 && (
+              <div className="rounded-xl border border-border/40 p-3 space-y-2">
+                <p className="text-xs font-medium text-foreground/90">Contas vinculadas</p>
+                {resumoContasSelecionadas.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="truncate pr-2">
+                      {c.nome} ({c.qtd})
+                    </span>
+                    <span className="font-medium text-foreground shrink-0">{fmt(c.total)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div>
               <Label className="text-foreground/90 text-sm">Valor real recebido</Label>
@@ -338,13 +449,15 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
                 type="number"
                 step="0.01"
                 value={valorConfirmado}
-                onChange={e => setValorConfirmado(e.target.value)}
+                onChange={(e) => setValorConfirmado(e.target.value)}
                 className="mt-1 dark:bg-muted dark:border-border/40"
+                disabled={processing}
               />
               {parseFloat(valorConfirmado) !== totalSelecionado && (
                 <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
-                  Divergência de {fmt(Math.abs(parseFloat(valorConfirmado || 0) - totalSelecionado))} — será registrada como ajuste
+                  Divergência de {fmt(Math.abs(parseFloat(valorConfirmado || 0) - totalSelecionado))} — ajuste
+                  proporcional por lançamento
                 </p>
               )}
             </div>
@@ -354,31 +467,33 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
               <Input
                 type="date"
                 value={dataEfetiva}
-                onChange={e => setDataEfetiva(e.target.value)}
+                onChange={(e) => setDataEfetiva(e.target.value)}
                 className="mt-1 dark:bg-muted dark:border-border/40"
+                disabled={processing}
               />
             </div>
 
-            <div>
-              <Label className="text-foreground/90 text-sm">Lançar na conta bancária</Label>
-              <select
-                value={contaBancariaDestino}
-                onChange={e => setContaBancariaDestino(e.target.value)}
-                className="mt-1 w-full h-10 rounded-md border border-border/40 bg-card dark:bg-muted text-sm px-3 text-foreground"
-              >
-                <option value="">Não lançar (só marcar como conciliado)</option>
-                {contas.map(c => (
-                  <option key={c.id} value={c.id}>{c.nome}</option>
-                ))}
-              </select>
-            </div>
+            {processing && progressoLote.total > 0 && (
+              <p className="text-xs text-muted-foreground text-center">
+                Processando lote… {progressoLote.atual}/{progressoLote.total}
+              </p>
+            )}
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDialogConfirm(false)} disabled={processing} className="dark:bg-muted dark:border-border/40">
+            <Button
+              variant="outline"
+              onClick={() => setDialogConfirm(false)}
+              disabled={processing}
+              className="dark:bg-muted dark:border-border/40"
+            >
               Cancelar
             </Button>
-            <Button onClick={confirmarConciliacao} disabled={processing} className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground">
+            <Button
+              onClick={confirmarConciliacao}
+              disabled={processing}
+              className="bg-primary hover:bg-background dark:bg-muted dark:text-foreground"
+            >
               {processing ? 'Processando...' : 'Confirmar'}
             </Button>
           </DialogFooter>
