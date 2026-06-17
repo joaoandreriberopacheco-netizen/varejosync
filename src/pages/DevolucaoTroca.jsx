@@ -159,7 +159,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
         <div className="px-4 py-3 border-b border-border">
           <p className="text-sm font-medium text-foreground">Selecione os itens a devolver</p>
         </div>
-        <P38MobileLineList>
+        <P38MobileLineList allViewports>
           {(pedido.itens || []).map((item, index) => {
             const key = item.produto_id + '_' + item.produto_nome;
             const qtd = qtds[key] || 0;
