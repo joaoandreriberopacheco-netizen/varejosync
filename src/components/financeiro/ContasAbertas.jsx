@@ -25,6 +25,7 @@ import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
+import CorrigirDataLoteDialog from './CorrigirDataLoteDialog';
 import { useToast } from '@/components/ui/use-toast';
 import { CONCILIACAO_LOTE_TAMANHO, processarEmLotes } from '@/lib/conciliacaoEmLote';
 
@@ -135,8 +136,10 @@ function useContasAbertasModel(onOpenImportador, shared) {
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [modoSelecaoLote, setModoSelecaoLote] = useState(false);
+  const [modoCorrigirDataLote, setModoCorrigirDataLote] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [showPagamentoLote, setShowPagamentoLote] = useState(false);
+  const [showCorrigirDataLote, setShowCorrigirDataLote] = useState(false);
   const [contaLoteId, setContaLoteId] = useState('');
   const [dataPagamentoLote, setDataPagamentoLote] = useState(dataHoje());
   const [processingLote, setProcessingLote] = useState(false);
@@ -300,10 +303,12 @@ function useContasAbertasModel(onOpenImportador, shared) {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
   };
 
-  const idsSelecionaveis = useMemo(
-    () => filtrados.filter((l) => !isLancamentoPago(l)).map((l) => l.id),
-    [filtrados]
-  );
+  const idsSelecionaveis = useMemo(() => {
+    if (modoCorrigirDataLote) {
+      return filtrados.filter((l) => isLancamentoPago(l)).map((l) => l.id);
+    }
+    return filtrados.filter((l) => !isLancamentoPago(l)).map((l) => l.id);
+  }, [filtrados, modoCorrigirDataLote]);
 
   const todosSelecionados = idsSelecionaveis.length > 0
     && idsSelecionaveis.every((id) => selectedIds.includes(id));
@@ -312,7 +317,39 @@ function useContasAbertasModel(onOpenImportador, shared) {
     setSelectedIds(todosSelecionados ? [] : idsSelecionaveis);
   };
 
-  const lancamentosSelecionados = filtrados.filter((l) => selectedIds.includes(l.id) && !isLancamentoPago(l));
+  const lancamentosSelecionados = useMemo(() => {
+    if (modoCorrigirDataLote) {
+      return filtrados.filter((l) => selectedIds.includes(l.id) && isLancamentoPago(l));
+    }
+    return filtrados.filter((l) => selectedIds.includes(l.id) && !isLancamentoPago(l));
+  }, [filtrados, selectedIds, modoCorrigirDataLote]);
+
+  const sairModoLote = () => {
+    setModoSelecaoLote(false);
+    setModoCorrigirDataLote(false);
+    setSelectedIds([]);
+  };
+
+  const entrarModoPagarLote = () => {
+    if (modoSelecaoLote) {
+      sairModoLote();
+      return;
+    }
+    setModoCorrigirDataLote(false);
+    setModoSelecaoLote(true);
+    setSelectedIds([]);
+  };
+
+  const entrarModoCorrigirDataLote = () => {
+    if (modoCorrigirDataLote) {
+      sairModoLote();
+      return;
+    }
+    setModoSelecaoLote(false);
+    setModoCorrigirDataLote(true);
+    setMostrarPagas(true);
+    setSelectedIds([]);
+  };
 
   const handleConfirmarPagamentoLote = async () => {
     const conta = contas.find((c) => c.id === contaLoteId);
@@ -386,8 +423,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
       });
 
       setShowPagamentoLote(false);
-      setModoSelecaoLote(false);
-      setSelectedIds([]);
+      sairModoLote();
       setContaLoteId('');
       setDataPagamentoLote(dataHoje());
       await load();
@@ -396,6 +432,59 @@ function useContasAbertasModel(onOpenImportador, shared) {
       toast({
         title: 'Erro no pagamento em lote',
         description: error?.message || 'Não foi possível concluir todos os lançamentos.',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingLote(false);
+      setProgressoLote({ atual: 0, total: 0 });
+    }
+  };
+
+  const handleConfirmarCorrigirDataLote = async () => {
+    const idsSnapshot = [...selectedIds];
+    const itensLote = filtrados.filter(
+      (l) => idsSnapshot.includes(l.id) && isLancamentoPago(l)
+    );
+    if (!dataPagamentoLote || itensLote.length === 0) return;
+
+    setProcessingLote(true);
+    setProgressoLote({ atual: 0, total: itensLote.length });
+    try {
+      const { erros, sucessos } = await processarEmLotes(
+        itensLote,
+        CONCILIACAO_LOTE_TAMANHO,
+        async (lancamento) => {
+          await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+            data_pagamento: dataPagamentoLote,
+          });
+        },
+        (atual, total) => setProgressoLote({ atual, total })
+      );
+
+      if (sucessos.length === 0) {
+        throw new Error('Nenhum lançamento foi atualizado.');
+      }
+
+      const descricaoSucesso = erros.length > 0
+        ? `${sucessos.length} de ${itensLote.length} data(s) corrigida(s) — ${erros.length} falha(s)`
+        : `${sucessos.length} data(s) de pagamento atualizada(s).`;
+
+      toast({
+        title: erros.length > 0 ? 'Correção parcial' : 'Datas corrigidas',
+        description: descricaoSucesso,
+        className: erros.length > 0 ? undefined : 'bg-muted text-foreground',
+        variant: erros.length > 0 ? 'destructive' : undefined,
+      });
+
+      setShowCorrigirDataLote(false);
+      sairModoLote();
+      setDataPagamentoLote(dataHoje());
+      await load();
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Erro ao corrigir datas',
+        description: error?.message || 'Não foi possível atualizar todos os lançamentos.',
         variant: 'destructive',
       });
     } finally {
@@ -460,7 +549,10 @@ function useContasAbertasModel(onOpenImportador, shared) {
     mostrarPagas,
     setMostrarPagas,
     modoSelecaoLote,
-    setModoSelecaoLote,
+    modoCorrigirDataLote,
+    entrarModoPagarLote,
+    entrarModoCorrigirDataLote,
+    sairModoLote,
     selectedIds,
     setSelectedIds,
     lancamentosSelecionados,
@@ -481,6 +573,8 @@ function useContasAbertasModel(onOpenImportador, shared) {
     contas,
     showPagamentoLote,
     setShowPagamentoLote,
+    showCorrigirDataLote,
+    setShowCorrigirDataLote,
     contaLoteId,
     setContaLoteId,
     dataPagamentoLote,
@@ -488,6 +582,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
     processingLote,
     progressoLote,
     handleConfirmarPagamentoLote,
+    handleConfirmarCorrigirDataLote,
     load,
   };
 }
@@ -571,7 +666,9 @@ export function ContasAbertasListaPane() {
     filtrados,
     setDetalhe,
     modoSelecaoLote,
-    setModoSelecaoLote,
+    modoCorrigirDataLote,
+    entrarModoPagarLote,
+    entrarModoCorrigirDataLote,
     setSelectedIds,
     selectedIds,
     handleToggleSelecionado,
@@ -588,12 +685,15 @@ export function ContasAbertasListaPane() {
     contas,
     showPagamentoLote,
     setShowPagamentoLote,
+    showCorrigirDataLote,
+    setShowCorrigirDataLote,
     contaLoteId,
     setContaLoteId,
     dataPagamentoLote,
     setDataPagamentoLote,
     lancamentosSelecionados,
     handleConfirmarPagamentoLote,
+    handleConfirmarCorrigirDataLote,
     processingLote,
     progressoLote,
     load,
@@ -636,18 +736,65 @@ export function ContasAbertasListaPane() {
           </>
         }
         extraActions={
-          <button
-            type="button"
-            onClick={() => {
-              setModoSelecaoLote((prev) => !prev);
-              setSelectedIds([]);
-            }}
-            className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${modoSelecaoLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
-          >
-            {modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={entrarModoCorrigirDataLote}
+              className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${modoCorrigirDataLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
+            >
+              {modoCorrigirDataLote ? 'Cancelar' : 'Corrigir data'}
+            </button>
+            <button
+              type="button"
+              onClick={entrarModoPagarLote}
+              className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${modoSelecaoLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
+            >
+              {modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
+            </button>
+          </div>
         }
       />
+
+      {modoCorrigirDataLote && (
+        <div className="min-w-0 overflow-hidden rounded-xl border border-border/40 bg-card/60 p-3 dark:border-white/10 dark:bg-[#26262e]/80">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Corrigir data de pagamento</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {lancamentosSelecionados.length} de {idsSelecionaveis.length} pago(s) selecionado(s)
+              </p>
+              {idsSelecionaveis.length === 0 && (
+                <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                  Ative &quot;Mostrar pagas&quot; nos filtros ou ajuste o período para ver os lançamentos.
+                </p>
+              )}
+              {lancamentosSelecionados.length > CONCILIACAO_LOTE_TAMANHO && (
+                <p className="text-[10px] text-muted-foreground">
+                  Serão processados em {Math.ceil(lancamentosSelecionados.length / CONCILIACAO_LOTE_TAMANHO)} lotes de {CONCILIACAO_LOTE_TAMANHO}
+                </p>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSelecionarTodos}
+                disabled={idsSelecionaveis.length === 0}
+                className="h-9 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/80 disabled:opacity-40"
+              >
+                {todosSelecionados ? 'Limpar tudo' : 'Selecionar tudo'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCorrigirDataLote(true)}
+                disabled={lancamentosSelecionados.length === 0}
+                className="h-9 shrink-0 rounded-xl bg-[#4a5240] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {modoSelecaoLote && (
         <div className="min-w-0 overflow-hidden rounded-xl border border-border/40 bg-card/60 p-3 dark:border-white/10 dark:bg-[#26262e]/80">
@@ -689,7 +836,8 @@ export function ContasAbertasListaPane() {
         grupos={grupos}
         loading={loading}
         onRow={setDetalhe}
-        emSelecao={modoSelecaoLote}
+        emSelecao={modoSelecaoLote || modoCorrigirDataLote}
+        selecionarPagos={modoCorrigirDataLote}
         selecionados={selectedIds}
         onToggleSelecionado={handleToggleSelecionado}
       />
@@ -717,6 +865,17 @@ export function ContasAbertasListaPane() {
 
       <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} origemContaPagar onClose={() => setShowNovo(false)} onSaved={load} />
       {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
+      <CorrigirDataLoteDialog
+        open={showCorrigirDataLote}
+        onOpenChange={setShowCorrigirDataLote}
+        dataPagamento={dataPagamentoLote}
+        setDataPagamento={setDataPagamentoLote}
+        selecionados={lancamentosSelecionados}
+        onConfirm={handleConfirmarCorrigirDataLote}
+        loading={processingLote}
+        progresso={progressoLote}
+        tamanhoLote={CONCILIACAO_LOTE_TAMANHO}
+      />
       <PagamentoLoteDialog
         open={showPagamentoLote}
         onOpenChange={setShowPagamentoLote}
