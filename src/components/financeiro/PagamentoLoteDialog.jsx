@@ -7,8 +7,10 @@ import { CheckCircle2 } from 'lucide-react';
 
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-export default function PagamentoLoteDialog({ open, onOpenChange, contas, contaId, setContaId, dataPagamento, setDataPagamento, selecionados, onConfirm, loading }) {
+export default function PagamentoLoteDialog({ open, onOpenChange, contas, contaId, setContaId, dataPagamento, setDataPagamento, selecionados, onConfirm, loading, progresso, tamanhoLote = 25 }) {
   const total = selecionados.reduce((acc, item) => acc + Math.abs(item.valor || 0), 0);
+  const totalLotes = Math.ceil(selecionados.length / tamanhoLote);
+  const loteAtual = progresso?.total > 0 ? Math.ceil(progresso.atual / tamanhoLote) : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -22,11 +24,16 @@ export default function PagamentoLoteDialog({ open, onOpenChange, contas, contaI
             <p className="text-sm font-medium text-foreground">{selecionados.length} lançamento(s)</p>
             <p className="text-xs text-muted-foreground">Total selecionado</p>
             <p className="text-lg font-semibold text-foreground">{R(total)}</p>
+            {totalLotes > 1 && (
+              <p className="text-[10px] text-muted-foreground">
+                Processamento em {totalLotes} lotes de {tamanhoLote}
+              </p>
+            )}
           </div>
 
           <div>
             <Label className="text-xs text-muted-foreground mb-2 block">Conta de entrada/saída</Label>
-            <Select value={contaId} onValueChange={setContaId}>
+            <Select value={contaId} onValueChange={setContaId} disabled={loading}>
               <SelectTrigger className="rounded-2xl border-0 bg-muted">
                 <SelectValue placeholder="Selecione a conta" />
               </SelectTrigger>
@@ -44,9 +51,24 @@ export default function PagamentoLoteDialog({ open, onOpenChange, contas, contaI
               type="date"
               value={dataPagamento}
               onChange={(e) => setDataPagamento(e.target.value)}
-              className="w-full h-11 px-4 rounded-2xl border-0 bg-muted text-sm text-foreground outline-none"
+              disabled={loading}
+              className="w-full h-11 px-4 rounded-2xl border-0 bg-muted text-sm text-foreground outline-none disabled:opacity-50"
             />
           </div>
+
+          {loading && progresso?.total > 0 && (
+            <div className="space-y-2">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-emerald-600 transition-all duration-300"
+                  style={{ width: `${Math.round((progresso.atual / progresso.total) * 100)}%` }}
+                />
+              </div>
+              <p className="text-center text-xs text-muted-foreground">
+                Processando lote {loteAtual}/{totalLotes}… {progresso.atual}/{progresso.total}
+              </p>
+            </div>
+          )}
         </div>
 
         <DialogFooter>

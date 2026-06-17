@@ -26,6 +26,7 @@ import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
 import { useToast } from '@/components/ui/use-toast';
+import { CONCILIACAO_LOTE_TAMANHO, processarEmLotes } from '@/lib/conciliacaoEmLote';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -139,6 +140,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
   const [contaLoteId, setContaLoteId] = useState('');
   const [dataPagamentoLote, setDataPagamentoLote] = useState(dataHoje());
   const [processingLote, setProcessingLote] = useState(false);
+  const [progressoLote, setProgressoLote] = useState({ atual: 0, total: 0 });
 
   const lancs = shared?.lancs ?? lancsLocal;
   const contas = shared?.contas ?? contasLocal;
@@ -298,6 +300,18 @@ function useContasAbertasModel(onOpenImportador, shared) {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
   };
 
+  const idsSelecionaveis = useMemo(
+    () => filtrados.filter((l) => !isLancamentoPago(l)).map((l) => l.id),
+    [filtrados]
+  );
+
+  const todosSelecionados = idsSelecionaveis.length > 0
+    && idsSelecionaveis.every((id) => selectedIds.includes(id));
+
+  const handleSelecionarTodos = () => {
+    setSelectedIds(todosSelecionados ? [] : idsSelecionaveis);
+  };
+
   const lancamentosSelecionados = filtrados.filter((l) => selectedIds.includes(l.id) && !isLancamentoPago(l));
 
   const handleConfirmarPagamentoLote = async () => {
@@ -309,46 +323,66 @@ function useContasAbertasModel(onOpenImportador, shared) {
     if (!conta || !dataPagamentoLote || itensLote.length === 0) return;
 
     setProcessingLote(true);
+    setProgressoLote({ atual: 0, total: itensLote.length });
     try {
-      let deltaConta = 0;
-      const contasMutaveis = contas.map((c) => ({ ...c }));
-
-      for (const lancamento of itensLote) {
-        const contaAnteriorId = lancamento.conta_financeira_id;
-        const contaAnterior = contasMutaveis.find((c) => c.id === contaAnteriorId);
-        const valor = lancamento.valor || 0;
-
-        await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
-          status: 'Pago',
-          data_pagamento: dataPagamentoLote,
-          status_conciliacao: 'Pendente',
-          conta_financeira_id: conta.id,
-          conta_financeira_nome: conta.nome,
-        });
-
-        if (contaAnterior && contaAnterior.id !== conta.id) {
-          const deltaAnterior = lancamento.tipo === 'Receita' ? -valor : valor;
-          await base44.entities.ContasFinanceiras.update(contaAnterior.id, {
-            saldo_atual: (contaAnterior.saldo_atual || 0) + deltaAnterior,
+      const { erros, sucessos } = await processarEmLotes(
+        itensLote,
+        CONCILIACAO_LOTE_TAMANHO,
+        async (lancamento) => {
+          await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+            status: 'Pago',
+            data_pagamento: dataPagamentoLote,
+            status_conciliacao: 'Pendente',
+            conta_financeira_id: conta.id,
+            conta_financeira_nome: conta.nome,
           });
-          contaAnterior.saldo_atual = (contaAnterior.saldo_atual || 0) + deltaAnterior;
-        }
+        },
+        (atual, total) => setProgressoLote({ atual, total })
+      );
 
-        deltaConta += lancamento.tipo === 'Receita'
-          ? valor
-          : -valor;
+      if (sucessos.length === 0) {
+        throw new Error('Nenhum lançamento foi pago.');
       }
 
-      const contaDestino = contasMutaveis.find((c) => c.id === conta.id) || conta;
-      await base44.entities.ContasFinanceiras.update(conta.id, {
-        saldo_atual: (contaDestino.saldo_atual || 0) + deltaConta,
-      });
+      const contasMutaveis = contas.map((c) => ({ ...c }));
+      const deltaPorConta = {};
 
-      const qtd = itensLote.length;
+      for (const lancamento of sucessos) {
+        const valor = lancamento.valor || 0;
+        const contaAnteriorId = lancamento.conta_financeira_id;
+
+        if (contaAnteriorId && contaAnteriorId !== conta.id) {
+          const deltaAnterior = lancamento.tipo === 'Receita' ? -valor : valor;
+          deltaPorConta[contaAnteriorId] = (deltaPorConta[contaAnteriorId] || 0) + deltaAnterior;
+        }
+
+        const deltaDestino = lancamento.tipo === 'Receita' ? valor : -valor;
+        deltaPorConta[conta.id] = (deltaPorConta[conta.id] || 0) + deltaDestino;
+      }
+
+      const contasParaAtualizar = Object.entries(deltaPorConta);
+      for (let i = 0; i < contasParaAtualizar.length; i += CONCILIACAO_LOTE_TAMANHO) {
+        const loteContas = contasParaAtualizar.slice(i, i + CONCILIACAO_LOTE_TAMANHO);
+        await Promise.all(
+          loteContas.map(([idConta, delta]) => {
+            const contaLocal = contasMutaveis.find((c) => c.id === idConta);
+            if (!contaLocal) return Promise.resolve();
+            const novoSaldo = (contaLocal.saldo_atual || 0) + delta;
+            contaLocal.saldo_atual = novoSaldo;
+            return base44.entities.ContasFinanceiras.update(idConta, { saldo_atual: novoSaldo });
+          })
+        );
+      }
+
+      const descricaoSucesso = erros.length > 0
+        ? `${sucessos.length} de ${itensLote.length} lançamento(s) pago(s) — ${erros.length} falha(s)`
+        : `${sucessos.length} lançamento(s) marcado(s) como pago(s).`;
+
       toast({
-        title: qtd > 1 ? 'Pagamentos confirmados' : 'Pagamento confirmado',
-        description: `${qtd} lançamento(s) marcado(s) como pago(s).`,
-        className: 'bg-muted text-foreground',
+        title: erros.length > 0 ? 'Pagamento parcial' : (sucessos.length > 1 ? 'Pagamentos confirmados' : 'Pagamento confirmado'),
+        description: descricaoSucesso,
+        className: erros.length > 0 ? undefined : 'bg-muted text-foreground',
+        variant: erros.length > 0 ? 'destructive' : undefined,
       });
 
       setShowPagamentoLote(false);
@@ -366,6 +400,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
       });
     } finally {
       setProcessingLote(false);
+      setProgressoLote({ atual: 0, total: 0 });
     }
   };
 
@@ -433,6 +468,9 @@ function useContasAbertasModel(onOpenImportador, shared) {
     grupos,
     setDetalhe,
     handleToggleSelecionado,
+    handleSelecionarTodos,
+    todosSelecionados,
+    idsSelecionaveis,
     fabOpen,
     setFabOpen,
     FAB_ITEMS,
@@ -448,6 +486,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
     dataPagamentoLote,
     setDataPagamentoLote,
     processingLote,
+    progressoLote,
     handleConfirmarPagamentoLote,
     load,
   };
@@ -536,6 +575,9 @@ export function ContasAbertasListaPane() {
     setSelectedIds,
     selectedIds,
     handleToggleSelecionado,
+    handleSelecionarTodos,
+    todosSelecionados,
+    idsSelecionaveis,
     fabOpen,
     setFabOpen,
     FAB_ITEMS,
@@ -553,6 +595,7 @@ export function ContasAbertasListaPane() {
     lancamentosSelecionados,
     handleConfirmarPagamentoLote,
     processingLote,
+    progressoLote,
     load,
     periodo,
     setPeriodo,
@@ -611,16 +654,33 @@ export function ContasAbertasListaPane() {
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground">Pagamento em lote</p>
-              <p className="truncate text-xs text-muted-foreground">{lancamentosSelecionados.length} item(ns) selecionado(s)</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {lancamentosSelecionados.length} de {idsSelecionaveis.length} item(ns) selecionado(s)
+              </p>
+              {lancamentosSelecionados.length > CONCILIACAO_LOTE_TAMANHO && (
+                <p className="text-[10px] text-muted-foreground">
+                  Serão processados em {Math.ceil(lancamentosSelecionados.length / CONCILIACAO_LOTE_TAMANHO)} lotes de {CONCILIACAO_LOTE_TAMANHO}
+                </p>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => setShowPagamentoLote(true)}
-              disabled={lancamentosSelecionados.length === 0}
-              className="h-9 shrink-0 rounded-xl bg-[#4a5240] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
-            >
-              Continuar
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSelecionarTodos}
+                disabled={idsSelecionaveis.length === 0}
+                className="h-9 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/80 disabled:opacity-40"
+              >
+                {todosSelecionados ? 'Limpar tudo' : 'Selecionar tudo'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPagamentoLote(true)}
+                disabled={lancamentosSelecionados.length === 0}
+                className="h-9 shrink-0 rounded-xl bg-[#4a5240] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+              >
+                Continuar
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -668,6 +728,8 @@ export function ContasAbertasListaPane() {
         selecionados={lancamentosSelecionados}
         onConfirm={handleConfirmarPagamentoLote}
         loading={processingLote}
+        progresso={progressoLote}
+        tamanhoLote={CONCILIACAO_LOTE_TAMANHO}
       />
     </>
   );
