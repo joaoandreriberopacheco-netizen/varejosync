@@ -18,6 +18,10 @@ import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverla
 import { Search, ShoppingCart, Trash2, UserPlus, ArrowRight, Barcode, Truck, Store, Keyboard, Plus, Minus, ArrowLeft, ChevronDown, ChevronRight, AlertCircle, Package, Boxes, Camera, Undo2, X, Edit, FileText, CreditCard } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { useMobileLayout } from '@/hooks/use-breakpoint';
+import {
+  QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS,
+  QUICK_ACCESS_NESTED_DIALOG_CLASS,
+} from '@/lib/quickAccessOverlay';
 import { format } from 'date-fns';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -1015,7 +1019,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className={`fixed top-4 left-1/2 -translate-x-1/2 ${overlayMode ? 'z-[1230]' : 'z-[100]'} px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm ${
+          className={`fixed top-4 left-1/2 -translate-x-1/2 ${overlayMode ? QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS : 'z-[100]'} px-4 py-2 rounded-full text-sm font-medium shadow-lg backdrop-blur-sm ${
           feedback.type === 'success' ? 'bg-emerald-500/90 text-white' :
           feedback.type === 'error' ? 'bg-red-500/90 text-white' :
           'bg-muted/90 text-white'}`
@@ -1689,7 +1693,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       </Dialog>
 
       {showCarrinhoMobile &&
-      <div className={`desktop-layout:hidden fixed inset-0 ${overlayMode ? 'z-[1220]' : 'z-[70]'} ${screenShellBg} flex flex-col`}>
+      <div className={`desktop-layout:hidden fixed inset-0 ${overlayMode ? QUICK_ACCESS_NESTED_DIALOG_CLASS : 'z-[70]'} ${screenShellBg} flex flex-col`}>
           {/* Header */}
           <div className="px-4 py-3 bg-card dark:bg-background border-b border-border/40 dark:border-border/40 flex items-center justify-between flex-shrink-0">
             <button onClick={() => setShowCarrinhoMobile(false)} className="h-9 w-9 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted dark:hover:bg-card">

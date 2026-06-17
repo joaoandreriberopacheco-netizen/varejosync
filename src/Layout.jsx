@@ -10,7 +10,7 @@ import PinSetupDialog from '@/components/auth/PinSetupDialog';
 import { Button } from '@/components/ui/button';
 import GlacialBottomNav from '@/components/navigation/GlacialBottomNav';
 import GlacialSidebar from '@/components/navigation/GlacialSidebar';
-import GlobalSearchBar from '@/components/navigation/GlobalSearchBar';
+import GlobalSearchOverlay from '@/components/navigation/GlobalSearchOverlay';
 import MobileUserMenu from '@/components/layout/MobileUserMenu';
 import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelector';
 import { useCompactShell } from '@/hooks/use-breakpoint';
@@ -201,13 +201,13 @@ export default function Layout({ children, currentPageName }) {
   }, [openSearchOverlay]);
 
   useEffect(() => {
-    if (!searchOverlayOpen || !isMobile || isFullscreen) return undefined;
+    if (!searchOverlayOpen || !isMobile) return undefined;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [searchOverlayOpen, isMobile, isFullscreen]);
+  }, [searchOverlayOpen, isMobile]);
 
   useEffect(() => {
     if (!showDesktopUserPanel) return;
@@ -273,12 +273,27 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
+  const searchOverlay = (
+    <GlobalSearchOverlay
+      open={searchOverlayOpen}
+      onClose={closeSearchOverlay}
+      isMobile={isMobile}
+      isDark={darkMode}
+      searchableItems={allSearchableItems}
+      onNavigate={() => {
+        closeSearchOverlay();
+        setIsOpen(false);
+      }}
+    />
+  );
+
   if (isFullscreen) {
     return (
       <div className={darkMode ? 'dark' : ''}>
         <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-white dark:bg-background p38-app">
           {children}
         </div>
+        {searchOverlay}
       </div>
     );
   }
@@ -369,47 +384,7 @@ export default function Layout({ children, currentPageName }) {
           user={currentUser}
         />
       )}
-      {searchOverlayOpen && !isFullscreen ? (
-        isMobile ? (
-          <div
-            className="fixed inset-0 z-[70] font-din-1451 desktop-layout:hidden"
-            onClick={closeSearchOverlay}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Busca de funcionalidades"
-          >
-            <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-hidden />
-            <div
-              className="relative z-[1] w-full px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <GlobalSearchBar
-                isDark={darkMode}
-                searchableItems={allSearchableItems}
-                autoFocus
-                showClose
-                atTop
-                onClose={closeSearchOverlay}
-                onNavigate={() => {
-                  closeSearchOverlay();
-                  setIsOpen(false);
-                }}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="fixed z-[70] top-4 left-1/2 -translate-x-1/2 w-full max-w-xl px-3 font-din-1451">
-            <GlobalSearchBar
-              isDark={darkMode}
-              searchableItems={allSearchableItems}
-              autoFocus
-              showClose
-              onClose={closeSearchOverlay}
-              onNavigate={closeSearchOverlay}
-            />
-          </div>
-        )
-      ) : null}
+      {searchOverlay}
     </div>
   );
 }
