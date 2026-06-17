@@ -10,6 +10,7 @@ import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { fetchCaixaTurnoSnapshot, buildPainelCaixaResumo } from '@/lib/caixaTurnoData';
 import { getCachedUserSession } from '@/lib/userSessionCache';
+import { QUICK_ACCESS_NESTED_DIALOG_CLASS } from '@/lib/quickAccessOverlay';
 
 function normalizeCaixaId(id) {
   return String(id ?? '').trim();
@@ -20,7 +21,7 @@ function isCaixaAutorizado(caixaId, autorizados = []) {
   return autorizados.some((id) => normalizeCaixaId(id) === key);
 }
 
-export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }) {
+export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, elevatedStack = false }) {
   const navigate = useNavigate();
   const [caixasDisponiveis, setCaixasDisponiveis] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -188,10 +189,16 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
     }
   };
 
+  const elevatedDialogClass = elevatedStack ? QUICK_ACCESS_NESTED_DIALOG_CLASS : undefined;
+
   return (
     <>
       <Dialog open={open && !showSaldoDialog} onOpenChange={() => {}}>
-        <CaixaDialogContent className="max-w-2xl dark:bg-background" hideClose>
+        <CaixaDialogContent
+          overlayClassName={elevatedDialogClass}
+          className="max-w-2xl dark:bg-background"
+          hideClose
+        >
           <DialogHeader className="relative">
             <button
               onClick={() => onClose ? onClose() : navigate(-1)}
@@ -269,6 +276,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose }
 
       <Dialog open={showSaldoDialog} onOpenChange={() => {}}>
         <CaixaDialogContent
+          overlayClassName={elevatedDialogClass}
           className="max-w-sm dark:bg-background border-0 p-0 shadow-2xl"
           hideClose
         >
