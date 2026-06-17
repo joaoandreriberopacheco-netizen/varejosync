@@ -434,5 +434,20 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     );
   }
 
-  return panel;
+  return createPortal(
+    <>
+      <button
+        type="button"
+        aria-label="Fechar"
+        className="fixed inset-0 z-[59] cursor-default bg-muted/55 backdrop-blur-[2px] dark:bg-muted/40"
+        onClick={onClose}
+      />
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 pointer-events-none md:p-4">
+        <div className="pointer-events-auto w-full max-w-2xl" role="dialog" aria-modal="true">
+          {panel}
+        </div>
+      </div>
+    </>,
+    document.body
+  );
 }
