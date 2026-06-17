@@ -28,11 +28,18 @@ import PagamentoLoteDialog from './PagamentoLoteDialog';
 import CorrigirDataLoteDialog from './CorrigirDataLoteDialog';
 import { useToast } from '@/components/ui/use-toast';
 import { CONCILIACAO_LOTE_TAMANHO, processarEmLotes } from '@/lib/conciliacaoEmLote';
+import {
+  dataFinanceiraKey,
+  hojeFinanceiroStr,
+  passaFiltroPeriodo,
+  periodoRangeFinanceiro,
+  PERIODOS_DATA_PAGAMENTO,
+} from '@/lib/filtroDataFinanceiro';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 const R = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 const hoje = () => new Date();
-const hojeStr = () => format(hoje(), 'yyyy-MM-dd');
+const hojeStr = () => hojeFinanceiroStr();
 
 function parseVencimento(value) {
   if (!value || typeof value !== 'string') return null;
@@ -42,8 +49,15 @@ function parseVencimento(value) {
 }
 
 function getVencimento(l) {
-  const parsed = parseVencimento(l.data_vencimento);
-  return parsed ? format(parsed, 'yyyy-MM-dd') : null;
+  return dataFinanceiraKey(l.data_vencimento);
+}
+
+function getDataPagamento(l) {
+  return dataFinanceiraKey(l.data_pagamento);
+}
+
+function getDataCampo(l, campo) {
+  return campo === 'pagamento' ? getDataPagamento(l) : getVencimento(l);
 }
 
 function isLancamentoPago(l) {
@@ -51,17 +65,7 @@ function isLancamentoPago(l) {
 }
 
 function periodoRange(p, cs, ce) {
-  const h = new Date();
-  if (p === 'vencidas') return { s: null, e: startOfDay(h), vencidas: true };
-  if (p === 'hoje')     return { s: startOfDay(h), e: endOfDay(h) };
-  if (p === 'semana')   return { s: startOfDay(h), e: endOfDay(addDays(h, 7)) };
-  if (p === 'mes')      return { s: startOfMonth(h), e: endOfMonth(h) };
-  if (p === 'futuras')  return { s: addDays(h, 1), e: null };
-  if (p === 'personalizado') return {
-    s: cs ? startOfDay(new Date(cs)) : null,
-    e: ce ? endOfDay(new Date(ce)) : null,
-  };
-  return { s: null, e: null }; // todas
+  return periodoRangeFinanceiro(p, cs, ce);
 }
 
 function KpiAbertas({ kpis, layout = 'card' }) {
@@ -133,6 +137,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
   const [fabOpen, setFabOpen]         = useState(false);
   const [detalhe, setDetalhe]         = useState(null);
   const [mostrarPagas, setMostrarPagas] = useState(false);
+  const [campoPeriodo, setCampoPeriodo] = useState('vencimento');
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [modoSelecaoLote, setModoSelecaoLote] = useState(false);
@@ -173,34 +178,26 @@ function useContasAbertasModel(onOpenImportador, shared) {
   const emAberto = useMemo(() =>
     lancs.filter(l => {
       if (l.status === 'Cancelado' || l.tipo === 'Transferência') return false;
-      // Mostra se tem tag conta_pagar OU se é despesa Em Aberto/Vencido sem tag alguma (registros legados)
       const temTag = Array.isArray(l.tags) && l.tags.length > 0;
       const ehContaPagar = Array.isArray(l.tags) && l.tags.includes('conta_pagar');
       if (temTag && !ehContaPagar) return false;
-      if (!mostrarPagas && isLancamentoPago(l)) return false;
+      const exigePago = mostrarPagas || campoPeriodo === 'pagamento';
+      if (!exigePago && isLancamentoPago(l)) return false;
+      if (campoPeriodo === 'pagamento' && !isLancamentoPago(l)) return false;
       return true;
     }),
-  [lancs, mostrarPagas]);
+  [lancs, mostrarPagas, campoPeriodo]);
 
   const { s: ds, e: de } = useMemo(() => periodoRange(periodo, cs, ce), [periodo, cs, ce]);
 
   const filtrados = useMemo(() => emAberto.filter(l => {
-    const vStr = getVencimento(l);
-    const vDate = parseVencimento(vStr);
+    const dataStr = getDataCampo(l, campoPeriodo);
+    const dataDate = parseVencimento(dataStr);
 
-    // Período
-    if (periodo === 'vencidas') {
-      if (!vStr || vStr >= hojeStr()) return false;
-    } else if (periodo === 'mes') {
-      // mês corrente: inclui vencidas do mês + a vencer no mês
-      if (!vStr || !isWithinInterval(new Date(vStr + 'T12:00:00'), { start: ds, end: de })) return false;
-    } else if (ds && de && vDate) {
-      if (!isWithinInterval(vDate, { start: ds, end: de })) return false;
-    } else if (ds && !de && vDate) {
-      if (isBefore(vDate, ds)) return false;
-    }
+    if (campoPeriodo === 'pagamento' && !dataStr) return false;
 
-    // Filtro tipo / compras
+    if (!passaFiltroPeriodo(dataStr, dataDate, periodo, ds, de, hojeStr())) return false;
+
     if (tipoFiltro === 'compras') {
       if (l.referencia_tipo !== 'PedidoCompra' && !l.is_custo_mercadoria) return false;
     } else if (tipoFiltro !== 'todos' && l.tipo !== tipoFiltro) return false;
@@ -213,7 +210,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
              (l.terceiro_nome || '').toLowerCase().includes(q);
     }
     return true;
-  }), [emAberto, periodo, ds, de, tipoFiltro, contasSel, search, cs, ce]);
+  }), [emAberto, periodo, ds, de, tipoFiltro, contasSel, search, cs, ce, campoPeriodo]);
 
   const kpis = useMemo(() => {
     let aReceber = 0, aPagar = 0, qtdReceber = 0, qtdPagar = 0, vencidas = 0, qtdVencidas = 0;
@@ -236,7 +233,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
     const oStr = format(subDays(new Date(), 1), 'yyyy-MM-dd');
     const map = {};
     filtrados.forEach((l) => {
-      const k = getVencimento(l) || 'sem-data';
+      const k = getDataCampo(l, campoPeriodo) || 'sem-data';
       (map[k] = map[k] || []).push(l);
     });
 
@@ -245,10 +242,10 @@ function useContasAbertasModel(onOpenImportador, shared) {
       aPagarDia: items.filter((l) => l.tipo === 'Despesa').reduce((s, l) => s + (l.valor || 0), 0),
     });
 
-    const sortPorVencimentoAntigo = (items) =>
+    const sortPorDataAntiga = (items) =>
       [...items].sort((a, b) => {
-        const da = getVencimento(a) || '';
-        const db = getVencimento(b) || '';
+        const da = getDataCampo(a, campoPeriodo) || '';
+        const db = getDataCampo(b, campoPeriodo) || '';
         if (da !== db) return da.localeCompare(db);
         return (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' });
       });
@@ -259,7 +256,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
     Object.entries(map)
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([k, items]) => {
-        const isVencido = k !== 'sem-data' && k < hStr;
+        const isVencido = campoPeriodo === 'vencimento' && k !== 'sem-data' && k < hStr;
         if (isVencido) {
           vencidasItems.push(...items);
         } else {
@@ -270,7 +267,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
     const resultado = [];
 
     if (vencidasItems.length > 0) {
-      const itemsOrdenados = sortPorVencimentoAntigo(vencidasItems);
+      const itemsOrdenados = sortPorDataAntiga(vencidasItems);
       resultado.push({
         k: 'vencidas',
         label: 'Vencidas',
@@ -283,7 +280,9 @@ function useContasAbertasModel(onOpenImportador, shared) {
 
     outros.forEach(([k, items]) => {
       const itemsOrdenados = sortLancamentosPorDescricao(items);
-      const label = k === 'sem-data' ? 'Sem vencimento' : formatFinanceiroGrupoLabel(k, hStr, oStr);
+      const label = k === 'sem-data'
+        ? (campoPeriodo === 'pagamento' ? 'Sem data de pagamento' : 'Sem vencimento')
+        : formatFinanceiroGrupoLabel(k, hStr, oStr);
       resultado.push({
         k,
         label,
@@ -295,7 +294,19 @@ function useContasAbertasModel(onOpenImportador, shared) {
     });
 
     return resultado;
-  }, [filtrados]);
+  }, [filtrados, campoPeriodo]);
+
+  const handleCampoPeriodo = (campo) => {
+    setCampoPeriodo(campo);
+    if (campo === 'pagamento') {
+      setMostrarPagas(true);
+      if (!PERIODOS_DATA_PAGAMENTO.some((p) => p.v === periodo)) {
+        setPeriodo('mes');
+        setCs('');
+        setCe('');
+      }
+    }
+  };
 
   // Marcar como pago rapidamente (abre detalhe pre-configurado)
 
@@ -548,6 +559,8 @@ function useContasAbertasModel(onOpenImportador, shared) {
     setTipoFiltro,
     mostrarPagas,
     setMostrarPagas,
+    campoPeriodo,
+    handleCampoPeriodo,
     modoSelecaoLote,
     modoCorrigirDataLote,
     entrarModoPagarLote,
@@ -633,6 +646,8 @@ export function ContasAbertasFiltros() {
     setTipoFiltro,
     mostrarPagas,
     setMostrarPagas,
+    campoPeriodo,
+    handleCampoPeriodo,
   } = m;
 
   return (
@@ -651,6 +666,8 @@ export function ContasAbertasFiltros() {
       onTipoFiltro={setTipoFiltro}
       mostrarPagas={mostrarPagas}
       onMostrarPagas={setMostrarPagas}
+      campoPeriodo={campoPeriodo}
+      onCampoPeriodo={handleCampoPeriodo}
     />
   );
 }
@@ -703,14 +720,16 @@ export function ContasAbertasListaPane() {
     setTipoFiltro,
     mostrarPagas,
     setMostrarPagas,
+    campoPeriodo,
+    handleCampoPeriodo,
     cs,
     ce,
     setCs,
     setCe,
   } = m;
 
-  const hasActiveFilters = periodo !== 'mes' || tipoFiltro !== 'todos' || mostrarPagas || !!cs || !!ce;
-  const periodoLabel = PERIODOS_CONTAS.find((p) => p.v === periodo)?.l || 'Período';
+  const hasActiveFilters = periodo !== 'mes' || tipoFiltro !== 'todos' || mostrarPagas || campoPeriodo !== 'vencimento' || !!cs || !!ce;
+  const periodoLabel = (campoPeriodo === 'pagamento' ? PERIODOS_DATA_PAGAMENTO : PERIODOS_CONTAS).find((p) => p.v === periodo)?.l || 'Período';
   const tipoLabel = tipoFiltro === 'Receita' ? 'A Receber' : tipoFiltro === 'Despesa' ? 'A Pagar' : tipoFiltro === 'compras' ? 'Compras' : null;
 
   return (
@@ -723,11 +742,15 @@ export function ContasAbertasListaPane() {
           setPeriodo('mes');
           setTipoFiltro('todos');
           setMostrarPagas(false);
+          handleCampoPeriodo('vencimento');
           setCs('');
           setCe('');
         }}
         summaryChips={
           <>
+            {campoPeriodo === 'pagamento' && (
+              <FinanceiroSummaryChip>Pagamento</FinanceiroSummaryChip>
+            )}
             {periodo !== 'mes' && <FinanceiroSummaryChip>{periodoLabel}</FinanceiroSummaryChip>}
             {tipoFiltro !== 'todos' && tipoLabel && <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>}
             {mostrarPagas && (
@@ -838,6 +861,7 @@ export function ContasAbertasListaPane() {
         onRow={setDetalhe}
         emSelecao={modoSelecaoLote || modoCorrigirDataLote}
         selecionarPagos={modoCorrigirDataLote}
+        agruparPorPagamento={campoPeriodo === 'pagamento'}
         selecionados={selectedIds}
         onToggleSelecionado={handleToggleSelecionado}
       />

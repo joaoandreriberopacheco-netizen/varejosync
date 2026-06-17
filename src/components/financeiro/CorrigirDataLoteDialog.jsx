@@ -14,6 +14,10 @@ export default function CorrigirDataLoteDialog({
   loading,
   progresso,
   tamanhoLote = 25,
+  titulo = 'Corrigir data de pagamento',
+  labelData = 'Nova data de pagamento',
+  descricao = 'Apenas a data de pagamento será alterada — saldos e contas não mudam.',
+  itemLabel = 'pago(s)',
 }) {
   const totalLotes = Math.ceil(selecionados.length / tamanhoLote);
   const loteAtual = progresso?.total > 0 ? Math.ceil(progresso.atual / tamanhoLote) : 0;
@@ -22,15 +26,13 @@ export default function CorrigirDataLoteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md rounded-3xl border-0 bg-card shadow-xl">
         <DialogHeader>
-          <DialogTitle className="font-glacial text-foreground">Corrigir data de pagamento</DialogTitle>
+          <DialogTitle className="font-glacial text-foreground">{titulo}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="rounded-2xl bg-muted/50 p-4 space-y-1">
-            <p className="text-sm font-medium text-foreground">{selecionados.length} lançamento(s) pago(s)</p>
-            <p className="text-xs text-muted-foreground">
-              Apenas a data de pagamento será alterada — saldos e contas não mudam.
-            </p>
+            <p className="text-sm font-medium text-foreground">{selecionados.length} lançamento(s) {itemLabel}</p>
+            <p className="text-xs text-muted-foreground">{descricao}</p>
             {totalLotes > 1 && (
               <p className="text-[10px] text-muted-foreground">
                 Processamento em {totalLotes} lotes de {tamanhoLote}
@@ -39,7 +41,7 @@ export default function CorrigirDataLoteDialog({
           </div>
 
           <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">Nova data de pagamento</Label>
+            <Label className="text-xs text-muted-foreground mb-2 block">{labelData}</Label>
             <input
               autoComplete="off"
               type="date"

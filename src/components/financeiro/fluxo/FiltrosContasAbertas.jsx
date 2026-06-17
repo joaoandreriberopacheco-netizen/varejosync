@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import FinanceiroFiltrosShell from './FinanceiroFiltrosShell';
 import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE } from './financeiroP38';
+import { PERIODOS_DATA_PAGAMENTO } from '@/lib/filtroDataFinanceiro';
 
 export const PERIODOS_CONTAS = [
   { v: 'vencidas', l: 'Vencidas' },
@@ -35,11 +36,15 @@ export default function FiltrosContasAbertas({
   onTipoFiltro,
   mostrarPagas,
   onMostrarPagas,
+  campoPeriodo,
+  onCampoPeriodo,
 }) {
+  const periodosVisiveis = campoPeriodo === 'pagamento' ? PERIODOS_DATA_PAGAMENTO : PERIODOS_CONTAS;
   const hasActiveFilters =
     periodo !== 'mes' ||
     tipoFiltro !== 'todos' ||
     mostrarPagas ||
+    campoPeriodo !== 'vencimento' ||
     !!cs ||
     !!ce;
 
@@ -54,9 +59,34 @@ export default function FiltrosContasAbertas({
     >
       <div className="space-y-3">
         <div>
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Filtrar por</p>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => onCampoPeriodo('vencimento')}
+              className={`rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${campoPeriodo === 'vencimento' ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
+            >
+              Vencimento
+            </button>
+            <button
+              type="button"
+              onClick={() => onCampoPeriodo('pagamento')}
+              className={`rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${campoPeriodo === 'pagamento' ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
+            >
+              Data de pagamento
+            </button>
+          </div>
+          {campoPeriodo === 'pagamento' && (
+            <p className="mt-1.5 text-[10px] text-muted-foreground">
+              Mostra só lançamentos já pagos, agrupados pela data em que foram quitados.
+            </p>
+          )}
+        </div>
+
+        <div>
           <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Período</p>
           <div className="flex flex-wrap gap-1.5">
-            {PERIODOS_CONTAS.map((p) => (
+            {periodosVisiveis.map((p) => (
               <button
                 key={p.v}
                 type="button"
@@ -109,7 +139,8 @@ export default function FiltrosContasAbertas({
           <button
             type="button"
             onClick={() => onMostrarPagas((p) => !p)}
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${mostrarPagas ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
+            disabled={campoPeriodo === 'pagamento'}
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${mostrarPagas || campoPeriodo === 'pagamento' ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
           >
             <CheckCircle2 className="h-3 w-3" /> Pagas
           </button>

@@ -9,6 +9,7 @@ export default function ListaContasAbertas({
   onRow,
   emSelecao = false,
   selecionarPagos = false,
+  agruparPorPagamento = false,
   selecionados = [],
   onToggleSelecionado,
 }) {
@@ -34,7 +35,7 @@ export default function ListaContasAbertas({
               key={l.id}
               l={l}
               striped={index % 2 === 1}
-              dataField={selecionarPagos ? 'pagamento' : 'vencimento'}
+              dataField={selecionarPagos || agruparPorPagamento ? 'pagamento' : 'vencimento'}
               showPago
               onClick={onRow}
               emSelecao={emSelecao}
