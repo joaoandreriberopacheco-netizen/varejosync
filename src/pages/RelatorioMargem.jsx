@@ -272,6 +272,21 @@ function wrapDescLinesPdf(pdf, text, maxWidth) {
   return lines.length ? lines : ['?'];
 }
 
+/** Título de coluna no header A4: centrado H/V (exceto `alignLeft`). */
+function drawPdfA4HeaderCell(pdf, label, colLeft, colRight, headerTop, headerH, fontSize, { alignLeft = false } = {}) {
+  const pad = 0.8;
+  const colW = Math.max(4, colRight - colLeft - pad * 2);
+  const lines = wrapDescLinesPdf(pdf, normalizePdfText(label), colW);
+  const lineH = fontSize * 0.42;
+  const textBlockH = lines.length * lineH;
+  const startY = headerTop + (headerH - textBlockH) / 2 + lineH * 0.85;
+  const x = alignLeft ? colLeft + pad : (colLeft + colRight) / 2;
+  pdf.setFontSize(fontSize);
+  lines.forEach((line, i) => {
+    pdf.text(line, x, startY + i * lineH, { align: alignLeft ? 'left' : 'center' });
+  });
+}
+
 function formatQuant(val, unitCode) {
   return formatCommercialQuantity(val, unitCode);
 }
@@ -1399,13 +1414,9 @@ export default function RelatorioMargemVendas() {
     const footerY = pageHeight - 10;
     const lineHeight = 2.9 * BODY_LINE_HEIGHT_MULT;
     const rowMinHeightProduct = 4.6 * BODY_LINE_HEIGHT_MULT;
-    const rowMinHeightGroup = rowMinHeightProduct;
     const rowPadV = 1.2 * BODY_PAD_MULT;
     const textBaseline = 3.5 * BODY_PAD_MULT;
-    const pdfIndentGroupMm = 3;
-    const pdfIndentProdutoMm = 1.6;
     const descPad = 2 * BODY_PAD_MULT;
-    const rowGapGroup = 0;
 
     const C = PDF_EMBARQUES_C;
 
@@ -1524,27 +1535,32 @@ export default function RelatorioMargemVendas() {
     const PDF_STORM = [82, 96, 112];
 
     const drawTableHeader = () => {
-      const headerH = 12;
+      const headerH = 14;
+      const headerFontSize = 7.5;
       setFill(PDF_STORM);
       pdf.roundedRect(margin, yPos, contentWidth, headerH, 2, 2, 'F');
 
       setPdfFont('normal');
-      pdf.setFontSize(6);
       setColor(C.white);
-      const headerY1 = yPos + 4.8;
-      const headerY2 = yPos + 9.2;
-      const quantCenter = (colXAbs.quant + colRightAbs.quant) / 2;
-      const unCenter = (colXAbs.un + colRightAbs.un) / 2;
 
-      pdf.text('QUANT', quantCenter, headerY1, { align: 'center' });
-      pdf.text('UN', unCenter, headerY2, { align: 'center' });
-      pdf.text(normalizePdfText('DESCRIÇÃO'), colXAbs.desc + 1, headerY1);
+      const headerTop = yPos;
+      const headerOpts = { headerTop, headerH, fontSize: headerFontSize };
 
-      MARGIN_MOBILE_VALUE_ROWS[0].forEach(({ label, key }) => {
-        pdf.text(normalizePdfText(label), colRightAbs[key] - 1, headerY1, { align: 'right' });
-      });
-      MARGIN_MOBILE_VALUE_ROWS[1].forEach(({ label, key }) => {
-        pdf.text(normalizePdfText(label), colRightAbs[key] - 1, headerY2, { align: 'right' });
+      drawPdfA4HeaderCell(pdf, 'QUANT', colXAbs.quant, colRightAbs.quant, headerTop, headerH, headerFontSize);
+      drawPdfA4HeaderCell(pdf, 'UN', colXAbs.un, colRightAbs.un, headerTop, headerH, headerFontSize);
+      drawPdfA4HeaderCell(
+        pdf,
+        'DESCRIÇÃO',
+        colXAbs.desc,
+        colRightAbs.desc,
+        headerTop,
+        headerH,
+        headerFontSize,
+        { alignLeft: true }
+      );
+
+      MARGIN_MOBILE_VALUE_ROWS.flat().forEach(({ label, key }) => {
+        drawPdfA4HeaderCell(pdf, label, colXAbs[key], colRightAbs[key], headerTop, headerH, headerFontSize);
       });
 
       yPos += headerH + 1.2;
@@ -1575,7 +1591,7 @@ export default function RelatorioMargemVendas() {
       const unCenter = (colXAbs.un + colRightAbs.un) / 2;
 
       setPdfFont('normal');
-      pdf.setFontSize(isGroup ? 7 : 7.5);
+      pdf.setFontSize(7.5);
       setColor(C.text);
       pdf.text(
         formatCommercialQuantity(dataRow.quantidade_vendida || 0, dataRow.unidade_exibicao),
@@ -1598,10 +1614,11 @@ export default function RelatorioMargemVendas() {
       };
 
       MARGIN_METRIC_KEYS.forEach((key) => {
+        const colCenter = (colXAbs[key] + colRightAbs[key]) / 2;
         if (key === 'markup' || key === 'lucro') setColor(MARGIN_ACCENT_RGB);
         else if (key === 'custoUnit' || key === 'custoTotal') setColor(C.muted);
         else setColor(C.text);
-        pdf.text(metricValues[key], colRightAbs[key] - 1, textY, { align: 'right' });
+        pdf.text(metricValues[key], colCenter, textY, { align: 'center' });
       });
     };
 
@@ -1609,51 +1626,29 @@ export default function RelatorioMargemVendas() {
       const isGroup = treeRow.type === 'group';
       const showMetrics = !isGroup || treeRow.showMetrics !== false;
       const dataRow = isGroup ? treeRow : treeRow.item;
-      const descIndent = marginDescTextStartPdfMm(
-        treeRow.level,
-        pdfIndentProdutoMm,
-        pdfIndentGroupMm
-      );
-      const descX = colXAbs.desc + descIndent;
-      const descMaxW = Math.max(8, colWidths.desc - descPad - descIndent);
+      const descPadLeft = 1;
+      const descX = colXAbs.desc + descPadLeft;
+      const descMaxW = Math.max(8, colWidths.desc - descPad - descPadLeft);
       const descText = isGroup
         ? normalizePdfText(`${String(treeRow.label || '').toUpperCase()} (${treeRow.count ?? 0})`)
         : normalizePdfText(dataRow?.nome || '?');
       const descLines = wrapDescLinesPdf(pdf, descText, descMaxW);
-      const rowMinHeight = isGroup ? rowMinHeightGroup : rowMinHeightProduct;
-      const rowHeight = Math.max(rowMinHeight, descLines.length * lineHeight + rowPadV);
-      const rowGap = isGroup ? rowGapGroup : 0;
+      const rowHeight = Math.max(rowMinHeightProduct, descLines.length * lineHeight + rowPadV);
 
-      ensureSpace(rowHeight + rowGap);
+      ensureSpace(rowHeight);
 
       const rowX = margin;
       const rowW = contentWidth;
 
-      if (isGroup) {
-        setFill(C.teal);
-        pdf.roundedRect(
-          margin - 3.2,
-          yPos + 2.6 * BODY_PAD_MULT,
-          1.2,
-          Math.min(rowHeight - 4.8 * BODY_PAD_MULT, 6.5),
-          0.6,
-          0.6,
-          'F'
-        );
-        setDraw(C.border);
-        pdf.setLineWidth(0.15);
-        pdf.line(rowX, yPos + rowHeight + 0.4, rowX + rowW, yPos + rowHeight + 0.4);
-      } else {
-        const isZebra = zebraIndex % 2 === 1;
-        zebraIndex += 1;
-        if (isZebra) {
-          setFill(C.rowAlt);
-          pdf.roundedRect(rowX, yPos, rowW, rowHeight, 1.5, 1.5, 'F');
-        }
-        setDraw(C.border);
-        pdf.setLineWidth(0.1);
-        pdf.line(margin, yPos + rowHeight, pageWidth - margin, yPos + rowHeight);
+      const isZebra = zebraIndex % 2 === 1;
+      zebraIndex += 1;
+      if (isZebra) {
+        setFill(C.rowAlt);
+        pdf.roundedRect(rowX, yPos, rowW, rowHeight, 1.5, 1.5, 'F');
       }
+      setDraw(C.border);
+      pdf.setLineWidth(0.1);
+      pdf.line(margin, yPos + rowHeight, pageWidth - margin, yPos + rowHeight);
 
       const textY = yPos + textBaseline;
       setPdfFont('normal');
@@ -1664,7 +1659,7 @@ export default function RelatorioMargemVendas() {
         drawMetricsRow(dataRow, textY, { isGroup });
       }
 
-      yPos += rowHeight + rowGap;
+      yPos += rowHeight;
     };
 
     drawReportHeader();
