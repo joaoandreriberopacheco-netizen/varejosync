@@ -26,9 +26,15 @@ import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
 import ValesTrocaTab from '@/components/vendas/ValesTrocaTab';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
-import { dataHoje, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
+import { dataHoje, boundsMesCivil, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
+
+function getPeriodoMesCorrente() {
+  const hoje = dataHoje();
+  const [year, month] = hoje.split('-').map(Number);
+  return boundsMesCivil(year, month - 1);
+}
 const dateRangeMatches = (valor, inicio, fim) => {
   const chave = toLocalDateKey(valor);
   if (!chave) return false;
@@ -418,8 +424,8 @@ function VendasGestaoPage() {
   const [rascunhosFiltrados, setRascunhosFiltrados] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('todos');
-  const [dataInicio, setDataInicio] = useState('');
-  const [dataFim, setDataFim] = useState('');
+  const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
+  const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
   const [isLoading, setIsLoading] = useState(true);
 
 
@@ -593,8 +599,9 @@ function VendasGestaoPage() {
   const limparFiltros = () => {
     setSearchTerm('');
     setStatusFiltro('todos');
-    setDataInicio('');
-    setDataFim('');
+    const { start, end } = getPeriodoMesCorrente();
+    setDataInicio(start);
+    setDataFim(end);
   };
 
   return (
