@@ -27,6 +27,9 @@ export default function GlobalSearchBar({
   autoFocus = false,
   showClose = false,
   atTop = false,
+  showShortcutHint = false,
+  shortcutLabel = '',
+  collapsedTitle,
   onClose,
   onNavigate,
   onCollapsedActivate,
@@ -77,7 +80,8 @@ export default function GlobalSearchBar({
         onClick={() => onCollapsedActivate?.()}
         className={cn('w-full flex items-center justify-center rounded-xl transition-colors', className)}
         style={{ padding: '10px' }}
-        title={placeholder}
+        title={collapsedTitle || placeholder}
+        aria-label={collapsedTitle || placeholder}
       >
         <Search size={18} style={{ color: c.iconColor }} />
       </button>
@@ -121,6 +125,13 @@ export default function GlobalSearchBar({
           >
             <X className="w-4 h-4" style={{ color: c.iconColor }} />
           </button>
+        ) : showShortcutHint && shortcutLabel && !query && !focused ? (
+          <kbd
+            className="hidden desktop-layout:inline-flex flex-none items-center rounded-md border border-border/50 bg-background/60 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground"
+            aria-hidden="true"
+          >
+            {shortcutLabel}
+          </kbd>
         ) : null}
       </div>
 

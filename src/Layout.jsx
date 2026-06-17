@@ -16,6 +16,7 @@ import MobileFunctionSelector from '@/components/navigation/MobileFunctionSelect
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
+import { shouldOpenGlobalSearchFromKeyboard } from '@/lib/globalSearchShortcut';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
@@ -178,24 +179,25 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     const down = (e) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+      if (shouldOpenGlobalSearchFromKeyboard(e)) {
         e.preventDefault();
         setSearchOverlayOpen((open) => !open);
         setShowMobileMenu(false);
+        return;
       }
       if (e.key === 'Escape') {
         setSearchOverlayOpen(false);
       }
     };
-    document.addEventListener("keydown", down);
-    
+    document.addEventListener('keydown', down, true);
+
     const handleGlobalSearch = () => {
       openSearchOverlay();
     };
     window.addEventListener('open-global-search', handleGlobalSearch);
-    
+
     return () => {
-      document.removeEventListener("keydown", down);
+      document.removeEventListener('keydown', down, true);
       window.removeEventListener('open-global-search', handleGlobalSearch);
     };
   }, [openSearchOverlay]);
