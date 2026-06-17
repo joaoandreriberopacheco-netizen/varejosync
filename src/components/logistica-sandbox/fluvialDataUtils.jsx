@@ -66,13 +66,23 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lan
     }
   });
 
+  const embarquesPorEvento = new Map();
+  (embarques || []).forEach((embarque) => {
+    const eventoId = embarque.evento_logistico_id;
+    if (!eventoId) return;
+    if (!embarquesPorEvento.has(eventoId)) {
+      embarquesPorEvento.set(eventoId, []);
+    }
+    embarquesPorEvento.get(eventoId).push(embarque);
+  });
+
   return (eventosLogisticos || [])
     .map((item) => {
       const saidaManaus = item.data_saida_origem || item.data_referencia;
       const chegadaTabatinga = item.data_chegada_destino || item.previsao_chegada;
       const chegadaManaus = item.data_chegada_manaus || item.data_retorno_origem || item.previsao_retorno;
       const proximaChegadaManaus = item.proxima_chegada_manaus || item.proximo_ciclo_chegada_manaus;
-      const embarquesRelacionados = (embarques || []).filter((emb) => emb.evento_logistico_id === item.id);
+      const embarquesRelacionados = embarquesPorEvento.get(item.id) || [];
 
       const fornecedoresMap = new Map();
       embarquesRelacionados.forEach((embarque) => {
@@ -134,9 +144,18 @@ export function buildFluvialEvents({ eventosLogisticos = [], embarques = [], lan
 }
 
 export function buildBoatViewModels({ transportadoras = [], eventos = [] }) {
+  const eventosPorTransportadora = new Map();
+  (eventos || []).forEach((evento) => {
+    const transportadoraId = evento.transportadora_id;
+    if (!transportadoraId) return;
+    if (!eventosPorTransportadora.has(transportadoraId)) {
+      eventosPorTransportadora.set(transportadoraId, []);
+    }
+    eventosPorTransportadora.get(transportadoraId).push(evento);
+  });
+
   return (transportadoras || []).map((item) => {
-    const eventosRelacionados = (eventos || [])
-      .filter((evento) => evento.transportadora_id === item.id)
+    const eventosRelacionados = (eventosPorTransportadora.get(item.id) || [])
       .sort((a, b) => new Date(a.data_saida_origem || 0) - new Date(b.data_saida_origem || 0));
 
     const proximoEvento = eventosRelacionados.find((evento) => {

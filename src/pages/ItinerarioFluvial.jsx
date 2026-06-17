@@ -36,9 +36,10 @@ export default function ItinerarioFluvial() {
   const todayRef = React.useRef(null);
   const queryClient = useQueryClient();
 
-  const { data: eventosLogisticos = [] } = useLogisticaEventosQuery({ initialData: [] });
-  const { data: embarques = [] } = useLogisticaEmbarquesQuery({ initialData: [] });
-  const { data: lancamentosFinanceiros = [] } = useLogisticaLancamentosFretesQuery({ initialData: [] });
+  const { data: eventosLogisticos = [], isPending: eventosPending } = useLogisticaEventosQuery({ initialData: [] });
+  const { data: embarques = [], isPending: embarquesPending } = useLogisticaEmbarquesQuery({ initialData: [] });
+  const { data: lancamentosFinanceiros = [], isPending: lancamentosPending } = useLogisticaLancamentosFretesQuery({ initialData: [] });
+  const timelineCarregando = eventosPending || embarquesPending || lancamentosPending;
 
   useEffect(() => {
     const unsub = base44.entities.LancamentoFinanceiro.subscribe((ev) => {
@@ -117,6 +118,10 @@ export default function ItinerarioFluvial() {
       return evento.data_chegada_manaus;
     };
 
+    const eventosComEmbarque = new Set(
+      embarques.map((emb) => emb.evento_logistico_id).filter(Boolean),
+    );
+
     return eventos
       .map((evento) => {
         const viewDate = getViewDate(evento);
@@ -128,7 +133,7 @@ export default function ItinerarioFluvial() {
       })
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
-        const temVinculoEmbarque = embarques.some((emb) => emb.evento_logistico_id === evento.id);
+        const temVinculoEmbarque = eventosComEmbarque.has(evento.id);
         if (embarqueLinkFilter === 'com_vinculo' && !temVinculoEmbarque) return false;
         if (embarqueLinkFilter === 'sem_vinculo' && temVinculoEmbarque) return false;
         return true;
@@ -215,7 +220,17 @@ export default function ItinerarioFluvial() {
            <>
              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
                <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
-                 {timelineItems.map((item) => (
+                 {timelineCarregando ? (
+                   <div className="space-y-4">
+                     {[1, 2, 3, 4].map((item) => (
+                       <div key={item} className="rounded-3xl bg-card border border-border/40 p-4 animate-pulse">
+                         <div className="h-4 w-40 rounded bg-muted mb-3" />
+                         <div className="h-16 rounded-2xl bg-muted" />
+                       </div>
+                     ))}
+                     <p className="text-xs text-muted-foreground text-center">Carregando viagens…</p>
+                   </div>
+                 ) : timelineItems.map((item) => (
                    <div key={item.key} ref={item.isToday ? todayRef : null}>
                      <TimelineDayGroup
                        label={item.label}

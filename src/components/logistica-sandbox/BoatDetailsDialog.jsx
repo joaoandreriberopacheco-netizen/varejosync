@@ -102,7 +102,7 @@ function HistoricoCard({ evento, onOpen }) {
   );
 }
 
-export default function BoatDetailsDialog({ open, onOpenChange, transportadora, onSave, onDelete, onInactivate }) {
+export default function BoatDetailsDialog({ open, onOpenChange, transportadora, viagensCarregando = false, onSave, onDelete, onInactivate }) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [selectedEvento, setSelectedEvento] = React.useState(null);
   const [draft, setDraft] = React.useState(transportadora);
@@ -129,6 +129,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
   const itinerarioItems = draft.itinerario_real || [];
   const eventoItems = draft.eventos || [];
   const hasRecords = (draft.timeline || []).length > 0;
+  const mostrarCarregandoViagens = viagensCarregando && !hasRecords;
 
   const handleSave = async () => {
     setShowProgress(true);
@@ -138,6 +139,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
 
     setProgressStep(1);
     setStepStatuses(['done', 'active', 'waiting', 'waiting']);
+    const precisaRecalcularViagens = (draft.saida_referencia || '') !== (transportadora.saida_referencia || '');
     await sincronizarViagensTransportadora({
       transportadoraId: draft.id,
       nome: draft.nome,
@@ -147,6 +149,7 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
       email: draft.email,
       observacoes: draft.observacoes,
       ativo: draft.status !== 'inativa',
+      recalcularViagens: precisaRecalcularViagens,
     });
 
     setProgressStep(2);
@@ -202,11 +205,28 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                 </TabsList>
 
                 <TabsContent value="timeline" className="mt-0 min-w-0">
-                  <div className="space-y-1 pr-1 min-w-0">
-                    {timelineItems.map((item) => (
-                      <BoatTimelineItem key={`${item.label}-${item.data}`} item={item} />
-                    ))}
-                  </div>
+                  {mostrarCarregandoViagens ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((item) => (
+                        <div key={item} className="rounded-2xl bg-muted/50 p-4 shadow-sm animate-pulse">
+                          <div className="h-3 w-32 rounded bg-muted mb-3" />
+                          <div className="h-5 w-24 rounded bg-muted" />
+                        </div>
+                      ))}
+                      <p className="text-xs text-muted-foreground text-center pt-2">Carregando viagens…</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1 pr-1 min-w-0">
+                      {timelineItems.map((item) => (
+                        <BoatTimelineItem key={`${item.label}-${item.data}`} item={item} />
+                      ))}
+                      {timelineItems.length === 0 && (
+                        <div className="rounded-2xl bg-muted/50 p-6 shadow-sm text-center">
+                          <p className="text-sm text-muted-foreground">Nenhuma viagem planejada para esta transportadora.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="cadastro" className="mt-0 space-y-4 min-w-0">
@@ -254,7 +274,16 @@ export default function BoatDetailsDialog({ open, onOpenChange, transportadora, 
                 </TabsContent>
 
                 <TabsContent value="historico" className="mt-0 min-w-0">
-                  {eventoItems.length > 0 ? (
+                  {mostrarCarregandoViagens ? (
+                    <div className="space-y-3">
+                      {[1, 2].map((item) => (
+                        <div key={item} className="rounded-2xl bg-muted/50 p-4 shadow-sm animate-pulse">
+                          <div className="h-4 w-48 rounded bg-muted mb-2" />
+                          <div className="h-3 w-32 rounded bg-muted" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : eventoItems.length > 0 ? (
                     <div className="space-y-3">
                       {eventoItems.map((evento) => (
                         <HistoricoCard key={evento.id} evento={evento} onOpen={setSelectedEvento} />

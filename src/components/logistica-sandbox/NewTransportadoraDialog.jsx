@@ -53,7 +53,6 @@ export default function NewTransportadoraDialog({ open, onOpenChange, onCreated 
     setProgressStep(2);
     setStepStatuses(['done', 'done', 'active', 'waiting']);
     await onCreated?.({ ...novaTransportadora, saida_referencia: saidaReferencia });
-    await base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 1);
 
     setProgressStep(3);
     setStepStatuses(['done', 'done', 'done', 'active']);

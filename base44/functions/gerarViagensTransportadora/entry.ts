@@ -27,16 +27,29 @@ function buildCodigoAleatorio() {
   return `${output.slice(0, 3)}-${output.slice(3)}`;
 }
 
-function gerarCodigoUnico(codigosExistentes) {
+async function codigoJaExiste(base44, codigo) {
+  const resultados = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ codigo }, null, 1);
+  return resultados.length > 0;
+}
+
+async function gerarCodigoUnico(base44, codigosLocais) {
   let tentativas = 0;
 
   while (tentativas < 200) {
     const codigo = buildCodigoAleatorio();
-    if (!codigosExistentes.has(codigo)) {
-      codigosExistentes.add(codigo);
-      return codigo;
+    if (codigosLocais.has(codigo)) {
+      tentativas += 1;
+      continue;
     }
-    tentativas += 1;
+
+    if (await codigoJaExiste(base44, codigo)) {
+      codigosLocais.add(codigo);
+      tentativas += 1;
+      continue;
+    }
+
+    codigosLocais.add(codigo);
+    return codigo;
   }
 
   throw new Error('Não foi possível gerar um código único para a viagem');
@@ -82,12 +95,13 @@ Deno.serve(async (req) => {
     const limiteProspectivo = addMonths(hoje, 3);
     const sequenciaMaxima = 999;
 
-    const [viagensDaTransportadora, todasAsViagens] = await Promise.all([
-      base44.asServiceRole.entities.EventoLogisticoSandbox.filter({ transportadora_id: transportadoraId }, '-data_saida_origem', 500),
-      base44.asServiceRole.entities.EventoLogisticoSandbox.list('-created_date', 5000),
-    ]);
+    const viagensDaTransportadora = await base44.asServiceRole.entities.EventoLogisticoSandbox.filter(
+      { transportadora_id: transportadoraId },
+      '-data_saida_origem',
+      500,
+    );
     const viagensNormalizadas = viagensDaTransportadora.map((viagem) => viagem.data || viagem);
-    const codigosExistentes = new Set(todasAsViagens.map((viagem) => (viagem.data || viagem).codigo).filter(Boolean));
+    const codigosLocais = new Set(viagensNormalizadas.map((viagem) => viagem.codigo).filter(Boolean));
     const saidasExistentes = new Set(viagensNormalizadas.map((viagem) => viagem.data_saida_origem).filter(Boolean));
 
     let sequencia = 1;
@@ -101,7 +115,7 @@ Deno.serve(async (req) => {
       }
 
       if (!saidasExistentes.has(saidaManaus)) {
-        const codigo = gerarCodigoUnico(codigosExistentes);
+        const codigo = await gerarCodigoUnico(base44, codigosLocais);
         const chegadaManaus = addDays(saidaManaus, -7, 12);
         const etaTabatinga = addDays(saidaManaus, 7, 12);
         const proximaChegadaManaus = addDays(saidaManaus, 21, 12);
@@ -127,7 +141,7 @@ Deno.serve(async (req) => {
           transportadora_nome: transportadora.nome,
           tipo_registro: 'Viagem',
           observacoes: transportadora.observacoes || '',
-          chave_relacional_futura: 'viagem_id'
+          chave_relacional_futura: 'viagem_id',
         });
       }
 

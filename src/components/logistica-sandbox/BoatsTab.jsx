@@ -72,7 +72,7 @@ function BoatListSkeleton() {
 export default function BoatsTab() {
   const [filter, setFilter] = useState('todas');
   const [search, setSearch] = useState('');
-  const [selectedBoat, setSelectedBoat] = useState(null);
+  const [selectedBoatId, setSelectedBoatId] = useState(null);
   const [showNewDialog, setShowNewDialog] = useState(false);
   const queryClient = useQueryClient();
 
@@ -85,9 +85,10 @@ export default function BoatsTab() {
     isFetching,
   } = useTransportadorasFluvialQuery();
 
-  const { data: eventosData = [] } = useLogisticaEventosQuery();
-  const { data: embarquesData = [] } = useLogisticaEmbarquesQuery();
-  const { data: lancamentosFretesData = [] } = useLogisticaLancamentosFretesQuery();
+  const { data: eventosData = [], isPending: eventosPending, isFetching: eventosFetching } = useLogisticaEventosQuery();
+  const { data: embarquesData = [], isPending: embarquesPending } = useLogisticaEmbarquesQuery();
+  const { data: lancamentosFretesData = [], isPending: lancamentosPending } = useLogisticaLancamentosFretesQuery();
+  const viagensCarregando = eventosPending || embarquesPending || lancamentosPending;
 
   const eventosEnriquecidos = useMemo(() => buildFluvialEvents({
     eventosLogisticos: eventosData,
@@ -116,14 +117,17 @@ export default function BoatsTab() {
   const hasActiveFilters = filter !== 'todas' || search.trim().length > 0;
   const totalCadastradas = transportadorasNormalizadas.length;
 
+  const selectedBoat = useMemo(
+    () => transportadorasNormalizadas.find((item) => item.id === selectedBoatId) || null,
+    [transportadorasNormalizadas, selectedBoatId],
+  );
+
   const handleSaveBoat = async (updatedBoat) => {
     await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.transportadorasFluvial() });
     await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.eventos() });
     await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.embarques() });
     await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.lancamentosFretes() });
-
-    const boatAtualizada = transportadorasNormalizadas.find((item) => item.id === updatedBoat.id) || updatedBoat;
-    setSelectedBoat(boatAtualizada);
+    setSelectedBoatId(updatedBoat.id);
   };
 
   const handleCreatedBoat = async (createdBoat) => {
@@ -131,15 +135,15 @@ export default function BoatsTab() {
     await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.eventos() });
     await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.embarques() });
     await queryClient.invalidateQueries({ queryKey: p38Keys.logistica.lancamentosFretes() });
-    setSelectedBoat(createdBoat);
+    setSelectedBoatId(createdBoat.id);
   };
 
   const handleDeleteBoat = () => {
-    setSelectedBoat(null);
+    setSelectedBoatId(null);
   };
 
   const handleInactivateBoat = () => {
-    setSelectedBoat(null);
+    setSelectedBoatId(null);
   };
 
   const emptyMessage = hasActiveFilters
@@ -177,7 +181,8 @@ export default function BoatsTab() {
       {!isPending && !isError && totalCadastradas > 0 ? (
         <p className="text-xs text-muted-foreground px-1">
           {transportadoras.length} de {totalCadastradas} transportadora{totalCadastradas !== 1 ? 's' : ''}
-          {isFetching ? ' · atualizando…' : ''}
+          {isFetching || eventosFetching ? ' · atualizando…' : ''}
+          {viagensCarregando ? ' · carregando viagens…' : ''}
         </p>
       ) : null}
 
@@ -210,16 +215,17 @@ export default function BoatsTab() {
             <BoatListCard
               key={transportadora.id}
               transportadora={transportadora}
-              onClick={() => setSelectedBoat(transportadora)}
+              onClick={() => setSelectedBoatId(transportadora.id)}
             />
           ))}
         </div>
       )}
 
       <BoatDetailsDialog
-        open={!!selectedBoat}
-        onOpenChange={(open) => !open && setSelectedBoat(null)}
+        open={!!selectedBoatId}
+        onOpenChange={(open) => !open && setSelectedBoatId(null)}
         transportadora={selectedBoat}
+        viagensCarregando={viagensCarregando}
         onSave={handleSaveBoat}
         onDelete={handleDeleteBoat}
         onInactivate={handleInactivateBoat}
