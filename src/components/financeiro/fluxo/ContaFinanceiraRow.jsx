@@ -1,30 +1,30 @@
 import React from 'react';
-import { Clock, Eye, Edit } from 'lucide-react';
+import { Clock, Eye, Edit, Scale } from 'lucide-react';
 import {
   P38MobileLine,
   P38StatusLabel,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
+import { contaTemDivergenciaSaldo, getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
 
 const LINE_TITLE_CLASS =
   '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
 
-function saldoConta(conta) {
-  return Number(conta.saldo_atual ?? conta.saldo_inicial ?? 0);
-}
-
 export default function ContaFinanceiraRow({
   conta,
   pendencias = 0,
+  saldosCalculados,
   onExtrato,
   onEdit,
+  onAjuste,
   onConciliar,
   striped,
 }) {
-  const saldo = saldoConta(conta);
+  const saldo = getSaldoExibicaoConta(conta, saldosCalculados);
   const isNegativo = saldo < 0;
   const ativa = conta.ativo !== false;
+  const divergente = contaTemDivergenciaSaldo(conta, saldo);
 
   const subtitle = [conta.tipo, conta.banco].filter(Boolean).join(' · ');
 
@@ -54,6 +54,9 @@ export default function ContaFinanceiraRow({
               {pendencias} conciliação{pendencias > 1 ? 'ões' : ''}
             </P38StatusLabel>
           )}
+          {divergente && (
+            <P38StatusLabel tone="warning">Divergente</P38StatusLabel>
+          )}
           {conta.is_caixa_pdv && <span>PDV</span>}
         </>
       }
@@ -72,6 +75,17 @@ export default function ContaFinanceiraRow({
             aria-label="Extrato"
           >
             <Eye className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAjuste?.(conta);
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/60"
+            aria-label="Ajustar saldo"
+          >
+            <Scale className="h-4 w-4" />
           </button>
           <button
             type="button"

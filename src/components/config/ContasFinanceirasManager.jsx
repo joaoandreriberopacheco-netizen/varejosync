@@ -8,13 +8,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Wallet, Edit, Trash2, PlusCircle, Scale, ArrowRightLeft } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
+import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import { resolveContaDestinoCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
+import {
+  calcularSaldosTodasContas,
+  getSaldoExibicaoConta,
+} from '@/lib/saldoContaFinanceira';
 
 export default function ContasFinanceirasManager() {
   const [contas, setContas] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isAjusteOpen, setIsAjusteOpen] = useState(false);
+  const [pinAjusteOpen, setPinAjusteOpen] = useState(false);
   const [selectedConta, setSelectedConta] = useState(null);
+  const [saldosCalculados, setSaldosCalculados] = useState({});
   const [formData, setFormData] = useState({
     nome: '', tipo: 'Conta Bancária', banco: '', agencia: '', conta: '',
     saldo_inicial: 0, saldo_atual: 0, cor: '#10B981', observacoes: '', ativo: true, is_caixa_pdv: false,
@@ -25,8 +32,13 @@ export default function ContasFinanceirasManager() {
   useEffect(() => { loadContas(); }, []);
 
   const loadContas = async () => {
-    const data = await base44.entities.ContasFinanceiras.list();
+    const [data, lancs, movs] = await Promise.all([
+      base44.entities.ContasFinanceiras.list(),
+      base44.entities.LancamentoFinanceiro.list(),
+      base44.entities.MovimentosCaixa.list(),
+    ]);
     setContas(data);
+    setSaldosCalculados(calcularSaldosTodasContas(data, lancs, movs));
   };
 
   const handleEdit = (conta) => { setSelectedConta(conta); setFormData(conta); setIsDialogOpen(true); };
@@ -41,7 +53,7 @@ export default function ContasFinanceirasManager() {
 
   const handleAjusteSaldo = (conta) => {
     setSelectedConta(conta);
-    setIsAjusteOpen(true);
+    setPinAjusteOpen(true);
   };
 
   const handleDelete = async (conta) => {
@@ -169,7 +181,7 @@ export default function ContasFinanceirasManager() {
               {/* Saldo */}
               <div className="flex-shrink-0 text-right">
                 <div className="text-sm font-semibold text-foreground/90 tabular-nums">
-                  R$ {fmtR(conta.saldo_atual)}
+                  R$ {fmtR(getSaldoExibicaoConta(conta, saldosCalculados))}
                 </div>
               </div>
               {/* Ações */}
@@ -192,10 +204,25 @@ export default function ContasFinanceirasManager() {
         </div>
       )}
 
+      <PinValidationDialog
+        isOpen={pinAjusteOpen}
+        onClose={() => {
+          setPinAjusteOpen(false);
+          setSelectedConta(null);
+        }}
+        onSuccess={() => {
+          setPinAjusteOpen(false);
+          setIsAjusteOpen(true);
+        }}
+        operationName={selectedConta ? `Ajuste de saldo — ${selectedConta.nome}` : 'Ajuste de saldo'}
+        forceEnabled
+      />
+
       <AjusteSaldoDialog
         open={isAjusteOpen}
         onOpenChange={setIsAjusteOpen}
         conta={selectedConta}
+        saldoCalculado={selectedConta ? getSaldoExibicaoConta(selectedConta, saldosCalculados) : 0}
         onSaved={loadContas}
       />
 

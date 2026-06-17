@@ -13,6 +13,7 @@ import {
   ArrowRightLeft,
   FileDown,
   Printer,
+  Scale,
 } from 'lucide-react';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, isWithinInterval, parseISO } from 'date-fns';
 import { useToast } from '@/components/ui/use-toast';
@@ -24,6 +25,13 @@ import FiltrosExtratoConta, { PERIODOS_EXTRATO } from '@/components/financeiro/f
 import ListaExtratoConta from '@/components/financeiro/fluxo/ListaExtratoConta';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
 import { formatFinanceiroGrupoLabel } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
+import PinValidationDialog from '@/components/auth/PinValidationDialog';
+import {
+  calcularSaldoContaFinanceira,
+  movimentoParticipaExtrato,
+  totaisEntradaSaidaMovimentos,
+} from '@/lib/saldoContaFinanceira';
 
 export default function ExtratoContaPage() {
   const [conta, setConta] = useState(null);
@@ -38,6 +46,8 @@ export default function ExtratoContaPage() {
   const [dataFim, setDataFim] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [pinAjusteOpen, setPinAjusteOpen] = useState(false);
+  const [ajusteDialogOpen, setAjusteDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const [formLancamento, setFormLancamento] = useState({
@@ -90,8 +100,15 @@ export default function ExtratoContaPage() {
           lancamentosFiltrados = lancamentosData.filter(l => l.conta_financeira_id === contaId);
         }
 
+        const movsFiltrados = movimentosData.filter(m => m.conta_id === contaId);
         setLancamentos(lancamentosFiltrados);
-        setMovimentosCaixa(movimentosData.filter(m => m.conta_id === contaId));
+        setMovimentosCaixa(movsFiltrados);
+
+        const saldo = calcularSaldoContaFinanceira(contaAtual, lancamentosFiltrados, movsFiltrados);
+        if (Math.abs(saldo - Number(contaAtual.saldo_atual || 0)) > 0.009) {
+          await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: saldo });
+          setConta({ ...contaAtual, saldo_atual: saldo });
+        }
       }
     } catch (error) {
       toast({
@@ -115,16 +132,7 @@ export default function ExtratoContaPage() {
 
       await base44.entities.LancamentoFinanceiro.create(lancamentoData);
 
-      // Atualiza saldo da conta
-      const novoSaldo = conta.saldo_atual + (
-        formLancamento.tipo === 'Receita' ? 
-        parseFloat(formLancamento.valor) : 
-        -parseFloat(formLancamento.valor)
-      );
-
-      await base44.entities.ContasFinanceiras.update(conta.id, {
-        saldo_atual: novoSaldo
-      });
+      await loadExtrato(conta.id);
 
       toast({
         title: "Lançamento registrado",
@@ -179,15 +187,6 @@ export default function ExtratoContaPage() {
         observacoes: `Transferência de ${conta.nome} para ${contaDestino.nome}`
       });
 
-      // Atualiza saldos
-      await base44.entities.ContasFinanceiras.update(conta.id, {
-        saldo_atual: conta.saldo_atual - valor
-      });
-
-      await base44.entities.ContasFinanceiras.update(contaDestino.id, {
-        saldo_atual: contaDestino.saldo_atual + valor
-      });
-
       toast({
         title: "Transferência realizada",
         description: `${formatCurrency(valor)} transferido para ${contaDestino.nome}`,
@@ -195,7 +194,7 @@ export default function ExtratoContaPage() {
       });
 
       setDialogType(null);
-      loadExtrato(conta.id);
+      await loadExtrato(conta.id);
     } catch (error) {
       toast({
         title: "Erro ao transferir",
@@ -233,12 +232,7 @@ export default function ExtratoContaPage() {
   };
 
   const getDataMovimento = (mov) => mov.data_pagamento || mov.data_vencimento || mov.created_date;
-  const participaDoSaldo = (mov) => {
-    if (mov.status === 'Cancelado') return false;
-    if (mov.origem === 'movimento') return false;
-    if (mov.tipo !== 'Receita' && mov.tipo !== 'Despesa') return false;
-    return mov.status === 'Pago' || !!mov.data_pagamento;
-  };
+  const participaDoSaldo = movimentoParticipaExtrato;
 
   // Combina e ordena movimentações
   const todasMovimentacoes = [
@@ -296,39 +290,31 @@ export default function ExtratoContaPage() {
 
   const diasOrdenados = Object.keys(movimentacoesPorDia).sort((a, b) => new Date(b) - new Date(a));
 
-  // Usa o saldo_atual real da conta como ponto de referência
-  // e remove todo o efeito das movimentações futuras para chegar no saldo do período exibido
-  const saldoReal = (() => {
-    const saldoInicial = Number(conta?.saldo_inicial || 0);
-    const totalEntradasValidas = todasMovimentacoes
-      .filter(m => participaDoSaldo(m) && m.tipo === 'Receita')
-      .reduce((sum, m) => sum + (m.valor || 0), 0);
-    const totalSaidasValidas = todasMovimentacoes
-      .filter(m => participaDoSaldo(m) && m.tipo === 'Despesa')
-      .reduce((sum, m) => sum + (m.valor || 0), 0);
-    return saldoInicial + totalEntradasValidas - totalSaidasValidas;
-  })();
+  // Saldo canónico (mesma regra da lista de contas)
+  const saldoReal = conta
+    ? calcularSaldoContaFinanceira(conta, lancamentos, movimentosCaixa)
+    : 0;
 
   const movimentacoesAposPeriodo = todasMovimentacoes.filter(m => {
     const dataMovimento = new Date(getDataMovimento(m));
     return dataMovimento > fim && participaDoSaldo(m);
   });
 
-  const totalEntradasAposPeriodo = movimentacoesAposPeriodo
-    .filter(m => m.tipo === 'Receita')
-    .reduce((sum, m) => sum + (m.valor || 0), 0);
-  const totalSaidasAposPeriodo = movimentacoesAposPeriodo
-    .filter(m => m.tipo === 'Despesa')
-    .reduce((sum, m) => sum + (m.valor || 0), 0);
+  const totalEntradasAposPeriodo = totaisEntradaSaidaMovimentos(
+    movimentacoesAposPeriodo.filter(participaDoSaldo),
+  ).entradas;
+  const totalSaidasAposPeriodo = totaisEntradaSaidaMovimentos(
+    movimentacoesAposPeriodo.filter(participaDoSaldo),
+  ).saidas;
 
   const saldoNoFimDoPeriodo = saldoReal - totalEntradasAposPeriodo + totalSaidasAposPeriodo;
 
-  const totalEntradasPeriodo = movimentacoesNoPeriodo
-    .filter(m => participaDoSaldo(m) && m.tipo === 'Receita')
-    .reduce((sum, m) => sum + (m.valor || 0), 0);
-  const totalSaidasPeriodo = movimentacoesNoPeriodo
-    .filter(m => participaDoSaldo(m) && m.tipo === 'Despesa')
-    .reduce((sum, m) => sum + (m.valor || 0), 0);
+  const totalEntradasPeriodo = totaisEntradaSaidaMovimentos(
+    movimentacoesNoPeriodo.filter(participaDoSaldo),
+  ).entradas;
+  const totalSaidasPeriodo = totaisEntradaSaidaMovimentos(
+    movimentacoesNoPeriodo.filter(participaDoSaldo),
+  ).saidas;
 
   let saldoAcumulado = saldoNoFimDoPeriodo - totalEntradasPeriodo + totalSaidasPeriodo;
 
@@ -336,13 +322,9 @@ export default function ExtratoContaPage() {
     const saldoAnterior = saldoAcumulado;
     const movimentacoesDia = movimentacoesPorDia[dia];
 
-    const totalEntradas = movimentacoesDia
-      .filter(m => participaDoSaldo(m) && m.tipo === 'Receita')
-      .reduce((sum, m) => sum + (m.valor || 0), 0);
-
-    const totalSaidas = movimentacoesDia
-      .filter(m => participaDoSaldo(m) && m.tipo === 'Despesa')
-      .reduce((sum, m) => sum + (m.valor || 0), 0);
+    const { entradas: totalEntradas, saidas: totalSaidas } = totaisEntradaSaidaMovimentos(
+      movimentacoesDia.filter(participaDoSaldo),
+    );
 
     saldoAcumulado = saldoAcumulado + totalEntradas - totalSaidas;
 
@@ -474,6 +456,14 @@ export default function ExtratoContaPage() {
             <div className="flex shrink-0 gap-0.5 no-pdf-capture">
               <button
                 type="button"
+                onClick={() => setPinAjusteOpen(true)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
+                aria-label="Ajustar saldo"
+              >
+                <Scale className="h-4 w-4 text-foreground/90" />
+              </button>
+              <button
+                type="button"
                 onClick={exportarCSV}
                 className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
                 aria-label="Exportar CSV"
@@ -508,6 +498,14 @@ export default function ExtratoContaPage() {
             <KpiExtratoConta kpis={kpisExtrato} layout="inline" />
           </div>
           <div className="flex shrink-0 gap-1 no-pdf-capture">
+            <button
+              type="button"
+              onClick={() => setPinAjusteOpen(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg p38-field-surface border-0"
+              aria-label="Ajustar saldo"
+            >
+              <Scale className="h-4 w-4 text-foreground/90" />
+            </button>
             <button
               type="button"
               onClick={exportarCSV}
@@ -560,6 +558,25 @@ export default function ExtratoContaPage() {
       />
 
       <ListaExtratoConta grupos={grupos} loading={isLoading} />
+
+      <PinValidationDialog
+        isOpen={pinAjusteOpen}
+        onClose={() => setPinAjusteOpen(false)}
+        onSuccess={() => {
+          setPinAjusteOpen(false);
+          setAjusteDialogOpen(true);
+        }}
+        operationName={conta ? `Ajuste de saldo — ${conta.nome}` : 'Ajuste de saldo'}
+        forceEnabled
+      />
+
+      <AjusteSaldoDialog
+        open={ajusteDialogOpen}
+        onOpenChange={setAjusteDialogOpen}
+        conta={conta}
+        saldoCalculado={saldoCalculado}
+        onSaved={() => loadExtrato(conta.id)}
+      />
 
       {fabOpen && (
         <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />

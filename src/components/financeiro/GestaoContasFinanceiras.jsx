@@ -8,10 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, ArrowRightLeft } from 'lucide-react';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
+import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
+import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import KpiContasFinanceiras from './fluxo/KpiContasFinanceiras';
 import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFinanceiras';
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
+import {
+  calcularSaldosTodasContas,
+  getSaldoExibicaoConta,
+} from '@/lib/saldoContaFinanceira';
 
 const GestaoContasCtx = createContext(null);
 
@@ -26,12 +32,10 @@ const FORM_VAZIO = {
   ativo: true,
 };
 
-function saldoConta(conta) {
-  return Number(conta.saldo_atual ?? conta.saldo_inicial ?? 0);
-}
-
 function useGestaoContasModel() {
   const [accounts, setAccounts] = useState([]);
+  const [lancamentos, setLancamentos] = useState([]);
+  const [movimentosCaixa, setMovimentosCaixa] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pendenciasConciliacao, setPendenciasConciliacao] = useState({});
   const [search, setSearch] = useState('');
@@ -43,16 +47,23 @@ function useGestaoContasModel() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [conciliacaoConta, setConciliacaoConta] = useState(null);
+  const [ajusteConta, setAjusteConta] = useState(null);
+  const [pinAjusteOpen, setPinAjusteOpen] = useState(false);
+  const [ajusteDialogOpen, setAjusteDialogOpen] = useState(false);
   const [formData, setFormData] = useState(FORM_VAZIO);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [contas, pendConciliacao] = await Promise.all([
+      const [contas, pendConciliacao, lancs, movs] = await Promise.all([
         base44.entities.ContasFinanceiras.list(),
         base44.entities.LancamentoFinanceiro.filter({ status_conciliacao: 'Pendente' }),
+        base44.entities.LancamentoFinanceiro.list(),
+        base44.entities.MovimentosCaixa.list(),
       ]);
       setAccounts(contas);
+      setLancamentos(lancs);
+      setMovimentosCaixa(movs);
 
       const mapa = {};
       pendConciliacao.forEach((l) => {
@@ -72,7 +83,17 @@ function useGestaoContasModel() {
     loadData();
   }, [loadData]);
 
-  const filtrados = useMemo(() => accounts.filter((account) => {
+  const saldosCalculados = useMemo(
+    () => calcularSaldosTodasContas(accounts, lancamentos, movimentosCaixa),
+    [accounts, lancamentos, movimentosCaixa],
+  );
+
+  const contasEnriquecidas = useMemo(() => accounts.map((account) => ({
+    ...account,
+    saldo_calculado: saldosCalculados[account.id],
+  })), [accounts, saldosCalculados]);
+
+  const filtrados = useMemo(() => contasEnriquecidas.filter((account) => {
     if (statusFiltro === 'ativas' && account.ativo === false) return false;
     if (statusFiltro === 'inativas' && account.ativo !== false) return false;
     if (tipoFiltro !== 'todos' && account.tipo !== tipoFiltro) return false;
@@ -87,7 +108,7 @@ function useGestaoContasModel() {
       );
     }
     return true;
-  }), [accounts, statusFiltro, tipoFiltro, somentePendencias, pendenciasConciliacao, search]);
+  }), [contasEnriquecidas, statusFiltro, tipoFiltro, somentePendencias, pendenciasConciliacao, search]);
 
   const kpis = useMemo(() => {
     let saldoTotal = 0;
@@ -97,8 +118,8 @@ function useGestaoContasModel() {
     let saldoNegativo = 0;
     let pendencias = 0;
 
-    accounts.forEach((a) => {
-      const saldo = saldoConta(a);
+    contasEnriquecidas.forEach((a) => {
+      const saldo = getSaldoExibicaoConta(a, saldosCalculados);
       saldoTotal += saldo;
       if (a.ativo !== false) qtdAtivas++;
       else qtdInativas++;
@@ -118,7 +139,7 @@ function useGestaoContasModel() {
       saldoNegativo: Math.abs(saldoNegativo),
       pendencias,
     };
-  }, [accounts, pendenciasConciliacao]);
+  }, [contasEnriquecidas, saldosCalculados, pendenciasConciliacao]);
 
   const grupos = useMemo(() => {
     const map = {};
@@ -184,11 +205,17 @@ function useGestaoContasModel() {
     window.location.href = createPageUrl(`ExtratoConta?id=${account.id}`);
   };
 
+  const handleAjuste = (account) => {
+    setAjusteConta(account);
+    setPinAjusteOpen(true);
+  };
+
   return {
     loading,
     filtrados,
     grupos,
     kpis,
+    saldosCalculados,
     pendenciasConciliacao,
     search,
     setSearch,
@@ -215,8 +242,15 @@ function useGestaoContasModel() {
     handleEdit,
     handleNova,
     handleExtrato,
+    handleAjuste,
     loadData,
     resetForm,
+    ajusteConta,
+    setAjusteConta,
+    pinAjusteOpen,
+    setPinAjusteOpen,
+    ajusteDialogOpen,
+    setAjusteDialogOpen,
   };
 }
 
@@ -267,8 +301,16 @@ export function GestaoContasPane() {
     handleEdit,
     handleNova,
     handleExtrato,
+    handleAjuste,
     loadData,
     resetForm,
+    saldosCalculados,
+    ajusteConta,
+    setAjusteConta,
+    pinAjusteOpen,
+    setPinAjusteOpen,
+    ajusteDialogOpen,
+    setAjusteDialogOpen,
   } = m;
 
   const tipoLabel = TIPOS_CONTA.find((t) => t.v === tipoFiltro)?.l;
@@ -319,8 +361,10 @@ export function GestaoContasPane() {
         grupos={grupos}
         loading={loading}
         pendenciasMap={pendenciasConciliacao}
+        saldosCalculados={saldosCalculados}
         onExtrato={handleExtrato}
         onEdit={handleEdit}
+        onAjuste={handleAjuste}
         onConciliar={setConciliacaoConta}
       />
 
@@ -349,6 +393,31 @@ export function GestaoContasPane() {
           <Plus className={`h-6 w-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
         </button>
       </div>
+
+      <PinValidationDialog
+        isOpen={pinAjusteOpen}
+        onClose={() => {
+          setPinAjusteOpen(false);
+          setAjusteConta(null);
+        }}
+        onSuccess={() => {
+          setPinAjusteOpen(false);
+          setAjusteDialogOpen(true);
+        }}
+        operationName={ajusteConta ? `Ajuste de saldo — ${ajusteConta.nome}` : 'Ajuste de saldo'}
+        forceEnabled
+      />
+
+      <AjusteSaldoDialog
+        open={ajusteDialogOpen}
+        onOpenChange={(open) => {
+          setAjusteDialogOpen(open);
+          if (!open) setAjusteConta(null);
+        }}
+        conta={ajusteConta}
+        saldoCalculado={ajusteConta ? getSaldoExibicaoConta(ajusteConta, saldosCalculados) : 0}
+        onSaved={loadData}
+      />
 
       <Dialog
         open={isDialogOpen}

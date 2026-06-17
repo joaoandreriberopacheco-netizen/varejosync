@@ -6,27 +6,33 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowUpCircle, ArrowDownCircle, Scale } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { contaTemDivergenciaSaldo } from '@/lib/saldoContaFinanceira';
 
-export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }) {
+export default function AjusteSaldoDialog({ open, onOpenChange, conta, saldoCalculado, onSaved }) {
   const [saldoInformado, setSaldoInformado] = useState('0');
   const [observacao, setObservacao] = useState('Ajuste manual de saldo');
   const [currentUser, setCurrentUser] = useState(null);
   const { toast } = useToast();
 
+  const saldoAtual = saldoCalculado != null
+    ? Number(saldoCalculado)
+    : Number(conta?.saldo_atual || 0);
+
   useEffect(() => {
     if (open && conta) {
-      setSaldoInformado(String(conta.saldo_atual || 0));
+      setSaldoInformado(String(saldoAtual));
+      setObservacao('Ajuste manual de saldo');
       base44.auth.me().then(setCurrentUser).catch(() => setCurrentUser(null));
     }
-  }, [open, conta?.id]);
+  }, [open, conta?.id, saldoAtual]);
 
   if (!conta) return null;
 
-  const saldoAtual = Number(conta.saldo_atual || 0);
   const saldoNovo = Number(saldoInformado || 0);
   const diferenca = saldoNovo - saldoAtual;
   const isReforco = diferenca > 0;
   const isSangria = diferenca < 0;
+  const divergente = saldoCalculado != null && contaTemDivergenciaSaldo(conta, saldoCalculado);
 
   const formatValor = (valor) => `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -43,19 +49,19 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }
       observacao: observacao || 'Ajuste manual de saldo',
       conta_id: conta.id,
       usuario_responsavel_id: currentUser?.id || 'sistema',
-      usuario_responsavel_nome: currentUser?.full_name || currentUser?.email || 'Sistema'
+      usuario_responsavel_nome: currentUser?.full_name || currentUser?.email || 'Sistema',
     });
 
     await base44.entities.ContasFinanceiras.update(conta.id, {
-      saldo_atual: saldoNovo
+      saldo_atual: saldoNovo,
     });
 
     toast({
       title: isReforco ? 'Ajuste para mais registrado' : 'Ajuste para menos registrado',
-      className: 'bg-card'
+      className: 'bg-card',
     });
 
-    onSaved();
+    onSaved?.();
     onOpenChange(false);
   };
 
@@ -73,7 +79,14 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, onSaved }
           <div className="rounded-2xl bg-muted/50 p-3 shadow-sm space-y-1">
             <p className="text-xs text-muted-foreground">Conta</p>
             <p className="text-sm font-medium text-foreground">{conta.nome}</p>
-            <p className="text-xs text-muted-foreground">Saldo atual: {formatValor(saldoAtual)}</p>
+            <p className="text-xs text-muted-foreground">
+              Saldo calculado: {formatValor(saldoAtual)}
+            </p>
+            {divergente && (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                Registro gravado: {formatValor(conta.saldo_atual)} — será alinhado após o ajuste.
+              </p>
+            )}
           </div>
 
           <div className="space-y-1.5">
