@@ -1,4 +1,4 @@
-import { memo, useState, useEffect, useRef } from 'react';
+import { memo, useState, useEffect, useRef, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
 import {
@@ -12,7 +12,7 @@ import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket } from 'lucide-react';
+import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket, Receipt } from 'lucide-react';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
@@ -24,6 +24,8 @@ import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
 import ValesTrocaTab from '@/components/vendas/ValesTrocaTab';
+import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
 import { dataHoje, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
 const fmtDataCurta = (d) => d ? formatarSoData(d) : '';
@@ -507,11 +509,39 @@ function VendasGestaoPage() {
     setRascunhosFiltrados(currentFiltered);
   }, [rascunhos, searchTerm, statusFiltro, dataInicio, dataFim]);
 
+  const vendasConsulta = useMemo(() => {
+    let list = pedidos.filter((p) => STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA.includes(p.status));
+
+    if (searchTerm) {
+      list = list.filter(
+        (p) =>
+          p.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFiltro !== 'todos') {
+      list = list.filter((p) => p.status === statusFiltro);
+    }
+
+    if (dataInicio || dataFim) {
+      list = list.filter((p) => dateRangeMatches(p.created_date, dataInicio, dataFim));
+    }
+
+    return list;
+  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim]);
+
   // Calcular subtotal dos pedidos filtrados
-  const subtotalFiltrado = activeTab === 'pedidos' 
+  const subtotalFiltrado = activeTab === 'pedidos'
     ? pedidosFiltrados.reduce((acc, p) => acc + (p.valor_total || 0), 0)
-    : rascunhosFiltrados.reduce((acc, r) => acc + (r.valor_total || 0), 0);
-  const quantidadeFiltrada = activeTab === 'pedidos' ? pedidosFiltrados.length : rascunhosFiltrados.length;
+    : activeTab === 'consulta'
+      ? vendasConsulta.reduce((acc, p) => acc + (p.valor_total || 0), 0)
+      : rascunhosFiltrados.reduce((acc, r) => acc + (r.valor_total || 0), 0);
+  const quantidadeFiltrada = activeTab === 'pedidos'
+    ? pedidosFiltrados.length
+    : activeTab === 'consulta'
+      ? vendasConsulta.length
+      : rascunhosFiltrados.length;
 
   const handleEdit = (pedido) => {
     // Navegar para edição ou abrir modal conforme necessário
@@ -620,6 +650,13 @@ function VendasGestaoPage() {
         </div>
       </div>
 
+      <GlacialTabsList className="w-full" scrollable>
+        <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
+        <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
+        <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={setActiveTab} label="Consulta" icon={Receipt} />
+        <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={setActiveTab} label="Vales" icon={Ticket} />
+      </GlacialTabsList>
+
       <Drawer open={showFiltros} onOpenChange={setShowFiltros}>
         <DrawerContent className="border-0 rounded-t-[28px] bg-card dark:bg-card px-4 pb-6">
           <DrawerHeader className="px-0 pb-2 text-left">
@@ -632,6 +669,7 @@ function VendasGestaoPage() {
               <GlacialTabsList className="w-full" scrollable>
                 <GlacialTabsTrigger value="rascunhos" activeValue={activeTab} onSelect={setActiveTab} label="Senhas" icon={FileText} />
                 <GlacialTabsTrigger value="pedidos" activeValue={activeTab} onSelect={setActiveTab} label="Pedidos" icon={ShoppingCart} />
+                <GlacialTabsTrigger value="consulta" activeValue={activeTab} onSelect={setActiveTab} label="Consulta" icon={Receipt} />
                 <GlacialTabsTrigger value="vales" activeValue={activeTab} onSelect={setActiveTab} label="Vales" icon={Ticket} />
               </GlacialTabsList>
             </div>
@@ -659,6 +697,13 @@ function VendasGestaoPage() {
                       <SelectItem value="Utilizado">Utilizado</SelectItem>
                       <SelectItem value="Expirado">Expirado</SelectItem>
                       <SelectItem value="Cancelado">Cancelado</SelectItem>
+                    </>
+                  ) : activeTab === 'consulta' ? (
+                    <>
+                      <SelectItem value="Financeiro OK">Financeiro OK</SelectItem>
+                      <SelectItem value="Em Separação">Em Separação</SelectItem>
+                      <SelectItem value="Em Rota de Entrega">Em Rota de Entrega</SelectItem>
+                      <SelectItem value="Pedido Concluído">Concluído</SelectItem>
                     </>
                   ) : (
                     <>
@@ -788,6 +833,23 @@ function VendasGestaoPage() {
           </>
         )}
         </div>
+        </div>
+        )}
+
+        {activeTab === 'consulta' && (
+        <div className="space-y-4 min-w-0">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40"></div>
+            </div>
+          ) : (
+            <ConsultaVendasCaixa
+              vendasFinalizadas={vendasConsulta}
+              onVerDetalhes={handleVerDetalhes}
+              contextLabel="Consulta de vendas"
+              emptyMessage="Nenhuma venda finalizada no período selecionado"
+            />
+          )}
         </div>
         )}
 

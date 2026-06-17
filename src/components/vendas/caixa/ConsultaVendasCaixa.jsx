@@ -128,7 +128,12 @@ function sortByComprovante(vendas) {
   });
 }
 
-export default function ConsultaVendasCaixa({ vendasFinalizadas = [], onVerDetalhes }) {
+export default function ConsultaVendasCaixa({
+  vendasFinalizadas = [],
+  onVerDetalhes,
+  contextLabel = 'Consulta do turno',
+  emptyMessage = 'Nenhuma venda finalizada no turno',
+}) {
   const [modo, setModo] = useState('produto');
 
   const produtosAgregados = useMemo(() => aggregateByProduto(vendasFinalizadas), [vendasFinalizadas]);
@@ -143,7 +148,7 @@ export default function ConsultaVendasCaixa({ vendasFinalizadas = [], onVerDetal
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <Receipt className="w-10 h-10 text-muted-foreground mb-3" />
-        <p className={caixaTypo.meta}>Nenhuma venda finalizada no turno</p>
+        <p className={caixaTypo.meta}>{emptyMessage}</p>
       </div>
     );
   }
@@ -152,7 +157,7 @@ export default function ConsultaVendasCaixa({ vendasFinalizadas = [], onVerDetal
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <p className={caixaTypo.labelSm}>Consulta do turno</p>
+          <p className={caixaTypo.labelSm}>{contextLabel}</p>
           <CaixaValorDisplay valor={totalGeral} tone="success" size="lg" />
           <p className={`${caixaTypo.meta} mt-1`}>
             {vendasFinalizadas.length} comprovante{vendasFinalizadas.length === 1 ? '' : 's'}
