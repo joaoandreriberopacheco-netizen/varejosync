@@ -4,11 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Search, Printer, CheckCircle2, Minus, Plus, Camera, X, Upload } from 'lucide-react';
+import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
+import { ArrowLeft, Search, Printer, CheckCircle2, Minus, Plus, Camera, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { createPageUrl } from '@/components/utils';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+
+function tituloModulo(tipo) {
+  if (tipo === 'Troca') return 'Troca de Produto';
+  if (tipo === 'Cancelamento') return 'Cancelamento de Venda';
+  return 'Devolução de Produto';
+}
 
 // Step 1: Buscar pedido
 function BuscarPedidoStep({ onFound }) {
@@ -61,7 +68,7 @@ function BuscarPedidoStep({ onFound }) {
 }
 
 // Step 2: Selecionar itens, forma de reembolso, fotos
-function SelecionarItensStep({ pedido, onConfirm }) {
+function SelecionarItensStep({ pedido, tipo, onConfirm }) {
   const [qtds, setQtds] = useState(
     Object.fromEntries((pedido.itens || []).map(i => [i.produto_id + '_' + i.produto_nome, 0]))
   );
@@ -308,7 +315,7 @@ function SelecionarItensStep({ pedido, onConfirm }) {
           onClick={handleConfirmarClick}
           className="w-full max-w-lg mx-auto block h-14 bg-background dark:bg-card text-white dark:text-foreground rounded-2xl font-semibold text-base"
         >
-          Confirmar Devolução
+          Confirmar {tipo}
         </Button>
       </div>
     </div>
@@ -427,6 +434,8 @@ function ComprovanteStep({ resultado, onClose }) {
 }
 
 export default function DevolucaoTrocaPage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const tipo = urlParams.get('tipo') || 'Devolução';
   const [step, setStep] = useState('buscar');
   const [pedido, setPedido] = useState(null);
   const [resultado, setResultado] = useState(null);
@@ -447,6 +456,7 @@ export default function DevolucaoTrocaPage() {
     aguardaSubstituto,
   }) => {
     setProcessando(true);
+    try {
     const user = await base44.auth.me();
     const todos = await base44.entities.DevolucaoTroca.list();
     const nextNum = (todos.length > 0 ? Math.max(...todos.map(d => parseInt(d.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
@@ -476,7 +486,7 @@ export default function DevolucaoTrocaPage() {
         valor_disponivel: totalDevolvido,
         cliente_id: pedido.cliente_id,
         cliente_nome: pedido.cliente_nome,
-        origem_tipo: 'Devolução',
+        origem_tipo: tipo,
         pedido_origem_id: pedido.id,
         pedido_origem_numero: pedido.numero,
         status: 'Ativo',
@@ -486,6 +496,7 @@ export default function DevolucaoTrocaPage() {
 
     await base44.entities.DevolucaoTroca.create({
       numero: numeroDev,
+      tipo,
       pedido_origem_id: pedido.id,
       pedido_origem_numero: pedido.numero,
       cliente_id: pedido.cliente_id,
@@ -546,7 +557,7 @@ export default function DevolucaoTrocaPage() {
           cliente_nome: pedido.cliente_nome,
           valor_autorizado: totalDevolvido,
           forma_reembolso: 'Dinheiro',
-          motivo: `Devolução${motivo ? ` - ${motivo}` : ''}`,
+          motivo: `${tipo}${motivo ? ` - ${motivo}` : ''}`,
           turno_caixa_destino_id: turno.id,
           turno_caixa_destino_numero: turno.numero,
           gerente_aprovador_id: user?.id,
@@ -560,7 +571,7 @@ export default function DevolucaoTrocaPage() {
       if (caixaGeral) {
         await base44.entities.LancamentoFinanceiro.create({
           tipo: 'Despesa',
-          descricao: `Devolução - ${numeroDev} - ${pedido.numero}`,
+          descricao: `${tipo} - ${numeroDev} - ${pedido.numero}`,
           valor: totalDevolvido,
           conta_financeira_id: caixaGeral.id,
           conta_financeira_nome: caixaGeral.nome,
@@ -571,7 +582,7 @@ export default function DevolucaoTrocaPage() {
           referencia_tipo: 'PedidoVenda',
           referencia_id: pedido.id,
           referencia_numero: pedido.numero,
-          observacoes: `Reembolso PIX por Devolução`,
+          observacoes: `Reembolso PIX por ${tipo}`,
         });
         await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
           saldo_atual: (caixaGeral.saldo_atual || 0) - totalDevolvido,
@@ -587,8 +598,12 @@ export default function DevolucaoTrocaPage() {
       formaReembolso,
       valeCode: valeCodigo,
       motivo,
+      tipo,
     });
     setStep('comprovante');
+    } catch (error) {
+      toast({ title: 'Erro ao processar', description: error.message, variant: 'destructive' });
+    }
     setProcessando(false);
   };
 
@@ -604,7 +619,7 @@ export default function DevolucaoTrocaPage() {
           <ArrowLeft className="w-6 h-6 text-foreground/90" />
         </button>
         <h2 className="flex-1 text-center text-lg font-semibold text-foreground font-glacial">
-          Devolução de Produto
+          {tituloModulo(tipo)}
         </h2>
         <div className="w-10" />
       </div>
@@ -617,7 +632,7 @@ export default function DevolucaoTrocaPage() {
           </div>
         )}
         {step === 'buscar' && <BuscarPedidoStep onFound={p => { setPedido(p); setStep('itens'); }} />}
-        {step === 'itens' && pedido && <SelecionarItensStep pedido={pedido} onConfirm={handleConfirm} />}
+        {step === 'itens' && pedido && <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} />}
         {step === 'comprovante' && resultado && <ComprovanteStep resultado={resultado} onClose={handleClose} />}
       </div>
     </div>
