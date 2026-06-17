@@ -20,6 +20,7 @@ export const p38Keys = {
     embarques: () => [...p38Keys.all, 'logistica', 'embarques'],
     lancamentosFretes: () => [...p38Keys.all, 'logistica', 'lancamentos-fretes'],
     contasPrevistas: () => [...p38Keys.all, 'logistica', 'contas-previstas'],
+    transportadorasFluvial: () => [...p38Keys.all, 'logistica', 'transportadoras-fluvial'],
     embarquesPorEvento: (eventoId) => [...p38Keys.all, 'logistica', 'embarques-evento', eventoId],
   },
 };

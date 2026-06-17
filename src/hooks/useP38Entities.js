@@ -176,6 +176,20 @@ export function useLogisticaContasPrevistasQuery(options = {}) {
   });
 }
 
+export async function fetchTransportadorasFluvialList() {
+  const data = await base44.entities.Transportadora.list('-updated_date', 200);
+  return Array.isArray(data) ? data : [];
+}
+
+export function useTransportadorasFluvialQuery(options = {}) {
+  return useQuery({
+    queryKey: p38Keys.logistica.transportadorasFluvial(),
+    queryFn: fetchTransportadorasFluvialList,
+    ...entityQueryDefaults,
+    ...options,
+  });
+}
+
 export function useP38QueryInvalidation() {
   const queryClient = useQueryClient();
 
