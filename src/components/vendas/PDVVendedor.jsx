@@ -1003,9 +1003,11 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     }
   };
 
+  const screenShellBg = overlayMode ? 'bg-muted dark:bg-background' : 'bg-muted/40 dark:bg-background';
+
   return (
     <CaixaOverlayStackProvider active={overlayMode}>
-    <div className={`${overlayMode ? 'h-full min-h-0' : 'h-screen'} flex flex-col bg-muted/40 dark:bg-background relative`}>
+    <div className={`${overlayMode ? 'h-full min-h-0' : 'h-screen'} flex flex-col ${screenShellBg} relative`}>
       {/* Feedback Inline - Glacial Style */}
       <AnimatePresence>
         {feedback.message &&
@@ -1025,7 +1027,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="bg-muted/40 dark:bg-background px-3 md:px-5 pt-3 md:pt-5 pb-2 md:pb-3 flex-shrink-0">
+      <div className={`${screenShellBg} px-3 md:px-5 pt-3 md:pt-5 pb-2 md:pb-3 flex-shrink-0`}>
         <div className="rounded-[28px] bg-card dark:bg-background shadow-sm px-4 py-3 md:px-5 md:py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex items-start gap-3">
@@ -1062,7 +1064,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
 
       <div className="flex-1 flex overflow-hidden pb-20 md:pb-0">
         {/* Área Principal */}
-        <div className="flex-1 flex flex-col px-3 md:px-5 pb-28 md:pb-5 overflow-auto bg-muted/40 dark:bg-background">
+        <div className={`flex-1 flex flex-col px-3 md:px-5 pb-28 md:pb-5 overflow-auto ${screenShellBg}`}>
           {/* Busca de Produto */}
           <div className="mb-4 md:mb-6 flex-shrink-0" ref={suggestionsRef}>
             <div className="flex gap-2.5 w-full">
@@ -1220,7 +1222,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
         </div>
 
         {/* Sidebar Carrinho - Desktop Only */}
-        <div className="hidden desktop-layout:flex w-80 lg:w-[22rem] bg-muted/40 dark:bg-background px-0 pr-5 pb-5 flex-col flex-shrink-0">
+        <div className={`hidden desktop-layout:flex w-80 lg:w-[22rem] ${screenShellBg} px-0 pr-5 pb-5 flex-col flex-shrink-0`}>
           <div className="rounded-[28px] bg-card dark:bg-background shadow-sm flex flex-col min-h-0 h-full overflow-hidden">
             <div className="px-5 py-4 flex items-center justify-between flex-shrink-0">
               <h2 className="text-base font-semibold text-foreground font-glacial">Carrinho</h2>
@@ -1687,7 +1689,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       </Dialog>
 
       {showCarrinhoMobile &&
-      <div className={`desktop-layout:hidden fixed inset-0 ${overlayMode ? 'z-[1220]' : 'z-[70]'} bg-muted/40 dark:bg-background flex flex-col`}>
+      <div className={`desktop-layout:hidden fixed inset-0 ${overlayMode ? 'z-[1220]' : 'z-[70]'} ${screenShellBg} flex flex-col`}>
           {/* Header */}
           <div className="px-4 py-3 bg-card dark:bg-background border-b border-border/40 dark:border-border/40 flex items-center justify-between flex-shrink-0">
             <button onClick={() => setShowCarrinhoMobile(false)} className="h-9 w-9 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted dark:hover:bg-card">

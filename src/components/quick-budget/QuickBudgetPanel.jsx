@@ -15,7 +15,7 @@ import {
 } from './quickBudgetUtils';
 import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { toast } from 'sonner';
-import { QUICK_ACCESS_PANEL_CLASS } from '@/lib/quickAccessOverlay';
+import { QUICK_ACCESS_PANEL_CLASS, QUICK_ACCESS_PANEL_SHELL_CLASS } from '@/lib/quickAccessOverlay';
 
 export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 }) {
   const [produtos, setProdutos] = useState([]);
@@ -251,7 +251,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
   };
 
   const content = (
-    <div className="relative flex min-h-0 flex-1 flex-col bg-muted/40 dark:bg-background">
+    <div className={`relative flex min-h-0 flex-1 flex-col ${QUICK_ACCESS_PANEL_SHELL_CLASS}`}>
       <div className="flex items-center justify-between px-4 py-4 border-b border-border/40 bg-card">
         <div>
           <DialogTitle className="text-lg font-semibold text-foreground font-glacial">Orçamento rápido</DialogTitle>
@@ -306,7 +306,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
       </div>
 
       {isMobile && items.length > 0 && (
-        <div className="absolute inset-0 z-[100] bg-muted/40 dark:bg-background flex flex-col" style={{ display: showCartMobile ? 'flex' : 'none' }}>
+        <div className={`absolute inset-0 z-[100] ${QUICK_ACCESS_PANEL_SHELL_CLASS} flex flex-col`} style={{ display: showCartMobile ? 'flex' : 'none' }}>
           <div className="flex items-center justify-between px-4 py-4 border-b border-border/40 bg-card">
             <button type="button" onClick={() => setShowCartMobile(false)} className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
               <X className="w-4 h-4" />
@@ -382,7 +382,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent
           overlayClassName={QUICK_ACCESS_PANEL_CLASS}
-          className={`${QUICK_ACCESS_PANEL_CLASS} mt-0 flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col rounded-none border-0 bg-muted/40 p-0 dark:bg-background [&>div:first-child]:hidden`}
+          className={`${QUICK_ACCESS_PANEL_CLASS} ${QUICK_ACCESS_PANEL_SHELL_CLASS} mt-0 flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col rounded-none border-0 p-0 [&>div:first-child]:hidden`}
         >
           {content}
         </DrawerContent>
@@ -394,7 +394,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         overlayClassName={QUICK_ACCESS_PANEL_CLASS}
-        className={`${QUICK_ACCESS_PANEL_CLASS} flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-muted/40 p-0 shadow-2xl dark:bg-background [&>button.absolute]:hidden`}
+        className={`${QUICK_ACCESS_PANEL_CLASS} ${QUICK_ACCESS_PANEL_SHELL_CLASS} flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 shadow-2xl [&>button.absolute]:hidden`}
       >
         <DialogHeader className="hidden" />
         {content}

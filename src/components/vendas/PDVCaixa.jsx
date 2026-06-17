@@ -1301,9 +1301,11 @@ export default function PDVCaixa({
     // Não faz nada, pois o balanço está sempre visível
   };
 
+  const screenShellBg = overlayMode ? 'bg-muted dark:bg-background' : 'bg-muted/40 dark:bg-background';
+
   const rootClassName = overlayMode || inAppLayout
-    ? `h-full min-h-0 flex flex-col bg-muted/40 dark:bg-background ${caixaTypo.screen}`
-    : `${caixaShell} bg-muted/40 dark:bg-background ${caixaTypo.screen}`;
+    ? `h-full min-h-0 flex flex-col ${screenShellBg} ${caixaTypo.screen}`
+    : `${caixaShell} ${screenShellBg} ${caixaTypo.screen}`;
 
   return (
     <CaixaOverlayStackProvider active={overlayMode}>
@@ -1361,7 +1363,7 @@ export default function PDVCaixa({
       </div>
 
       {/* Conteúdo Principal */}
-      <div className={`${caixaMain} relative bg-muted/40 dark:bg-background`}>
+      <div className={`${caixaMain} relative ${screenShellBg}`}>
         {!caixaSelecionado ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center text-muted-foreground dark:text-muted-foreground">

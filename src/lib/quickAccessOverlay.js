@@ -9,6 +9,9 @@ export const QUICK_ACCESS_Z = {
   nestedDialogChild: 1230,
 };
 
+/** Fundo opaco dos painéis de atalho (evita ver a tela de baixo no modo claro). */
+export const QUICK_ACCESS_PANEL_SHELL_CLASS = 'bg-muted dark:bg-background';
+
 /** Classes Tailwind (valores literais para o purge do build). */
 export const QUICK_ACCESS_PANEL_CLASS = 'z-[1200]';
 export const QUICK_ACCESS_LAUNCHER_CLASS = 'z-[1210]';
