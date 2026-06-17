@@ -9,7 +9,7 @@ import {
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, getFluvialViewDate, isWithinFluvialPeriod } from '@/components/logistica-sandbox/fluvialDataUtils';
 import LogisticaSandboxHeader from '@/components/logistica-sandbox/LogisticaSandboxHeader';
 import RouteModeToggle from '@/components/logistica-sandbox/RouteModeToggle';
 import TimelineDatePicker from '@/components/logistica-sandbox/TimelineDatePicker';
@@ -23,6 +23,7 @@ import BoatsTab from '@/components/logistica-sandbox/BoatsTab';
 import ItinerarioFluvialMobile from '@/components/logistica-sandbox/mobile/ItinerarioFluvialMobile';
 import FreteDetailPanel from '@/components/logistica-sandbox/FreteDetailPanel';
 import FluvialActionFab from '@/components/logistica-sandbox/FluvialActionFab';
+import FluvialFilterBar from '@/components/logistica-sandbox/FluvialFilterBar';
 
 export default function ItinerarioFluvial() {
   const [routeType, setRouteType] = useState('Fluvial');
@@ -31,8 +32,8 @@ export default function ItinerarioFluvial() {
   const [viewMode, setViewMode] = useState('saida_manaus');
   const [isMobile, setIsMobile] = useState(false);
   const [freteSearchQuery, setFreteSearchQuery] = useState('');
-  const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [embarqueLinkFilter, setEmbarqueLinkFilter] = useState('todos');
+  const [periodoFiltro, setPeriodoFiltro] = useState(FLUVIAL_DEFAULT_PERIOD);
   const todayRef = React.useRef(null);
   const queryClient = useQueryClient();
 
@@ -96,13 +97,7 @@ export default function ItinerarioFluvial() {
 
   React.useEffect(() => {
     setSelectedEvento(null);
-  }, [routeType, viewMode, simulationDate]);
-
-  React.useEffect(() => {
-    if (routeType !== 'Fluvial') {
-      // No filter panel on Fretes/Boats
-    }
-  }, [routeType]);
+  }, [routeType, viewMode, simulationDate, periodoFiltro, embarqueLinkFilter]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -112,19 +107,13 @@ export default function ItinerarioFluvial() {
   }, []);
 
   const groupedEventos = useMemo(() => {
-    const getViewDate = (evento) => {
-      if (viewMode === 'chegada_tabatinga') return evento.data_chegada_destino;
-      if (viewMode === 'saida_manaus') return evento.data_saida_origem;
-      return evento.data_chegada_manaus;
-    };
-
     const eventosComEmbarque = new Set(
       embarques.map((emb) => emb.evento_logistico_id).filter(Boolean),
     );
 
     return eventos
       .map((evento) => {
-        const viewDate = getViewDate(evento);
+        const viewDate = getFluvialViewDate(evento, viewMode);
         return {
           ...evento,
           visualizacao_data: viewDate,
@@ -133,6 +122,7 @@ export default function ItinerarioFluvial() {
       })
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
+        if (!isWithinFluvialPeriod(evento.visualizacao_data, periodoFiltro)) return false;
         const temVinculoEmbarque = eventosComEmbarque.has(evento.id);
         if (embarqueLinkFilter === 'com_vinculo' && !temVinculoEmbarque) return false;
         if (embarqueLinkFilter === 'sem_vinculo' && temVinculoEmbarque) return false;
@@ -144,7 +134,12 @@ export default function ItinerarioFluvial() {
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, viewMode, embarques, embarqueLinkFilter]);
+  }, [eventos, viewMode, embarques, embarqueLinkFilter, periodoFiltro]);
+
+  const totalViagensFiltradas = useMemo(
+    () => Object.values(groupedEventos).reduce((total, items) => total + items.length, 0),
+    [groupedEventos],
+  );
 
   const timelineItems = useMemo(() => {
     return Object.entries(groupedEventos)
@@ -218,6 +213,13 @@ export default function ItinerarioFluvial() {
 
         {routeType === 'Fluvial' ? (
            <>
+             <FluvialFilterBar
+               periodoFiltro={periodoFiltro}
+               onPeriodoFiltroChange={setPeriodoFiltro}
+               embarqueLinkFilter={embarqueLinkFilter}
+               onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
+               totalViagens={totalViagensFiltradas}
+             />
              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5">
                <div className="bg-transparent space-y-1 max-h-[calc(100vh-190px)] overflow-y-auto overflow-x-hidden pr-2 min-w-0">
                  {timelineCarregando ? (
@@ -230,7 +232,7 @@ export default function ItinerarioFluvial() {
                      ))}
                      <p className="text-xs text-muted-foreground text-center">Carregando viagens…</p>
                    </div>
-                 ) : timelineItems.map((item) => (
+                 ) : timelineItems.length > 0 ? timelineItems.map((item) => (
                    <div key={item.key} ref={item.isToday ? todayRef : null}>
                      <TimelineDayGroup
                        label={item.label}
@@ -242,13 +244,18 @@ export default function ItinerarioFluvial() {
                        selectedEventoId={currentEvento?.id}
                      />
                    </div>
-                 ))}
+                 )) : (
+                   <div className="rounded-3xl bg-card border border-border/40 shadow-sm p-6 text-sm text-muted-foreground text-center">
+                     Nenhuma viagem no período selecionado. Tente ampliar o filtro para ver mais datas.
+                   </div>
+                 )}
                </div>
                <TimelineSidebarCard evento={currentEvento} />
              </div>
              <FluvialActionFab 
                onScrollToToday={handleScrollToToday}
-               onOpenFilters={() => setShowFilterPanel(true)}
+               periodoFiltro={periodoFiltro}
+               onPeriodoFiltroChange={setPeriodoFiltro}
                embarqueLinkFilter={embarqueLinkFilter}
                onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
              />

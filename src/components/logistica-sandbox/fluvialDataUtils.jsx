@@ -1,5 +1,53 @@
-import { format } from 'date-fns';
+import { format, subDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+export const FLUVIAL_DEFAULT_PERIOD = '30d';
+
+export const FLUVIAL_PERIOD_OPTIONS = [
+  { id: '30d', label: '±30 dias', dias: 30 },
+  { id: '60d', label: '±60 dias', dias: 60 },
+  { id: '90d', label: '±90 dias', dias: 90 },
+  { id: 'todas', label: 'Todas', dias: null },
+];
+
+export function getFluvialViewDate(evento, viewMode) {
+  if (viewMode === 'chegada_tabatinga') return evento.data_chegada_destino;
+  if (viewMode === 'saida_manaus') return evento.data_saida_origem;
+  return evento.data_chegada_manaus;
+}
+
+export function getFluvialPeriodBounds(periodoId, referenceDate = new Date()) {
+  const option = FLUVIAL_PERIOD_OPTIONS.find((item) => item.id === periodoId);
+  if (!option?.dias) {
+    return { inicio: null, fim: null };
+  }
+
+  const ref = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+    12,
+    0,
+    0,
+    0,
+  );
+
+  return {
+    inicio: format(subDays(ref, option.dias), 'yyyy-MM-dd'),
+    fim: format(addDays(ref, option.dias), 'yyyy-MM-dd'),
+  };
+}
+
+export function isWithinFluvialPeriod(dateStr, periodoId, referenceDate = new Date()) {
+  if (!dateStr) return false;
+  const { inicio, fim } = getFluvialPeriodBounds(periodoId, referenceDate);
+  if (!inicio || !fim) return true;
+  return dateStr >= inicio && dateStr <= fim;
+}
+
+export function getFluvialPeriodLabel(periodoId) {
+  return FLUVIAL_PERIOD_OPTIONS.find((item) => item.id === periodoId)?.label || '±30 dias';
+}
 
 function parseStableDate(value) {
   if (!value) return null;

@@ -5,7 +5,7 @@ import { useLogisticaEventosQuery, useLogisticaLancamentosFretesQuery } from '@/
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { buildFluvialEvents, formatDate } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { buildFluvialEvents, formatDate, FLUVIAL_DEFAULT_PERIOD, getFluvialViewDate, isWithinFluvialPeriod } from '@/components/logistica-sandbox/fluvialDataUtils';
 import TimelineDayGroup from '@/components/logistica-sandbox/TimelineDayGroup';
 import TimelineSidebarCard from '@/components/logistica-sandbox/TimelineSidebarCard';
 import MobileDetailHeader from '@/components/logistica-sandbox/MobileDetailHeader';
@@ -31,6 +31,7 @@ export default function ItinerarioFluvialMobile() {
   const [searchTerm, setSearchTerm] = useState('');
   const [freteFilter, setFreteFilter] = useState('todos');
   const [embarqueLinkFilter, setEmbarqueLinkFilter] = useState('todos');
+  const [periodoFiltro, setPeriodoFiltro] = useState(FLUVIAL_DEFAULT_PERIOD);
   const todayRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -104,24 +105,26 @@ export default function ItinerarioFluvialMobile() {
 
   useEffect(() => {
     setSelectedEvento(null);
-  }, [routeType, viewMode, simulationDate]);
+  }, [routeType, viewMode, simulationDate, periodoFiltro, embarqueLinkFilter]);
 
   const groupedEventos = useMemo(() => {
-    const getViewDate = (evento) => {
-      if (viewMode === 'chegada_tabatinga') return evento.data_chegada_destino;
-      if (viewMode === 'saida_manaus') return evento.data_saida_origem;
-      return evento.data_chegada_manaus;
-    };
+    const eventosComEmbarque = new Set(
+      embarques.map((emb) => emb.evento_logistico_id).filter(Boolean),
+    );
 
     return eventos
-      .map((evento) => ({
-        ...evento,
-        visualizacao_data: getViewDate(evento),
-        visualizacao_data_formatada: formatDate(getViewDate(evento))
-      }))
+      .map((evento) => {
+        const viewDate = getFluvialViewDate(evento, viewMode);
+        return {
+          ...evento,
+          visualizacao_data: viewDate,
+          visualizacao_data_formatada: formatDate(viewDate)
+        };
+      })
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
-        const temVinculoEmbarque = embarques.some((emb) => emb.evento_logistico_id === evento.id);
+        if (!isWithinFluvialPeriod(evento.visualizacao_data, periodoFiltro)) return false;
+        const temVinculoEmbarque = eventosComEmbarque.has(evento.id);
         if (embarqueLinkFilter === 'com_vinculo' && !temVinculoEmbarque) return false;
         if (embarqueLinkFilter === 'sem_vinculo' && temVinculoEmbarque) return false;
         if (searchTerm) {
@@ -138,7 +141,7 @@ export default function ItinerarioFluvialMobile() {
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, viewMode, searchTerm, embarques, embarqueLinkFilter]);
+  }, [eventos, viewMode, searchTerm, embarques, embarqueLinkFilter, periodoFiltro]);
 
   const timelineItems = useMemo(() => {
     const sortedItems = Object.entries(groupedEventos)
@@ -274,6 +277,8 @@ export default function ItinerarioFluvialMobile() {
                 onViewModeChange={setViewMode}
                 simulationDate={simulationDate}
                 onSimulationDateChange={setSimulationDate}
+                periodoFiltro={periodoFiltro}
+                onPeriodoFiltroChange={setPeriodoFiltro}
                 embarqueLinkFilter={embarqueLinkFilter}
                 onEmbarqueLinkFilterChange={setEmbarqueLinkFilter}
               />
@@ -281,7 +286,7 @@ export default function ItinerarioFluvialMobile() {
           ) : (
             <ItinerarioMobileEmptyState
               title="Nenhum evento encontrado"
-              description="Verifique os filtros e tente novamente."
+              description="Nenhuma viagem no período selecionado. Amplie o filtro de datas ou ajuste a busca."
             />
           )
         ) : routeType === 'Fretes' ? (

@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Sliders, Calendar, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FLUVIAL_PERIOD_OPTIONS } from '@/components/logistica-sandbox/fluvialDataUtils';
 
 export default function FluvialActionFab({ 
   onScrollToToday,
-  onOpenFilters,
+  periodoFiltro = '30d',
+  onPeriodoFiltroChange,
   embarqueLinkFilter = 'todos',
   onEmbarqueLinkFilterChange
 }) {
@@ -41,6 +43,28 @@ export default function FluvialActionFab({
             </Button>
             <div className="rounded-2xl bg-muted/50 p-3 space-y-2">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Calendar className="w-3.5 h-3.5" />
+                Período
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {FLUVIAL_PERIOD_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => onPeriodoFiltroChange?.(option.id)}
+                    className={`rounded-2xl px-2 py-2 text-[11px] font-medium transition-colors ${
+                      periodoFiltro === option.id
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'bg-transparent text-muted-foreground'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl bg-muted/50 p-3 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <Link2 className="w-3.5 h-3.5" />
                 Vínculo de embarque
               </div>
@@ -61,17 +85,6 @@ export default function FluvialActionFab({
                 ))}
               </div>
             </div>
-            <Button
-              onClick={() => {
-                onOpenFilters();
-                setOpen(false);
-              }}
-              variant="outline"
-              className="w-full justify-start gap-3 h-12 rounded-2xl"
-            >
-              <Sliders className="w-5 h-5" />
-              <span>Filtros</span>
-            </Button>
           </div>
         </SheetContent>
       </Sheet>

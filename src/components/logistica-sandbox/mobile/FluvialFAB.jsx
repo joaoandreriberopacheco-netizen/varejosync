@@ -5,11 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { format } from 'date-fns';
 
+import { FLUVIAL_PERIOD_OPTIONS } from '@/components/logistica-sandbox/fluvialDataUtils';
+
 export default function FluvialFAB({ 
   viewMode,
   onViewModeChange,
   simulationDate,
   onSimulationDateChange,
+  periodoFiltro = '30d',
+  onPeriodoFiltroChange,
   embarqueLinkFilter = 'todos',
   onEmbarqueLinkFilterChange
 }) {
@@ -76,6 +80,28 @@ export default function FluvialFAB({
                 }}
                 className="text-xs bg-card border-border/40 text-foreground dark:text-foreground"
               />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground block mb-2 uppercase tracking-wide flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5" />
+                Período (a partir de hoje)
+              </label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {FLUVIAL_PERIOD_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => onPeriodoFiltroChange?.(option.id)}
+                    className={`w-full text-left px-3 py-2.5 rounded text-xs font-medium transition-colors ${
+                      periodoFiltro === option.id
+                        ? 'bg-card text-foreground dark:text-foreground shadow-sm ring-1 ring-border/40 dark:ring-border/40'
+                        : 'bg-muted text-foreground/90 dark:text-muted-foreground hover:bg-muted dark:hover:bg-primary/90'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
