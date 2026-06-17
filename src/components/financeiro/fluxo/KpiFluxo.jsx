@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, ArrowRightLeft, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowRightLeft, AlertTriangle, Wallet } from 'lucide-react';
 import { P38_ACCENT } from './financeiroP38';
 import {
   FinanceiroKpiItem,
@@ -16,11 +16,22 @@ export default function KpiFluxo({ kpis, layout = 'card' }) {
     <FinanceiroKpiStrip
       layout={layout}
       footer={
-        kpis.totalTransferencias > 0 ? (
-          <div className="flex items-center gap-2 border-t border-border/40 pt-1.5 dark:border-white/10">
-            <ArrowRightLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <p className="min-w-0 flex-1 text-[9px] uppercase tracking-wide text-muted-foreground">Transferências</p>
-            <p className="text-xs font-semibold tabular-nums text-foreground">{formatKpiValor(kpis.totalTransferencias)}</p>
+        kpis.saldoContas != null || kpis.totalTransferencias > 0 ? (
+          <div className="space-y-1.5 border-t border-border/40 pt-1.5 dark:border-white/10">
+            {kpis.saldoContas != null && (
+              <div className="flex items-center gap-2">
+                <Wallet className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <p className="min-w-0 flex-1 text-[9px] uppercase tracking-wide text-muted-foreground">Saldo em contas</p>
+                <p className="text-xs font-semibold tabular-nums text-foreground">{formatKpiValor(kpis.saldoContas)}</p>
+              </div>
+            )}
+            {kpis.totalTransferencias > 0 && (
+              <div className="flex items-center gap-2">
+                <ArrowRightLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <p className="min-w-0 flex-1 text-[9px] uppercase tracking-wide text-muted-foreground">Transferências</p>
+                <p className="text-xs font-semibold tabular-nums text-foreground">{formatKpiValor(kpis.totalTransferencias)}</p>
+              </div>
+            )}
           </div>
         ) : null
       }

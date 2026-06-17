@@ -77,8 +77,8 @@ export default function ContasFinanceirasPage() {
   };
 
   const calcularSaldoConta = (account) => {
-    const saldoInicial = Number(account.saldo_inicial || 0);
-    return saldoInicial;
+    const saldo = account.saldo_atual ?? account.saldo_inicial ?? 0;
+    return Number(saldo) || 0;
   };
 
   const saldoTotal = accounts.reduce((acc, a) => acc + calcularSaldoConta(a), 0);

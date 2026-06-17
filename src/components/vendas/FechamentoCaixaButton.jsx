@@ -65,21 +65,24 @@ export default function FechamentoCaixaButton({
       const todasContas = await base44.entities.ContasFinanceiras.list();
       const contaDestino = resolveContaDestinoCaixaPDV(todasContas);
       if (contaDestino && dinheiroConferido > 0) {
+        const observacao = `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${contaDestino.nome}`;
+        const movimento = await base44.entities.MovimentosCaixa.create({
+          numero: `MCX-${String(Date.now()).slice(-5)}`,
+          tipo: 'Sangria',
+          valor: dinheiroConferido,
+          observacao,
+          conta_id: contaCaixaPDV.id,
+          turno_caixa_id: turnoAtivo.id,
+          usuario_responsavel_id: currentUser.id,
+          usuario_responsavel_nome: currentUser.full_name,
+        });
         await transferirDinheiroFechamentoCaixaPDV({
           base44,
           contaCaixaPDV,
           contaDestino,
           dinheiroConferido,
-        });
-        await base44.entities.MovimentosCaixa.create({
-          numero: `MCX-${String(Date.now()).slice(-5)}`,
-          tipo: 'Sangria',
-          valor: dinheiroConferido,
-          observacao: `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${contaDestino.nome}`,
-          conta_id: contaCaixaPDV.id,
-          turno_caixa_id: turnoAtivo.id,
-          usuario_responsavel_id: currentUser.id,
-          usuario_responsavel_nome: currentUser.full_name,
+          descricao: observacao,
+          movimentoId: movimento.id,
         });
       }
 

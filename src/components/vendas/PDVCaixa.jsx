@@ -20,8 +20,8 @@ import ConfirmarPagamentoDialog from './caixa/ConfirmarPagamentoDialog.jsx';
 import PromissoriaDialog from './caixa/PromissoriaDialog';
 import FechamentoCaixaButton from '@/components/vendas/FechamentoCaixaButton';
 import {
-  creditarContaDestinoCaixaPDV,
   resolveContaDestinoCaixaPDV,
+  transferirRecolhimentoCaixaPDV,
 } from '@/lib/contaDestinoCaixaPDV';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
@@ -1076,7 +1076,14 @@ export default function PDVCaixa({
         usuario_responsavel_nome: currentUser.full_name
       });
 
-      await creditarContaDestinoCaixaPDV(base44, contaDestino, valorFloat);
+      await transferirRecolhimentoCaixaPDV({
+        base44,
+        contaOrigem: contaCaixaPDV,
+        contaDestino,
+        valor: valorFloat,
+        descricao: movimento.observacao,
+        movimentoId: movimento.id,
+      });
 
       if (turnoAtivo) {
         await base44.entities.TurnoCaixa.update(turnoAtivo.id, {

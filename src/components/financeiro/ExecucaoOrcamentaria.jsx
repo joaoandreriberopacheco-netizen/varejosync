@@ -190,6 +190,13 @@ export default function ExecucaoOrcamentaria() {
         else if (l.tipo === 'Despesa') pSaiu += l.valor || 0;
       }
     });
+    const contasVisiveis = contasSel.length
+      ? contas.filter((c) => contasSel.includes(c.id))
+      : contas;
+    const saldoContas = contasVisiveis.reduce(
+      (acc, c) => acc + (c.saldo_atual ?? c.saldo_inicial ?? 0),
+      0
+    );
     return {
       entrou: roundToTwoDecimals(entrou),
       saiu: roundToTwoDecimals(saiu),
@@ -199,9 +206,10 @@ export default function ExecucaoOrcamentaria() {
       saldoPrev: roundToTwoDecimals(entrou + pEntrou - saiu - pSaiu),
       totalTransferencias: roundToTwoDecimals(totalTransferencias),
       vencidos: roundToTwoDecimals(vencidos),
-      qtdVencidos
+      qtdVencidos,
+      saldoContas: roundToTwoDecimals(saldoContas),
     };
-  }, [filtrados]);
+  }, [filtrados, contas, contasSel]);
 
   const grupos = useMemo(() => {
     const hStr = dataHoje();
