@@ -5,26 +5,10 @@ import { useToast } from '@/components/ui/use-toast';
 import AnexosModal from '@/components/anexos/AnexosModal';
 import { listarAnexos } from '@/functions/listarAnexos';
 
-// Raio em px — aumentado para não sair da tela
-const RADIUS = 72;
-const sendDebugLog = (payload) => {
-  fetch('http://127.0.0.1:7433/ingest/19dc4542-f04e-4f0d-8afd-9f77d7005162', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '0cc0d0' },
-    body: JSON.stringify({
-      sessionId: '0cc0d0',
-      runId: 'initial',
-      timestamp: Date.now(),
-      ...payload,
-    }),
-  }).catch(() => {});
-};
-
 export default function PedidoCompraFAB({
   pedido,
   onSave,
   isSaving,
-  isDisabled,
   onEnviarFinanceiro,
   mostrarEnviarFinanceiro,
   onSolicitarEdicao,
@@ -33,30 +17,13 @@ export default function PedidoCompraFAB({
   const [isExpanded, setIsExpanded] = useState(false);
   const [showAnexosModal, setShowAnexosModal] = useState(false);
   const [anexos, setAnexos] = useState([]);
-  const [anexoLoading, setAnexoLoading] = useState(false);
-
-  useEffect(() => {
-    const handlePointerDown = (event) => {
-      if (!isExpanded) return;
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      if (!target.closest('[data-pedido-compra-fab]')) {
-        setIsExpanded(false);
-      }
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [isExpanded]);
   const [anexoUploading, setAnexoUploading] = useState(false);
   const { toast } = useToast();
 
   const carregarAnexos = async () => {
     if (!pedido?.id) return;
-    setAnexoLoading(true);
     const res = await listarAnexos({ referencia_tipo: 'PedidoCompra', referencia_id: pedido.id });
     setAnexos(res.data?.anexos || []);
-    setAnexoLoading(false);
   };
 
   const handleAnexoUpload = async (file, tipoSelecionado, e) => {
@@ -91,26 +58,6 @@ export default function PedidoCompraFAB({
     if (showAnexosModal) carregarAnexos();
   }, [showAnexosModal]);
 
-  useEffect(() => {
-    if (!showAnexosModal && !isExpanded) return;
-    const fabRoot = document.querySelector('[data-pedido-compra-fab]');
-    const mainFabButton = fabRoot?.querySelector('button');
-    // #region agent log
-    sendDebugLog({
-      hypothesisId: 'H1',
-      location: 'PedidoCompraFAB.jsx:95',
-      message: 'FAB state and layering snapshot',
-      data: {
-        isExpanded,
-        showAnexosModal,
-        fabRootClass: fabRoot?.className || null,
-        fabRootZClass: fabRoot?.className?.includes('z-[999]') || false,
-        mainFabRect: mainFabButton?.getBoundingClientRect() || null,
-      },
-    });
-    // #endregion
-  }, [isExpanded, showAnexosModal]);
-
   const handlePrintPDF = async () => {
     if (!pedido?.id) {
       toast({ title: 'Salve o pedido antes de gerar o PDF', variant: 'destructive' });
@@ -136,24 +83,30 @@ export default function PedidoCompraFAB({
     setIsExpanded(false);
   };
 
+  const runAction = (action) => {
+    if (action.disabled) return;
+    action.onClick();
+    setIsExpanded(false);
+  };
+
   // Monta lista de ações dinamicamente
   const actions = [
     mostrarEnviarFinanceiro && {
       icon: <Send className="w-5 h-5" style={{ transform: 'rotate(-45deg)' }} />,
       label: 'Financeiro',
-      onClick: () => { onEnviarFinanceiro?.(); setIsExpanded(false); },
+      onClick: () => onEnviarFinanceiro?.(),
       color: 'bg-emerald-600 text-white',
     },
     mostrarSolicitarEdicao && {
       icon: <Wrench className="w-5 h-5" />,
       label: 'Solicitar correção',
-      onClick: () => { onSolicitarEdicao?.(); setIsExpanded(false); },
+      onClick: () => onSolicitarEdicao?.(),
       color: 'bg-amber-500 text-white',
     },
     {
       icon: <Paperclip className="w-5 h-5" />,
       label: 'Anexos',
-      onClick: () => { setShowAnexosModal(true); setIsExpanded(false); },
+      onClick: () => setShowAnexosModal(true),
       disabled: !pedido?.id,
       color: 'bg-card dark:bg-muted text-foreground/90',
     },
@@ -167,8 +120,8 @@ export default function PedidoCompraFAB({
     {
       icon: <Save className="w-5 h-5" />,
       label: 'Salvar',
-      onClick: () => { onSave(); setIsExpanded(false); },
-      disabled: isDisabled || isSaving,
+      onClick: () => onSave?.(),
+      disabled: isSaving,
       color: 'bg-card dark:bg-muted text-foreground/90',
     },
   ].filter(Boolean);
@@ -177,8 +130,22 @@ export default function PedidoCompraFAB({
   return (
     <>
       {!showAnexosModal && (
-        <div data-pedido-compra-fab className="fixed right-4 z-[999] flex flex-col-reverse items-end gap-2 p38-bottom-fab1 md:bottom-6 md:right-6">
+        <>
+          {isExpanded && (
             <button
+              type="button"
+              aria-label="Fechar ações"
+              className="fixed inset-0 z-[998] bg-black/20 backdrop-blur-[2px]"
+              onClick={() => setIsExpanded(false)}
+            />
+          )}
+
+          <div
+            data-pedido-compra-fab
+            className="fixed right-4 z-[999] flex flex-col-reverse items-end gap-2 p38-bottom-fab1 md:bottom-6 md:right-6"
+          >
+            <button
+              type="button"
               onClick={() => setIsExpanded(prev => !prev)}
               className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
                 isExpanded ? 'bg-muted dark:bg-muted/400 rotate-45' : 'bg-background dark:bg-muted'
@@ -191,10 +158,11 @@ export default function PedidoCompraFAB({
             {isExpanded && actions.map((action, idx) => (
               <button
                 key={idx}
-                onClick={action.onClick}
+                type="button"
+                onClick={() => runAction(action)}
                 disabled={action.disabled}
                 title={action.label}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 flex-shrink-0 ${action.color}`}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-lg text-sm font-medium whitespace-nowrap active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 ${action.color}`}
                 style={{
                   animation: `fadeSlideUp 0.18s ease both`,
                   animationDelay: `${idx * 30}ms`,
@@ -205,16 +173,16 @@ export default function PedidoCompraFAB({
               </button>
             ))}
           </div>
+        </>
       )}
 
-        <style>{`
+      <style>{`
         @keyframes fadeSlideUp {
           from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
 
-      {/* AnexosModal */}
       <AnexosModal
         isOpen={showAnexosModal}
         onClose={() => setShowAnexosModal(false)}

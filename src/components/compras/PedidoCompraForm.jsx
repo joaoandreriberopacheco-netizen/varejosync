@@ -1657,7 +1657,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
            pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
            onSave={handleInitiateSave}
            isSaving={isSaving}
-           isDisabled={!formData.fornecedor_id || formData.itens.length === 0}
            mostrarEnviarFinanceiro={!isLocked && !!pedido?.id && formData.status === 'Rascunho' && formData.itens.length > 0}
            onEnviarFinanceiro={() => {
              handleInitiateSave({ status: 'Aguardando Aprovação Financeira' });
@@ -1671,7 +1670,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
            pedido={{ ...formData, id: pedido?.id, numero: pedido?.numero, valor_itens: valorItens, valor_total: valorTotal }}
            onSave={handleInitiateSave}
            isSaving={isSaving}
-           isDisabled={isSaving}
            mostrarSolicitarEdicao={podeSolicitarCorrecao}
            onSolicitarEdicao={() => setIsSolicitarEdicaoOpen(true)}
            />
