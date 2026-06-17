@@ -21,6 +21,11 @@ import {
   ContasAbertasFiltros,
   ContasAbertasListaPane,
 } from './ContasAbertas';
+import {
+  GestaoContasEmbedded,
+  GestaoContasKpis,
+  GestaoContasPane,
+} from './GestaoContasFinanceiras';
 import AgefinRecorrentes from './AgefinRecorrentes';
 import AgefinImportador from '../agefin/AgefinImportador';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
@@ -229,7 +234,7 @@ export default function ExecucaoOrcamentaria() {
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || !!search;
 
-  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'contas'
+  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'contas'
 
   const periodoLabel = useMemo(() => {
     if (periodo === 'tudo') return 'Todo o período';
@@ -277,12 +282,20 @@ export default function ExecucaoOrcamentaria() {
   };
 
   const contasPagarAtiva = aba === 'contas' && abaContas === 'contas';
+  const caixasAtiva = aba === 'caixas';
   const contasShared = useMemo(
     () => ({ lancs, contas, loading, reload: load }),
     [lancs, contas, loading],
   );
 
+  const abasPrincipais = [
+    { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
+    { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Caixas' },
+    { value: 'contas', label: 'Contas Abertas', shortLabel: 'Contas' },
+  ];
+
   return (
+    <GestaoContasEmbedded active={caixasAtiva}>
     <ContasAbertasProvider
       active={contasPagarAtiva}
       shared={contasShared}
@@ -310,10 +323,7 @@ export default function ExecucaoOrcamentaria() {
             compact
             value={aba}
             onChange={setAba}
-            items={[
-              { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
-              { value: 'contas', label: 'Contas Abertas', shortLabel: 'Contas' },
-            ]}
+            items={abasPrincipais}
           />
           {aba === 'contas' && (
             <FinanceiroPillTabs
@@ -328,6 +338,7 @@ export default function ExecucaoOrcamentaria() {
             />
           )}
           {aba === 'fluxo' && <KpiFluxo kpis={kpis} layout="stack" />}
+          {caixasAtiva && <GestaoContasKpis layout="stack" />}
           {aba === 'contas' && abaContas === 'contas' && <ContasAbertasKpis layout="stack" />}
           {aba === 'contas' && abaContas === 'agefin' && <AgefinRecorrentes />}
         </div>
@@ -351,6 +362,11 @@ export default function ExecucaoOrcamentaria() {
               <KpiFluxo kpis={kpis} layout="inline" />
             </div>
           )}
+          {caixasAtiva && (
+            <div className="min-w-0 flex-1">
+              <GestaoContasKpis layout="inline" />
+            </div>
+          )}
           {aba === 'contas' && abaContas === 'contas' && (
             <div className="min-w-0 flex-1">
               <ContasAbertasKpis layout="inline" />
@@ -361,10 +377,7 @@ export default function ExecucaoOrcamentaria() {
               compact
               value={aba}
               onChange={setAba}
-              items={[
-                { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
-                { value: 'contas', label: 'Contas Abertas', shortLabel: 'Contas' },
-              ]}
+              items={abasPrincipais}
             />
             {aba === 'contas' && (
               <FinanceiroPillTabs
@@ -511,6 +524,8 @@ export default function ExecucaoOrcamentaria() {
         </>
       )}
 
+      {caixasAtiva && <GestaoContasPane />}
+
       {contasPagarAtiva && (
         <>
           <ContasAbertasFiltros />
@@ -541,5 +556,6 @@ export default function ExecucaoOrcamentaria() {
       )}
     </div>
     </ContasAbertasProvider>
+    </GestaoContasEmbedded>
   );
 }
