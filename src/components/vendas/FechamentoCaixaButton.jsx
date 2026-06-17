@@ -5,6 +5,10 @@ import SafeActionButton from '@/components/ui/safe-action-button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import {
+  resolveContaDestinoCaixaPDV,
+  transferirDinheiroFechamentoCaixaPDV,
+} from '@/lib/contaDestinoCaixaPDV';
 import RelatorioFechamentoCaixa from './caixa/RelatorioFechamentoCaixa';
 
 /**
@@ -59,17 +63,19 @@ export default function FechamentoCaixaButton({
       });
 
       const todasContas = await base44.entities.ContasFinanceiras.list();
-      const caixaGeral = todasContas.find((c) => c.is_caixa_geral === true);
-      if (caixaGeral && dinheiroConferido > 0) {
-        await base44.entities.ContasFinanceiras.update(contaCaixaPDV.id, { saldo_atual: 0 });
-        await base44.entities.ContasFinanceiras.update(caixaGeral.id, {
-          saldo_atual: caixaGeral.saldo_atual + dinheiroConferido,
+      const contaDestino = resolveContaDestinoCaixaPDV(todasContas);
+      if (contaDestino && dinheiroConferido > 0) {
+        await transferirDinheiroFechamentoCaixaPDV({
+          base44,
+          contaCaixaPDV,
+          contaDestino,
+          dinheiroConferido,
         });
         await base44.entities.MovimentosCaixa.create({
           numero: `MCX-${String(Date.now()).slice(-5)}`,
           tipo: 'Sangria',
           valor: dinheiroConferido,
-          observacao: `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${caixaGeral.nome}`,
+          observacao: `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${contaDestino.nome}`,
           conta_id: contaCaixaPDV.id,
           turno_caixa_id: turnoAtivo.id,
           usuario_responsavel_id: currentUser.id,

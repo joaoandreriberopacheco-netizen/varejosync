@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Wallet, Edit, Trash2, PlusCircle, Scale } from 'lucide-react';
+import { Wallet, Edit, Trash2, PlusCircle, Scale, ArrowRightLeft } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
+import { resolveContaDestinoCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
 
 export default function ContasFinanceirasManager() {
   const [contas, setContas] = useState([]);
@@ -16,7 +17,8 @@ export default function ContasFinanceirasManager() {
   const [selectedConta, setSelectedConta] = useState(null);
   const [formData, setFormData] = useState({
     nome: '', tipo: 'Conta Bancária', banco: '', agencia: '', conta: '',
-    saldo_inicial: 0, saldo_atual: 0, cor: '#10B981', observacoes: '', ativo: true, is_caixa_pdv: false
+    saldo_inicial: 0, saldo_atual: 0, cor: '#10B981', observacoes: '', ativo: true, is_caixa_pdv: false,
+    is_caixa_geral: false,
   });
   const { toast } = useToast();
 
@@ -32,7 +34,8 @@ export default function ContasFinanceirasManager() {
   const handleAddNew = () => {
     setSelectedConta(null);
     setFormData({ nome: '', tipo: 'Conta Bancária', banco: '', agencia: '', conta: '',
-      saldo_inicial: 0, saldo_atual: 0, cor: '#10B981', observacoes: '', ativo: true, is_caixa_pdv: false });
+      saldo_inicial: 0, saldo_atual: 0, cor: '#10B981', observacoes: '', ativo: true, is_caixa_pdv: false,
+      is_caixa_geral: false });
     setIsDialogOpen(true);
   };
 
@@ -51,6 +54,12 @@ export default function ContasFinanceirasManager() {
   const handleSave = async () => {
     const dataToSave = { ...formData };
     if (!selectedConta) dataToSave.saldo_atual = dataToSave.saldo_inicial;
+    if (dataToSave.is_caixa_geral) {
+      const outras = contas.filter((c) => c.is_caixa_geral && c.id !== selectedConta?.id);
+      await Promise.all(
+        outras.map((c) => base44.entities.ContasFinanceiras.update(c.id, { is_caixa_geral: false }))
+      );
+    }
     if (selectedConta) {
       await base44.entities.ContasFinanceiras.update(selectedConta.id, dataToSave);
     } else {
@@ -58,6 +67,28 @@ export default function ContasFinanceirasManager() {
     }
     toast({ title: "Conta salva!", className: "bg-card" });
     loadContas(); setIsDialogOpen(false);
+  };
+
+  const contaDestinoCaixaPDV = resolveContaDestinoCaixaPDV(contas);
+
+  const handleDefinirDestinoCaixaPDV = async (contaId) => {
+    if (!contaId) return;
+    try {
+      await Promise.all(
+        contas.map((c) =>
+          base44.entities.ContasFinanceiras.update(c.id, { is_caixa_geral: c.id === contaId })
+        )
+      );
+      const conta = contas.find((c) => c.id === contaId);
+      toast({
+        title: 'Conta destino definida',
+        description: `Recolhimentos e fechamentos do caixa PDV irão para "${conta?.nome}".`,
+        className: 'bg-card',
+      });
+      loadContas();
+    } catch (error) {
+      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
+    }
   };
 
   const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -76,6 +107,29 @@ export default function ContasFinanceirasManager() {
           <PlusCircle className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Nova Conta</span>
         </Button>
+      </div>
+
+      <div className="rounded-xl bg-muted/50/60 p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
+          <p className="text-xs font-semibold text-foreground/90">Destino do caixa PDV</p>
+        </div>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Recolhimentos durante o turno e o dinheiro do fechamento de caixa são transferidos para esta conta financeira.
+        </p>
+        <Select
+          value={contaDestinoCaixaPDV?.id || ''}
+          onValueChange={handleDefinirDestinoCaixaPDV}
+        >
+          <SelectTrigger className="bg-card border-0 shadow-sm h-9 text-sm">
+            <SelectValue placeholder="Selecione a conta destino..." />
+          </SelectTrigger>
+          <SelectContent className="dark:bg-muted">
+            {contas.filter((c) => c.ativo !== false).map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {contas.length === 0 ? (
@@ -99,6 +153,9 @@ export default function ContasFinanceirasManager() {
                   <span className="text-sm font-medium text-foreground truncate">{conta.nome}</span>
                   {conta.is_caixa_pdv && (
                     <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">PDV</span>
+                  )}
+                  {conta.is_caixa_geral && (
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-1.5 py-0.5 rounded-full">Destino PDV</span>
                   )}
                   {!conta.ativo && (
                     <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">inativa</span>
@@ -211,6 +268,7 @@ export default function ContasFinanceirasManager() {
               {[
                 { key: 'ativo', label: 'Conta ativa' },
                 { key: 'is_caixa_pdv', label: 'Usar como Caixa PDV', desc: 'Pode ser atribuída a um usuário de ponto de venda' },
+                { key: 'is_caixa_geral', label: 'Destino de recolhimento e fechamento do caixa PDV', desc: 'Dinheiro retirado no PDV e no fechamento entra nesta conta' },
               ].map(({ key, label, desc }) => (
                 <div key={key} className="flex items-start gap-2 px-3 py-2 rounded-xl bg-muted/50">
                   <input type="checkbox" checked={formData[key]}

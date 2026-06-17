@@ -19,6 +19,10 @@ import ProcessarVendasView from './caixa/ProcessarVendasView';
 import ConfirmarPagamentoDialog from './caixa/ConfirmarPagamentoDialog.jsx';
 import PromissoriaDialog from './caixa/PromissoriaDialog';
 import FechamentoCaixaButton from '@/components/vendas/FechamentoCaixaButton';
+import {
+  creditarContaDestinoCaixaPDV,
+  resolveContaDestinoCaixaPDV,
+} from '@/lib/contaDestinoCaixaPDV';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
 import {
@@ -1047,41 +1051,38 @@ export default function PDVCaixa({
       const nextNumber = (todosMovimentos.length > 0 ? Math.max(...todosMovimentos.map((m) => parseInt(m.numero?.split('-')[1] || 0) || 0)) : 0) + 1;
       const numeroMovimento = `MCX-${String(nextNumber).padStart(5, '0')}`;
 
-      // Para Recolhimento de Caixa, buscar Caixa Geral e gerar lançamentos duplos
+      // Recolhimento: saída no caixa PDV (MovimentosCaixa) + entrada na conta destino configurada
       if (tipoMovimento === 'Recolhimento de Caixa') {
       const todasContas = await base44.entities.ContasFinanceiras.list();
-      const caixaGeral = todasContas.find(c => c.is_caixa_geral);
+      const contaDestino = resolveContaDestinoCaixaPDV(todasContas);
 
-      if (!caixaGeral) {
+      if (!contaDestino) {
         toast({
-          title: "Caixa Geral não encontrado",
-          description: "Crie uma conta 'Caixa Geral' nas configurações.",
+          title: "Conta destino não configurada",
+          description: "Em Configurações → Financeiro → Contas, defina a conta que recebe recolhimentos e fechamento do caixa PDV.",
           variant: "destructive"
         });
         return;
       }
 
-      // Criar movimento de saída do Caixa PDV
       const movimento = await base44.entities.MovimentosCaixa.create({
         numero: numeroMovimento,
         tipo: tipoMovimento,
         valor: valorFloat,
-        observacao: `Transferência para ${caixaGeral.nome}${observacaoMovimento ? '. ' + observacaoMovimento : ''}`,
+        observacao: `Transferência para ${contaDestino.nome}${observacaoMovimento ? '. ' + observacaoMovimento : ''}`,
         conta_id: contaCaixaPDV.id,
         turno_caixa_id: turnoAtivo?.id,
         usuario_responsavel_id: currentUser.id,
         usuario_responsavel_nome: currentUser.full_name
       });
 
-      // Atualizar turno com movimento
+      await creditarContaDestinoCaixaPDV(base44, contaDestino, valorFloat);
+
       if (turnoAtivo) {
         await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
           movimentos_ids: [...(turnoAtivo.movimentos_ids || []), movimento.id]
         });
       }
-
-      // Nota: Não criamos lançamentos financeiros para sangrias
-      // A MovimentosCaixa já reduz a conta, é redundante ter LancamentoFinanceiro
 
       setMovimentoCriado(movimento);
       } else {
