@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { registerJsPdfDin1451Fonts } from '@/lib/jspdfNotoFont';
 
 /** Escala só no eixo Y (glifos mais altos, largura inalterada). PDF Tm: sx=1, sy>1. */
 const PDF_GLYPH_STRETCH_Y = 1.1;
@@ -889,9 +890,24 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       unit: 'mm',
       format: isMobile ? [MOBILE_W, MOBILE_PAGE_H] : 'a4',
     });
-    const usarNoto = await registerPdfFonts(doc);
-    const pdfFontFamily = usarNoto ? 'NotoSans' : 'helvetica';
-    patchPdfTextVerticalStretch(doc, isMobileClaro ? 1 : PDF_GLYPH_STRETCH_Y);
+    const usarNoto = isEnxuta ? false : await registerPdfFonts(doc);
+    const pdfFontFamily = isEnxuta
+      ? await registerJsPdfDin1451Fonts(doc)
+      : (usarNoto ? 'NotoSans' : 'helvetica');
+    patchPdfTextVerticalStretch(doc, (isEnxuta || isMobileClaro) ? 1 : PDF_GLYPH_STRETCH_Y);
+
+    /** Enxuto: DIN 1451, mind map vertical, traços finos uniformes. */
+    const ENXUTO_LINE_W = 0.12;
+    const ENXUTO = {
+      black: [0, 0, 0],
+      muted: [72, 72, 72],
+      line: [110, 110, 110],
+    };
+    const strokeEnxutoLine = (x0, y0, x1, y1) => {
+      doc.setDrawColor(...ENXUTO.line);
+      doc.setLineWidth(ENXUTO_LINE_W);
+      doc.line(x0, y0, x1, y1);
+    };
 
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
@@ -1004,23 +1020,23 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       if (isEnxuta) {
         doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
         doc.setFontSize(13);
-        doc.setTextColor(...C.text);
+        doc.setTextColor(...ENXUTO.black);
         doc.text('Relatorio de embarques — ENXUTO', M, y);
-        y += 5;
+        y += 5.5;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(8);
-        doc.setTextColor(...C.muted);
-        doc.text('A4 compacto   itens empilhados   sem decoracao', M, y);
-        y += 4;
+        doc.setTextColor(...ENXUTO.muted);
+        doc.text('A4 compacto   mind map vertical   DIN 1451', M, y);
+        y += 4.5;
         const filtrosLinhas = doc.splitTextToSize(safe(filtros_desc || '-'), CW);
+        doc.setFontSize(7.6);
         doc.text(filtrosLinhas[0] || '-', M, y);
-        y += 3.5;
-        doc.setFontSize(7);
+        y += 4;
+        doc.setFontSize(7.2);
         doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M, y);
-        y += 3;
-        doc.setDrawColor(220, 220, 220);
-        doc.line(M, y, M + CW, y);
-        y += 5;
+        y += 4;
+        strokeEnxutoLine(M, y, M + CW, y);
+        y += 6;
         return;
       }
 
@@ -1135,16 +1151,16 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       if (isEnxuta) {
         ensureSpace(14);
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(8.2);
-        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setTextColor(...C.text);
+        doc.setTextColor(...ENXUTO.black);
         doc.text(`Pedidos: ${kpis.totalPedidos || pedidos.length || 0}`, M, y);
-        doc.text(`Pendente: ${moeda(kpis.totalGeral || 0)}`, M + 48, y);
-        doc.text(`Em aberto: ${moeda(kpis.totalEmAberto || 0)}`, M + 96, y);
+        doc.text(`Pendente: ${moeda(kpis.totalGeral || 0)}`, M + 50, y);
+        doc.text(`Em aberto: ${moeda(kpis.totalEmAberto || 0)}`, M + 100, y);
+        doc.setTextColor(...ENXUTO.muted);
         doc.text(`Pago/nao entregue: ${moeda(kpis.totalPagoNaoEntregue || 0)}`, M + CW, y, { align: 'right' });
         y += 6;
-        doc.setDrawColor(200, 200, 200);
-        doc.line(M, y, M + CW, y);
+        strokeEnxutoLine(M, y, M + CW, y);
         y += 6;
         return;
       }
@@ -1369,13 +1385,13 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           qtdColRight,
           nomeMaxW: M + CW - itemMl - 3,
           contentRight: M + CW,
-          vs: 1.3,
+          vs: 1.32,
           fontScale: 1,
-          lineWidth: 1.6,
+          branchLen: 2.4,
           nomeFontSize: 8.6,
-          detailFontSize: 7.4,
-          qtdFontSize: 7.8,
-          unFontSize: 6.7,
+          detailFontSize: 7.5,
+          qtdFontSize: 7.9,
+          unFontSize: 6.9,
           ink: true,
         };
       }
@@ -1535,21 +1551,27 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const { rowBlockH, met, nomeLinhas, cfg, vs, nomeLineStep, nomeTop } = measured;
       const nomeX = measured.nomeX ?? cfg.itemMl;
       const branchY = y0 + 2.8 * vs;
+      const isEnxutoRow = layout === 'narrow_enxuto';
       const ink = !!cfg.ink;
-      const inkBlack = ink ? MOBILE_INK.black : SLATE900;
-      const inkBody = ink ? MOBILE_INK.body : SLATE700;
-      const inkMeta = ink ? MOBILE_INK.meta : SLATE500;
-      const inkLine = ink ? MOBILE_INK.line : [203, 213, 225];
+      const inkBlack = isEnxutoRow ? ENXUTO.black : (ink ? MOBILE_INK.black : SLATE900);
+      const inkBody = isEnxutoRow ? ENXUTO.black : (ink ? MOBILE_INK.body : SLATE700);
+      const inkMeta = isEnxutoRow ? ENXUTO.muted : (ink ? MOBILE_INK.meta : SLATE500);
 
-      doc.setFillColor(...inkLine);
-      doc.rect(cfg.lineX, y0, 0.1, rowBlockH, 'F');
-      doc.rect(cfg.lineX, branchY, cfg.lineWidth, 0.1, 'F');
+      if (isEnxutoRow) {
+        strokeEnxutoLine(cfg.lineX, y0, cfg.lineX, y0 + rowBlockH);
+        strokeEnxutoLine(cfg.lineX, branchY, cfg.lineX + (cfg.branchLen ?? 2.4), branchY);
+      } else {
+        const inkLine = ink ? MOBILE_INK.line : [203, 213, 225];
+        doc.setFillColor(...inkLine);
+        doc.rect(cfg.lineX, y0, 0.1, rowBlockH, 'F');
+        doc.rect(cfg.lineX, branchY, cfg.lineWidth, 0.1, 'F');
+      }
 
       const qtdFs = layout === 'wide'
         ? (cfg.qtdFontSize ?? 6.8)
         : (cfg.qtdFontSize ?? 6.8);
       const unFs = layout === 'wide' ? (cfg.unFontSize ?? 5.9) : (cfg.unFontSize ?? 5.9);
-      doc.setFont(pdfFontFamily, ink ? PDF_FONT_NORMAL : PDF_FONT_BOLD);
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(qtdFs * cfg.fontScale);
       doc.setTextColor(...inkBlack);
       const qtdYOff = 1.2;
@@ -1557,10 +1579,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.text(fmtQuantidadePdf(Number(met.qtd) || 0), cfg.qtdColRight, nomeTop + qtdYOff, { align: 'right' });
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(unFs * cfg.fontScale);
-      doc.setTextColor(...inkBody);
+      doc.setTextColor(...inkMeta);
       doc.text(met.un, cfg.qtdColRight, nomeTop + unYOff, { align: 'right' });
 
-      doc.setFont(pdfFontFamily, ink && layout === 'narrow_enxuto' ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       const nomeFsDraw = layout === 'wide' ? cfg.nomeFontSize : (cfg.nomeFontSize ?? 7);
       doc.setFontSize(nomeFsDraw * cfg.fontScale);
       doc.setTextColor(...inkBody);
@@ -1610,9 +1632,13 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       const sepX0 = layout === 'wide' ? (cfg.sepLineX0 ?? cfg.itemMl) : cfg.itemMl;
       const sepX1 = layout === 'wide' ? (cfg.sepLineX1 ?? cfg.contentRight) : cfg.contentRight;
-      doc.setDrawColor(...(ink ? MOBILE_INK.line : [226, 232, 240]));
-      doc.setLineWidth(0.12);
-      doc.line(sepX0, y0 + rowBlockH, sepX1, y0 + rowBlockH);
+      if (isEnxutoRow) {
+        strokeEnxutoLine(sepX0, y0 + rowBlockH, sepX1, y0 + rowBlockH);
+      } else {
+        doc.setDrawColor(...(ink ? MOBILE_INK.line : [226, 232, 240]));
+        doc.setLineWidth(0.12);
+        doc.line(sepX0, y0 + rowBlockH, sepX1, y0 + rowBlockH);
+      }
 
       const qtd = Number(met.qtd) || 0;
       const totCustoAdd = qtd * (Number(met.custoUnit) || 0);
@@ -2047,50 +2073,46 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       const blockTop = y;
 
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.25);
-      doc.line(M, blockTop, M + CW, blockTop);
+      strokeEnxutoLine(M, blockTop, M + CW, blockTop);
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(7.6);
-      doc.setTextColor(80, 80, 80);
+      doc.setTextColor(...ENXUTO.muted);
       codigoLinhas.forEach((line, ci) => {
         doc.text(line, M + 2, blockTop + codeY0 + ci * codigoLineStep);
       });
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(...ENXUTO.black);
       doc.text(safe(statusRelatorio), M + CW - 2, blockTop + codeY0, { align: 'right' });
 
       let cy = blockTop + codeY0 + codeBlockH + gapCodeForn;
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10.2);
+      doc.setTextColor(...ENXUTO.black);
       fornLines.forEach((line, fl) => {
         doc.text(line, M + 2, cy + fl * fornLineStep);
       });
       cy += fornBlock + 1.2;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(7.4);
-      doc.setTextColor(80, 80, 80);
+      doc.setFontSize(7.6);
+      doc.setTextColor(...ENXUTO.muted);
       doc.text('Total', M + 2, cy);
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10.2);
+      doc.setTextColor(...ENXUTO.black);
       doc.text(valorHeader, M + CW - 2, cy, { align: 'right' });
       cy += totalRowH;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(7.2);
-      doc.setTextColor(70, 70, 70);
+      doc.setFontSize(7.4);
+      doc.setTextColor(...ENXUTO.muted);
       metaLines.forEach((line, ml) => {
         doc.text(line, M + 2, cy + ml * metaLineStep);
       });
 
       y = blockTop + headerBlockH + 3;
 
-      doc.setDrawColor(210, 210, 210);
-      doc.setLineWidth(0.12);
-      doc.line(M, y - 1.5, M + CW, y - 1.5);
+      strokeEnxutoLine(M, y - 1.5, M + CW, y - 1.5);
 
       let totCusto = 0;
       let totVenda = 0;
@@ -2105,13 +2127,11 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
       if (itens.length > 0) {
         ensureSpace(8);
-        doc.setDrawColor(210, 210, 210);
-        doc.setLineWidth(0.12);
-        doc.line(M, y, M + CW, y);
+        strokeEnxutoLine(M, y, M + CW, y);
         y += 4.5;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(7.4);
-        doc.setTextColor(70, 70, 70);
+        doc.setFontSize(7.5);
+        doc.setTextColor(...ENXUTO.muted);
         doc.text(`Custo: ${moedaOuTraco(totCusto)}   Venda ref.: ${moeda(totVenda)}`, M + 2, y);
         y += 5;
       }
@@ -2170,17 +2190,15 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         ensureSpace(12);
         const bandH = 7.5;
         const totalGrupo = (grupo.pedidos || []).reduce((a, p) => a + getValorRelatorio(p, produtosMap), 0);
-        doc.setDrawColor(0, 0, 0);
-        doc.setLineWidth(0.2);
-        doc.line(M, y, M + CW, y);
+        strokeEnxutoLine(M, y, M + CW, y);
         y += 2.5;
         doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setFontSize(8.2);
-        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(8.4);
+        doc.setTextColor(...ENXUTO.black);
         doc.text(safe(grupo.label || '-'), M + 2, y + 3.5);
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(7.4);
-        doc.setTextColor(70, 70, 70);
+        doc.setFontSize(7.5);
+        doc.setTextColor(...ENXUTO.muted);
         doc.text(`${(grupo.pedidos || []).length} ped.   ${moeda(totalGrupo)}`, M + CW - 2, y + 3.5, { align: 'right' });
         y += bandH;
       } else {
