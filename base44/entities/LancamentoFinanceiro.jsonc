@@ -4,6 +4,14 @@
   "properties": {
     "id": { "type": "string" },
     "valor": { "type": "number" },
-    "tipo": { "type": "string" }
+    "tipo": { "type": "string" },
+    "data_lancamento": {
+      "type": "string",
+      "description": "Instante do lançamento (editável no fluxo de caixa; padrão = agora)"
+    },
+    "codigo_lancamento": {
+      "type": "string",
+      "description": "Código AAAAMMDDHHMMSS para ordenação no fluxo de caixa"
+    }
   }
 }

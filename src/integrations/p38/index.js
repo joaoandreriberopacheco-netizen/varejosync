@@ -5,6 +5,7 @@ import { createSubpayzeAdapter } from './subpayzeAdapter';
 import { createSupabaseAdapter } from './supabaseAdapter';
 import { createRequestContext } from './requestContext';
 import { resolveLegacyClient } from './linkedBase44Client';
+import { wrapLegacyClientLancamentoFinanceiro } from '@/lib/lancamentoFinanceiroEntityHook';
 import {
   getP38Providers,
   hasBase44Credentials,
@@ -93,7 +94,9 @@ const activeAdapter = shouldUseSupabase
   : shouldUseSubpayze
     ? subpayzeAdapter
     : base44Adapter || supabaseAdapter;
-const activeLegacyClient = activeAdapter.legacyClient || linkedLegacyClient;
+const activeLegacyClient = wrapLegacyClientLancamentoFinanceiro(
+  activeAdapter.legacyClient || linkedLegacyClient,
+);
 
 function withSafeFallback(sectionName, candidateSection, fallbackSection) {
   if (!candidateSection) {

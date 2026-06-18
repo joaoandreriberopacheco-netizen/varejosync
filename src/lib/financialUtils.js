@@ -1,3 +1,9 @@
+import {
+  agora,
+  codigoOrdenacaoDesdeDataSomente,
+  codigoOrdenacaoDesdeInstante,
+} from '@/components/utils/dateUtils';
+
 /**
  * Arredonda número (ou string numérica) para 2 casas decimais.
  * Evita caudas de ponto flutuante em totais de caixa, quantidades embarcadas, etc.
@@ -44,11 +50,44 @@ export const parseFinancialValue = (value) => {
 };
 
 /**
- * Ordena lançamentos alfabeticamente por descrição dentro do mesmo dia/data (pt-BR).
+ * Código AAAAMMDDHHMMSS para ordenar lançamentos no fluxo de caixa.
+ * Usa `codigo_lancamento` persistido, depois `data_lancamento`, `created_date`
+ * ou data de pagamento/vencimento (00:00:00).
+ */
+export function codigoOrdenacaoLancamento(item) {
+  if (item?.codigo_lancamento) return String(item.codigo_lancamento);
+  if (item?.data_lancamento) {
+    const codigo = codigoOrdenacaoDesdeInstante(item.data_lancamento);
+    if (codigo) return codigo;
+  }
+  if (item?.created_date) {
+    const codigo = codigoOrdenacaoDesdeInstante(item.created_date);
+    if (codigo) return codigo;
+  }
+  return codigoOrdenacaoDesdeDataSomente(item?.data_pagamento || item?.data_vencimento)
+    || '00000000000000';
+}
+
+/**
+ * Preenche `data_lancamento` e `codigo_lancamento` ao criar um lançamento.
+ * Se `dataLancamento` não for informada, usa o instante atual.
+ */
+export function prepararMetadadosLancamentoFinanceiro({ dataLancamento } = {}) {
+  const iso = dataLancamento || agora();
+  return {
+    data_lancamento: iso,
+    codigo_lancamento: codigoOrdenacaoDesdeInstante(iso),
+  };
+}
+
+/**
+ * Ordena lançamentos por código AAAAMMDDHHMMSS; em empate, ordem alfabética (pt-BR).
  */
 export function sortLancamentosPorDescricao(items) {
   if (!items?.length) return [];
-  return [...items].sort((a, b) =>
-    (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' })
-  );
+  return [...items].sort((a, b) => {
+    const cmp = codigoOrdenacaoLancamento(a).localeCompare(codigoOrdenacaoLancamento(b));
+    if (cmp !== 0) return cmp;
+    return (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' });
+  });
 }

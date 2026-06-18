@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { addWeeks, addMonths, addYears, format } from 'date-fns';
-import { dataHoje } from '@/components/utils/dateUtils';
+import { dataHoje, datetimeLocalParaISO } from '@/components/utils/dateUtils';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import RecorrenciaConfig from './fluxo/RecorrenciaConfig';
 import TagsInput from './fluxo/TagsInput';
@@ -36,6 +36,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   const [valorCents, setValorCents] = useState(valorInicial ? Math.round(parseFloat(valorInicial) * 100).toString() : '0');
   const [descricao, setDescricao] = useState(descricaoInicial || '');
   const [data, setData] = useState(dataHoje());
+  const [dataLancamento, setDataLancamento] = useState('');
   const [categoria, setCategoria] = useState('');
   const [categoriaId, setCategoriaId] = useState('');
   const [contaId, setContaId] = useState(contaDefaultId || '');
@@ -65,6 +66,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       setValorCents(valorInicial ? Math.round(parseFloat(valorInicial) * 100).toString() : '0');
       setDescricao(descricaoInicial || '');
       setData(dataHoje());
+      setDataLancamento('');
       setCategoria('');
       setCategoriaId('');
       setContaId(contaDefaultId || '');
@@ -98,6 +100,12 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
   const gerarGrupoId = () => `grp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
+  const metaDataLancamento = () => {
+    if (!dataLancamento) return {};
+    const iso = datetimeLocalParaISO(dataLancamento);
+    return iso ? { data_lancamento: iso } : {};
+  };
+
   const handleSave = async () => {
     if (saving) return;
     if (!valorNumerico || valorNumerico <= 0) { toast({ title: 'Informe o valor', variant: 'destructive' }); return; }
@@ -122,8 +130,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         return;
       }
       const contaDest = contas.find(c => c.id === contaDestinoId);
-      await base44.entities.LancamentoFinanceiro.create({ tipo: 'Despesa', descricao: `Transferência para ${contaDest?.nome}`, valor: valorNumerico, data_vencimento: data, data_pagamento: data, status: 'Pago', status_conciliacao: 'N/A', categoria: 'Transferência entre Contas', conta_financeira_id: contaId, conta_financeira_nome: conta?.nome, referencia_tipo: 'Manual' });
-      await base44.entities.LancamentoFinanceiro.create({ tipo: 'Receita', descricao: `Transferência de ${conta?.nome}`, valor: valorNumerico, data_vencimento: data, data_pagamento: data, status: 'Pago', status_conciliacao: 'N/A', categoria: 'Transferência entre Contas', conta_financeira_id: contaDestinoId, conta_financeira_nome: contaDest?.nome, referencia_tipo: 'Manual' });
+      await base44.entities.LancamentoFinanceiro.create({ ...metaDataLancamento(), tipo: 'Despesa', descricao: `Transferência para ${contaDest?.nome}`, valor: valorNumerico, data_vencimento: data, data_pagamento: data, status: 'Pago', status_conciliacao: 'N/A', categoria: 'Transferência entre Contas', conta_financeira_id: contaId, conta_financeira_nome: conta?.nome, referencia_tipo: 'Manual' });
+      await base44.entities.LancamentoFinanceiro.create({ ...metaDataLancamento(), tipo: 'Receita', descricao: `Transferência de ${conta?.nome}`, valor: valorNumerico, data_vencimento: data, data_pagamento: data, status: 'Pago', status_conciliacao: 'N/A', categoria: 'Transferência entre Contas', conta_financeira_id: contaDestinoId, conta_financeira_nome: contaDest?.nome, referencia_tipo: 'Manual' });
       await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta?.saldo_atual || 0) - valorNumerico });
       await base44.entities.ContasFinanceiras.update(contaDestinoId, { saldo_atual: (contas.find(c => c.id === contaDestinoId)?.saldo_atual || 0) + valorNumerico });
     } else if (isRecorrente && frequencia) {
@@ -136,6 +144,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         for (let i = 0; i < parcelas; i++) {
           const dtVenc = addMonths(baseDate, i);
           lotes.push({
+            ...metaDataLancamento(),
             tipo, descricao: `${descricao} (${i + 1}/${parcelas})`,
             valor: valorNumerico, data_vencimento: format(dtVenc, 'yyyy-MM-dd'),
             data_pagamento: i === 0 && isPago ? data : null,
@@ -159,6 +168,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         let dtAtual = baseDate;
         while (dtAtual <= limiteDate && i < 60) {
           lotes.push({
+            ...metaDataLancamento(),
             tipo, descricao,
             valor: valorNumerico, data_vencimento: format(dtAtual, 'yyyy-MM-dd'),
             data_pagamento: i === 0 && isPago ? data : null,
@@ -187,6 +197,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     } else {
       const isPago = status === 'Pago';
       const novoLancamento = await base44.entities.LancamentoFinanceiro.create({
+        ...metaDataLancamento(),
         tipo, descricao, valor: valorNumerico,
         data_vencimento: data, data_pagamento: isPago ? data : null,
         status, status_conciliacao: isPago ? 'Pendente' : 'N/A',
@@ -275,6 +286,22 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
             <div className="px-4 py-1 text-[10px] text-muted-foreground uppercase tracking-wider pt-3">Data de Vencimento</div>
             <input autoComplete="off" type="date" value={data} onChange={e => setData(e.target.value)}
               className="w-full bg-transparent px-4 pb-3 text-sm text-foreground outline-none" />
+          </div>
+
+          <div className="bg-card rounded-2xl shadow-sm">
+            <div className="px-4 py-1 text-[10px] text-muted-foreground uppercase tracking-wider pt-3">
+              Data do lançamento <span className="normal-case text-muted-foreground/80">(opcional)</span>
+            </div>
+            <input
+              autoComplete="off"
+              type="datetime-local"
+              value={dataLancamento}
+              onChange={(e) => setDataLancamento(e.target.value)}
+              className="w-full bg-transparent px-4 pb-1 text-sm text-foreground outline-none"
+            />
+            <p className="px-4 pb-3 text-[10px] text-muted-foreground">
+              Define a ordem no fluxo de caixa (AAAAMMDDHHMMSS). Se vazio, usa a data/hora atual ao salvar.
+            </p>
           </div>
 
           {/* Conta — obrigatória só para Transferência ou quando Pago */}

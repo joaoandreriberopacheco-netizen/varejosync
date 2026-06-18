@@ -261,3 +261,48 @@ export function formatarLogTime(valor) {
   if (!local) return '—';
   return `${pad(local.getUTCDate())}/${pad(local.getUTCMonth() + 1)} ${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
 }
+
+/**
+ * Código de ordenação AAAAMMDDHHMMSS no fuso do negócio (Tabatinga).
+ * @param {string|Date} valor
+ * @returns {string|null}
+ */
+export function codigoOrdenacaoDesdeInstante(valor) {
+  const local = toRioBranco(valor);
+  if (!local) return null;
+  return `${local.getUTCFullYear()}${pad(local.getUTCMonth() + 1)}${pad(local.getUTCDate())}${pad(local.getUTCHours())}${pad(local.getUTCMinutes())}${pad(local.getUTCSeconds())}`;
+}
+
+/**
+ * Código de ordenação a partir de campo só-data (hora 00:00:00).
+ * @param {string} ymd YYYY-MM-DD
+ * @returns {string|null}
+ */
+export function codigoOrdenacaoDesdeDataSomente(ymd) {
+  const d = String(ymd || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+  return `${d.replace(/-/g, '')}000000`;
+}
+
+/**
+ * Converte valor de `<input type="datetime-local">` para ISO UTC.
+ * @param {string} datetimeLocal e.g. "2026-06-18T14:30"
+ * @returns {string|null}
+ */
+export function datetimeLocalParaISO(datetimeLocal) {
+  if (!datetimeLocal) return null;
+  const s = String(datetimeLocal).trim();
+  if (!s) return null;
+  const normalized = s.length === 16 ? `${s}:00` : s;
+  return new Date(`${normalized}${OFFSET_SISTEMA}`).toISOString();
+}
+
+/**
+ * Valor atual formatado para `<input type="datetime-local">` no fuso do negócio.
+ * @returns {string}
+ */
+export function agoraParaInputDatetimeLocal() {
+  const local = toRioBranco(new Date());
+  if (!local) return '';
+  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}T${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
+}
