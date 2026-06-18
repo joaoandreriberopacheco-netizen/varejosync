@@ -225,6 +225,11 @@ export default function ExecucaoOrcamentaria() {
     [contas],
   );
 
+  const contasAtivas = useMemo(
+    () => contas.filter((c) => c.ativo !== false),
+    [contas],
+  );
+
   const filtrados = useMemo(() => lancs.filter(l => {
     if (isLancamentoCancelado(l) && !statusSel.includes('Cancelado')) return false;
     if (!isLancamentoRealizadoFluxo(l)) return false;
@@ -361,10 +366,6 @@ export default function ExecucaoOrcamentaria() {
 
   const contasPagarAtiva = aba === 'contas' && abaContas === 'contas';
   const caixasAtiva = aba === 'caixas';
-  const contasAtivas = useMemo(
-    () => contas.filter((c) => c.ativo !== false),
-    [contas],
-  );
   const financeiroShared = useMemo(
     () => ({
       lancs,
