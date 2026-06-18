@@ -67,6 +67,16 @@ export function deltaLancamentoSaldoConta(conta, l) {
   return l.tipo === 'Receita' ? valor : -valor;
 }
 
+/** Lançamento visível nas contas selecionadas (inclui legado sem conta_financeira_id na Caixa Geral). */
+export function lancamentoPertenceContasSelecionadas(l, contasSel = [], contasById = {}) {
+  if (!contasSel.length) return true;
+  if (l.conta_financeira_id && contasSel.includes(l.conta_financeira_id)) return true;
+  if (!l.conta_financeira_id) {
+    return contasSel.some((id) => contasById[id]?.is_caixa_geral === true);
+  }
+  return false;
+}
+
 /** Recolhimento/fechamento PDV e transferências manuais entre contas financeiras. */
 export function isTransferenciaEntreContas(l) {
   if (!l) return false;

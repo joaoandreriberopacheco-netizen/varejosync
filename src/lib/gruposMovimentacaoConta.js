@@ -1,7 +1,9 @@
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import {
+  contaUsaRegraCaixaPDV,
   idsMovimentosComLancamentoFinanceiro,
+  isMovimentoTransferenciaCaixaPDV,
   movimentoParticipaExtrato,
   projetarLinhaFluxoCaixa,
   totaisGrupoFluxoCaixa,
@@ -32,7 +34,74 @@ function dataChaveMovimento(mov) {
 }
 
 /**
- * Grupos por dia alinhados ao extrato (Caixa PDV: só dinheiro físico + movimentos de caixa).
+ * Grupos do Fluxo de Caixa: lista todos os lançamentos filtrados + movimentos PDV órfãos.
+ * Totais do dia separam operacional vs transferência (recolhimento/fechamento).
+ */
+export function montarGruposFluxoCaixa({
+  lancamentos = [],
+  movimentos = [],
+  todosLancamentos = [],
+  contas = [],
+  contasSel = [],
+  contasById = {},
+  formatGrupoLabel,
+  hStr,
+  oStr,
+}) {
+  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(todosLancamentos);
+  const pdvIds = new Set(
+    contas
+      .filter(
+        (c) => contaUsaRegraCaixaPDV(c) && (!contasSel.length || contasSel.includes(c.id)),
+      )
+      .map((c) => c.id),
+  );
+
+  const map = {};
+  lancamentos.forEach((l) => {
+    const dr = l.data_pagamento || l.data_vencimento;
+    const k = dr ? toLocalDateKey(dr) : 'sem-data';
+    (map[k] = map[k] || []).push(l);
+  });
+
+  movimentos.forEach((m) => {
+    if (!pdvIds.has(m.conta_id)) return;
+    if (movimentosJaNoFinanceiro.has(String(m.id))) return;
+    if (m.tipo !== 'Reforço' && !isMovimentoTransferenciaCaixaPDV(m)) return;
+    const k = m.created_date ? toLocalDateKey(m.created_date) : 'sem-data';
+    (map[k] = map[k] || []).push({ ...m, origem: 'movimento' });
+  });
+
+  return Object.keys(map)
+    .sort((a, b) => b.localeCompare(a))
+    .map((dia) => {
+      const brutos = map[dia];
+      const itemsOrdenados = sortLancamentosPorDescricao(brutos);
+      const items = itemsOrdenados.map((m) => {
+        if (m.origem === 'movimento') {
+          return projetarLinhaFluxoCaixa(normalizarMovimentoCaixaParaLinha(m));
+        }
+        return projetarLinhaFluxoCaixa(m);
+      });
+      const totaisGrupo = totaisGrupoFluxoCaixa(itemsOrdenados, contasById);
+      const label = dia === 'sem-data' ? 'Sem data' : formatGrupoLabel(dia, hStr, oStr);
+
+      return {
+        k: dia,
+        label,
+        items,
+        totais: {
+          r: totaisGrupo.r,
+          d: totaisGrupo.d,
+          liquido: totaisGrupo.liquido,
+        },
+      };
+    });
+}
+
+/**
+ * Grupos por dia alinhados ao extrato (Caixa PDV: só dinheiro físico na gaveta).
+ * Usado no extrato da conta — não no Fluxo de Caixa geral.
  */
 export function montarGruposPorDiaConta({
   conta,

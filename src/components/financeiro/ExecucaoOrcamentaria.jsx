@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { roundToTwoDecimals, sortLancamentosPorDescricao } from '@/lib/financialUtils';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
   calcularKpisFluxoPeriodo,
   calcularSaldosTodasContas,
   contaUsaRegraCaixaPDV,
-  projetarLinhaFluxoCaixa,
-  totaisGrupoFluxoCaixa,
+  isTransferenciaEntreContas,
+  lancamentoPertenceContasSelecionadas,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
-import { montarGruposPorDiaConta } from '@/lib/gruposMovimentacaoConta';
+import { montarGruposFluxoCaixa } from '@/lib/gruposMovimentacaoConta';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
@@ -142,12 +142,6 @@ export default function ExecucaoOrcamentaria() {
   useEffect(() => { load(); }, []);
 
   useEffect(() => {
-    if (contas.length && contasSel.length === 0) {
-      setContasSel(contas.map(conta => conta.id));
-    }
-  }, [contas]);
-
-  useEffect(() => {
     if (!showNovoFluxo) return;
     setFabOpen(false);
   }, [showNovoFluxo]);
@@ -185,12 +179,20 @@ export default function ExecucaoOrcamentaria() {
       setLancs(lancamentos);
       setMovimentos(movs);
       setContas(cts);
+      setContasSel((prev) => (prev.length ? prev : cts.map((c) => c.id)));
+    } catch (error) {
+      console.error('[Fluxo de Caixa] Erro ao carregar:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
+
+  const contasById = useMemo(
+    () => Object.fromEntries(contas.map((c) => [c.id, c])),
+    [contas],
+  );
 
   const filtrados = useMemo(() => lancs.filter(l => {
     if (l.status === 'Cancelado' && !statusSel.includes('Cancelado')) return false;
@@ -202,8 +204,12 @@ export default function ExecucaoOrcamentaria() {
     if ((ds || de) && !dataKey) return false;
     if (ds && dataKey < ds) return false;
     if (de && dataKey > de) return false;
-    if (contasSel.length && !contasSel.includes(l.conta_financeira_id)) return false;
-    if (tiposSel.length && !tiposSel.includes(l.tipo)) return false;
+    if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
+    if (tiposSel.length) {
+      const matchTipo = tiposSel.includes(l.tipo);
+      const matchTransf = tiposSel.includes('Transferência') && isTransferenciaEntreContas(l);
+      if (!matchTipo && !matchTransf) return false;
+    }
     if (statusSel.length && !statusSel.includes(l.status)) return false;
     if (pendentes && l.status_conciliacao !== 'Pendente') return false;
     if (cmvOnly && !l.is_custo_mercadoria) return false;
@@ -216,12 +222,7 @@ export default function ExecucaoOrcamentaria() {
         (l.tags || []).some(t => t.toLowerCase().includes(q));
     }
     return true;
-  }), [lancs, ds, de, contasSel, tiposSel, statusSel, pendentes, cmvOnly, search]);
-
-  const contasById = useMemo(
-    () => Object.fromEntries(contas.map((c) => [c.id, c])),
-    [contas],
-  );
+  }), [lancs, ds, de, contasSel, contasById, tiposSel, statusSel, pendentes, cmvOnly, search]);
 
   const movimentosFiltrados = useMemo(() => movimentos.filter((m) => {
     if (contasSel.length && !contasSel.includes(m.conta_id)) return false;
@@ -251,73 +252,22 @@ export default function ExecucaoOrcamentaria() {
     };
   }, [filtrados, movimentosFiltrados, lancs, contasById, contas, contasSel, movimentos]);
 
-  const contaFluxoPDV = useMemo(() => {
-    if (contasSel.length !== 1) return null;
-    const conta = contasById[contasSel[0]];
-    return contaUsaRegraCaixaPDV(conta) ? conta : null;
-  }, [contasSel, contasById]);
-
   const grupos = useMemo(() => {
     const hStr = dataHoje();
     const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
 
-    if (contaFluxoPDV) {
-      const filtrarDataKey = (dataKey) => {
-        if (ds && dataKey < ds) return false;
-        if (de && dataKey > de) return false;
-        return true;
-      };
-      const filtrarBusca = search
-        ? (mov) => {
-            const q = search.toLowerCase();
-            return (
-              (mov.descricao || mov.observacao || '').toLowerCase().includes(q) ||
-              (mov.tipo || '').toLowerCase().includes(q) ||
-              (mov.categoria || '').toLowerCase().includes(q)
-            );
-          }
-        : null;
-
-      return montarGruposPorDiaConta({
-        conta: contaFluxoPDV,
-        lancamentos: filtrados,
-        movimentos: movimentosFiltrados,
-        todosLancamentos: lancs,
-        filtrarDataKey: ds || de ? filtrarDataKey : null,
-        filtrarBusca,
-        formatGrupoLabel: formatFinanceiroGrupoLabel,
-        hStr,
-        oStr,
-      });
-    }
-
-    const map = {};
-    filtrados.forEach(l => {
-      const dr = l.data_pagamento || l.data_vencimento;
-      const k = dr ? toLocalDateKey(dr) : 'sem-data';
-      (map[k] = map[k] || []).push(l);
+    return montarGruposFluxoCaixa({
+      lancamentos: filtrados,
+      movimentos: movimentosFiltrados,
+      todosLancamentos: lancs,
+      contas,
+      contasSel,
+      contasById,
+      formatGrupoLabel: formatFinanceiroGrupoLabel,
+      hStr,
+      oStr,
     });
-    return Object.entries(map).sort(([a], [b]) => b.localeCompare(a)).map(([k, items]) => {
-      const itemsOrdenados = sortLancamentosPorDescricao(items);
-      const label = k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(k, hStr, oStr);
-      const totais = totaisGrupoFluxoCaixa(itemsOrdenados, contasById);
-      return {
-        k,
-        label,
-        items: itemsOrdenados.map(projetarLinhaFluxoCaixa),
-        totais: { r: totais.r, d: totais.d, liquido: totais.liquido },
-      };
-    });
-  }, [
-    filtrados,
-    contasById,
-    contaFluxoPDV,
-    movimentosFiltrados,
-    lancs,
-    ds,
-    de,
-    search,
-  ]);
+  }, [filtrados, movimentosFiltrados, lancs, contas, contasSel, contasById]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || !!search;
