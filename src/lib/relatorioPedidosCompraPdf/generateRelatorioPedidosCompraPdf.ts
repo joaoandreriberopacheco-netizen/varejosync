@@ -906,9 +906,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     /** Recuos do mind map enxuto: 1 embarque → 2 pedido → 3 produtos. */
     const ENXUTO_INDENT = {
       embarque: 0,
-      pedido: 5,
-      produto: 11,
-      grupoLineX: 1.5,
+      pedidoLine: 5,
+      pedido: 7.5,
+      produto: 14,
     };
     /** Tipografia enxuta — corpo bem legível (DIN 1451 com tamanhos maiores). */
     const ENXUTO_FONT = {
@@ -2254,11 +2254,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW - 1, y + 3.2, { align: 'right' });
         y += 5.5;
       } else if (isEnxuta) {
-        const grupoTopY = y;
         y += 5;
         ensureSpace(12);
         const bandH = 7.5;
-        const embarqueX = M + ENXUTO_INDENT.embarque + 3;
+        const embarqueX = M + ENXUTO_INDENT.embarque;
         const totalGrupo = (grupo.pedidos || []).reduce((a, p) => a + getValorRelatorio(p, produtosMap), 0);
         doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
         doc.setFontSize(ENXUTO_FONT.grupo);
@@ -2269,17 +2268,18 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         doc.setTextColor(...ENXUTO.muted);
         doc.text(
           `${(grupo.pedidos || []).length} ped.   ${moeda(totalGrupo)}`,
-          embarqueX + CW - 3,
+          M + CW,
           y + 3.5,
           { align: 'right' },
         );
         y += bandH + 2;
+        const grupoLineTopY = y;
         (grupo.pedidos || []).forEach(renderPedido);
         const grupoBottomY = y;
         strokeEnxutoBlackLine(
-          M + ENXUTO_INDENT.grupoLineX,
-          grupoTopY,
-          M + ENXUTO_INDENT.grupoLineX,
+          M + ENXUTO_INDENT.pedidoLine,
+          grupoLineTopY,
+          M + ENXUTO_INDENT.pedidoLine,
           grupoBottomY,
         );
         y += 4;
