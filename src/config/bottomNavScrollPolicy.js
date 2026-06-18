@@ -5,6 +5,7 @@
  */
 export const BOTTOM_NAV_HUB_PAGES = new Set([
   'Home',
+  'Dashboard',
   'Operacoes',
   'Estoque',
   'Relatorios',

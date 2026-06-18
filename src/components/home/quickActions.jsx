@@ -1,6 +1,6 @@
 import {
   Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
-  Ship, BarChart3, Users, QrCode, Tag, Settings, Upload, MonitorCheck,
+  Ship, LayoutDashboard, Users, QrCode, Tag, Settings, Upload, MonitorCheck,
   Tablet, ClipboardPenLine, ReceiptText, Percent,
 } from 'lucide-react';
 
@@ -68,11 +68,10 @@ export const ALL_QUICK_ACTIONS = [
   },
   {
     id: 'dashboard',
-    icon: BarChart3,
+    icon: LayoutDashboard,
     label: 'Dashboard',
     page: 'Dashboard',
     permissaoCheck: (p) => p?.dashboard?.acesso,
-    deprecated: true,
   },
   {
     id: 'tabelaprecos',

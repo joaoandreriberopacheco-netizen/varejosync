@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { LayoutDashboard, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
+import { BarChart3, TrendingUp, ShoppingCart, Package, DollarSign } from 'lucide-react';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import P38Logo from '@/components/brand/P38Logo';
 import GeralTab from '@/paiol/components/dashboard/tabs/GeralTab';
@@ -46,7 +46,7 @@ export default function DashboardPage() {
       </div>
 
       <GlacialTabsList scrollable>
-        <GlacialTabsTrigger value="geral"      activeValue={activeTab} onSelect={setActiveTab} icon={LayoutDashboard} label="Geral" />
+        <GlacialTabsTrigger value="geral"      activeValue={activeTab} onSelect={setActiveTab} icon={BarChart3}      label="Geral" />
         <GlacialTabsTrigger value="vendas"     activeValue={activeTab} onSelect={setActiveTab} icon={TrendingUp}      label="Vendas" />
         <GlacialTabsTrigger value="compras"    activeValue={activeTab} onSelect={setActiveTab} icon={ShoppingCart}    label="Compras" />
         <GlacialTabsTrigger value="estoque"    activeValue={activeTab} onSelect={setActiveTab} icon={Package}         label="Estoque" />
