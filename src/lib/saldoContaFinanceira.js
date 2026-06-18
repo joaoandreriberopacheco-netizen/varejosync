@@ -46,8 +46,12 @@ export function lancamentoParticipaSaldoCaixaPDV(l) {
   return false;
 }
 
+export function contaUsaRegraCaixaPDV(conta) {
+  return conta?.is_caixa_pdv === true || conta?.tipo === 'Caixa PDV';
+}
+
 export function lancamentoParticipaSaldoConta(conta, l) {
-  if (conta?.is_caixa_pdv === true) return lancamentoParticipaSaldoCaixaPDV(l);
+  if (contaUsaRegraCaixaPDV(conta)) return lancamentoParticipaSaldoCaixaPDV(l);
   return lancamentoParticipaSaldo(l);
 }
 
@@ -63,12 +67,23 @@ export function deltaLancamentoSaldoConta(conta, l) {
   return l.tipo === 'Receita' ? valor : -valor;
 }
 
-/** Reforço soma; sangria subtrai. */
+/** IDs de MovimentosCaixa já refletidos em LancamentoFinanceiro (evita contar duas vezes). */
+export function idsMovimentosComLancamentoFinanceiro(lancamentos = []) {
+  const ids = new Set();
+  lancamentos.forEach((l) => {
+    if (l?.referencia_tipo === 'MovimentosCaixa' && l?.referencia_id && l.tipo === 'Despesa') {
+      ids.add(String(l.referencia_id));
+    }
+  });
+  return ids;
+}
+
+/** Reforço soma; sangria e recolhimento subtraem. */
 export function deltaMovimentoCaixaSaldo(m) {
   if (!m) return 0;
   const valor = Number(m.valor || 0);
   if (m.tipo === 'Reforço') return valor;
-  if (m.tipo === 'Sangria') return -valor;
+  if (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa') return -valor;
   return 0;
 }
 
@@ -96,9 +111,14 @@ export function calcularSaldoContaFinanceira(conta, todosLancamentos = [], todos
   const lancamentos = filtrarLancamentosDaConta(conta, todosLancamentos);
   const movimentos = filtrarMovimentosDaConta(conta.id, todosMovimentos);
 
+  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(lancamentos);
+
   let delta = 0;
   lancamentos.forEach((l) => { delta += deltaLancamentoSaldoConta(conta, l); });
-  movimentos.forEach((m) => { delta += deltaMovimentoCaixaSaldo(m); });
+  movimentos.forEach((m) => {
+    if (movimentosJaNoFinanceiro.has(String(m.id))) return;
+    delta += deltaMovimentoCaixaSaldo(m);
+  });
 
   return roundToTwoDecimals(saldoInicial + delta);
 }
@@ -127,7 +147,7 @@ export function contaTemDivergenciaSaldo(conta, saldoCalculado) {
 }
 
 function movimentoCaixaParticipaExtrato(mov) {
-  return mov?.tipo === 'Reforço' || mov?.tipo === 'Sangria';
+  return mov?.tipo === 'Reforço' || mov?.tipo === 'Sangria' || mov?.tipo === 'Recolhimento de Caixa';
 }
 
 /** Indica se o movimento compõe o saldo/extrato da conta (PDV usa regra de dinheiro físico). */
@@ -146,7 +166,9 @@ export function totaisEntradaSaidaMovimentos(movimentos = [], conta = null) {
   movimentos.forEach((mov) => {
     if (mov.origem === 'movimento' || mov.conta_id) {
       if (mov.tipo === 'Reforço') entradas += Number(mov.valor || 0);
-      else if (mov.tipo === 'Sangria') saidas += Number(mov.valor || 0);
+      else if (mov.tipo === 'Sangria' || mov.tipo === 'Recolhimento de Caixa') {
+        saidas += Number(mov.valor || 0);
+      }
       return;
     }
     if (!lancamentoParticipaSaldoConta(conta, mov)) return;

@@ -19,7 +19,7 @@ import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, end
 import { useToast } from '@/components/ui/use-toast';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
+import { roundToTwoDecimals, sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import KpiExtratoConta from '@/components/financeiro/fluxo/KpiExtratoConta';
 import FiltrosExtratoConta, { PERIODOS_EXTRATO } from '@/components/financeiro/fluxo/FiltrosExtratoConta';
 import ListaExtratoConta from '@/components/financeiro/fluxo/ListaExtratoConta';
@@ -29,6 +29,8 @@ import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import {
   calcularSaldoContaFinanceira,
+  contaUsaRegraCaixaPDV,
+  idsMovimentosComLancamentoFinanceiro,
   movimentoParticipaExtrato,
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
@@ -234,10 +236,17 @@ export default function ExtratoContaPage() {
   const getDataMovimento = (mov) => mov.data_pagamento || mov.data_vencimento || mov.created_date;
   const participaDoSaldo = (mov) => movimentoParticipaExtrato(mov, conta);
 
+  const movimentosJaNoFinanceiro = useMemo(
+    () => idsMovimentosComLancamentoFinanceiro(lancamentos),
+    [lancamentos],
+  );
+
   // Combina e ordena movimentações (PDV: só o que compõe dinheiro na gaveta)
   const todasMovimentacoes = [
     ...lancamentos.map(l => ({ ...l, origem: 'lancamento' })),
-    ...movimentosCaixa.map(m => ({ ...m, origem: 'movimento' }))
+    ...movimentosCaixa
+      .filter((m) => !movimentosJaNoFinanceiro.has(String(m.id)))
+      .map(m => ({ ...m, origem: 'movimento' }))
   ]
     .filter((mov) => participaDoSaldo(mov))
     .sort((a, b) => new Date(getDataMovimento(a)) - new Date(getDataMovimento(b)));
@@ -384,6 +393,7 @@ export default function ExtratoContaPage() {
     entradas: totalEntradasPeriodo,
     saidas: totalSaidasPeriodo,
     saldo: saldoCalculado,
+    saldoPeriodo: roundToTwoDecimals(totalEntradasPeriodo - totalSaidasPeriodo),
   }), [totalEntradasPeriodo, totalSaidasPeriodo, saldoCalculado]);
 
   const periodoLabel = PERIODOS_EXTRATO.find((p) => p.v === filtroPeriodo)?.l || 'Período';
@@ -492,7 +502,7 @@ export default function ExtratoContaPage() {
           <KpiExtratoConta
             kpis={kpisExtrato}
             layout="stack"
-            saldoLabel={conta.is_caixa_pdv ? 'Saldo (dinheiro)' : 'Saldo'}
+            saldoLabel={contaUsaRegraCaixaPDV(conta) ? 'Saldo na gaveta' : 'Saldo na conta'}
           />
         </div>
 
@@ -513,7 +523,7 @@ export default function ExtratoContaPage() {
             <KpiExtratoConta
               kpis={kpisExtrato}
               layout="inline"
-              saldoLabel={conta.is_caixa_pdv ? 'Saldo (dinheiro)' : 'Saldo'}
+              saldoLabel={contaUsaRegraCaixaPDV(conta) ? 'Saldo na gaveta' : 'Saldo na conta'}
             />
           </div>
           <div className="flex shrink-0 gap-1 no-pdf-capture">
