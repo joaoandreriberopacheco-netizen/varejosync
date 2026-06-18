@@ -4,10 +4,95 @@ import {
   contaUsaRegraCaixaPDV,
   idsMovimentosComLancamentoFinanceiro,
   isMovimentoTransferenciaCaixaPDV,
+  isTransferenciaEntreContas,
   movimentoParticipaExtrato,
   projetarLinhaFluxoCaixa,
   totaisGrupoFluxoCaixa,
 } from '@/lib/saldoContaFinanceira';
+
+function chaveParTransferenciaLancamento(l) {
+  if (!isTransferenciaEntreContas(l) || l.origem === 'movimento') return null;
+  if (l.referencia_tipo === 'MovimentosCaixa' && l.referencia_id != null) {
+    return `mc:${l.referencia_id}`;
+  }
+  const data = l.data_pagamento || l.data_vencimento || '';
+  const valor = Number(l.valor || 0).toFixed(2);
+  if (l.categoria === 'Transferência entre Contas' || l.referencia_tipo === 'Manual') {
+    return `tr:${data}:${valor}`;
+  }
+  return null;
+}
+
+function extrairNotaTransferencia(despesa, receita) {
+  const origem = despesa?.conta_financeira_nome || '';
+  const destino = receita?.conta_financeira_nome || '';
+
+  const limpar = (text) => {
+    if (!text) return '';
+    let s = String(text).trim();
+    if (origem) {
+      s = s.replace(new RegExp(`^entrada de\\s+${origem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*:\\s*`, 'i'), '');
+      s = s.replace(new RegExp(`^transferência de\\s+${origem.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\.?\\s*`, 'i'), '');
+    }
+    if (destino) {
+      s = s.replace(new RegExp(`^transferência para\\s+${destino.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\.?\\s*`, 'i'), '');
+    }
+    return s.trim();
+  };
+
+  for (const raw of [despesa?.observacoes, despesa?.descricao, receita?.observacoes, receita?.descricao]) {
+    const note = limpar(raw);
+    if (note.length > 2) return note;
+  }
+  return null;
+}
+
+/** Une par Despesa+Receita da mesma transferência numa linha só no Fluxo de Caixa. */
+export function consolidarTransferenciasListaFluxo(items = []) {
+  const grupos = new Map();
+  items.forEach((item) => {
+    const key = chaveParTransferenciaLancamento(item);
+    if (!key) return;
+    if (!grupos.has(key)) grupos.set(key, []);
+    grupos.get(key).push(item);
+  });
+
+  const consolidados = new Map();
+  const receitaOculta = new Set();
+
+  grupos.forEach((grupo) => {
+    const despesa = grupo.find((i) => i.tipo === 'Despesa');
+    const receita = grupo.find((i) => i.tipo === 'Receita');
+    if (!despesa || !receita) return;
+    if (Math.abs(Number(despesa.valor || 0) - Number(receita.valor || 0)) > 0.009) return;
+
+    consolidados.set(despesa.id, {
+      id: `transfer-par-${despesa.id}-${receita.id}`,
+      isTransferenciaConsolidada: true,
+      tipoExibicao: 'Transferência',
+      tipo: 'Transferência',
+      valor: despesa.valor,
+      data_pagamento: despesa.data_pagamento || receita.data_pagamento,
+      data_vencimento: despesa.data_vencimento || receita.data_vencimento,
+      contaOrigemNome: despesa.conta_financeira_nome || 'Origem',
+      contaDestinoNome: receita.conta_financeira_nome || 'Destino',
+      conta_origem_id: despesa.conta_financeira_id,
+      conta_destino_id: receita.conta_financeira_id,
+      notaTransferencia: extrairNotaTransferencia(despesa, receita),
+      status: despesa.status || receita.status || 'Pago',
+      status_conciliacao: despesa.status_conciliacao || receita.status_conciliacao,
+      categoria: 'Transferência entre Contas',
+      tags: despesa.tags || receita.tags,
+      _lancamentoDespesa: despesa,
+      _lancamentoReceita: receita,
+    });
+    receitaOculta.add(receita.id);
+  });
+
+  return items
+    .filter((item) => !receitaOculta.has(item.id))
+    .map((item) => consolidados.get(item.id) || item);
+}
 
 export function normalizarMovimentoCaixaParaLinha(mov) {
   const data = mov.data_pagamento || mov.data_vencimento || mov.created_date;
@@ -77,7 +162,8 @@ export function montarGruposFluxoCaixa({
     .map((dia) => {
       const brutos = map[dia];
       const itemsOrdenados = sortLancamentosPorDescricao(brutos);
-      const items = itemsOrdenados.map((m) => {
+      const itemsConsolidados = consolidarTransferenciasListaFluxo(itemsOrdenados);
+      const items = itemsConsolidados.map((m) => {
         if (m.origem === 'movimento') {
           return projetarLinhaFluxoCaixa(normalizarMovimentoCaixaParaLinha(m));
         }

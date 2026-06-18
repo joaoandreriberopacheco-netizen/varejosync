@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { AlertCircle, Clock } from 'lucide-react';
+import { AlertCircle, ArrowRightLeft, Clock } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
@@ -92,7 +92,7 @@ function rowMeta(l, { showPago = false } = {}) {
   return (
     <>
       {l.categoria && l.categoria !== 'Transferência entre Contas' && <span>{l.categoria}</span>}
-      {isTransferenciaEntreContas(l) && <span>Transferência entre contas</span>}
+      {isTransferenciaEntreContas(l) && !l.isTransferenciaConsolidada && <span>Transferência entre contas</span>}
       {l.status && l.status !== 'Pago' && (
         showPago && l.status === 'Vencido' ? (
           <P38StatusPill tone="danger">{l.status}</P38StatusPill>
@@ -131,6 +131,7 @@ export default function FinanceiroLancRow({
   const isPago = l.status === 'Pago' || !!l.data_pagamento;
   const podeSelecionar = emSelecao && (selecionarPagos ? isPago : !isPago);
   const conc = l.status_conciliacao || 'N/A';
+  const isTransfConsolidada = l.isTransferenciaConsolidada;
   const data =
     dataField === 'vencimento'
       ? l.data_vencimento
@@ -148,19 +149,39 @@ export default function FinanceiroLancRow({
     </>
   );
 
-  const subtitle = (
+  const subtitle = isTransfConsolidada ? (
+    <>
+      {data ? formatarDataCurta(data) : '—'}
+      {l.notaTransferencia ? ` · ${l.notaTransferencia}` : ''}
+    </>
+  ) : (
     <>
       {data ? formatarDataCurta(data) : '—'}
       {l.conta_financeira_nome ? ` · ${l.conta_financeira_nome}` : ''}
     </>
   );
 
+  const title = isTransfConsolidada ? (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <ArrowRightLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="truncate">
+        {l.contaOrigemNome}
+        <span className="mx-1 text-muted-foreground">&gt;</span>
+        {l.contaDestinoNome}
+      </span>
+    </span>
+  ) : (
+    <span className={cancelado ? 'line-through' : undefined}>{l.descricao}</span>
+  );
+
+  const lancamentoClick = isTransfConsolidada ? (l._lancamentoDespesa || l) : l;
+
   const commonProps = {
     thinAccent: true,
     striped,
     accent: p38AccentKeyFromTone(rowAccent(l, { dimPago: showPago })),
     className: `w-full text-left ${LINE_TITLE_CLASS} [&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${cancelado || (showPago && isPago) ? 'opacity-60' : ''}`,
-    title: <span className={cancelado ? 'line-through' : undefined}>{l.descricao}</span>,
+    title,
     subtitle,
     meta: rowMeta(l, { showPago }),
     value: valorNode(l),
@@ -182,7 +203,7 @@ export default function FinanceiroLancRow({
       {...commonProps}
       as="button"
       type="button"
-      onClick={() => onClick?.(l)}
+      onClick={() => onClick?.(lancamentoClick)}
     />
   );
 }
