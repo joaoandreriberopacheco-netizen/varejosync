@@ -429,6 +429,7 @@ export default function ExtratoContaPage() {
         r: diaData.totalEntradas,
         d: diaData.totalSaidas,
         liquido: roundToTwoDecimals(diaData.totalEntradas - diaData.totalSaidas),
+        saldoAcumulado: roundToTwoDecimals(diaData.saldoFinal),
       },
     }));
   }, [diasExibicao]);

@@ -16,9 +16,8 @@ export default function ListaExtratoConta({ grupos, loading, onRow }) {
           key={k}
           label={label}
           balancoDia
-          receitas={totais.r}
-          despesas={totais.d}
-          liquido={totais.liquido ?? totais.r - totais.d}
+          liquido={totais.liquido}
+          saldoAcumulado={totais.saldoAcumulado}
         >
           {items.map((l, index) => (
             <FinanceiroLancRow

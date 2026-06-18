@@ -5,6 +5,7 @@ import {
   idsMovimentosComLancamentoFinanceiro,
   isMovimentoTransferenciaCaixaPDV,
   isTransferenciaEntreContas,
+  lancamentoPertenceContasSelecionadas,
   movimentoParticipaExtrato,
   projetarLinhaFluxoCaixa,
   totaisGrupoFluxoCaixa,
@@ -18,6 +19,101 @@ function totaisDiaFromGrupo(totaisGrupo) {
     saiu: roundToTwoDecimals(totaisGrupo.d + totaisGrupo.transfOut),
     liquido: totaisGrupo.liquido,
   };
+}
+
+/** Variação líquida do fluxo em dias posteriores ao cabeçalho mais recente visível. */
+export function liquidoFluxoCaixaAposDia({
+  lancamentos = [],
+  movimentos = [],
+  todosLancamentos = [],
+  contas = [],
+  contasSel = [],
+  contasById = {},
+  diaLimite,
+}) {
+  if (!diaLimite || diaLimite === 'sem-data') return 0;
+
+  const aposDia = (dataKey) => dataKey && dataKey > diaLimite;
+
+  const lancsDepois = lancamentos.filter((l) => {
+    if (l.status === 'Cancelado') return false;
+    const cartaoCreditoPendente =
+      l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
+    const realizado = l.status === 'Pago' || !!l.data_pagamento;
+    if (!realizado && !cartaoCreditoPendente) return false;
+    const dataAncora = cartaoCreditoPendente
+      ? l.data_liquidacao_prevista || l.data_vencimento
+      : l.data_pagamento || l.data_vencimento;
+    const dataKey = dataAncora ? toLocalDateKey(dataAncora) : null;
+    if (!aposDia(dataKey)) return false;
+    if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
+    return true;
+  });
+
+  const movsDepois = movimentos.filter((m) => {
+    if (contasSel.length && !contasSel.includes(m.conta_id)) return false;
+    const dataKey = m.created_date ? toLocalDateKey(m.created_date) : null;
+    return aposDia(dataKey);
+  });
+
+  if (!lancsDepois.length && !movsDepois.length) return 0;
+
+  const grupos = montarGruposFluxoCaixa({
+    lancamentos: lancsDepois,
+    movimentos: movsDepois,
+    todosLancamentos,
+    contas,
+    contasSel,
+    contasById,
+    formatGrupoLabel: (k) => k,
+    hStr: diaLimite,
+    oStr: diaLimite,
+  });
+
+  return roundToTwoDecimals(grupos.reduce((acc, g) => acc + (g.totais?.liquido || 0), 0));
+}
+
+/** Anexa saldo acumulado ao fim de cada dia (grupos do mais recente ao mais antigo). */
+export function anexarSaldoAcumuladoAosGrupos(grupos = [], saldoNoFimDoPeriodoVisivel = 0) {
+  if (!grupos.length) return grupos;
+  let saldo = roundToTwoDecimals(saldoNoFimDoPeriodoVisivel);
+  return grupos.map((grupo) => {
+    const saldoAcumulado = saldo;
+    saldo = roundToTwoDecimals(saldo - (grupo.totais?.liquido ?? 0));
+    return {
+      ...grupo,
+      totais: {
+        ...grupo.totais,
+        saldoAcumulado,
+      },
+    };
+  });
+}
+
+/** Fluxo de caixa: variação do dia + saldo acumulado no cabeçalho de cada dia. */
+export function prepararGruposFluxoComSaldoAcumulado({
+  grupos = [],
+  saldoContasAtual = 0,
+  lancamentos = [],
+  movimentos = [],
+  todosLancamentos = [],
+  contas = [],
+  contasSel = [],
+  contasById = {},
+}) {
+  if (!grupos.length) return grupos;
+  const diaRef = grupos[0].k;
+  const liquidoApos = liquidoFluxoCaixaAposDia({
+    lancamentos,
+    movimentos,
+    todosLancamentos,
+    contas,
+    contasSel,
+    contasById,
+    diaLimite: diaRef,
+  });
+  const saldoNoFim = roundToTwoDecimals(saldoContasAtual - liquidoApos);
+  return anexarSaldoAcumuladoAosGrupos(grupos, saldoNoFim);
 }
 
 function chaveParTransferenciaLancamento(l) {

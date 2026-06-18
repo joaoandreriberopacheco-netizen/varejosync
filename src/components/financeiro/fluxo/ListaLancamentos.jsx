@@ -16,9 +16,8 @@ export default function ListaLancamentos({ grupos, loading, onRow }) {
           key={k}
           label={label}
           balancoDia
-          receitas={totais.entrou ?? totais.r}
-          despesas={totais.saiu ?? totais.d}
           liquido={totais.liquido}
+          saldoAcumulado={totais.saldoAcumulado}
         >
           {items.map((l, index) => (
             <FinanceiroLancRow key={l.id} l={l} onClick={onRow} striped={index % 2 === 1} />

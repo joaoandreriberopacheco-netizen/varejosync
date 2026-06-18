@@ -10,7 +10,7 @@ import {
   lancamentoPertenceContasSelecionadas,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
-import { montarGruposFluxoCaixa } from '@/lib/gruposMovimentacaoConta';
+import { montarGruposFluxoCaixa, prepararGruposFluxoComSaldoAcumulado } from '@/lib/gruposMovimentacaoConta';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
@@ -275,7 +275,7 @@ export default function ExecucaoOrcamentaria() {
     const hStr = dataHoje();
     const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
 
-    return montarGruposFluxoCaixa({
+    const base = montarGruposFluxoCaixa({
       lancamentos: filtrados,
       movimentos: movimentosFiltrados,
       todosLancamentos: lancs,
@@ -287,7 +287,18 @@ export default function ExecucaoOrcamentaria() {
       oStr,
       ordemLancamentos,
     });
-  }, [filtrados, movimentosFiltrados, lancs, contas, contasSel, contasById, ordemLancamentos]);
+
+    return prepararGruposFluxoComSaldoAcumulado({
+      grupos: base,
+      saldoContasAtual: kpis.saldoContas,
+      lancamentos: lancs,
+      movimentos,
+      todosLancamentos: lancs,
+      contas,
+      contasSel,
+      contasById,
+    });
+  }, [filtrados, movimentosFiltrados, lancs, contas, contasSel, contasById, ordemLancamentos, kpis.saldoContas, movimentos]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || !!search;

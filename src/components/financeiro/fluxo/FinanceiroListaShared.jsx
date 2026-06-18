@@ -27,6 +27,7 @@ export function FinanceiroGrupo({
   receitas = 0,
   despesas = 0,
   liquido: liquidoProp,
+  saldoAcumulado,
   variant = 'default',
   card = false,
   balancoDia = false,
@@ -40,6 +41,42 @@ export function FinanceiroGrupo({
 
   const negClass = overdue ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
 
+  const variacaoNode = (
+    <span
+      className={cn(
+        'shrink-0 font-semibold tabular-nums',
+        liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass,
+      )}
+    >
+      {liquido >= 0 ? '+' : '−'}
+      {formatFinanceiroValor(Math.abs(liquido))}
+    </span>
+  );
+
+  const balancoDiaNode = balancoDia ? (
+    <div
+      className="flex min-w-0 items-center justify-end gap-2 text-[10px] sm:text-[11px] tabular-nums"
+      title={
+        saldoAcumulado != null
+          ? `Variação do dia ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))} · Saldo ${saldoAcumulado >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(saldoAcumulado))}`
+          : `Variação do dia ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))}`
+      }
+    >
+      {variacaoNode}
+      {saldoAcumulado != null && (
+        <>
+          <span className="text-muted-foreground/50 font-normal" aria-hidden>
+            |
+          </span>
+          <span className="shrink-0 font-bold text-foreground">
+            {saldoAcumulado >= 0 ? '+' : '−'}
+            {formatFinanceiroValor(Math.abs(saldoAcumulado))}
+          </span>
+        </>
+      )}
+    </div>
+  ) : null;
+
   const saldoNode = (
     <span
       className={cn(
@@ -51,33 +88,6 @@ export function FinanceiroGrupo({
       {formatFinanceiroValor(Math.abs(liquido))}
     </span>
   );
-
-  const balancoDiaNode = balancoDia ? (
-    <div
-      className="flex min-w-0 flex-wrap items-center justify-end gap-x-1 gap-y-0 text-[10px] font-semibold tabular-nums sm:text-[11px]"
-      title={`Entrou ${formatFinanceiroValor(receitas)} · Saiu ${formatFinanceiroValor(despesas)} · Saldo ${formatFinanceiroValor(Math.abs(liquido))}`}
-    >
-      <span className="text-[#4A5D23] dark:text-[#a4ce33]" title="Entrou">
-        +{formatFinanceiroValor(receitas)}
-      </span>
-      <span className="text-muted-foreground/40" aria-hidden>
-        ·
-      </span>
-      <span className={cn(despesas > 0 ? negClass : 'text-muted-foreground/70')} title="Saiu">
-        −{formatFinanceiroValor(despesas)}
-      </span>
-      <span className="text-muted-foreground/40" aria-hidden>
-        ·
-      </span>
-      <span
-        className={cn(liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass)}
-        title="Saldo do dia"
-      >
-        {liquido >= 0 ? '+' : '−'}
-        {formatFinanceiroValor(Math.abs(liquido))}
-      </span>
-    </div>
-  ) : null;
 
   const content = (
     <>
