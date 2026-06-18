@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, SlidersHorizontal, Clock } from 'lucide-react';
+import { Search, X, SlidersHorizontal, Clock, ArrowDownWideNarrow, ArrowUpWideNarrow } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { P38_CHIP_ACTIVE, P38_FIELD_SURFACE, P38_FILTROS_STICKY, P38_SEARCH } from './financeiroP38';
@@ -22,6 +22,8 @@ export default function FinanceiroFiltrosShell({
   conciliacaoPendente = 0,
   pendentes = false,
   onPendentesToggle,
+  ordemLancamentos,
+  onOrdemLancamentosChange,
   children,
 }) {
   const badgeLabel =
@@ -67,6 +69,26 @@ export default function FinanceiroFiltrosShell({
             )}
           </button>
         </CollapsibleTrigger>
+
+        {onOrdemLancamentosChange && (
+          <button
+            type="button"
+            aria-label={ordemLancamentos === 'desc' ? 'Mais recentes em cima' : 'Mais antigos em cima'}
+            title={
+              ordemLancamentos === 'desc'
+                ? 'Mais recentes em cima — toque para inverter'
+                : 'Mais antigos em cima — toque para inverter'
+            }
+            onClick={() => onOrdemLancamentosChange(ordemLancamentos === 'desc' ? 'asc' : 'desc')}
+            className={iconBtnBase}
+          >
+            {ordemLancamentos === 'desc' ? (
+              <ArrowDownWideNarrow className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ArrowUpWideNarrow className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+        )}
 
         {onPendentesToggle && (
           <button

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { addWeeks, addMonths, addYears, format } from 'date-fns';
-import { dataHoje, datetimeLocalParaISO } from '@/components/utils/dateUtils';
+import { dataHoje, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
+import { formatarCodigoLancamentoLegivel } from '@/lib/financialUtils';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import RecorrenciaConfig from './fluxo/RecorrenciaConfig';
 import TagsInput from './fluxo/TagsInput';
@@ -86,6 +87,13 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       setShowConfirmDialog(false);
     }
   }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial]);
+
+  const previewOrdemLancamento = useMemo(() => {
+    if (!dataLancamento) return null;
+    const iso = datetimeLocalParaISO(dataLancamento);
+    if (!iso) return null;
+    return formatarCodigoLancamentoLegivel(codigoOrdenacaoDesdeInstante(iso));
+  }, [dataLancamento]);
 
   if (!open) return null;
 
@@ -300,7 +308,14 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
               className="w-full bg-transparent px-4 pb-1 text-sm text-foreground outline-none"
             />
             <p className="px-4 pb-3 text-[10px] text-muted-foreground">
-              Define a ordem no fluxo de caixa (AAAAMMDDHHMMSS). Se vazio, usa a data/hora atual ao salvar.
+              {previewOrdemLancamento ? (
+                <>
+                  Ordem no fluxo:{' '}
+                  <span className="font-mono text-[10px] text-foreground/80">{previewOrdemLancamento}</span>
+                </>
+              ) : (
+                'Se vazio, usa a data e hora atuais ao salvar.'
+              )}
             </p>
           </div>
 

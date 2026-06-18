@@ -102,6 +102,7 @@ export default function ExecucaoOrcamentaria() {
   const [abaContas, setAbaContas] = useState('contas');
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
   const [showNovoFluxo, setShowNovoFluxo] = useState(false);
+  const [ordemLancamentos, setOrdemLancamentos] = useState('desc');
   const [urlDescricao, setUrlDescricao] = useState('');
   const [urlValor, setUrlValor] = useState('');
   const [urlReferenciaId, setUrlReferenciaId] = useState('');
@@ -284,8 +285,9 @@ export default function ExecucaoOrcamentaria() {
       formatGrupoLabel: formatFinanceiroGrupoLabel,
       hStr,
       oStr,
+      ordemLancamentos,
     });
-  }, [filtrados, movimentosFiltrados, lancs, contas, contasSel, contasById]);
+  }, [filtrados, movimentosFiltrados, lancs, contas, contasSel, contasById, ordemLancamentos]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || !!search;
@@ -478,6 +480,8 @@ export default function ExecucaoOrcamentaria() {
             onCmvOnly={setCmvOnly}
             onOpenConciliacao={setConciliacaoConta}
             conciliacaoPendente={totalPend}
+            ordemLancamentos={ordemLancamentos}
+            onOrdemLancamentosChange={setOrdemLancamentos}
           />
 
           <FinanceiroListaMeta

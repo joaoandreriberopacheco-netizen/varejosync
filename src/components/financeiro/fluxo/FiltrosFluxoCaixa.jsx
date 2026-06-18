@@ -378,6 +378,8 @@ export default function FiltrosFluxoCaixa({
   cmvOnly, onCmvOnly,
   onOpenConciliacao,
   conciliacaoPendente = 0,
+  ordemLancamentos = 'desc',
+  onOrdemLancamentosChange,
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -401,6 +403,8 @@ export default function FiltrosFluxoCaixa({
       conciliacaoPendente={conciliacaoPendente}
       pendentes={pendentes}
       onPendentesToggle={onPendentes}
+      ordemLancamentos={ordemLancamentos}
+      onOrdemLancamentosChange={onOrdemLancamentosChange}
     >
       <FiltrosFluxoPainel
         periodo={periodo}

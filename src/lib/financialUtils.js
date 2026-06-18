@@ -82,12 +82,29 @@ export function prepararMetadadosLancamentoFinanceiro({ dataLancamento } = {}) {
 
 /**
  * Ordena lançamentos por código AAAAMMDDHHMMSS; em empate, ordem alfabética (pt-BR).
+ * @param {'desc'|'asc'} [ordem] `desc` = mais recente em cima (padrão do fluxo de caixa)
  */
-export function sortLancamentosPorDescricao(items) {
+export function sortLancamentosPorCodigo(items, ordem = 'desc') {
   if (!items?.length) return [];
+  const asc = ordem === 'asc';
   return [...items].sort((a, b) => {
     const cmp = codigoOrdenacaoLancamento(a).localeCompare(codigoOrdenacaoLancamento(b));
-    if (cmp !== 0) return cmp;
-    return (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' });
+    if (cmp !== 0) return asc ? cmp : -cmp;
+    const alpha = (a.descricao || '').localeCompare(b.descricao || '', 'pt-BR', { sensitivity: 'base' });
+    return asc ? alpha : -alpha;
   });
+}
+
+/** @deprecated Nome legado — use `sortLancamentosPorCodigo`. */
+export function sortLancamentosPorDescricao(items, ordem = 'desc') {
+  return sortLancamentosPorCodigo(items, ordem);
+}
+
+/**
+ * Exibe código AAAAMMDDHHMMSS em formato legível (dd/MM/yyyy HH:mm:ss).
+ */
+export function formatarCodigoLancamentoLegivel(codigo) {
+  const s = String(codigo || '');
+  if (s.length !== 14 || !/^\d{14}$/.test(s)) return null;
+  return `${s.slice(6, 8)}/${s.slice(4, 6)}/${s.slice(0, 4)} ${s.slice(8, 10)}:${s.slice(10, 12)}:${s.slice(12, 14)}`;
 }

@@ -1,5 +1,5 @@
 import { toLocalDateKey } from '@/components/utils/dateUtils';
-import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
+import { sortLancamentosPorCodigo } from '@/lib/financialUtils';
 import {
   contaUsaRegraCaixaPDV,
   idsMovimentosComLancamentoFinanceiro,
@@ -132,6 +132,7 @@ export function montarGruposFluxoCaixa({
   formatGrupoLabel,
   hStr,
   oStr,
+  ordemLancamentos = 'desc',
 }) {
   const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(todosLancamentos);
   const pdvIds = new Set(
@@ -161,7 +162,7 @@ export function montarGruposFluxoCaixa({
     .sort((a, b) => b.localeCompare(a))
     .map((dia) => {
       const brutos = map[dia];
-      const itemsOrdenados = sortLancamentosPorDescricao(brutos);
+      const itemsOrdenados = sortLancamentosPorCodigo(brutos, ordemLancamentos);
       const itemsConsolidados = consolidarTransferenciasListaFluxo(itemsOrdenados);
       const items = itemsConsolidados.map((m) => {
         if (m.origem === 'movimento') {
