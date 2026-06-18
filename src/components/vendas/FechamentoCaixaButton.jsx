@@ -45,6 +45,49 @@ export default function FechamentoCaixaButton({
     const diferenca = roundToTwoDecimals(totalConferido - esperado);
 
     try {
+      const todasContas = await base44.entities.ContasFinanceiras.list();
+      const contaDestino = resolveContaDestinoCaixaPDV(todasContas);
+      const origemFresh = (await base44.entities.ContasFinanceiras.filter({ id: contaCaixaPDV.id }))[0];
+      const saldoRestante = roundToTwoDecimals(origemFresh?.saldo_atual || 0);
+
+      if (saldoRestante > 0 && !contaDestino) {
+        toast({
+          title: 'Conta destino não configurada',
+          description: 'Em Configurações → Financeiro → Contas, defina para onde vai o dinheiro do caixa PDV antes de fechar.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      let movimentoFechamento = null;
+      if (contaDestino && saldoRestante > 0) {
+        const observacao = `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${contaDestino.nome}`;
+        movimentoFechamento = await base44.entities.MovimentosCaixa.create({
+          numero: `MCX-${String(Date.now()).slice(-5)}`,
+          tipo: 'Sangria',
+          valor: saldoRestante,
+          observacao,
+          conta_id: contaCaixaPDV.id,
+          turno_caixa_id: turnoAtivo.id,
+          usuario_responsavel_id: currentUser.id,
+          usuario_responsavel_nome: currentUser.full_name,
+        });
+        await transferirDinheiroFechamentoCaixaPDV({
+          base44,
+          contaCaixaPDV,
+          contaDestino,
+          descricao: observacao,
+          movimentoId: movimentoFechamento.id,
+        });
+      } else if (contaCaixaPDV?.id) {
+        await transferirDinheiroFechamentoCaixaPDV({
+          base44,
+          contaCaixaPDV,
+          contaDestino,
+          descricao: `Fechamento de turno ${turnoAtivo.numero}`,
+        });
+      }
+
       await base44.entities.TurnoCaixa.update(turnoAtivo.id, {
         data_fechamento: new Date().toISOString(),
         usuario_fechamento_id: currentUser.id,
@@ -61,30 +104,6 @@ export default function FechamentoCaixaButton({
         diferenca,
         status: 'Fechado',
       });
-
-      const todasContas = await base44.entities.ContasFinanceiras.list();
-      const contaDestino = resolveContaDestinoCaixaPDV(todasContas);
-      if (contaDestino && dinheiroConferido > 0) {
-        const observacao = `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${contaDestino.nome}`;
-        const movimento = await base44.entities.MovimentosCaixa.create({
-          numero: `MCX-${String(Date.now()).slice(-5)}`,
-          tipo: 'Sangria',
-          valor: dinheiroConferido,
-          observacao,
-          conta_id: contaCaixaPDV.id,
-          turno_caixa_id: turnoAtivo.id,
-          usuario_responsavel_id: currentUser.id,
-          usuario_responsavel_nome: currentUser.full_name,
-        });
-        await transferirDinheiroFechamentoCaixaPDV({
-          base44,
-          contaCaixaPDV,
-          contaDestino,
-          dinheiroConferido,
-          descricao: observacao,
-          movimentoId: movimento.id,
-        });
-      }
 
       // Buscar turno atualizado para o relatório
       const turnoAtualizado = await base44.entities.TurnoCaixa.filter({ id: turnoAtivo.id });
