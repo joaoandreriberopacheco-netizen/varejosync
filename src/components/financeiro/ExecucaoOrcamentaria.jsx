@@ -8,7 +8,8 @@ import {
   contaUsaRegraCaixaPDV,
   totaisGrupoFluxoCaixa,
 } from '@/lib/saldoContaFinanceira';
-import { reconciliarSaldoCaixaPDVSemTurnoAberto } from '@/lib/contaDestinoCaixaPDV';
+import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
+import { montarGruposPorDiaConta } from '@/lib/gruposMovimentacaoConta';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
@@ -161,12 +162,18 @@ export default function ExecucaoOrcamentaria() {
 
       let lancamentos = ls;
       const pdvContas = cts.filter((c) => contaUsaRegraCaixaPDV(c));
+
+      const backfill = await backfillLancamentosMovimentosCaixaPDV(base44, cts);
+      if (backfill) {
+        lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento');
+      }
+
       for (const conta of pdvContas) {
         const reconciliou = await reconciliarSaldoCaixaPDVSemTurnoAberto(
           base44,
           conta,
           cts,
-          ls,
+          lancamentos,
           movs,
         );
         if (reconciliou) {
@@ -242,9 +249,46 @@ export default function ExecucaoOrcamentaria() {
     };
   }, [filtrados, movimentosFiltrados, lancs, contasById, contas, contasSel, movimentos]);
 
+  const contaFluxoPDV = useMemo(() => {
+    if (contasSel.length !== 1) return null;
+    const conta = contasById[contasSel[0]];
+    return contaUsaRegraCaixaPDV(conta) ? conta : null;
+  }, [contasSel, contasById]);
+
   const grupos = useMemo(() => {
     const hStr = dataHoje();
     const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
+
+    if (contaFluxoPDV) {
+      const filtrarDataKey = (dataKey) => {
+        if (ds && dataKey < ds) return false;
+        if (de && dataKey > de) return false;
+        return true;
+      };
+      const filtrarBusca = search
+        ? (mov) => {
+            const q = search.toLowerCase();
+            return (
+              (mov.descricao || mov.observacao || '').toLowerCase().includes(q) ||
+              (mov.tipo || '').toLowerCase().includes(q) ||
+              (mov.categoria || '').toLowerCase().includes(q)
+            );
+          }
+        : null;
+
+      return montarGruposPorDiaConta({
+        conta: contaFluxoPDV,
+        lancamentos: filtrados,
+        movimentos: movimentosFiltrados,
+        todosLancamentos: lancs,
+        filtrarDataKey: ds || de ? filtrarDataKey : null,
+        filtrarBusca,
+        formatGrupoLabel: formatFinanceiroGrupoLabel,
+        hStr,
+        oStr,
+      });
+    }
+
     const map = {};
     filtrados.forEach(l => {
       const dr = l.data_pagamento || l.data_vencimento;
@@ -257,7 +301,16 @@ export default function ExecucaoOrcamentaria() {
       const totais = totaisGrupoFluxoCaixa(itemsOrdenados, contasById);
       return { k, label, items: itemsOrdenados, totais };
     });
-  }, [filtrados, contasById]);
+  }, [
+    filtrados,
+    contasById,
+    contaFluxoPDV,
+    movimentosFiltrados,
+    lancs,
+    ds,
+    de,
+    search,
+  ]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || !!search;
@@ -489,7 +542,14 @@ export default function ExecucaoOrcamentaria() {
             }
           />
 
-          <ListaLancamentos grupos={grupos} loading={loading} onRow={setDetalhe} />
+          <ListaLancamentos
+            grupos={grupos}
+            loading={loading}
+            onRow={(l) => {
+              if (l.origem === 'movimento') return;
+              setDetalhe(l);
+            }}
+          />
 
           {fabOpen && !showNovoFluxo && <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
           <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">

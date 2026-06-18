@@ -34,7 +34,7 @@ import {
   movimentoParticipaExtrato,
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
-import { reconciliarSaldoCaixaPDVSemTurnoAberto } from '@/lib/contaDestinoCaixaPDV';
+import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
 
 export default function ExtratoContaPage() {
   const [conta, setConta] = useState(null);
@@ -104,6 +104,18 @@ export default function ExtratoContaPage() {
         }
 
         const movsFiltrados = movimentosData.filter(m => m.conta_id === contaId);
+
+        const backfill = await backfillLancamentosMovimentosCaixaPDV(base44, contasData);
+        let lancamentosAtual = lancamentosData;
+        if (backfill) {
+          lancamentosAtual = await base44.entities.LancamentoFinanceiro.list();
+          if (isCaixaGeral) {
+            lancamentosFiltrados = lancamentosAtual.filter(l => !l.conta_financeira_id);
+          } else {
+            lancamentosFiltrados = lancamentosAtual.filter(l => l.conta_financeira_id === contaId);
+          }
+        }
+
         setLancamentos(lancamentosFiltrados);
         setMovimentosCaixa(movsFiltrados);
 

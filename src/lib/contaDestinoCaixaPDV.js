@@ -2,6 +2,7 @@ import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
   calcularSaldoContaFinanceira,
   contaUsaRegraCaixaPDV,
+  idsMovimentosComLancamentoFinanceiro,
 } from '@/lib/saldoContaFinanceira';
 
 /**
@@ -25,19 +26,19 @@ async function carregarContaFinanceira(base44, contaId) {
 /** Par Despesa/Receita no fluxo de caixa (espelha transferência manual). */
 async function registrarLancamentosTransferenciaCaixaPDV(
   base44,
-  { contaOrigem, contaDestino, valor, descricao, movimentoId }
+  { contaOrigem, contaDestino, valor, descricao, movimentoId, dataPagamento },
 ) {
   const amount = roundToTwoDecimals(valor);
   if (!contaOrigem?.id || !contaDestino?.id || amount <= 0) return;
 
-  const hoje = dataHojeIso();
+  const dataRef = dataPagamento || dataHojeIso();
   const ref = movimentoId
     ? { referencia_tipo: 'MovimentosCaixa', referencia_id: movimentoId }
     : {};
   const base = {
     valor: amount,
-    data_vencimento: hoje,
-    data_pagamento: hoje,
+    data_vencimento: dataRef,
+    data_pagamento: dataRef,
     status: 'Pago',
     status_conciliacao: 'N/A',
     categoria: 'Transferência entre Contas',
@@ -194,4 +195,42 @@ export async function transferirDinheiroFechamentoCaixaPDV({
   }
 
   return { saldoRestante, valorTransferido: saldoRestante };
+}
+
+/**
+ * Sangrias/recolhimentos antigos sem par Despesa/Receita no fluxo: cria lançamentos
+ * retroativos (só registo contábil; não altera saldo_atual gravado).
+ */
+export async function backfillLancamentosMovimentosCaixaPDV(base44, contas = []) {
+  const contaDestino = resolveContaDestinoCaixaPDV(contas);
+  if (!contaDestino) return false;
+
+  const [movimentos, lancamentos] = await Promise.all([
+    base44.entities.MovimentosCaixa.list(),
+    base44.entities.LancamentoFinanceiro.list(),
+  ]);
+  const idsComLanc = idsMovimentosComLancamentoFinanceiro(lancamentos);
+  const pdvById = Object.fromEntries(
+    contas.filter((c) => contaUsaRegraCaixaPDV(c)).map((c) => [c.id, c]),
+  );
+
+  let criou = false;
+  for (const mov of movimentos) {
+    const contaOrigem = pdvById[mov.conta_id];
+    if (!contaOrigem) continue;
+    if (mov.tipo !== 'Sangria' && mov.tipo !== 'Recolhimento de Caixa') continue;
+    if (idsComLanc.has(String(mov.id))) continue;
+
+    const dataPagamento = mov.created_date?.slice(0, 10) || dataHojeIso();
+    await registrarLancamentosTransferenciaCaixaPDV(base44, {
+      contaOrigem,
+      contaDestino,
+      valor: mov.valor,
+      descricao: mov.observacao || `${mov.tipo} — ${contaOrigem.nome}`,
+      movimentoId: mov.id,
+      dataPagamento,
+    });
+    criou = true;
+  }
+  return criou;
 }
