@@ -146,37 +146,48 @@ export default function ExecucaoOrcamentaria() {
     setFabOpen(false);
   }, [showNovoFluxo]);
 
+  const syncCaixaPDVMaintenance = async (cts, movs, lancamentosIniciais) => {
+    let lancamentos = lancamentosIniciais;
+    let changed = false;
+    const pdvContas = cts.filter((c) => contaUsaRegraCaixaPDV(c));
+
+    const backfill = await backfillLancamentosMovimentosCaixaPDV(base44, cts);
+    if (backfill) {
+      changed = true;
+      lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento');
+    }
+
+    for (const conta of pdvContas) {
+      const reconciliou = await reconciliarSaldoCaixaPDVSemTurnoAberto(
+        base44,
+        conta,
+        cts,
+        lancamentos,
+        movs,
+      );
+      if (reconciliou) {
+        changed = true;
+        lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento');
+      }
+    }
+
+    if (changed) {
+      setLancs(lancamentos);
+    }
+  };
+
   const load = async () => {
     setLoading(true);
+    let snapshot = null;
     try {
       const [ls, cts, movs] = await Promise.all([
         base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
         base44.entities.ContasFinanceiras.filter({ ativo: true }),
         base44.entities.MovimentosCaixa.list(),
       ]);
+      snapshot = { ls, cts, movs };
 
-      let lancamentos = ls;
-      const pdvContas = cts.filter((c) => contaUsaRegraCaixaPDV(c));
-
-      const backfill = await backfillLancamentosMovimentosCaixaPDV(base44, cts);
-      if (backfill) {
-        lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento');
-      }
-
-      for (const conta of pdvContas) {
-        const reconciliou = await reconciliarSaldoCaixaPDVSemTurnoAberto(
-          base44,
-          conta,
-          cts,
-          lancamentos,
-          movs,
-        );
-        if (reconciliou) {
-          lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento');
-        }
-      }
-
-      setLancs(lancamentos);
+      setLancs(ls);
       setMovimentos(movs);
       setContas(cts);
       setContasSel((prev) => (prev.length ? prev : cts.map((c) => c.id)));
@@ -184,6 +195,13 @@ export default function ExecucaoOrcamentaria() {
       console.error('[Fluxo de Caixa] Erro ao carregar:', error);
     } finally {
       setLoading(false);
+    }
+
+    if (!snapshot) return;
+    try {
+      await syncCaixaPDVMaintenance(snapshot.cts, snapshot.movs, snapshot.ls);
+    } catch (error) {
+      console.error('[Fluxo de Caixa] Erro na manutenção PDV:', error);
     }
   };
 
