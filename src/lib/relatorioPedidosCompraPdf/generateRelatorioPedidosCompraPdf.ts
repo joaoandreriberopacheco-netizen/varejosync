@@ -930,6 +930,22 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.line(x0, y0, x1, y1);
     };
     const strokeEnxutoBlackLine = (x0, y0, x1, y1) => strokeEnxutoLine(x0, y0, x1, y1, ENXUTO.black);
+    /** Linha vertical enxuta respeitando quebras de página (evita traço “doido”). */
+    const drawEnxutoVerticalSpan = (x, yStart, yEnd, startPage, endPage) => {
+      const topPad = 14;
+      const bottomPad = 10;
+      const pageH = doc.internal.pageSize.getHeight();
+      const savedPage = doc.internal.getNumberOfPages();
+      for (let page = startPage; page <= endPage; page += 1) {
+        doc.setPage(page);
+        const segTop = page === startPage ? yStart : topPad;
+        const segBottom = page === endPage ? yEnd : pageH - bottomPad;
+        if (segBottom > segTop + 0.5) {
+          strokeEnxutoBlackLine(x, segTop, x, segBottom);
+        }
+      }
+      doc.setPage(savedPage);
+    };
 
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
@@ -2133,6 +2149,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       ensureSpace(headerBlockH + 4 + minPrimeiroItemH + 8);
 
       const blockTop = y;
+      const pedidoStartPage = doc.internal.getNumberOfPages();
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(ENXUTO_FONT.pedidoCodigo);
@@ -2202,6 +2219,15 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         );
         y += 5;
       }
+
+      const pedidoEndPage = doc.internal.getNumberOfPages();
+      drawEnxutoVerticalSpan(
+        M + ENXUTO_INDENT.pedidoLine,
+        blockTop,
+        y,
+        pedidoStartPage,
+        pedidoEndPage,
+      );
 
       y += 6;
     };
@@ -2273,15 +2299,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           { align: 'right' },
         );
         y += bandH + 2;
-        const grupoLineTopY = y;
         (grupo.pedidos || []).forEach(renderPedido);
-        const grupoBottomY = y;
-        strokeEnxutoBlackLine(
-          M + ENXUTO_INDENT.pedidoLine,
-          grupoLineTopY,
-          M + ENXUTO_INDENT.pedidoLine,
-          grupoBottomY,
-        );
         y += 4;
         return;
       } else {
