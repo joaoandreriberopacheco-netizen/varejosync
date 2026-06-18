@@ -2,6 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { roundToTwoDecimals, sortLancamentosPorDescricao } from '@/lib/financialUtils';
+import {
+  calcularKpisFluxoPeriodo,
+  calcularSaldosTodasContas,
+  contaUsaRegraCaixaPDV,
+  totaisGrupoFluxoCaixa,
+} from '@/lib/saldoContaFinanceira';
+import { reconciliarSaldoCaixaPDVSemTurnoAberto } from '@/lib/contaDestinoCaixaPDV';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
@@ -73,6 +80,7 @@ const FAB_ITEMS = [
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ExecucaoOrcamentaria() {
   const [lancs, setLancs] = useState([]);
+  const [movimentos, setMovimentos] = useState([]);
   const [contas, setContas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -144,13 +152,34 @@ export default function ExecucaoOrcamentaria() {
 
   const load = async () => {
     setLoading(true);
-    const [ls, cts] = await Promise.all([
-      base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
-      base44.entities.ContasFinanceiras.filter({ ativo: true }),
-    ]);
-    setLancs(ls);
-    setContas(cts);
-    setLoading(false);
+    try {
+      const [ls, cts, movs] = await Promise.all([
+        base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
+        base44.entities.ContasFinanceiras.filter({ ativo: true }),
+        base44.entities.MovimentosCaixa.list(),
+      ]);
+
+      let lancamentos = ls;
+      const pdvContas = cts.filter((c) => contaUsaRegraCaixaPDV(c));
+      for (const conta of pdvContas) {
+        const reconciliou = await reconciliarSaldoCaixaPDVSemTurnoAberto(
+          base44,
+          conta,
+          cts,
+          ls,
+          movs,
+        );
+        if (reconciliou) {
+          lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento');
+        }
+      }
+
+      setLancs(lancamentos);
+      setMovimentos(movs);
+      setContas(cts);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
@@ -181,40 +210,37 @@ export default function ExecucaoOrcamentaria() {
     return true;
   }), [lancs, ds, de, contasSel, tiposSel, statusSel, pendentes, cmvOnly, search]);
 
+  const contasById = useMemo(
+    () => Object.fromEntries(contas.map((c) => [c.id, c])),
+    [contas],
+  );
+
+  const movimentosFiltrados = useMemo(() => movimentos.filter((m) => {
+    if (contasSel.length && !contasSel.includes(m.conta_id)) return false;
+    const dataKey = m.created_date ? toLocalDateKey(m.created_date) : null;
+    if ((ds || de) && !dataKey) return false;
+    if (ds && dataKey < ds) return false;
+    if (de && dataKey > de) return false;
+    return true;
+  }), [movimentos, ds, de, contasSel]);
+
   const kpis = useMemo(() => {
-    let entrou = 0, saiu = 0, pEntrou = 0, pSaiu = 0, totalTransferencias = 0, vencidos = 0, qtdVencidos = 0;
-    filtrados.forEach(l => {
-      if (l.tipo === 'Transferência') { totalTransferencias += l.valor || 0; return; }
-      if (l.status === 'Vencido') { vencidos += l.valor || 0; qtdVencidos++; }
-      const isPago = l.status === 'Pago' || !!l.data_pagamento;
-      if (isPago) {
-        if (l.tipo === 'Receita') entrou += l.valor || 0;
-        else if (l.tipo === 'Despesa') saiu += l.valor || 0;
-      } else {
-        if (l.tipo === 'Receita') pEntrou += l.valor || 0;
-        else if (l.tipo === 'Despesa') pSaiu += l.valor || 0;
-      }
-    });
+    const baseKpis = calcularKpisFluxoPeriodo(
+      filtrados,
+      movimentosFiltrados,
+      lancs,
+      contasById,
+    );
     const contasVisiveis = contasSel.length
       ? contas.filter((c) => contasSel.includes(c.id))
       : contas;
-    const saldoContas = contasVisiveis.reduce(
-      (acc, c) => acc + (c.saldo_atual ?? c.saldo_inicial ?? 0),
-      0
-    );
+    const saldosMap = calcularSaldosTodasContas(contasVisiveis, lancs, movimentos);
+    const saldoContas = contasVisiveis.reduce((acc, c) => acc + (saldosMap[c.id] || 0), 0);
     return {
-      entrou: roundToTwoDecimals(entrou),
-      saiu: roundToTwoDecimals(saiu),
-      saldo: roundToTwoDecimals(entrou - saiu),
-      pEntrou: roundToTwoDecimals(pEntrou),
-      pSaiu: roundToTwoDecimals(pSaiu),
-      saldoPrev: roundToTwoDecimals(entrou + pEntrou - saiu - pSaiu),
-      totalTransferencias: roundToTwoDecimals(totalTransferencias),
-      vencidos: roundToTwoDecimals(vencidos),
-      qtdVencidos,
+      ...baseKpis,
       saldoContas: roundToTwoDecimals(saldoContas),
     };
-  }, [filtrados, contas, contasSel]);
+  }, [filtrados, movimentosFiltrados, lancs, contasById, contas, contasSel, movimentos]);
 
   const grupos = useMemo(() => {
     const hStr = dataHoje();
@@ -228,16 +254,10 @@ export default function ExecucaoOrcamentaria() {
     return Object.entries(map).sort(([a], [b]) => b.localeCompare(a)).map(([k, items]) => {
       const itemsOrdenados = sortLancamentosPorDescricao(items);
       const label = k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(k, hStr, oStr);
-      const totais = { r: 0, d: 0 };
-      itemsOrdenados.forEach(l => {
-        const cartaoCreditoPendente = l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
-        const isPago = l.status === 'Pago' || !!l.data_pagamento;
-        if (l.tipo === 'Receita' && (isPago || cartaoCreditoPendente)) totais.r += l.valor || 0;
-        if (l.tipo === 'Despesa' && isPago) totais.d += l.valor || 0;
-      });
-      return { k, label, items: itemsOrdenados, totais: { r: roundToTwoDecimals(totais.r), d: roundToTwoDecimals(totais.d) } };
+      const totais = totaisGrupoFluxoCaixa(itemsOrdenados, contasById);
+      return { k, label, items: itemsOrdenados, totais };
     });
-  }, [filtrados]);
+  }, [filtrados, contasById]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || !!search;

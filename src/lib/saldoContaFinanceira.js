@@ -181,3 +181,91 @@ export function totaisEntradaSaidaMovimentos(movimentos = [], conta = null) {
     saidas: roundToTwoDecimals(saidas),
   };
 }
+
+/**
+ * KPIs do Fluxo de Caixa alinhados ao extrato.
+ * Caixa PDV: só dinheiro físico nos lançamentos + reforços/sangrias/recolhimentos.
+ */
+export function calcularKpisFluxoPeriodo(
+  lancamentosPeriodo = [],
+  movimentosPeriodo = [],
+  todosLancamentos = [],
+  contasById = {},
+) {
+  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(todosLancamentos);
+  let entrou = 0;
+  let saiu = 0;
+  let pEntrou = 0;
+  let pSaiu = 0;
+  let totalTransferencias = 0;
+  let vencidos = 0;
+  let qtdVencidos = 0;
+
+  lancamentosPeriodo.forEach((l) => {
+    if (l.tipo === 'Transferência') {
+      totalTransferencias += Number(l.valor || 0);
+      return;
+    }
+
+    const conta = contasById[l.conta_financeira_id];
+    const cartaoCreditoPendente =
+      l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
+
+    if (l.status === 'Vencido') {
+      vencidos += Number(l.valor || 0);
+      qtdVencidos++;
+    }
+
+    const isPago = l.status === 'Pago' || !!l.data_pagamento;
+    const participaSaldo = lancamentoParticipaSaldoConta(conta, l);
+    if (!participaSaldo && !cartaoCreditoPendente) return;
+
+    if (isPago || cartaoCreditoPendente) {
+      if (l.tipo === 'Receita') entrou += Number(l.valor || 0);
+      else if (l.tipo === 'Despesa') saiu += Number(l.valor || 0);
+    } else {
+      if (l.tipo === 'Receita') pEntrou += Number(l.valor || 0);
+      else if (l.tipo === 'Despesa') pSaiu += Number(l.valor || 0);
+    }
+  });
+
+  movimentosPeriodo.forEach((m) => {
+    if (movimentosJaNoFinanceiro.has(String(m.id))) return;
+    const conta = contasById[m.conta_id];
+    if (!contaUsaRegraCaixaPDV(conta)) return;
+    const valor = Number(m.valor || 0);
+    if (m.tipo === 'Reforço') entrou += valor;
+    else if (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa') saiu += valor;
+  });
+
+  return {
+    entrou: roundToTwoDecimals(entrou),
+    saiu: roundToTwoDecimals(saiu),
+    saldo: roundToTwoDecimals(entrou - saiu),
+    pEntrou: roundToTwoDecimals(pEntrou),
+    pSaiu: roundToTwoDecimals(pSaiu),
+    saldoPrev: roundToTwoDecimals(entrou + pEntrou - saiu - pSaiu),
+    totalTransferencias: roundToTwoDecimals(totalTransferencias),
+    vencidos: roundToTwoDecimals(vencidos),
+    qtdVencidos,
+  };
+}
+
+/** Totais de receitas/despesas de um grupo do fluxo (respeita regra Caixa PDV). */
+export function totaisGrupoFluxoCaixa(items = [], contasById = {}) {
+  let r = 0;
+  let d = 0;
+
+  items.forEach((l) => {
+    const conta = contasById[l.conta_financeira_id];
+    const cartaoCreditoPendente =
+      l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
+    const isPago = l.status === 'Pago' || !!l.data_pagamento;
+    const participaSaldo = lancamentoParticipaSaldoConta(conta, l);
+    if (!participaSaldo && !cartaoCreditoPendente) return;
+    if (l.tipo === 'Receita' && (isPago || cartaoCreditoPendente)) r += Number(l.valor || 0);
+    if (l.tipo === 'Despesa' && isPago) d += Number(l.valor || 0);
+  });
+
+  return { r: roundToTwoDecimals(r), d: roundToTwoDecimals(d) };
+}
