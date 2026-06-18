@@ -21,6 +21,8 @@ import {
   Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toLocalDateKey } from '@/components/utils/dateUtils';
+import { getDataMovimentoCaixa } from '@/lib/saldoContaFinanceira';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 import { caixaClasses } from '@/lib/caixaP38Theme';
 
@@ -66,8 +68,7 @@ export default function BalancoCaixaDialog({ open, onOpenChange, contaCaixa }) {
       const todosMovimentos = await base44.entities.MovimentosCaixa.list();
       const movimentosHoje = todosMovimentos.filter(m =>
         m.conta_id === contaCaixa.id &&
-        m.created_date &&
-        m.created_date.startsWith(hoje)
+        toLocalDateKey(getDataMovimentoCaixa(m)) === hoje
       );
       setMovimentos(movimentosHoje);
 

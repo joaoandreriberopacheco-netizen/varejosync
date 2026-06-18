@@ -2,6 +2,7 @@ import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import {
   contaUsaRegraCaixaPDV,
+  getDataMovimentoCaixa,
   idsMovimentosComLancamentoFinanceiro,
   isMovimentoTransferenciaCaixaPDV,
   movimentoParticipaExtrato,
@@ -10,7 +11,7 @@ import {
 } from '@/lib/saldoContaFinanceira';
 
 export function normalizarMovimentoCaixaParaLinha(mov) {
-  const data = mov.data_pagamento || mov.data_vencimento || mov.created_date;
+  const data = mov.data_pagamento || mov.data_vencimento || getDataMovimentoCaixa(mov);
   let tipo = mov.tipo;
   if (tipo === 'Reforço') tipo = 'Receita';
   if (tipo === 'Sangria' || tipo === 'Recolhimento de Caixa') tipo = 'Despesa';
@@ -29,7 +30,7 @@ export function normalizarMovimentoCaixaParaLinha(mov) {
 }
 
 function dataChaveMovimento(mov) {
-  const data = mov.data_pagamento || mov.data_vencimento || mov.created_date;
+  const data = mov.data_pagamento || mov.data_vencimento || getDataMovimentoCaixa(mov);
   return data ? toLocalDateKey(data) : null;
 }
 
@@ -68,7 +69,7 @@ export function montarGruposFluxoCaixa({
     if (!pdvIds.has(m.conta_id)) return;
     if (movimentosJaNoFinanceiro.has(String(m.id))) return;
     if (m.tipo !== 'Reforço' && !isMovimentoTransferenciaCaixaPDV(m)) return;
-    const k = m.created_date ? toLocalDateKey(m.created_date) : 'sem-data';
+    const k = getDataMovimentoCaixa(m) ? toLocalDateKey(getDataMovimentoCaixa(m)) : 'sem-data';
     (map[k] = map[k] || []).push({ ...m, origem: 'movimento' });
   });
 

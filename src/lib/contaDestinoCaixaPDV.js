@@ -2,6 +2,7 @@ import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
   calcularSaldoContaFinanceira,
   contaUsaRegraCaixaPDV,
+  getDataMovimentoCaixa,
   idsMovimentosComLancamentoFinanceiro,
 } from '@/lib/saldoContaFinanceira';
 
@@ -221,7 +222,7 @@ export async function backfillLancamentosMovimentosCaixaPDV(base44, contas = [])
     if (mov.tipo !== 'Sangria' && mov.tipo !== 'Recolhimento de Caixa') continue;
     if (idsComLanc.has(String(mov.id))) continue;
 
-    const dataPagamento = mov.created_date?.slice(0, 10) || dataHojeIso();
+    const dataPagamento = getDataMovimentoCaixa(mov)?.slice(0, 10) || dataHojeIso();
     await registrarLancamentosTransferenciaCaixaPDV(base44, {
       contaOrigem,
       contaDestino,

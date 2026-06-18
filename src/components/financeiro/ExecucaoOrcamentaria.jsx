@@ -6,6 +6,7 @@ import {
   calcularKpisFluxoPeriodo,
   calcularSaldosTodasContas,
   contaUsaRegraCaixaPDV,
+  getDataMovimentoCaixa,
   isTransferenciaEntreContas,
   lancamentoPertenceContasSelecionadas,
 } from '@/lib/saldoContaFinanceira';
@@ -244,7 +245,7 @@ export default function ExecucaoOrcamentaria() {
 
   const movimentosFiltrados = useMemo(() => movimentos.filter((m) => {
     if (contasSel.length && !contasSel.includes(m.conta_id)) return false;
-    const dataKey = m.created_date ? toLocalDateKey(m.created_date) : null;
+    const dataKey = getDataMovimentoCaixa(m) ? toLocalDateKey(getDataMovimentoCaixa(m)) : null;
     if ((ds || de) && !dataKey) return false;
     if (ds && dataKey < ds) return false;
     if (de && dataKey > de) return false;

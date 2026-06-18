@@ -19,6 +19,8 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toLocalDateKey } from '@/components/utils/dateUtils';
+import { getDataMovimentoCaixa } from '@/lib/saldoContaFinanceira';
 import { printOrShareElementAsPdf } from '@/lib/mobilePrintAndShare';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
 import { caixaClasses } from '@/lib/caixaP38Theme';
@@ -75,8 +77,7 @@ export default function ControleCaixasAtivos() {
       const todosMovimentos = await base44.entities.MovimentosCaixa.list();
       const movimentosHoje = todosMovimentos.filter(m =>
         m.conta_id === caixaSelecionado.id &&
-        m.created_date &&
-        m.created_date.startsWith(hoje)
+        toLocalDateKey(getDataMovimentoCaixa(m)) === hoje
       );
       setMovimentosCaixa(movimentosHoje);
 

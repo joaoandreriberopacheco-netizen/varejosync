@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { buildSubstituicoesVendaCaixa } from '@/lib/substituicoesVendaCaixa';
+import { getDataMovimentoCaixa } from '@/lib/saldoContaFinanceira';
 
 export default function GestaoCaixa() {
   const [fluxoCaixa, setFluxoCaixa] = useState({
@@ -58,7 +59,7 @@ export default function GestaoCaixa() {
     // Buscar movimentos de caixa do dia
     const todosMovimentos = await base44.entities.MovimentosCaixa.list();
     const movimentosDia = todosMovimentos.filter(m => 
-      new Date(m.created_date) >= inicioDia
+      new Date(getDataMovimentoCaixa(m)) >= inicioDia
     );
 
     const totalSangrias = movimentosDia
