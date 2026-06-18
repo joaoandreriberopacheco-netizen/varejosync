@@ -126,7 +126,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
   const getActionVersion = (label) => {
     if (label === 'PDF expandido') return 'expandida';
     if (label === 'PDF enxuto') return 'expandida_enxuta';
-    if (label === 'PDF mobile') return 'expandida_mobile';
+    if (label === 'PDF para celular') return 'expandida_mobile';
     return null;
   };
 
@@ -234,10 +234,11 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
     },
     {
       icon: <Smartphone className="w-5 h-5" />,
-      label: 'PDF mobile',
+      label: 'PDF para celular',
       onClick: () => handleGerarRelatorio('expandida_mobile'),
       color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
+      title: 'Formato estreito com fontes pretas para leitura clara no celular',
     },
   ];
 

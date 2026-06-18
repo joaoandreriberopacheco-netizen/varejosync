@@ -8,7 +8,7 @@ const PDF_GLYPH_STRETCH_Y = 1.1;
  * Aplica alongamento vertical no texto do PDF via matriz interna do jsPDF (não aumenta fontSize).
  * Preserva options.angle se já for uma Matrix (ex.: rotação customizada).
  */
-const patchPdfTextVerticalStretch = (doc) => {
+const patchPdfTextVerticalStretch = (doc, stretchY = PDF_GLYPH_STRETCH_Y) => {
   const PdfMatrix = jsPDF.API?.Matrix;
   if (!PdfMatrix) return;
   const origText = doc.text.bind(doc);
@@ -16,7 +16,7 @@ const patchPdfTextVerticalStretch = (doc) => {
     if (options != null && typeof options === 'object' && options.angle instanceof PdfMatrix) {
       return origText(text, x, y, options, transform);
     }
-    const stretch = new PdfMatrix(1, 0, 0, PDF_GLYPH_STRETCH_Y, 0, 0);
+    const stretch = new PdfMatrix(1, 0, 0, stretchY, 0, 0);
     if (options != null && typeof options === 'object' && !Array.isArray(options)) {
       return origText(text, x, y, { ...options, angle: stretch }, transform);
     }
@@ -898,7 +898,7 @@ Deno.serve(async (req) => {
     });
     const usarNoto = await registerPdfFonts(doc);
     const pdfFontFamily = usarNoto ? 'NotoSans' : 'helvetica';
-    patchPdfTextVerticalStretch(doc);
+    patchPdfTextVerticalStretch(doc, isMobile ? 1 : PDF_GLYPH_STRETCH_Y);
 
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
@@ -924,6 +924,15 @@ Deno.serve(async (req) => {
       tealDark:  [15,  118, 110],
     };
 
+    /** Paleta alto contraste para PDF mobile — tinta preta, leitura nítida no celular. */
+    const MOBILE_INK = {
+      black: [0, 0, 0],
+      body:  [18, 18, 18],
+      meta:  [58, 58, 58],
+      line:  [185, 185, 185],
+      track: [228, 228, 228],
+    };
+
     let y = 16;
 
     const ensureSpace = (needed = 24) => {
@@ -946,6 +955,18 @@ Deno.serve(async (req) => {
         const sx = M + s * (segW + 1);
         doc.setFillColor(...(s < level ? sc.dot : [220, 225, 230]));
         doc.roundedRect(sx, barY, segW, 1.5, 0.75, 0.75, 'F');
+      }
+    };
+
+    /** Barra de status mobile claro — preto sólido vs trilho cinza claro. */
+    const drawProgressBarMobileClaro = (status, barY) => {
+      const level = getStatusProgress(status);
+      const totalSegs = 5;
+      const segW = (CW - (totalSegs - 1) * 0.8) / totalSegs;
+      for (let s = 0; s < totalSegs; s++) {
+        const sx = M + s * (segW + 0.8);
+        doc.setFillColor(...(s < level ? MOBILE_INK.black : MOBILE_INK.track));
+        doc.rect(sx, barY, segW, 1.1, 'F');
       }
     };
 
@@ -1009,34 +1030,33 @@ Deno.serve(async (req) => {
       }
 
       if (isMobile) {
-        // Header mobile: hierarquia clara, filtros em até 3 linhas, tipografia legível no celular
         let hy = 12;
-        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setFontSize(12);
-        doc.setTextColor(...C.text);
-        doc.text('Embarques', M, hy);
-        hy += 5;
-
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(6.5);
-        doc.setTextColor(...C.muted);
-        doc.text('Relatório para celular', M, hy);
+        doc.setFontSize(11);
+        doc.setTextColor(...MOBILE_INK.black);
+        doc.text('Embarques', M, hy);
         hy += 4.2;
+
+        doc.setFontSize(6.8);
+        doc.setTextColor(...MOBILE_INK.meta);
+        doc.text('Relatorio para celular — leitura clara', M, hy);
+        hy += 3.8;
 
         const filtrosLinhas = doc.splitTextToSize(safe(filtros_desc || '-'), CW);
         const maxFiltroLinhas = Math.min(3, filtrosLinhas.length);
         for (let fi = 0; fi < maxFiltroLinhas; fi++) {
           doc.text(filtrosLinhas[fi], M, hy);
-          hy += 3.9;
+          hy += 3.6;
         }
-        hy += 1;
+        hy += 0.5;
         doc.setFontSize(6.2);
         doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M, hy);
-        hy += 4.5;
+        hy += 4;
 
-        doc.setFillColor(...C.soft);
-        doc.rect(M, hy, CW, 0.5, 'F');
-        hy += 2.5;
+        doc.setDrawColor(...MOBILE_INK.black);
+        doc.setLineWidth(0.2);
+        doc.line(M, hy, M + CW, hy);
+        hy += 3;
         y = hy;
         return;
       }
@@ -1089,28 +1109,21 @@ Deno.serve(async (req) => {
       }
 
       if (isMobile) {
-        const colW = (CW - 3) / 2;
-        const cardH = 14.5;
-        for (let i = 0; i < cards.length; i += 2) {
-          ensureSpace(18);
-          [0, 1].forEach((col) => {
-            const card = cards[i + col];
-            if (!card) return;
-            const cx = M + col * (colW + 3);
-            doc.setFillColor(...C.soft);
-            doc.roundedRect(cx, y, colW, cardH, 2, 2, 'F');
-            doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-            doc.setFontSize(6);
-            doc.setTextColor(...C.muted);
-            doc.text(safe(card.label), cx + 3, y + 5);
-            doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-            doc.setFontSize(8.5);
-            doc.setTextColor(...C.dark);
-            doc.text(safe(String(card.value)), cx + 3, y + 11.5);
-          });
-          y += 16.5;
-        }
-        y += 2;
+        ensureSpace(16);
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(6.5);
+        doc.setTextColor(...MOBILE_INK.black);
+        doc.text(`Pedidos: ${kpis.totalPedidos || pedidos.length || 0}`, M, y);
+        y += 3.6;
+        doc.text(`Pendente: ${moeda(kpis.totalGeral || 0)}`, M, y);
+        doc.text(`Em aberto: ${moeda(kpis.totalEmAberto || 0)}`, M + 48, y);
+        y += 3.6;
+        doc.text(`Pago/nao entregue: ${moeda(kpis.totalPagoNaoEntregue || 0)}`, M, y);
+        y += 4;
+        doc.setDrawColor(...MOBILE_INK.line);
+        doc.setLineWidth(0.15);
+        doc.line(M, y, M + CW, y);
+        y += 4;
         return;
       }
 
@@ -1278,6 +1291,27 @@ Deno.serve(async (req) => {
           unFontSize: 6.35,
         };
       }
+      if (layout === 'narrow_claro') {
+        const itemMl = M + 13.2;
+        const lineX = M + 11.2;
+        const qtdColRight = M + 10.2;
+        return {
+          layout: 'narrow_claro',
+          itemMl,
+          lineX,
+          qtdColRight,
+          nomeMaxW: M + CW - itemMl - 2,
+          contentRight: M + CW,
+          vs: 1.18,
+          fontScale: 1,
+          lineWidth: 1.8,
+          nomeFontSize: 7.4,
+          detailFontSize: 6.1,
+          qtdFontSize: 6.9,
+          unFontSize: 5.75,
+          ink: true,
+        };
+      }
       const itemMl = M + 14.8;
       const lineX = M + 12.5;
       const qtdColRight = M + 11.5;
@@ -1335,7 +1369,8 @@ Deno.serve(async (req) => {
       const margemLinhaInferiorItem = 1.3 * vs;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize((layout === 'wide' ? cfg.nomeFontSize : 7) * cfg.fontScale);
+      const nomeFsMeasure = layout === 'wide' ? cfg.nomeFontSize : (cfg.nomeFontSize ?? 7);
+      doc.setFontSize(nomeFsMeasure * cfg.fontScale);
       const nomeMaxW = cfg.nomeMaxW;
       const nomeX = cfg.itemMl;
       const nomeLinhas = doc.splitTextToSize(
@@ -1371,9 +1406,9 @@ Deno.serve(async (req) => {
       }
 
       const det = buildExpandedItemDetailText(layout, item, prod, met);
-      const auxDetailStep = 2.95 * vs;
-      const gapNomeDetalhe = 2.4 * vs;
-      doc.setFontSize(5.65 * cfg.fontScale);
+      const auxDetailStep = 2.85 * vs;
+      const gapNomeDetalhe = 2.2 * vs;
+      doc.setFontSize((cfg.detailFontSize ?? 5.65) * cfg.fontScale);
       const auxValoresLinhas = doc.splitTextToSize(det.linha1, cfg.nomeMaxW);
       const detAux1 = lastNomeBaseline + gapNomeDetalhe;
       const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
@@ -1404,27 +1439,35 @@ Deno.serve(async (req) => {
       const { rowBlockH, met, nomeLinhas, cfg, vs, nomeLineStep, nomeTop } = measured;
       const nomeX = measured.nomeX ?? cfg.itemMl;
       const branchY = y0 + 2.8 * vs;
+      const ink = !!cfg.ink;
+      const inkBlack = ink ? MOBILE_INK.black : SLATE900;
+      const inkBody = ink ? MOBILE_INK.body : SLATE700;
+      const inkMeta = ink ? MOBILE_INK.meta : SLATE500;
+      const inkLine = ink ? MOBILE_INK.line : [203, 213, 225];
 
-      doc.setFillColor(203, 213, 225);
-      doc.rect(cfg.lineX, y0, 0.12, rowBlockH, 'F');
-      doc.rect(cfg.lineX, branchY, cfg.lineWidth, 0.12, 'F');
+      doc.setFillColor(...inkLine);
+      doc.rect(cfg.lineX, y0, 0.1, rowBlockH, 'F');
+      doc.rect(cfg.lineX, branchY, cfg.lineWidth, 0.1, 'F');
 
-      const qtdFs = layout === 'wide' ? (cfg.qtdFontSize ?? 6.8) : 6.8;
-      const unFs = layout === 'wide' ? (cfg.unFontSize ?? 5.9) : 5.9;
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      const qtdFs = layout === 'wide'
+        ? (cfg.qtdFontSize ?? 6.8)
+        : (cfg.qtdFontSize ?? 6.8);
+      const unFs = layout === 'wide' ? (cfg.unFontSize ?? 5.9) : (cfg.unFontSize ?? 5.9);
+      doc.setFont(pdfFontFamily, ink ? PDF_FONT_NORMAL : PDF_FONT_BOLD);
       doc.setFontSize(qtdFs * cfg.fontScale);
-      doc.setTextColor(...SLATE900);
+      doc.setTextColor(...inkBlack);
       const qtdYOff = 1.2;
       const unYOff = layout === 'wide' ? 4.6 : 4.6;
       doc.text(fmtQuantidadePdf(Number(met.qtd) || 0), cfg.qtdColRight, nomeTop + qtdYOff, { align: 'right' });
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(unFs * cfg.fontScale);
-      doc.setTextColor(...SLATE700);
+      doc.setTextColor(...inkBody);
       doc.text(met.un, cfg.qtdColRight, nomeTop + unYOff, { align: 'right' });
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize((layout === 'wide' ? cfg.nomeFontSize : 7) * cfg.fontScale);
-      doc.setTextColor(...SLATE700);
+      const nomeFsDraw = layout === 'wide' ? cfg.nomeFontSize : (cfg.nomeFontSize ?? 7);
+      doc.setFontSize(nomeFsDraw * cfg.fontScale);
+      doc.setTextColor(...inkBody);
       nomeLinhas.forEach((line, li) => {
         doc.text(line, nomeX, nomeTop + li * nomeLineStep);
       });
@@ -1455,8 +1498,8 @@ Deno.serve(async (req) => {
         const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
         const detAux1 = lastNomeBaseline + gapNomeDetalhe;
         const detAux2 = detAux1 + auxValoresLinhas.length * auxDetailStep;
-        doc.setFontSize(5.65 * cfg.fontScale);
-        doc.setTextColor(...SLATE500);
+        doc.setFontSize((cfg.detailFontSize ?? 5.65) * cfg.fontScale);
+        doc.setTextColor(...inkMeta);
         auxValoresLinhas.forEach((line, ai) => {
           doc.text(line, cfg.itemMl, detAux1 + ai * auxDetailStep);
         });
@@ -1471,8 +1514,8 @@ Deno.serve(async (req) => {
 
       const sepX0 = layout === 'wide' ? (cfg.sepLineX0 ?? cfg.itemMl) : cfg.itemMl;
       const sepX1 = layout === 'wide' ? (cfg.sepLineX1 ?? cfg.contentRight) : cfg.contentRight;
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.15);
+      doc.setDrawColor(...(ink ? MOBILE_INK.line : [226, 232, 240]));
+      doc.setLineWidth(0.12);
       doc.line(sepX0, y0 + rowBlockH, sepX1, y0 + rowBlockH);
 
       const qtd = Number(met.qtd) || 0;
@@ -1653,13 +1696,11 @@ Deno.serve(async (req) => {
     };
 
     // ════════════════════════════════════════════════════════════════════════
-    //  MOBILE: card limpo modo claro
+    //  MOBILE: leitura clara — tinta preta, tipografia fina, alto contraste
     // ════════════════════════════════════════════════════════════════════════
     const drawMobileCard = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
-      const sc = getStatusColors(statusRelatorio);
-
       const itens = mapItensRelatorioComercial(pedido);
 
       const valorHeader = isPendencia
@@ -1671,96 +1712,91 @@ Deno.serve(async (req) => {
         : moeda(getValorRelatorio(pedido, produtosMap));
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6.5);
-      const codigoLinhas = doc.splitTextToSize(safe(getPedidoNumeroRelatorio(pedido)), CW - 34).slice(0, 2);
-      const codigoLineStep = 3.8;
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(9);
-      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 6).slice(0, 3);
+      doc.setFontSize(6.4);
+      const codigoLinhas = doc.splitTextToSize(safe(getPedidoNumeroRelatorio(pedido)), CW - 4).slice(0, 2);
+      const codigoLineStep = 3.5;
+      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 4).slice(0, 3);
       const countLabel = isNecessidadeRelatorio(pedido)
         ? `${itens.length} item(ns) pendente(s)`
         : `${itens.length} item(ns)`;
       const metaTexto = `${dataFmt(getDataRelatorio(pedido))} · ETA ${dataFmt(getEtaRelatorio(pedido))} · ${getOrdinalRelatorio(pedido)} · ${countLabel}`;
-      const metaLines = doc.splitTextToSize(metaTexto, CW - 6).slice(0, 2);
+      const metaLines = doc.splitTextToSize(metaTexto, CW - 4).slice(0, 2);
 
-      const fornLineStep = 4;
+      const fornLineStep = 3.7;
       const fornBlock = fornLines.length * fornLineStep;
-      const totalRowH = 5.5;
-      const metaLineStep = 3.6;
+      const totalRowH = 4.8;
+      const metaLineStep = 3.4;
       const metaBlock = metaLines.length * metaLineStep;
-      const progH = 4;
-      const cardPadBottom = 3;
-      const codeY0 = 6.5;
+      const progH = 2.2;
+      const codeY0 = 5.5;
       const codeBlockH = codigoLinhas.length * codigoLineStep;
-      const gapCodeForn = 3;
-      const cardHeight = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + progH + cardPadBottom;
+      const gapCodeForn = 2.2;
+      const headerBlockH = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + progH + 2;
 
-      // Mesma ideia do desktop (minPedidoH): cabeçalho do pedido + 1.ª linha de itens na mesma página
-      const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], 'narrow', 0) : 0;
-      ensureSpace(cardHeight + 3 + minPrimeiroItemH + 6);
+      const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], 'narrow_claro', 0) : 0;
+      ensureSpace(headerBlockH + 2 + minPrimeiroItemH + 5);
 
-      const cardTop = y;
+      const blockTop = y;
 
-      doc.setFillColor(...C.panel);
-      doc.roundedRect(M, cardTop, CW, cardHeight, 2.5, 2.5, 'F');
+      doc.setDrawColor(...MOBILE_INK.black);
+      doc.setLineWidth(0.2);
+      doc.line(M, blockTop, M + CW, blockTop);
 
-      doc.setFillColor(...sc.dot);
-      doc.circle(M + 4.5, cardTop + 6, 2, 'F');
+      doc.setFillColor(...MOBILE_INK.black);
+      doc.rect(M, blockTop, 0.9, headerBlockH, 'F');
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6.5);
-      doc.setTextColor(...SLATE500);
+      doc.setFontSize(6.4);
+      doc.setTextColor(...MOBILE_INK.meta);
       codigoLinhas.forEach((line, ci) => {
-        doc.text(line, M + 10, cardTop + codeY0 + ci * codigoLineStep);
+        doc.text(line, M + 3, blockTop + codeY0 + ci * codigoLineStep);
       });
 
-      doc.setFillColor(...sc.pillBg);
-      doc.roundedRect(M + CW - 30, cardTop + 2, 28, 7, 3.5, 3.5, 'F');
-      doc.setFontSize(6);
-      doc.setTextColor(...sc.pillText);
-      doc.text(safe(statusRelatorio), M + CW - 16, cardTop + 6.8, { align: 'center' });
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(6.2);
+      doc.setTextColor(...MOBILE_INK.black);
+      doc.text(safe(statusRelatorio), M + CW - 2, blockTop + codeY0, { align: 'right' });
 
-      let cy = cardTop + codeY0 + codeBlockH + gapCodeForn;
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(9);
-      doc.setTextColor(...SLATE900);
+      let cy = blockTop + codeY0 + codeBlockH + gapCodeForn;
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(8.2);
+      doc.setTextColor(...MOBILE_INK.black);
       fornLines.forEach((line, fl) => {
         doc.text(line, M + 3, cy + fl * fornLineStep);
       });
-      cy += fornBlock + 1;
+      cy += fornBlock + 0.8;
 
-      // Total com rótulo explícito
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6);
-      doc.setTextColor(...SLATE500);
+      doc.setFontSize(6.1);
+      doc.setTextColor(...MOBILE_INK.meta);
       doc.text('Total', M + 3, cy);
-      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-      doc.setFontSize(9);
-      doc.setTextColor(...SLATE900);
-      doc.text(valorHeader, M + CW - 3, cy, { align: 'right' });
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(8.2);
+      doc.setTextColor(...MOBILE_INK.black);
+      doc.text(valorHeader, M + CW - 2, cy, { align: 'right' });
       cy += totalRowH;
 
-      // Metadados (até 2 linhas)
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(6);
-      doc.setTextColor(...SLATE500);
+      doc.setFontSize(6.1);
+      doc.setTextColor(...MOBILE_INK.meta);
       metaLines.forEach((line, ml) => {
         doc.text(line, M + 3, cy + ml * metaLineStep);
       });
       cy += metaBlock + 1;
 
-      drawProgressBar(pedido._display_status || pedido.status, cy);
-      y = cardTop + cardHeight + 3;
+      drawProgressBarMobileClaro(pedido._display_status || pedido.status, cy);
+      y = blockTop + headerBlockH + 2;
 
-      // ── Itens (mesmo layout limpo do expandido, página estreita) ──
+      doc.setDrawColor(...MOBILE_INK.line);
+      doc.setLineWidth(0.12);
+      doc.line(M, y - 1, M + CW, y - 1);
+
       itens.forEach((item) => {
-        const rowH = computeExpandedItemRowH(pedido, item, 'narrow', y);
-        ensureSpace(rowH + 6);
-        const drawn = drawExpandedItemRowClean(pedido, item, 'narrow', y, 0);
+        const rowH = computeExpandedItemRowH(pedido, item, 'narrow_claro', y);
+        ensureSpace(rowH + 4);
+        const drawn = drawExpandedItemRowClean(pedido, item, 'narrow_claro', y, 0);
         y += drawn.rowBlockH;
       });
 
-      y += 4; // espaço entre pedidos
+      y += 3;
     };
 
     // ════════════════════════════════════════════════════════════════════════
@@ -1870,19 +1906,20 @@ Deno.serve(async (req) => {
       ensureSpace(14);
       if (isMobile) {
         y += 2;
-        const bandH = 9;
-        ensureSpace(bandH + 4);
-        doc.setFillColor(241, 245, 249);
-        doc.roundedRect(M, y, CW, bandH, 2, 2, 'F');
-        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-        doc.setFontSize(6.5);
-        doc.setTextColor(...SLATE900);
-        doc.text(safe(grupo.label || '-'), M + 3, y + 5.5);
+        const bandH = 7.5;
+        ensureSpace(bandH + 3);
+        doc.setDrawColor(...MOBILE_INK.black);
+        doc.setLineWidth(0.2);
+        doc.line(M, y, M + CW, y);
+        y += 2.2;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-        doc.setFontSize(5.8);
-        doc.setTextColor(...SLATE500);
-        doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW - 3, y + 5.5, { align: 'right' });
-        y += bandH + 3;
+        doc.setFontSize(6.6);
+        doc.setTextColor(...MOBILE_INK.black);
+        doc.text(safe(grupo.label || '-'), M + 1, y + 3.2);
+        doc.setFontSize(6.1);
+        doc.setTextColor(...MOBILE_INK.meta);
+        doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW - 1, y + 3.2, { align: 'right' });
+        y += 5.5;
       } else if (isEnxuta) {
         ensureSpace(12);
         const bandH = 7;
