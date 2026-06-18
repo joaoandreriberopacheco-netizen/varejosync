@@ -1,5 +1,5 @@
 import { toLocalDateKey } from '@/components/utils/dateUtils';
-import { sortLancamentosPorCodigo } from '@/lib/financialUtils';
+import { roundToTwoDecimals, sortLancamentosPorCodigo } from '@/lib/financialUtils';
 import {
   contaUsaRegraCaixaPDV,
   idsMovimentosComLancamentoFinanceiro,
@@ -9,6 +9,16 @@ import {
   projetarLinhaFluxoCaixa,
   totaisGrupoFluxoCaixa,
 } from '@/lib/saldoContaFinanceira';
+
+function totaisDiaFromGrupo(totaisGrupo) {
+  return {
+    r: totaisGrupo.r,
+    d: totaisGrupo.d,
+    entrou: roundToTwoDecimals(totaisGrupo.r + totaisGrupo.transfIn),
+    saiu: roundToTwoDecimals(totaisGrupo.d + totaisGrupo.transfOut),
+    liquido: totaisGrupo.liquido,
+  };
+}
 
 function chaveParTransferenciaLancamento(l) {
   if (!isTransferenciaEntreContas(l) || l.origem === 'movimento') return null;
@@ -177,11 +187,7 @@ export function montarGruposFluxoCaixa({
         k: dia,
         label,
         items,
-        totais: {
-          r: totaisGrupo.r,
-          d: totaisGrupo.d,
-          liquido: totaisGrupo.liquido,
-        },
+        totais: totaisDiaFromGrupo(totaisGrupo),
       };
     });
 }
@@ -232,7 +238,7 @@ export function montarGruposPorDiaConta({
     .map((dia) => {
       const brutos = porDia[dia];
       const contasById = { [conta.id]: conta };
-      const items = sortLancamentosPorDescricao(brutos).map((m) => {
+      const items = sortLancamentosPorCodigo(brutos).map((m) => {
         const linha = m.origem === 'movimento' ? normalizarMovimentoCaixaParaLinha(m) : m;
         return projetarLinhaFluxoCaixa(linha);
       });
@@ -244,11 +250,7 @@ export function montarGruposPorDiaConta({
         k: dia,
         label,
         items,
-        totais: {
-          r: totaisGrupo.r,
-          d: totaisGrupo.d,
-          liquido: totaisGrupo.liquido,
-        },
+        totais: totaisDiaFromGrupo(totaisGrupo),
       };
     });
 }

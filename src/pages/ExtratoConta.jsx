@@ -425,7 +425,11 @@ export default function ExtratoContaPage() {
       k: diaData.dia,
       label: formatFinanceiroGrupoLabel(diaData.dia, hStr, oStr),
       items: diaData.movimentacoes.map(normalizeMov),
-      totais: { r: diaData.totalEntradas, d: diaData.totalSaidas },
+      totais: {
+        r: diaData.totalEntradas,
+        d: diaData.totalSaidas,
+        liquido: roundToTwoDecimals(diaData.totalEntradas - diaData.totalSaidas),
+      },
     }));
   }, [diasExibicao]);
 

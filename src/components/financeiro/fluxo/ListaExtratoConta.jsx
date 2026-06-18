@@ -12,7 +12,14 @@ export default function ListaExtratoConta({ grupos, loading, onRow }) {
       vazioIcon={Scale}
     >
       {grupos.map(({ k, label, items, totais }) => (
-        <FinanceiroGrupo key={k} label={label} receitas={totais.r} despesas={totais.d}>
+        <FinanceiroGrupo
+          key={k}
+          label={label}
+          balancoDia
+          receitas={totais.r}
+          despesas={totais.d}
+          liquido={totais.liquido ?? totais.r - totais.d}
+        >
           {items.map((l, index) => (
             <FinanceiroLancRow
               key={l.id || `${k}-${index}`}

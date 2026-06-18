@@ -29,15 +29,55 @@ export function FinanceiroGrupo({
   liquido: liquidoProp,
   variant = 'default',
   card = false,
+  balancoDia = false,
   children,
   defaultOpen = true,
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const liquido = liquidoProp != null ? liquidoProp : receitas - despesas;
-  const showBreakdown = receitas > 0 && despesas > 0;
+  const showBreakdown = !balancoDia && receitas > 0 && despesas > 0;
   const overdue = variant === 'overdue';
 
   const negClass = overdue ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
+
+  const saldoNode = (
+    <span
+      className={cn(
+        'shrink-0 text-[11px] font-bold tabular-nums',
+        liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass,
+      )}
+    >
+      {liquido >= 0 ? '+' : '−'}
+      {formatFinanceiroValor(Math.abs(liquido))}
+    </span>
+  );
+
+  const balancoDiaNode = balancoDia ? (
+    <div
+      className="flex min-w-0 flex-wrap items-center justify-end gap-x-1 gap-y-0 text-[10px] font-semibold tabular-nums sm:text-[11px]"
+      title={`Entrou ${formatFinanceiroValor(receitas)} · Saiu ${formatFinanceiroValor(despesas)} · Saldo ${formatFinanceiroValor(Math.abs(liquido))}`}
+    >
+      <span className="text-[#4A5D23] dark:text-[#a4ce33]" title="Entrou">
+        +{formatFinanceiroValor(receitas)}
+      </span>
+      <span className="text-muted-foreground/40" aria-hidden>
+        ·
+      </span>
+      <span className={cn(despesas > 0 ? negClass : 'text-muted-foreground/70')} title="Saiu">
+        −{formatFinanceiroValor(despesas)}
+      </span>
+      <span className="text-muted-foreground/40" aria-hidden>
+        ·
+      </span>
+      <span
+        className={cn(liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass)}
+        title="Saldo do dia"
+      >
+        {liquido >= 0 ? '+' : '−'}
+        {formatFinanceiroValor(Math.abs(liquido))}
+      </span>
+    </div>
+  ) : null;
 
   const content = (
     <>
@@ -51,32 +91,31 @@ export function FinanceiroGrupo({
       >
         <p
           className={cn(
-            'min-w-0 max-w-[42%] truncate text-left text-[11px] font-semibold uppercase tracking-wide text-foreground/75 sm:max-w-none sm:tracking-widest',
+            'min-w-0 max-w-[38%] truncate text-left text-[11px] font-semibold uppercase tracking-wide text-foreground/75 sm:max-w-none sm:tracking-widest',
+            balancoDia && 'max-w-[28%] sm:max-w-none',
             labelClassName,
           )}
         >
           {label}
         </p>
         <div className="flex min-w-0 shrink items-center gap-1 sm:gap-1.5">
-          {showBreakdown && receitas > 0 && (
-            <span className="hidden text-[11px] font-semibold tabular-nums text-[#4A5D23] sm:inline dark:text-[#a4ce33]">
-              +{formatFinanceiroValor(receitas)}
-            </span>
+          {balancoDia ? (
+            balancoDiaNode
+          ) : (
+            <>
+              {showBreakdown && receitas > 0 && (
+                <span className="hidden text-[11px] font-semibold tabular-nums text-[#4A5D23] sm:inline dark:text-[#a4ce33]">
+                  +{formatFinanceiroValor(receitas)}
+                </span>
+              )}
+              {showBreakdown && despesas > 0 && (
+                <span className={cn('hidden text-[11px] font-semibold tabular-nums sm:inline', negClass)}>
+                  −{formatFinanceiroValor(despesas)}
+                </span>
+              )}
+              {saldoNode}
+            </>
           )}
-          {showBreakdown && despesas > 0 && (
-            <span className={cn('hidden text-[11px] font-semibold tabular-nums sm:inline', negClass)}>
-              −{formatFinanceiroValor(despesas)}
-            </span>
-          )}
-          <span
-            className={cn(
-              'shrink-0 text-[11px] font-bold tabular-nums',
-              liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass,
-            )}
-          >
-            {liquido >= 0 ? '+' : '−'}
-            {formatFinanceiroValor(Math.abs(liquido))}
-          </span>
           <ChevronRight
             className={cn('h-3 w-3 shrink-0 text-foreground/50 transition-transform', open && 'rotate-90')}
           />
