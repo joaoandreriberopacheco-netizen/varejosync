@@ -188,11 +188,30 @@ export async function fetchLogisticaEventosList() {
   return unifyLogisticaEventos(sandboxFallback, prodFallback);
 }
 
+/** Lista ampla para seletor de viagem (despacho) — sem janela de datas, como antes do React Query. */
+export async function fetchLogisticaEventosSelectorList() {
+  const [fromSandbox, fromProd] = await Promise.all([
+    base44.entities.EventoLogisticoSandbox.list('-data_saida_origem', 500).catch(() => []),
+    base44.entities.EventosLogisticos.list('-created_date', 300).catch(() => []),
+  ]);
+  return unifyLogisticaEventos(fromSandbox, fromProd);
+}
+
 export function useLogisticaEventosQuery(options = {}) {
   return useQuery({
     queryKey: p38Keys.logistica.eventos(),
     queryFn: () => fetchLogisticaEventosList(),
     ...entityQueryDefaults,
+    ...options,
+  });
+}
+
+export function useLogisticaEventosSelectorQuery(options = {}) {
+  return useQuery({
+    queryKey: [...p38Keys.logistica.eventos(), 'selector'],
+    queryFn: fetchLogisticaEventosSelectorList,
+    ...entityQueryDefaults,
+    refetchOnMount: 'always',
     ...options,
   });
 }

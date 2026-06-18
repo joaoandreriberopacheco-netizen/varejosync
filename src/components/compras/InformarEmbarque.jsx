@@ -208,6 +208,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   const [transportadoras, setTransportadoras] = useState([]);
   const [eventosLogisticos, setEventosLogisticos] = useState([]);
   const [eventoLogisticoId, setEventoLogisticoId] = useState('');
+  const [eventoVinculado, setEventoVinculado] = useState(null);
   const [transportadoraId, setTransportadoraId] = useState('');
   const [dataDespacho, setDataDespacho] = useState('');
   const [eta, setEta] = useState('');
@@ -222,10 +223,10 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   const [fornecedorLocal, setFornecedorLocal] = useState({ id: '', nome: '' });
   const [podeEscolherFornecedor, setPodeEscolherFornecedor] = useState(false);
 
-  const eventoSelecionado = useMemo(
-    () => eventosLogisticos.find((evento) => evento.id === eventoLogisticoId) || null,
-    [eventosLogisticos, eventoLogisticoId]
-  );
+  const eventoSelecionado = useMemo(() => {
+    if (eventoVinculado && eventoVinculado.id === eventoLogisticoId) return eventoVinculado;
+    return eventosLogisticos.find((evento) => evento.id === eventoLogisticoId) || eventoVinculado || null;
+  }, [eventosLogisticos, eventoLogisticoId, eventoVinculado]);
 
   const jaEmbarcado = useMemo(() =>
     calcularJaEmbarcadoSemEmbarque(pedido, embarqueExistente?.id),
@@ -235,6 +236,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
   useEffect(() => {
     if (!isOpen) {
       setShowTripSelector(false);
+      setEventoVinculado(null);
       return;
     }
     if (!pedido) return;
@@ -274,6 +276,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
       setDataDespacho(dataHoje());
       setTransportadoraId('');
       setEventoLogisticoId('');
+      setEventoVinculado(null);
       setEta('');
       setVolumes([]);
       setObservacoes('');
@@ -328,6 +331,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
 
   const handleSelectTrip = (evento) => {
     logDespachoAudit({ action: 'viagem_selecionada', eventoId: evento?.id, codigo: evento?.codigo });
+    setEventoVinculado(evento || null);
     setEventoLogisticoId(evento?.id || '');
     setTransportadoraId(evento?.transportadora_id || '');
     const dataSaida = evento?.data_saida_origem || evento?.data_referencia;
@@ -714,7 +718,7 @@ export default function InformarEmbarque({ pedido, isOpen, onClose, onSuccess, o
                       <p className="text-xs text-muted-foreground">
                         Ao escolher a viagem, datas e transportadora foram preenchidas; você pode ajustar manualmente.
                       </p>
-                      <button type="button" onClick={() => setEventoLogisticoId('')} className="shrink-0 text-xs text-teal-400 hover:text-teal-300">
+                      <button type="button" onClick={() => { setEventoLogisticoId(''); setEventoVinculado(null); }} className="shrink-0 text-xs text-teal-400 hover:text-teal-300">
                         Limpar vínculo
                       </button>
                     </div>

@@ -2,14 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import {
-  useLogisticaContasPrevistasQuery,
   useLogisticaEmbarquesQuery,
-  useLogisticaEventosQuery,
+  useLogisticaEventosSelectorQuery,
+  useLogisticaLancamentosFretesQuery,
 } from '@/hooks/useP38Entities';
 import { addDays, format, isSameDay, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowLeft, Anchor, Check, Sliders } from 'lucide-react';
-import { buildFluvialEvents, formatDate, getLinkedIndicatorStyle } from '@/components/logistica-sandbox/fluvialDataUtils';
+import { buildFluvialEvents, formatDate, getFluvialViewDate, getLinkedIndicatorStyle } from '@/components/logistica-sandbox/fluvialDataUtils';
 import ItinerarioMobileTopTabs from '@/components/logistica-sandbox/mobile/ItinerarioMobileTopTabs';
 import FluvialSearchBar from '@/components/logistica-sandbox/mobile/FluvialSearchBar';
 import FluvialExpandableFilters from '@/components/logistica-sandbox/FluvialExpandableFilters';
@@ -30,13 +30,17 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
   const [onlyLinked, setOnlyLinked] = useState(false);
   const todayRef = useRef(null);
 
-  const { data: eventosLogisticos = [] } = useLogisticaEventosQuery({
+  const { data: eventosLogisticos = [], isPending: eventosPending } = useLogisticaEventosSelectorQuery({
+    initialData: [],
     enabled: open,
   });
   const { data: embarques = [] } = useLogisticaEmbarquesQuery({ initialData: [], enabled: open });
-  const { data: contasPrevistas = [] } = useLogisticaContasPrevistasQuery({ initialData: [], enabled: open });
+  const { data: lancamentosFinanceiros = [] } = useLogisticaLancamentosFretesQuery({ initialData: [], enabled: open });
 
-  const eventosBase = useMemo(() => buildFluvialEvents({ eventosLogisticos, embarques, contasPrevistas }), [eventosLogisticos, embarques, contasPrevistas]);
+  const eventosBase = useMemo(
+    () => buildFluvialEvents({ eventosLogisticos, embarques, lancamentosFinanceiros }),
+    [eventosLogisticos, embarques, lancamentosFinanceiros],
+  );
 
   const eventos = useMemo(() => {
     const simulationBaseDate = new Date(`${simulationDate}T12:00:00`);
@@ -75,21 +79,15 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
 
 
   const groupedEventos = useMemo(() => {
-    const targetDate = new Date(1980, 0, 1);
-    const endDate = new Date(2099, 11, 31);
-
-    const getViewDate = (evento) => {
-      if (viewMode === 'chegada_tabatinga') return evento.data_chegada_destino;
-      if (viewMode === 'saida_manaus') return evento.data_saida_origem;
-      return evento.data_chegada_manaus;
-    };
-
     return eventos
-      .map((evento) => ({
-        ...evento,
-        visualizacao_data: getViewDate(evento),
-        visualizacao_data_formatada: formatDate(getViewDate(evento))
-      }))
+      .map((evento) => {
+        const viewDate = getFluvialViewDate(evento, viewMode);
+        return {
+          ...evento,
+          visualizacao_data: viewDate,
+          visualizacao_data_formatada: formatDate(viewDate),
+        };
+      })
       .filter((evento) => {
         if (!evento.visualizacao_data) return false;
         if (onlyLinked && !evento.tem_embarques_relacionados) return false;
@@ -102,7 +100,7 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
         acc[key].push(evento);
         return acc;
       }, {});
-  }, [eventos, simulationDate, periodRange, viewMode, onlyLinked, searchQuery]);
+  }, [eventos, viewMode, onlyLinked, searchQuery]);
 
   const timelineItems = useMemo(() => {
     return Object.entries(groupedEventos)
@@ -235,6 +233,8 @@ export default function FluvialTripSelectorFullscreen({ open, onClose, onSelect 
                 </div>
               ))}
             </div>
+          ) : eventosPending ? (
+            <div className="rounded-3xl bg-card shadow-sm p-5 text-sm text-muted-foreground mt-2">Carregando viagens…</div>
           ) : (
             <div className="rounded-3xl bg-card shadow-sm p-5 text-sm text-muted-foreground mt-2">Nenhuma viagem encontrada neste período.</div>
           )}
