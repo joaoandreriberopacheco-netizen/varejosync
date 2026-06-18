@@ -521,7 +521,7 @@ export function GestaoContasPane() {
       </Dialog>
 
       <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
-        <DialogContent className="flex h-[85vh] max-h-[90vh] w-[calc(100vw-1rem)] max-w-3xl flex-col overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
+        <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
           <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
             <DialogTitle className="flex items-center gap-2 text-foreground">
               <ArrowRightLeft className="h-5 w-5 text-amber-500" />

@@ -441,8 +441,9 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
   }
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-hidden">
-      <div className="bg-muted/50/50 rounded-2xl p-4 mb-4 flex items-start gap-3 border border-border/40">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="shrink-0 space-y-3 pb-3">
+      <div className="bg-muted/50/50 rounded-2xl p-4 flex items-start gap-3 border border-border/40">
         <Info className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
         <div className="text-sm text-muted-foreground">
           <p className="font-medium mb-1 text-foreground/90">
@@ -456,7 +457,7 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
         </div>
       </div>
 
-      <div className="mb-3 space-y-3 rounded-2xl border border-border/40 bg-card/60 p-3">
+      <div className="max-h-[min(34vh,15rem)] space-y-3 overflow-y-auto overscroll-contain rounded-2xl border border-border/40 bg-card/60 p-3 [scrollbar-gutter:stable]">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap gap-1.5">
             <button
@@ -534,9 +535,10 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
           </div>
         )}
       </div>
+      </div>
 
       {modoCorrigirData && (
-        <div className="mb-3 rounded-xl border border-border/40 bg-card/60 p-3">
+        <div className="shrink-0 mb-3 rounded-xl border border-border/40 bg-card/60 p-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-semibold text-foreground">{corrigirTitulo}</p>
@@ -566,7 +568,8 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3 mb-3 px-1">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex shrink-0 items-center justify-between gap-3 px-1 pb-2">
         <div>
           <p className="text-xs font-semibold text-foreground/90">{contaNome || 'Todas as contas'}</p>
           <p className="text-[11px] text-muted-foreground">
@@ -582,7 +585,7 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
         )}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 pb-4">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
         {grupos.map(([data, items]) => {
           const totalGrupo = items.reduce((s, l) => s + (l.valor_liquido || l.valor || 0), 0);
           const idsDaData = items.map((l) => l.id);
@@ -682,9 +685,10 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
           );
         })}
       </div>
+      </div>
 
       {selecionados.length > 0 && !modoCorrigirData && !mostrarConciliados && (
-        <div className="bg-primary dark:bg-muted rounded-2xl p-4 flex items-center justify-between gap-4 shadow-lg">
+        <div className="mt-3 shrink-0 rounded-2xl border border-border/40 bg-primary p-4 shadow-lg dark:bg-muted flex items-center justify-between gap-4">
           <div className="text-white">
             <p className="text-xs text-muted-foreground dark:text-muted-foreground">
               {selecionados.length} selecionado{selecionados.length > 1 ? 's' : ''}
@@ -705,12 +709,12 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
       )}
 
       <Dialog open={dialogConfirm} onOpenChange={setDialogConfirm}>
-        <DialogContent className="dark:bg-muted dark:border-border/40 max-w-sm">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[min(92vh,36rem)] w-[calc(100vw-1rem)] max-w-sm flex-col gap-0 overflow-hidden p-0 dark:border-border/40 dark:bg-muted">
+          <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
             <DialogTitle className="text-foreground">Confirmar Conciliação</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-2 [scrollbar-gutter:stable]">
             <div className="bg-muted/40 dark:bg-muted rounded-xl p-3 space-y-1">
               <p className="text-xs text-muted-foreground">
                 {selecionados.length} lançamento{selecionados.length > 1 ? 's' : ''} selecionado
@@ -770,7 +774,7 @@ export default function ConciliacaoBancaria({ contaId, contaNome, onClose, onCon
             )}
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="shrink-0 gap-2 border-t border-border/40 px-6 py-4">
             <Button
               variant="outline"
               onClick={() => setDialogConfirm(false)}
