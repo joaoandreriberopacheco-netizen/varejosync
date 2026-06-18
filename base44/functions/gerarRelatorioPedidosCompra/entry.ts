@@ -854,7 +854,8 @@ const getStatusColors = (status) => {
 
 const normalizeReportVersion = (version) => {
   if (version === 'mobile_com_alma') return 'expandida_mobile';
-  if (version === 'compacta') return 'expandida';
+  if (version === 'compacta') return 'expandida_enxuta';
+  if (version === 'expandida_enxuta') return 'expandida_enxuta';
   if (version === 'expandida_mobile') return 'expandida_mobile';
   if (version === 'expandida') return 'expandida';
   return 'expandida';
@@ -877,6 +878,7 @@ Deno.serve(async (req) => {
     const normalizedVersion = normalizeReportVersion(version);
 
     const isMobile = normalizedVersion === 'expandida_mobile';
+    const isEnxuta = normalizedVersion === 'expandida_enxuta';
 
     // Carregar apenas produtos realmente usados no relatório
     const produtoIds = [...new Set(
@@ -985,6 +987,27 @@ Deno.serve(async (req) => {
     //  HEADER
     // ════════════════════════════════════════════════════════════════════════
     const drawHeader = () => {
+      if (isEnxuta) {
+        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setFontSize(12);
+        doc.setTextColor(...C.text);
+        doc.text('Relatorio de embarques (enxuto)', M, y);
+        y += 5;
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(8);
+        doc.setTextColor(...C.muted);
+        const filtrosLinhas = doc.splitTextToSize(safe(filtros_desc || '-'), CW);
+        doc.text(filtrosLinhas[0] || '-', M, y);
+        y += 4;
+        doc.setFontSize(7);
+        doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M, y);
+        y += 3;
+        doc.setDrawColor(220, 220, 220);
+        doc.line(M, y, M + CW, y);
+        y += 5;
+        return;
+      }
+
       if (isMobile) {
         // Header mobile: hierarquia clara, filtros em até 3 linhas, tipografia legível no celular
         let hy = 12;
@@ -1049,6 +1072,22 @@ Deno.serve(async (req) => {
         { label: 'Pago / nao entregue', value: moeda(kpis.totalPagoNaoEntregue || 0) },
       ];
 
+      if (isEnxuta) {
+        ensureSpace(12);
+        doc.setFontSize(7.5);
+        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setTextColor(...C.text);
+        doc.text(`Pedidos: ${kpis.totalPedidos || pedidos.length || 0}`, M, y);
+        doc.text(`Pendente: ${moeda(kpis.totalGeral || 0)}`, M + 46, y);
+        doc.text(`Em aberto: ${moeda(kpis.totalEmAberto || 0)}`, M + 92, y);
+        doc.text(`Pago/nao entregue: ${moeda(kpis.totalPagoNaoEntregue || 0)}`, M + CW, y, { align: 'right' });
+        y += 5;
+        doc.setDrawColor(230, 230, 230);
+        doc.line(M, y, M + CW, y);
+        y += 5;
+        return;
+      }
+
       if (isMobile) {
         const colW = (CW - 3) / 2;
         const cardH = 14.5;
@@ -1097,7 +1136,7 @@ Deno.serve(async (req) => {
     //  GROUP SUMMARY (desktop only)
     // ════════════════════════════════════════════════════════════════════════
     const drawGroupSummary = () => {
-      if (isMobile || !Array.isArray(grupos) || grupos.length === 0) return;
+      if (isMobile || isEnxuta || !Array.isArray(grupos) || grupos.length === 0) return;
       ensureSpace(20);
       doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
       doc.setFontSize(9);
@@ -1249,7 +1288,7 @@ Deno.serve(async (req) => {
         qtdColRight,
         nomeMaxW: M + CW - itemMl - 3,
         contentRight: M + CW,
-        vs: 1.35,
+        vs: isEnxuta ? 1.18 : 1.35,
         fontScale: 1.05,
         lineWidth: 2.5,
         useZebra: false,
@@ -1725,6 +1764,96 @@ Deno.serve(async (req) => {
     };
 
     // ════════════════════════════════════════════════════════════════════════
+    //  ENXUTO A4: faixas estilo fluxo de caixa + itens empilhados (mobile)
+    // ════════════════════════════════════════════════════════════════════════
+    const drawEnxuto = (pedido) => {
+      const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
+      const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
+      const sc = getStatusColors(statusRelatorio);
+      const itens = mapItensRelatorioComercial(pedido);
+
+      const valorHeader = isPendencia
+        ? moeda(itens.reduce((a, i) => {
+            const prod = produtosMap[i.produto_id] || {};
+            const met = resolveMetricasItemPdf(i, prod, pedido);
+            return a + met.totalLinha;
+          }, 0))
+        : moeda(getValorRelatorio(pedido, produtosMap));
+
+      const totalQtdExp = itens.reduce((a, i) => a + (Number(i._qtdEfetiva) || 0), 0);
+      const countLabel = isPendencia
+        ? `${itens.length} item(ns) pendente(s)`
+        : `${itens.length} item(ns) · ${fmtQuantidadePdf(totalQtdExp)} un.`;
+
+      const bandH = 6.5;
+      const metaH = 4.5;
+      const progH = 2.5;
+      const headerBlockH = bandH + 1.5 + metaH + progH;
+      const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], 'narrow', 0) : 0;
+      ensureSpace(headerBlockH + 2 + minPrimeiroItemH + 6);
+
+      doc.setFillColor(248, 250, 252);
+      doc.rect(M, y, CW, bandH, 'F');
+      doc.setFillColor(...sc.dot);
+      doc.rect(M, y, 1.2, bandH, 'F');
+
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(8);
+      doc.setTextColor(...SLATE900);
+      const codigo = safe(getPedidoNumeroRelatorio(pedido)).slice(0, 20);
+      const forn = getFornecedorRelatorio(pedido).slice(0, 38);
+      doc.text(`${codigo} · ${forn}`, M + 3, y + 4.2);
+
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(7);
+      doc.setTextColor(...sc.pillText);
+      doc.text(safe(statusRelatorio), M + CW * 0.52, y + 4.2);
+
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(8.5);
+      doc.setTextColor(...SLATE900);
+      doc.text(valorHeader, M + CW - 2, y + 4.2, { align: 'right' });
+
+      y += bandH + 1.5;
+
+      const metaTexto = `${dataFmt(getDataRelatorio(pedido))} · ETA ${dataFmt(getEtaRelatorio(pedido))} · ${getOrdinalRelatorio(pedido)} · ${countLabel}`;
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(6.8);
+      doc.setTextColor(...SLATE500);
+      doc.text(metaTexto, M + 2, y + 3);
+      y += metaH;
+
+      drawProgressBar(statusRelatorio, y);
+      y += progH + 1;
+
+      let totCusto = 0;
+      let totVenda = 0;
+      itens.forEach((item) => {
+        const rowH = computeExpandedItemRowH(pedido, item, 'narrow', y);
+        ensureSpace(rowH + 4);
+        const drawn = drawExpandedItemRowClean(pedido, item, 'narrow', y, 0);
+        totCusto += drawn.totCustoAdd;
+        totVenda += drawn.totVendaAdd;
+        y += drawn.rowBlockH;
+      });
+
+      if (itens.length > 0) {
+        ensureSpace(6);
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.15);
+        doc.line(M, y, M + CW, y);
+        y += 3.5;
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(6.8);
+        doc.setTextColor(...SLATE500);
+        doc.text(`Custo: ${moedaOuTraco(totCusto)} · Venda ref.: ${moeda(totVenda)}`, M + 2, y);
+        y += 4;
+      }
+
+      y += 2;
+    };
+
+    // ════════════════════════════════════════════════════════════════════════
     //  RENDER PRINCIPAL
     // ════════════════════════════════════════════════════════════════════════
     drawHeader();
@@ -1733,6 +1862,7 @@ Deno.serve(async (req) => {
 
     const renderPedido = (pedido) => {
       if (isMobile)              return drawMobileCard(pedido);
+      if (isEnxuta)              return drawEnxuto(pedido);
       return drawExpandido(pedido);
     };
 
@@ -1753,6 +1883,21 @@ Deno.serve(async (req) => {
         doc.setTextColor(...SLATE500);
         doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW - 3, y + 5.5, { align: 'right' });
         y += bandH + 3;
+      } else if (isEnxuta) {
+        ensureSpace(12);
+        const bandH = 7;
+        const totalGrupo = (grupo.pedidos || []).reduce((a, p) => a + getValorRelatorio(p, produtosMap), 0);
+        doc.setFillColor(245, 245, 245);
+        doc.rect(M, y, CW, bandH, 'F');
+        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setFontSize(7.5);
+        doc.setTextColor(...SLATE900);
+        doc.text(safe(grupo.label || '-'), M + 2, y + 4.8);
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(7);
+        doc.setTextColor(...SLATE500);
+        doc.text(`${(grupo.pedidos || []).length} ped. · ${moeda(totalGrupo)}`, M + CW - 2, y + 4.8, { align: 'right' });
+        y += bandH + 2;
       } else {
         ensureSpace(GROUP_AGRUPAMENTO_TO_CARD_GAP_MM + 12);
         y += GROUP_AGRUPAMENTO_TO_CARD_GAP_MM / 2;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2 } from 'lucide-react';
+import { Plus, FileText, X, Download, Send, CheckSquare, FileSpreadsheet, Smartphone, Loader2, List } from 'lucide-react';
 import { gerarRelatorioPedidosCompra } from '@/functions/gerarRelatorioPedidosCompra';
 import { toast } from 'sonner';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -125,6 +125,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
   const [gerando, setGerando] = useState(null);
   const getActionVersion = (label) => {
     if (label === 'PDF expandido') return 'expandida';
+    if (label === 'PDF enxuto') return 'expandida_enxuta';
     if (label === 'PDF mobile') return 'expandida_mobile';
     return null;
   };
@@ -221,6 +222,13 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
       icon: <FileSpreadsheet className="w-5 h-5" />,
       label: 'PDF expandido',
       onClick: () => handleGerarRelatorio('expandida'),
+      color: 'bg-card dark:bg-muted text-foreground/90',
+      disabled: !!gerando,
+    },
+    {
+      icon: <List className="w-5 h-5" />,
+      label: 'PDF enxuto',
+      onClick: () => handleGerarRelatorio('expandida_enxuta'),
       color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
     },
