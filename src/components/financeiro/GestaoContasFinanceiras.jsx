@@ -581,9 +581,16 @@ export default function GestaoContasFinanceiras() {
 
 /** Provider + painel para embutir no módulo Financeiro (ExecucaoOrcamentaria). */
 export function GestaoContasEmbedded({ active, shared, children }) {
+  if (shared) {
+    return (
+      <GestaoContasProvider shared={shared}>
+        {children}
+      </GestaoContasProvider>
+    );
+  }
   if (!active) return <>{children}</>;
   return (
-    <GestaoContasProvider shared={shared}>
+    <GestaoContasProvider>
       {children}
     </GestaoContasProvider>
   );

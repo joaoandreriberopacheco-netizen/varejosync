@@ -11,12 +11,12 @@ export default function ListaLancamentos({ grupos, loading, onRow }) {
       vazioMensagem="Nenhum lançamento encontrado"
       vazioIcon={Scale}
     >
-      {grupos.map(({ k, label, items, totais }) => (
+      {grupos.map(({ k, label, items, totais = {} }) => (
         <FinanceiroGrupo
           key={k}
           label={label}
           balancoDia
-          liquido={totais.liquido}
+          liquido={totais.liquido ?? 0}
           saldoAcumulado={totais.saldoAcumulado}
         >
           {items.map((l, index) => (

@@ -597,6 +597,13 @@ function ContasAbertasInnerProvider({ onOpenImportador, shared, children }) {
 
 /** Ativa dados só na aba Contas a pagar; reutiliza lançamentos do Fluxo quando disponíveis. */
 export function ContasAbertasProvider({ active, onOpenImportador, shared, children }) {
+  if (shared) {
+    return (
+      <ContasAbertasInnerProvider onOpenImportador={onOpenImportador} shared={shared}>
+        {children}
+      </ContasAbertasInnerProvider>
+    );
+  }
   if (!active) return <>{children}</>;
   return (
     <ContasAbertasInnerProvider onOpenImportador={onOpenImportador} shared={shared}>

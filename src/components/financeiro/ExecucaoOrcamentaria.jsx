@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
@@ -102,8 +102,9 @@ export default function ExecucaoOrcamentaria() {
   const [fabOpen, setFabOpen] = useState(false);
   const [novoTipo, setNovoTipo] = useState('Despesa');
   const [detalhe, setDetalhe] = useState(null);
-  const [conciliacaoConta, setConciliacaoConta] = useState(false);
+  const [conciliacaoConta, setConciliacaoConta] = useState(null);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'contas'
   const [abaContas, setAbaContas] = useState('contas');
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
   const [showNovoFluxo, setShowNovoFluxo] = useState(false);
@@ -116,6 +117,7 @@ export default function ExecucaoOrcamentaria() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('aba') === 'agefin') {
+      setAba('contas');
       setAbaContas('agefin');
       params.delete('aba');
       const next = params.toString();
@@ -317,7 +319,13 @@ export default function ExecucaoOrcamentaria() {
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || !!search;
 
-  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'contas'
+  const abrirConciliacao = useCallback((conta) => {
+    if (conta === null) {
+      setConciliacaoConta({ id: null, nome: 'Todas as contas' });
+      return;
+    }
+    setConciliacaoConta(conta);
+  }, []);
 
   const periodoLabel = useMemo(() => {
     if (periodo === 'tudo') return 'Todo o período';
@@ -511,7 +519,7 @@ export default function ExecucaoOrcamentaria() {
             onPendentes={setPendentes}
             cmvOnly={cmvOnly}
             onCmvOnly={setCmvOnly}
-            onOpenConciliacao={setConciliacaoConta}
+            onOpenConciliacao={abrirConciliacao}
             conciliacaoPendente={totalPend}
             ordemLancamentos={ordemLancamentos}
             onOrdemLancamentosChange={setOrdemLancamentos}
@@ -603,7 +611,7 @@ export default function ExecucaoOrcamentaria() {
             periodoLabel={periodoLabel}
           />
 
-          <Dialog open={conciliacaoConta !== false} onOpenChange={(open) => !open && setConciliacaoConta(false)}>
+          <Dialog open={conciliacaoConta != null} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
             <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
               <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
                 <DialogTitle className="text-foreground">Conciliação em lote — {conciliacaoConta?.nome || 'Todas as contas'}</DialogTitle>
@@ -612,10 +620,10 @@ export default function ExecucaoOrcamentaria() {
                 <ConciliacaoBancaria
                   contaId={conciliacaoConta?.id || null}
                   contaNome={conciliacaoConta?.nome || 'Todas as contas'}
-                  onClose={() => setConciliacaoConta(false)}
+                  onClose={() => setConciliacaoConta(null)}
                   onConciliado={() => {
                     load();
-                    setConciliacaoConta(false);
+                    setConciliacaoConta(null);
                   }}
                 />
               </div>
