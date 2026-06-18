@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { addWeeks, addMonths, addYears, format } from 'date-fns';
 import { dataHoje, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
 import { formatarCodigoLancamentoLegivel } from '@/lib/financialUtils';
+import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import RecorrenciaConfig from './fluxo/RecorrenciaConfig';
 import TagsInput from './fluxo/TagsInput';
@@ -140,8 +141,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       const contaDest = contas.find(c => c.id === contaDestinoId);
       await base44.entities.LancamentoFinanceiro.create({ ...metaDataLancamento(), tipo: 'Despesa', descricao: `Transferência para ${contaDest?.nome}`, valor: valorNumerico, data_vencimento: data, data_pagamento: data, status: 'Pago', status_conciliacao: 'N/A', categoria: 'Transferência entre Contas', conta_financeira_id: contaId, conta_financeira_nome: conta?.nome, referencia_tipo: 'Manual' });
       await base44.entities.LancamentoFinanceiro.create({ ...metaDataLancamento(), tipo: 'Receita', descricao: `Transferência de ${conta?.nome}`, valor: valorNumerico, data_vencimento: data, data_pagamento: data, status: 'Pago', status_conciliacao: 'N/A', categoria: 'Transferência entre Contas', conta_financeira_id: contaDestinoId, conta_financeira_nome: contaDest?.nome, referencia_tipo: 'Manual' });
-      await base44.entities.ContasFinanceiras.update(contaId, { saldo_atual: (conta?.saldo_atual || 0) - valorNumerico });
-      await base44.entities.ContasFinanceiras.update(contaDestinoId, { saldo_atual: (contas.find(c => c.id === contaDestinoId)?.saldo_atual || 0) + valorNumerico });
+      await sincronizarSaldosAposAlteracao(base44, [contaId, contaDestinoId]);
     } else if (isRecorrente && frequencia) {
       const grupoId = gerarGrupoId();
       const baseDate = new Date(`${data}T12:00:00Z`);
@@ -199,8 +199,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
       await base44.entities.LancamentoFinanceiro.bulkCreate(lotes);
       if (isPago && conta) {
-        const delta = tipo === 'Receita' ? valorNumerico : -valorNumerico;
-        await base44.entities.ContasFinanceiras.update(conta.id, { saldo_atual: (conta.saldo_atual || 0) + delta });
+        await sincronizarSaldosAposAlteracao(base44, [conta.id]);
       }
     } else {
       const isPago = status === 'Pago';
@@ -218,8 +217,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         pedido_compra_vinculado_numero: pedidoCompra?.numero,
       });
       if (isPago && conta) {
-        const delta = tipo === 'Receita' ? valorNumerico : -valorNumerico;
-        await base44.entities.ContasFinanceiras.update(conta.id, { saldo_atual: (conta.saldo_atual || 0) + delta });
+        await sincronizarSaldosAposAlteracao(base44, [conta.id]);
       }
       setLancamentoCriado(novoLancamento);
       lancamentoParaCallback = novoLancamento;

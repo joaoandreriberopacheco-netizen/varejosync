@@ -32,12 +32,11 @@ const FORM_VAZIO = {
   ativo: true,
 };
 
-function useGestaoContasModel() {
-  const [accounts, setAccounts] = useState([]);
-  const [lancamentos, setLancamentos] = useState([]);
-  const [movimentosCaixa, setMovimentosCaixa] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [pendenciasConciliacao, setPendenciasConciliacao] = useState({});
+function useGestaoContasModel(shared) {
+  const [accountsLocal, setAccountsLocal] = useState([]);
+  const [lancamentosLocal, setLancamentosLocal] = useState([]);
+  const [movimentosLocal, setMovimentosLocal] = useState([]);
+  const [loadingLocal, setLoadingLocal] = useState(!shared);
   const [search, setSearch] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState('todos');
   const [statusFiltro, setStatusFiltro] = useState('ativas');
@@ -52,36 +51,47 @@ function useGestaoContasModel() {
   const [ajusteDialogOpen, setAjusteDialogOpen] = useState(false);
   const [formData, setFormData] = useState(FORM_VAZIO);
 
+  const accounts = shared?.contas ?? accountsLocal;
+  const lancamentos = shared?.lancs ?? lancamentosLocal;
+  const movimentosCaixa = shared?.movimentos ?? movimentosLocal;
+  const loading = shared ? shared.loading : loadingLocal;
+
   const loadData = useCallback(async () => {
-    setLoading(true);
+    if (shared?.reload) {
+      await shared.reload();
+      return;
+    }
+    setLoadingLocal(true);
     try {
-      const [contas, pendConciliacao, lancs, movs] = await Promise.all([
+      const [contas, lancs, movs] = await Promise.all([
         base44.entities.ContasFinanceiras.list(),
-        base44.entities.LancamentoFinanceiro.filter({ status_conciliacao: 'Pendente' }),
         base44.entities.LancamentoFinanceiro.list(),
         base44.entities.MovimentosCaixa.list(),
       ]);
-      setAccounts(contas);
-      setLancamentos(lancs);
-      setMovimentosCaixa(movs);
-
-      const mapa = {};
-      pendConciliacao.forEach((l) => {
-        if (l.conta_financeira_id) {
-          mapa[l.conta_financeira_id] = (mapa[l.conta_financeira_id] || 0) + 1;
-        }
-      });
-      setPendenciasConciliacao(mapa);
+      setAccountsLocal(contas);
+      setLancamentosLocal(lancs);
+      setMovimentosLocal(movs);
     } catch (error) {
       console.error('Erro ao carregar contas:', error);
     } finally {
-      setLoading(false);
+      setLoadingLocal(false);
     }
-  }, []);
+  }, [shared]);
 
   useEffect(() => {
+    if (shared) return;
     loadData();
-  }, [loadData]);
+  }, [shared, loadData]);
+
+  const pendenciasConciliacao = useMemo(() => {
+    const mapa = {};
+    lancamentos.forEach((l) => {
+      if (l.status_conciliacao === 'Pendente' && l.conta_financeira_id) {
+        mapa[l.conta_financeira_id] = (mapa[l.conta_financeira_id] || 0) + 1;
+      }
+    });
+    return mapa;
+  }, [lancamentos]);
 
   const saldosCalculados = useMemo(
     () => calcularSaldosTodasContas(accounts, lancamentos, movimentosCaixa),
@@ -254,8 +264,8 @@ function useGestaoContasModel() {
   };
 }
 
-function GestaoContasProvider({ children }) {
-  const value = useGestaoContasModel();
+function GestaoContasProvider({ shared, children }) {
+  const value = useGestaoContasModel(shared);
   return <GestaoContasCtx.Provider value={value}>{children}</GestaoContasCtx.Provider>;
 }
 
@@ -570,10 +580,10 @@ export default function GestaoContasFinanceiras() {
 }
 
 /** Provider + painel para embutir no módulo Financeiro (ExecucaoOrcamentaria). */
-export function GestaoContasEmbedded({ active, children }) {
+export function GestaoContasEmbedded({ active, shared, children }) {
   if (!active) return <>{children}</>;
   return (
-    <GestaoContasProvider>
+    <GestaoContasProvider shared={shared}>
       {children}
     </GestaoContasProvider>
   );

@@ -10,6 +10,11 @@ import {
   projetarLinhaFluxoCaixa,
   totaisGrupoFluxoCaixa,
 } from '@/lib/saldoContaFinanceira';
+import {
+  getDataAncoraFluxoKey,
+  isLancamentoCancelado,
+  isLancamentoRealizadoFluxo,
+} from '@/lib/lancamentoFinanceiroStatus';
 
 function totaisDiaFromGrupo(totaisGrupo) {
   return {
@@ -36,15 +41,9 @@ export function liquidoFluxoCaixaAposDia({
   const aposDia = (dataKey) => dataKey && dataKey > diaLimite;
 
   const lancsDepois = lancamentos.filter((l) => {
-    if (l.status === 'Cancelado') return false;
-    const cartaoCreditoPendente =
-      l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
-    const realizado = l.status === 'Pago' || !!l.data_pagamento;
-    if (!realizado && !cartaoCreditoPendente) return false;
-    const dataAncora = cartaoCreditoPendente
-      ? l.data_liquidacao_prevista || l.data_vencimento
-      : l.data_pagamento || l.data_vencimento;
-    const dataKey = dataAncora ? toLocalDateKey(dataAncora) : null;
+    if (isLancamentoCancelado(l)) return false;
+    if (!isLancamentoRealizadoFluxo(l)) return false;
+    const dataKey = getDataAncoraFluxoKey(l);
     if (!aposDia(dataKey)) return false;
     if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
     return true;

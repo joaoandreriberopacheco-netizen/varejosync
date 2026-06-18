@@ -29,6 +29,13 @@ import CorrigirDataLoteDialog from './CorrigirDataLoteDialog';
 import { useToast } from '@/components/ui/use-toast';
 import { CONCILIACAO_LOTE_TAMANHO, processarEmLotes } from '@/lib/conciliacaoEmLote';
 import {
+  isLancamentoEmAberto,
+  isLancamentoPago,
+  isLancamentoVencido,
+  lancamentoPassaFiltroContasAbertas,
+} from '@/lib/lancamentoFinanceiroStatus';
+import { sincronizarSaldosContasFinanceiras } from '@/lib/sincronizarSaldoContasFinanceiras';
+import {
   dataFinanceiraKey,
   hojeFinanceiroStr,
   passaFiltroPeriodo,
@@ -58,14 +65,6 @@ function getDataPagamento(l) {
 
 function getDataCampo(l, campo) {
   return campo === 'pagamento' ? getDataPagamento(l) : getVencimento(l);
-}
-
-function isLancamentoPago(l) {
-  return l?.status === 'Pago' || !!l?.data_pagamento;
-}
-
-function periodoRange(p, cs, ce) {
-  return periodoRangeFinanceiro(p, cs, ce);
 }
 
 function KpiAbertas({ kpis, layout = 'card' }) {
@@ -118,6 +117,10 @@ function KpiAbertas({ kpis, layout = 'card' }) {
   );
 }
 
+function periodoRange(p, cs, ce) {
+  return periodoRangeFinanceiro(p, cs, ce);
+}
+
 // ─── Context (layout espelha Fluxo: KPIs no card; filtros + lista fora) ───────
 const ContasAbertasCtx = createContext(null);
 
@@ -151,13 +154,14 @@ function useContasAbertasModel(onOpenImportador, shared) {
   const [progressoLote, setProgressoLote] = useState({ atual: 0, total: 0 });
 
   const lancs = shared?.lancs ?? lancsLocal;
-  const contas = shared?.contas ?? contasLocal;
+  const contas = shared?.contasAtivas ?? shared?.contas ?? contasLocal;
+  const movimentos = shared?.movimentos ?? [];
+  const todasContas = shared?.contas ?? contas;
   const loading = shared ? shared.loading : loadingLocal;
 
   const load = async () => {
     if (shared?.reload) {
-      await shared.reload();
-      return;
+      return shared.reload();
     }
     setLoadingLocal(true);
     const [ls, cts] = await Promise.all([
@@ -177,10 +181,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
   // Lançamentos não cancelados (inclui pagas se mostrarPagas ativo)
   const emAberto = useMemo(() =>
     lancs.filter(l => {
-      if (l.status === 'Cancelado' || l.tipo === 'Transferência') return false;
-      const temTag = Array.isArray(l.tags) && l.tags.length > 0;
-      const ehContaPagar = Array.isArray(l.tags) && l.tags.includes('conta_pagar');
-      if (temTag && !ehContaPagar) return false;
+      if (!lancamentoPassaFiltroContasAbertas(l)) return false;
       const exigePago = mostrarPagas || campoPeriodo === 'pagamento';
       if (!exigePago && isLancamentoPago(l)) return false;
       if (campoPeriodo === 'pagamento' && !isLancamentoPago(l)) return false;
@@ -216,11 +217,11 @@ function useContasAbertasModel(onOpenImportador, shared) {
     let aReceber = 0, aPagar = 0, qtdReceber = 0, qtdPagar = 0, vencidas = 0, qtdVencidas = 0;
     const hStr = hojeStr();
     // KPIs consideram apenas Em Aberto/Vencido (não as pagas)
-    filtrados.filter(l => !isLancamentoPago(l)).forEach(l => {
+    filtrados.filter((l) => isLancamentoEmAberto(l)).forEach((l) => {
       const vStr = getVencimento(l);
       if (l.tipo === 'Receita') { aReceber += l.valor || 0; qtdReceber++; }
       else { aPagar += l.valor || 0; qtdPagar++; }
-      if (vStr && vStr < hStr) {
+      if (isLancamentoVencido(l, hStr)) {
         vencidas += l.valor || 0;
         qtdVencidas++;
       }
@@ -392,35 +393,20 @@ function useContasAbertasModel(onOpenImportador, shared) {
         throw new Error('Nenhum lançamento foi pago.');
       }
 
-      const contasMutaveis = contas.map((c) => ({ ...c }));
-      const deltaPorConta = {};
+      const contaIdsAfetados = [
+        ...new Set([
+          conta.id,
+          ...sucessos.map((l) => l.conta_financeira_id).filter(Boolean),
+        ]),
+      ];
 
-      for (const lancamento of sucessos) {
-        const valor = lancamento.valor || 0;
-        const contaAnteriorId = lancamento.conta_financeira_id;
-
-        if (contaAnteriorId && contaAnteriorId !== conta.id) {
-          const deltaAnterior = lancamento.tipo === 'Receita' ? -valor : valor;
-          deltaPorConta[contaAnteriorId] = (deltaPorConta[contaAnteriorId] || 0) + deltaAnterior;
-        }
-
-        const deltaDestino = lancamento.tipo === 'Receita' ? valor : -valor;
-        deltaPorConta[conta.id] = (deltaPorConta[conta.id] || 0) + deltaDestino;
-      }
-
-      const contasParaAtualizar = Object.entries(deltaPorConta);
-      for (let i = 0; i < contasParaAtualizar.length; i += CONCILIACAO_LOTE_TAMANHO) {
-        const loteContas = contasParaAtualizar.slice(i, i + CONCILIACAO_LOTE_TAMANHO);
-        await Promise.all(
-          loteContas.map(([idConta, delta]) => {
-            const contaLocal = contasMutaveis.find((c) => c.id === idConta);
-            if (!contaLocal) return Promise.resolve();
-            const novoSaldo = (contaLocal.saldo_atual || 0) + delta;
-            contaLocal.saldo_atual = novoSaldo;
-            return base44.entities.ContasFinanceiras.update(idConta, { saldo_atual: novoSaldo });
-          })
-        );
-      }
+      const snapshot = await load();
+      await sincronizarSaldosContasFinanceiras(base44, {
+        contas: snapshot?.cts ?? todasContas,
+        lancamentos: snapshot?.ls ?? lancs,
+        movimentos: snapshot?.movs ?? movimentos,
+        contaIds: contaIdsAfetados,
+      });
 
       const descricaoSucesso = erros.length > 0
         ? `${sucessos.length} de ${itensLote.length} lançamento(s) pago(s) — ${erros.length} falha(s)`

@@ -8,6 +8,7 @@ import {
   endOfMonth,
   isBefore,
 } from 'date-fns';
+import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
 
 export function parseDataFinanceira(value) {
   if (!value || typeof value !== 'string') return null;
@@ -16,13 +17,15 @@ export function parseDataFinanceira(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+/** Chave YYYY-MM-DD no fuso do negócio (Tabatinga). */
 export function dataFinanceiraKey(value) {
-  const parsed = parseDataFinanceira(value);
-  return parsed ? format(parsed, 'yyyy-MM-dd') : null;
+  if (!value) return null;
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  return toLocalDateKey(value);
 }
 
 export function hojeFinanceiroStr() {
-  return format(new Date(), 'yyyy-MM-dd');
+  return dataHoje();
 }
 
 export function periodoRangeFinanceiro(periodo, cs, ce) {

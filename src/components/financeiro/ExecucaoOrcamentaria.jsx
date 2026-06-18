@@ -11,6 +11,11 @@ import {
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
 import { montarGruposFluxoCaixa, prepararGruposFluxoComSaldoAcumulado } from '@/lib/gruposMovimentacaoConta';
+import {
+  getDataAncoraFluxoKey,
+  isLancamentoCancelado,
+  isLancamentoRealizadoFluxo,
+} from '@/lib/lancamentoFinanceiroStatus';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
@@ -183,7 +188,7 @@ export default function ExecucaoOrcamentaria() {
     try {
       const [ls, cts, movs] = await Promise.all([
         base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
-        base44.entities.ContasFinanceiras.filter({ ativo: true }),
+        base44.entities.ContasFinanceiras.list(),
         base44.entities.MovimentosCaixa.list(),
       ]);
       snapshot = { ls, cts, movs };
@@ -191,19 +196,26 @@ export default function ExecucaoOrcamentaria() {
       setLancs(ls);
       setMovimentos(movs);
       setContas(cts);
-      setContasSel((prev) => (prev.length ? prev : cts.map((c) => c.id)));
+      const ativas = cts.filter((c) => c.ativo !== false);
+      setContasSel((prev) => (prev.length ? prev : ativas.map((c) => c.id)));
     } catch (error) {
       console.error('[Fluxo de Caixa] Erro ao carregar:', error);
     } finally {
       setLoading(false);
     }
 
-    if (!snapshot) return;
+    if (!snapshot) return null;
     try {
       await syncCaixaPDVMaintenance(snapshot.cts, snapshot.movs, snapshot.ls);
+      const [ls2] = await Promise.all([
+        base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
+      ]);
+      setLancs(ls2);
+      return { ...snapshot, ls: ls2 };
     } catch (error) {
       console.error('[Fluxo de Caixa] Erro na manutenção PDV:', error);
     }
+    return snapshot;
   };
 
   const { s: ds, e: de } = useMemo(() => dateRange(periodo, cs, ce), [periodo, cs, ce]);
@@ -214,12 +226,9 @@ export default function ExecucaoOrcamentaria() {
   );
 
   const filtrados = useMemo(() => lancs.filter(l => {
-    if (l.status === 'Cancelado' && !statusSel.includes('Cancelado')) return false;
-    const cartaoCreditoPendente = l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
-    const lancamentoRealizado = l.status === 'Pago' || !!l.data_pagamento;
-    if (!lancamentoRealizado && !cartaoCreditoPendente) return false;
-    const dataAncora = cartaoCreditoPendente ? l.data_liquidacao_prevista || l.data_vencimento : l.data_pagamento || l.data_vencimento;
-    const dataKey = dataAncora ? toLocalDateKey(dataAncora) : null;
+    if (isLancamentoCancelado(l) && !statusSel.includes('Cancelado')) return false;
+    if (!isLancamentoRealizadoFluxo(l)) return false;
+    const dataKey = getDataAncoraFluxoKey(l);
     if ((ds || de) && !dataKey) return false;
     if (ds && dataKey < ds) return false;
     if (de && dataKey > de) return false;
@@ -262,14 +271,14 @@ export default function ExecucaoOrcamentaria() {
     );
     const contasVisiveis = contasSel.length
       ? contas.filter((c) => contasSel.includes(c.id))
-      : contas;
+      : contasAtivas;
     const saldosMap = calcularSaldosTodasContas(contasVisiveis, lancs, movimentos);
     const saldoContas = contasVisiveis.reduce((acc, c) => acc + (saldosMap[c.id] || 0), 0);
     return {
       ...baseKpis,
       saldoContas: roundToTwoDecimals(saldoContas),
     };
-  }, [filtrados, movimentosFiltrados, lancs, contasById, contas, contasSel, movimentos]);
+  }, [filtrados, movimentosFiltrados, lancs, contasById, contas, contasAtivas, contasSel, movimentos]);
 
   const grupos = useMemo(() => {
     const hStr = dataHoje();
@@ -352,10 +361,22 @@ export default function ExecucaoOrcamentaria() {
 
   const contasPagarAtiva = aba === 'contas' && abaContas === 'contas';
   const caixasAtiva = aba === 'caixas';
-  const contasShared = useMemo(
-    () => ({ lancs, contas, loading, reload: load }),
-    [lancs, contas, loading],
+  const contasAtivas = useMemo(
+    () => contas.filter((c) => c.ativo !== false),
+    [contas],
   );
+  const financeiroShared = useMemo(
+    () => ({
+      lancs,
+      movimentos,
+      contas,
+      contasAtivas,
+      loading,
+      reload: load,
+    }),
+    [lancs, movimentos, contas, contasAtivas, loading],
+  );
+  const contasShared = financeiroShared;
 
   const abasPrincipais = [
     { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
@@ -364,7 +385,7 @@ export default function ExecucaoOrcamentaria() {
   ];
 
   return (
-    <GestaoContasEmbedded active={caixasAtiva}>
+    <GestaoContasEmbedded active={caixasAtiva} shared={financeiroShared}>
     <ContasAbertasProvider
       active={contasPagarAtiva}
       shared={contasShared}
@@ -478,7 +499,7 @@ export default function ExecucaoOrcamentaria() {
             customStart={cs}
             customEnd={ce}
             onCustom={(k, v) => (k === 'start' ? setCs(v) : setCe(v))}
-            contas={contas}
+            contas={contasAtivas}
             contasSel={contasSel}
             onContasSel={setContasSel}
             tiposSel={tiposSel}
@@ -504,7 +525,7 @@ export default function ExecucaoOrcamentaria() {
               setCs('');
               setCe('');
               setTiposSel([]);
-              setContasSel(contas.map((conta) => conta.id));
+              setContasSel(contasAtivas.map((conta) => conta.id));
               setStatusSel([]);
               setPendentes(false);
               setCmvOnly(false);

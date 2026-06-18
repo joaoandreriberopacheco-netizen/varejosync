@@ -3,6 +3,7 @@
  */
 
 import { calcTotalItemCompraPedido } from '@/lib/productUnits';
+import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 
 const roundToTwoDecimals = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
@@ -35,9 +36,6 @@ export function calcValorTotalPedidoCompra(pedido = {}) {
   const desconto = Number(pedido.valor_desconto) || 0;
   return roundToTwoDecimals(itens + frete - desconto);
 }
-
-const isLancamentoPago = (l) =>
-  l?.status === 'Pago' || Boolean(l?.data_pagamento);
 
 const statusCancelavel = (l) =>
   l?.status === 'Em Aberto' || l?.status === 'Vencido';
