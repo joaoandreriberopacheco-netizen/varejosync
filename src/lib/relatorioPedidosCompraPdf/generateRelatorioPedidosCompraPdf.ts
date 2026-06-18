@@ -921,9 +921,6 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       pedidoMeta: 8.8,
       colHdr: 8.5,
       nome: 10,
-      values: 8.5,
-      qtd: 9,
-      un: 7.5,
       footer: 8.5,
       warn: 7,
     };
@@ -1427,9 +1424,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
           fontScale: 1,
           branchLen: 2.4,
           nomeFontSize: ENXUTO_FONT.nome,
-          valuesFontSize: ENXUTO_FONT.values,
-          qtdFontSize: ENXUTO_FONT.qtd,
-          unFontSize: ENXUTO_FONT.un,
+          valuesFontSize: ENXUTO_FONT.nome,
+          qtdFontSize: ENXUTO_FONT.nome,
+          unFontSize: ENXUTO_FONT.nome,
           valuesInlineWithNome: true,
           ink: true,
         };
@@ -1623,15 +1620,15 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         ? (cfg.qtdFontSize ?? 6.8)
         : (cfg.qtdFontSize ?? 6.8);
       const unFs = usesColumnValueLayout(layout) ? (cfg.unFontSize ?? 5.9) : (cfg.unFontSize ?? 5.9);
-      doc.setFont(pdfFontFamily, isEnxutoRow ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(qtdFs * cfg.fontScale);
-      doc.setTextColor(...inkBlack);
+      doc.setTextColor(...(isEnxutoRow ? inkBody : inkBlack));
       const qtdYOff = 1.2;
       const unYOff = usesColumnValueLayout(layout) ? 4.6 : 4.6;
       doc.text(fmtQuantidadePdf(Number(met.qtd) || 0), cfg.qtdColRight, nomeTop + qtdYOff, { align: 'right' });
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(unFs * cfg.fontScale);
-      doc.setTextColor(...inkMeta);
+      doc.setTextColor(...(isEnxutoRow ? inkBody : inkMeta));
       doc.text(met.un, cfg.qtdColRight, nomeTop + unYOff, { align: 'right' });
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
@@ -1646,7 +1643,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         const valoresY = measured.valoresY;
         const cols = cfg.cols;
         const tx = columnTableX(cfg);
-        const valuesColor = isEnxutoRow ? ENXUTO.muted : SLATE500;
+        const valuesColor = isEnxutoRow ? inkBody : SLATE500;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(cfg.valuesFontSize * cfg.fontScale);
         doc.setTextColor(...valuesColor);
