@@ -20,7 +20,7 @@ import {
   perfilResolvidoParaUsuario,
 } from '@/lib/perfilPermissoes';
 import {
-  LayoutDashboard, Monitor, Banknote, TrendingUp, Package,
+  LayoutDashboard, House, Monitor, Banknote, TrendingUp, Package,
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
   Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
   ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
@@ -45,7 +45,7 @@ export function temPermissao(user, perfilDeAcesso, modulo, permissao, subtipo = 
 const MINIMAL_MENU_ITEMS = [
   {
     name: 'Início',
-    icon: LayoutDashboard,
+    icon: House,
     page: 'Home',
     permissaoCheck: () => true,
   },
@@ -100,9 +100,15 @@ export function buildMenuItems(user, perfilDeAcesso) {
 export const ALL_MENU_ITEMS = [
   {
     name: 'Início',
-    icon: LayoutDashboard,
+    icon: House,
     page: 'Home',
     permissaoCheck: () => true
+  },
+  {
+    name: 'Dashboard',
+    icon: LayoutDashboard,
+    page: 'Dashboard',
+    permissaoCheck: (p) => p?.dashboard?.acesso === true
   },
   {
     name: 'PDV',
