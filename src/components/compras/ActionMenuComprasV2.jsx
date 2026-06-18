@@ -126,7 +126,8 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
   const getActionVersion = (label) => {
     if (label === 'PDF expandido') return 'expandida';
     if (label === 'PDF enxuto') return 'expandida_enxuta';
-    if (label === 'PDF para celular') return 'expandida_mobile';
+    if (label === 'PDF mobile clássico') return 'expandida_mobile';
+    if (label === 'PDF mobile claro') return 'expandida_mobile_claro';
     return null;
   };
 
@@ -235,11 +236,19 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
     },
     {
       icon: <Smartphone className="w-5 h-5" />,
-      label: 'PDF para celular',
+      label: 'PDF mobile clássico',
       onClick: () => handleGerarRelatorio('expandida_mobile'),
       color: 'bg-card dark:bg-muted text-foreground/90',
       disabled: !!gerando,
-      title: 'Formato estreito com fontes pretas para leitura clara no celular',
+      title: 'Cards coloridos com pills de status (versão anterior)',
+    },
+    {
+      icon: <Smartphone className="w-5 h-5" />,
+      label: 'PDF mobile claro',
+      onClick: () => handleGerarRelatorio('expandida_mobile_claro'),
+      color: 'bg-card dark:bg-muted text-foreground/90',
+      disabled: !!gerando,
+      title: 'Fontes pretas e alto contraste para leitura no celular',
     },
   ];
 

@@ -852,9 +852,10 @@ const getStatusColors = (status) => {
 };
 
 const normalizeReportVersion = (version) => {
-  if (version === 'mobile_com_alma') return 'expandida_mobile';
+  if (version === 'mobile_com_alma') return 'expandida_mobile_claro';
   if (version === 'compacta') return 'expandida_enxuta';
   if (version === 'expandida_enxuta') return 'expandida_enxuta';
+  if (version === 'expandida_mobile_claro') return 'expandida_mobile_claro';
   if (version === 'expandida_mobile') return 'expandida_mobile';
   if (version === 'expandida') return 'expandida';
   return 'expandida';
@@ -872,7 +873,9 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     } = payload;
     const normalizedVersion = normalizeReportVersion(version);
 
-    const isMobile = normalizedVersion === 'expandida_mobile';
+    const isMobileClaro = normalizedVersion === 'expandida_mobile_claro';
+    const isMobileClassico = normalizedVersion === 'expandida_mobile';
+    const isMobile = isMobileClaro || isMobileClassico;
     const isEnxuta = normalizedVersion === 'expandida_enxuta';
 
     const produtosMap = { ...produtosMapFromPayload };
@@ -888,7 +891,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     });
     const usarNoto = await registerPdfFonts(doc);
     const pdfFontFamily = usarNoto ? 'NotoSans' : 'helvetica';
-    patchPdfTextVerticalStretch(doc, isMobile ? 1 : PDF_GLYPH_STRETCH_Y);
+    patchPdfTextVerticalStretch(doc, isMobileClaro ? 1 : PDF_GLYPH_STRETCH_Y);
 
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
@@ -1021,7 +1024,39 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         return;
       }
 
-      if (isMobile) {
+      if (isMobileClassico) {
+        let hy = 12;
+        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setFontSize(12);
+        doc.setTextColor(...C.text);
+        doc.text('Embarques', M, hy);
+        hy += 5;
+
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(6.5);
+        doc.setTextColor(...C.muted);
+        doc.text('Relatorio para celular (classico)', M, hy);
+        hy += 4.2;
+
+        const filtrosLinhas = doc.splitTextToSize(safe(filtros_desc || '-'), CW);
+        const maxFiltroLinhas = Math.min(3, filtrosLinhas.length);
+        for (let fi = 0; fi < maxFiltroLinhas; fi++) {
+          doc.text(filtrosLinhas[fi], M, hy);
+          hy += 3.9;
+        }
+        hy += 1;
+        doc.setFontSize(6.2);
+        doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, M, hy);
+        hy += 4.5;
+
+        doc.setFillColor(...C.soft);
+        doc.rect(M, hy, CW, 0.5, 'F');
+        hy += 2.5;
+        y = hy;
+        return;
+      }
+
+      if (isMobileClaro) {
         let hy = 12;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(11);
@@ -1031,7 +1066,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
 
         doc.setFontSize(6.8);
         doc.setTextColor(...MOBILE_INK.meta);
-        doc.text('Relatorio para celular — leitura clara', M, hy);
+        doc.text('Relatorio para celular (leitura clara)', M, hy);
         hy += 3.8;
 
         const filtrosLinhas = doc.splitTextToSize(safe(filtros_desc || '-'), CW);
@@ -1114,7 +1149,33 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         return;
       }
 
-      if (isMobile) {
+      if (isMobileClassico) {
+        const colW = (CW - 3) / 2;
+        const cardH = 14.5;
+        for (let i = 0; i < cards.length; i += 2) {
+          ensureSpace(18);
+          [0, 1].forEach((col) => {
+            const card = cards[i + col];
+            if (!card) return;
+            const cx = M + col * (colW + 3);
+            doc.setFillColor(...C.soft);
+            doc.roundedRect(cx, y, colW, cardH, 2, 2, 'F');
+            doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+            doc.setFontSize(6);
+            doc.setTextColor(...C.muted);
+            doc.text(safe(card.label), cx + 3, y + 5);
+            doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+            doc.setFontSize(8.5);
+            doc.setTextColor(...C.dark);
+            doc.text(safe(String(card.value)), cx + 3, y + 11.5);
+          });
+          y += 16.5;
+        }
+        y += 2;
+        return;
+      }
+
+      if (isMobileClaro) {
         ensureSpace(16);
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(6.5);
@@ -1702,9 +1763,116 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     };
 
     // ════════════════════════════════════════════════════════════════════════
-    //  MOBILE: leitura clara — tinta preta, tipografia fina, alto contraste
+    //  MOBILE CLÁSSICO: cards com pills e cores (layout anterior)
     // ════════════════════════════════════════════════════════════════════════
-    const drawMobileCard = (pedido) => {
+    const drawMobileCardClassico = (pedido) => {
+      const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
+      const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
+      const sc = getStatusColors(statusRelatorio);
+
+      const itens = mapItensRelatorioComercial(pedido);
+
+      const valorHeader = isPendencia
+        ? moeda(itens.reduce((a, i) => {
+            const prod = produtosMap[i.produto_id] || {};
+            const met = resolveMetricasItemPdf(i, prod, pedido);
+            return a + met.totalLinha;
+          }, 0))
+        : moeda(getValorRelatorio(pedido, produtosMap));
+
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(6.5);
+      const codigoLinhas = doc.splitTextToSize(safe(getPedidoNumeroRelatorio(pedido)), CW - 34).slice(0, 2);
+      const codigoLineStep = 3.8;
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(9);
+      const fornLines = doc.splitTextToSize(getFornecedorRelatorio(pedido), CW - 6).slice(0, 3);
+      const countLabel = isNecessidadeRelatorio(pedido)
+        ? `${itens.length} item(ns) pendente(s)`
+        : `${itens.length} item(ns)`;
+      const metaTexto = `${dataFmt(getDataRelatorio(pedido))} · ETA ${dataFmt(getEtaRelatorio(pedido))} · ${getOrdinalRelatorio(pedido)} · ${countLabel}`;
+      const metaLines = doc.splitTextToSize(metaTexto, CW - 6).slice(0, 2);
+
+      const fornLineStep = 4;
+      const fornBlock = fornLines.length * fornLineStep;
+      const totalRowH = 5.5;
+      const metaLineStep = 3.6;
+      const metaBlock = metaLines.length * metaLineStep;
+      const progH = 4;
+      const cardPadBottom = 3;
+      const codeY0 = 6.5;
+      const codeBlockH = codigoLinhas.length * codigoLineStep;
+      const gapCodeForn = 3;
+      const cardHeight = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + progH + cardPadBottom;
+
+      const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], 'narrow', 0) : 0;
+      ensureSpace(cardHeight + 3 + minPrimeiroItemH + 6);
+
+      const cardTop = y;
+
+      doc.setFillColor(...C.panel);
+      doc.roundedRect(M, cardTop, CW, cardHeight, 2.5, 2.5, 'F');
+
+      doc.setFillColor(...sc.dot);
+      doc.circle(M + 4.5, cardTop + 6, 2, 'F');
+
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(6.5);
+      doc.setTextColor(...SLATE500);
+      codigoLinhas.forEach((line, ci) => {
+        doc.text(line, M + 10, cardTop + codeY0 + ci * codigoLineStep);
+      });
+
+      doc.setFillColor(...sc.pillBg);
+      doc.roundedRect(M + CW - 30, cardTop + 2, 28, 7, 3.5, 3.5, 'F');
+      doc.setFontSize(6);
+      doc.setTextColor(...sc.pillText);
+      doc.text(safe(statusRelatorio), M + CW - 16, cardTop + 6.8, { align: 'center' });
+
+      let cy = cardTop + codeY0 + codeBlockH + gapCodeForn;
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(9);
+      doc.setTextColor(...SLATE900);
+      fornLines.forEach((line, fl) => {
+        doc.text(line, M + 3, cy + fl * fornLineStep);
+      });
+      cy += fornBlock + 1;
+
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(6);
+      doc.setTextColor(...SLATE500);
+      doc.text('Total', M + 3, cy);
+      doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+      doc.setFontSize(9);
+      doc.setTextColor(...SLATE900);
+      doc.text(valorHeader, M + CW - 3, cy, { align: 'right' });
+      cy += totalRowH;
+
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(6);
+      doc.setTextColor(...SLATE500);
+      metaLines.forEach((line, ml) => {
+        doc.text(line, M + 3, cy + ml * metaLineStep);
+      });
+      cy += metaBlock + 1;
+
+      drawProgressBar(pedido._display_status || pedido.status, cy);
+      y = cardTop + cardHeight + 3;
+
+      itens.forEach((item) => {
+        const rowH = computeExpandedItemRowH(pedido, item, 'narrow', y);
+        ensureSpace(rowH + 6);
+        const drawn = drawExpandedItemRowClean(pedido, item, 'narrow', y, 0);
+        y += drawn.rowBlockH;
+      });
+
+      y += 4;
+    };
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  MOBILE CLARO: tinta preta, tipografia fina, alto contraste
+    // ════════════════════════════════════════════════════════════════════════
+    const drawMobileCardClaro = (pedido) => {
       const isPendencia = (pedido.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'Pendencia';
       const statusRelatorio = normalizarStatusRelatorio(pedido._display_status || pedido.status);
       const itens = mapItensRelatorioComercial(pedido);
@@ -1903,14 +2071,30 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     drawGroupSummary();
 
     const renderPedido = (pedido) => {
-      if (isMobile)              return drawMobileCard(pedido);
-      if (isEnxuta)              return drawEnxuto(pedido);
+      if (isMobileClaro)           return drawMobileCardClaro(pedido);
+      if (isMobileClassico)        return drawMobileCardClassico(pedido);
+      if (isEnxuta)                return drawEnxuto(pedido);
       return drawExpandido(pedido);
     };
 
     const renderGrupo = (grupo) => {
       ensureSpace(14);
-      if (isMobile) {
+      if (isMobileClassico) {
+        y += 2;
+        const bandH = 9;
+        ensureSpace(bandH + 4);
+        doc.setFillColor(241, 245, 249);
+        doc.roundedRect(M, y, CW, bandH, 2, 2, 'F');
+        doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+        doc.setFontSize(6.5);
+        doc.setTextColor(...SLATE900);
+        doc.text(safe(grupo.label || '-'), M + 3, y + 5.5);
+        doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+        doc.setFontSize(5.8);
+        doc.setTextColor(...SLATE500);
+        doc.text(`${(grupo.pedidos || []).length} pedido(s)`, M + CW - 3, y + 5.5, { align: 'right' });
+        y += bandH + 3;
+      } else if (isMobileClaro) {
         y += 2;
         const bandH = 7.5;
         ensureSpace(bandH + 3);
