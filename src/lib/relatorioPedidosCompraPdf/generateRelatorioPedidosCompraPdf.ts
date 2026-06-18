@@ -908,8 +908,6 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       embarque: 0,
       pedido: 5,
       produto: 11,
-      produtoLine: 8.5,
-      produtoQtd: 9.8,
     };
     const strokeEnxutoLine = (x0, y0, x1, y1) => {
       doc.setDrawColor(...ENXUTO.line);
@@ -1005,21 +1003,32 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
     };
 
     /** Títulos das colunas de valores (sem DESCRICAO, sem negrito, alinhados à 2ª linha do item). */
-    const drawWideValueColumnHeaders = (baselineY, fontSize = EXPANDED_ITEMS_TABLE_FONT_SIZE) => {
+    const drawWideValueColumnHeaders = (
+      baselineY,
+      opts: { fontSize?: number; tableX?: number; mutedColor?: number[] } = {},
+    ) => {
+      const {
+        fontSize = EXPANDED_ITEMS_TABLE_FONT_SIZE,
+        tableX = TM,
+        mutedColor = SLATE500,
+      } = opts;
       const cols = EXPANDED_ITEMS_TABLE_COLUMNS;
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(fontSize);
-      doc.setTextColor(...SLATE500);
-      doc.text('QTD', TM + cols.qtd, baselineY);
-      doc.text('UN', TM + cols.unidade, baselineY);
-      doc.text('VLR. UN.', TM + cols.vlrUnit, baselineY, { align: 'right' });
-      doc.text('FRETE', TM + cols.frete, baselineY, { align: 'right' });
-      doc.text('OUTROS', TM + cols.outros, baselineY, { align: 'right' });
-      doc.text('CUSTO', TM + cols.custo, baselineY, { align: 'right' });
-      doc.text('TOTAL', TM + cols.total, baselineY, { align: 'right' });
-      doc.text('VENDA', TM + cols.venda, baselineY, { align: 'right' });
-      doc.text('MARKUP', TM + cols.markup, baselineY, { align: 'right' });
+      doc.setTextColor(...mutedColor);
+      doc.text('QTD', tableX + cols.qtd, baselineY);
+      doc.text('UN', tableX + cols.unidade, baselineY);
+      doc.text('VLR. UN.', tableX + cols.vlrUnit, baselineY, { align: 'right' });
+      doc.text('FRETE', tableX + cols.frete, baselineY, { align: 'right' });
+      doc.text('OUTROS', tableX + cols.outros, baselineY, { align: 'right' });
+      doc.text('CUSTO', tableX + cols.custo, baselineY, { align: 'right' });
+      doc.text('TOTAL', tableX + cols.total, baselineY, { align: 'right' });
+      doc.text('VENDA', tableX + cols.venda, baselineY, { align: 'right' });
+      doc.text('MARKUP', tableX + cols.markup, baselineY, { align: 'right' });
     };
+
+    const usesColumnValueLayout = (layout) => layout === 'wide' || layout === 'narrow_enxuto';
+    const columnTableX = (cfg) => cfg.tableX ?? TM;
 
     // ════════════════════════════════════════════════════════════════════════
     //  HEADER
@@ -1379,23 +1388,29 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         };
       }
       if (layout === 'narrow_enxuto') {
-        const itemMl = M + ENXUTO_INDENT.produto + 1.2;
-        const lineX = M + ENXUTO_INDENT.produtoLine;
-        const qtdColRight = M + ENXUTO_INDENT.produtoQtd;
+        const tableX = M + ENXUTO_INDENT.produto;
+        const cols = EXPANDED_ITEMS_TABLE_COLUMNS;
+        const itemMl = tableX + 14;
+        const nomeMaxW = Math.max(
+          18,
+          tableX + cols.vlrUnit - itemMl - EXPANDED_DESC_TO_VLR_GAP_MM,
+        );
         return {
           layout: 'narrow_enxuto',
+          tableX,
           itemMl,
-          lineX,
-          qtdColRight,
-          nomeMaxW: M + CW - itemMl - 2,
+          nomeMaxW,
+          cols,
+          lineX: tableX + 11.5,
+          qtdColRight: tableX + 10.5,
           contentRight: M + CW,
-          vs: 1.32,
+          vs: 1.12,
           fontScale: 1,
           branchLen: 2.4,
-          nomeFontSize: 8.6,
-          detailFontSize: 7.5,
-          qtdFontSize: 7.9,
-          unFontSize: 6.9,
+          nomeFontSize: EXPANDED_A4_DESC_HEADER_FONT_SIZE,
+          valuesFontSize: EXPANDED_A4_BODY_VALUES_FONT_SIZE,
+          qtdFontSize: 7.4,
+          unFontSize: 6.35,
           ink: true,
         };
       }
@@ -1482,10 +1497,10 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const met = resolveMetricasItemPdf(item, prod, pedido);
       const vs = cfg.vs;
       const nomeLineStep = 3.85 * vs;
-      const margemLinhaInferiorItem = (layout === 'narrow_enxuto' ? 1.8 : 1.3) * vs;
+      const margemLinhaInferiorItem = (usesColumnValueLayout(layout) ? 1.2 : 1.3) * vs;
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      const nomeFsMeasure = layout === 'wide' ? cfg.nomeFontSize : (cfg.nomeFontSize ?? 7);
+      const nomeFsMeasure = usesColumnValueLayout(layout) ? cfg.nomeFontSize : (cfg.nomeFontSize ?? 7);
       doc.setFontSize(nomeFsMeasure * cfg.fontScale);
       const nomeMaxW = cfg.nomeMaxW;
       const nomeX = cfg.itemMl;
@@ -1496,7 +1511,7 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const nomeTop = y0 + 3.4 * vs;
       const lastNomeBaseline = nomeTop + Math.max(0, nomeLinhas.length - 1) * nomeLineStep;
 
-      if (layout === 'wide') {
+      if (usesColumnValueLayout(layout)) {
         const gapNomeValores = 2.65 * vs;
         const valoresRowH = 4.5 * vs;
         const valoresY = lastNomeBaseline + gapNomeValores;
@@ -1571,15 +1586,15 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         doc.rect(cfg.lineX, branchY, cfg.lineWidth, 0.1, 'F');
       }
 
-      const qtdFs = layout === 'wide'
+      const qtdFs = usesColumnValueLayout(layout)
         ? (cfg.qtdFontSize ?? 6.8)
         : (cfg.qtdFontSize ?? 6.8);
-      const unFs = layout === 'wide' ? (cfg.unFontSize ?? 5.9) : (cfg.unFontSize ?? 5.9);
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      const unFs = usesColumnValueLayout(layout) ? (cfg.unFontSize ?? 5.9) : (cfg.unFontSize ?? 5.9);
+      doc.setFont(pdfFontFamily, isEnxutoRow ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
       doc.setFontSize(qtdFs * cfg.fontScale);
       doc.setTextColor(...inkBlack);
       const qtdYOff = 1.2;
-      const unYOff = layout === 'wide' ? 4.6 : 4.6;
+      const unYOff = usesColumnValueLayout(layout) ? 4.6 : 4.6;
       doc.text(fmtQuantidadePdf(Number(met.qtd) || 0), cfg.qtdColRight, nomeTop + qtdYOff, { align: 'right' });
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(unFs * cfg.fontScale);
@@ -1587,29 +1602,31 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       doc.text(met.un, cfg.qtdColRight, nomeTop + unYOff, { align: 'right' });
 
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      const nomeFsDraw = layout === 'wide' ? cfg.nomeFontSize : (cfg.nomeFontSize ?? 7);
+      const nomeFsDraw = usesColumnValueLayout(layout) ? cfg.nomeFontSize : (cfg.nomeFontSize ?? 7);
       doc.setFontSize(nomeFsDraw * cfg.fontScale);
       doc.setTextColor(...inkBody);
       nomeLinhas.forEach((line, li) => {
         doc.text(line, nomeX, nomeTop + li * nomeLineStep);
       });
 
-      if (layout === 'wide') {
+      if (usesColumnValueLayout(layout)) {
         const valoresY = measured.valoresY;
         const cols = cfg.cols;
+        const tx = columnTableX(cfg);
+        const valuesColor = isEnxutoRow ? ENXUTO.muted : SLATE500;
         doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
         doc.setFontSize(cfg.valuesFontSize * cfg.fontScale);
-        doc.setTextColor(...SLATE500);
-        doc.text(moedaSemSimboloOuTraco(met.vlrUnit), TM + cols.vlrUnit, valoresY, { align: 'right' });
-        doc.text(moedaSemSimboloOuTraco(met.freteUnit), TM + cols.frete, valoresY, { align: 'right' });
-        doc.text(moedaSemSimboloOuTraco(met.outrosUnit), TM + cols.outros, valoresY, { align: 'right' });
-        doc.text(moedaSemSimboloOuTraco(met.custoUnit), TM + cols.custo, valoresY, { align: 'right' });
-        doc.text(moedaSemSimboloOuTraco(met.totalLinha), TM + cols.total, valoresY, { align: 'right' });
-        doc.text(moedaSemSimboloOuTraco(met.vendaUnit), TM + cols.venda, valoresY, { align: 'right' });
-        doc.text(percentualOuTraco(met.markup), TM + cols.markup, valoresY, { align: 'right' });
+        doc.setTextColor(...valuesColor);
+        doc.text(moedaSemSimboloOuTraco(met.vlrUnit), tx + cols.vlrUnit, valoresY, { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(met.freteUnit), tx + cols.frete, valoresY, { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(met.outrosUnit), tx + cols.outros, valoresY, { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(met.custoUnit), tx + cols.custo, valoresY, { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(met.totalLinha), tx + cols.total, valoresY, { align: 'right' });
+        doc.text(moedaSemSimboloOuTraco(met.vendaUnit), tx + cols.venda, valoresY, { align: 'right' });
+        doc.text(percentualOuTraco(met.markup), tx + cols.markup, valoresY, { align: 'right' });
         if (met.warningText) {
           doc.setFontSize(5.5 * cfg.fontScale);
-          doc.setTextColor(...SLATE500);
+          doc.setTextColor(...(isEnxutoRow ? ENXUTO.muted : SLATE500));
           const warnLinhas = doc.splitTextToSize(met.warningText, cfg.nomeMaxW);
           warnLinhas.forEach((line, wi) => {
             doc.text(line, cfg.itemMl, valoresY + 3.2 * vs + wi * 2.8 * vs);
@@ -1634,8 +1651,8 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
         }
       }
 
-      const sepX0 = layout === 'wide' ? (cfg.sepLineX0 ?? cfg.itemMl) : cfg.itemMl;
-      const sepX1 = layout === 'wide' ? (cfg.sepLineX1 ?? cfg.contentRight) : cfg.contentRight;
+      const sepX0 = usesColumnValueLayout(layout) ? (cfg.sepLineX0 ?? cfg.itemMl) : cfg.itemMl;
+      const sepX1 = usesColumnValueLayout(layout) ? (cfg.sepLineX1 ?? cfg.contentRight) : cfg.contentRight;
       if (!isEnxutoRow) {
         doc.setDrawColor(...(ink ? MOBILE_INK.line : [226, 232, 240]));
         doc.setLineWidth(0.12);
@@ -2069,8 +2086,14 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       const codeY0 = 5;
       const codeBlockH = codigoLinhas.length * codigoLineStep;
       const gapCodeForn = 2.5;
-      const headerPadBottom = 4;
-      const headerBlockH = codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock + headerPadBottom;
+      const gapBeforeColHdr = 2.2;
+      const colHdrBaselineOffset = 4.2;
+      const colHdrBlockH = 6.2;
+      const headerPadBottom = 2;
+      const headerBlockH =
+        codeY0 + codeBlockH + gapCodeForn + fornBlock + totalRowH + metaBlock
+        + gapBeforeColHdr + colHdrBlockH + headerPadBottom;
+      const enxutoTableX = M + ENXUTO_INDENT.produto;
 
       const minPrimeiroItemH = itens.length > 0 ? computeExpandedItemRowH(pedido, itens[0], 'narrow_enxuto', 0) : 0;
       ensureSpace(headerBlockH + 4 + minPrimeiroItemH + 8);
@@ -2111,8 +2134,15 @@ export async function generateRelatorioPedidosCompraPdf(payload = {}) {
       metaLines.forEach((line, ml) => {
         doc.text(line, pedidoX, cy + ml * metaLineStep);
       });
+      cy += metaBlock + gapBeforeColHdr;
 
-      y = blockTop + headerBlockH + 2;
+      drawWideValueColumnHeaders(cy + colHdrBaselineOffset, {
+        fontSize: 7.2,
+        tableX: enxutoTableX,
+        mutedColor: ENXUTO.muted,
+      });
+
+      y = blockTop + headerBlockH + 1.5;
 
       let totCusto = 0;
       let totVenda = 0;
