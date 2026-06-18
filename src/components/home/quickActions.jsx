@@ -1,7 +1,7 @@
 import {
   Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
   Ship, LayoutDashboard, Users, QrCode, Tag, Settings, Upload, MonitorCheck,
-  Tablet, ClipboardPenLine, ReceiptText, Percent,
+  Tablet, ClipboardPenLine, ReceiptText, Percent, BarChart3,
 } from 'lucide-react';
 
 /**
