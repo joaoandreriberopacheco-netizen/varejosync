@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
   resolveContaDestinoCaixaPDV,
+  resolverSaldoGavetaCaixaPDV,
   transferirDinheiroFechamentoCaixaPDV,
 } from '@/lib/contaDestinoCaixaPDV';
 import RelatorioFechamentoCaixa from './caixa/RelatorioFechamentoCaixa';
@@ -45,10 +46,19 @@ export default function FechamentoCaixaButton({
     const diferenca = roundToTwoDecimals(totalConferido - esperado);
 
     try {
-      const todasContas = await base44.entities.ContasFinanceiras.list();
+      const [todasContas, lancamentos, movimentos] = await Promise.all([
+        base44.entities.ContasFinanceiras.list(),
+        base44.entities.LancamentoFinanceiro.list(),
+        base44.entities.MovimentosCaixa.list(),
+      ]);
       const contaDestino = resolveContaDestinoCaixaPDV(todasContas);
-      const origemFresh = (await base44.entities.ContasFinanceiras.filter({ id: contaCaixaPDV.id }))[0];
-      const saldoRestante = roundToTwoDecimals(origemFresh?.saldo_atual || 0);
+      const { saldoGaveta } = await resolverSaldoGavetaCaixaPDV(
+        base44,
+        contaCaixaPDV,
+        lancamentos,
+        movimentos,
+      );
+      const saldoRestante = roundToTwoDecimals(saldoGaveta);
 
       if (saldoRestante > 0 && !contaDestino) {
         toast({
@@ -59,10 +69,9 @@ export default function FechamentoCaixaButton({
         return;
       }
 
-      let movimentoFechamento = null;
       if (contaDestino && saldoRestante > 0) {
         const observacao = `Fechamento de turno ${turnoAtivo.numero} - Transferido para ${contaDestino.nome}`;
-        movimentoFechamento = await base44.entities.MovimentosCaixa.create({
+        const movimentoFechamento = await base44.entities.MovimentosCaixa.create({
           numero: `MCX-${String(Date.now()).slice(-5)}`,
           tipo: 'Sangria',
           valor: saldoRestante,
@@ -78,6 +87,8 @@ export default function FechamentoCaixaButton({
           contaDestino,
           descricao: observacao,
           movimentoId: movimentoFechamento.id,
+          lancamentos,
+          movimentos,
         });
       } else if (contaCaixaPDV?.id) {
         await transferirDinheiroFechamentoCaixaPDV({
@@ -85,6 +96,8 @@ export default function FechamentoCaixaButton({
           contaCaixaPDV,
           contaDestino,
           descricao: `Fechamento de turno ${turnoAtivo.numero}`,
+          lancamentos,
+          movimentos,
         });
       }
 

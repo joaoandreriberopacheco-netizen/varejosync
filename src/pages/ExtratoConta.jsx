@@ -34,6 +34,7 @@ import {
   movimentoParticipaExtrato,
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
+import { reconciliarSaldoCaixaPDVSemTurnoAberto } from '@/lib/contaDestinoCaixaPDV';
 
 export default function ExtratoContaPage() {
   const [conta, setConta] = useState(null);
@@ -106,10 +107,38 @@ export default function ExtratoContaPage() {
         setLancamentos(lancamentosFiltrados);
         setMovimentosCaixa(movsFiltrados);
 
-        const saldo = calcularSaldoContaFinanceira(contaAtual, lancamentosFiltrados, movsFiltrados);
+        const reconciliou = await reconciliarSaldoCaixaPDVSemTurnoAberto(
+          base44,
+          contaAtual,
+          contasData,
+          lancamentosFiltrados,
+          movsFiltrados,
+        );
+
+        const saldo = calcularSaldoContaFinanceira(
+          contaAtual,
+          reconciliou
+            ? (await base44.entities.LancamentoFinanceiro.list()).filter(
+                (l) => l.conta_financeira_id === contaId || (!l.conta_financeira_id && contaAtual.is_caixa_geral),
+              )
+            : lancamentosFiltrados,
+          movsFiltrados,
+        );
+
+        if (reconciliou) {
+          const [lancamentosAtualizados] = await Promise.all([
+            base44.entities.LancamentoFinanceiro.list(),
+          ]);
+          const lancsConta = lancamentosAtualizados.filter((l) => l.conta_financeira_id === contaId);
+          setLancamentos(lancsConta);
+        }
+
         if (Math.abs(saldo - Number(contaAtual.saldo_atual || 0)) > 0.009) {
           await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: saldo });
           setConta({ ...contaAtual, saldo_atual: saldo });
+        } else if (contaUsaRegraCaixaPDV(contaAtual) && Math.abs(saldo) <= 0.009) {
+          await base44.entities.ContasFinanceiras.update(contaAtual.id, { saldo_atual: 0 });
+          setConta({ ...contaAtual, saldo_atual: 0 });
         }
       }
     } catch (error) {
