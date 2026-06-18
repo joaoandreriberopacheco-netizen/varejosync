@@ -67,6 +67,28 @@ export function deltaLancamentoSaldoConta(conta, l) {
   return l.tipo === 'Receita' ? valor : -valor;
 }
 
+/** Recolhimento/fechamento PDV e transferências manuais entre contas financeiras. */
+export function isTransferenciaEntreContas(l) {
+  if (!l) return false;
+  if (l.tipo === 'Transferência') return true;
+  if (l.categoria === 'Transferência entre Contas') return true;
+  if (l.referencia_tipo === 'MovimentosCaixa') return true;
+  return false;
+}
+
+export function isMovimentoTransferenciaCaixaPDV(m) {
+  return m?.tipo === 'Sangria' || m?.tipo === 'Recolhimento de Caixa';
+}
+
+/** Linha do Fluxo: recolhimentos aparecem como transferência (sem mudar o PDV). */
+export function projetarLinhaFluxoCaixa(l) {
+  if (!isTransferenciaEntreContas(l)) return l;
+  return {
+    ...l,
+    tipoExibicao: 'Transferência',
+  };
+}
+
 /** IDs de MovimentosCaixa já refletidos em LancamentoFinanceiro (evita contar duas vezes). */
 export function idsMovimentosComLancamentoFinanceiro(lancamentos = []) {
   const ids = new Set();
@@ -191,19 +213,30 @@ export function calcularKpisFluxoPeriodo(
   movimentosPeriodo = [],
   todosLancamentos = [],
   contasById = {},
+  contasSel = [],
 ) {
   const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(todosLancamentos);
+  const contaNoFiltro = (contaId) => !contasSel.length || contasSel.includes(contaId);
   let entrou = 0;
   let saiu = 0;
   let pEntrou = 0;
   let pSaiu = 0;
   let totalTransferencias = 0;
+  let transfIn = 0;
+  let transfOut = 0;
   let vencidos = 0;
   let qtdVencidos = 0;
 
   lancamentosPeriodo.forEach((l) => {
-    if (l.tipo === 'Transferência') {
-      totalTransferencias += Number(l.valor || 0);
+    const valor = Number(l.valor || 0);
+    const isPago = l.status === 'Pago' || !!l.data_pagamento;
+
+    if (isTransferenciaEntreContas(l)) {
+      totalTransferencias += valor;
+      if (contaNoFiltro(l.conta_financeira_id)) {
+        if (l.tipo === 'Receita') transfIn += valor;
+        else if (l.tipo === 'Despesa') transfOut += valor;
+      }
       return;
     }
 
@@ -212,20 +245,19 @@ export function calcularKpisFluxoPeriodo(
       l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
 
     if (l.status === 'Vencido') {
-      vencidos += Number(l.valor || 0);
+      vencidos += valor;
       qtdVencidos++;
     }
 
-    const isPago = l.status === 'Pago' || !!l.data_pagamento;
     const participaSaldo = lancamentoParticipaSaldoConta(conta, l);
     if (!participaSaldo && !cartaoCreditoPendente) return;
 
     if (isPago || cartaoCreditoPendente) {
-      if (l.tipo === 'Receita') entrou += Number(l.valor || 0);
-      else if (l.tipo === 'Despesa') saiu += Number(l.valor || 0);
+      if (l.tipo === 'Receita') entrou += valor;
+      else if (l.tipo === 'Despesa') saiu += valor;
     } else {
-      if (l.tipo === 'Receita') pEntrou += Number(l.valor || 0);
-      else if (l.tipo === 'Despesa') pSaiu += Number(l.valor || 0);
+      if (l.tipo === 'Receita') pEntrou += valor;
+      else if (l.tipo === 'Despesa') pSaiu += valor;
     }
   });
 
@@ -234,38 +266,69 @@ export function calcularKpisFluxoPeriodo(
     const conta = contasById[m.conta_id];
     if (!contaUsaRegraCaixaPDV(conta)) return;
     const valor = Number(m.valor || 0);
-    if (m.tipo === 'Reforço') entrou += valor;
-    else if (m.tipo === 'Sangria' || m.tipo === 'Recolhimento de Caixa') saiu += valor;
+    if (m.tipo === 'Reforço') {
+      entrou += valor;
+      return;
+    }
+    if (!isMovimentoTransferenciaCaixaPDV(m)) return;
+    totalTransferencias += valor;
+    if (contaNoFiltro(m.conta_id)) transfOut += valor;
   });
 
   return {
     entrou: roundToTwoDecimals(entrou),
     saiu: roundToTwoDecimals(saiu),
-    saldo: roundToTwoDecimals(entrou - saiu),
+    saldo: roundToTwoDecimals(entrou - saiu + transfIn - transfOut),
     pEntrou: roundToTwoDecimals(pEntrou),
     pSaiu: roundToTwoDecimals(pSaiu),
-    saldoPrev: roundToTwoDecimals(entrou + pEntrou - saiu - pSaiu),
+    saldoPrev: roundToTwoDecimals(entrou + pEntrou - saiu - pSaiu + transfIn - transfOut),
     totalTransferencias: roundToTwoDecimals(totalTransferencias),
     vencidos: roundToTwoDecimals(vencidos),
     qtdVencidos,
   };
 }
 
-/** Totais de receitas/despesas de um grupo do fluxo (respeita regra Caixa PDV). */
+/**
+ * Totais do grupo no Fluxo.
+ * Transferências (recolhimento/fechamento) entram no líquido do dia mas fora de receita/despesa operacional.
+ */
 export function totaisGrupoFluxoCaixa(items = [], contasById = {}) {
   let r = 0;
   let d = 0;
+  let transfIn = 0;
+  let transfOut = 0;
 
   items.forEach((l) => {
     const conta = contasById[l.conta_financeira_id];
     const cartaoCreditoPendente =
       l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
     const isPago = l.status === 'Pago' || !!l.data_pagamento;
+    const valor = Number(l.valor || 0);
+
+    if (l.origem === 'movimento' || (l.conta_id && !l.conta_financeira_id)) {
+      if (l.tipo === 'Reforço') r += valor;
+      else if (isMovimentoTransferenciaCaixaPDV(l)) transfOut += valor;
+      return;
+    }
+
+    if (isTransferenciaEntreContas(l)) {
+      if (l.tipo === 'Receita') transfIn += valor;
+      else if (l.tipo === 'Despesa') transfOut += valor;
+      return;
+    }
+
     const participaSaldo = lancamentoParticipaSaldoConta(conta, l);
     if (!participaSaldo && !cartaoCreditoPendente) return;
-    if (l.tipo === 'Receita' && (isPago || cartaoCreditoPendente)) r += Number(l.valor || 0);
-    if (l.tipo === 'Despesa' && isPago) d += Number(l.valor || 0);
+    if (l.tipo === 'Receita' && (isPago || cartaoCreditoPendente)) r += valor;
+    if (l.tipo === 'Despesa' && isPago) d += valor;
   });
 
-  return { r: roundToTwoDecimals(r), d: roundToTwoDecimals(d) };
+  const liquido = r - d + transfIn - transfOut;
+  return {
+    r: roundToTwoDecimals(r),
+    d: roundToTwoDecimals(d),
+    transfIn: roundToTwoDecimals(transfIn),
+    transfOut: roundToTwoDecimals(transfOut),
+    liquido: roundToTwoDecimals(liquido),
+  };
 }

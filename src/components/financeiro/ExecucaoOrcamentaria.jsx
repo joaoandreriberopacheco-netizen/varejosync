@@ -6,6 +6,7 @@ import {
   calcularKpisFluxoPeriodo,
   calcularSaldosTodasContas,
   contaUsaRegraCaixaPDV,
+  projetarLinhaFluxoCaixa,
   totaisGrupoFluxoCaixa,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
@@ -237,6 +238,7 @@ export default function ExecucaoOrcamentaria() {
       movimentosFiltrados,
       lancs,
       contasById,
+      contasSel,
     );
     const contasVisiveis = contasSel.length
       ? contas.filter((c) => contasSel.includes(c.id))
@@ -299,7 +301,12 @@ export default function ExecucaoOrcamentaria() {
       const itemsOrdenados = sortLancamentosPorDescricao(items);
       const label = k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(k, hStr, oStr);
       const totais = totaisGrupoFluxoCaixa(itemsOrdenados, contasById);
-      return { k, label, items: itemsOrdenados, totais };
+      return {
+        k,
+        label,
+        items: itemsOrdenados.map(projetarLinhaFluxoCaixa),
+        totais: { r: totais.r, d: totais.d, liquido: totais.liquido },
+      };
     });
   }, [
     filtrados,

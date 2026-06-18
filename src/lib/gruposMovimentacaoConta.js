@@ -3,7 +3,8 @@ import { sortLancamentosPorDescricao } from '@/lib/financialUtils';
 import {
   idsMovimentosComLancamentoFinanceiro,
   movimentoParticipaExtrato,
-  totaisEntradaSaidaMovimentos,
+  projetarLinhaFluxoCaixa,
+  totaisGrupoFluxoCaixa,
 } from '@/lib/saldoContaFinanceira';
 
 export function normalizarMovimentoCaixaParaLinha(mov) {
@@ -20,7 +21,8 @@ export function normalizarMovimentoCaixaParaLinha(mov) {
     data_pagamento: data,
     data_vencimento: data,
     status: mov.status || 'Pago',
-    categoria: mov.categoria || 'Caixa',
+    categoria: mov.categoria || 'Transferência entre Contas',
+    tipoExibicao: tipo === 'Despesa' ? 'Transferência' : undefined,
   };
 }
 
@@ -73,13 +75,24 @@ export function montarGruposPorDiaConta({
     .sort((a, b) => b.localeCompare(a))
     .map((dia) => {
       const brutos = porDia[dia];
-      const items = sortLancamentosPorDescricao(brutos).map((m) =>
-        m.origem === 'movimento' ? normalizarMovimentoCaixaParaLinha(m) : m,
-      );
-      const { entradas: r, saidas: d } = totaisEntradaSaidaMovimentos(brutos, conta);
+      const contasById = { [conta.id]: conta };
+      const items = sortLancamentosPorDescricao(brutos).map((m) => {
+        const linha = m.origem === 'movimento' ? normalizarMovimentoCaixaParaLinha(m) : m;
+        return projetarLinhaFluxoCaixa(linha);
+      });
+      const totaisGrupo = totaisGrupoFluxoCaixa(brutos, contasById);
       const label =
         dia === 'sem-data' ? 'Sem data' : formatGrupoLabel(dia, hStr, oStr);
 
-      return { k: dia, label, items, totais: { r, d } };
+      return {
+        k: dia,
+        label,
+        items,
+        totais: {
+          r: totaisGrupo.r,
+          d: totaisGrupo.d,
+          liquido: totaisGrupo.liquido,
+        },
+      };
     });
 }

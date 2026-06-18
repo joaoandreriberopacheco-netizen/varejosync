@@ -26,13 +26,14 @@ export function FinanceiroGrupo({
   labelClassName,
   receitas = 0,
   despesas = 0,
+  liquido: liquidoProp,
   variant = 'default',
   card = false,
   children,
   defaultOpen = true,
 }) {
   const [open, setOpen] = useState(defaultOpen);
-  const liquido = receitas - despesas;
+  const liquido = liquidoProp != null ? liquidoProp : receitas - despesas;
   const showBreakdown = receitas > 0 && despesas > 0;
   const overdue = variant === 'overdue';
 

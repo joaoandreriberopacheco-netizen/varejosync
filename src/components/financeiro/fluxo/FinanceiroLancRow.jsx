@@ -10,6 +10,7 @@ import {
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
+import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
 
 const LINE_TITLE_CLASS =
   '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
@@ -35,10 +36,17 @@ function lancStatusTone(status) {
   return p38StatusTone(status);
 }
 
+function tipoLinha(l) {
+  if (l.tipoExibicao) return l.tipoExibicao;
+  if (isTransferenciaEntreContas(l)) return 'Transferência';
+  return l.tipo;
+}
+
 /** Barra lateral — mesmo critério do Fluxo de Caixa: verde receita, vermelho despesa. */
 function rowAccent(l, { dimPago = false } = {}) {
-  const isR = l.tipo === 'Receita';
-  const isT = l.tipo === 'Transferência';
+  const tipo = tipoLinha(l);
+  const isR = tipo === 'Receita';
+  const isT = tipo === 'Transferência';
   const cancelado = l.status === 'Cancelado';
   const isPago = l.status === 'Pago' || !!l.data_pagamento;
 
@@ -50,8 +58,9 @@ function rowAccent(l, { dimPago = false } = {}) {
 }
 
 function valorNode(l) {
-  const isR = l.tipo === 'Receita';
-  const isT = l.tipo === 'Transferência';
+  const tipo = tipoLinha(l);
+  const isR = tipo === 'Receita';
+  const isT = tipo === 'Transferência';
   const cancelado = l.status === 'Cancelado';
 
   if (cancelado) return '—';
@@ -82,7 +91,8 @@ function rowMeta(l, { showPago = false } = {}) {
 
   return (
     <>
-      {l.categoria && <span>{l.categoria}</span>}
+      {l.categoria && l.categoria !== 'Transferência entre Contas' && <span>{l.categoria}</span>}
+      {isTransferenciaEntreContas(l) && <span>Transferência entre contas</span>}
       {l.status && l.status !== 'Pago' && (
         showPago && l.status === 'Vencido' ? (
           <P38StatusPill tone="danger">{l.status}</P38StatusPill>
