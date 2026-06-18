@@ -1,5 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
-import { jsPDF } from 'npm:jspdf@2.5.2';
+import { jsPDF } from 'jspdf';
 
 /** Escala só no eixo Y (glifos mais altos, largura inalterada). PDF Tm: sx=1, sy>1. */
 const PDF_GLYPH_STRETCH_Y = 1.1;
@@ -861,13 +860,8 @@ const normalizeReportVersion = (version) => {
   return 'expandida';
 };
 
-Deno.serve(async (req) => {
+export async function generateRelatorioPedidosCompraPdf(payload = {}) {
   try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const payload = await req.json();
     const {
       pedidos = [],
       version = 'compacta',
@@ -881,16 +875,7 @@ Deno.serve(async (req) => {
     const isMobile = normalizedVersion === 'expandida_mobile';
     const isEnxuta = normalizedVersion === 'expandida_enxuta';
 
-    const produtoIds = [...new Set(
-      pedidos.flatMap((p) => (p._display_itens || p.itens || []).map((i) => i.produto_id).filter(Boolean))
-    )];
-    const produtosFetched = produtoIds.length
-      ? await Promise.all(produtoIds.map((id) => base44.asServiceRole.entities.Produto.get(id).catch(() => null)))
-      : [];
-    const produtosMap = {
-      ...Object.fromEntries((produtosFetched || []).filter(Boolean).map((p) => [p.id, p])),
-      ...produtosMapFromPayload,
-    };
+    const produtosMap = { ...produtosMapFromPayload };
 
     // ── Criação do documento ─────────────────────────────────────────────────
     const MOBILE_W = 100; // mm — largura estilo smartphone
@@ -1987,14 +1972,11 @@ Deno.serve(async (req) => {
     }
 
     const pdfBytes = doc.output('arraybuffer');
-    return new Response(pdfBytes, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="relatorio-pedidos-${normalizedVersion}.pdf"`,
-      },
-    });
+    return {
+      data: pdfBytes,
+      version: normalizedVersion,
+    };
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    throw new Error(error?.message || String(error));
   }
-});
+}

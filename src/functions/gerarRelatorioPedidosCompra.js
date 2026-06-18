@@ -1,5 +1,9 @@
-import { invokeFunctionBinary } from './_invokeHelper';
+import { generateRelatorioPedidosCompraPdf } from '@/lib/relatorioPedidosCompraPdf/generateRelatorioPedidosCompraPdf';
 
-export function gerarRelatorioPedidosCompra(body) {
-  return invokeFunctionBinary('gerarRelatorioPedidosCompra', body);
+/**
+ * Gera o PDF no browser (jspdf) para que expandido / enxuto / mobile
+ * reflitam sempre o código do repositório, sem depender do deploy Base44.
+ */
+export async function gerarRelatorioPedidosCompra(body) {
+  return generateRelatorioPedidosCompraPdf(body ?? {});
 }

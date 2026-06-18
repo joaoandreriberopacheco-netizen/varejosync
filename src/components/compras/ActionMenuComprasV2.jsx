@@ -162,6 +162,7 @@ export default function ActionMenuComprasV2({ onNovopedido, onImportarNF, onDown
         filtros_desc: filtrosDesc,
         kpis,
         grupos: gruposNormalizados,
+        produtos_map: produtosMap,
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
