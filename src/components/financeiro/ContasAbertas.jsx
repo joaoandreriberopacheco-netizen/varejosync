@@ -29,6 +29,7 @@ import CorrigirDataLoteDialog from './CorrigirDataLoteDialog';
 import { useToast } from '@/components/ui/use-toast';
 import { CONCILIACAO_LOTE_TAMANHO, processarEmLotes } from '@/lib/conciliacaoEmLote';
 import {
+  getValorContaAberta,
   isLancamentoEmAberto,
   isLancamentoPago,
   isLancamentoVencido,
@@ -218,11 +219,11 @@ function useContasAbertasModel(onOpenImportador, shared) {
     const hStr = hojeStr();
     // KPIs consideram apenas Em Aberto/Vencido (não as pagas)
     filtrados.filter((l) => isLancamentoEmAberto(l)).forEach((l) => {
-      const vStr = getVencimento(l);
-      if (l.tipo === 'Receita') { aReceber += l.valor || 0; qtdReceber++; }
-      else { aPagar += l.valor || 0; qtdPagar++; }
+      const valor = getValorContaAberta(l);
+      if (l.tipo === 'Receita') { aReceber += valor; qtdReceber++; }
+      else { aPagar += valor; qtdPagar++; }
       if (isLancamentoVencido(l, hStr)) {
-        vencidas += l.valor || 0;
+        vencidas += valor;
         qtdVencidas++;
       }
     });
@@ -239,8 +240,8 @@ function useContasAbertasModel(onOpenImportador, shared) {
     });
 
     const totaisGrupo = (items) => ({
-      aReceberDia: items.filter((l) => l.tipo === 'Receita').reduce((s, l) => s + (l.valor || 0), 0),
-      aPagarDia: items.filter((l) => l.tipo === 'Despesa').reduce((s, l) => s + (l.valor || 0), 0),
+      aReceberDia: items.filter((l) => l.tipo === 'Receita').reduce((s, l) => s + getValorContaAberta(l), 0),
+      aPagarDia: items.filter((l) => l.tipo === 'Despesa').reduce((s, l) => s + getValorContaAberta(l), 0),
     });
 
     const sortPorDataAntiga = (items) =>

@@ -349,6 +349,7 @@ Deno.serve(async (req) => {
         // Data de vencimento = próximo(s) dia(s) útil(eis)
         const prazoDias = pag.prazo_maquininha_dias ?? (pag.forma_pagamento === 'Cartão de Débito' ? 1 : 30);
         const dataVencimento = addDiasUteis(hoje, prazoDias);
+        const isCredito = pag.forma_pagamento === 'Cartão de Crédito';
 
         const maquininhaNome = pag.maquininha_nome || pag.forma_pagamento;
         const bandeira = pag.bandeira || '';
@@ -366,7 +367,8 @@ Deno.serve(async (req) => {
           valor: valorBruto,
           valor_liquido: valorLiquido,
           data_vencimento: dataVencimento,
-          // Não marca como Pago — fica Em Aberto até conciliação bancária
+          data_liquidacao_prevista: dataVencimento,
+          // Não marca como Pago — fica Em Aberto (Contas Abertas) até liquidação automática 09:00
           status: 'Em Aberto',
           status_conciliacao: 'Pendente',
           forma_pagamento: pag.forma_pagamento,
@@ -374,6 +376,7 @@ Deno.serve(async (req) => {
           categoria: 'Venda de Produto',
           tags: [
             'CARTAO',
+            ...(isCredito ? ['conta_receber'] : []),
             maquininhaNome,
             ...(bandeira ? [bandeira] : []),
           ],

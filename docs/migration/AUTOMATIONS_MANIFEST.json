@@ -106,6 +106,16 @@
       }
     },
     {
+      "id": "scheduled-processar-liquidacao-cartao-credito",
+      "name": "Liquidar cartão de crédito — 09:00 GMT-5",
+      "type": "scheduled",
+      "is_active": true,
+      "schedule": "daily at 14:00 UTC (09:00 America/Rio_Branco, GMT-5)",
+      "function": "processarLiquidacaoCartaoCredito",
+      "description": "Marca como Pago receitas de cartão de crédito cuja data prevista chegou; até lá ficam só em Contas Abertas.",
+      "supabase_equivalent": "SELECT cron.schedule('liquidacao-cartao-credito', '0 14 * * *', $$ SELECT net.http_post(...) $$);"
+    },
+    {
       "id": "69be3ff014187cf035c2eb79",
       "name": "Gerar Lançamentos Cartão - Meia-noite",
       "type": "scheduled",
