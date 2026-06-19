@@ -17,9 +17,26 @@ function ResumoSegment({ icon: Icon, value, valueClass, iconClass }) {
   );
 }
 
+/** Coluna fixa — mobile balanço diário (ícone e valor sempre na mesma posição). */
+function ResumoGridCell({ icon: Icon, value, valueClass, iconClass }) {
+  return (
+    <div className="flex min-w-0 flex-col items-center justify-start gap-1.5 px-0.5">
+      <Icon className={cn('h-3.5 w-3.5 shrink-0', iconClass ?? valueClass)} aria-hidden />
+      <span
+        className={cn(
+          'w-full truncate text-center text-[10px] font-semibold leading-tight tabular-nums',
+          valueClass,
+        )}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 /**
  * Faixa compacta — receitas, despesas, variação (md+) e saldo.
- * Mobile: só 3 itens (sem variação).
+ * variant balancoDia: mobile em grelha 3 colunas fixas (sem variação).
  */
 export default function FinanceiroResumoBar({
   receitas = 0,
@@ -27,12 +44,14 @@ export default function FinanceiroResumoBar({
   variacao,
   saldo,
   saldoComSinal = false,
+  variant = 'default',
   className,
 }) {
   const variacaoVal = variacao ?? receitas - despesas;
   const variacaoPos = variacaoVal >= 0;
   const posClass = 'text-[#4A5D23] dark:text-[#a4ce33]';
   const negClass = 'text-red-600 dark:text-red-400';
+  const isBalancoDia = variant === 'balancoDia';
 
   const saldoDisplay =
     saldo != null
@@ -49,6 +68,83 @@ export default function FinanceiroResumoBar({
   ]
     .filter(Boolean)
     .join(' · ');
+
+  if (isBalancoDia) {
+    return (
+      <>
+        {/* Mobile: 3 colunas fixas — leitura vertical estável ao rolar */}
+        <div
+          className={cn(
+            'grid w-full grid-cols-3 gap-2 rounded-lg px-2 py-3 md:hidden',
+            className,
+          )}
+          title={title}
+        >
+          <ResumoGridCell
+            icon={TrendingUp}
+            value={`+${formatKpiValor(receitas)}`}
+            valueClass={posClass}
+          />
+          <ResumoGridCell
+            icon={TrendingDown}
+            value={`−${formatKpiValor(despesas)}`}
+            valueClass={despesas > 0 ? negClass : 'text-muted-foreground/70'}
+          />
+          {saldoDisplay != null ? (
+            <ResumoGridCell
+              icon={Wallet}
+              value={saldoDisplay}
+              valueClass="text-foreground"
+              iconClass="text-foreground/70"
+            />
+          ) : (
+            <div aria-hidden />
+          )}
+        </div>
+
+        {/* Desktop: faixa inline */}
+        <div
+          className={cn(
+            'hidden min-w-0 items-center gap-3 overflow-x-auto md:flex',
+            '[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+            className,
+          )}
+          title={title}
+        >
+          <ResumoSegment icon={TrendingUp} value={`+${formatKpiValor(receitas)}`} valueClass={posClass} />
+          <span className="shrink-0 text-muted-foreground/35" aria-hidden>
+            ·
+          </span>
+          <ResumoSegment
+            icon={TrendingDown}
+            value={`−${formatKpiValor(despesas)}`}
+            valueClass={despesas > 0 ? negClass : 'text-muted-foreground/70'}
+          />
+          <span className="shrink-0 text-muted-foreground/35" aria-hidden>
+            ·
+          </span>
+          <ResumoSegment
+            icon={ArrowUpDown}
+            value={`${variacaoPos ? '+' : '−'}${formatKpiValor(Math.abs(variacaoVal))}`}
+            valueClass={variacaoPos ? posClass : negClass}
+          />
+          {saldoDisplay != null && (
+            <>
+              <span className="shrink-0 text-muted-foreground/35" aria-hidden>
+                ·
+              </span>
+              <ResumoSegment
+                icon={Wallet}
+                value={saldoDisplay}
+                valueClass="text-foreground"
+                iconClass="text-foreground/70"
+              />
+            </>
+          )}
+        </div>
+      </>
+    );
+  }
 
   return (
     <div

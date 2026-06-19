@@ -49,7 +49,8 @@ export function FinanceiroGrupo({
       variacao={liquido}
       saldo={saldoAcumulado}
       saldoComSinal
-      className="w-full md:w-auto md:justify-end"
+      variant="balancoDia"
+      className="md:w-auto md:justify-end"
     />
   ) : null;
 
@@ -73,7 +74,7 @@ export function FinanceiroGrupo({
         className={cn(
           'group w-full min-w-0 px-1',
           balancoDia
-            ? 'flex flex-col gap-1.5 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:py-1.5'
+            ? 'flex flex-col gap-2.5 px-1 py-3 md:flex-row md:items-center md:justify-between md:gap-2 md:py-1.5'
             : cn(
                 'flex items-center justify-between gap-2 py-1.5',
                 card && 'gap-3 py-2.5',
@@ -84,7 +85,7 @@ export function FinanceiroGrupo({
         <div
           className={cn(
             'flex min-w-0 items-center gap-2',
-            balancoDia ? 'w-full justify-between sm:w-auto sm:flex-1' : 'flex-1',
+            balancoDia ? 'w-full justify-between md:w-auto md:flex-1' : 'flex-1',
           )}
         >
           <p
@@ -101,7 +102,7 @@ export function FinanceiroGrupo({
           {balancoDia && (
             <ChevronRight
               className={cn(
-                'h-3.5 w-3.5 shrink-0 text-foreground/50 transition-transform sm:hidden',
+                'h-3.5 w-3.5 shrink-0 text-foreground/50 transition-transform md:hidden',
                 open && 'rotate-90',
               )}
             />
@@ -110,7 +111,7 @@ export function FinanceiroGrupo({
         <div
           className={cn(
             'flex min-w-0 items-center gap-1 sm:gap-1.5',
-            balancoDia && 'w-full sm:w-auto sm:shrink sm:justify-end',
+            balancoDia && 'w-full md:w-auto md:shrink md:justify-end',
           )}
         >
           {balancoDia ? (
@@ -138,7 +139,7 @@ export function FinanceiroGrupo({
           {balancoDia && (
             <ChevronRight
               className={cn(
-                'hidden h-3.5 w-3.5 shrink-0 text-foreground/50 transition-transform sm:block',
+                'hidden h-3.5 w-3.5 shrink-0 text-foreground/50 transition-transform md:block',
                 open && 'rotate-90',
               )}
             />
