@@ -3,7 +3,7 @@ import { Clock, Eye, Edit, Scale } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P38StatusPill } from '@/components/ui/p38-mobile-line';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
-import { contaTemDivergenciaSaldo, getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
+import { getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
 import { p38Accent } from '@/lib/p38ThemeSurfaces';
 
 export default function ContaFinanceiraRow({
@@ -19,7 +19,6 @@ export default function ContaFinanceiraRow({
   const saldo = getSaldoExibicaoConta(conta, saldosCalculados);
   const isNegativo = saldo < 0;
   const ativa = conta.ativo !== false;
-  const divergente = contaTemDivergenciaSaldo(conta, saldo);
 
   const subtitle = [conta.tipo, conta.banco].filter(Boolean).join(' · ');
   const valueSub = conta.is_caixa_pdv
@@ -85,11 +84,6 @@ export default function ContaFinanceiraRow({
           {pendencias > 0 && (
             <P38StatusPill tone="warning" className="max-w-[8.5rem] truncate text-[10px]">
               {pendencias} conc.
-            </P38StatusPill>
-          )}
-          {divergente && (
-            <P38StatusPill tone="warning" className="text-[10px]">
-              Divergente
             </P38StatusPill>
           )}
           {conta.is_caixa_pdv && (

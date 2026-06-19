@@ -16,7 +16,6 @@ import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFina
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import {
-  calcularSaldosAposDataCorte,
   calcularSaldosTodasContas,
   getSaldoExibicaoConta,
 } from '@/lib/saldoContaFinanceira';
@@ -119,12 +118,11 @@ function useGestaoContasModel(shared) {
     return mapa;
   }, [lancamentos, mostrarHistoricoAnterior, dataCorteHistorico]);
 
-  const saldosCalculados = useMemo(() => {
-    if (mostrarHistoricoAnterior) {
-      return calcularSaldosTodasContas(accounts, lancamentos, movimentosCaixa);
-    }
-    return calcularSaldosAposDataCorte(accounts, lancamentos, movimentosCaixa, dataCorteHistorico);
-  }, [accounts, lancamentos, movimentosCaixa, mostrarHistoricoAnterior, dataCorteHistorico]);
+  // Mesma regra do Fluxo de Caixa: saldo canónico a partir de todos os lançamentos pagos + movimentos.
+  const saldosCalculados = useMemo(
+    () => calcularSaldosTodasContas(accounts, lancamentos, movimentosCaixa),
+    [accounts, lancamentos, movimentosCaixa],
+  );
 
   const contasEnriquecidas = useMemo(() => accounts.map((account) => ({
     ...account,
@@ -408,7 +406,7 @@ export function GestaoContasPane() {
                 )}
                 {!mostrarHistoricoAnterior && (
                   <FinanceiroSummaryChip>
-                    Saldos desde {formatarSoData(dataCorteHistorico)}
+                    Movimentos desde {formatarSoData(dataCorteHistorico)}
                   </FinanceiroSummaryChip>
                 )}
                 {mostrarHistoricoAnterior && (

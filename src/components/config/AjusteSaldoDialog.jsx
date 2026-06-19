@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowUpCircle, ArrowDownCircle, Scale } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { contaTemDivergenciaSaldo } from '@/lib/saldoContaFinanceira';
+import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
 
 export default function AjusteSaldoDialog({ open, onOpenChange, conta, saldoCalculado, onSaved }) {
   const [saldoInformado, setSaldoInformado] = useState('0');
@@ -32,8 +32,6 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, saldoCalc
   const diferenca = saldoNovo - saldoAtual;
   const isReforco = diferenca > 0;
   const isSangria = diferenca < 0;
-  const divergente = saldoCalculado != null && contaTemDivergenciaSaldo(conta, saldoCalculado);
-
   const formatValor = (valor) => `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const handleSalvar = async () => {
@@ -52,9 +50,7 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, saldoCalc
       usuario_responsavel_nome: currentUser?.full_name || currentUser?.email || 'Sistema',
     });
 
-    await base44.entities.ContasFinanceiras.update(conta.id, {
-      saldo_atual: saldoNovo,
-    });
+    await sincronizarSaldosAposAlteracao(base44, [conta.id]);
 
     toast({
       title: isReforco ? 'Ajuste para mais registrado' : 'Ajuste para menos registrado',
@@ -80,13 +76,8 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, saldoCalc
             <p className="text-xs text-muted-foreground">Conta</p>
             <p className="text-sm font-medium text-foreground">{conta.nome}</p>
             <p className="text-xs text-muted-foreground">
-              Saldo calculado: {formatValor(saldoAtual)}
+              Saldo atual: {formatValor(saldoAtual)}
             </p>
-            {divergente && (
-              <p className="text-[11px] text-amber-600 dark:text-amber-400">
-                Registro gravado: {formatValor(conta.saldo_atual)} — será alinhado após o ajuste.
-              </p>
-            )}
           </div>
 
           <div className="space-y-1.5">
