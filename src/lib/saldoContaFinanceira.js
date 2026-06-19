@@ -122,7 +122,10 @@ export function deltaMovimentoCaixaSaldo(m) {
 export function filtrarLancamentosDaConta(conta, todosLancamentos = []) {
   if (!conta) return [];
   if (conta.is_caixa_geral === true) {
-    return todosLancamentos.filter((l) => !l.conta_financeira_id);
+    // Legado sem conta_financeira_id + lançamentos já vinculados à Caixa Geral (mesma regra do Extrato).
+    return todosLancamentos.filter(
+      (l) => !l.conta_financeira_id || l.conta_financeira_id === conta.id,
+    );
   }
   return todosLancamentos.filter((l) => l.conta_financeira_id === conta.id);
 }
