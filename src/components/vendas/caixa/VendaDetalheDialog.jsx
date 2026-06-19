@@ -4,6 +4,7 @@ import { CaixaDialogContent } from './CaixaDialogContent';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatarDataHora } from '@/components/utils/dateUtils';
 import { caixaClasses } from '@/lib/caixaP38Theme';
+import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 
 export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
   if (!venda) return null;
@@ -14,6 +15,7 @@ export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
           <DialogTitle className="text-lg text-foreground">
             Detalhes da Venda - {venda.numero}
           </DialogTitle>
+          <FormaPagamentoBadges pagamentos={venda.pagamentos} className="pt-1" />
         </DialogHeader>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -33,11 +35,17 @@ export default function VendaDetalheDialog({ venda, onClose, formatValor }) {
             </div>
             <div>
               <span className="text-muted-foreground">Pagamento:</span>
-              {venda.pagamentos?.map((p, idx) => (
-                <p key={idx} className="font-medium text-foreground">
-                  {p.forma_pagamento} - {formatValor(p.valor)}
-                </p>
-              ))}
+              {venda.pagamentos?.length > 0 ? (
+                <div className="mt-1 space-y-1">
+                  {venda.pagamentos.map((p, idx) => (
+                    <p key={idx} className="font-medium text-foreground text-sm">
+                      {p.forma_pagamento} — {formatValor(p.valor)}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="font-medium text-muted-foreground">—</p>
+              )}
             </div>
           </div>
           <div className="border-t border-border/40 pt-4">

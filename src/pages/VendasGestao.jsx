@@ -25,6 +25,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
 import ValesTrocaTab from '@/components/vendas/ValesTrocaTab';
 import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
+import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
 import { dataHoje, boundsMesCivil, formatarDataHora, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : '-';
@@ -102,6 +103,7 @@ function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, striped
       meta={
         <>
           <P38StatusLabel tone={tone}>{pedido.status}</P38StatusLabel>
+          <FormaPagamentoBadges pagamentos={pedido.pagamentos} size="xs" />
           {pedido.vendedor_nome ? <span className="truncate">{pedido.vendedor_nome}</span> : null}
         </>
       }
@@ -216,6 +218,7 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir 
                   <TableCell>
                     <div className="font-medium text-foreground">{pedido.cliente_nome || '-'}</div>
                     <div className="text-xs text-muted-foreground">{pedido.numero}</div>
+                    <FormaPagamentoBadges pagamentos={pedido.pagamentos} className="mt-1" size="xs" />
                   </TableCell>
                   <TableCell>
                     <P38StatusLabel tone={tone}>{pedido.status}</P38StatusLabel>
