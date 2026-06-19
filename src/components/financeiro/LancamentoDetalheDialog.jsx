@@ -239,10 +239,10 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
   const handleMarcarRevisado = async () => {
     setSaving(true);
-    await base44.entities.LancamentoFinanceiro.update(
-      lancamento.id,
-      payloadMarcarRevisaoCartaoCredito(dataLiquidacao),
-    );
+    await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+      ...payloadMarcarRevisaoCartaoCredito(dataLiquidacao),
+      ...payloadValor,
+    });
     toast({ title: 'Venda revisada!', className: 'bg-muted text-foreground' });
     onSaved?.();
     setSaving(false);
