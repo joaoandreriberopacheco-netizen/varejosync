@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  X, Wallet, BarChart3, Clock, ChevronDown,
+  X, Wallet, BarChart3, ChevronDown,
   ChevronLeft, ChevronRight, Layers, RefreshCw
 } from 'lucide-react';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -329,47 +329,13 @@ function CmvFiltro({ cmvOnly, onToggle }) {
   );
 }
 
-function ConciliacaoLoteFiltro({ contas, onOpenConciliacao }) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button type="button" className={`flex-none flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${P38_CHIP_INACTIVE}`}>
-          <Clock className="w-3 h-3" /> Conciliar em lote
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className={`w-56 p-2 ${P38_POPOVER}`} align="start">
-        <p className="px-2 py-1 text-[11px] uppercase tracking-wide text-muted-foreground">Escolha a conta</p>
-        <button
-          type="button"
-          onClick={() => onOpenConciliacao?.(null)}
-          className="w-full text-left px-2 py-2 rounded text-xs hover:bg-secondary/80 dark:hover:bg-[#383e47] text-foreground/90"
-        >
-          Todas as contas
-        </button>
-        {contas.map(c => (
-          <button
-            type="button"
-            key={c.id}
-            onClick={() => onOpenConciliacao?.(c)}
-            className="w-full text-left px-2 py-2 rounded text-xs hover:bg-secondary/80 dark:hover:bg-[#383e47] text-foreground/90"
-          >
-            {c.nome}
-          </button>
-        ))}
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 // ─── Painel de filtros (compartilhado mobile drawer + desktop inline) ─────────
 function FiltrosFluxoPainel({
   periodo, onPeriodo, customStart, customEnd, onCustom,
   contas, contasSel, onContasSel,
   tiposSel, onTiposSel,
   statusSel, onStatusSel,
-  pendentes, onPendentes,
   cmvOnly, onCmvOnly,
-  onOpenConciliacao,
   mostrarHistoricoAnterior, dataCorteHistorico, onMostrarHistoricoAnterior, onDataCorteHistorico,
 }) {
   return (
@@ -391,7 +357,6 @@ function FiltrosFluxoPainel({
         <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
         <StatusFiltro sel={statusSel} onSel={onStatusSel} />
         <CmvFiltro cmvOnly={cmvOnly} onToggle={onCmvOnly} />
-        <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
       </div>
 
       <CorteHistoricoFiltro
@@ -405,7 +370,7 @@ function FiltrosFluxoPainel({
 }
 
 // ─── Export Principal ─────────────────────────────────────────────────────────
-export { PeriodoPicker, ContasFiltro, TipoFiltro, StatusFiltro, CmvFiltro, ConciliacaoLoteFiltro };
+export { PeriodoPicker, ContasFiltro, TipoFiltro, StatusFiltro, CmvFiltro };
 
 export default function FiltrosFluxoCaixa({
   search, onSearch,
@@ -415,8 +380,7 @@ export default function FiltrosFluxoCaixa({
   statusSel, onStatusSel,
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
-  onOpenConciliacao,
-  conciliacaoPendente = 0,
+  revisaoCartaoPendente = 0,
   ordemLancamentos = 'desc',
   onOrdemLancamentosChange,
   mostrarHistoricoAnterior = false,
@@ -444,7 +408,7 @@ export default function FiltrosFluxoCaixa({
       filtersOpen={filtersOpen}
       onFiltersOpenChange={setFiltersOpen}
       hasActiveFilters={hasPanelFilters}
-      conciliacaoPendente={conciliacaoPendente}
+      revisaoCartaoPendente={revisaoCartaoPendente}
       pendentes={pendentes}
       onPendentesToggle={onPendentes}
       ordemLancamentos={ordemLancamentos}
@@ -463,11 +427,8 @@ export default function FiltrosFluxoCaixa({
         onTiposSel={onTiposSel}
         statusSel={statusSel}
         onStatusSel={onStatusSel}
-        pendentes={pendentes}
-        onPendentes={onPendentes}
         cmvOnly={cmvOnly}
         onCmvOnly={onCmvOnly}
-        onOpenConciliacao={onOpenConciliacao}
         mostrarHistoricoAnterior={mostrarHistoricoAnterior}
         dataCorteHistorico={dataCorteHistorico}
         onMostrarHistoricoAnterior={onMostrarHistoricoAnterior}

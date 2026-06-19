@@ -381,7 +381,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
           await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
             status: 'Pago',
             data_pagamento: dataPagamentoLote,
-            status_conciliacao: 'Pendente',
+            status_conciliacao: 'N/A',
             conta_financeira_id: conta.id,
             conta_financeira_nome: conta.nome,
           });

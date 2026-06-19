@@ -17,6 +17,10 @@ import { useToast } from '@/components/ui/use-toast';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
 import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
 import { lancamentoMesmoRamoRecorrencia } from '@/lib/agefinLancamentosRecorrencia';
+import {
+  isRevisaoCartaoCreditoPendente,
+  payloadMarcarRevisaoCartaoCredito,
+} from '@/lib/lancamentoFinanceiroStatus';
 
 const R = (v) => `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -102,7 +106,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   ]);
 
   const isPagoOriginal = isLancamentoPago(lancamento);
-  const isPendente = lancamento.status_conciliacao === 'Pendente';
+  const isPendenteRevisao = isRevisaoCartaoCreditoPendente(lancamento);
+  const isCartaoCredito = lancamento.forma_pagamento_tipo === 'Cartão Crédito';
   const isCartaoReceber = isReceita && ['Cartão Débito', 'Cartão Crédito'].includes(lancamento.forma_pagamento_tipo);
   const valorNumerico = parseFloat(valorEditavel) || 0;
   const valorLiquidoOriginal = parseFloat(lancamento.valor_liquido ?? lancamento.valor) || 0;
@@ -160,13 +165,16 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         })
         .filter((l) => lancamentoMesmoRamoRecorrencia(lancamento, l));
       for (const l of alvos) {
-        await base44.entities.LancamentoFinanceiro.update(l.id, {
+        const payload = {
           status: 'Pago',
           data_pagamento: dataPagamento,
-          status_conciliacao: 'Pendente',
           conta_financeira_id: contaId,
           conta_financeira_nome: conta?.nome,
-        });
+        };
+        if (l.forma_pagamento_tipo === 'Cartão Crédito') {
+          payload.status_conciliacao = 'Pendente';
+        }
+        await base44.entities.LancamentoFinanceiro.update(l.id, payload);
       }
       await sincronizarSaldosAposAlteracao(base44, [
         contaId,
@@ -180,12 +188,17 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
     // Salvar apenas este
     if (isPagoLocal && !isPagoOriginal) {
-      await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+      const payload = {
         ...payloadValor,
-        status: 'Pago', data_pagamento: dataPagamento,
-        status_conciliacao: 'Pendente',
-        conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
-      });
+        status: 'Pago',
+        data_pagamento: dataPagamento,
+        conta_financeira_id: contaId,
+        conta_financeira_nome: conta?.nome,
+      };
+      if (lancamento.forma_pagamento_tipo === 'Cartão Crédito') {
+        payload.status_conciliacao = 'Pendente';
+      }
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, payload);
       await sincronizarSaldosAposAlteracao(base44, [contaId, lancamento.conta_financeira_id]);
       toast({ title: 'Pagamento registrado!', className: 'bg-muted text-foreground' });
     } else if (!isPagoLocal && isPagoOriginal) {
@@ -224,13 +237,13 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     await aplicarPagamento('apenas_esta');
   };
 
-  const handleConciliar = async () => {
+  const handleMarcarRevisado = async () => {
     setSaving(true);
-    await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
-      status_conciliacao: 'Conciliado',
-      data_liquidacao_efetiva: dataLiquidacao
-    });
-    toast({ title: 'Lançamento conciliado!', className: 'bg-muted text-foreground' });
+    await base44.entities.LancamentoFinanceiro.update(
+      lancamento.id,
+      payloadMarcarRevisaoCartaoCredito(dataLiquidacao),
+    );
+    toast({ title: 'Venda revisada!', className: 'bg-muted text-foreground' });
     onSaved?.();
     setSaving(false);
   };
@@ -387,9 +400,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               Ref: {lancamento.referencia_numero}
             </span>
           )}
-          {isPendente && (
+          {isPendenteRevisao && (
             <span className="flex items-center gap-1 text-[0.65rem] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-              <Clock className="w-2.5 h-2.5" /> Aguard. Conciliação
+              <Clock className="w-2.5 h-2.5" /> Revisar cartão
             </span>
           )}
         </div>
@@ -550,17 +563,17 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           </>
         )}
 
-        {/* Conciliar (se pago e pendente) */}
-        {isPagoOriginal && isPendente && !isCancelado && (
+        {/* Revisão de venda no cartão de crédito */}
+        {isCartaoCredito && isPendenteRevisao && !isCancelado && (
           <>
             <div className="h-px bg-muted" />
             <div className="px-5 py-4 space-y-3">
               <div>
-                <p className="text-sm font-medium text-foreground/90">Conciliar</p>
-                <p className="text-xs text-muted-foreground">Confirmar data de liquidação</p>
+                <p className="text-sm font-medium text-foreground/90">Revisar venda</p>
+                <p className="text-xs text-muted-foreground">Confirme valor e data prevista de recebimento</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Data de liquidação</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Data prevista de recebimento</p>
                 <input autoComplete="off"
                   type="date"
                   value={dataLiquidacao}
@@ -569,11 +582,11 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                 />
               </div>
               <button
-                onClick={handleConciliar}
+                onClick={handleMarcarRevisado}
                 disabled={saving}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary dark:bg-muted text-white dark:text-foreground text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
                 <CheckCircle2 className="w-4 h-4" />
-                Salvar Conciliação
+                Marcar como revisado
               </button>
             </div>
           </>

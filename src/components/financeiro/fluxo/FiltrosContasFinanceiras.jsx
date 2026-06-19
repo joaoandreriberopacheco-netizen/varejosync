@@ -43,7 +43,7 @@ export default function FiltrosContasFinanceiras({
       filtersOpen={filtersOpen}
       onFiltersOpenChange={onFiltersOpenChange}
       hasActiveFilters={hasActiveFilters}
-      conciliacaoPendente={totalPendencias}
+      revisaoCartaoPendente={totalPendencias}
       pendentes={somentePendencias}
       onPendentesToggle={onSomentePendencias}
     >

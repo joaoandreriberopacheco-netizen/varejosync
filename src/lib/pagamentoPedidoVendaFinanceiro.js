@@ -202,7 +202,7 @@ export async function rebuildReceitasLancamentosPedidoVenda(
         valor_liquido: valorLiquido,
         data_vencimento: dataVencimento,
         status: 'Em Aberto',
-        status_conciliacao: 'Pendente',
+        status_conciliacao: pag.forma_pagamento === 'Cartão de Crédito' ? 'Pendente' : 'N/A',
         forma_pagamento: pag.forma_pagamento,
         forma_pagamento_tipo:
           pag.forma_pagamento === 'Cartão de Débito' ? 'Cartão Débito' : 'Cartão Crédito',
@@ -260,7 +260,7 @@ export async function rebuildReceitasLancamentosPedidoVenda(
       data_vencimento: hoje,
       data_pagamento: hoje,
       status: 'Pago',
-      status_conciliacao: pag.forma_pagamento === 'Dinheiro' ? 'N/A' : 'Pendente',
+      status_conciliacao: 'N/A',
       forma_pagamento: pag.forma_pagamento,
       forma_pagamento_id: formaPgId,
       forma_pagamento_tipo: pag.forma_pagamento,

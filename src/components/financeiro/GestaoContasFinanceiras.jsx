@@ -6,14 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, ArrowRightLeft } from 'lucide-react';
-import ConciliacaoBancaria from './ConciliacaoBancaria';
+import { Plus } from 'lucide-react';
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import KpiContasFinanceiras from './fluxo/KpiContasFinanceiras';
 import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFinanceiras';
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
+import { isRevisaoCartaoCreditoPendente } from '@/lib/lancamentoFinanceiroStatus';
 import {
   calcularSaldosTodasContas,
   getSaldoExibicaoConta,
@@ -45,7 +45,6 @@ function useGestaoContasModel(shared) {
   const [fabOpen, setFabOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [conciliacaoConta, setConciliacaoConta] = useState(null);
   const [ajusteConta, setAjusteConta] = useState(null);
   const [pinAjusteOpen, setPinAjusteOpen] = useState(false);
   const [ajusteDialogOpen, setAjusteDialogOpen] = useState(false);
@@ -83,10 +82,10 @@ function useGestaoContasModel(shared) {
     loadData();
   }, [shared, loadData]);
 
-  const pendenciasConciliacao = useMemo(() => {
+  const revisaoCartaoPorConta = useMemo(() => {
     const mapa = {};
     lancamentos.forEach((l) => {
-      if (l.status_conciliacao === 'Pendente' && l.conta_financeira_id) {
+      if (isRevisaoCartaoCreditoPendente(l) && l.conta_financeira_id) {
         mapa[l.conta_financeira_id] = (mapa[l.conta_financeira_id] || 0) + 1;
       }
     });
@@ -107,7 +106,7 @@ function useGestaoContasModel(shared) {
     if (statusFiltro === 'ativas' && account.ativo === false) return false;
     if (statusFiltro === 'inativas' && account.ativo !== false) return false;
     if (tipoFiltro !== 'todos' && account.tipo !== tipoFiltro) return false;
-    if (somentePendencias && !(pendenciasConciliacao[account.id] > 0)) return false;
+    if (somentePendencias && !(revisaoCartaoPorConta[account.id] > 0)) return false;
     if (search) {
       const q = search.toLowerCase();
       return (
@@ -118,7 +117,7 @@ function useGestaoContasModel(shared) {
       );
     }
     return true;
-  }), [contasEnriquecidas, statusFiltro, tipoFiltro, somentePendencias, pendenciasConciliacao, search]);
+  }), [contasEnriquecidas, statusFiltro, tipoFiltro, somentePendencias, revisaoCartaoPorConta, search]);
 
   const kpis = useMemo(() => {
     let saldoTotal = 0;
@@ -137,7 +136,7 @@ function useGestaoContasModel(shared) {
         negativas++;
         saldoNegativo += saldo;
       }
-      pendencias += pendenciasConciliacao[a.id] || 0;
+      pendencias += revisaoCartaoPorConta[a.id] || 0;
     });
 
     return {
@@ -149,7 +148,7 @@ function useGestaoContasModel(shared) {
       saldoNegativo: Math.abs(saldoNegativo),
       pendencias,
     };
-  }, [contasEnriquecidas, saldosCalculados, pendenciasConciliacao]);
+  }, [contasEnriquecidas, saldosCalculados, revisaoCartaoPorConta]);
 
   const grupos = useMemo(() => {
     const map = {};
@@ -226,7 +225,7 @@ function useGestaoContasModel(shared) {
     grupos,
     kpis,
     saldosCalculados,
-    pendenciasConciliacao,
+    revisaoCartaoPorConta,
     search,
     setSearch,
     tipoFiltro,
@@ -244,8 +243,6 @@ function useGestaoContasModel(shared) {
     isDialogOpen,
     setIsDialogOpen,
     selectedAccount,
-    conciliacaoConta,
-    setConciliacaoConta,
     formData,
     setFormData,
     handleSave,
@@ -285,7 +282,7 @@ export function GestaoContasPane() {
     loading,
     filtrados,
     grupos,
-    pendenciasConciliacao,
+    revisaoCartaoPorConta,
     search,
     setSearch,
     tipoFiltro,
@@ -303,8 +300,6 @@ export function GestaoContasPane() {
     isDialogOpen,
     setIsDialogOpen,
     selectedAccount,
-    conciliacaoConta,
-    setConciliacaoConta,
     formData,
     setFormData,
     handleSave,
@@ -360,7 +355,7 @@ export function GestaoContasPane() {
             {statusLabel && <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>}
             {somentePendencias && (
               <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
-                Conciliação
+                Revisão cartão
               </FinanceiroSummaryChip>
             )}
           </>
@@ -370,12 +365,11 @@ export function GestaoContasPane() {
       <ListaContasFinanceiras
         grupos={grupos}
         loading={loading}
-        pendenciasMap={pendenciasConciliacao}
+        pendenciasMap={revisaoCartaoPorConta}
         saldosCalculados={saldosCalculados}
         onExtrato={handleExtrato}
         onEdit={handleEdit}
         onAjuste={handleAjuste}
-        onConciliar={setConciliacaoConta}
       />
 
       {fabOpen && (
@@ -527,27 +521,6 @@ export function GestaoContasPane() {
               Salvar
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!conciliacaoConta} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
-        <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
-          <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
-            <DialogTitle className="flex items-center gap-2 text-foreground">
-              <ArrowRightLeft className="h-5 w-5 text-amber-500" />
-              Conciliação — {conciliacaoConta?.nome}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 md:px-6 md:pb-6">
-            {conciliacaoConta && (
-              <ConciliacaoBancaria
-                contaId={conciliacaoConta.id}
-                contaNome={conciliacaoConta.nome}
-                onClose={() => setConciliacaoConta(null)}
-                onConciliado={loadData}
-              />
-            )}
-          </div>
         </DialogContent>
       </Dialog>
     </>

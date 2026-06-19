@@ -31,9 +31,9 @@ export default function KpiContasFinanceiras({ kpis, layout = 'card' }) {
           layout={layout}
           icon={Clock}
           iconClass="text-amber-600 dark:text-amber-400"
-          label="Conciliação"
+          label="Revisão cartão"
           value={String(kpis.pendencias)}
-          sub="pendente(s)"
+          sub="para revisar"
         />
       )}
       {kpis.negativas > 0 && (

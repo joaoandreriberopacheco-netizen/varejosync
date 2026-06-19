@@ -12,7 +12,6 @@ export default function ListaContasFinanceiras({
   onExtrato,
   onEdit,
   onAjuste,
-  onConciliar,
 }) {
   return (
     <FinanceiroListaEstado
@@ -46,7 +45,6 @@ export default function ListaContasFinanceiras({
                 onExtrato={onExtrato}
                 onEdit={onEdit}
                 onAjuste={onAjuste}
-                onConciliar={onConciliar}
               />
             ))}
           </FinanceiroGrupo>

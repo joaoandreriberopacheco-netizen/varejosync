@@ -9,19 +9,30 @@ export function isLancamentoCancelado(l) {
   return l?.status === 'Cancelado';
 }
 
-/** Cartão crédito pendente de conciliação — aparece no fluxo como realizado previsto. */
-export function isCartaoCreditoPendenteConciliacao(l) {
+/** Venda no cartão de crédito aguardando revisão (valor/data previstos). */
+export function isRevisaoCartaoCreditoPendente(l) {
   return l?.forma_pagamento_tipo === 'Cartão Crédito' && l?.status_conciliacao === 'Pendente';
 }
 
-/** Visível no Fluxo de Caixa (pago ou cartão crédito pendente). */
+/** @deprecated use isRevisaoCartaoCreditoPendente */
+export const isCartaoCreditoPendenteConciliacao = isRevisaoCartaoCreditoPendente;
+
+/** Marca revisão concluída (campo legado status_conciliacao). */
+export function payloadMarcarRevisaoCartaoCredito(dataLiquidacao) {
+  return {
+    status_conciliacao: 'Conciliado',
+    data_liquidacao_efetiva: dataLiquidacao,
+  };
+}
+
+/** Visível no Fluxo de Caixa (pago ou cartão crédito pendente de revisão). */
 export function isLancamentoRealizadoFluxo(l) {
-  return isLancamentoPago(l) || isCartaoCreditoPendenteConciliacao(l);
+  return isLancamentoPago(l) || isRevisaoCartaoCreditoPendente(l);
 }
 
 /** Data usada para agrupar/filtrar no Fluxo de Caixa. */
 export function getDataAncoraFluxo(l) {
-  if (isCartaoCreditoPendenteConciliacao(l)) {
+  if (isRevisaoCartaoCreditoPendente(l)) {
     return l.data_liquidacao_prevista || l.data_vencimento;
   }
   return l.data_pagamento || l.data_vencimento;

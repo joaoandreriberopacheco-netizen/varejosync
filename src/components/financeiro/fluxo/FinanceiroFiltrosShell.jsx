@@ -10,7 +10,7 @@ const iconBtnBase = cn(
 );
 
 /**
- * Busca + ícones ao lado: filtros (sliders) e atalho de conciliação pendente (relógio + badge).
+ * Busca + ícones ao lado: filtros (sliders) e atalho de revisão de cartão crédito (relógio + badge).
  */
 export default function FinanceiroFiltrosShell({
   search,
@@ -19,7 +19,7 @@ export default function FinanceiroFiltrosShell({
   filtersOpen,
   onFiltersOpenChange,
   hasActiveFilters,
-  conciliacaoPendente = 0,
+  revisaoCartaoPendente = 0,
   pendentes = false,
   onPendentesToggle,
   ordemLancamentos,
@@ -27,7 +27,7 @@ export default function FinanceiroFiltrosShell({
   children,
 }) {
   const badgeLabel =
-    conciliacaoPendente > 99 ? '99+' : conciliacaoPendente > 0 ? String(conciliacaoPendente) : null;
+    revisaoCartaoPendente > 99 ? '99+' : revisaoCartaoPendente > 0 ? String(revisaoCartaoPendente) : null;
 
   return (
     <Collapsible
@@ -93,9 +93,9 @@ export default function FinanceiroFiltrosShell({
         {onPendentesToggle && (
           <button
             type="button"
-            aria-label="Aguardando conciliação"
+            aria-label="Revisar vendas no cartão de crédito"
             aria-pressed={pendentes}
-            title="Filtrar aguardando conciliação"
+            title="Filtrar vendas no cartão de crédito para revisão"
             onClick={() => onPendentesToggle(!pendentes)}
             className={cn(
               iconBtnBase,

@@ -1,27 +1,26 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowDownLeft, ArrowUpRight, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Clock } from 'lucide-react';
+
+import { isRevisaoCartaoCreditoPendente } from '@/lib/lancamentoFinanceiroStatus';
 
 const formatCurrency = (v) =>
   `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
 const categoriaLabel = (cat) => cat || 'Outros';
 
-const statusConciliacaoConfig = {
-  'Pendente': { icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-  'Conciliado': { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/10' },
-  'Discrepância': { icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/10' },
-  'N/A': { icon: CheckCircle2, color: 'text-muted-foreground', bg: '' },
+const statusRevisaoConfig = {
+  pendente: { icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20' },
 };
 
 export default function LancamentoItem({ lancamento, onClick }) {
   const isReceita = lancamento.tipo === 'Receita';
   const isPago = lancamento.status === 'Pago';
   const isPrevisto = !isPago && lancamento.status !== 'Cancelado';
-  const concStatus = lancamento.status_conciliacao || 'N/A';
-  const ConcIcon = statusConciliacaoConfig[concStatus]?.icon || Clock;
-  const concColor = statusConciliacaoConfig[concStatus]?.color || 'text-muted-foreground';
+  const revisaoPendente = isRevisaoCartaoCreditoPendente(lancamento);
+  const RevisaoIcon = statusRevisaoConfig.pendente.icon;
+  const revisaoColor = statusRevisaoConfig.pendente.color;
 
   const dataRef = lancamento.data_pagamento || lancamento.data_vencimento;
 
@@ -67,8 +66,8 @@ export default function LancamentoItem({ lancamento, onClick }) {
         }`}>
           {isReceita ? '+' : '-'}{formatCurrency(lancamento.valor)}
         </p>
-        {concStatus !== 'N/A' && concStatus !== 'Conciliado' && (
-          <ConcIcon className={`w-3 h-3 ${concColor}`} />
+        {revisaoPendente && (
+          <RevisaoIcon className={`w-3 h-3 ${revisaoColor}`} />
         )}
       </div>
     </button>

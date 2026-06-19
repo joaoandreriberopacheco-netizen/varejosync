@@ -1,4 +1,5 @@
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { isRevisaoCartaoCreditoPendente } from '@/lib/lancamentoFinanceiroStatus';
 
 /** Lançamento pago/cancelado entra no saldo (receita +, despesa −). Transferências ficam de fora. */
 export function lancamentoParticipaSaldo(l) {
@@ -254,8 +255,7 @@ export function calcularKpisFluxoPeriodo(
     }
 
     const conta = contasById[l.conta_financeira_id];
-    const cartaoCreditoPendente =
-      l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
+    const cartaoCreditoPendente = isRevisaoCartaoCreditoPendente(l);
 
     if (l.status === 'Vencido') {
       vencidos += valor;
@@ -313,8 +313,7 @@ export function totaisGrupoFluxoCaixa(items = [], contasById = {}) {
 
   items.forEach((l) => {
     const conta = contasById[l.conta_financeira_id];
-    const cartaoCreditoPendente =
-      l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
+    const cartaoCreditoPendente = isRevisaoCartaoCreditoPendente(l);
     const isPago = l.status === 'Pago' || !!l.data_pagamento;
     const valor = Number(l.valor || 0);
 

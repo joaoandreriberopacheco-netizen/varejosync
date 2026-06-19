@@ -103,7 +103,7 @@ export const MODULOS = [
       { key: 'contas', label: 'Contas e Saldos' },
       { key: 'criar_lancamento', label: 'Criar Lançamento' },
       { key: 'aprovar_pagamentos', label: 'Aprovar Pagamentos' },
-      { key: 'conciliar_movimentos', label: 'Conciliação Bancária' },
+      { key: 'conciliar_movimentos', label: 'Revisão vendas cartão' },
       { key: 'ver_extrato', label: 'Ver Extrato' },
       { key: 'caixas_ativos', label: 'Caixas Ativos' },
     ]

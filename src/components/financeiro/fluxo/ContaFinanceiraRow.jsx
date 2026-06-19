@@ -18,7 +18,6 @@ export default function ContaFinanceiraRow({
   onExtrato,
   onEdit,
   onAjuste,
-  onConciliar,
   striped,
 }) {
   const saldo = getSaldoExibicaoConta(conta, saldosCalculados);
@@ -29,8 +28,7 @@ export default function ContaFinanceiraRow({
   const subtitle = [conta.tipo, conta.banco].filter(Boolean).join(' · ');
 
   const handleClick = () => {
-    if (pendencias > 0) onConciliar?.(conta);
-    else onExtrato?.(conta);
+    onExtrato?.(conta);
   };
 
   return (
@@ -51,7 +49,7 @@ export default function ContaFinanceiraRow({
           </P38StatusLabel>
           {pendencias > 0 && (
             <P38StatusLabel tone="warning">
-              {pendencias} conciliação{pendencias > 1 ? 'ões' : ''}
+              {pendencias} revisão{pendencias > 1 ? 'ões' : ''}
             </P38StatusLabel>
           )}
           {divergente && (

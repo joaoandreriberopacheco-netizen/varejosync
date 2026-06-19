@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatarDataCurta } from '@/components/utils/dateUtils';
-import { AlertCircle, ArrowRightLeft, Clock } from 'lucide-react';
+import { ArrowRightLeft, Clock } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   P38MobileLine,
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/p38-mobile-line';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
 import { isTransferenciaEntreContas } from '@/lib/saldoContaFinanceira';
+import { isRevisaoCartaoCreditoPendente } from '@/lib/lancamentoFinanceiroStatus';
 
 const LINE_TITLE_CLASS =
   '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
@@ -130,7 +131,7 @@ export default function FinanceiroLancRow({
   const cancelado = l.status === 'Cancelado';
   const isPago = l.status === 'Pago' || !!l.data_pagamento;
   const podeSelecionar = emSelecao && (selecionarPagos ? isPago : !isPago);
-  const conc = l.status_conciliacao || 'N/A';
+  const revisaoPendente = isRevisaoCartaoCreditoPendente(l);
   const isTransfConsolidada = l.isTransferenciaConsolidada;
   const data =
     dataField === 'vencimento'
@@ -144,8 +145,7 @@ export default function FinanceiroLancRow({
       {podeSelecionar && (
         <Checkbox checked={selecionado} onCheckedChange={() => onToggleSelecionado?.(l.id)} />
       )}
-      {conc === 'Pendente' && <Clock className="h-2.5 w-2.5 text-muted-foreground" />}
-      {conc === 'Discrepância' && <AlertCircle className="h-2.5 w-2.5 text-muted-foreground" />}
+      {revisaoPendente && <Clock className="h-2.5 w-2.5 text-amber-500" />}
     </>
   );
 

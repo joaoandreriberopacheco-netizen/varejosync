@@ -15,6 +15,7 @@ import {
   getDataAncoraFluxoKey,
   isLancamentoCancelado,
   isLancamentoRealizadoFluxo,
+  isRevisaoCartaoCreditoPendente,
 } from '@/lib/lancamentoFinanceiroStatus';
 import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
@@ -42,7 +43,6 @@ import {
 } from './GestaoContasFinanceiras';
 import AgefinRecorrentes from './AgefinRecorrentes';
 import AgefinImportador from '../agefin/AgefinImportador';
-import ConciliacaoBancaria from './ConciliacaoBancaria';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DATA_CORTE_HISTORICO_PADRAO,
@@ -109,7 +109,6 @@ export default function ExecucaoOrcamentaria() {
   const [fabOpen, setFabOpen] = useState(false);
   const [novoTipo, setNovoTipo] = useState('Despesa');
   const [detalhe, setDetalhe] = useState(null);
-  const [conciliacaoConta, setConciliacaoConta] = useState(null);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'contas'
   const [abaContas, setAbaContas] = useState('contas');
@@ -266,7 +265,7 @@ export default function ExecucaoOrcamentaria() {
       if (!matchTipo && !matchTransf) return false;
     }
     if (statusSel.length && !statusSel.includes(l.status)) return false;
-    if (pendentes && l.status_conciliacao !== 'Pendente') return false;
+    if (pendentes && !isRevisaoCartaoCreditoPendente(l)) return false;
     if (cmvOnly && !l.is_custo_mercadoria) return false;
     if (search && !lancamentoPassaBuscaFluxo(l, search, contasAtivas, contasById)) return false;
     return true;
@@ -330,16 +329,8 @@ export default function ExecucaoOrcamentaria() {
     });
   }, [filtrados, movimentosFiltrados, lancs, contas, contasSel, contasById, ordemLancamentos, kpis.saldoContas, movimentos]);
 
-  const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
+  const totalPend = useMemo(() => lancs.filter(isRevisaoCartaoCreditoPendente).length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || mostrarHistoricoAnterior || !!search;
-
-  const abrirConciliacao = useCallback((conta) => {
-    if (conta === null) {
-      setConciliacaoConta({ id: null, nome: 'Todas as contas' });
-      return;
-    }
-    setConciliacaoConta(conta);
-  }, []);
 
   const periodoLabel = useMemo(() => {
     if (periodo === 'tudo') return 'Todo o período';
@@ -364,7 +355,7 @@ export default function ExecucaoOrcamentaria() {
     const partes = [periodoLabel, contasSelecionadasLabel];
     if (tiposSel.length) partes.push(`Tipos: ${tiposSel.join(', ')}`);
     if (statusSel.length) partes.push(`Status: ${statusSel.join(', ')}`);
-    if (pendentes) partes.push('Conciliação pendente');
+    if (pendentes) partes.push('Revisão cartão crédito');
     if (cmvOnly) partes.push('Somente CMV');
     if (search) partes.push(`Busca: ${search}`);
     if (mostrarHistoricoAnterior) partes.push('Histórico completo');
@@ -534,8 +525,7 @@ export default function ExecucaoOrcamentaria() {
             onPendentes={setPendentes}
             cmvOnly={cmvOnly}
             onCmvOnly={setCmvOnly}
-            onOpenConciliacao={abrirConciliacao}
-            conciliacaoPendente={totalPend}
+            revisaoCartaoPendente={totalPend}
             ordemLancamentos={ordemLancamentos}
             onOrdemLancamentosChange={setOrdemLancamentos}
             mostrarHistoricoAnterior={mostrarHistoricoAnterior}
@@ -575,7 +565,7 @@ export default function ExecucaoOrcamentaria() {
                 {statusSel.length > 0 && (
                   <FinanceiroSummaryChip>{statusSel.length} status</FinanceiroSummaryChip>
                 )}
-                {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
+                {pendentes && <FinanceiroSummaryChip>Revisão cartão</FinanceiroSummaryChip>}
                 {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
                 {mostrarHistoricoAnterior && (
                   <FinanceiroSummaryChip>Histórico completo</FinanceiroSummaryChip>
@@ -633,24 +623,6 @@ export default function ExecucaoOrcamentaria() {
             periodoLabel={periodoLabel}
           />
 
-          <Dialog open={conciliacaoConta != null} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
-            <DialogContent className="flex h-[min(85dvh,90vh)] max-h-[min(85dvh,90vh)] w-[calc(100vw-1rem)] max-w-3xl flex-col gap-0 overflow-hidden border-border/40 p-0 dark:border-border/40 dark:bg-muted">
-              <DialogHeader className="shrink-0 px-6 pb-3 pt-6">
-                <DialogTitle className="text-foreground">Conciliação em lote — {conciliacaoConta?.nome || 'Todas as contas'}</DialogTitle>
-              </DialogHeader>
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-4 md:px-6 md:pb-6">
-                <ConciliacaoBancaria
-                  contaId={conciliacaoConta?.id || null}
-                  contaNome={conciliacaoConta?.nome || 'Todas as contas'}
-                  onClose={() => setConciliacaoConta(null)}
-                  onConciliado={() => {
-                    load();
-                    setConciliacaoConta(null);
-                  }}
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
         </>
       )}
 
