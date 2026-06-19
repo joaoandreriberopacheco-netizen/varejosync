@@ -9,38 +9,50 @@ export function isLancamentoCancelado(l) {
   return l?.status === 'Cancelado';
 }
 
-/** Cartão (crédito ou débito) aguardando crédito na conta — venda em aberto até conciliação. */
-export function isCartaoPendenteConciliacao(l) {
+/** Cartão de crédito aguardando liquidação automática (só Contas Abertas até o job das 09:00). */
+export function isCartaoCreditoAguardandoLiquidacao(l) {
   if (!l || isLancamentoPago(l) || isLancamentoCancelado(l)) return false;
-  const fpt = l.forma_pagamento_tipo;
-  const cartao = fpt === 'Cartão Crédito' || fpt === 'Cartão Débito';
-  return cartao && l.status_conciliacao === 'Pendente';
+  return l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
 }
 
-/** @deprecated Use isCartaoPendenteConciliacao — mantido para compatibilidade. */
+/** Cartão débito aguardando liquidação (Contas Abertas; fluxo só após Pago). */
+export function isCartaoDebitoAguardandoLiquidacao(l) {
+  if (!l || isLancamentoPago(l) || isLancamentoCancelado(l)) return false;
+  return l.forma_pagamento_tipo === 'Cartão Débito' && l.status_conciliacao === 'Pendente';
+}
+
+/** Cartão (crédito ou débito) pendente de crédito na conta. */
+export function isCartaoPendenteConciliacao(l) {
+  return isCartaoCreditoAguardandoLiquidacao(l) || isCartaoDebitoAguardandoLiquidacao(l);
+}
+
+/** @deprecated Use isCartaoCreditoAguardandoLiquidacao */
 export function isCartaoCreditoPendenteConciliacao(l) {
-  return l?.forma_pagamento_tipo === 'Cartão Crédito' && l?.status_conciliacao === 'Pendente';
+  return isCartaoCreditoAguardandoLiquidacao(l);
 }
 
-/** Valor que entra no fluxo / contas abertas: líquido (após taxa) para cartão pendente. */
-export function getValorEfetivoLancamento(l) {
-  if (isCartaoPendenteConciliacao(l)) {
+/** Valor no fluxo: líquido (após taxa) para cartão; bruto nos demais. */
+export function getValorFluxoCaixa(l) {
+  const fpt = l?.forma_pagamento_tipo;
+  if (fpt === 'Cartão Crédito' || fpt === 'Cartão Débito') {
     const liquido = l.valor_liquido;
     if (liquido != null && liquido !== '') return Number(liquido) || 0;
   }
   return Number(l?.valor || 0);
 }
 
-/** Visível no Fluxo de Caixa (pago ou cartão pendente de crédito na conta). */
+/** @deprecated Use getValorFluxoCaixa */
+export function getValorEfetivoLancamento(l) {
+  return getValorFluxoCaixa(l);
+}
+
+/** Visível no Fluxo de Caixa somente após pago (ex.: liquidação automática 09:00 no crédito). */
 export function isLancamentoRealizadoFluxo(l) {
-  return isLancamentoPago(l) || isCartaoPendenteConciliacao(l);
+  return isLancamentoPago(l);
 }
 
 /** Data usada para agrupar/filtrar no Fluxo de Caixa. */
 export function getDataAncoraFluxo(l) {
-  if (isCartaoPendenteConciliacao(l)) {
-    return l.data_liquidacao_prevista || l.data_vencimento;
-  }
   return l.data_pagamento || l.data_vencimento;
 }
 
@@ -62,10 +74,26 @@ export function isLancamentoVencido(l, hojeKey = dataHoje()) {
   return !!venc && venc < hojeKey;
 }
 
-/** Tag `conta_pagar` — regra das contas abertas. */
+/** Tag `conta_pagar` / `conta_receber` / cartão / fiado — regra das contas abertas. */
 export function lancamentoPassaFiltroContasAbertas(l) {
   if (isLancamentoCancelado(l) || l?.tipo === 'Transferência') return false;
   const tags = l?.tags || [];
-  if (tags.length > 0 && !tags.includes('conta_pagar')) return false;
+  if (
+    tags.includes('conta_pagar') ||
+    tags.includes('conta_receber') ||
+    tags.includes('CARTAO') ||
+    tags.includes('FIADO')
+  ) {
+    return true;
+  }
+  if (tags.length > 0) return false;
   return true;
+}
+
+/** Valor em Contas Abertas: líquido para cartão pendente. */
+export function getValorContaAberta(l) {
+  if (isCartaoPendenteConciliacao(l)) {
+    return getValorFluxoCaixa(l);
+  }
+  return Number(l?.valor || 0);
 }

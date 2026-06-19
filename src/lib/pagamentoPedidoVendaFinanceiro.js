@@ -191,6 +191,7 @@ export async function rebuildReceitasLancamentosPedidoVenda(
       const valorLiquido = roundToTwoDecimals(valorBruto * (1 - taxa / 100));
       const prazoDias = pag.prazo_maquininha_dias ?? getPrazoLiquidacaoMaquininha();
       const dataVencimento = addDiasUteis(hoje, prazoDias);
+      const isCredito = pag.forma_pagamento === 'Cartão de Crédito';
       const maquininhaNome = pag.maquininha_nome || pag.forma_pagamento;
       const bandeira = pag.bandeira || '';
       const parcelas = pag.parcelas || 1;
@@ -213,7 +214,7 @@ export async function rebuildReceitasLancamentosPedidoVenda(
         forma_pagamento_tipo:
           pag.forma_pagamento === 'Cartão de Débito' ? 'Cartão Débito' : 'Cartão Crédito',
         categoria: 'Venda de Produto',
-        tags: ['CARTAO', maquininhaNome, ...(bandeira ? [bandeira] : [])],
+        tags: ['CARTAO', ...(isCredito ? ['conta_receber'] : []), maquininhaNome, ...(bandeira ? [bandeira] : [])],
         conta_financeira_id: contaDestinoId,
         conta_financeira_nome: contaDestinoNome,
         turno_caixa_id: turnoCaixaId,
