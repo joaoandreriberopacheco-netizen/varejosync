@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label';
 import { ArrowUpCircle, ArrowDownCircle, Scale } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 export default function AjusteSaldoDialog({ open, onOpenChange, conta, saldoCalculado, onSaved }) {
   const [saldoInformado, setSaldoInformado] = useState('0');
+  const [dataMovimento, setDataMovimento] = useState(dataHoje());
   const [observacao, setObservacao] = useState('Ajuste manual de saldo');
   const [currentUser, setCurrentUser] = useState(null);
   const { toast } = useToast();
@@ -21,6 +23,7 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, saldoCalc
   useEffect(() => {
     if (open && conta) {
       setSaldoInformado(String(saldoAtual));
+      setDataMovimento(dataHoje());
       setObservacao('Ajuste manual de saldo');
       base44.auth.me().then(setCurrentUser).catch(() => setCurrentUser(null));
     }
@@ -45,6 +48,7 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, saldoCalc
       tipo: isReforco ? 'Reforço' : 'Sangria',
       valor: Math.abs(diferenca),
       observacao: observacao || 'Ajuste manual de saldo',
+      data_movimento: dataMovimento,
       conta_id: conta.id,
       usuario_responsavel_id: currentUser?.id || 'sistema',
       usuario_responsavel_nome: currentUser?.full_name || currentUser?.email || 'Sistema',
@@ -87,6 +91,17 @@ export default function AjusteSaldoDialog({ open, onOpenChange, conta, saldoCalc
               step="0.01"
               value={saldoInformado}
               onChange={(e) => setSaldoInformado(e.target.value)}
+              className="bg-muted/50 border-0 shadow-sm h-10 text-sm"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground font-medium">Data do ajuste</Label>
+            <Input
+              type="date"
+              value={dataMovimento}
+              max={dataHoje()}
+              onChange={(e) => setDataMovimento(e.target.value)}
               className="bg-muted/50 border-0 shadow-sm h-10 text-sm"
             />
           </div>

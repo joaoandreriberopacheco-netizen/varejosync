@@ -112,6 +112,11 @@ export function idsMovimentosComLancamentoFinanceiro(lancamentos = []) {
   return ids;
 }
 
+/** Data efetiva do movimento de caixa (permite retroativo via data_movimento). */
+export function getDataMovimentoCaixa(mov) {
+  return mov?.data_movimento || mov?.created_date || null;
+}
+
 /** Reforço soma; sangria e recolhimento subtraem. */
 export function deltaMovimentoCaixaSaldo(m) {
   if (!m) return 0;

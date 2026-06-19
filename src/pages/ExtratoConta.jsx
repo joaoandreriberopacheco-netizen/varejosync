@@ -274,7 +274,7 @@ export default function ExtratoContaPage() {
     }
   };
 
-  const getDataMovimento = (mov) => mov.data_pagamento || mov.data_vencimento || mov.created_date;
+  const getDataMovimento = (mov) => mov.data_pagamento || mov.data_vencimento || mov.data_movimento || mov.created_date;
   const participaDoSaldo = (mov) => movimentoParticipaExtrato(mov, conta);
 
   const movimentosJaNoFinanceiro = useMemo(
