@@ -26,8 +26,7 @@ import LancamentoDetalheDialog from './LancamentoDetalheDialog';
 import FiltrosFluxoCaixa, { PERIODO_LABELS } from './fluxo/FiltrosFluxoCaixa';
 import FinanceiroPillTabs from './fluxo/FinanceiroPillTabs';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
-import KpiFluxo from './fluxo/KpiFluxo';
-import KpiFluxoMobileBar from './fluxo/KpiFluxoMobileBar';
+import KpiFluxoBar from './fluxo/KpiFluxoBar';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
 import {
@@ -440,12 +439,11 @@ export default function ExecucaoOrcamentaria() {
       onOpenImportador={() => setShowImportadorAgefin(true)}
     >
     <div className="w-full min-w-0 max-w-full space-y-3 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
-      {/* Header — mobile e desktop separados para evitar sobreposição */}
+      {/* Header unificado — título, KPIs do fluxo, abas */}
       <div className="min-w-0 max-w-full space-y-2">
-        {/* Mobile */}
-        <div className="flex flex-col gap-2 md:hidden">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <p className="text-lg font-semibold leading-none text-foreground font-glacial">Financeiro</p>
+            <p className="text-lg font-semibold leading-none text-foreground font-glacial md:text-2xl">Financeiro</p>
             {aba === 'fluxo' && (
               <button
                 onClick={() => setShowPrintDialog(true)}
@@ -456,69 +454,21 @@ export default function ExecucaoOrcamentaria() {
               </button>
             )}
           </div>
-          {aba === 'fluxo' && <KpiFluxoMobileBar kpis={kpis} />}
-          <FinanceiroPillTabs
-            stretch
-            compact
-            value={aba}
-            onChange={setAba}
-            items={abasPrincipais}
-          />
-          {aba === 'contas' && (
+
+          {aba === 'fluxo' && <KpiFluxoBar kpis={kpis} />}
+
+          <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3">
             <FinanceiroPillTabs
               stretch
-              compact
-              value={abaContas}
-              onChange={setAbaContas}
-              items={[
-                { value: 'contas', label: 'Contas a pagar', shortLabel: 'A pagar' },
-                { value: 'agefin', label: 'Atualizar boletos', shortLabel: 'Boletos' },
-              ]}
-            />
-          )}
-          {caixasAtiva && <GestaoContasKpis layout="stack" />}
-          {aba === 'contas' && abaContas === 'contas' && <ContasAbertasKpis layout="stack" />}
-          {aba === 'contas' && abaContas === 'agefin' && <AgefinRecorrentes />}
-        </div>
-
-        {/* Desktop */}
-        <div className="hidden min-w-0 items-center gap-3 md:flex">
-          <div className="flex shrink-0 items-center gap-2">
-            <p className="text-2xl font-semibold leading-none text-foreground font-glacial">Financeiro</p>
-            {aba === 'fluxo' && (
-              <button
-                onClick={() => setShowPrintDialog(true)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-field-surface border-0 hover:opacity-90 transition-opacity"
-                aria-label="Imprimir extrato"
-              >
-                <Printer className="w-4 h-4 text-foreground/90" />
-              </button>
-            )}
-          </div>
-          {aba === 'fluxo' && (
-            <div className="min-w-0 flex-1">
-              <KpiFluxo kpis={kpis} layout="inline" />
-            </div>
-          )}
-          {caixasAtiva && (
-            <div className="min-w-0 flex-1">
-              <GestaoContasKpis layout="inline" />
-            </div>
-          )}
-          {aba === 'contas' && abaContas === 'contas' && (
-            <div className="min-w-0 flex-1">
-              <ContasAbertasKpis layout="inline" />
-            </div>
-          )}
-          <div className="ml-auto flex shrink-0 flex-col items-end gap-1">
-            <FinanceiroPillTabs
               compact
               value={aba}
               onChange={setAba}
               items={abasPrincipais}
+              className="md:w-auto md:shrink-0"
             />
             {aba === 'contas' && (
               <FinanceiroPillTabs
+                stretch
                 compact
                 value={abaContas}
                 onChange={setAbaContas}
@@ -526,15 +476,15 @@ export default function ExecucaoOrcamentaria() {
                   { value: 'contas', label: 'Contas a pagar', shortLabel: 'A pagar' },
                   { value: 'agefin', label: 'Atualizar boletos', shortLabel: 'Boletos' },
                 ]}
+                className="md:w-auto md:shrink-0"
               />
             )}
           </div>
+
+          {caixasAtiva && <GestaoContasKpis layout="stack" />}
+          {aba === 'contas' && abaContas === 'contas' && <ContasAbertasKpis layout="stack" />}
+          {aba === 'contas' && abaContas === 'agefin' && <AgefinRecorrentes />}
         </div>
-        {aba === 'contas' && abaContas === 'agefin' && (
-          <div className="hidden min-w-0 md:block">
-            <AgefinRecorrentes />
-          </div>
-        )}
       </div>
 
       {aba === 'fluxo' && (
