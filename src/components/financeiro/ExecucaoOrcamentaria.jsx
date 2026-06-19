@@ -50,7 +50,13 @@ import {
   lerPreferenciasCorteHistorico,
   passaFiltroCorteHistorico,
 } from '@/lib/filtroDataFinanceiro';
-import { lancamentoPassaBuscaFluxo } from '@/lib/buscaFluxoCaixa';
+import {
+  lancamentoPassaBuscaFluxo,
+  contasMatchBuscaFluxo,
+  contasSelEfetivasFluxo,
+  contasVisiveisFluxo,
+  idsFiltroContasFluxo,
+} from '@/lib/buscaFluxoCaixa';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 function parseDateKey(dateKey) {
@@ -251,6 +257,26 @@ export default function ExecucaoOrcamentaria() {
     [contas],
   );
 
+  const contasBuscaFluxo = useMemo(
+    () => contasMatchBuscaFluxo(search, contasAtivas),
+    [search, contasAtivas],
+  );
+
+  const contasSelBusca = useMemo(
+    () => contasSelEfetivasFluxo(contasSel, contasAtivas, contasBuscaFluxo),
+    [contasSel, contasAtivas, contasBuscaFluxo],
+  );
+
+  const contasFiltroIds = useMemo(
+    () => idsFiltroContasFluxo(contasSel, contasSelBusca),
+    [contasSel, contasSelBusca],
+  );
+
+  const contasVisiveisSaldo = useMemo(
+    () => contasVisiveisFluxo(contasSel, contasAtivas, contasSelBusca),
+    [contasSel, contasAtivas, contasSelBusca],
+  );
+
   const filtrados = useMemo(() => lancs.filter(l => {
     if (isLancamentoCancelado(l) && !statusSel.includes('Cancelado')) return false;
     if (!isLancamentoRealizadoFluxo(l)) return false;
@@ -273,14 +299,14 @@ export default function ExecucaoOrcamentaria() {
   }), [lancs, ds, de, contasSel, contasById, contasAtivas, tiposSel, statusSel, pendentes, cmvOnly, search, mostrarHistoricoAnterior, dataCorteHistorico]);
 
   const movimentosFiltrados = useMemo(() => movimentos.filter((m) => {
-    if (contasSel.length && !contasSel.includes(m.conta_id)) return false;
+    if (contasFiltroIds.length && !contasFiltroIds.includes(m.conta_id)) return false;
     const dataKey = m.created_date ? toLocalDateKey(m.created_date) : null;
     if ((ds || de) && !dataKey) return false;
     if (ds && dataKey < ds) return false;
     if (de && dataKey > de) return false;
     if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
     return true;
-  }), [movimentos, ds, de, contasSel, mostrarHistoricoAnterior, dataCorteHistorico]);
+  }), [movimentos, ds, de, contasFiltroIds, mostrarHistoricoAnterior, dataCorteHistorico]);
 
   const kpis = useMemo(() => {
     const baseKpis = calcularKpisFluxoPeriodo(
@@ -288,18 +314,15 @@ export default function ExecucaoOrcamentaria() {
       movimentosFiltrados,
       lancs,
       contasById,
-      contasSel,
+      contasFiltroIds,
     );
-    const contasVisiveis = contasSel.length
-      ? contas.filter((c) => contasSel.includes(c.id))
-      : contasAtivas;
-    const saldosMap = calcularSaldosTodasContas(contasVisiveis, lancs, movimentos);
-    const saldoContas = contasVisiveis.reduce((acc, c) => acc + (saldosMap[c.id] || 0), 0);
+    const saldosMap = calcularSaldosTodasContas(contasVisiveisSaldo, lancs, movimentos);
+    const saldoContas = contasVisiveisSaldo.reduce((acc, c) => acc + (saldosMap[c.id] || 0), 0);
     return {
       ...baseKpis,
       saldoContas: roundToTwoDecimals(saldoContas),
     };
-  }, [filtrados, movimentosFiltrados, lancs, contasById, contas, contasAtivas, contasSel, movimentos]);
+  }, [filtrados, movimentosFiltrados, lancs, contasById, contasVisiveisSaldo, contasFiltroIds, movimentos]);
 
   const grupos = useMemo(() => {
     const hStr = dataHoje();
@@ -310,7 +333,7 @@ export default function ExecucaoOrcamentaria() {
       movimentos: movimentosFiltrados,
       todosLancamentos: lancs,
       contas,
-      contasSel,
+      contasSel: contasFiltroIds,
       contasById,
       formatGrupoLabel: formatFinanceiroGrupoLabel,
       hStr,
@@ -325,10 +348,10 @@ export default function ExecucaoOrcamentaria() {
       movimentos,
       todosLancamentos: lancs,
       contas,
-      contasSel,
+      contasSel: contasFiltroIds,
       contasById,
     });
-  }, [filtrados, movimentosFiltrados, lancs, contas, contasSel, contasById, ordemLancamentos, kpis.saldoContas, movimentos]);
+  }, [filtrados, movimentosFiltrados, lancs, contas, contasFiltroIds, contasById, ordemLancamentos, kpis.saldoContas, movimentos]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || mostrarHistoricoAnterior || !!search;

@@ -74,3 +74,40 @@ export function lancamentoPassaBuscaFluxo(l, search, contas = [], contasById = {
 
   return lancamentoMatchBuscaTexto(l, texto);
 }
+
+/** Contas cujo nome corresponde à busca \\conta (null = sem filtro de conta na busca). */
+export function contasMatchBuscaFluxo(search, contas = []) {
+  const { modo, contaQuery } = parseBuscaFluxoCaixa(search);
+  if (modo !== 'conta' || !contaQuery) return null;
+  return contas.filter((c) => contaFinanceiraMatchBusca(c, contaQuery));
+}
+
+/**
+ * Contas usadas no saldo acumulado: intersecta filtro de contas com \\conta na busca.
+ * Retorna null quando não há restrição extra (mesma regra de contasSel vazio = todas).
+ */
+export function contasSelEfetivasFluxo(contasSel = [], contasAtivas = [], contasBusca = null) {
+  if (!contasBusca?.length) return null;
+  const base = contasSel.length
+    ? contasAtivas.filter((c) => contasSel.includes(c.id))
+    : [...contasAtivas];
+  const buscaIds = new Set(contasBusca.map((c) => c.id));
+  return base.filter((c) => buscaIds.has(c.id)).map((c) => c.id);
+}
+
+/** Lista de contas para saldo/KPIs a partir de contasSel + opcional restrição da busca \\conta. */
+export function contasVisiveisFluxo(contasSel = [], contasAtivas = [], contasSelBusca = null) {
+  if (contasSelBusca !== null) {
+    return contasAtivas.filter((c) => contasSelBusca.includes(c.id));
+  }
+  if (contasSel.length) {
+    return contasAtivas.filter((c) => contasSel.includes(c.id));
+  }
+  return contasAtivas;
+}
+
+/** IDs para filtrar movimentos/KPIs (vazio = sem filtro por conta). */
+export function idsFiltroContasFluxo(contasSel = [], contasSelBusca = null) {
+  if (contasSelBusca !== null) return contasSelBusca;
+  return contasSel;
+}
