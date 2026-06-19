@@ -255,22 +255,10 @@ export default function SimuladorTaxaCartao({ open, onClose, valorTotal, valorDe
                         R$ {calculo.valor_liquido.toFixed(2).replace('.', ',')}
                       </div>
                     </div>
-                    {modalidade !== 'Débito' && (
-                      <div className="text-right">
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Prazo</div>
-                        <div className="text-sm font-semibold text-muted-foreground">
-                          D+{modalidade === 'Crédito à Vista' ? maquininhaSel?.prazo_credito_vista_dias ?? 30 : maquininhaSel?.prazo_credito_parcelado_dias ?? 30}
-                        </div>
-                      </div>
-                    )}
-                    {modalidade === 'Débito' && (
-                      <div className="text-right">
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Prazo</div>
-                        <div className="text-sm font-semibold text-muted-foreground">
-                          D+{maquininhaSel?.prazo_debito_dias ?? 1}
-                        </div>
-                      </div>
-                    )}
+                    <div className="text-right">
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Prazo</div>
+                      <div className="text-sm font-semibold text-muted-foreground">D+1</div>
+                    </div>
                   </div>
 
                   {/* Parcela do cliente */}

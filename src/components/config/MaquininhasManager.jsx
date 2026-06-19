@@ -28,7 +28,7 @@ const maqVazia = () => ({
   conta_destino_nome: '',
   prazo_debito_dias: 1,
   prazo_credito_vista_dias: 1,
-  prazo_credito_parcelado_dias: 30,
+  prazo_credito_parcelado_dias: 1,
   taxa_juros_cliente_mensal: 1.81,
   bandeiras: BANDEIRAS.map(bandeiraPadrao),
   ativo: true,
@@ -103,7 +103,13 @@ export default function MaquininhasManager() {
   const handleSalvar = async () => {
     if (!editando.nome.trim()) { toast.error('Informe o nome da maquininha'); return; }
     const contaSel = contas.find(c => c.id === editando.conta_destino_id);
-    const dados = { ...editando, conta_destino_nome: contaSel?.nome || '' };
+    const dados = {
+      ...editando,
+      conta_destino_nome: contaSel?.nome || '',
+      prazo_debito_dias: 1,
+      prazo_credito_vista_dias: 1,
+      prazo_credito_parcelado_dias: 1,
+    };
     if (editando.id) {
       await base44.entities.Maquininha.update(editando.id, dados);
       toast.success('Maquininha atualizada');
@@ -199,7 +205,7 @@ export default function MaquininhasManager() {
                 <div>
                   <div className="text-sm font-medium text-foreground">{maq.nome}</div>
                   <div className="text-xs text-muted-foreground">
-                    {maq.adquirente || '—'} · Débito D+{maq.prazo_debito_dias ?? 1} · Crédito D+{maq.prazo_credito_vista_dias ?? 30}
+                    {maq.adquirente || '—'} · Recebimento: próximo dia útil (D+1)
                   </div>
                 </div>
               </div>
@@ -285,21 +291,11 @@ export default function MaquininhasManager() {
                 </div>
               </div>
 
-              {/* Prazos */}
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Débito (dias)</label>
-                  <Input type="number" value={editando.prazo_debito_dias ?? 1} onChange={e => setEditando(p => ({ ...p, prazo_debito_dias: parseInt(e.target.value) || 1 }))} />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Créd. Vista (dias)</label>
-                  <Input type="number" value={editando.prazo_credito_vista_dias ?? 30} onChange={e => setEditando(p => ({ ...p, prazo_credito_vista_dias: parseInt(e.target.value) || 30 }))} />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Créd. Parc. (dias)</label>
-                  <Input type="number" value={editando.prazo_credito_parcelado_dias ?? 30} onChange={e => setEditando(p => ({ ...p, prazo_credito_parcelado_dias: parseInt(e.target.value) || 30 }))} />
-                </div>
-              </div>
+              {/* Prazo fixo: todas as modalidades creditam no próximo dia útil */}
+              <p className="text-xs text-muted-foreground rounded-lg bg-muted/40 px-3 py-2">
+                Débito, crédito à vista e parcelado: crédito no próximo dia útil (D+1).
+                Vendas de sexta a domingo entram na segunda-feira.
+              </p>
 
               {/* Taxa juros cliente */}
               <div>

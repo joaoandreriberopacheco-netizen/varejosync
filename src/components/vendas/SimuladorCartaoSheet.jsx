@@ -142,12 +142,7 @@ export default function SimuladorCartaoSheet({ open, onClose, valorTotal, valorD
     return calcularTaxaCartao(maqSelecionada, bandeira, 'Crédito Parcelado', parcelas);
   }, [modoJurosCliente, maqSelecionada, bandeira, parcelas]);
 
-  const prazoStr = () => {
-    if (!maqSelecionada) return '';
-    if (modalidade === 'Débito') return `D+${maqSelecionada.prazo_debito_dias ?? 1}`;
-    if (modalidade === 'Crédito à Vista') return `D+${maqSelecionada.prazo_credito_vista_dias ?? 30}`;
-    return `D+${maqSelecionada.prazo_credito_parcelado_dias ?? 30}/parcela`;
-  };
+  const prazoStr = () => (maqSelecionada ? 'D+1 (próximo dia útil)' : '');
 
   if (!open) return null;
 
