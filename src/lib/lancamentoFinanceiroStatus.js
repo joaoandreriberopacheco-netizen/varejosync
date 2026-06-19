@@ -17,25 +17,12 @@ export function isRevisaoCartaoCreditoPendente(l) {
 /** @deprecated use isRevisaoCartaoCreditoPendente */
 export const isCartaoCreditoPendenteConciliacao = isRevisaoCartaoCreditoPendente;
 
-/** Marca revisão concluída (campo legado status_conciliacao) e registra recebimento previsto. */
+/** Marca revisão concluída (campo legado status_conciliacao). */
 export function payloadMarcarRevisaoCartaoCredito(dataLiquidacao) {
   return {
     status_conciliacao: 'Conciliado',
     data_liquidacao_efetiva: dataLiquidacao,
-    status: 'Pago',
-    data_pagamento: dataLiquidacao,
   };
-}
-
-/**
- * Receita em aberto com conciliação/revisão pendente — entra no saldo da conta
- * (ex.: cartão de crédito na maquininha). Itens já pagos entram pelo fluxo normal.
- */
-export function isReceitaPendenteConciliacaoSaldo(l) {
-  if (!l || l.tipo !== 'Receita' || l.status === 'Cancelado') return false;
-  if (l.status_conciliacao !== 'Pendente') return false;
-  if (l.status === 'Pago' || l.data_pagamento) return false;
-  return true;
 }
 
 /** Visível no Fluxo de Caixa (pago ou cartão crédito pendente de revisão). */

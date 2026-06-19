@@ -7,7 +7,6 @@ import { getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
 export default function ListaContasFinanceiras({
   grupos,
   loading,
-  pendenciasMap = {},
   saldosCalculados = {},
   onExtrato,
   onEdit,
@@ -39,7 +38,6 @@ export default function ListaContasFinanceiras({
               <ContaFinanceiraRow
                 key={conta.id}
                 conta={conta}
-                pendencias={pendenciasMap[conta.id] || 0}
                 saldosCalculados={saldosCalculados}
                 striped={index % 2 === 1}
                 onExtrato={onExtrato}

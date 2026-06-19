@@ -13,7 +13,6 @@ import KpiContasFinanceiras from './fluxo/KpiContasFinanceiras';
 import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFinanceiras';
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
-import { isRevisaoCartaoCreditoPendente } from '@/lib/lancamentoFinanceiroStatus';
 import {
   calcularSaldosTodasContas,
   getSaldoExibicaoConta,
@@ -40,7 +39,6 @@ function useGestaoContasModel(shared) {
   const [search, setSearch] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState('todos');
   const [statusFiltro, setStatusFiltro] = useState('ativas');
-  const [somentePendencias, setSomentePendencias] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -82,16 +80,6 @@ function useGestaoContasModel(shared) {
     loadData();
   }, [shared, loadData]);
 
-  const revisaoCartaoPorConta = useMemo(() => {
-    const mapa = {};
-    lancamentos.forEach((l) => {
-      if (isRevisaoCartaoCreditoPendente(l) && l.conta_financeira_id) {
-        mapa[l.conta_financeira_id] = (mapa[l.conta_financeira_id] || 0) + 1;
-      }
-    });
-    return mapa;
-  }, [lancamentos]);
-
   const saldosCalculados = useMemo(
     () => calcularSaldosTodasContas(accounts, lancamentos, movimentosCaixa),
     [accounts, lancamentos, movimentosCaixa],
@@ -106,7 +94,6 @@ function useGestaoContasModel(shared) {
     if (statusFiltro === 'ativas' && account.ativo === false) return false;
     if (statusFiltro === 'inativas' && account.ativo !== false) return false;
     if (tipoFiltro !== 'todos' && account.tipo !== tipoFiltro) return false;
-    if (somentePendencias && !(revisaoCartaoPorConta[account.id] > 0)) return false;
     if (search) {
       const q = search.toLowerCase();
       return (
@@ -117,7 +104,7 @@ function useGestaoContasModel(shared) {
       );
     }
     return true;
-  }), [contasEnriquecidas, statusFiltro, tipoFiltro, somentePendencias, revisaoCartaoPorConta, search]);
+  }), [contasEnriquecidas, statusFiltro, tipoFiltro, search]);
 
   const kpis = useMemo(() => {
     let saldoTotal = 0;
@@ -125,7 +112,6 @@ function useGestaoContasModel(shared) {
     let qtdInativas = 0;
     let negativas = 0;
     let saldoNegativo = 0;
-    let pendencias = 0;
 
     contasEnriquecidas.forEach((a) => {
       const saldo = getSaldoExibicaoConta(a, saldosCalculados);
@@ -136,7 +122,6 @@ function useGestaoContasModel(shared) {
         negativas++;
         saldoNegativo += saldo;
       }
-      pendencias += revisaoCartaoPorConta[a.id] || 0;
     });
 
     return {
@@ -146,9 +131,8 @@ function useGestaoContasModel(shared) {
       qtdInativas,
       negativas,
       saldoNegativo: Math.abs(saldoNegativo),
-      pendencias,
     };
-  }, [contasEnriquecidas, saldosCalculados, revisaoCartaoPorConta]);
+  }, [contasEnriquecidas, saldosCalculados, accounts.length]);
 
   const grupos = useMemo(() => {
     const map = {};
@@ -166,8 +150,7 @@ function useGestaoContasModel(shared) {
       }));
   }, [filtrados]);
 
-  const totalPendencias = kpis.pendencias;
-  const hasActiveFilters = tipoFiltro !== 'todos' || statusFiltro !== 'ativas' || somentePendencias;
+  const hasActiveFilters = tipoFiltro !== 'todos' || statusFiltro !== 'ativas';
 
   const resetForm = () => {
     setSelectedAccount(null);
@@ -225,19 +208,15 @@ function useGestaoContasModel(shared) {
     grupos,
     kpis,
     saldosCalculados,
-    revisaoCartaoPorConta,
     search,
     setSearch,
     tipoFiltro,
     setTipoFiltro,
     statusFiltro,
     setStatusFiltro,
-    somentePendencias,
-    setSomentePendencias,
     filtersOpen,
     setFiltersOpen,
     hasActiveFilters,
-    totalPendencias,
     fabOpen,
     setFabOpen,
     isDialogOpen,
@@ -282,19 +261,15 @@ export function GestaoContasPane() {
     loading,
     filtrados,
     grupos,
-    revisaoCartaoPorConta,
     search,
     setSearch,
     tipoFiltro,
     setTipoFiltro,
     statusFiltro,
     setStatusFiltro,
-    somentePendencias,
-    setSomentePendencias,
     filtersOpen,
     setFiltersOpen,
     hasActiveFilters,
-    totalPendencias,
     fabOpen,
     setFabOpen,
     isDialogOpen,
@@ -332,9 +307,6 @@ export function GestaoContasPane() {
         onTipoFiltro={setTipoFiltro}
         statusFiltro={statusFiltro}
         onStatusFiltro={setStatusFiltro}
-        somentePendencias={somentePendencias}
-        onSomentePendencias={setSomentePendencias}
-        totalPendencias={totalPendencias}
       />
 
       <FinanceiroListaMeta
@@ -344,7 +316,6 @@ export function GestaoContasPane() {
         onLimparFiltros={() => {
           setTipoFiltro('todos');
           setStatusFiltro('ativas');
-          setSomentePendencias(false);
           setSearch('');
         }}
         summaryChips={
@@ -353,11 +324,6 @@ export function GestaoContasPane() {
               <FinanceiroSummaryChip>{tipoLabel}</FinanceiroSummaryChip>
             )}
             {statusLabel && <FinanceiroSummaryChip>{statusLabel}</FinanceiroSummaryChip>}
-            {somentePendencias && (
-              <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
-                Revisão cartão
-              </FinanceiroSummaryChip>
-            )}
           </>
         }
       />
@@ -365,7 +331,6 @@ export function GestaoContasPane() {
       <ListaContasFinanceiras
         grupos={grupos}
         loading={loading}
-        pendenciasMap={revisaoCartaoPorConta}
         saldosCalculados={saldosCalculados}
         onExtrato={handleExtrato}
         onEdit={handleEdit}

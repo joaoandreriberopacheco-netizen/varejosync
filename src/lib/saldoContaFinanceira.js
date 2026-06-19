@@ -1,7 +1,5 @@
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import {
-  isReceitaPendenteConciliacaoSaldo,
-} from '@/lib/lancamentoFinanceiroStatus';
+import { isRevisaoCartaoCreditoPendente } from '@/lib/lancamentoFinanceiroStatus';
 
 /** Lançamento pago/cancelado entra no saldo (receita +, despesa −). Transferências ficam de fora. */
 export function lancamentoParticipaSaldo(l) {
@@ -65,14 +63,9 @@ export function deltaLancamentoSaldo(l) {
 }
 
 export function deltaLancamentoSaldoConta(conta, l) {
-  if (lancamentoParticipaSaldoConta(conta, l)) {
-    const valor = Number(l.valor || 0);
-    return l.tipo === 'Receita' ? valor : -valor;
-  }
-  if (isReceitaPendenteConciliacaoSaldo(l) && !contaUsaRegraCaixaPDV(conta)) {
-    return Number(l.valor_liquido ?? l.valor ?? 0);
-  }
-  return 0;
+  if (!lancamentoParticipaSaldoConta(conta, l)) return 0;
+  const valor = Number(l.valor || 0);
+  return l.tipo === 'Receita' ? valor : -valor;
 }
 
 /** Lançamento visível nas contas selecionadas (inclui legado sem conta_financeira_id na Caixa Geral). */
@@ -198,9 +191,7 @@ export function movimentoParticipaExtrato(mov, conta = null) {
   if (mov?.origem === 'movimento' || mov?.conta_id) {
     return movimentoCaixaParticipaExtrato(mov);
   }
-  if (lancamentoParticipaSaldoConta(conta, mov)) return true;
-  if (isReceitaPendenteConciliacaoSaldo(mov) && !contaUsaRegraCaixaPDV(conta)) return true;
-  return false;
+  return lancamentoParticipaSaldoConta(conta, mov);
 }
 
 /** Entradas e saídas de um conjunto de movimentos (extrato / período). */
@@ -264,7 +255,7 @@ export function calcularKpisFluxoPeriodo(
     }
 
     const conta = contasById[l.conta_financeira_id];
-    const receitaPendenteSaldo = isReceitaPendenteConciliacaoSaldo(l);
+    const cartaoCreditoPendente = isRevisaoCartaoCreditoPendente(l);
 
     if (l.status === 'Vencido') {
       vencidos += valor;
@@ -272,9 +263,9 @@ export function calcularKpisFluxoPeriodo(
     }
 
     const participaSaldo = lancamentoParticipaSaldoConta(conta, l);
-    if (!participaSaldo && !receitaPendenteSaldo) return;
+    if (!participaSaldo && !cartaoCreditoPendente) return;
 
-    if (isPago || receitaPendenteSaldo) {
+    if (isPago || cartaoCreditoPendente) {
       if (l.tipo === 'Receita') entrou += valor;
       else if (l.tipo === 'Despesa') saiu += valor;
     } else {
@@ -322,7 +313,7 @@ export function totaisGrupoFluxoCaixa(items = [], contasById = {}) {
 
   items.forEach((l) => {
     const conta = contasById[l.conta_financeira_id];
-    const receitaPendenteSaldo = isReceitaPendenteConciliacaoSaldo(l);
+    const cartaoCreditoPendente = isRevisaoCartaoCreditoPendente(l);
     const isPago = l.status === 'Pago' || !!l.data_pagamento;
     const valor = Number(l.valor || 0);
 
@@ -339,8 +330,8 @@ export function totaisGrupoFluxoCaixa(items = [], contasById = {}) {
     }
 
     const participaSaldo = lancamentoParticipaSaldoConta(conta, l);
-    if (!participaSaldo && !receitaPendenteSaldo) return;
-    if (l.tipo === 'Receita' && (isPago || receitaPendenteSaldo)) r += valor;
+    if (!participaSaldo && !cartaoCreditoPendente) return;
+    if (l.tipo === 'Receita' && (isPago || cartaoCreditoPendente)) r += valor;
     if (l.tipo === 'Despesa' && isPago) d += valor;
   });
 

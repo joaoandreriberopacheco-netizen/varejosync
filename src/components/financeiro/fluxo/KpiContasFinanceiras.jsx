@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { Wallet, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { P38_ACCENT } from './financeiroP38';
 import {
   FinanceiroKpiItem,
@@ -26,16 +26,6 @@ export default function KpiContasFinanceiras({ kpis, layout = 'card' }) {
         value={String(kpis.qtdTotal)}
         sub={kpis.qtdInativas > 0 ? `${kpis.qtdInativas} inativa${kpis.qtdInativas > 1 ? 's' : ''}` : null}
       />
-      {kpis.pendencias > 0 && (
-        <FinanceiroKpiItem
-          layout={layout}
-          icon={Clock}
-          iconClass="text-amber-600 dark:text-amber-400"
-          label="Revisão cartão"
-          value={String(kpis.pendencias)}
-          sub="para revisar"
-        />
-      )}
       {kpis.negativas > 0 && (
         <FinanceiroKpiItem
           layout={layout}

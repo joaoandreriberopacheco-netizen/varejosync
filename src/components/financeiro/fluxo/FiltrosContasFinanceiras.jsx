@@ -26,14 +26,8 @@ export default function FiltrosContasFinanceiras({
   onTipoFiltro,
   statusFiltro,
   onStatusFiltro,
-  somentePendencias,
-  onSomentePendencias,
-  totalPendencias = 0,
 }) {
-  const hasActiveFilters =
-    tipoFiltro !== 'todos' ||
-    statusFiltro !== 'ativas' ||
-    somentePendencias;
+  const hasActiveFilters = tipoFiltro !== 'todos' || statusFiltro !== 'ativas';
 
   return (
     <FinanceiroFiltrosShell
@@ -43,9 +37,6 @@ export default function FiltrosContasFinanceiras({
       filtersOpen={filtersOpen}
       onFiltersOpenChange={onFiltersOpenChange}
       hasActiveFilters={hasActiveFilters}
-      revisaoCartaoPendente={totalPendencias}
-      pendentes={somentePendencias}
-      onPendentesToggle={onSomentePendencias}
     >
       <div className="space-y-3">
         <div>

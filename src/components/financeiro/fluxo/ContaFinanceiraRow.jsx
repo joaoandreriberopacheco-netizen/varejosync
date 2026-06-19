@@ -1,19 +1,18 @@
 import React from 'react';
-import { Clock, Eye, Edit, Scale } from 'lucide-react';
+import { Eye, Edit, Scale } from 'lucide-react';
 import {
   P38MobileLine,
   P38StatusLabel,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
 import { formatFinanceiroValor } from './FinanceiroListaShared';
-import { contaTemDivergenciaSaldo, getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
+import { getSaldoExibicaoConta } from '@/lib/saldoContaFinanceira';
 
 const LINE_TITLE_CLASS =
   '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
 
 export default function ContaFinanceiraRow({
   conta,
-  pendencias = 0,
   saldosCalculados,
   onExtrato,
   onEdit,
@@ -23,7 +22,6 @@ export default function ContaFinanceiraRow({
   const saldo = getSaldoExibicaoConta(conta, saldosCalculados);
   const isNegativo = saldo < 0;
   const ativa = conta.ativo !== false;
-  const divergente = contaTemDivergenciaSaldo(conta, saldo);
 
   const subtitle = [conta.tipo, conta.banco].filter(Boolean).join(' · ');
 
@@ -47,14 +45,6 @@ export default function ContaFinanceiraRow({
           <P38StatusLabel tone={ativa ? 'success' : 'muted'}>
             {ativa ? 'Ativa' : 'Inativa'}
           </P38StatusLabel>
-          {pendencias > 0 && (
-            <P38StatusLabel tone="warning">
-              {pendencias} revisão{pendencias > 1 ? 'ões' : ''}
-            </P38StatusLabel>
-          )}
-          {divergente && (
-            <P38StatusLabel tone="warning">Divergente</P38StatusLabel>
-          )}
           {conta.is_caixa_pdv && <span>PDV</span>}
         </>
       }
@@ -68,7 +58,6 @@ export default function ContaFinanceiraRow({
       }
       trailing={
         <div className="flex items-center gap-0.5 shrink-0">
-          {pendencias > 0 && <Clock className="h-3 w-3 text-amber-500" />}
           <button
             type="button"
             onClick={(e) => {
