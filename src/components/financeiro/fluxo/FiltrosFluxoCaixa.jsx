@@ -286,26 +286,26 @@ function TipoFiltro({ sel, onSel }) {
   );
 }
 
-function CorteHistoricoFiltro({ ativo, dataCorte, onAtivo, onDataCorte }) {
+function CorteHistoricoFiltro({ mostrarHistoricoAnterior, dataCorte, onMostrarHistoricoAnterior, onDataCorte }) {
   return (
     <div className="space-y-1.5 border-t border-border/25 pt-2.5 dark:border-white/5">
       <label className="flex cursor-pointer items-center gap-2 py-0.5">
         <Checkbox
-          checked={ativo}
-          onCheckedChange={(v) => onAtivo(!!v)}
+          checked={mostrarHistoricoAnterior}
+          onCheckedChange={(v) => onMostrarHistoricoAnterior(!!v)}
           className="h-3.5 w-3.5 border-muted-foreground/40"
         />
         <span className="text-[11px] text-muted-foreground/90">
-          Ocultar histórico anterior
-          {ativo && dataCorte && (
+          Mostrar histórico anterior
+          {!mostrarHistoricoAnterior && dataCorte && (
             <span className="text-muted-foreground/60">
               {' '}
-              (desde {format(new Date(`${dataCorte}T12:00:00`), 'dd/MM/yyyy')})
+              (lista desde {format(new Date(`${dataCorte}T12:00:00`), 'dd/MM/yyyy')})
             </span>
           )}
         </span>
       </label>
-      {ativo && (
+      {!mostrarHistoricoAnterior && (
         <input
           type="date"
           value={dataCorte}
@@ -370,7 +370,7 @@ function FiltrosFluxoPainel({
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
   onOpenConciliacao,
-  ocultarHistoricoAntigo, dataCorteHistorico, onOcultarHistoricoAntigo, onDataCorteHistorico,
+  mostrarHistoricoAnterior, dataCorteHistorico, onMostrarHistoricoAnterior, onDataCorteHistorico,
 }) {
   return (
     <div className="space-y-3">
@@ -395,9 +395,9 @@ function FiltrosFluxoPainel({
       </div>
 
       <CorteHistoricoFiltro
-        ativo={ocultarHistoricoAntigo}
+        mostrarHistoricoAnterior={mostrarHistoricoAnterior}
         dataCorte={dataCorteHistorico}
-        onAtivo={onOcultarHistoricoAntigo}
+        onMostrarHistoricoAnterior={onMostrarHistoricoAnterior}
         onDataCorte={onDataCorteHistorico}
       />
     </div>
@@ -419,9 +419,9 @@ export default function FiltrosFluxoCaixa({
   conciliacaoPendente = 0,
   ordemLancamentos = 'desc',
   onOrdemLancamentosChange,
-  ocultarHistoricoAntigo = false,
+  mostrarHistoricoAnterior = false,
   dataCorteHistorico,
-  onOcultarHistoricoAntigo,
+  onMostrarHistoricoAnterior,
   onDataCorteHistorico,
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -431,7 +431,7 @@ export default function FiltrosFluxoCaixa({
     tiposSel.length > 0 ||
     statusSel.length > 0 ||
     cmvOnly ||
-    ocultarHistoricoAntigo ||
+    mostrarHistoricoAnterior ||
     !!customStart ||
     !!customEnd ||
     (contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length);
@@ -468,9 +468,9 @@ export default function FiltrosFluxoCaixa({
         cmvOnly={cmvOnly}
         onCmvOnly={onCmvOnly}
         onOpenConciliacao={onOpenConciliacao}
-        ocultarHistoricoAntigo={ocultarHistoricoAntigo}
+        mostrarHistoricoAnterior={mostrarHistoricoAnterior}
         dataCorteHistorico={dataCorteHistorico}
-        onOcultarHistoricoAntigo={onOcultarHistoricoAntigo}
+        onMostrarHistoricoAnterior={onMostrarHistoricoAnterior}
         onDataCorteHistorico={onDataCorteHistorico}
       />
     </FinanceiroFiltrosShell>

@@ -70,36 +70,48 @@ export const PERIODOS_DATA_PAGAMENTO = [
 /** Data padrão para ocultar histórico confuso no Fluxo de Caixa (ajustável pelo utilizador). */
 export const DATA_CORTE_HISTORICO_PADRAO = '2026-06-18';
 
-const STORAGE_OCULTAR_HISTORICO = 'p38-fluxo-ocultar-historico';
+const STORAGE_MOSTRAR_HISTORICO = 'p38-fluxo-mostrar-historico-anterior';
+const STORAGE_OCULTAR_HISTORICO_LEGADO = 'p38-fluxo-ocultar-historico';
 const STORAGE_DATA_CORTE = 'p38-fluxo-data-corte-historico';
 
 export function lerPreferenciasCorteHistorico() {
   if (typeof window === 'undefined') {
-    return { ativo: false, dataCorte: DATA_CORTE_HISTORICO_PADRAO };
+    return { mostrarHistoricoAnterior: false, dataCorte: DATA_CORTE_HISTORICO_PADRAO };
   }
   try {
-    return {
-      ativo: localStorage.getItem(STORAGE_OCULTAR_HISTORICO) === 'true',
-      dataCorte: localStorage.getItem(STORAGE_DATA_CORTE) || DATA_CORTE_HISTORICO_PADRAO,
-    };
+    const salvo = localStorage.getItem(STORAGE_MOSTRAR_HISTORICO);
+    if (salvo !== null) {
+      return {
+        mostrarHistoricoAnterior: salvo === 'true',
+        dataCorte: localStorage.getItem(STORAGE_DATA_CORTE) || DATA_CORTE_HISTORICO_PADRAO,
+      };
+    }
+    const legado = localStorage.getItem(STORAGE_OCULTAR_HISTORICO_LEGADO);
+    if (legado !== null) {
+      return {
+        mostrarHistoricoAnterior: legado !== 'true',
+        dataCorte: localStorage.getItem(STORAGE_DATA_CORTE) || DATA_CORTE_HISTORICO_PADRAO,
+      };
+    }
+    return { mostrarHistoricoAnterior: false, dataCorte: DATA_CORTE_HISTORICO_PADRAO };
   } catch {
-    return { ativo: false, dataCorte: DATA_CORTE_HISTORICO_PADRAO };
+    return { mostrarHistoricoAnterior: false, dataCorte: DATA_CORTE_HISTORICO_PADRAO };
   }
 }
 
-export function gravarPreferenciasCorteHistorico(ativo, dataCorte) {
+export function gravarPreferenciasCorteHistorico(mostrarHistoricoAnterior, dataCorte) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_OCULTAR_HISTORICO, ativo ? 'true' : 'false');
+    localStorage.setItem(STORAGE_MOSTRAR_HISTORICO, mostrarHistoricoAnterior ? 'true' : 'false');
     if (dataCorte) localStorage.setItem(STORAGE_DATA_CORTE, dataCorte);
   } catch {
     /* ignore quota / private mode */
   }
 }
 
-/** Oculta lançamentos anteriores à data de corte (chave YYYY-MM-DD). */
-export function passaFiltroCorteHistorico(dataKey, { ativo, dataCorte }) {
-  if (!ativo || !dataCorte) return true;
+/** Por defeito oculta lançamentos anteriores à data de corte; liga "mostrar histórico" para ver tudo. */
+export function passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte }) {
+  if (mostrarHistoricoAnterior || !dataCorte) return true;
   if (!dataKey || dataKey === 'sem-data') return false;
   return dataKey >= dataCorte;
 }
