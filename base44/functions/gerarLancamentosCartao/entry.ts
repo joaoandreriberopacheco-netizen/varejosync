@@ -55,15 +55,8 @@ Deno.serve(async (req) => {
         const maquininha = await base44.asServiceRole.entities.Maquininha.get(pgto.maquininha_id);
         if (!maquininha) continue;
 
-        // Calcula prazo baseado na modalidade
-        let prazoDias = 1;
-        if (pgto.modalidade === 'Débito') {
-          prazoDias = maquininha.prazo_debito_dias || 1;
-        } else if (pgto.modalidade === 'Crédito à Vista') {
-          prazoDias = maquininha.prazo_credito_vista_dias || 30;
-        } else {
-          prazoDias = maquininha.prazo_credito_parcelado_dias || 30;
-        }
+        // Todas as modalidades: próximo dia útil (D+1; sexta–domingo → segunda)
+        const prazoDias = 1;
 
         const dataLiquidacao = proximoDiaUtil(pgto.data_venda, prazoDias);
 

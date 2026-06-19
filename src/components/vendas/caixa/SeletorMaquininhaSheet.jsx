@@ -4,6 +4,7 @@ import { CreditCard, ChevronRight, AlertCircle } from 'lucide-react';
 import { Dialog } from '@/components/ui/dialog';
 import { CaixaDialogContent } from './CaixaDialogContent';
 import { cn } from '@/lib/utils';
+import { getPrazoLiquidacaoMaquininha } from '@/lib/pagamentoPedidoVendaFinanceiro';
 
 const BANDEIRAS = ['Visa', 'Mastercard', 'Elo', 'Amex', 'Hipercard'];
 
@@ -42,15 +43,12 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
     return cfg.taxa_credito_7_12x || 0;
   };
 
-  const getPrazoDias = (maq) => {
-    if (modalidade === 'debito') return maq.prazo_debito_dias ?? 1;
-    return maq.prazo_credito_vista_dias ?? 30;
-  };
+  const getPrazoDias = () => getPrazoLiquidacaoMaquininha();
 
   const handleConfirmar = () => {
     if (!selecionada || !bandeiraSelecionada) return;
     const taxa = getTaxaParaMaquininha(selecionada, bandeiraSelecionada);
-    const prazo = getPrazoDias(selecionada);
+    const prazo = getPrazoDias();
     onSelect({ maquininha: selecionada, bandeira: bandeiraSelecionada, taxa, prazo_dias: prazo, parcelas });
   };
 
@@ -131,11 +129,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                     <div className="font-medium text-sm">{maq.nome}</div>
                     {maq.adquirente && <div className="text-xs opacity-60">{maq.adquirente}</div>}
                   </div>
-                  <div className="text-xs opacity-60">
-                    {modalidade === 'debito'
-                      ? `D+${maq.prazo_debito_dias ?? 1}`
-                      : `D+${maq.prazo_credito_vista_dias ?? 30}`}
-                  </div>
+                  <div className="text-xs opacity-60">D+{getPrazoDias()}</div>
                 </button>
               ))}
             </div>
@@ -169,7 +163,7 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
             {/* Resumo taxa */}
             {selecionada && bandeiraSelecionada && (() => {
               const taxa = getTaxaParaMaquininha(selecionada, bandeiraSelecionada);
-              const prazo = getPrazoDias(selecionada);
+              const prazo = getPrazoDias();
               return (
                 <div className="p-3 bg-muted/50 rounded-xl text-xs text-muted-foreground flex justify-between">
                   <span>Taxa: <b className="text-foreground/90">{taxa}%</b></span>
