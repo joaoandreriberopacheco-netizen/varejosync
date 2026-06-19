@@ -17,6 +17,8 @@ import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
 import { shouldOpenGlobalSearchFromKeyboard } from '@/lib/globalSearchShortcut';
+import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
+import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
@@ -289,11 +291,18 @@ export default function Layout({ children, currentPageName }) {
     />
   );
 
+  const financeGateActive = isFinanceiroProtectedPage(currentPageName);
+  const pageContent = financeGateActive ? (
+    <FinanceiroAccessGuard>{children}</FinanceiroAccessGuard>
+  ) : (
+    children
+  );
+
   if (isFullscreen) {
     return (
       <div className={darkMode ? 'dark' : ''}>
         <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-white dark:bg-background p38-app">
-          {children}
+          {pageContent}
         </div>
         {searchOverlay}
       </div>
@@ -345,11 +354,11 @@ export default function Layout({ children, currentPageName }) {
         >
           {MOBILE_FULL_VIEWPORT_PAGES.has(currentPageName) ? (
             <div className="h-full min-h-0 overflow-hidden">
-              <LayoutOutlet>{children}</LayoutOutlet>
+              <LayoutOutlet>{pageContent}</LayoutOutlet>
             </div>
           ) : (
             <div className="p-4 md:p-6 tablet-landscape:p-7 overflow-x-hidden max-w-full">
-              <LayoutOutlet>{children}</LayoutOutlet>
+              <LayoutOutlet>{pageContent}</LayoutOutlet>
             </div>
           )}
         </div>
