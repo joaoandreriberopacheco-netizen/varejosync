@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  History,
   X, Wallet, BarChart3, Clock, ChevronDown,
   ChevronLeft, ChevronRight, Layers, RefreshCw
 } from 'lucide-react';
@@ -289,42 +288,32 @@ function TipoFiltro({ sel, onSel }) {
 
 function CorteHistoricoFiltro({ ativo, dataCorte, onAtivo, onDataCorte }) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
-          ${ativo ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
-        >
-          <History className="w-3 h-3" />
-          {ativo ? `Desde ${format(new Date(`${dataCorte}T12:00:00`), 'dd/MM/yy')}` : 'Histórico completo'}
-          <ChevronDown className="w-3 h-3" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className={`w-72 p-3 ${P38_POPOVER}`} align="start">
-        <p className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+    <div className="space-y-1.5 border-t border-border/25 pt-2.5 dark:border-white/5">
+      <label className="flex cursor-pointer items-center gap-2 py-0.5">
+        <Checkbox
+          checked={ativo}
+          onCheckedChange={(v) => onAtivo(!!v)}
+          className="h-3.5 w-3.5 border-muted-foreground/40"
+        />
+        <span className="text-[11px] text-muted-foreground/90">
           Ocultar histórico anterior
-        </p>
-        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
-          Esconde lançamentos e dias anteriores à data escolhida. O saldo acumulado continua correto a partir dessa data.
-        </p>
-        <label className="flex items-center gap-2.5 rounded-xl px-2 py-2 hover:bg-secondary/80 dark:hover:bg-[#383e47] cursor-pointer">
-          <Checkbox checked={ativo} onCheckedChange={(v) => onAtivo(!!v)} className="w-4 h-4" />
-          <span className="text-xs text-foreground/90">Ativar corte de histórico</span>
-        </label>
-        {ativo && (
-          <div className="mt-2 px-2">
-            <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Mostrar a partir de</p>
-            <input
-              type="date"
-              value={dataCorte}
-              onChange={(e) => onDataCorte(e.target.value)}
-              className="w-full rounded-xl border border-border/50 bg-background px-3 py-2 text-xs text-foreground dark:border-white/10 dark:bg-[#26262e]"
-            />
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
+          {ativo && dataCorte && (
+            <span className="text-muted-foreground/60">
+              {' '}
+              (desde {format(new Date(`${dataCorte}T12:00:00`), 'dd/MM/yyyy')})
+            </span>
+          )}
+        </span>
+      </label>
+      {ativo && (
+        <input
+          type="date"
+          value={dataCorte}
+          onChange={(e) => onDataCorte(e.target.value)}
+          className="w-full max-w-[11rem] rounded-lg border border-border/30 bg-transparent px-2 py-1 text-[11px] text-muted-foreground outline-none focus:border-border/60 dark:border-white/10"
+        />
+      )}
+    </div>
   );
 }
 
@@ -401,15 +390,16 @@ function FiltrosFluxoPainel({
         <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
         <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
         <StatusFiltro sel={statusSel} onSel={onStatusSel} />
-        <CorteHistoricoFiltro
-          ativo={ocultarHistoricoAntigo}
-          dataCorte={dataCorteHistorico}
-          onAtivo={onOcultarHistoricoAntigo}
-          onDataCorte={onDataCorteHistorico}
-        />
         <CmvFiltro cmvOnly={cmvOnly} onToggle={onCmvOnly} />
         <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
       </div>
+
+      <CorteHistoricoFiltro
+        ativo={ocultarHistoricoAntigo}
+        dataCorte={dataCorteHistorico}
+        onAtivo={onOcultarHistoricoAntigo}
+        onDataCorte={onDataCorteHistorico}
+      />
     </div>
   );
 }
@@ -450,7 +440,7 @@ export default function FiltrosFluxoCaixa({
     <FinanceiroFiltrosShell
       search={search}
       onSearch={onSearch}
-      searchPlaceholder="Buscar lançamento, categoria, tag..."
+      searchPlaceholder="Buscar lançamento, categoria, tag… ou \\conta"
       filtersOpen={filtersOpen}
       onFiltersOpenChange={setFiltersOpen}
       hasActiveFilters={hasPanelFilters}

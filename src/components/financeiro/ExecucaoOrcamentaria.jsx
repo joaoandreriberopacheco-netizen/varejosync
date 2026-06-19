@@ -50,6 +50,7 @@ import {
   lerPreferenciasCorteHistorico,
   passaFiltroCorteHistorico,
 } from '@/lib/filtroDataFinanceiro';
+import { lancamentoPassaBuscaFluxo } from '@/lib/buscaFluxoCaixa';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 function parseDateKey(dateKey) {
@@ -267,16 +268,9 @@ export default function ExecucaoOrcamentaria() {
     if (statusSel.length && !statusSel.includes(l.status)) return false;
     if (pendentes && l.status_conciliacao !== 'Pendente') return false;
     if (cmvOnly && !l.is_custo_mercadoria) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return (l.descricao || '').toLowerCase().includes(q) ||
-        (l.categoria || '').toLowerCase().includes(q) ||
-        (l.conta_financeira_nome || '').toLowerCase().includes(q) ||
-        (l.referencia_numero || '').toLowerCase().includes(q) ||
-        (l.tags || []).some(t => t.toLowerCase().includes(q));
-    }
+    if (search && !lancamentoPassaBuscaFluxo(l, search, contasAtivas, contasById)) return false;
     return true;
-  }), [lancs, ds, de, contasSel, contasById, tiposSel, statusSel, pendentes, cmvOnly, search, ocultarHistoricoAntigo, dataCorteHistorico]);
+  }), [lancs, ds, de, contasSel, contasById, contasAtivas, tiposSel, statusSel, pendentes, cmvOnly, search, ocultarHistoricoAntigo, dataCorteHistorico]);
 
   const movimentosFiltrados = useMemo(() => movimentos.filter((m) => {
     if (contasSel.length && !contasSel.includes(m.conta_id)) return false;
