@@ -56,7 +56,7 @@ export function FinanceiroGrupo({
   const saldoNode = (
     <span
       className={cn(
-        'shrink-0 text-[11px] font-bold tabular-nums',
+        'shrink-0 text-[11px] font-bold tabular-nums whitespace-nowrap',
         liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass,
       )}
     >
@@ -74,7 +74,10 @@ export function FinanceiroGrupo({
           'group w-full min-w-0 px-1',
           balancoDia
             ? 'flex flex-col gap-1.5 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:py-1.5'
-            : 'flex items-center justify-between gap-2 py-1.5',
+            : cn(
+                'flex items-center justify-between gap-2 py-1.5',
+                card && 'gap-3 py-2.5',
+              ),
           card ? 'px-3 py-2.5' : 'mb-0.5 border-b border-border/50 dark:border-white/10',
         )}
       >
@@ -87,7 +90,8 @@ export function FinanceiroGrupo({
           <p
             className={cn(
               'min-w-0 text-left text-[11px] font-semibold uppercase tracking-wide text-foreground/75 sm:tracking-widest',
-              !balancoDia && 'max-w-[42%] truncate sm:max-w-none',
+              !balancoDia && !card && 'max-w-[42%] truncate sm:max-w-none',
+              (!balancoDia && card) && 'min-w-0 flex-1 truncate',
               balancoDia && 'truncate',
               labelClassName,
             )}

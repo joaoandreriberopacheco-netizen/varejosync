@@ -11,7 +11,7 @@ import { Plus, ArrowRightLeft } from 'lucide-react';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 import PinValidationDialog from '@/components/auth/PinValidationDialog';
-import KpiContasFinanceiras from './fluxo/KpiContasFinanceiras';
+import KpiContasBar from './fluxo/KpiContasBar';
 import FiltrosContasFinanceiras, { TIPOS_CONTA } from './fluxo/FiltrosContasFinanceiras';
 import ListaContasFinanceiras from './fluxo/ListaContasFinanceiras';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
@@ -305,11 +305,11 @@ function GestaoContasProvider({ shared, children }) {
   return <GestaoContasCtx.Provider value={value}>{children}</GestaoContasCtx.Provider>;
 }
 
-/** KPIs — no header (mobile stack / desktop inline), como Fluxo de Caixa. */
-export function GestaoContasKpis({ layout = 'card' }) {
+/** KPIs — faixa compacta (mobile e desktop). */
+export function GestaoContasKpis() {
   const m = useContext(GestaoContasCtx);
   if (!m) return null;
-  return <KpiContasFinanceiras kpis={m.kpis} layout={layout} />;
+  return <KpiContasBar kpis={m.kpis} />;
 }
 
 /** Filtros + meta + lista + FAB + diálogos. */
@@ -611,17 +611,11 @@ export default function GestaoContasFinanceiras() {
     <GestaoContasProvider>
       <div className="w-full min-w-0 max-w-full space-y-3 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451 bg-background">
         <div className="min-w-0 max-w-full space-y-2">
-          <div className="flex flex-col gap-2.5 md:hidden">
-            <p className="text-lg font-semibold leading-none text-foreground font-glacial">Contas Financeiras</p>
-            <GestaoContasKpis layout="stack" />
-          </div>
-          <div className="hidden min-w-0 items-center gap-3 md:flex">
-            <p className="shrink-0 text-2xl font-semibold leading-none text-foreground font-glacial">
+          <div className="flex flex-col gap-2">
+            <p className="text-lg font-semibold leading-none text-foreground font-glacial md:text-2xl">
               Contas Financeiras
             </p>
-            <div className="min-w-0 flex-1">
-              <GestaoContasKpis layout="inline" />
-            </div>
+            <GestaoContasKpis />
           </div>
         </div>
         <GestaoContasPane />

@@ -481,7 +481,7 @@ export default function ExecucaoOrcamentaria() {
             )}
           </div>
 
-          {caixasAtiva && <GestaoContasKpis layout="stack" />}
+          {caixasAtiva && <GestaoContasKpis />}
           {aba === 'contas' && abaContas === 'contas' && <ContasAbertasKpis layout="stack" />}
           {aba === 'contas' && abaContas === 'agefin' && <AgefinRecorrentes />}
         </div>
