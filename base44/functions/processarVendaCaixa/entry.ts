@@ -346,8 +346,11 @@ Deno.serve(async (req) => {
         const valorBruto = pag.valor;
         const valorLiquido = parseFloat((valorBruto * (1 - taxa / 100)).toFixed(2));
 
-        // Data de vencimento = próximo(s) dia(s) útil(eis)
-        const prazoDias = pag.prazo_maquininha_dias ?? (pag.forma_pagamento === 'Cartão de Débito' ? 1 : 30);
+        // Data de vencimento = próximo(s) dia(s) útil(eis) — sexta–domingo credita na segunda
+        const parcelas = pag.parcelas || 1;
+        const prazoDias = pag.prazo_maquininha_dias ?? (
+          pag.forma_pagamento === 'Cartão de Débito' ? 1 : parcelas > 1 ? 30 : 1
+        );
         const dataVencimento = addDiasUteis(hoje, prazoDias);
 
         const maquininhaNome = pag.maquininha_nome || pag.forma_pagamento;
@@ -366,6 +369,7 @@ Deno.serve(async (req) => {
           valor: valorBruto,
           valor_liquido: valorLiquido,
           data_vencimento: dataVencimento,
+          data_liquidacao_prevista: dataVencimento,
           // Não marca como Pago — fica Em Aberto até conciliação bancária
           status: 'Em Aberto',
           status_conciliacao: 'Pendente',

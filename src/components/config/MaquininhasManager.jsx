@@ -27,7 +27,7 @@ const maqVazia = () => ({
   conta_destino_id: '',
   conta_destino_nome: '',
   prazo_debito_dias: 1,
-  prazo_credito_vista_dias: 30,
+  prazo_credito_vista_dias: 1,
   prazo_credito_parcelado_dias: 30,
   taxa_juros_cliente_mensal: 1.81,
   bandeiras: BANDEIRAS.map(bandeiraPadrao),

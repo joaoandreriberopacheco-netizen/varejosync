@@ -44,7 +44,8 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
 
   const getPrazoDias = (maq) => {
     if (modalidade === 'debito') return maq.prazo_debito_dias ?? 1;
-    return maq.prazo_credito_vista_dias ?? 30;
+    if (parcelas > 1) return maq.prazo_credito_parcelado_dias ?? 30;
+    return maq.prazo_credito_vista_dias ?? 1;
   };
 
   const handleConfirmar = () => {
@@ -134,7 +135,9 @@ export default function SeletorMaquininhaSheet({ visible, modalidade, parcelas: 
                   <div className="text-xs opacity-60">
                     {modalidade === 'debito'
                       ? `D+${maq.prazo_debito_dias ?? 1}`
-                      : `D+${maq.prazo_credito_vista_dias ?? 30}`}
+                      : parcelas > 1
+                        ? `D+${maq.prazo_credito_parcelado_dias ?? 30}`
+                        : `D+${maq.prazo_credito_vista_dias ?? 1}`}
                   </div>
                 </button>
               ))}

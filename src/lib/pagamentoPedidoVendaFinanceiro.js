@@ -68,7 +68,7 @@ export function buildPagamentoCartaoFromSelecao(forma, valor, dados) {
       maquininha_conta_nome: m?.conta_destino_nome,
       bandeira: dados.bandeira,
       taxa_maquininha: dados.taxa || 0,
-      prazo_maquininha_dias: dados.prazo_dias ?? 30,
+      prazo_maquininha_dias: dados.prazo_dias ?? (parcelas > 1 ? 30 : 1),
     };
   }
   return null;
@@ -184,7 +184,7 @@ export async function rebuildReceitasLancamentosPedidoVenda(
       const valorLiquido = roundToTwoDecimals(valorBruto * (1 - taxa / 100));
       const prazoDias =
         pag.prazo_maquininha_dias ??
-        (pag.forma_pagamento === 'Cartão de Débito' ? 1 : 30);
+        (pag.forma_pagamento === 'Cartão de Débito' ? 1 : parcelas > 1 ? 30 : 1);
       const dataVencimento = addDiasUteis(hoje, prazoDias);
       const maquininhaNome = pag.maquininha_nome || pag.forma_pagamento;
       const bandeira = pag.bandeira || '';
@@ -201,6 +201,7 @@ export async function rebuildReceitasLancamentosPedidoVenda(
         valor: valorBruto,
         valor_liquido: valorLiquido,
         data_vencimento: dataVencimento,
+        data_liquidacao_prevista: dataVencimento,
         status: 'Em Aberto',
         status_conciliacao: 'Pendente',
         forma_pagamento: pag.forma_pagamento,

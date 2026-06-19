@@ -9,19 +9,36 @@ export function isLancamentoCancelado(l) {
   return l?.status === 'Cancelado';
 }
 
-/** Cartão crédito pendente de conciliação — aparece no fluxo como realizado previsto. */
+/** Cartão (crédito ou débito) aguardando crédito na conta — venda em aberto até conciliação. */
+export function isCartaoPendenteConciliacao(l) {
+  if (!l || isLancamentoPago(l) || isLancamentoCancelado(l)) return false;
+  const fpt = l.forma_pagamento_tipo;
+  const cartao = fpt === 'Cartão Crédito' || fpt === 'Cartão Débito';
+  return cartao && l.status_conciliacao === 'Pendente';
+}
+
+/** @deprecated Use isCartaoPendenteConciliacao — mantido para compatibilidade. */
 export function isCartaoCreditoPendenteConciliacao(l) {
   return l?.forma_pagamento_tipo === 'Cartão Crédito' && l?.status_conciliacao === 'Pendente';
 }
 
-/** Visível no Fluxo de Caixa (pago ou cartão crédito pendente). */
+/** Valor que entra no fluxo / contas abertas: líquido (após taxa) para cartão pendente. */
+export function getValorEfetivoLancamento(l) {
+  if (isCartaoPendenteConciliacao(l)) {
+    const liquido = l.valor_liquido;
+    if (liquido != null && liquido !== '') return Number(liquido) || 0;
+  }
+  return Number(l?.valor || 0);
+}
+
+/** Visível no Fluxo de Caixa (pago ou cartão pendente de crédito na conta). */
 export function isLancamentoRealizadoFluxo(l) {
-  return isLancamentoPago(l) || isCartaoCreditoPendenteConciliacao(l);
+  return isLancamentoPago(l) || isCartaoPendenteConciliacao(l);
 }
 
 /** Data usada para agrupar/filtrar no Fluxo de Caixa. */
 export function getDataAncoraFluxo(l) {
-  if (isCartaoCreditoPendenteConciliacao(l)) {
+  if (isCartaoPendenteConciliacao(l)) {
     return l.data_liquidacao_prevista || l.data_vencimento;
   }
   return l.data_pagamento || l.data_vencimento;

@@ -788,7 +788,7 @@ export default function PDVCaixa({
          maquininha_conta_nome: maquininhaCredito?.maquininha?.conta_destino_nome,
          bandeira: maquininhaCredito?.bandeira,
          taxa_maquininha: maquininhaCredito?.taxa || 0,
-         prazo_maquininha_dias: maquininhaCredito?.prazo_dias ?? 30,
+         prazo_maquininha_dias: maquininhaCredito?.prazo_dias ?? (parcelasCredito > 1 ? 30 : 1),
        });
        if (pagamentosVale > 0 && valeEncontrado) {
          pagamentosArray.push({ forma_pagamento: 'Vale Troca', valor: pagamentosVale, parcelas: 1, vale_codigo: valeEncontrado.codigo, vale_id: valeEncontrado.id });
