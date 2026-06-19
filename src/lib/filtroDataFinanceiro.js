@@ -66,3 +66,40 @@ export const PERIODOS_DATA_PAGAMENTO = [
   { v: 'todas', l: 'Todas' },
   { v: 'personalizado', l: 'Personalizado' },
 ];
+
+/** Data padrão para ocultar histórico confuso no Fluxo de Caixa (ajustável pelo utilizador). */
+export const DATA_CORTE_HISTORICO_PADRAO = '2026-06-18';
+
+const STORAGE_OCULTAR_HISTORICO = 'p38-fluxo-ocultar-historico';
+const STORAGE_DATA_CORTE = 'p38-fluxo-data-corte-historico';
+
+export function lerPreferenciasCorteHistorico() {
+  if (typeof window === 'undefined') {
+    return { ativo: false, dataCorte: DATA_CORTE_HISTORICO_PADRAO };
+  }
+  try {
+    return {
+      ativo: localStorage.getItem(STORAGE_OCULTAR_HISTORICO) === 'true',
+      dataCorte: localStorage.getItem(STORAGE_DATA_CORTE) || DATA_CORTE_HISTORICO_PADRAO,
+    };
+  } catch {
+    return { ativo: false, dataCorte: DATA_CORTE_HISTORICO_PADRAO };
+  }
+}
+
+export function gravarPreferenciasCorteHistorico(ativo, dataCorte) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_OCULTAR_HISTORICO, ativo ? 'true' : 'false');
+    if (dataCorte) localStorage.setItem(STORAGE_DATA_CORTE, dataCorte);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+/** Oculta lançamentos anteriores à data de corte (chave YYYY-MM-DD). */
+export function passaFiltroCorteHistorico(dataKey, { ativo, dataCorte }) {
+  if (!ativo || !dataCorte) return true;
+  if (!dataKey || dataKey === 'sem-data') return false;
+  return dataKey >= dataCorte;
+}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  History,
   X, Wallet, BarChart3, Clock, ChevronDown,
   ChevronLeft, ChevronRight, Layers, RefreshCw
 } from 'lucide-react';
@@ -286,6 +287,47 @@ function TipoFiltro({ sel, onSel }) {
   );
 }
 
+function CorteHistoricoFiltro({ ativo, dataCorte, onAtivo, onDataCorte }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors
+          ${ativo ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE}`}
+        >
+          <History className="w-3 h-3" />
+          {ativo ? `Desde ${format(new Date(`${dataCorte}T12:00:00`), 'dd/MM/yy')}` : 'Histórico completo'}
+          <ChevronDown className="w-3 h-3" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className={`w-72 p-3 ${P38_POPOVER}`} align="start">
+        <p className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+          Ocultar histórico anterior
+        </p>
+        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+          Esconde lançamentos e dias anteriores à data escolhida. O saldo acumulado continua correto a partir dessa data.
+        </p>
+        <label className="flex items-center gap-2.5 rounded-xl px-2 py-2 hover:bg-secondary/80 dark:hover:bg-[#383e47] cursor-pointer">
+          <Checkbox checked={ativo} onCheckedChange={(v) => onAtivo(!!v)} className="w-4 h-4" />
+          <span className="text-xs text-foreground/90">Ativar corte de histórico</span>
+        </label>
+        {ativo && (
+          <div className="mt-2 px-2">
+            <p className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Mostrar a partir de</p>
+            <input
+              type="date"
+              value={dataCorte}
+              onChange={(e) => onDataCorte(e.target.value)}
+              className="w-full rounded-xl border border-border/50 bg-background px-3 py-2 text-xs text-foreground dark:border-white/10 dark:bg-[#26262e]"
+            />
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function CmvFiltro({ cmvOnly, onToggle }) {
   return (
     <button
@@ -339,6 +381,7 @@ function FiltrosFluxoPainel({
   pendentes, onPendentes,
   cmvOnly, onCmvOnly,
   onOpenConciliacao,
+  ocultarHistoricoAntigo, dataCorteHistorico, onOcultarHistoricoAntigo, onDataCorteHistorico,
 }) {
   return (
     <div className="space-y-3">
@@ -358,6 +401,12 @@ function FiltrosFluxoPainel({
         <ContasFiltro contas={contas} sel={contasSel} onSel={onContasSel} />
         <TipoFiltro sel={tiposSel} onSel={onTiposSel} />
         <StatusFiltro sel={statusSel} onSel={onStatusSel} />
+        <CorteHistoricoFiltro
+          ativo={ocultarHistoricoAntigo}
+          dataCorte={dataCorteHistorico}
+          onAtivo={onOcultarHistoricoAntigo}
+          onDataCorte={onDataCorteHistorico}
+        />
         <CmvFiltro cmvOnly={cmvOnly} onToggle={onCmvOnly} />
         <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
       </div>
@@ -380,6 +429,10 @@ export default function FiltrosFluxoCaixa({
   conciliacaoPendente = 0,
   ordemLancamentos = 'desc',
   onOrdemLancamentosChange,
+  ocultarHistoricoAntigo = false,
+  dataCorteHistorico,
+  onOcultarHistoricoAntigo,
+  onDataCorteHistorico,
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -388,6 +441,7 @@ export default function FiltrosFluxoCaixa({
     tiposSel.length > 0 ||
     statusSel.length > 0 ||
     cmvOnly ||
+    ocultarHistoricoAntigo ||
     !!customStart ||
     !!customEnd ||
     (contas.length > 0 && contasSel.length > 0 && contasSel.length < contas.length);
@@ -424,6 +478,10 @@ export default function FiltrosFluxoCaixa({
         cmvOnly={cmvOnly}
         onCmvOnly={onCmvOnly}
         onOpenConciliacao={onOpenConciliacao}
+        ocultarHistoricoAntigo={ocultarHistoricoAntigo}
+        dataCorteHistorico={dataCorteHistorico}
+        onOcultarHistoricoAntigo={onOcultarHistoricoAntigo}
+        onDataCorteHistorico={onDataCorteHistorico}
       />
     </FinanceiroFiltrosShell>
   );

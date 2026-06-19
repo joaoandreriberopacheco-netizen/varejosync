@@ -44,6 +44,12 @@ import AgefinRecorrentes from './AgefinRecorrentes';
 import AgefinImportador from '../agefin/AgefinImportador';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DATA_CORTE_HISTORICO_PADRAO,
+  gravarPreferenciasCorteHistorico,
+  lerPreferenciasCorteHistorico,
+  passaFiltroCorteHistorico,
+} from '@/lib/filtroDataFinanceiro';
 
 // ─── utils ────────────────────────────────────────────────────────────────────
 function parseDateKey(dateKey) {
@@ -113,6 +119,18 @@ export default function ExecucaoOrcamentaria() {
   const [urlValor, setUrlValor] = useState('');
   const [urlReferenciaId, setUrlReferenciaId] = useState('');
   const [urlReferenciaTipo, setUrlReferenciaTipo] = useState('');
+  const [ocultarHistoricoAntigo, setOcultarHistoricoAntigo] = useState(
+    () => lerPreferenciasCorteHistorico().ativo,
+  );
+  const [dataCorteHistorico, setDataCorteHistorico] = useState(
+    () => lerPreferenciasCorteHistorico().dataCorte || DATA_CORTE_HISTORICO_PADRAO,
+  );
+
+  const atualizarCorteHistorico = useCallback((ativo, dataCorte) => {
+    setOcultarHistoricoAntigo(ativo);
+    setDataCorteHistorico(dataCorte);
+    gravarPreferenciasCorteHistorico(ativo, dataCorte);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -239,6 +257,7 @@ export default function ExecucaoOrcamentaria() {
     if ((ds || de) && !dataKey) return false;
     if (ds && dataKey < ds) return false;
     if (de && dataKey > de) return false;
+    if (!passaFiltroCorteHistorico(dataKey, { ativo: ocultarHistoricoAntigo, dataCorte: dataCorteHistorico })) return false;
     if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
     if (tiposSel.length) {
       const matchTipo = tiposSel.includes(l.tipo);
@@ -257,7 +276,7 @@ export default function ExecucaoOrcamentaria() {
         (l.tags || []).some(t => t.toLowerCase().includes(q));
     }
     return true;
-  }), [lancs, ds, de, contasSel, contasById, tiposSel, statusSel, pendentes, cmvOnly, search]);
+  }), [lancs, ds, de, contasSel, contasById, tiposSel, statusSel, pendentes, cmvOnly, search, ocultarHistoricoAntigo, dataCorteHistorico]);
 
   const movimentosFiltrados = useMemo(() => movimentos.filter((m) => {
     if (contasSel.length && !contasSel.includes(m.conta_id)) return false;
@@ -265,8 +284,9 @@ export default function ExecucaoOrcamentaria() {
     if ((ds || de) && !dataKey) return false;
     if (ds && dataKey < ds) return false;
     if (de && dataKey > de) return false;
+    if (!passaFiltroCorteHistorico(dataKey, { ativo: ocultarHistoricoAntigo, dataCorte: dataCorteHistorico })) return false;
     return true;
-  }), [movimentos, ds, de, contasSel]);
+  }), [movimentos, ds, de, contasSel, ocultarHistoricoAntigo, dataCorteHistorico]);
 
   const kpis = useMemo(() => {
     const baseKpis = calcularKpisFluxoPeriodo(
@@ -317,7 +337,7 @@ export default function ExecucaoOrcamentaria() {
   }, [filtrados, movimentosFiltrados, lancs, contas, contasSel, contasById, ordemLancamentos, kpis.saldoContas, movimentos]);
 
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
-  const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || !!search;
+  const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || ocultarHistoricoAntigo || !!search;
 
   const abrirConciliacao = useCallback((conta) => {
     if (conta === null) {
@@ -353,8 +373,9 @@ export default function ExecucaoOrcamentaria() {
     if (pendentes) partes.push('Conciliação pendente');
     if (cmvOnly) partes.push('Somente CMV');
     if (search) partes.push(`Busca: ${search}`);
+    if (ocultarHistoricoAntigo) partes.push(`Histórico desde ${formatarSoData(dataCorteHistorico)}`);
     return partes.join(' · ');
-  }, [periodoLabel, contasSelecionadasLabel, tiposSel, statusSel, pendentes, cmvOnly, search]);
+  }, [periodoLabel, contasSelecionadasLabel, tiposSel, statusSel, pendentes, cmvOnly, search, ocultarHistoricoAntigo, dataCorteHistorico]);
 
   const handlePrint = async () => {
     const response = await gerarExtratoFluxoCaixa({
@@ -523,6 +544,10 @@ export default function ExecucaoOrcamentaria() {
             conciliacaoPendente={totalPend}
             ordemLancamentos={ordemLancamentos}
             onOrdemLancamentosChange={setOrdemLancamentos}
+            ocultarHistoricoAntigo={ocultarHistoricoAntigo}
+            dataCorteHistorico={dataCorteHistorico}
+            onOcultarHistoricoAntigo={(v) => atualizarCorteHistorico(v, dataCorteHistorico)}
+            onDataCorteHistorico={(v) => atualizarCorteHistorico(ocultarHistoricoAntigo, v || DATA_CORTE_HISTORICO_PADRAO)}
           />
 
           <FinanceiroListaMeta
@@ -558,6 +583,9 @@ export default function ExecucaoOrcamentaria() {
                 )}
                 {pendentes && <FinanceiroSummaryChip>Conciliação</FinanceiroSummaryChip>}
                 {cmvOnly && <FinanceiroSummaryChip>CMV</FinanceiroSummaryChip>}
+                {ocultarHistoricoAntigo && (
+                  <FinanceiroSummaryChip>Desde {formatarSoData(dataCorteHistorico)}</FinanceiroSummaryChip>
+                )}
               </>
             }
           />
