@@ -10,6 +10,7 @@ import {
   lancamentoPertenceContasSelecionadas,
 } from '@/lib/saldoContaFinanceira';
 import { reconciliarSaldoCaixaPDVSemTurnoAberto, backfillLancamentosMovimentosCaixaPDV } from '@/lib/contaDestinoCaixaPDV';
+import { sincronizarSaldosContasFinanceiras } from '@/lib/sincronizarSaldoContasFinanceiras';
 import { montarGruposFluxoCaixa, prepararGruposFluxoComSaldoAcumulado } from '@/lib/gruposMovimentacaoConta';
 import {
   getDataAncoraFluxoKey,
@@ -234,13 +235,24 @@ export default function ExecucaoOrcamentaria() {
     if (!snapshot) return null;
     try {
       await syncCaixaPDVMaintenance(snapshot.cts, snapshot.movs, snapshot.ls);
-      const [ls2] = await Promise.all([
+      const [ls2, movs2] = await Promise.all([
         base44.entities.LancamentoFinanceiro.list('-data_vencimento'),
+        base44.entities.MovimentosCaixa.list(),
       ]);
+      const contaIds = snapshot.cts.filter((c) => c.ativo !== false).map((c) => c.id);
+      await sincronizarSaldosContasFinanceiras(base44, {
+        contas: snapshot.cts,
+        lancamentos: ls2,
+        movimentos: movs2,
+        contaIds,
+      });
+      const cts2 = await base44.entities.ContasFinanceiras.list();
       setLancs(ls2);
-      return { ...snapshot, ls: ls2 };
+      setMovimentos(movs2);
+      setContas(cts2);
+      return { ...snapshot, ls: ls2, movs: movs2, cts: cts2 };
     } catch (error) {
-      console.error('[Fluxo de Caixa] Erro na manutenção PDV:', error);
+      console.error('[Fluxo de Caixa] Erro na manutenção PDV/sincronização:', error);
     }
     return snapshot;
   };
