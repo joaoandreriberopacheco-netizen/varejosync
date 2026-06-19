@@ -180,7 +180,7 @@ export default function FinanceiroLancRow({
     thinAccent: true,
     striped,
     accent: p38AccentKeyFromTone(rowAccent(l, { dimPago: showPago })),
-    className: `w-full text-left ${LINE_TITLE_CLASS} [&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${cancelado || (showPago && isPago) ? 'opacity-60' : ''}`,
+    className: `w-full text-left ${LINE_TITLE_CLASS} [&>div:last-child]:max-w-[50%] sm:[&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${cancelado || (showPago && isPago) ? 'opacity-60' : ''}`,
     title,
     subtitle,
     meta: rowMeta(l, { showPago }),

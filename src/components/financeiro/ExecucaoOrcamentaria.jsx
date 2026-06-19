@@ -438,11 +438,11 @@ export default function ExecucaoOrcamentaria() {
       shared={contasShared}
       onOpenImportador={() => setShowImportadorAgefin(true)}
     >
-    <div className="w-full min-w-0 max-w-full space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
+    <div className="w-full min-w-0 max-w-full space-y-3 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
       {/* Header — mobile e desktop separados para evitar sobreposição */}
-      <div className="min-w-0 max-w-full space-y-1.5">
+      <div className="min-w-0 max-w-full space-y-2">
         {/* Mobile */}
-        <div className="flex flex-col gap-1.5 md:hidden">
+        <div className="flex flex-col gap-2.5 md:hidden">
           <div className="flex items-center gap-2">
             <p className="text-lg font-semibold leading-none text-foreground font-glacial">Financeiro</p>
             {aba === 'fluxo' && (

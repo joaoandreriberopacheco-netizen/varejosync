@@ -17,19 +17,19 @@ export default function KpiFluxo({ kpis, layout = 'card' }) {
       layout={layout}
       footer={
         kpis.saldoContas != null || kpis.totalTransferencias > 0 ? (
-          <div className="space-y-1.5 border-t border-border/40 pt-1.5 dark:border-white/10">
+          <div className="space-y-2 border-t border-border/40 pt-2 dark:border-white/10">
             {kpis.saldoContas != null && (
-              <div className="flex items-center gap-2">
-                <Wallet className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <p className="min-w-0 flex-1 text-[9px] uppercase tracking-wide text-muted-foreground">Saldo em contas</p>
-                <p className="text-xs font-semibold tabular-nums text-foreground">{formatKpiValor(kpis.saldoContas)}</p>
+              <div className="flex items-center gap-2.5">
+                <Wallet className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <p className="min-w-0 flex-1 text-[11px] uppercase tracking-wide text-muted-foreground">Saldo em contas</p>
+                <p className="text-sm font-semibold tabular-nums text-foreground">{formatKpiValor(kpis.saldoContas)}</p>
               </div>
             )}
             {kpis.totalTransferencias > 0 && (
-              <div className="flex items-center gap-2">
-                <ArrowRightLeft className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <p className="min-w-0 flex-1 text-[9px] uppercase tracking-wide text-muted-foreground">Transferências</p>
-                <p className="text-xs font-semibold tabular-nums text-foreground">{formatKpiValor(kpis.totalTransferencias)}</p>
+              <div className="flex items-center gap-2.5">
+                <ArrowRightLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <p className="min-w-0 flex-1 text-[11px] uppercase tracking-wide text-muted-foreground">Transferências</p>
+                <p className="text-sm font-semibold tabular-nums text-foreground">{formatKpiValor(kpis.totalTransferencias)}</p>
               </div>
             )}
           </div>

@@ -41,15 +41,13 @@ export function FinanceiroGrupo({
 
   const negClass = overdue ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
 
-  const balancoDiaNode = balancoDia ? (
-    <div
-      className="flex min-w-0 flex-wrap items-center justify-end gap-x-1 gap-y-0 text-[10px] font-semibold tabular-nums sm:gap-x-1.5 sm:text-[11px]"
-      title={
-        saldoAcumulado != null
-          ? `Entrou ${formatFinanceiroValor(receitas)} · Saiu ${formatFinanceiroValor(despesas)} · Variação ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))} · Saldo acumulado ${saldoAcumulado >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(saldoAcumulado))}`
-          : `Entrou ${formatFinanceiroValor(receitas)} · Saiu ${formatFinanceiroValor(despesas)} · Variação ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))}`
-      }
-    >
+  const balancoTitle =
+    saldoAcumulado != null
+      ? `Entrou ${formatFinanceiroValor(receitas)} · Saiu ${formatFinanceiroValor(despesas)} · Variação ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))} · Saldo acumulado ${saldoAcumulado >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(saldoAcumulado))}`
+      : `Entrou ${formatFinanceiroValor(receitas)} · Saiu ${formatFinanceiroValor(despesas)} · Variação ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))}`;
+
+  const balancoValores = (
+    <>
       <span className="text-[#4A5D23] dark:text-[#a4ce33]" title="Entrou">
         +{formatFinanceiroValor(receitas)}
       </span>
@@ -69,18 +67,43 @@ export function FinanceiroGrupo({
         {liquido >= 0 ? '+' : '−'}
         {formatFinanceiroValor(Math.abs(liquido))}
       </span>
-      {saldoAcumulado != null && (
-        <>
-          <span className="text-muted-foreground/50 font-normal" aria-hidden>
-            |
-          </span>
-          <span className="shrink-0 font-bold text-foreground" title="Saldo acumulado no final do dia">
+    </>
+  );
+
+  const balancoDiaNode = balancoDia ? (
+    <>
+      {/* Mobile: label em cima, totais em 1–2 linhas abaixo */}
+      <div className="w-full min-w-0 space-y-1 sm:hidden" title={balancoTitle}>
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] font-semibold tabular-nums">
+          {balancoValores}
+        </div>
+        {saldoAcumulado != null && (
+          <p className="text-[11px] font-bold tabular-nums text-foreground" title="Saldo acumulado no final do dia">
+            <span className="mr-1.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/50">Saldo</span>
             {saldoAcumulado >= 0 ? '+' : '−'}
             {formatFinanceiroValor(Math.abs(saldoAcumulado))}
-          </span>
-        </>
-      )}
-    </div>
+          </p>
+        )}
+      </div>
+      {/* Desktop: faixa única à direita */}
+      <div
+        className="hidden min-w-0 flex-wrap items-center justify-end gap-x-1.5 text-[11px] font-semibold tabular-nums sm:flex"
+        title={balancoTitle}
+      >
+        {balancoValores}
+        {saldoAcumulado != null && (
+          <>
+            <span className="text-muted-foreground/50 font-normal" aria-hidden>
+              |
+            </span>
+            <span className="shrink-0 font-bold text-foreground" title="Saldo acumulado no final do dia">
+              {saldoAcumulado >= 0 ? '+' : '−'}
+              {formatFinanceiroValor(Math.abs(saldoAcumulado))}
+            </span>
+          </>
+        )}
+      </div>
+    </>
   ) : null;
 
   const saldoNode = (
@@ -101,20 +124,44 @@ export function FinanceiroGrupo({
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'group flex w-full min-w-0 items-center justify-between gap-2 px-1 py-1.5',
+          'group w-full min-w-0 px-1',
+          balancoDia
+            ? 'flex flex-col gap-1.5 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:py-1.5'
+            : 'flex items-center justify-between gap-2 py-1.5',
           card ? 'px-3 py-2.5' : 'mb-0.5 border-b border-border/50 dark:border-white/10',
         )}
       >
-        <p
+        <div
           className={cn(
-            'min-w-0 max-w-[38%] truncate text-left text-[11px] font-semibold uppercase tracking-wide text-foreground/75 sm:max-w-none sm:tracking-widest',
-            balancoDia && 'max-w-[28%] sm:max-w-none',
-            labelClassName,
+            'flex min-w-0 items-center gap-2',
+            balancoDia ? 'w-full justify-between sm:w-auto sm:flex-1' : 'flex-1',
           )}
         >
-          {label}
-        </p>
-        <div className="flex min-w-0 shrink items-center gap-1 sm:gap-1.5">
+          <p
+            className={cn(
+              'min-w-0 text-left text-[11px] font-semibold uppercase tracking-wide text-foreground/75 sm:tracking-widest',
+              !balancoDia && 'max-w-[42%] truncate sm:max-w-none',
+              balancoDia && 'truncate',
+              labelClassName,
+            )}
+          >
+            {label}
+          </p>
+          {balancoDia && (
+            <ChevronRight
+              className={cn(
+                'h-3.5 w-3.5 shrink-0 text-foreground/50 transition-transform sm:hidden',
+                open && 'rotate-90',
+              )}
+            />
+          )}
+        </div>
+        <div
+          className={cn(
+            'flex min-w-0 items-center gap-1 sm:gap-1.5',
+            balancoDia && 'w-full sm:w-auto sm:shrink sm:justify-end',
+          )}
+        >
           {balancoDia ? (
             balancoDiaNode
           ) : (
@@ -132,9 +179,19 @@ export function FinanceiroGrupo({
               {saldoNode}
             </>
           )}
-          <ChevronRight
-            className={cn('h-3 w-3 shrink-0 text-foreground/50 transition-transform', open && 'rotate-90')}
-          />
+          {!balancoDia && (
+            <ChevronRight
+              className={cn('h-3.5 w-3.5 shrink-0 text-foreground/50 transition-transform', open && 'rotate-90')}
+            />
+          )}
+          {balancoDia && (
+            <ChevronRight
+              className={cn(
+                'hidden h-3.5 w-3.5 shrink-0 text-foreground/50 transition-transform sm:block',
+                open && 'rotate-90',
+              )}
+            />
+          )}
         </div>
       </button>
       {open && (
