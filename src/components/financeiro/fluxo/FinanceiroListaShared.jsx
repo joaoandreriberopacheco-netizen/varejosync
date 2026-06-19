@@ -5,6 +5,7 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import { P38_FIELD_SURFACE } from './financeiroP38';
+import FinanceiroResumoBar from './FinanceiroResumoBar';
 
 /** Rótulo de grupo — Hoje/Ontem ou data curta (mesmo padrão Fluxo e Contas). */
 export function formatFinanceiroGrupoLabel(k, hStr, oStr) {
@@ -41,69 +42,15 @@ export function FinanceiroGrupo({
 
   const negClass = overdue ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
 
-  const balancoTitle =
-    saldoAcumulado != null
-      ? `Entrou ${formatFinanceiroValor(receitas)} · Saiu ${formatFinanceiroValor(despesas)} · Variação ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))} · Saldo acumulado ${saldoAcumulado >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(saldoAcumulado))}`
-      : `Entrou ${formatFinanceiroValor(receitas)} · Saiu ${formatFinanceiroValor(despesas)} · Variação ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))}`;
-
-  const balancoValores = (
-    <>
-      <span className="text-[#4A5D23] dark:text-[#a4ce33]" title="Entrou">
-        +{formatFinanceiroValor(receitas)}
-      </span>
-      <span className="text-muted-foreground/40" aria-hidden>
-        ·
-      </span>
-      <span className={cn(despesas > 0 ? negClass : 'text-muted-foreground/70')} title="Saiu">
-        −{formatFinanceiroValor(despesas)}
-      </span>
-      <span className="text-muted-foreground/40" aria-hidden>
-        ·
-      </span>
-      <span
-        className={cn(liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass)}
-        title="Variação do dia"
-      >
-        {liquido >= 0 ? '+' : '−'}
-        {formatFinanceiroValor(Math.abs(liquido))}
-      </span>
-    </>
-  );
-
   const balancoDiaNode = balancoDia ? (
-    <>
-      {/* Mobile: label em cima, totais em 1–2 linhas abaixo */}
-      <div className="w-full min-w-0 space-y-1 sm:hidden" title={balancoTitle}>
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] font-semibold tabular-nums">
-          {balancoValores}
-        </div>
-        {saldoAcumulado != null && (
-          <p className="text-[11px] font-bold tabular-nums text-foreground" title="Saldo acumulado no final do dia">
-            <span className="mr-1.5 text-[10px] font-semibold uppercase tracking-wide text-foreground/50">Saldo</span>
-            {saldoAcumulado >= 0 ? '+' : '−'}
-            {formatFinanceiroValor(Math.abs(saldoAcumulado))}
-          </p>
-        )}
-      </div>
-      {/* Desktop: faixa única à direita */}
-      <div
-        className="hidden min-w-0 flex-wrap items-center justify-end gap-x-1.5 text-[11px] font-semibold tabular-nums sm:flex"
-        title={balancoTitle}
-      >
-        {balancoValores}
-        {saldoAcumulado != null && (
-          <>
-            <span className="text-muted-foreground/50 font-normal" aria-hidden>
-              |
-            </span>
-            <span className="shrink-0 font-bold text-foreground" title="Saldo acumulado no final do dia">
-              {saldoAcumulado >= 0 ? '+' : '−'}
-              {formatFinanceiroValor(Math.abs(saldoAcumulado))}
-            </span>
-          </>
-        )}
-      </div>
-    </>
+    <FinanceiroResumoBar
+      receitas={receitas}
+      despesas={despesas}
+      variacao={liquido}
+      saldo={saldoAcumulado}
+      saldoComSinal
+      className="w-full md:w-auto md:justify-end"
+    />
   ) : null;
 
   const saldoNode = (
