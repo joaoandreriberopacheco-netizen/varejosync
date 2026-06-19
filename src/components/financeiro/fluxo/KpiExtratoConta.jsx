@@ -1,5 +1,6 @@
 import React from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { P38_ACCENT } from './financeiroP38';
 import {
   FinanceiroKpiItem,
@@ -8,60 +9,81 @@ import {
   formatKpiValor,
 } from './FinanceiroKpiInline';
 
-export default function KpiExtratoConta({ kpis, layout = 'card', saldoLabel = 'Saldo na conta' }) {
-  const taxa = kpis.entradas > 0 ? (kpis.saidas / kpis.entradas * 100).toFixed(0) : 0;
-
+function KpiExtratoHelpTooltip({ kpis, saldoLabel, taxa }) {
   return (
-    <FinanceiroKpiStrip
-      layout={layout}
-      footer={
-        <div className="space-y-1 border-t border-border/40 pt-1.5 text-[10px] text-muted-foreground dark:border-white/10">
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex shrink-0 items-center justify-center rounded-full text-muted-foreground/60 transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Explicação dos valores"
+          >
+            <HelpCircle className="h-3 w-3" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent
+          side="bottom"
+          align="end"
+          className="max-w-[16rem] space-y-1.5 text-left text-[11px] leading-snug normal-case"
+        >
           {kpis.saldoPeriodo != null && (
             <p>
               Resultado do período:{' '}
-              <span className="font-semibold tabular-nums text-foreground">
+              <span className="font-semibold tabular-nums">
                 {kpis.saldoPeriodo >= 0 ? '+' : '−'}
                 {formatKpiValor(Math.abs(kpis.saldoPeriodo))}
               </span>
             </p>
           )}
           {kpis.entradas > 0 && (
-            <p className="text-[9px] opacity-80">
-              Proporção saídas ÷ entradas no período: {taxa}% (a barrinha trava em 100%).
-            </p>
+            <p>Proporção saídas ÷ entradas no período: {taxa}% (a barrinha trava em 100%).</p>
           )}
-          <p className="text-[9px] opacity-80">
+          <p>
             &quot;{saldoLabel}&quot; é o total na conta; &quot;Hoje&quot; na lista é só o movimento daquele dia.
           </p>
-        </div>
-      }
-    >
-      <FinanceiroKpiItem
-        layout={layout}
-        icon={TrendingUp}
-        iconClass={P38_ACCENT}
-        label="Entradas"
-        value={formatKpiValor(kpis.entradas)}
-      />
-      <FinanceiroKpiItem
-        layout={layout}
-        icon={TrendingDown}
-        iconClass="text-foreground/50"
-        label="Saídas"
-        value={formatKpiValor(kpis.saidas)}
-      />
-      <FinanceiroKpiSaldo
-        layout={layout}
-        label={saldoLabel}
-        value={
-          <>
-            {kpis.saldo >= 0 ? '+' : '−'}
-            {formatKpiValor(Math.abs(kpis.saldo))}
-          </>
-        }
-        percent={taxa}
-        positive={kpis.saldo >= 0}
-      />
-    </FinanceiroKpiStrip>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+export default function KpiExtratoConta({ kpis, layout = 'card', saldoLabel = 'Saldo na conta' }) {
+  const taxa = kpis.entradas > 0 ? (kpis.saidas / kpis.entradas * 100).toFixed(0) : 0;
+  const helpTooltip = <KpiExtratoHelpTooltip kpis={kpis} saldoLabel={saldoLabel} taxa={taxa} />;
+
+  return (
+    <div className={layout === 'stack' ? 'relative' : undefined}>
+      {layout === 'stack' && <div className="absolute right-2 top-2 z-10">{helpTooltip}</div>}
+      <FinanceiroKpiStrip layout={layout}>
+        <FinanceiroKpiItem
+          layout={layout}
+          icon={TrendingUp}
+          iconClass={P38_ACCENT}
+          label="Entradas"
+          value={formatKpiValor(kpis.entradas)}
+        />
+        <FinanceiroKpiItem
+          layout={layout}
+          icon={TrendingDown}
+          iconClass="text-foreground/50"
+          label="Saídas"
+          value={formatKpiValor(kpis.saidas)}
+        />
+        <FinanceiroKpiSaldo
+          layout={layout}
+          label={saldoLabel}
+          value={
+            <>
+              {kpis.saldo >= 0 ? '+' : '−'}
+              {formatKpiValor(Math.abs(kpis.saldo))}
+            </>
+          }
+          percent={taxa}
+          positive={kpis.saldo >= 0}
+        />
+        {layout !== 'stack' && helpTooltip}
+      </FinanceiroKpiStrip>
+    </div>
   );
 }
