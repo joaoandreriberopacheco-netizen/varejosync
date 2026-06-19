@@ -115,3 +115,18 @@ export function passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, d
   if (!dataKey || dataKey === 'sem-data') return false;
   return dataKey >= dataCorte;
 }
+
+function normalizarTextoConta(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+/** Contas de migração / transição — ocultas por defeito em Caixas e Bancos. */
+export function isContaTransicao(conta) {
+  if (!conta) return false;
+  const tipo = normalizarTextoConta(conta.tipo);
+  const nome = normalizarTextoConta(conta.nome);
+  return tipo.includes('transicao') || nome.includes('transicao');
+}

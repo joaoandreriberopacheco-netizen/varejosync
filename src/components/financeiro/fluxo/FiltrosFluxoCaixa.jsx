@@ -13,6 +13,7 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import FinanceiroFiltrosShell from './FinanceiroFiltrosShell';
+import FinanceiroCorteHistoricoFiltro from './FinanceiroCorteHistoricoFiltro';
 import {
   P38_CHIP_ACTIVE,
   P38_CHIP_INACTIVE,
@@ -286,37 +287,6 @@ function TipoFiltro({ sel, onSel }) {
   );
 }
 
-function CorteHistoricoFiltro({ mostrarHistoricoAnterior, dataCorte, onMostrarHistoricoAnterior, onDataCorte }) {
-  return (
-    <div className="space-y-1.5 border-t border-border/25 pt-2.5 dark:border-white/5">
-      <label className="flex cursor-pointer items-center gap-2 py-0.5">
-        <Checkbox
-          checked={mostrarHistoricoAnterior}
-          onCheckedChange={(v) => onMostrarHistoricoAnterior(!!v)}
-          className="h-3.5 w-3.5 border-muted-foreground/40"
-        />
-        <span className="text-[11px] text-muted-foreground/90">
-          Mostrar histórico anterior
-          {!mostrarHistoricoAnterior && dataCorte && (
-            <span className="text-muted-foreground/60">
-              {' '}
-              (lista desde {format(new Date(`${dataCorte}T12:00:00`), 'dd/MM/yyyy')})
-            </span>
-          )}
-        </span>
-      </label>
-      {!mostrarHistoricoAnterior && (
-        <input
-          type="date"
-          value={dataCorte}
-          onChange={(e) => onDataCorte(e.target.value)}
-          className="w-full max-w-[11rem] rounded-lg border border-border/30 bg-transparent px-2 py-1 text-[11px] text-muted-foreground outline-none focus:border-border/60 dark:border-white/10"
-        />
-      )}
-    </div>
-  );
-}
-
 function CmvFiltro({ cmvOnly, onToggle }) {
   return (
     <button
@@ -394,11 +364,12 @@ function FiltrosFluxoPainel({
         <ConciliacaoLoteFiltro contas={contas} onOpenConciliacao={onOpenConciliacao} />
       </div>
 
-      <CorteHistoricoFiltro
+      <FinanceiroCorteHistoricoFiltro
         mostrarHistoricoAnterior={mostrarHistoricoAnterior}
         dataCorte={dataCorteHistorico}
         onMostrarHistoricoAnterior={onMostrarHistoricoAnterior}
         onDataCorte={onDataCorteHistorico}
+        contextoLista="lista"
       />
     </div>
   );

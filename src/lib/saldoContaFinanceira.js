@@ -1,4 +1,5 @@
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { toLocalDateKey } from '@/components/utils/dateUtils';
 
 /** Lançamento pago/cancelado entra no saldo (receita +, despesa −). Transferências ficam de fora. */
 export function lancamentoParticipaSaldo(l) {
@@ -162,6 +163,48 @@ export function calcularSaldosTodasContas(contas = [], todosLancamentos = [], to
   const map = {};
   contas.forEach((conta) => {
     map[conta.id] = calcularSaldoContaFinanceira(conta, todosLancamentos, todosMovimentos);
+  });
+  return map;
+}
+
+function dataChaveLancamentoSaldo(l) {
+  const dr = l?.data_pagamento || l?.data_vencimento;
+  return dr ? toLocalDateKey(dr) : null;
+}
+
+/** Saldo atual menos movimentos anteriores à data de corte (visão pós-corte). */
+export function calcularSaldoContaAposDataCorte(conta, todosLancamentos = [], todosMovimentos = [], dataCorte) {
+  if (!conta || !dataCorte) {
+    return calcularSaldoContaFinanceira(conta, todosLancamentos, todosMovimentos);
+  }
+
+  const saldoCompleto = calcularSaldoContaFinanceira(conta, todosLancamentos, todosMovimentos);
+  const lancamentos = filtrarLancamentosDaConta(conta, todosLancamentos);
+  const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(lancamentos);
+  let liquidoAntes = 0;
+
+  lancamentos.forEach((l) => {
+    const dataKey = dataChaveLancamentoSaldo(l);
+    if (dataKey && dataKey < dataCorte) {
+      liquidoAntes += deltaLancamentoSaldoConta(conta, l);
+    }
+  });
+
+  filtrarMovimentosDaConta(conta.id, todosMovimentos).forEach((m) => {
+    if (movimentosJaNoFinanceiro.has(String(m.id))) return;
+    const dataKey = m.created_date ? toLocalDateKey(m.created_date) : null;
+    if (dataKey && dataKey < dataCorte) {
+      liquidoAntes += deltaMovimentoCaixaSaldo(m);
+    }
+  });
+
+  return roundToTwoDecimals(saldoCompleto - liquidoAntes);
+}
+
+export function calcularSaldosAposDataCorte(contas = [], todosLancamentos = [], todosMovimentos = [], dataCorte) {
+  const map = {};
+  contas.forEach((conta) => {
+    map[conta.id] = calcularSaldoContaAposDataCorte(conta, todosLancamentos, todosMovimentos, dataCorte);
   });
   return map;
 }

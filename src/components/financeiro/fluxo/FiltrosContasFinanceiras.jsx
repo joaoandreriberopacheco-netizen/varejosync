@@ -1,5 +1,6 @@
 import React from 'react';
 import FinanceiroFiltrosShell from './FinanceiroFiltrosShell';
+import FinanceiroCorteHistoricoFiltro from './FinanceiroCorteHistoricoFiltro';
 import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE } from './financeiroP38';
 
 export const TIPOS_CONTA = [
@@ -29,11 +30,16 @@ export default function FiltrosContasFinanceiras({
   somentePendencias,
   onSomentePendencias,
   totalPendencias = 0,
+  mostrarHistoricoAnterior = false,
+  dataCorteHistorico,
+  onMostrarHistoricoAnterior,
+  onDataCorteHistorico,
 }) {
   const hasActiveFilters =
     tipoFiltro !== 'todos' ||
     statusFiltro !== 'ativas' ||
-    somentePendencias;
+    somentePendencias ||
+    mostrarHistoricoAnterior;
 
   return (
     <FinanceiroFiltrosShell
@@ -79,6 +85,14 @@ export default function FiltrosContasFinanceiras({
             ))}
           </div>
         </div>
+
+        <FinanceiroCorteHistoricoFiltro
+          mostrarHistoricoAnterior={mostrarHistoricoAnterior}
+          dataCorte={dataCorteHistorico}
+          onMostrarHistoricoAnterior={onMostrarHistoricoAnterior}
+          onDataCorte={onDataCorteHistorico}
+          contextoLista="saldos desde"
+        />
       </div>
     </FinanceiroFiltrosShell>
   );
