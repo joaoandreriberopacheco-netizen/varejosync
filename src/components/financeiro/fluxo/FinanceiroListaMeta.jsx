@@ -25,8 +25,8 @@ export default function FinanceiroListaMeta({
   extraActions,
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5 py-0.5 sm:flex-row sm:items-center sm:justify-between">
-      <p className="shrink-0 text-[10px] font-medium uppercase tracking-wide text-foreground/40 dark:text-foreground/45">
+    <div className="flex min-w-0 flex-col gap-1 py-1 sm:flex-row sm:items-center sm:justify-between sm:gap-0 sm:py-0.5">
+      <p className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-foreground/40 dark:text-foreground/45">
         {total} {totalLabel}
       </p>
 

@@ -609,9 +609,9 @@ export function GestaoContasPane() {
 export default function GestaoContasFinanceiras() {
   return (
     <GestaoContasProvider>
-      <div className="w-full min-w-0 max-w-full space-y-2 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451 bg-background">
-        <div className="min-w-0 max-w-full space-y-1.5">
-          <div className="flex flex-col gap-1.5 md:hidden">
+      <div className="w-full min-w-0 max-w-full space-y-3 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451 bg-background">
+        <div className="min-w-0 max-w-full space-y-2">
+          <div className="flex flex-col gap-2.5 md:hidden">
             <p className="text-lg font-semibold leading-none text-foreground font-glacial">Contas Financeiras</p>
             <GestaoContasKpis layout="stack" />
           </div>

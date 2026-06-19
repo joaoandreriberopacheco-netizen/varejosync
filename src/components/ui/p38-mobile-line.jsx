@@ -64,7 +64,7 @@ export function P38MobileLine({
 
   return (
     <Component
-      className={cn(rowClass, 'flex items-center gap-2', onClick && 'min-h-[52px]')}
+      className={cn(rowClass, 'flex items-center gap-2.5', onClick && 'min-h-[56px]')}
       onClick={onClick}
       {...props}
     >
@@ -82,7 +82,7 @@ export function P38MobileLine({
         ) : null}
       </div>
       {(value || valueSub || trailing) && (
-        <div className="flex items-center gap-1 shrink-0 max-w-[42%]">
+        <div className="flex items-center gap-1.5 shrink-0 max-w-[50%] sm:max-w-[42%]">
           <div className="flex flex-col items-end gap-0.5 min-w-0">
             {value ? <div className={p38Table.mobileLineValue}>{value}</div> : null}
             {valueSub ? <div className={p38Table.mobileLineValueSub}>{valueSub}</div> : null}

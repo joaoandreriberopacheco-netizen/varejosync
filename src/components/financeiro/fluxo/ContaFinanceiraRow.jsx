@@ -41,7 +41,7 @@ export default function ContaFinanceiraRow({
       as="button"
       type="button"
       onClick={handleClick}
-      className={`w-full text-left ${LINE_TITLE_CLASS} [&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${!ativa ? 'opacity-70' : ''}`}
+      className={`w-full text-left ${LINE_TITLE_CLASS} [&>div:last-child]:max-w-[50%] sm:[&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${!ativa ? 'opacity-70' : ''}`}
       title={conta.nome}
       subtitle={subtitle || '—'}
       meta={

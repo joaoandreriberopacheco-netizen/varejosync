@@ -18,7 +18,7 @@ export default function FinanceiroCorteHistoricoFiltro({
           onCheckedChange={(v) => onMostrarHistoricoAnterior(!!v)}
           className="h-3.5 w-3.5 border-muted-foreground/40"
         />
-        <span className="text-[11px] text-muted-foreground/90">
+        <span className="min-w-0 text-[11px] leading-snug text-muted-foreground/90">
           Mostrar histórico anterior
           {!mostrarHistoricoAnterior && dataCorte && (
             <span className="text-muted-foreground/60">

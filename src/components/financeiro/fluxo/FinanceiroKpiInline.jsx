@@ -18,14 +18,14 @@ export function FinanceiroKpiItem({
 }) {
   if (layout === 'stack') {
     return (
-      <div className={cn('flex min-w-0 items-center justify-between gap-3 py-1.5', className)}>
-        <span className="flex min-w-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-foreground/60">
-          {Icon && <Icon className={cn('h-3.5 w-3.5 shrink-0', iconClass)} />}
+      <div className={cn('flex min-w-0 items-center justify-between gap-4 py-2', className)}>
+        <span className="flex min-w-0 items-center gap-2 text-[11px] uppercase tracking-wide text-foreground/60">
+          {Icon && <Icon className={cn('h-4 w-4 shrink-0', iconClass)} />}
           <span className="truncate">{label}</span>
         </span>
         <div className="shrink-0 text-right">
-          <span className={cn('text-sm font-semibold tabular-nums leading-tight', valueClass)}>{value}</span>
-          {sub && <p className="text-[10px] text-foreground/45">{sub}</p>}
+          <span className={cn('text-base font-semibold tabular-nums leading-tight', valueClass)}>{value}</span>
+          {sub && <p className="text-[11px] text-foreground/45">{sub}</p>}
         </div>
       </div>
     );
@@ -46,21 +46,21 @@ export function FinanceiroKpiItem({
 export function FinanceiroKpiSaldo({ label = 'Saldo', value, percent, positive, className, layout = 'inline' }) {
   if (layout === 'stack') {
     return (
-      <div className={cn('space-y-1.5 py-1.5', className)}>
-        <div className="flex min-w-0 items-center justify-between gap-3">
-          <span className="text-[10px] uppercase tracking-wide text-foreground/60">{label}</span>
-          <span className={cn('text-sm font-semibold tabular-nums', positive ? P38_ACCENT : 'text-foreground/80')}>
+      <div className={cn('space-y-2 py-2', className)}>
+        <div className="flex min-w-0 items-center justify-between gap-4">
+          <span className="text-[11px] uppercase tracking-wide text-foreground/60">{label}</span>
+          <span className={cn('text-base font-semibold tabular-nums', positive ? P38_ACCENT : 'text-foreground/80')}>
             {value}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary/80 dark:bg-[#383e47]">
+        <div className="flex items-center gap-2.5">
+          <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary/80 dark:bg-[#383e47]">
             <div
               className="h-full rounded-full bg-[#4a5240] transition-all dark:bg-[#a4ce33]"
               style={{ width: `${Math.min(Number(percent), 100)}%` }}
             />
           </div>
-          <span className="shrink-0 text-[10px] tabular-nums text-foreground/50">{percent}%</span>
+          <span className="shrink-0 text-[11px] tabular-nums text-foreground/50">{percent}%</span>
         </div>
       </div>
     );
