@@ -41,34 +41,40 @@ export function FinanceiroGrupo({
 
   const negClass = overdue ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
 
-  const variacaoNode = (
-    <span
-      className={cn(
-        'shrink-0 font-semibold tabular-nums',
-        liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass,
-      )}
-    >
-      {liquido >= 0 ? '+' : '−'}
-      {formatFinanceiroValor(Math.abs(liquido))}
-    </span>
-  );
-
   const balancoDiaNode = balancoDia ? (
     <div
-      className="flex min-w-0 items-center justify-end gap-2 text-[10px] sm:text-[11px] tabular-nums"
+      className="flex min-w-0 flex-wrap items-center justify-end gap-x-1 gap-y-0 text-[10px] font-semibold tabular-nums sm:gap-x-1.5 sm:text-[11px]"
       title={
         saldoAcumulado != null
-          ? `Variação do dia ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))} · Saldo ${saldoAcumulado >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(saldoAcumulado))}`
-          : `Variação do dia ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))}`
+          ? `Entrou ${formatFinanceiroValor(receitas)} · Saiu ${formatFinanceiroValor(despesas)} · Variação ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))} · Saldo acumulado ${saldoAcumulado >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(saldoAcumulado))}`
+          : `Entrou ${formatFinanceiroValor(receitas)} · Saiu ${formatFinanceiroValor(despesas)} · Variação ${liquido >= 0 ? '+' : '−'}${formatFinanceiroValor(Math.abs(liquido))}`
       }
     >
-      {variacaoNode}
+      <span className="text-[#4A5D23] dark:text-[#a4ce33]" title="Entrou">
+        +{formatFinanceiroValor(receitas)}
+      </span>
+      <span className="text-muted-foreground/40" aria-hidden>
+        ·
+      </span>
+      <span className={cn(despesas > 0 ? negClass : 'text-muted-foreground/70')} title="Saiu">
+        −{formatFinanceiroValor(despesas)}
+      </span>
+      <span className="text-muted-foreground/40" aria-hidden>
+        ·
+      </span>
+      <span
+        className={cn(liquido >= 0 ? 'text-[#4A5D23] dark:text-[#a4ce33]' : negClass)}
+        title="Variação do dia"
+      >
+        {liquido >= 0 ? '+' : '−'}
+        {formatFinanceiroValor(Math.abs(liquido))}
+      </span>
       {saldoAcumulado != null && (
         <>
           <span className="text-muted-foreground/50 font-normal" aria-hidden>
             |
           </span>
-          <span className="shrink-0 font-bold text-foreground">
+          <span className="shrink-0 font-bold text-foreground" title="Saldo acumulado no final do dia">
             {saldoAcumulado >= 0 ? '+' : '−'}
             {formatFinanceiroValor(Math.abs(saldoAcumulado))}
           </span>

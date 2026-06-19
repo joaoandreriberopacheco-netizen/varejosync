@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
       doc.setTextColor(80, 80, 80);
       doc.text(safe(grupo.label.toUpperCase()), M + 1, y + 3);
 
-      const saldoAcum = grupo.saldoAcumulado;
+      const saldoAcum = grupo.totais?.saldoAcumulado ?? grupo.saldoAcumulado;
       if (saldoAcum !== null && saldoAcum !== undefined) {
         doc.setFont('courier', 'bold');
         if (saldoAcum < 0) doc.setTextColor(180, 60, 60);
