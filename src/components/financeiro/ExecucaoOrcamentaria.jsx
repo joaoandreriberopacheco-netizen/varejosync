@@ -27,6 +27,7 @@ import FiltrosFluxoCaixa, { PERIODO_LABELS } from './fluxo/FiltrosFluxoCaixa';
 import FinanceiroPillTabs from './fluxo/FinanceiroPillTabs';
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from './fluxo/FinanceiroListaMeta';
 import KpiFluxo from './fluxo/KpiFluxo';
+import KpiFluxoMobileBar from './fluxo/KpiFluxoMobileBar';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
 import {
@@ -442,7 +443,7 @@ export default function ExecucaoOrcamentaria() {
       {/* Header — mobile e desktop separados para evitar sobreposição */}
       <div className="min-w-0 max-w-full space-y-2">
         {/* Mobile */}
-        <div className="flex flex-col gap-2.5 md:hidden">
+        <div className="flex flex-col gap-2 md:hidden">
           <div className="flex items-center gap-2">
             <p className="text-lg font-semibold leading-none text-foreground font-glacial">Financeiro</p>
             {aba === 'fluxo' && (
@@ -455,6 +456,7 @@ export default function ExecucaoOrcamentaria() {
               </button>
             )}
           </div>
+          {aba === 'fluxo' && <KpiFluxoMobileBar kpis={kpis} />}
           <FinanceiroPillTabs
             stretch
             compact
@@ -474,7 +476,6 @@ export default function ExecucaoOrcamentaria() {
               ]}
             />
           )}
-          {aba === 'fluxo' && <KpiFluxo kpis={kpis} layout="stack" />}
           {caixasAtiva && <GestaoContasKpis layout="stack" />}
           {aba === 'contas' && abaContas === 'contas' && <ContasAbertasKpis layout="stack" />}
           {aba === 'contas' && abaContas === 'agefin' && <AgefinRecorrentes />}
