@@ -9,6 +9,7 @@ import { caixaTypo } from '@/lib/caixaP38Theme';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { formatCommercialQuantity } from '@/lib/productUnits';
 import { formatarDataHora } from '@/components/utils/dateUtils';
+import FormaPagamentoBadges from '@/components/vendas/FormaPagamentoBadges';
 
 /** Coluna Qtd (cima) + Un (baixo) + barra vertical — como relatório de compras / margem mobile */
 function ConsultaQtdUnCol({ qtd, unidade, accent = 'success' }) {
@@ -209,6 +210,7 @@ export default function ConsultaVendasCaixa({
                     {venda.cliente_nome || 'Avulso'}
                     {venda.created_date ? ` · ${formatarDataHora(venda.created_date).split(' ')[1] || ''}` : ''}
                   </p>
+                  <FormaPagamentoBadges pagamentos={venda.pagamentos} className="mt-1.5" size="xs" />
                 </div>
                 <CaixaValorDisplay valor={venda.valor_total} tone="success" size="sm" />
               </button>
