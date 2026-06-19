@@ -47,6 +47,27 @@ Deno.serve(async (req) => {
     return d.toISOString().split('T')[0];
   };
 
+  /** Conta da maquininha — nunca o Caixa PDV (igual PIX → Banco do Brasil). */
+  const resolveContaDestinoCartao = async (pag) => {
+    let contaDestinoId = pag.maquininha_conta_id || null;
+    let contaDestinoNome = pag.maquininha_conta_nome || pag.maquininha_nome || 'Maquininha';
+    if (!contaDestinoId && pag.maquininha_id) {
+      try {
+        const maq = await svc.entities.Maquininha.get(pag.maquininha_id);
+        if (maq?.conta_destino_id) {
+          contaDestinoId = maq.conta_destino_id;
+          contaDestinoNome = maq.conta_destino_nome || maq.nome || contaDestinoNome;
+        }
+      } catch (_) { /* ignore */ }
+    }
+    if (!contaDestinoId) {
+      throw new Error(
+        `Maquininha "${pag.maquininha_nome || '?'}" sem conta destino. Configure em Maquininhas (ex.: Banco do Brasil).`
+      );
+    }
+    return { id: contaDestinoId, nome: contaDestinoNome };
+  };
+
   // ── PASSO 1: Buscar rascunho e aplicar selo frio ─────────────────────────────
   let rascunho;
   try { rascunho = await svc.entities.RascunhoPedidoVenda.get(rascunho_id); } catch (_) { rascunho = null; }
@@ -355,9 +376,7 @@ Deno.serve(async (req) => {
         const bandeira = pag.bandeira || '';
         const descricao = `${pag.forma_pagamento}${bandeira ? ` ${bandeira}` : ''}${pag.parcelas > 1 ? ` ${pag.parcelas}x` : ''} - ${maquininhaNome} - Venda ${numeroPedido}`;
 
-        // Conta destino da maquininha (ou caixa PDV como fallback)
-        const contaDestinoId = pag.maquininha_conta_id || conta_caixa_id;
-        const contaDestinoNome = pag.maquininha_conta_nome || maquininhaNome;
+        const { id: contaDestinoId, nome: contaDestinoNome } = await resolveContaDestinoCartao(pag);
 
         await svc.entities.LancamentoFinanceiro.create({
           tipo: 'Receita',

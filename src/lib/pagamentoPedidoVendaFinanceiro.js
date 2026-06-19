@@ -7,6 +7,7 @@
  */
 
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { resolveContaDestinoCartao } from '@/lib/resolveContaDestinoCartao';
 
 /** Mesmo offset que processarVendaCaixa (America/Rio_Branco simplificado). */
 export function getHojeBr() {
@@ -196,8 +197,10 @@ export async function rebuildReceitasLancamentosPedidoVenda(
       const bandeira = pag.bandeira || '';
       const parcelas = pag.parcelas || 1;
       const descricao = `${pag.forma_pagamento}${bandeira ? ` ${bandeira}` : ''}${parcelas > 1 ? ` ${parcelas}x` : ''} - ${maquininhaNome} - Venda ${numeroPedido}`;
-      const contaDestinoId = pag.maquininha_conta_id || contaCaixaPDV?.id;
-      const contaDestinoNome = pag.maquininha_conta_nome || maquininhaNome;
+      const { id: contaDestinoId, nome: contaDestinoNome } = await resolveContaDestinoCartao(
+        base44,
+        pag,
+      );
 
       await base44.entities.LancamentoFinanceiro.create({
         tipo: 'Receita',
