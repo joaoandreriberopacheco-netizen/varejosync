@@ -26,7 +26,7 @@ export default function KpiFluxoBar({ kpis }) {
 
   return (
     <div
-      className="flex min-w-0 items-center gap-2 overflow-x-auto pb-0.5 md:gap-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex min-w-0 items-center gap-2 pb-0.5 md:gap-3 md:overflow-x-auto md:pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
       title={`Receitas ${formatKpiValor(kpis.entrou)} · Despesas ${formatKpiValor(kpis.saiu)} · Variação ${variacaoPos ? '+' : '−'}${formatKpiValor(Math.abs(variacao))} · Saldo ${formatKpiValor(kpis.saldoContas)}`}
     >
       <KpiSegment icon={TrendingUp} value={formatKpiValor(kpis.entrou)} valueClass={posClass} />
@@ -34,14 +34,16 @@ export default function KpiFluxoBar({ kpis }) {
         ·
       </span>
       <KpiSegment icon={TrendingDown} value={`−${formatKpiValor(kpis.saiu)}`} valueClass={negClass} />
-      <span className="shrink-0 text-muted-foreground/35" aria-hidden>
+      <span className="hidden shrink-0 text-muted-foreground/35 md:inline" aria-hidden>
         ·
       </span>
-      <KpiSegment
-        icon={ArrowUpDown}
-        value={`${variacaoPos ? '+' : '−'}${formatKpiValor(Math.abs(variacao))}`}
-        valueClass={variacaoPos ? posClass : negClass}
-      />
+      <span className="hidden md:contents">
+        <KpiSegment
+          icon={ArrowUpDown}
+          value={`${variacaoPos ? '+' : '−'}${formatKpiValor(Math.abs(variacao))}`}
+          valueClass={variacaoPos ? posClass : negClass}
+        />
+      </span>
       {kpis.saldoContas != null && (
         <>
           <span className="shrink-0 text-muted-foreground/35" aria-hidden>
