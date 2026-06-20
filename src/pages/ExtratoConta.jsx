@@ -372,15 +372,32 @@ export default function ExtratoContaPage() {
     conta,
   ).saidas;
 
+  const totalEntradasPeriodoKpi = totaisEntradaSaidaMovimentos(
+    movimentacoesNoPeriodo.filter(participaDoSaldo),
+    conta,
+    { excluirTransferencias: true },
+  ).entradas;
+  const totalSaidasPeriodoKpi = totaisEntradaSaidaMovimentos(
+    movimentacoesNoPeriodo.filter(participaDoSaldo),
+    conta,
+    { excluirTransferencias: true },
+  ).saidas;
+
   let saldoAcumulado = saldoNoFimDoPeriodo - totalEntradasPeriodo + totalSaidasPeriodo;
 
   const diasComSaldo = diasOrdenados.reverse().map(dia => {
     const saldoAnterior = saldoAcumulado;
     const movimentacoesDia = movimentacoesPorDia[dia];
+    const movsSaldo = movimentacoesDia.filter(participaDoSaldo);
 
     const { entradas: totalEntradas, saidas: totalSaidas } = totaisEntradaSaidaMovimentos(
-      movimentacoesDia.filter(participaDoSaldo),
+      movsSaldo,
       conta,
+    );
+    const { entradas: totalEntradasKpi, saidas: totalSaidasKpi } = totaisEntradaSaidaMovimentos(
+      movsSaldo,
+      conta,
+      { excluirTransferencias: true },
     );
 
     saldoAcumulado = saldoAcumulado + totalEntradas - totalSaidas;
@@ -391,7 +408,9 @@ export default function ExtratoContaPage() {
       saldoAnterior,
       saldoFinal: saldoAcumulado,
       totalEntradas,
-      totalSaidas
+      totalSaidas,
+      totalEntradasKpi,
+      totalSaidasKpi,
     };
   }).reverse();
 
@@ -426,9 +445,11 @@ export default function ExtratoContaPage() {
       label: formatFinanceiroGrupoLabel(diaData.dia, hStr, oStr),
       items: diaData.movimentacoes.map(normalizeMov),
       totais: {
-        r: diaData.totalEntradas,
-        d: diaData.totalSaidas,
-        liquido: roundToTwoDecimals(diaData.totalEntradas - diaData.totalSaidas),
+        r: diaData.totalEntradasKpi,
+        d: diaData.totalSaidasKpi,
+        entrou: diaData.totalEntradasKpi,
+        saiu: diaData.totalSaidasKpi,
+        liquidoOperacional: roundToTwoDecimals(diaData.totalEntradasKpi - diaData.totalSaidasKpi),
         saldoAcumulado: roundToTwoDecimals(diaData.saldoFinal),
       },
     }));
@@ -436,11 +457,11 @@ export default function ExtratoContaPage() {
 
   const totalMovimentacoes = movimentacoesFiltradas.length;
   const kpisExtrato = useMemo(() => ({
-    entradas: totalEntradasPeriodo,
-    saidas: totalSaidasPeriodo,
+    entradas: totalEntradasPeriodoKpi,
+    saidas: totalSaidasPeriodoKpi,
     saldo: saldoCalculado,
-    saldoPeriodo: roundToTwoDecimals(totalEntradasPeriodo - totalSaidasPeriodo),
-  }), [totalEntradasPeriodo, totalSaidasPeriodo, saldoCalculado]);
+    saldoPeriodo: roundToTwoDecimals(totalEntradasPeriodoKpi - totalSaidasPeriodoKpi),
+  }), [totalEntradasPeriodoKpi, totalSaidasPeriodoKpi, saldoCalculado]);
 
   const periodoLabel = PERIODOS_EXTRATO.find((p) => p.v === filtroPeriodo)?.l || 'Período';
   const hasActiveFilters = filtroPeriodo !== 'mes' || !!dataInicio || !!dataFim;

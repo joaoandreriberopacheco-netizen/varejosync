@@ -18,7 +18,7 @@ export default function ListaLancamentos({ grupos, loading, onRow }) {
           balancoDia
           receitas={totais.entrou ?? totais.r ?? 0}
           despesas={totais.saiu ?? totais.d ?? 0}
-          liquido={totais.liquido ?? 0}
+          liquido={totais.liquidoOperacional ?? totais.liquido ?? 0}
           saldoAcumulado={totais.saldoAcumulado}
         >
           {items.map((l, index) => (

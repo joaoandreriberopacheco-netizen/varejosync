@@ -243,7 +243,11 @@ export function movimentoParticipaExtrato(mov, conta = null) {
 }
 
 /** Entradas e saídas de um conjunto de movimentos (extrato / período). */
-export function totaisEntradaSaidaMovimentos(movimentos = [], conta = null) {
+export function totaisEntradaSaidaMovimentos(
+  movimentos = [],
+  conta = null,
+  { excluirTransferencias = false } = {},
+) {
   let entradas = 0;
   let saidas = 0;
 
@@ -251,10 +255,11 @@ export function totaisEntradaSaidaMovimentos(movimentos = [], conta = null) {
     if (mov.origem === 'movimento' || mov.conta_id) {
       if (mov.tipo === 'Reforço') entradas += Number(mov.valor || 0);
       else if (mov.tipo === 'Sangria' || mov.tipo === 'Recolhimento de Caixa') {
-        saidas += Number(mov.valor || 0);
+        if (!excluirTransferencias) saidas += Number(mov.valor || 0);
       }
       return;
     }
+    if (excluirTransferencias && isTransferenciaEntreContas(mov)) return;
     if (!lancamentoParticipaSaldoConta(conta, mov)) return;
     if (mov.tipo === 'Receita') entradas += Number(mov.valor || 0);
     else if (mov.tipo === 'Despesa') saidas += Number(mov.valor || 0);
@@ -338,11 +343,13 @@ export function calcularKpisFluxoPeriodo(
   return {
     entrou: roundToTwoDecimals(entrou),
     saiu: roundToTwoDecimals(saiu),
-    saldo: roundToTwoDecimals(entrou - saiu + transfIn - transfOut),
+    saldo: roundToTwoDecimals(entrou - saiu),
     pEntrou: roundToTwoDecimals(pEntrou),
     pSaiu: roundToTwoDecimals(pSaiu),
-    saldoPrev: roundToTwoDecimals(entrou + pEntrou - saiu - pSaiu + transfIn - transfOut),
+    saldoPrev: roundToTwoDecimals(entrou + pEntrou - saiu - pSaiu),
     totalTransferencias: roundToTwoDecimals(totalTransferencias),
+    transfIn: roundToTwoDecimals(transfIn),
+    transfOut: roundToTwoDecimals(transfOut),
     vencidos: roundToTwoDecimals(vencidos),
     qtdVencidos,
   };

@@ -21,9 +21,10 @@ function totaisDiaFromGrupo(totaisGrupo) {
   return {
     r: totaisGrupo.r,
     d: totaisGrupo.d,
-    entrou: roundToTwoDecimals(totaisGrupo.r + totaisGrupo.transfIn),
-    saiu: roundToTwoDecimals(totaisGrupo.d + totaisGrupo.transfOut),
+    entrou: totaisGrupo.r,
+    saiu: totaisGrupo.d,
     liquido: totaisGrupo.liquido,
+    liquidoOperacional: roundToTwoDecimals(totaisGrupo.r - totaisGrupo.d),
   };
 }
 
