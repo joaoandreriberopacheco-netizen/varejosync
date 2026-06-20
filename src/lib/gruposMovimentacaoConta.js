@@ -2,6 +2,7 @@ import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { getDataChaveLancamento, roundToTwoDecimals, sortLancamentosPorCodigo } from '@/lib/financialUtils';
 import {
   buildMapaContrapartesTransferencia,
+  chaveParTransferenciaLancamentoFluxo,
   contaUsaRegraCaixaPDV,
   getDataMovimentoCaixa,
   idsMovimentosComLancamentoFinanceiro,
@@ -119,16 +120,7 @@ export function prepararGruposFluxoComSaldoAcumulado({
 }
 
 function chaveParTransferenciaLancamento(l) {
-  if (!isTransferenciaEntreContas(l) || l.origem === 'movimento') return null;
-  if (l.referencia_tipo === 'MovimentosCaixa' && l.referencia_id != null) {
-    return `mc:${l.referencia_id}`;
-  }
-  const data = l.data_pagamento || l.data_vencimento || '';
-  const valor = Number(l.valor || 0).toFixed(2);
-  if (l.categoria === 'Transferência entre Contas' || l.referencia_tipo === 'Manual') {
-    return `tr:${data}:${valor}`;
-  }
-  return null;
+  return chaveParTransferenciaLancamentoFluxo(l);
 }
 
 function extrairNotaTransferencia(despesa, receita) {
