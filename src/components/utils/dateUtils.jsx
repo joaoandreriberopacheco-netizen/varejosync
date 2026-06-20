@@ -298,6 +298,18 @@ export function datetimeLocalParaISO(datetimeLocal) {
 }
 
 /**
+ * Converte ISO UTC para valor de `<input type="datetime-local">` no fuso do negócio.
+ * @param {string|Date} iso
+ * @returns {string} e.g. "2026-06-18T14:30" ou "" se inválido
+ */
+export function isoParaInputDatetimeLocal(iso) {
+  if (!iso) return '';
+  const local = toRioBranco(iso);
+  if (!local) return '';
+  return `${local.getUTCFullYear()}-${pad(local.getUTCMonth() + 1)}-${pad(local.getUTCDate())}T${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}`;
+}
+
+/**
  * Valor atual formatado para `<input type="datetime-local">` no fuso do negócio.
  * @returns {string}
  */

@@ -2,6 +2,7 @@ import {
   agora,
   codigoOrdenacaoDesdeDataSomente,
   codigoOrdenacaoDesdeInstante,
+  toLocalDateKey,
 } from '@/components/utils/dateUtils';
 
 /**
@@ -48,6 +49,23 @@ export const parseFinancialValue = (value) => {
   }
   return 0;
 };
+
+/**
+ * Dia civil (YYYY-MM-DD) para agrupar/filtrar no fluxo.
+ * Prioriza `data_lancamento` (data/hora informada pelo utilizador).
+ */
+export function getDataChaveLancamento(l) {
+  if (l?.data_lancamento) {
+    const k = toLocalDateKey(l.data_lancamento);
+    if (k) return k;
+  }
+  if (l?.forma_pagamento_tipo === 'Cartão Crédito' && l?.status_conciliacao === 'Pendente') {
+    const d = l.data_liquidacao_prevista || l.data_vencimento;
+    if (d) return toLocalDateKey(d);
+  }
+  const dr = l?.data_pagamento || l?.data_vencimento;
+  return dr ? toLocalDateKey(dr) : null;
+}
 
 /**
  * Código AAAAMMDDHHMMSS para ordenar lançamentos no fluxo de caixa.

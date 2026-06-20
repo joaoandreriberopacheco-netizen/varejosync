@@ -1,5 +1,5 @@
 import { toLocalDateKey } from '@/components/utils/dateUtils';
-import { roundToTwoDecimals, sortLancamentosPorCodigo } from '@/lib/financialUtils';
+import { getDataChaveLancamento, roundToTwoDecimals, sortLancamentosPorCodigo } from '@/lib/financialUtils';
 import {
   contaUsaRegraCaixaPDV,
   getDataMovimentoCaixa,
@@ -220,7 +220,11 @@ export function normalizarMovimentoCaixaParaLinha(mov) {
 }
 
 function dataChaveMovimento(mov) {
-  const data = mov.data_pagamento || mov.data_vencimento || getDataMovimentoCaixa(mov);
+  if (mov?.origem !== 'movimento' && !mov?.conta_id) {
+    const chaveLanc = getDataChaveLancamento(mov);
+    if (chaveLanc) return chaveLanc;
+  }
+  const data = mov.data_lancamento || mov.data_pagamento || mov.data_vencimento || getDataMovimentoCaixa(mov) || mov.created_date;
   return data ? toLocalDateKey(data) : null;
 }
 
@@ -251,8 +255,7 @@ export function montarGruposFluxoCaixa({
 
   const map = {};
   lancamentos.forEach((l) => {
-    const dr = l.data_pagamento || l.data_vencimento;
-    const k = dr ? toLocalDateKey(dr) : 'sem-data';
+    const k = getDataChaveLancamento(l) || 'sem-data';
     (map[k] = map[k] || []).push(l);
   });
 

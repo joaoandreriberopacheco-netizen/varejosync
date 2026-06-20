@@ -1,4 +1,5 @@
-import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
+import { dataHoje } from '@/components/utils/dateUtils';
+import { getDataChaveLancamento } from '@/lib/financialUtils';
 
 /** Lançamento já pago (entra no fluxo de caixa realizado). */
 export function isLancamentoPago(l) {
@@ -51,14 +52,15 @@ export function isLancamentoRealizadoFluxo(l) {
   return isLancamentoPago(l);
 }
 
-/** Data usada para agrupar/filtrar no Fluxo de Caixa. */
+/** Data usada para agrupar/filtrar no Fluxo de Caixa (prioriza `data_lancamento`). */
 export function getDataAncoraFluxo(l) {
-  return l.data_pagamento || l.data_vencimento;
+  const key = getDataChaveLancamento(l);
+  if (!key) return l?.data_pagamento || l?.data_vencimento || null;
+  return key;
 }
 
 export function getDataAncoraFluxoKey(l) {
-  const ancora = getDataAncoraFluxo(l);
-  return ancora ? toLocalDateKey(ancora) : null;
+  return getDataChaveLancamento(l);
 }
 
 /** Conta a pagar / aberta: em aberto e não cancelada. */

@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatarSoData, dataHoje, toLocalDateKey, vencimentoComMesmoDiaNoMes } from '@/components/utils/dateUtils';
+import { formatarSoData, dataHoje, toLocalDateKey, vencimentoComMesmoDiaNoMes, isoParaInputDatetimeLocal, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
+import { formatarCodigoLancamentoLegivel } from '@/lib/financialUtils';
 
 const mesAnoLabel = (dataStr) => {
   if (!dataStr) return '';
@@ -56,6 +57,11 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const [cadVencimento, setCadVencimento] = useState((lancamento.data_vencimento || '').slice(0, 10));
   const [cadValor, setCadValor] = useState(String(lancamento.valor ?? ''));
   const [cadObs, setCadObs] = useState(lancamento.observacoes || '');
+  const dataLancamentoOriginal = useMemo(
+    () => isoParaInputDatetimeLocal(lancamento.data_lancamento) || isoParaInputDatetimeLocal(lancamento.created_date) || '',
+    [lancamento.id, lancamento.data_lancamento, lancamento.created_date],
+  );
+  const [dataLancamentoLocal, setDataLancamentoLocal] = useState(dataLancamentoOriginal);
   const { toast } = useToast();
   const isCancelado = lancamento.status === 'Cancelado';
   const isReceita = lancamento.tipo === 'Receita';
@@ -95,13 +101,35 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     setCadVencimento((lancamento.data_vencimento || '').slice(0, 10));
     setCadValor(String(lancamento.valor ?? ''));
     setCadObs(lancamento.observacoes || '');
+    setDataLancamentoLocal(dataLancamentoOriginal);
   }, [
     lancamento.id,
     lancamento.descricao,
     lancamento.data_vencimento,
     lancamento.valor,
     lancamento.observacoes,
+    dataLancamentoOriginal,
   ]);
+
+  const dataLancamentoDirty = dataLancamentoLocal !== dataLancamentoOriginal;
+  const previewOrdemLancamento = useMemo(() => {
+    if (!dataLancamentoLocal) return null;
+    const iso = datetimeLocalParaISO(dataLancamentoLocal);
+    if (!iso) return null;
+    return formatarCodigoLancamentoLegivel(codigoOrdenacaoDesdeInstante(iso));
+  }, [dataLancamentoLocal]);
+
+  const metaDataLancamentoIfDirty = () => {
+    if (!dataLancamentoDirty) return {};
+    const iso = datetimeLocalParaISO(dataLancamentoLocal);
+    return iso ? { data_lancamento: iso } : {};
+  };
+
+  const salvarDataLancamentoSeDirty = async () => {
+    const meta = metaDataLancamentoIfDirty();
+    if (!meta.data_lancamento) return;
+    await base44.entities.LancamentoFinanceiro.update(lancamento.id, meta);
+  };
 
   const isPagoOriginal = isLancamentoPago(lancamento);
   const isPendente = lancamento.status_conciliacao === 'Pendente';
@@ -168,6 +196,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           status_conciliacao: 'Pendente',
           conta_financeira_id: contaId,
           conta_financeira_nome: conta?.nome,
+          ...(l.id === lancamento.id ? metaDataLancamentoIfDirty() : {}),
         });
       }
       await sincronizarSaldosAposAlteracao(base44, [
@@ -184,6 +213,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     if (isPagoLocal && !isPagoOriginal) {
       await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
         ...payloadValor,
+        ...metaDataLancamentoIfDirty(),
         status: 'Pago', data_pagamento: dataPagamento,
         status_conciliacao: 'Pendente',
         conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
@@ -191,18 +221,30 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       await sincronizarSaldosAposAlteracao(base44, [contaId, lancamento.conta_financeira_id]);
       toast({ title: 'Pagamento registrado!', className: 'bg-muted text-foreground' });
     } else if (!isPagoLocal && isPagoOriginal) {
-      await base44.entities.LancamentoFinanceiro.update(lancamento.id, { ...payloadValor, status: 'Em Aberto', data_pagamento: null });
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+        ...payloadValor,
+        ...metaDataLancamentoIfDirty(),
+        status: 'Em Aberto',
+        data_pagamento: null,
+      });
       await sincronizarSaldosAposAlteracao(base44, [conta?.id, lancamento.conta_financeira_id]);
       toast({ title: 'Marcado como em aberto', className: 'bg-muted text-foreground' });
     } else if (isPagoLocal && isPagoOriginal) {
       await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
         ...payloadValor,
+        ...metaDataLancamentoIfDirty(),
         data_pagamento: dataPagamento, conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
       });
       toast({ title: 'Dados atualizados!', className: 'bg-muted text-foreground' });
     } else if (houveAlteracaoValor) {
-      await base44.entities.LancamentoFinanceiro.update(lancamento.id, payloadValor);
+      await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+        ...payloadValor,
+        ...metaDataLancamentoIfDirty(),
+      });
       toast({ title: 'Valor atualizado!', className: 'bg-muted text-foreground' });
+    } else if (dataLancamentoDirty) {
+      await salvarDataLancamentoSeDirty();
+      toast({ title: 'Data/hora do lançamento atualizada!', className: 'bg-muted text-foreground' });
     }
     onSaved?.();
     setSaving(false);
@@ -230,7 +272,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     setSaving(true);
     await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
       status_conciliacao: 'Conciliado',
-      data_liquidacao_efetiva: dataLiquidacao
+      data_liquidacao_efetiva: dataLiquidacao,
+      ...metaDataLancamentoIfDirty(),
     });
     toast({ title: 'Lançamento conciliado!', className: 'bg-muted text-foreground' });
     onSaved?.();
@@ -271,6 +314,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       if (!lancamento.is_recorrente || !lancamento.grupo_lancamento_id || escopo === 'apenas_esta') {
         await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
           ...basePayload,
+          ...metaDataLancamentoIfDirty(),
           data_vencimento: venAtual || lancamento.data_vencimento,
         });
         toast({ title: 'Dados da conta atualizados', className: 'bg-muted text-foreground' });
@@ -305,6 +349,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
             : vencimentoComMesmoDiaNoMes(cadVencimento || l.data_vencimento, l.data_vencimento);
         await base44.entities.LancamentoFinanceiro.update(l.id, {
           ...basePayload,
+          ...(l.id === lancamento.id ? metaDataLancamentoIfDirty() : {}),
           data_vencimento: novaData,
         });
       }
@@ -312,6 +357,23 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         title: `${alvos.length} lançamento(s) atualizados`,
         className: 'bg-muted text-foreground',
       });
+      onSaved?.();
+    } catch {
+      toast({ title: 'Não foi possível guardar', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSalvarDataLancamento = async () => {
+    if (!dataLancamentoDirty) {
+      toast({ title: 'Nada foi alterado', className: 'bg-muted text-foreground' });
+      return;
+    }
+    setSaving(true);
+    try {
+      await salvarDataLancamentoSeDirty();
+      toast({ title: 'Data/hora do lançamento atualizada!', className: 'bg-muted text-foreground' });
       onSaved?.();
     } catch {
       toast({ title: 'Não foi possível guardar', variant: 'destructive' });
@@ -400,6 +462,40 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
+
+        {!isCancelado && (
+          <div className="px-5 pt-4 space-y-2">
+            <p className="text-xs font-medium text-foreground/90">Data/hora no fluxo</p>
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              Define a posição deste lançamento na lista do fluxo de caixa (independente da data de pagamento).
+            </p>
+            <input
+              autoComplete="off"
+              type="datetime-local"
+              value={dataLancamentoLocal}
+              onChange={(e) => setDataLancamentoLocal(e.target.value)}
+              className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
+            />
+            {previewOrdemLancamento && (
+              <p className="text-[11px] text-muted-foreground">
+                Ordem: <span className="font-mono text-foreground/80">{previewOrdemLancamento}</span>
+              </p>
+            )}
+            {dataLancamentoDirty && (
+              <button
+                type="button"
+                onClick={handleSalvarDataLancamento}
+                disabled={saving}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.99] transition-transform disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Guardar data/hora
+              </button>
+            )}
+          </div>
+        )}
+
+        {!isCancelado && <div className="h-px bg-muted mx-5 my-4" />}
 
         {ehDespesaEditavel && (
           <>
