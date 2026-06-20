@@ -17,7 +17,7 @@ const mesAnoLabel = (dataStr) => {
   const [y, m] = s.split('-');
   return `${meses[parseInt(m,10)-1]}/${y}`;
 };
-import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save, RotateCcw, AlertCircle, Trash2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Clock, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, Save, RotateCcw, AlertCircle, Trash2, Loader2, Pencil } from 'lucide-react';
 import CancelarLancamentoDialog from './CancelarLancamentoDialog';
 import { useToast } from '@/components/ui/use-toast';
 import AnexosPanel from '@/components/anexos/AnexosPanel';
@@ -45,7 +45,6 @@ function Toggle({ checked, onChange }) {
 
 export default function LancamentoDetalheDialog({ lancamento, contas, onClose, onSaved }) {
   const [contaId, setContaId] = useState(lancamento.conta_financeira_id || '');
-  const [valorEditavel, setValorEditavel] = useState(String(lancamento.valor || ''));
   const [dataPagamento, setDataPagamento] = useState(
     lancamento.data_pagamento ? lancamento.data_pagamento : dataHoje()
   );
@@ -68,14 +67,15 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   );
   const [dataLancamentoLocal, setDataLancamentoLocal] = useState(dataLancamentoOriginal);
   const [dataLancamentoBase, setDataLancamentoBase] = useState(dataLancamentoOriginal);
+  const [editMode, setEditMode] = useState(false);
   const { toast } = useToast();
   const isCancelado = lancamento.status === 'Cancelado';
   const isReceita = lancamento.tipo === 'Receita';
   const isTransf = lancamento.tipo === 'Transferência';
-  const ehDespesaEditavel = lancamento.tipo === 'Despesa' && !isTransf && !isCancelado;
+  const podeEditar = !isCancelado;
 
   const cadastroDirty = useMemo(() => {
-    if (!ehDespesaEditavel) return false;
+    if (!podeEditar) return false;
     const d0 = (lancamento.descricao || '').trim();
     const d1 = (cadDescricao || '').trim();
     const v0 = Number(lancamento.valor ?? 0);
@@ -91,7 +91,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       obs0 !== obs1
     );
   }, [
-    ehDespesaEditavel,
+    podeEditar,
     lancamento.descricao,
     lancamento.valor,
     lancamento.data_vencimento,
@@ -102,21 +102,38 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     cadObs,
   ]);
 
-  useEffect(() => {
+  const resetFormState = () => {
     setCadDescricao(lancamento.descricao || '');
     setCadVencimento((lancamento.data_vencimento || '').slice(0, 10));
     setCadValor(String(lancamento.valor ?? ''));
     setCadObs(lancamento.observacoes || '');
+    setContaId(lancamento.conta_financeira_id || '');
+    setDataPagamento(lancamento.data_pagamento ? lancamento.data_pagamento : dataHoje());
+    setDataLiquidacao(lancamento.data_pagamento ? lancamento.data_pagamento : dataHoje());
+    setIsPagoLocal(isLancamentoPago(lancamento));
     setDataLancamentoLocal(dataLancamentoOriginal);
     setDataLancamentoBase(dataLancamentoOriginal);
+  };
+
+  useEffect(() => {
+    resetFormState();
+    setEditMode(false);
   }, [
     lancamento.id,
     lancamento.descricao,
     lancamento.data_vencimento,
     lancamento.valor,
     lancamento.observacoes,
+    lancamento.conta_financeira_id,
+    lancamento.data_pagamento,
+    lancamento.status,
     dataLancamentoOriginal,
   ]);
+
+  const handleCancelarEdicao = () => {
+    resetFormState();
+    setEditMode(false);
+  };
 
   const dataLancamentoDirty = dataLancamentoLocal !== dataLancamentoBase;
   const previewOrdemLancamento = useMemo(() => {
@@ -167,11 +184,10 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
   const isPagoOriginal = isLancamentoPago(lancamento);
   const isPendente = lancamento.status_conciliacao === 'Pendente';
-  const isCartaoReceber = isReceita && ['Cartão Débito', 'Cartão Crédito'].includes(lancamento.forma_pagamento_tipo);
-  const valorNumerico = parseFloat(valorEditavel) || 0;
+  const valorNumerico = parseFloat(String(cadValor).replace(',', '.')) || 0;
   const valorLiquidoOriginal = parseFloat(lancamento.valor_liquido ?? lancamento.valor) || 0;
   const proporcaoLiquida = (lancamento.valor || 0) > 0 ? valorLiquidoOriginal / lancamento.valor : 1;
-  const houveAlteracaoValor = isCartaoReceber && Math.abs(valorNumerico - (parseFloat(lancamento.valor) || 0)) > 0.009;
+  const houveAlteracaoValor = Math.abs(valorNumerico - (parseFloat(lancamento.valor) || 0)) > 0.009;
   const payloadValor = houveAlteracaoValor ? {
     valor: valorNumerico,
     valor_liquido: parseFloat((valorNumerico * proporcaoLiquida).toFixed(2)),
@@ -281,6 +297,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       toast({ title: 'Data/hora do lançamento atualizada!', className: 'bg-muted text-foreground' });
     }
     onSaved?.();
+    setEditMode(false);
     setSaving(false);
   };
 
@@ -289,7 +306,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       toast({ title: 'Selecione uma conta', variant: 'destructive' });
       return;
     }
-    if (isCartaoReceber && valorNumerico <= 0) {
+    if (valorNumerico <= 0) {
       toast({ title: 'Informe um valor válido', variant: 'destructive' });
       return;
     }
@@ -311,6 +328,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     });
     toast({ title: 'Lançamento conciliado!', className: 'bg-muted text-foreground' });
     onSaved?.();
+    setEditMode(false);
     setSaving(false);
   };
 
@@ -338,10 +356,14 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       const descricao = normalizeDataText((cadDescricao || '').trim()) || lancamento.descricao;
       const obs = normalizeDataText(cadObs || '');
       const venAtual = (cadVencimento || '').slice(0, 10) || (lancamento.data_vencimento || '').slice(0, 10);
+      const valorOriginal = parseFloat(lancamento.valor) || 0;
+      const valorMudou = Math.abs(v - valorOriginal) > 0.009;
+      const liqOrig = parseFloat(lancamento.valor_liquido ?? lancamento.valor) || 0;
+      const propLiq = valorOriginal > 0 ? liqOrig / valorOriginal : 1;
       const basePayload = {
         descricao,
         valor: v,
-        valor_liquido: v,
+        valor_liquido: parseFloat((v * propLiq).toFixed(2)),
         observacoes: obs,
       };
 
@@ -349,10 +371,14 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
           ...basePayload,
           ...metaDataLancamentoIfDirty(),
-          data_vencimento: venAtual || lancamento.data_vencimento,
+          ...(isTransf ? {} : { data_vencimento: venAtual || lancamento.data_vencimento }),
         });
-        toast({ title: 'Dados da conta atualizados', className: 'bg-muted text-foreground' });
-        onSaved?.();
+        if (isPagoOriginal && valorMudou) {
+          await sincronizarSaldosAposAlteracao(base44, [lancamento.conta_financeira_id]);
+        }
+        toast({ title: 'Dados do lançamento atualizados', className: 'bg-muted text-foreground' });
+        onSaved?.({ keepOpen: true, lancamentoId: lancamento.id });
+        setEditMode(false);
         return;
       }
 
@@ -391,24 +417,11 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         title: `${alvos.length} lançamento(s) atualizados`,
         className: 'bg-muted text-foreground',
       });
-      onSaved?.();
-    } catch {
-      toast({ title: 'Não foi possível guardar', variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSalvarDataLancamento = async () => {
-    if (!dataLancamentoDirty) {
-      toast({ title: 'Nada foi alterado', className: 'bg-muted text-foreground' });
-      return;
-    }
-    setSaving(true);
-    try {
-      const updated = await salvarDataLancamento();
-      toast({ title: 'Data/hora do lançamento atualizada!', className: 'bg-muted text-foreground' });
-      onSaved?.({ keepOpen: true, updated, lancamentoId: lancamento.id });
+      if (isPagoOriginal && valorMudou) {
+        await sincronizarSaldosAposAlteracao(base44, [lancamento.conta_financeira_id]);
+      }
+      onSaved?.({ keepOpen: true, lancamentoId: lancamento.id });
+      setEditMode(false);
     } catch {
       toast({ title: 'Não foi possível guardar', variant: 'destructive' });
     } finally {
@@ -422,7 +435,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       toast({ title: 'Informe um valor válido', variant: 'destructive' });
       return;
     }
-    if (!cadastroDirty) {
+    if (!cadastroDirty && !dataLancamentoDirty) {
       toast({ title: 'Nada foi alterado', className: 'bg-muted text-foreground' });
       return;
     }
@@ -448,10 +461,34 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         <div className="shrink-0">
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-5 pb-3">
-          <p className="text-sm font-semibold text-foreground leading-snug flex-1 pr-3">{lancamento.descricao}</p>
-          <button onClick={onClose} className="w-7 h-7 flex-none flex items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <X className="w-3.5 h-3.5" />
-          </button>
+          <p className="text-sm font-semibold text-foreground leading-snug flex-1 pr-3">
+            {editMode ? (cadDescricao || lancamento.descricao) : lancamento.descricao}
+          </p>
+          <div className="flex items-center gap-1.5 flex-none">
+            {podeEditar && !editMode && (
+              <button
+                type="button"
+                onClick={() => setEditMode(true)}
+                title="Editar lançamento"
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {editMode && (
+              <button
+                type="button"
+                onClick={handleCancelarEdicao}
+                title="Cancelar edição"
+                className="text-[11px] font-medium text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg"
+              >
+                Cancelar
+              </button>
+            )}
+            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Valor principal */}
@@ -459,17 +496,32 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           <span className="w-10 h-10 flex-none rounded-xl bg-muted flex items-center justify-center">
             <Icon className={`w-5 h-5 ${iconClass}`} />
           </span>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-2xl font-bold text-foreground">
-                {isTransf ? '' : isReceita ? '+' : '−'}{R(lancamento.valor)}
-              </p>
-              {lancamento.is_recorrente && lancamento.data_vencimento && (
-                <span className="text-[0.65rem] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium">
-                  {mesAnoLabel(lancamento.data_vencimento)}
-                </span>
-              )}
-            </div>
+          <div className="flex-1 min-w-0">
+            {editMode ? (
+              <div>
+                <p className="text-[11px] text-muted-foreground mb-1">Valor</p>
+                <input
+                  autoComplete="off"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={cadValor}
+                  onChange={(e) => setCadValor(e.target.value)}
+                  className="w-full h-10 px-3 text-lg font-bold rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-2xl font-bold text-foreground">
+                  {isTransf ? '' : isReceita ? '+' : '−'}{R(lancamento.valor)}
+                </p>
+                {lancamento.is_recorrente && lancamento.data_vencimento && (
+                  <span className="text-[0.65rem] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium">
+                    {mesAnoLabel(lancamento.data_vencimento)}
+                  </span>
+                )}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-0.5">
               {lancamento.categoria || 'Sem categoria'}
               {lancamento.conta_financeira_nome ? ` · ${lancamento.conta_financeira_nome}` : ''}
@@ -497,8 +549,46 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
 
-        {!isCancelado && (
-          <div className="px-5 pt-4 space-y-2">
+        {/* Modo visualização — campos só leitura */}
+        {!editMode && !isCancelado && (
+          <div className="px-5 pt-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[11px] text-muted-foreground mb-0.5">Status</p>
+                <p className="text-sm text-foreground">{isPagoOriginal ? 'Pago' : 'Em aberto'}</p>
+              </div>
+              {!isTransf && lancamento.data_vencimento && (
+                <div>
+                  <p className="text-[11px] text-muted-foreground mb-0.5">Vencimento</p>
+                  <p className="text-sm text-foreground">{formatarSoData(lancamento.data_vencimento)}</p>
+                </div>
+              )}
+              {dataLancamentoOriginal && (
+                <div className="col-span-2">
+                  <p className="text-[11px] text-muted-foreground mb-0.5">Data/hora no fluxo</p>
+                  <p className="text-sm text-foreground font-mono">{previewOrdemLancamento || '—'}</p>
+                </div>
+              )}
+            </div>
+            {lancamento.observacoes && (
+              <div>
+                <p className="text-[11px] text-muted-foreground mb-0.5">Observações</p>
+                <p className="text-sm text-foreground whitespace-pre-wrap">{lancamento.observacoes}</p>
+              </div>
+            )}
+            {isPagoOriginal && isPendente && (
+              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <Clock className="w-3 h-3" /> Aguardando conciliação
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground pt-1">Toque no lápis para editar este lançamento.</p>
+          </div>
+        )}
+
+        {/* Modo edição — campos editáveis */}
+        {editMode && !isCancelado && (
+          <>
+        <div className="px-5 pt-4 space-y-2">
             <p className="text-xs font-medium text-foreground/90">Data/hora no fluxo</p>
             <p className="text-[11px] text-muted-foreground leading-snug">
               Define a posição deste lançamento na lista do fluxo de caixa (independente da data de pagamento).
@@ -515,28 +605,14 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                 Ordem: <span className="font-mono text-foreground/80">{previewOrdemLancamento}</span>
               </p>
             )}
-            {dataLancamentoDirty && (
-              <button
-                type="button"
-                onClick={handleSalvarDataLancamento}
-                disabled={saving}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.99] transition-transform disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Guardar data/hora
-              </button>
-            )}
           </div>
-        )}
 
-        {!isCancelado && <div className="h-px bg-muted mx-5 my-4" />}
+        <div className="h-px bg-muted mx-5 my-4" />
 
-        {ehDespesaEditavel && (
-          <>
-            <div className="px-5 pt-4 space-y-3">
-              <p className="text-xs font-medium text-foreground/90">Editar conta a pagar</p>
+            <div className="px-5 space-y-3">
+              <p className="text-xs font-medium text-foreground/90">Editar lançamento</p>
               <p className="text-[11px] text-muted-foreground leading-snug">
-                Inclui lançamentos criados por importação de PDF. Alterar vencimento ou valor não regista pagamento.
+                Altere descrição, valor ou observações. Para registar pagamento, use a secção abaixo.
               </p>
               <div>
                 <p className="text-[11px] text-muted-foreground mb-1">Descrição</p>
@@ -547,7 +623,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                   className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring p38-data-uppercase"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              {!isTransf && (
                 <div>
                   <p className="text-[11px] text-muted-foreground mb-1">Vencimento</p>
                   <input
@@ -558,19 +634,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                     className="w-full h-10 px-2 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
                   />
                 </div>
-                <div>
-                  <p className="text-[11px] text-muted-foreground mb-1">Valor</p>
-                  <input
-                    autoComplete="off"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={cadValor}
-                    onChange={(e) => setCadValor(e.target.value)}
-                    className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
-                  />
-                </div>
-              </div>
+              )}
               <div>
                 <p className="text-[11px] text-muted-foreground mb-1">Observações</p>
                 <textarea
@@ -583,33 +647,17 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               <button
                 type="button"
                 onClick={handleSalvarCadastro}
-                disabled={saving}
+                disabled={saving || (!cadastroDirty && !dataLancamentoDirty)}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary dark:bg-muted text-white dark:text-foreground text-sm font-semibold active:scale-[0.99] transition-transform disabled:opacity-50"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {saving ? 'A guardar…' : 'Guardar alterações'}
               </button>
             </div>
-            <div className="h-px bg-muted" />
-          </>
-        )}
 
-        {isCartaoReceber && !isCancelado && (
-          <div className="px-5 pt-4">
-            <p className="text-xs font-medium text-muted-foreground mb-1">Valor a receber</p>
-            <input autoComplete="off"
-              type="number"
-              step="0.01"
-              min="0"
-              value={valorEditavel}
-              onChange={(e) => setValorEditavel(e.target.value)}
-              className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
-            />
-          </div>
-        )}
-
-        {/* Seção: Marcar como pago */}
-        {!isTransf && !isCancelado && (
+        {!isTransf && (
+          <>
+            <div className="h-px bg-muted mx-5 my-4" />
           <div className="px-5 py-4 space-y-4">
             {/* Toggle */}
             <div className="flex items-center justify-between">
@@ -645,15 +693,46 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               </div>
             </div>
 
-            {/* Botão Salvar — PDV style */}
+            {/* Botão Salvar pagamento */}
             <button
               onClick={handleSalvarPagamento}
               disabled={saving}
               className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-background dark:bg-muted text-white dark:text-foreground text-base font-semibold active:scale-95 transition-transform disabled:opacity-50">
               <Save className="w-5 h-5" />
-              Salvar
+              Salvar pagamento
             </button>
           </div>
+          </>
+        )}
+
+        {isPagoOriginal && isPendente && (
+          <>
+            <div className="h-px bg-muted mx-5" />
+            <div className="px-5 py-4 space-y-3">
+              <div>
+                <p className="text-sm font-medium text-foreground/90">Conciliar</p>
+                <p className="text-xs text-muted-foreground">Confirmar data de liquidação</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Data de liquidação</p>
+                <input autoComplete="off"
+                  type="date"
+                  value={dataLiquidacao}
+                  onChange={(e) => setDataLiquidacao(e.target.value)}
+                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
+                />
+              </div>
+              <button
+                onClick={handleConciliar}
+                disabled={saving}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary dark:bg-muted text-white dark:text-foreground text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
+                <CheckCircle2 className="w-4 h-4" />
+                Salvar Conciliação
+              </button>
+            </div>
+          </>
+        )}
+          </>
         )}
 
         {/* Cancelado - Detalhes e Ações */}
@@ -677,35 +756,6 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-600 dark:bg-blue-700 text-white text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
                 <RotateCcw className="w-4 h-4" />
                 Restaurar Lançamento
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* Conciliar (se pago e pendente) */}
-        {isPagoOriginal && isPendente && !isCancelado && (
-          <>
-            <div className="h-px bg-muted" />
-            <div className="px-5 py-4 space-y-3">
-              <div>
-                <p className="text-sm font-medium text-foreground/90">Conciliar</p>
-                <p className="text-xs text-muted-foreground">Confirmar data de liquidação</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Data de liquidação</p>
-                <input autoComplete="off"
-                  type="date"
-                  value={dataLiquidacao}
-                  onChange={(e) => setDataLiquidacao(e.target.value)}
-                  className="w-full h-9 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
-                />
-              </div>
-              <button
-                onClick={handleConciliar}
-                disabled={saving}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary dark:bg-muted text-white dark:text-foreground text-sm font-medium active:scale-95 transition-transform disabled:opacity-50">
-                <CheckCircle2 className="w-4 h-4" />
-                Salvar Conciliação
               </button>
             </div>
           </>
