@@ -96,7 +96,8 @@ export default function CorteDiarioDialog({
           etapa === 'painel'
             ? 'h-[min(92dvh,900px)] w-[calc(100vw-1rem)] max-w-6xl'
             : 'w-[calc(100vw-1rem)] max-w-lg'
-        } rounded-[28px] bg-card`}
+        } z-[70] rounded-[28px] bg-card`}
+        overlayClassName="z-[70]"
       >
         <DialogHeader className="shrink-0 border-b border-border/30 px-5 pb-3 pt-5 text-left">
           <div className="flex items-center gap-2">
@@ -139,6 +140,7 @@ export default function CorteDiarioDialog({
                 setContasSel={setContasSel}
                 showAdvancedFilters={false}
                 showContasFilter={false}
+                inDialog
               />
 
               <div className="rounded-[24px] bg-muted/40 p-3 dark:bg-muted/60">

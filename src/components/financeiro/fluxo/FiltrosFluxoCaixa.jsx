@@ -98,7 +98,7 @@ const CHIPS = [
   { v: 'tudo', l: 'Tudo' }, { v: 'periodo', l: 'Período' },
 ];
 
-function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom, inline = false }) {
+function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom, inline = false, calendarClassName }) {
   const [showCal, setShowCal] = useState(false);
   const [offset, setOffset] = useState(0);
   const [hover, setHover] = useState(null);
@@ -156,7 +156,7 @@ function PeriodoPicker({ periodo, onPeriodo, customStart, customEnd, onCustom, i
         </div>
       )}
       {showCal && periodo === 'periodo' && (
-        <div className={`absolute left-0 z-50 mt-2 rounded-2xl p-3 ${P38_POPOVER} ${inline ? 'w-[min(320px,100%)]' : 'right-0'}`}>
+        <div className={`absolute left-0 mt-2 rounded-2xl p-3 ${P38_POPOVER} ${inline ? 'w-[min(320px,100%)]' : 'right-0'} ${calendarClassName || 'z-50'}`}>
           <MiniCal base={baseLeft} rangeStart={rs} rangeEnd={re} hover={hover} onDay={handleDay} onHover={setHover} onPrev={() => setOffset(o => o - 1)} onNext={() => setOffset(o => o + 1)} />
           {rs && re && (
             <div className="mt-2 flex items-center justify-between rounded-xl bg-secondary/60 dark:bg-[#26262e] px-3 py-2">

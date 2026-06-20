@@ -481,6 +481,7 @@ export default function ExecucaoOrcamentaria() {
   ]);
 
   const abrirMenuRelatorios = useCallback(() => {
+    setFabOpen(false);
     setPrintFilterState({
       periodo,
       customStart: cs,
@@ -725,8 +726,7 @@ export default function ExecucaoOrcamentaria() {
           <FluxoCaixaPrintDialog
             open={showPrintDialog}
             onOpenChange={setShowPrintDialog}
-            filterState={printFilterState}
-            setFilterState={setPrintFilterState}
+            initialFilters={printFilterState}
             contas={contasAtivas}
             onBalanceteDiario={abrirBalanceteDiario}
             onExtratoPdf={handlePrintExtratoLista}

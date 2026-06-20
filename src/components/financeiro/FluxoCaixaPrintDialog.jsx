@@ -1,7 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Printer, FileText, LayoutGrid } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import PrintDialogFilters from '@/components/financeiro/PrintDialogFilters';
+
+const DEFAULT_FILTERS = {
+  periodo: 'hoje',
+  customStart: '',
+  customEnd: '',
+  contasSel: [],
+};
 
 function OptionCard({ icon: IconComponent, title, description, onClick, highlight }) {
   return (
@@ -32,35 +39,41 @@ export default function FluxoCaixaPrintDialog({
   onOpenChange,
   onBalanceteDiario,
   onExtratoPdf,
-  filterState,
-  setFilterState,
+  initialFilters,
   contas,
 }) {
-  const safeFilterState = filterState || {
-    periodo: 'hoje',
-    customStart: '',
-    customEnd: '',
-    contasSel: [],
-  };
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
-  const updateFilterState = (updater) => {
-    if (!setFilterState) return;
-    setFilterState((prev) => updater(prev || safeFilterState));
+  useEffect(() => {
+    if (!open) return;
+    const contasAtivasIds = (contas || []).filter((c) => c.ativo !== false).map((c) => c.id);
+    setFilters({
+      ...DEFAULT_FILTERS,
+      ...(initialFilters || {}),
+      contasSel: initialFilters?.contasSel?.length ? initialFilters.contasSel : contasAtivasIds,
+    });
+  }, [open, initialFilters, contas]);
+
+  const patchFilters = (patch) => {
+    setFilters((prev) => ({ ...prev, ...patch }));
   };
 
   const emitirBalancete = () => {
-    onBalanceteDiario?.(safeFilterState);
+    onBalanceteDiario?.({ ...filters });
     onOpenChange(false);
   };
 
   const emitirExtrato = () => {
-    onExtratoPdf?.(safeFilterState);
+    onExtratoPdf?.({ ...filters });
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(90dvh,720px)] w-[calc(100vw-1rem)] max-w-md overflow-hidden rounded-[30px] border-0 bg-card p-0 shadow-2xl dark:bg-card">
+      <DialogContent
+        overlayClassName="z-[70]"
+        className="z-[70] max-h-[min(90dvh,720px)] w-[calc(100vw-1rem)] max-w-md gap-0 overflow-visible rounded-[30px] border-0 bg-card p-0 shadow-2xl dark:bg-card"
+      >
         <DialogHeader className="px-5 pb-3 pt-5 text-left">
           <DialogTitle className="flex items-center gap-2 font-glacial text-xl text-foreground">
             <Printer className="h-5 w-5" />
@@ -71,18 +84,19 @@ export default function FluxoCaixaPrintDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[calc(90dvh-5rem)] space-y-4 overflow-y-auto px-5 pb-5">
+        <div className="max-h-[calc(90dvh-5rem)] space-y-4 overflow-y-auto overflow-x-visible px-5 pb-5">
           <PrintDialogFilters
-            periodo={safeFilterState.periodo}
-            setPeriodo={(value) => updateFilterState((prev) => ({ ...prev, periodo: value }))}
-            customStart={safeFilterState.customStart}
-            customEnd={safeFilterState.customEnd}
-            setCustomStart={(value) => updateFilterState((prev) => ({ ...prev, customStart: value }))}
-            setCustomEnd={(value) => updateFilterState((prev) => ({ ...prev, customEnd: value }))}
+            periodo={filters.periodo}
+            setPeriodo={(value) => patchFilters({ periodo: value })}
+            customStart={filters.customStart}
+            customEnd={filters.customEnd}
+            setCustomStart={(value) => patchFilters({ customStart: value })}
+            setCustomEnd={(value) => patchFilters({ customEnd: value })}
             contas={contas || []}
-            contasSel={safeFilterState.contasSel}
-            setContasSel={(value) => updateFilterState((prev) => ({ ...prev, contasSel: value }))}
+            contasSel={filters.contasSel}
+            setContasSel={(value) => patchFilters({ contasSel: value })}
             showAdvancedFilters={false}
+            inDialog
           />
 
           <div className="space-y-3">
