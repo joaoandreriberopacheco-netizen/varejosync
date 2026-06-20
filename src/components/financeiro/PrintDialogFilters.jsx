@@ -7,6 +7,7 @@ import { PeriodoPicker } from './fluxo/FiltrosFluxoCaixa';
 function FilterChip({ active, icon: Icon, label, onClick }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-card dark:bg-muted text-muted-foreground shadow-sm'}`}
     >
@@ -16,19 +17,25 @@ function FilterChip({ active, icon: Icon, label, onClick }) {
   );
 }
 
-function MultiSelectPopover({ icon: Icon, label, options, selected, onToggle, onClear, allLabel = 'Todos' }) {
+function MultiSelectPopover({ icon: Icon, label, options, selected, onToggle, onClear, allLabel = 'Todos', inDialog = false }) {
   const active = selected.length > 0;
 
   return (
-    <Popover>
+    <Popover modal={inDialog}>
       <PopoverTrigger asChild>
-        <button className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-card dark:bg-muted text-muted-foreground shadow-sm'}`}>
+        <button
+          type="button"
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${active ? 'bg-primary dark:bg-muted text-white dark:text-foreground' : 'bg-card dark:bg-muted text-muted-foreground shadow-sm'}`}
+        >
           <Icon className="w-3.5 h-3.5" />
           {active ? `${selected.length} selecionado(s)` : label}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-2 rounded-3xl border-0 bg-card dark:bg-card shadow-xl" align="start">
-        <button onClick={onClear} className="w-full text-left px-3 py-2 rounded-2xl text-xs text-foreground/90 hover:bg-muted/40 dark:hover:bg-card">
+      <PopoverContent
+        className={`w-56 rounded-3xl border-0 bg-card p-2 shadow-xl dark:bg-card ${inDialog ? 'z-[80]' : ''}`}
+        align="start"
+      >
+        <button type="button" onClick={onClear} className="w-full text-left px-3 py-2 rounded-2xl text-xs text-foreground/90 hover:bg-muted/40 dark:hover:bg-card">
           {allLabel}
         </button>
         <div className="space-y-1 mt-1">
@@ -54,14 +61,17 @@ export default function PrintDialogFilters({
   contas,
   contasSel,
   setContasSel,
-  tiposSel,
-  setTiposSel,
-  statusSel,
-  setStatusSel,
-  pendentes,
-  setPendentes,
-  cmvOnly,
-  setCmvOnly,
+  tiposSel = [],
+  setTiposSel = () => {},
+  statusSel = [],
+  setStatusSel = () => {},
+  pendentes = false,
+  setPendentes = () => {},
+  cmvOnly = false,
+  setCmvOnly = () => {},
+  showAdvancedFilters = true,
+  showContasFilter = true,
+  inDialog = false,
 }) {
   const toggleItem = (value, selected, setter) => {
     setter(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]);
@@ -93,39 +103,49 @@ export default function PrintDialogFilters({
           customStart={customStart}
           customEnd={customEnd}
           onCustom={(key, value) => key === 'start' ? setCustomStart(value) : setCustomEnd(value)}
+          calendarClassName={inDialog ? 'z-[80]' : undefined}
         />
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <MultiSelectPopover
-          icon={Wallet}
-          label="Contas"
-          options={contaOptions}
-          selected={contasSel}
-          onToggle={(value) => toggleItem(value, contasSel, setContasSel)}
-          onClear={() => setContasSel([])}
-          allLabel="Todas as contas"
-        />
-        <MultiSelectPopover
-          icon={Filter}
-          label="Tipo"
-          options={tipoOptions}
-          selected={tiposSel}
-          onToggle={(value) => toggleItem(value, tiposSel, setTiposSel)}
-          onClear={() => setTiposSel([])}
-          allLabel="Todos os tipos"
-        />
-        <MultiSelectPopover
-          icon={RefreshCw}
-          label="Status"
-          options={statusOptions}
-          selected={statusSel}
-          onToggle={(value) => toggleItem(value, statusSel, setStatusSel)}
-          onClear={() => setStatusSel([])}
-          allLabel="Todos os status"
-        />
-        <FilterChip active={pendentes} icon={Clock} label="Pendentes" onClick={() => setPendentes(!pendentes)} />
-        <FilterChip active={cmvOnly} icon={Layers} label="CMV" onClick={() => setCmvOnly(!cmvOnly)} />
+        {showContasFilter && (
+          <MultiSelectPopover
+            icon={Wallet}
+            label="Contas"
+            options={contaOptions}
+            selected={contasSel}
+            onToggle={(value) => toggleItem(value, contasSel, setContasSel)}
+            onClear={() => setContasSel([])}
+            allLabel="Todas as contas"
+            inDialog={inDialog}
+          />
+        )}
+        {showAdvancedFilters && (
+          <>
+            <MultiSelectPopover
+              icon={Filter}
+              label="Tipo"
+              options={tipoOptions}
+              selected={tiposSel}
+              onToggle={(value) => toggleItem(value, tiposSel, setTiposSel)}
+              onClear={() => setTiposSel([])}
+              allLabel="Todos os tipos"
+              inDialog={inDialog}
+            />
+            <MultiSelectPopover
+              icon={RefreshCw}
+              label="Status"
+              options={statusOptions}
+              selected={statusSel}
+              onToggle={(value) => toggleItem(value, statusSel, setStatusSel)}
+              onClear={() => setStatusSel([])}
+              allLabel="Todos os status"
+              inDialog={inDialog}
+            />
+            <FilterChip active={pendentes} icon={Clock} label="Pendentes" onClick={() => setPendentes(!pendentes)} />
+            <FilterChip active={cmvOnly} icon={Layers} label="CMV" onClick={() => setCmvOnly(!cmvOnly)} />
+          </>
+        )}
       </div>
     </div>
   );
