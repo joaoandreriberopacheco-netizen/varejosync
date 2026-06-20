@@ -22,6 +22,8 @@ const R = (v) => `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractio
 
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
+import { normalizeDataText } from '@/lib/normalizeDataText';
+import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
 
 function Toggle({ checked, onChange }) {
   return (
@@ -256,8 +258,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
         toast({ title: 'Informe um valor válido', variant: 'destructive' });
         return;
       }
-      const descricao = (cadDescricao || '').trim() || lancamento.descricao;
-      const obs = cadObs || '';
+      const descricao = normalizeDataText((cadDescricao || '').trim()) || lancamento.descricao;
+      const obs = normalizeDataText(cadObs || '');
       const venAtual = (cadVencimento || '').slice(0, 10) || (lancamento.data_vencimento || '').slice(0, 10);
       const basePayload = {
         descricao,
@@ -411,8 +413,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                 <input
                   autoComplete="off"
                   value={cadDescricao}
-                  onChange={(e) => setCadDescricao(e.target.value)}
-                  className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
+                  onChange={createUppercaseInputChangeHandler((e) => setCadDescricao(e.target.value))}
+                  className="w-full h-10 px-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring p38-data-uppercase"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -443,9 +445,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
                 <p className="text-[11px] text-muted-foreground mb-1">Observações</p>
                 <textarea
                   value={cadObs}
-                  onChange={(e) => setCadObs(e.target.value)}
+                  onChange={createUppercaseInputChangeHandler((e) => setCadObs(e.target.value))}
                   rows={2}
-                  className="w-full resize-none rounded-xl bg-muted px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
+                  className="w-full resize-none rounded-xl bg-muted px-3 py-2 text-sm text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring p38-data-uppercase"
                 />
               </div>
               <button

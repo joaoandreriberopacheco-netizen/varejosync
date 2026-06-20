@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { X, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { normalizeDataText } from '@/lib/normalizeDataText';
+import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
 
 // Mini modal para criar categoria rapidamente inline
 export function NovaCategoriaInline({ tipo, onCriada, onCancelar }) {
@@ -12,7 +14,7 @@ export function NovaCategoriaInline({ tipo, onCriada, onCancelar }) {
   const handleSalvar = async () => {
     if (!nome.trim()) return;
     setSaving(true);
-    const cat = await base44.entities.CategoriaFinanceira.create({ nome: nome.trim(), tipo, ativa: true });
+    const cat = await base44.entities.CategoriaFinanceira.create({ nome: normalizeDataText(nome.trim()), tipo, ativa: true });
     toast({ title: `Categoria "${nome}" criada!` });
     onCriada(cat);
     setSaving(false);
@@ -23,10 +25,10 @@ export function NovaCategoriaInline({ tipo, onCriada, onCancelar }) {
       <input autoComplete="off"
         autoFocus
         value={nome}
-        onChange={e => setNome(e.target.value)}
+        onChange={createUppercaseInputChangeHandler((e) => setNome(e.target.value))}
         onKeyDown={e => { if (e.key === 'Enter') handleSalvar(); if (e.key === 'Escape') onCancelar(); }}
         placeholder="Nome da categoria"
-        className="flex-1 min-w-0 bg-transparent text-sm text-foreground/90 placeholder:text-muted-foreground outline-none"
+        className="flex-1 min-w-0 bg-transparent text-sm text-foreground/90 placeholder:text-muted-foreground outline-none p38-data-uppercase"
       />
       <button onClick={handleSalvar} disabled={saving || !nome.trim()}
         className="px-3 py-1.5 rounded-lg bg-background dark:bg-card text-white dark:text-foreground text-xs font-medium disabled:opacity-40">

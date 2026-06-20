@@ -13,6 +13,8 @@ import RecorrenciaConfig from './fluxo/RecorrenciaConfig';
 import TagsInput from './fluxo/TagsInput';
 import { Checkbox } from '@/components/ui/checkbox';
 import LancamentoConfirmacaoDialog from './LancamentoConfirmacaoDialog';
+import { normalizeDataText } from '@/lib/normalizeDataText';
+import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
 
 const TIPOS = [
   { value: 'Receita', label: 'Receita', icon: ArrowDownLeft },
@@ -122,6 +124,9 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     if (tipo === 'Transferência' && !contaId) { toast({ title: 'Selecione a conta', variant: 'destructive' }); return; }
     if (status === 'Pago' && !contaId) { toast({ title: 'Selecione a conta para registrar o pagamento', variant: 'destructive' }); return; }
 
+    const descricaoNorm = normalizeDataText(descricao.trim());
+    const categoriaNorm = normalizeDataText(categoria);
+
     setSaving(true);
     setConfirmDialogMode('processing');
     setShowConfirmDialog(true);
@@ -153,12 +158,12 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           const dtVenc = addMonths(baseDate, i);
           lotes.push({
             ...metaDataLancamento(),
-            tipo, descricao: `${descricao} (${i + 1}/${parcelas})`,
+            tipo, descricao: `${descricaoNorm} (${i + 1}/${parcelas})`,
             valor: valorNumerico, data_vencimento: format(dtVenc, 'yyyy-MM-dd'),
             data_pagamento: i === 0 && isPago ? data : null,
             status: i === 0 && isPago ? 'Pago' : 'Em Aberto',
             status_conciliacao: i === 0 && isPago ? 'Pendente' : 'N/A',
-            categoria, categoria_id: categoriaId, tags,
+            categoria: categoriaNorm, categoria_id: categoriaId, tags,
             conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
             referencia_tipo: 'Manual',
             is_recorrente: true, frequencia_recorrencia: frequencia,
@@ -177,12 +182,12 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
         while (dtAtual <= limiteDate && i < 60) {
           lotes.push({
             ...metaDataLancamento(),
-            tipo, descricao,
+            tipo, descricao: descricaoNorm,
             valor: valorNumerico, data_vencimento: format(dtAtual, 'yyyy-MM-dd'),
             data_pagamento: i === 0 && isPago ? data : null,
             status: i === 0 && isPago ? 'Pago' : 'Em Aberto',
             status_conciliacao: i === 0 && isPago ? 'Pendente' : 'N/A',
-            categoria, categoria_id: categoriaId, tags,
+            categoria: categoriaNorm, categoria_id: categoriaId, tags,
             conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
             referencia_tipo: 'Manual',
             is_recorrente: true, frequencia_recorrencia: frequencia,
@@ -205,10 +210,10 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       const isPago = status === 'Pago';
       const novoLancamento = await base44.entities.LancamentoFinanceiro.create({
         ...metaDataLancamento(),
-        tipo, descricao, valor: valorNumerico,
+        tipo, descricao: descricaoNorm, valor: valorNumerico,
         data_vencimento: data, data_pagamento: isPago ? data : null,
         status, status_conciliacao: isPago ? 'Pendente' : 'N/A',
-        categoria, categoria_id: categoriaId, tags,
+        categoria: categoriaNorm, categoria_id: categoriaId, tags,
         conta_financeira_id: contaId, conta_financeira_nome: conta?.nome,
         referencia_tipo: referenciaTipo || 'Manual',
         referencia_id: referenciaId || '',
@@ -269,9 +274,10 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
             <p className="text-xs text-muted-foreground mt-1">R$</p>
           </div>
           <input autoComplete="off"
-            value={descricao} onChange={e => setDescricao(e.target.value)}
+            value={descricao}
+            onChange={createUppercaseInputChangeHandler((e) => setDescricao(e.target.value))}
             placeholder={tipo === 'Transferência' ? 'Observações (opcional)' : 'Descrição *'}
-            className="w-full text-center bg-transparent border-0 border-b border-border/40 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground outline-none focus:border-border/40 transition-colors"
+            className="w-full text-center bg-transparent border-0 border-b border-border/40 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground outline-none focus:border-border/40 transition-colors p38-data-uppercase"
           />
           <button onClick={() => setStep('detalhes')}
             className="w-full h-14 rounded-2xl bg-muted/400 dark:bg-card text-white dark:text-foreground text-base font-semibold active:scale-95 transition-all flex items-center justify-center gap-2">
@@ -317,44 +323,62 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
             </p>
           </div>
 
-          {/* Conta — obrigatória só para Transferência ou quando Pago */}
-          {(tipo === 'Transferência' || status === 'Pago') && (
-            <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
-              <Select value={contaId} onValueChange={setContaId}>
-                <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-foreground text-sm px-4">
-                  <SelectValue placeholder={tipo === 'Transferência' ? 'Conta Origem *' : 'Conta *'} />
-                </SelectTrigger>
-                <SelectContent className="z-[70] dark:bg-muted dark:border-border/40">
-                  {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          {/* Conta */}
+          {tipo === 'Transferência' ? (
+            <>
+              <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
+                <div className="px-4 py-1 text-[10px] text-muted-foreground uppercase tracking-wider pt-3">Conta Origem</div>
+                <Select value={contaId} onValueChange={setContaId}>
+                  <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-foreground text-sm px-4">
+                    <SelectValue placeholder="Conta Origem *" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[70] dark:bg-muted dark:border-border/40">
+                    {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
+                <Select value={contaDestinoId} onValueChange={setContaDestinoId}>
+                  <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-foreground text-sm px-4">
+                    <SelectValue placeholder="Conta Destino *" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[70] dark:bg-muted dark:border-border/40">
+                    {contas.filter(c => c.id !== contaId).map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
+                <div className="px-4 py-1 text-[10px] text-muted-foreground uppercase tracking-wider pt-3">Conta</div>
+                <Select value={contaId} onValueChange={setContaId}>
+                  <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-foreground text-sm px-4">
+                    <SelectValue placeholder="Informar conta" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[70] dark:bg-muted dark:border-border/40">
+                    {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {tipo === 'Transferência' && (
-            <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
-              <Select value={contaDestinoId} onValueChange={setContaDestinoId}>
-                <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-foreground text-sm px-4">
-                  <SelectValue placeholder="Conta Destino *" />
-                </SelectTrigger>
-                <SelectContent className="z-[70] dark:bg-muted dark:border-border/40">
-                  {contas.filter(c => c.id !== contaId).map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Status — abaixo da conta */}
+              <div className="flex gap-2">
+                {[
+                  { value: 'Em Aberto', label: '(em aberto)' },
+                  { value: 'Pago', label: '(pago)' },
+                ].map(({ value, label }) => (
+                  <button key={value} onClick={() => setStatus(value)}
+                    className={`flex-1 h-12 rounded-2xl text-sm font-medium transition-all shadow-sm ${status === value ? 'bg-muted/400 dark:bg-card text-white dark:text-foreground' : 'bg-card text-muted-foreground'}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
           {tipo !== 'Transferência' && (
             <>
-              {/* Status */}
-              <div className="flex gap-2">
-                {['Em Aberto', 'Pago'].map(s => (
-                  <button key={s} onClick={() => setStatus(s)}
-                    className={`flex-1 h-12 rounded-2xl text-sm font-medium transition-all shadow-sm ${status === s ? 'bg-muted/400 dark:bg-card text-white dark:text-foreground' : 'bg-card text-muted-foreground'}`}>
-                    {s}
-                  </button>
-                ))}
-              </div>
 
               {/* Categoria dinâmica */}
               <SeletorCategoria
@@ -429,6 +453,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           setValorCents('0');
           setDescricao('');
           setData(dataHoje());
+          setDataLancamento('');
           setCategoria('');
           setCategoriaId('');
           setContaId(contaDefaultId || '');

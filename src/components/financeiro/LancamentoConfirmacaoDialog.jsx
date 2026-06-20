@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function LancamentoConfirmacaoDialog({ open, mode, onCreateAnother, onFinish }) {
   const processing = mode === 'processing';
+
+  useEffect(() => {
+    if (!open || processing) return;
+    const onKeyDown = (e) => {
+      const key = e.key.toLowerCase();
+      if (key === 's') { e.preventDefault(); onCreateAnother(); }
+      if (key === 'n') { e.preventDefault(); onFinish(); }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, processing, onCreateAnother, onFinish]);
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
@@ -22,7 +33,7 @@ export default function LancamentoConfirmacaoDialog({ open, mode, onCreateAnothe
               {processing ? 'Processando' : 'Lançamento confirmado'}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {processing ? 'Aguarde enquanto salvamos o lançamento.' : 'Deseja realizar outro lançamento ou concluir?'}
+              {processing ? 'Aguarde enquanto salvamos o lançamento.' : 'Deseja adicionar outro lançamento?'}
             </p>
           </div>
 
@@ -30,15 +41,15 @@ export default function LancamentoConfirmacaoDialog({ open, mode, onCreateAnothe
             <div className="w-full flex flex-col gap-2 pt-2">
               <button
                 onClick={onCreateAnother}
-                className="w-full h-12 rounded-2xl bg-muted text-foreground text-sm font-medium"
+                className="w-full h-12 rounded-2xl bg-background dark:bg-muted text-white dark:text-foreground text-sm font-semibold"
               >
-                Realizar outro lançamento
+                Sim (S)
               </button>
               <button
                 onClick={onFinish}
-                className="w-full h-12 rounded-2xl bg-background dark:bg-muted text-white dark:text-foreground text-sm font-semibold"
+                className="w-full h-12 rounded-2xl bg-muted text-foreground text-sm font-medium"
               >
-                Concluir
+                Não (N)
               </button>
             </div>
           )}
