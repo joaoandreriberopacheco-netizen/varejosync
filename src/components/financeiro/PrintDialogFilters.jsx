@@ -99,15 +99,17 @@ export default function PrintDialogFilters({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <MultiSelectPopover
-          icon={Wallet}
-          label="Contas"
-          options={contaOptions}
-          selected={contasSel}
-          onToggle={(value) => toggleItem(value, contasSel, setContasSel)}
-          onClear={() => setContasSel([])}
-          allLabel="Todas as contas"
-        />
+        {showContasFilter && (
+          <MultiSelectPopover
+            icon={Wallet}
+            label="Contas"
+            options={contaOptions}
+            selected={contasSel}
+            onToggle={(value) => toggleItem(value, contasSel, setContasSel)}
+            onClear={() => setContasSel([])}
+            allLabel="Todas as contas"
+          />
+        )}
         {showAdvancedFilters && (
           <>
             <MultiSelectPopover
