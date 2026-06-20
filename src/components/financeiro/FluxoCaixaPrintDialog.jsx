@@ -1,5 +1,5 @@
 import React from 'react';
-import { Printer, FileText, Filter } from 'lucide-react';
+import { Printer, FileText, Filter, LayoutGrid } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import PrintDialogFilters from '@/components/financeiro/PrintDialogFilters';
 
@@ -27,6 +27,7 @@ export default function FluxoCaixaPrintDialog({
   onOpenChange,
   onPrintExtratoCompleto,
   onPrintExtratoFiltrado,
+  onOpenCorteDiario,
   filterState,
   setFilterState,
   contas,
@@ -93,6 +94,16 @@ export default function FluxoCaixaPrintDialog({
             title="Extrato filtrado"
             description="Usa os filtros definidos aqui no diálogo para gerar o extrato."
             onClick={onPrintExtratoFiltrado}
+          />
+
+          <OptionCard
+            icon={LayoutGrid}
+            title="Corte diário"
+            description="Mapa relacional em T: PDV, Caixa Geral e bancos — só o que já está líquido no período."
+            onClick={() => {
+              onOpenChange(false);
+              onOpenCorteDiario?.();
+            }}
           />
         </div>
       </DialogContent>

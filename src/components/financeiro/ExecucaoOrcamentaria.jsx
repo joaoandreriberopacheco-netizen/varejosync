@@ -22,6 +22,7 @@ import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
 import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
+import CorteDiarioDialog from './corte-diario/CorteDiarioDialog';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
@@ -119,6 +120,7 @@ export default function ExecucaoOrcamentaria() {
   const [detalhe, setDetalhe] = useState(null);
   const [conciliacaoConta, setConciliacaoConta] = useState(null);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [showCorteDiario, setShowCorteDiario] = useState(false);
   const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'contas'
   const [abaContas, setAbaContas] = useState('contas');
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
@@ -616,8 +618,15 @@ export default function ExecucaoOrcamentaria() {
             onOpenChange={setShowPrintDialog}
             onPrintExtratoCompleto={handlePrint}
             onPrintExtratoFiltrado={handlePrint}
-            contasSelecionadasLabel={contasSelecionadasLabel}
-            periodoLabel={periodoLabel}
+            onOpenCorteDiario={() => setShowCorteDiario(true)}
+            contas={contasAtivas}
+          />
+          <CorteDiarioDialog
+            open={showCorteDiario}
+            onOpenChange={setShowCorteDiario}
+            contas={contas}
+            lancamentos={lancs}
+            movimentos={movimentos}
           />
 
           <Dialog open={conciliacaoConta != null} onOpenChange={(open) => !open && setConciliacaoConta(null)}>

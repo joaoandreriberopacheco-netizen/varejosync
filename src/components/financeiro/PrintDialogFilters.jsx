@@ -54,14 +54,16 @@ export default function PrintDialogFilters({
   contas,
   contasSel,
   setContasSel,
-  tiposSel,
-  setTiposSel,
-  statusSel,
-  setStatusSel,
-  pendentes,
-  setPendentes,
-  cmvOnly,
-  setCmvOnly,
+  tiposSel = [],
+  setTiposSel = () => {},
+  statusSel = [],
+  setStatusSel = () => {},
+  pendentes = false,
+  setPendentes = () => {},
+  cmvOnly = false,
+  setCmvOnly = () => {},
+  showAdvancedFilters = true,
+  showContasFilter = true,
 }) {
   const toggleItem = (value, selected, setter) => {
     setter(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]);
@@ -106,26 +108,30 @@ export default function PrintDialogFilters({
           onClear={() => setContasSel([])}
           allLabel="Todas as contas"
         />
-        <MultiSelectPopover
-          icon={Filter}
-          label="Tipo"
-          options={tipoOptions}
-          selected={tiposSel}
-          onToggle={(value) => toggleItem(value, tiposSel, setTiposSel)}
-          onClear={() => setTiposSel([])}
-          allLabel="Todos os tipos"
-        />
-        <MultiSelectPopover
-          icon={RefreshCw}
-          label="Status"
-          options={statusOptions}
-          selected={statusSel}
-          onToggle={(value) => toggleItem(value, statusSel, setStatusSel)}
-          onClear={() => setStatusSel([])}
-          allLabel="Todos os status"
-        />
-        <FilterChip active={pendentes} icon={Clock} label="Pendentes" onClick={() => setPendentes(!pendentes)} />
-        <FilterChip active={cmvOnly} icon={Layers} label="CMV" onClick={() => setCmvOnly(!cmvOnly)} />
+        {showAdvancedFilters && (
+          <>
+            <MultiSelectPopover
+              icon={Filter}
+              label="Tipo"
+              options={tipoOptions}
+              selected={tiposSel}
+              onToggle={(value) => toggleItem(value, tiposSel, setTiposSel)}
+              onClear={() => setTiposSel([])}
+              allLabel="Todos os tipos"
+            />
+            <MultiSelectPopover
+              icon={RefreshCw}
+              label="Status"
+              options={statusOptions}
+              selected={statusSel}
+              onToggle={(value) => toggleItem(value, statusSel, setStatusSel)}
+              onClear={() => setStatusSel([])}
+              allLabel="Todos os status"
+            />
+            <FilterChip active={pendentes} icon={Clock} label="Pendentes" onClick={() => setPendentes(!pendentes)} />
+            <FilterChip active={cmvOnly} icon={Layers} label="CMV" onClick={() => setCmvOnly(!cmvOnly)} />
+          </>
+        )}
       </div>
     </div>
   );
