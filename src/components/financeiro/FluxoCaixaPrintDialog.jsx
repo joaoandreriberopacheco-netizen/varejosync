@@ -1,21 +1,26 @@
 import React from 'react';
-import { Printer, FileText, Filter, LayoutGrid } from 'lucide-react';
+import { Printer, FileText, LayoutGrid } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import PrintDialogFilters from '@/components/financeiro/PrintDialogFilters';
 
-function OptionCard({ icon: IconComponent, title, description, onClick }) {
+function OptionCard({ icon: IconComponent, title, description, onClick, highlight }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="w-full rounded-[24px] bg-card dark:bg-muted px-4 py-4 text-left shadow-md transition-all hover:bg-muted/40 dark:hover:bg-muted"
+      className={`w-full rounded-[24px] px-4 py-4 text-left shadow-md transition-all hover:opacity-95 ${
+        highlight
+          ? 'bg-primary/12 ring-2 ring-primary/30 dark:bg-primary/15'
+          : 'bg-card dark:bg-muted hover:bg-muted/40 dark:hover:bg-muted'
+      }`}
     >
       <div className="flex items-start gap-3">
-        <div className="w-11 h-11 rounded-2xl bg-card dark:bg-card shadow-sm flex items-center justify-center flex-none">
-          <IconComponent className="w-5 h-5 text-foreground/90" />
+        <div className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-card shadow-sm dark:bg-card">
+          <IconComponent className="h-5 w-5 text-foreground/90" />
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground">{title}</p>
-          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
         </div>
       </div>
     </button>
@@ -25,22 +30,17 @@ function OptionCard({ icon: IconComponent, title, description, onClick }) {
 export default function FluxoCaixaPrintDialog({
   open,
   onOpenChange,
-  onPrintExtratoCompleto,
-  onPrintExtratoFiltrado,
-  onOpenCorteDiario,
+  onBalanceteDiario,
+  onExtratoPdf,
   filterState,
   setFilterState,
   contas,
 }) {
   const safeFilterState = filterState || {
-    periodo: 'mes',
+    periodo: 'hoje',
     customStart: '',
     customEnd: '',
     contasSel: [],
-    tiposSel: [],
-    statusSel: [],
-    pendentes: false,
-    cmvOnly: false,
   };
 
   const updateFilterState = (updater) => {
@@ -48,20 +48,30 @@ export default function FluxoCaixaPrintDialog({
     setFilterState((prev) => updater(prev || safeFilterState));
   };
 
+  const emitirBalancete = () => {
+    onBalanceteDiario?.(safeFilterState);
+    onOpenChange(false);
+  };
+
+  const emitirExtrato = () => {
+    onExtratoPdf?.(safeFilterState);
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-md rounded-[30px] border-0 bg-card dark:bg-card p-0 shadow-2xl overflow-hidden">
-        <DialogHeader className="px-5 pt-5 pb-3 text-left">
-          <DialogTitle className="font-glacial text-xl text-foreground flex items-center gap-2">
-            <Printer className="w-5 h-5" />
-            Imprimir extratos
+      <DialogContent className="max-h-[min(90dvh,720px)] w-[calc(100vw-1rem)] max-w-md overflow-hidden rounded-[30px] border-0 bg-card p-0 shadow-2xl dark:bg-card">
+        <DialogHeader className="px-5 pb-3 pt-5 text-left">
+          <DialogTitle className="flex items-center gap-2 font-glacial text-xl text-foreground">
+            <Printer className="h-5 w-5" />
+            Relatórios
           </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
-            Escolha abaixo o tipo de extrato que deseja gerar para impressão ou PDF.
+          <DialogDescription className="text-xs leading-relaxed text-muted-foreground">
+            Escolha o formato abaixo. Período e contas valem para balancete e extrato.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-5 pb-4 space-y-4">
+        <div className="max-h-[calc(90dvh-5rem)] space-y-4 overflow-y-auto px-5 pb-5">
           <PrintDialogFilters
             periodo={safeFilterState.periodo}
             setPeriodo={(value) => updateFilterState((prev) => ({ ...prev, periodo: value }))}
@@ -72,39 +82,25 @@ export default function FluxoCaixaPrintDialog({
             contas={contas || []}
             contasSel={safeFilterState.contasSel}
             setContasSel={(value) => updateFilterState((prev) => ({ ...prev, contasSel: value }))}
-            tiposSel={safeFilterState.tiposSel}
-            setTiposSel={(value) => updateFilterState((prev) => ({ ...prev, tiposSel: value }))}
-            statusSel={safeFilterState.statusSel}
-            setStatusSel={(value) => updateFilterState((prev) => ({ ...prev, statusSel: value }))}
-            pendentes={safeFilterState.pendentes}
-            setPendentes={(value) => updateFilterState((prev) => ({ ...prev, pendentes: value }))}
-            cmvOnly={safeFilterState.cmvOnly}
-            setCmvOnly={(value) => updateFilterState((prev) => ({ ...prev, cmvOnly: value }))}
+            showAdvancedFilters={false}
           />
 
-          <OptionCard
-            icon={FileText}
-            title="Extrato completo"
-            description="Gera um extrato geral, sem considerar os filtros próprios deste diálogo."
-            onClick={onPrintExtratoCompleto}
-          />
+          <div className="space-y-3">
+            <OptionCard
+              icon={LayoutGrid}
+              title="Balancete diário"
+              description="Mapa em T — PDV, Caixa Geral e bancos lado a lado. Só o que já está líquido no período."
+              onClick={emitirBalancete}
+              highlight
+            />
 
-          <OptionCard
-            icon={Filter}
-            title="Extrato filtrado"
-            description="Usa os filtros definidos aqui no diálogo para gerar o extrato."
-            onClick={onPrintExtratoFiltrado}
-          />
-
-          <OptionCard
-            icon={LayoutGrid}
-            title="Corte diário"
-            description="Mapa relacional em T: PDV, Caixa Geral e bancos — só o que já está líquido no período."
-            onClick={() => {
-              onOpenChange(false);
-              onOpenCorteDiario?.();
-            }}
-          />
+            <OptionCard
+              icon={FileText}
+              title="Extrato (PDF)"
+              description="Lista cronológica de lançamentos para impressão ou arquivo, com os filtros acima."
+              onClick={emitirExtrato}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

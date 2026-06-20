@@ -55,7 +55,7 @@ export default function CorteDiarioPainel({ mapa }) {
     <div className="space-y-4">
       <div className="rounded-xl border border-border/40 bg-muted/15 px-4 py-3">
         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-          Corte diário
+          Balancete diário
         </p>
         <p className="mt-1 font-glacial text-lg font-semibold text-foreground">
           {formatPeriodoLabel(dataInicio, dataFim)}

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { LayoutGrid, ChevronLeft, FileText } from 'lucide-react';
+import { LayoutGrid, ChevronLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -32,7 +32,7 @@ export default function CorteDiarioDialog({
   initialCustomStart = '',
   initialCustomEnd = '',
   initialContasSel = null,
-  onPrintExtratoLista,
+  abrirDiretoNoMapa = false,
 }) {
   const [etapa, setEtapa] = useState('config');
   const [periodo, setPeriodo] = useState(initialPeriodo);
@@ -55,7 +55,8 @@ export default function CorteDiarioDialog({
     setCustomEnd(initialCustomEnd);
     const padrao = initialContasSel?.length ? initialContasSel : contasPadraoCorte(contas);
     setContasSel(padrao);
-  }, [open, contas, initialPeriodo, initialCustomStart, initialCustomEnd, initialContasSel]);
+    setEtapa(abrirDiretoNoMapa && padrao.length ? 'painel' : 'config');
+  }, [open, contas, initialPeriodo, initialCustomStart, initialCustomEnd, initialContasSel, abrirDiretoNoMapa]);
 
   const mapa = useMemo(() => {
     if (etapa !== 'painel' || !contasSel.length) return null;
@@ -69,13 +70,6 @@ export default function CorteDiarioDialog({
       dataFim,
     });
   }, [etapa, contas, lancamentos, movimentos, contasSel, periodo, customStart, customEnd]);
-
-  const periodoResumo = useMemo(() => {
-    const { dataInicio, dataFim } = dateRangeFinanceiro(periodo, customStart, customEnd);
-    if (!dataInicio && !dataFim) return 'Todo o período';
-    if (dataInicio === dataFim) return dataInicio;
-    return `${dataInicio} até ${dataFim}`;
-  }, [periodo, customStart, customEnd]);
 
   const toggleConta = (id) => {
     setContasSel((prev) =>
@@ -119,12 +113,12 @@ export default function CorteDiarioDialog({
             <div>
               <DialogTitle className="flex items-center gap-2 font-glacial text-xl text-foreground">
                 <LayoutGrid className="h-5 w-5" />
-                {etapa === 'painel' ? 'Mapa do corte diário' : 'Relatório — Corte diário'}
+                {etapa === 'painel' ? 'Balancete diário' : 'Balancete diário'}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
                 {etapa === 'painel'
                   ? 'Palitos em T: PDV à esquerda, Caixa Geral no centro, bancos à direita.'
-                  : 'Mapa relacional do que já está líquido — não é a lista em PDF.'}
+                  : 'Ajuste período e contas, depois emita o mapa.'}
               </DialogDescription>
             </div>
           </div>
@@ -184,33 +178,13 @@ export default function CorteDiarioDialog({
                 onClick={emitirMapa}
               >
                 <LayoutGrid className="mr-2 h-4 w-4" />
-                Emitir mapa do corte
+                Emitir balancete
               </Button>
 
               {periodo === 'periodo' && !customStart && (
                 <p className="text-center text-[11px] text-amber-700 dark:text-amber-400">
                   Selecione a data inicial no período personalizado.
                 </p>
-              )}
-
-              {onPrintExtratoLista && (
-                <div className="border-t border-border/30 pt-4">
-                  <p className="mb-2 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Outro formato
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onPrintExtratoLista({ periodo, customStart, customEnd, contasSel });
-                    }}
-                    className="flex w-full items-center gap-3 rounded-2xl bg-muted/30 px-4 py-3 text-left text-xs text-muted-foreground hover:bg-muted/50"
-                  >
-                    <FileText className="h-4 w-4 shrink-0" />
-                    <span>
-                      Extrato em PDF (lista cronológica) — período: {periodoResumo}
-                    </span>
-                  </button>
-                </div>
               )}
             </div>
           ) : (

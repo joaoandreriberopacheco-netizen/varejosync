@@ -21,6 +21,7 @@ import {
 } from '@/lib/lancamentoFinanceiroStatus';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
+import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import CorteDiarioDialog from './corte-diario/CorteDiarioDialog';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
@@ -92,7 +93,15 @@ export default function ExecucaoOrcamentaria() {
   const [novoTipo, setNovoTipo] = useState('Despesa');
   const [detalhe, setDetalhe] = useState(null);
   const [conciliacaoConta, setConciliacaoConta] = useState(null);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [showCorteDiario, setShowCorteDiario] = useState(false);
+  const [printFilterState, setPrintFilterState] = useState({
+    periodo: 'hoje',
+    customStart: '',
+    customEnd: '',
+    contasSel: [],
+  });
+  const [corteDiarioInitial, setCorteDiarioInitial] = useState(null);
   const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'contas'
   const [abaContas, setAbaContas] = useState('contas');
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
@@ -471,6 +480,21 @@ export default function ExecucaoOrcamentaria() {
     dataCorteHistorico,
   ]);
 
+  const abrirMenuRelatorios = useCallback(() => {
+    setPrintFilterState({
+      periodo,
+      customStart: cs,
+      customEnd: ce,
+      contasSel: contasSel.length ? contasSel : contasAtivas.map((c) => c.id),
+    });
+    setShowPrintDialog(true);
+  }, [periodo, cs, ce, contasSel, contasAtivas]);
+
+  const abrirBalanceteDiario = useCallback((filters) => {
+    setCorteDiarioInitial(filters);
+    setShowCorteDiario(true);
+  }, []);
+
   const handlePrintExtratoLista = useCallback(async ({
     periodo: periodoPrint,
     customStart: csPrint,
@@ -546,9 +570,9 @@ export default function ExecucaoOrcamentaria() {
             <p className="text-lg font-semibold leading-none text-foreground font-glacial md:text-2xl">Financeiro</p>
             {aba === 'fluxo' && (
               <button
-                onClick={() => setShowCorteDiario(true)}
+                onClick={abrirMenuRelatorios}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-field-surface border-0 hover:opacity-90 transition-opacity"
-                aria-label="Relatório de corte diário"
+                aria-label="Relatórios — balancete e extrato"
               >
                 <Printer className="w-4 h-4 text-foreground/90" />
               </button>
@@ -698,17 +722,29 @@ export default function ExecucaoOrcamentaria() {
             onClose={() => { setShowNovoFluxo(false); setFabOpen(false); setUrlDescricao(''); setUrlValor(''); setUrlReferenciaId(''); setUrlReferenciaTipo(''); }}
             onSaved={load}
           />
+          <FluxoCaixaPrintDialog
+            open={showPrintDialog}
+            onOpenChange={setShowPrintDialog}
+            filterState={printFilterState}
+            setFilterState={setPrintFilterState}
+            contas={contasAtivas}
+            onBalanceteDiario={abrirBalanceteDiario}
+            onExtratoPdf={handlePrintExtratoLista}
+          />
           <CorteDiarioDialog
             open={showCorteDiario}
-            onOpenChange={setShowCorteDiario}
+            onOpenChange={(next) => {
+              setShowCorteDiario(next);
+              if (!next) setCorteDiarioInitial(null);
+            }}
             contas={contas}
             lancamentos={lancs}
             movimentos={movimentos}
-            initialPeriodo={periodo}
-            initialCustomStart={cs}
-            initialCustomEnd={ce}
-            initialContasSel={contasSel}
-            onPrintExtratoLista={handlePrintExtratoLista}
+            initialPeriodo={corteDiarioInitial?.periodo ?? periodo}
+            initialCustomStart={corteDiarioInitial?.customStart ?? cs}
+            initialCustomEnd={corteDiarioInitial?.customEnd ?? ce}
+            initialContasSel={corteDiarioInitial?.contasSel ?? contasSel}
+            abrirDiretoNoMapa={!!corteDiarioInitial}
           />
 
           <Dialog open={conciliacaoConta != null} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
