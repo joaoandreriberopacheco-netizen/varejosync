@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { getDataChaveLancamento, roundToTwoDecimals } from '@/lib/financialUtils';
 import {
   calcularKpisFluxoPeriodo,
   calcularSaldosTodasContas,
@@ -218,8 +218,7 @@ export default function ExecucaoOrcamentaria() {
     const cartaoCreditoPendente = l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
     const lancamentoRealizado = l.status === 'Pago' || !!l.data_pagamento;
     if (!lancamentoRealizado && !cartaoCreditoPendente) return false;
-    const dataAncora = cartaoCreditoPendente ? l.data_liquidacao_prevista || l.data_vencimento : l.data_pagamento || l.data_vencimento;
-    const dataKey = dataAncora ? toLocalDateKey(dataAncora) : null;
+    const dataKey = getDataChaveLancamento(l);
     if ((ds || de) && !dataKey) return false;
     if (ds && dataKey < ds) return false;
     if (de && dataKey > de) return false;

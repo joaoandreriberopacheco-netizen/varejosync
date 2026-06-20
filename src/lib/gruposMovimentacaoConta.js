@@ -1,5 +1,5 @@
 import { toLocalDateKey } from '@/components/utils/dateUtils';
-import { sortLancamentosPorCodigo } from '@/lib/financialUtils';
+import { getDataChaveLancamento, sortLancamentosPorCodigo } from '@/lib/financialUtils';
 import {
   contaUsaRegraCaixaPDV,
   idsMovimentosComLancamentoFinanceiro,
@@ -114,7 +114,11 @@ export function normalizarMovimentoCaixaParaLinha(mov) {
 }
 
 function dataChaveMovimento(mov) {
-  const data = mov.data_pagamento || mov.data_vencimento || mov.created_date;
+  if (mov?.origem !== 'movimento' && !mov?.conta_id) {
+    const chaveLanc = getDataChaveLancamento(mov);
+    if (chaveLanc) return chaveLanc;
+  }
+  const data = mov.data_lancamento || mov.data_pagamento || mov.data_vencimento || mov.created_date;
   return data ? toLocalDateKey(data) : null;
 }
 
@@ -145,8 +149,7 @@ export function montarGruposFluxoCaixa({
 
   const map = {};
   lancamentos.forEach((l) => {
-    const dr = l.data_pagamento || l.data_vencimento;
-    const k = dr ? toLocalDateKey(dr) : 'sem-data';
+    const k = getDataChaveLancamento(l) || 'sem-data';
     (map[k] = map[k] || []).push(l);
   });
 
@@ -232,7 +235,7 @@ export function montarGruposPorDiaConta({
     .map((dia) => {
       const brutos = porDia[dia];
       const contasById = { [conta.id]: conta };
-      const items = sortLancamentosPorDescricao(brutos).map((m) => {
+      const items = sortLancamentosPorCodigo(brutos).map((m) => {
         const linha = m.origem === 'movimento' ? normalizarMovimentoCaixaParaLinha(m) : m;
         return projetarLinhaFluxoCaixa(linha);
       });
