@@ -1,31 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { LayoutGrid, ChevronLeft } from 'lucide-react';
+import { LayoutGrid, ChevronLeft, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { dataHoje } from '@/components/utils/dateUtils';
+import { dateRangeFinanceiro } from '@/lib/periodoFinanceiro';
 import { montarCorteDiarioMapa, ordenarContasCorteDiario } from '@/lib/corteDiarioMapa';
 import { contaUsaRegraCaixaPDV } from '@/lib/saldoContaFinanceira';
 import PrintDialogFilters from '@/components/financeiro/PrintDialogFilters';
 import CorteDiarioPainel from './CorteDiarioPainel';
-
-function dateRangeFromFilter(periodo, customStart, customEnd) {
-  const hoje = dataHoje();
-  if (periodo === 'hoje') return { dataInicio: hoje, dataFim: hoje };
-  if (periodo === 'ontem') {
-    const d = new Date(`${hoje}T12:00:00`);
-    d.setDate(d.getDate() - 1);
-    const ontem = d.toISOString().slice(0, 10);
-    return { dataInicio: ontem, dataFim: ontem };
-  }
-  if (periodo === 'periodo' && customStart && customEnd) {
-    return { dataInicio: customStart, dataFim: customEnd };
-  }
-  if (periodo === 'periodo' && customStart) {
-    return { dataInicio: customStart, dataFim: customStart };
-  }
-  return { dataInicio: hoje, dataFim: hoje };
-}
 
 function contasPadraoCorte(contas = []) {
   const ativas = contas.filter((c) => c.ativo !== false);
@@ -46,11 +28,16 @@ export default function CorteDiarioDialog({
   contas = [],
   lancamentos = [],
   movimentos = [],
+  initialPeriodo = 'hoje',
+  initialCustomStart = '',
+  initialCustomEnd = '',
+  initialContasSel = null,
+  onPrintExtratoLista,
 }) {
   const [etapa, setEtapa] = useState('config');
-  const [periodo, setPeriodo] = useState('hoje');
-  const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
+  const [periodo, setPeriodo] = useState(initialPeriodo);
+  const [customStart, setCustomStart] = useState(initialCustomStart);
+  const [customEnd, setCustomEnd] = useState(initialCustomEnd);
   const [contasSel, setContasSel] = useState([]);
 
   const contasOrdenadas = useMemo(
@@ -63,15 +50,16 @@ export default function CorteDiarioDialog({
       setEtapa('config');
       return;
     }
-    setContasSel((prev) => (prev.length ? prev : contasPadraoCorte(contas)));
-    setPeriodo('hoje');
-    setCustomStart('');
-    setCustomEnd('');
-  }, [open, contas]);
+    setPeriodo(initialPeriodo);
+    setCustomStart(initialCustomStart);
+    setCustomEnd(initialCustomEnd);
+    const padrao = initialContasSel?.length ? initialContasSel : contasPadraoCorte(contas);
+    setContasSel(padrao);
+  }, [open, contas, initialPeriodo, initialCustomStart, initialCustomEnd, initialContasSel]);
 
   const mapa = useMemo(() => {
     if (etapa !== 'painel' || !contasSel.length) return null;
-    const { dataInicio, dataFim } = dateRangeFromFilter(periodo, customStart, customEnd);
+    const { dataInicio, dataFim } = dateRangeFinanceiro(periodo, customStart, customEnd);
     return montarCorteDiarioMapa({
       contas,
       lancamentos,
@@ -82,6 +70,13 @@ export default function CorteDiarioDialog({
     });
   }, [etapa, contas, lancamentos, movimentos, contasSel, periodo, customStart, customEnd]);
 
+  const periodoResumo = useMemo(() => {
+    const { dataInicio, dataFim } = dateRangeFinanceiro(periodo, customStart, customEnd);
+    if (!dataInicio && !dataFim) return 'Todo o período';
+    if (dataInicio === dataFim) return dataInicio;
+    return `${dataInicio} até ${dataFim}`;
+  }, [periodo, customStart, customEnd]);
+
   const toggleConta = (id) => {
     setContasSel((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
@@ -90,6 +85,7 @@ export default function CorteDiarioDialog({
 
   const emitirMapa = () => {
     if (!contasSel.length) return;
+    if (periodo === 'periodo' && !customStart) return;
     setEtapa('painel');
   };
 
@@ -123,12 +119,12 @@ export default function CorteDiarioDialog({
             <div>
               <DialogTitle className="flex items-center gap-2 font-glacial text-xl text-foreground">
                 <LayoutGrid className="h-5 w-5" />
-                {etapa === 'painel' ? 'Mapa do corte diário' : 'Corte diário'}
+                {etapa === 'painel' ? 'Mapa do corte diário' : 'Relatório — Corte diário'}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
                 {etapa === 'painel'
-                  ? 'Visão relacional em T: PDV, Caixa Geral e contas bancárias.'
-                  : 'Escolha o período e as contas. O mapa mostra apenas o que já está líquido.'}
+                  ? 'Palitos em T: PDV à esquerda, Caixa Geral no centro, bancos à direita.'
+                  : 'Mapa relacional do que já está líquido — não é a lista em PDF.'}
               </DialogDescription>
             </div>
           </div>
@@ -152,8 +148,11 @@ export default function CorteDiarioDialog({
               />
 
               <div className="rounded-[24px] bg-muted/40 p-3 dark:bg-muted/60">
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Ordem sugerida no mapa
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Contas no mapa
+                </p>
+                <p className="mb-2 text-[11px] text-muted-foreground">
+                  Ordem: PDV → Caixa Geral → bancos
                 </p>
                 <div className="space-y-1">
                   {contasOrdenadas.map((conta) => (
@@ -181,11 +180,38 @@ export default function CorteDiarioDialog({
               <Button
                 type="button"
                 className="w-full rounded-2xl"
-                disabled={!contasSel.length}
+                disabled={!contasSel.length || (periodo === 'periodo' && !customStart)}
                 onClick={emitirMapa}
               >
-                Emitir mapa
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                Emitir mapa do corte
               </Button>
+
+              {periodo === 'periodo' && !customStart && (
+                <p className="text-center text-[11px] text-amber-700 dark:text-amber-400">
+                  Selecione a data inicial no período personalizado.
+                </p>
+              )}
+
+              {onPrintExtratoLista && (
+                <div className="border-t border-border/30 pt-4">
+                  <p className="mb-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Outro formato
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onPrintExtratoLista({ periodo, customStart, customEnd, contasSel });
+                    }}
+                    className="flex w-full items-center gap-3 rounded-2xl bg-muted/30 px-4 py-3 text-left text-xs text-muted-foreground hover:bg-muted/50"
+                  >
+                    <FileText className="h-4 w-4 shrink-0" />
+                    <span>
+                      Extrato em PDF (lista cronológica) — período: {periodoResumo}
+                    </span>
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <CorteDiarioPainel mapa={mapa} />

@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ArrowRight } from 'lucide-react';
 import CorteDiarioContaT from './CorteDiarioContaT';
 
 function formatPeriodoLabel(dataInicio, dataFim) {
-  if (!dataInicio && !dataFim) return 'Período completo';
+  if (!dataInicio && !dataFim) return 'Todo o período';
   if (dataInicio === dataFim) {
     try {
       return format(parseISO(dataInicio), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -31,8 +32,8 @@ export default function CorteDiarioPainel({ mapa }) {
         if (!destino) return;
         links.push({
           id: `${origem.contaId}-${saida.id}-${destino.contaId}`,
-          origemId: origem.contaId,
-          destinoId: destino.contaId,
+          origemNome: origem.contaNome,
+          destinoNome: destino.contaNome,
           valor: saida.valor,
         });
       });
@@ -44,80 +45,67 @@ export default function CorteDiarioPainel({ mapa }) {
     return (
       <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-6 py-12 text-center">
         <p className="text-sm text-muted-foreground">
-          Selecione pelo menos uma conta para gerar o mapa do corte diário.
+          Nenhuma movimentação encontrada para o período e contas selecionados.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-2xl border border-border/40 bg-muted/20 px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="space-y-4">
+      <div className="rounded-xl border border-border/40 bg-muted/15 px-4 py-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           Corte diário
         </p>
         <p className="mt-1 font-glacial text-lg font-semibold text-foreground">
           {formatPeriodoLabel(dataInicio, dataFim)}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-          Mapa relacional do que já está líquido em cada conta. Vendas do PDV aparecem compactas;
-          demais movimentos linha a linha.
-        </p>
       </div>
 
-      <div className="relative">
-        {transferencias.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-2 px-1">
-            {transferencias.map((link) => {
-              const origem = contas.find((c) => c.contaId === link.origemId);
-              const destino = contas.find((c) => c.contaId === link.destinoId);
-              if (!origem || !destino) return null;
-              return (
-                <span
-                  key={link.id}
-                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] text-foreground/85"
-                >
-                  {origem.contaNome} → {destino.contaNome}
-                  <span className="font-medium tabular-nums">R$ {formatValor(link.valor)}</span>
-                </span>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
-          {contas.map((conta) => (
-            <div key={conta.contaId} className="snap-start shrink-0">
-              <CorteDiarioContaT conta={conta} />
-            </div>
+      {transferencias.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {transferencias.map((link) => (
+            <span
+              key={link.id}
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[11px] text-foreground/90"
+            >
+              {link.origemNome}
+              <ArrowRight className="h-3 w-3 opacity-60" />
+              {link.destinoNome}
+              <span className="font-semibold tabular-nums">R$ {formatValor(link.valor)}</span>
+            </span>
           ))}
         </div>
+      )}
+
+      {/* Palitos lado a lado — PDV | Geral | Bancos */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {contas.map((conta) => (
+          <CorteDiarioContaT key={conta.contaId} conta={conta} />
+        ))}
       </div>
 
       {previstos.length > 0 && (
-        <section className="rounded-2xl border border-amber-500/25 bg-amber-500/5 px-4 py-3 dark:bg-amber-500/8">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800/90 dark:text-amber-300">
+        <section className="rounded-xl border border-amber-500/30 bg-amber-50/80 px-4 py-3 dark:bg-amber-950/20">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-900/80 dark:text-amber-300">
             A entrar / previsto
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Valores que ainda não estão líquidos no corte — não entram nos saldos finais acima.
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Não entra no saldo final do corte.
           </p>
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-2 space-y-1.5">
             {previstos.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-wrap items-baseline justify-between gap-2 text-xs"
+                className="flex flex-wrap items-baseline justify-between gap-2 text-[11px]"
               >
                 <span className="text-foreground/90">
                   {item.descricao}
                   {item.contaNome ? (
                     <span className="text-muted-foreground"> · {item.contaNome}</span>
                   ) : null}
-                  {item.data ? (
-                    <span className="text-muted-foreground"> · {item.data}</span>
-                  ) : null}
                 </span>
-                <span className="font-medium tabular-nums text-amber-800 dark:text-amber-300">
+                <span className="font-semibold tabular-nums text-amber-900 dark:text-amber-300">
                   R$ {formatValor(item.valor)}
                 </span>
               </li>

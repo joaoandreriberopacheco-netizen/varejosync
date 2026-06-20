@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { format, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { dateRangeFinanceiroCurto } from '@/lib/periodoFinanceiro';
 import {
   calcularKpisFluxoPeriodo,
   calcularSaldosTodasContas,
@@ -18,10 +19,8 @@ import {
   isLancamentoCancelado,
   isLancamentoRealizadoFluxo,
 } from '@/lib/lancamentoFinanceiroStatus';
-import { ptBR } from 'date-fns/locale';
 import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dateUtils';
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
-import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import CorteDiarioDialog from './corte-diario/CorteDiarioDialog';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
@@ -66,33 +65,7 @@ function parseDateKey(dateKey) {
   return new Date(`${dateKey}T12:00:00-05:00`);
 }
 
-function dateRange(periodo, cs, ce) {
-  const hojeKey = dataHoje();
-  const base = parseDateKey(hojeKey);
-  if (periodo === 'hoje') return { s: hojeKey, e: hojeKey };
-  if (periodo === 'ontem') {
-    const ontem = format(subDays(base, 1), 'yyyy-MM-dd');
-    return { s: ontem, e: ontem };
-  }
-  if (periodo === 'semana') {
-    return {
-      s: format(startOfWeek(base, { locale: ptBR }), 'yyyy-MM-dd'),
-      e: format(endOfWeek(base, { locale: ptBR }), 'yyyy-MM-dd')
-    };
-  }
-  if (periodo === 'mes') {
-    return {
-      s: format(startOfMonth(base), 'yyyy-MM-dd'),
-      e: format(endOfMonth(base), 'yyyy-MM-dd')
-    };
-  }
-  if (periodo === 'tudo') return { s: null, e: null };
-  if (periodo === 'periodo') return { s: cs || null, e: ce || null };
-  return {
-    s: format(startOfMonth(base), 'yyyy-MM-dd'),
-    e: format(endOfMonth(base), 'yyyy-MM-dd')
-  };
-}
+const dateRange = dateRangeFinanceiroCurto;
 
 const FAB_ITEMS = [
   { tipo: 'Receita', icon: ArrowDownLeft, label: 'Receita' },
@@ -119,7 +92,6 @@ export default function ExecucaoOrcamentaria() {
   const [novoTipo, setNovoTipo] = useState('Despesa');
   const [detalhe, setDetalhe] = useState(null);
   const [conciliacaoConta, setConciliacaoConta] = useState(null);
-  const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [showCorteDiario, setShowCorteDiario] = useState(false);
   const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'contas'
   const [abaContas, setAbaContas] = useState('contas');
@@ -398,22 +370,136 @@ export default function ExecucaoOrcamentaria() {
     return 'Nenhuma conta';
   }, [contas, contasSel]);
 
-  const filtrosDesc = useMemo(() => {
-    const partes = [periodoLabel, contasSelecionadasLabel];
-    if (tiposSel.length) partes.push(`Tipos: ${tiposSel.join(', ')}`);
-    if (statusSel.length) partes.push(`Status: ${statusSel.join(', ')}`);
-    if (pendentes) partes.push('Conciliação pendente');
-    if (cmvOnly) partes.push('Somente CMV');
-    if (search) partes.push(`Busca: ${search}`);
-    if (mostrarHistoricoAnterior) partes.push('Histórico completo');
-    return partes.join(' · ');
-  }, [periodoLabel, contasSelecionadasLabel, tiposSel, statusSel, pendentes, cmvOnly, search, mostrarHistoricoAnterior]);
+  const buildGruposComFiltros = useCallback(({
+    periodoFiltro,
+    csFiltro,
+    ceFiltro,
+    contasSelFiltro,
+    tiposSelFiltro = [],
+    statusSelFiltro = [],
+    pendentesFiltro = false,
+    cmvOnlyFiltro = false,
+    searchFiltro = '',
+  }) => {
+    const { s: dsF, e: deF } = dateRange(periodoFiltro, csFiltro, ceFiltro);
+    const contasBuscaF = searchFiltro
+      ? contasMatchBuscaFluxo(searchFiltro, contasAtivas)
+      : contasAtivas;
+    const contasSelBuscaF = contasSelEfetivasFluxo(contasSelFiltro, contasAtivas, contasBuscaF);
+    const contasFiltroIdsF = idsFiltroContasFluxo(contasSelFiltro, contasSelBuscaF);
+    const contasVisiveisF = contasVisiveisFluxo(contasSelFiltro, contasAtivas, contasSelBuscaF);
 
-  const handlePrint = async () => {
+    const filtradosF = lancs.filter((l) => {
+      if (isLancamentoCancelado(l) && !statusSelFiltro.includes('Cancelado')) return false;
+      if (!isLancamentoRealizadoFluxo(l)) return false;
+      const dataKey = getDataAncoraFluxoKey(l);
+      if ((dsF || deF) && !dataKey) return false;
+      if (dsF && dataKey < dsF) return false;
+      if (deF && dataKey > deF) return false;
+      if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
+      if (contasSelFiltro.length && !lancamentoPertenceContasSelecionadas(l, contasSelFiltro, contasById)) return false;
+      if (tiposSelFiltro.length) {
+        const matchTipo = tiposSelFiltro.includes(l.tipo);
+        const matchTransf = tiposSelFiltro.includes('Transferência') && isTransferenciaEntreContas(l);
+        if (!matchTipo && !matchTransf) return false;
+      }
+      if (statusSelFiltro.length && !statusSelFiltro.includes(l.status)) return false;
+      if (pendentesFiltro && l.status_conciliacao !== 'Pendente') return false;
+      if (cmvOnlyFiltro && !l.is_custo_mercadoria) return false;
+      if (searchFiltro && !lancamentoPassaBuscaFluxo(l, searchFiltro, contasAtivas, contasById)) return false;
+      return true;
+    });
+
+    const movimentosFiltradosF = movimentos.filter((m) => {
+      if (contasFiltroIdsF.length && !contasFiltroIdsF.includes(m.conta_id)) return false;
+      const dataKey = getDataMovimentoCaixa(m) ? toLocalDateKey(getDataMovimentoCaixa(m)) : null;
+      if ((dsF || deF) && !dataKey) return false;
+      if (dsF && dataKey < dsF) return false;
+      if (deF && dataKey > deF) return false;
+      if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
+      return true;
+    });
+
+    const kpisF = (() => {
+      const baseKpis = calcularKpisFluxoPeriodo(
+        filtradosF,
+        movimentosFiltradosF,
+        lancs,
+        contasById,
+        contasFiltroIdsF,
+      );
+      const saldosMap = calcularSaldosTodasContas(contasVisiveisF, lancs, movimentos);
+      const saldoContas = contasVisiveisF.reduce((acc, c) => acc + (saldosMap[c.id] || 0), 0);
+      return { ...baseKpis, saldoContas: roundToTwoDecimals(saldoContas) };
+    })();
+
+    const hStr = dataHoje();
+    const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
+    const baseGrupos = montarGruposFluxoCaixa({
+      lancamentos: filtradosF,
+      movimentos: movimentosFiltradosF,
+      todosLancamentos: lancs,
+      contas,
+      contasSel: contasFiltroIdsF,
+      contasById,
+      formatGrupoLabel: formatFinanceiroGrupoLabel,
+      hStr,
+      oStr,
+      ordemLancamentos,
+    });
+    const gruposF = prepararGruposFluxoComSaldoAcumulado({
+      grupos: baseGrupos,
+      saldoContasAtual: kpisF.saldoContas,
+      lancamentos: lancs,
+      movimentos,
+      todosLancamentos: lancs,
+      contas,
+      contasSel: contasFiltroIdsF,
+      contasById,
+    });
+
+    return { grupos: gruposF, kpis: kpisF, ds: dsF, de: deF, contasSelFiltro };
+  }, [
+    lancs,
+    movimentos,
+    contas,
+    contasAtivas,
+    contasById,
+    contasBuscaFluxo,
+    ordemLancamentos,
+    mostrarHistoricoAnterior,
+    dataCorteHistorico,
+  ]);
+
+  const handlePrintExtratoLista = useCallback(async ({
+    periodo: periodoPrint,
+    customStart: csPrint,
+    customEnd: cePrint,
+    contasSel: contasSelPrint,
+  }) => {
+    const { grupos: gruposPrint, kpis: kpisPrint, ds: dsP, de: deP } = buildGruposComFiltros({
+      periodoFiltro: periodoPrint,
+      csFiltro: csPrint,
+      ceFiltro: cePrint,
+      contasSelFiltro: contasSelPrint,
+    });
+
+    const partes = [];
+    if (dsP === deP && dsP) partes.push(dsP);
+    else if (dsP && deP) partes.push(`${dsP} até ${deP}`);
+    else partes.push('Todo o período');
+    if (contasSelPrint?.length) {
+      partes.push(
+        contasSelPrint.length === contasAtivas.length
+          ? 'Todas as contas'
+          : `${contasSelPrint.length} conta(s)`,
+      );
+    }
+
     const response = await gerarExtratoFluxoCaixa({
-      grupos,
-      filtros_desc: filtrosDesc,
-      kpis,
+      grupos: gruposPrint,
+      filtros_desc: partes.join(' · '),
+      kpis: kpisPrint,
     });
     const blob = new Blob([response.data], { type: 'application/pdf' });
     const url = window.URL.createObjectURL(blob);
@@ -422,8 +508,7 @@ export default function ExecucaoOrcamentaria() {
     link.download = 'ExtratoFluxoCaixa.pdf';
     link.click();
     window.URL.revokeObjectURL(url);
-    setShowPrintDialog(false);
-  };
+  }, [buildGruposComFiltros, contasAtivas.length]);
 
   const contasPagarAtiva = aba === 'contas' && abaContas === 'contas';
   const caixasAtiva = aba === 'caixas';
@@ -461,9 +546,9 @@ export default function ExecucaoOrcamentaria() {
             <p className="text-lg font-semibold leading-none text-foreground font-glacial md:text-2xl">Financeiro</p>
             {aba === 'fluxo' && (
               <button
-                onClick={() => setShowPrintDialog(true)}
+                onClick={() => setShowCorteDiario(true)}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg p38-field-surface border-0 hover:opacity-90 transition-opacity"
-                aria-label="Imprimir extrato"
+                aria-label="Relatório de corte diário"
               >
                 <Printer className="w-4 h-4 text-foreground/90" />
               </button>
@@ -613,20 +698,17 @@ export default function ExecucaoOrcamentaria() {
             onClose={() => { setShowNovoFluxo(false); setFabOpen(false); setUrlDescricao(''); setUrlValor(''); setUrlReferenciaId(''); setUrlReferenciaTipo(''); }}
             onSaved={load}
           />
-          <FluxoCaixaPrintDialog
-            open={showPrintDialog}
-            onOpenChange={setShowPrintDialog}
-            onPrintExtratoCompleto={handlePrint}
-            onPrintExtratoFiltrado={handlePrint}
-            onOpenCorteDiario={() => setShowCorteDiario(true)}
-            contas={contasAtivas}
-          />
           <CorteDiarioDialog
             open={showCorteDiario}
             onOpenChange={setShowCorteDiario}
             contas={contas}
             lancamentos={lancs}
             movimentos={movimentos}
+            initialPeriodo={periodo}
+            initialCustomStart={cs}
+            initialCustomEnd={ce}
+            initialContasSel={contasSel}
+            onPrintExtratoLista={handlePrintExtratoLista}
           />
 
           <Dialog open={conciliacaoConta != null} onOpenChange={(open) => !open && setConciliacaoConta(null)}>

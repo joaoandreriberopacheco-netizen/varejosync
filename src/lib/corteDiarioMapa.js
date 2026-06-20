@@ -117,9 +117,7 @@ function isVendaDinheiroPDV(mov, conta) {
   if (mov.tipo !== 'Receita') return false;
   if (isTransferenciaEntreContas(mov)) return false;
   if (formaPagamentoNaoDinheiroFisico(mov)) return false;
-  if (mov.referencia_tipo === 'PedidoVenda') return true;
-  const tags = Array.isArray(mov.tags) ? mov.tags : [];
-  return tags.includes('PDV') || tags.includes('VENDA');
+  return true;
 }
 
 function compactarEntradasPDV(entradas, conta) {
