@@ -605,13 +605,14 @@ export default function ExecucaoOrcamentaria() {
               lancamento={detalhe}
               contas={contas}
               onClose={() => setDetalhe(null)}
-              onSaved={(opts) => {
-                if (opts?.keepOpen && opts?.updated) {
-                  setDetalhe(opts.updated);
-                  load();
+              onSaved={async (opts) => {
+                const refreshed = await load();
+                if (opts?.keepOpen) {
+                  const id = opts?.lancamentoId || opts?.updated?.id;
+                  const fresh = refreshed?.ls?.find((l) => l.id === id) || opts?.updated;
+                  if (fresh) setDetalhe(fresh);
                   return;
                 }
-                load();
                 setDetalhe(null);
               }}
             />

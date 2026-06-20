@@ -3,7 +3,12 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatarSoData, dataHoje, toLocalDateKey, vencimentoComMesmoDiaNoMes, isoParaInputDatetimeLocal, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
-import { formatarCodigoLancamentoLegivel, prepararMetadadosLancamentoFinanceiro } from '@/lib/financialUtils';
+import { formatarCodigoLancamentoLegivel } from '@/lib/financialUtils';
+import {
+  ordemLancamentoFoiPersistida,
+  prepararPayloadOrdemLancamento,
+  resolverDataLancamentoInput,
+} from '@/lib/lancamentoOrdemMeta';
 
 const mesAnoLabel = (dataStr) => {
   if (!dataStr) return '';
@@ -58,8 +63,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const [cadValor, setCadValor] = useState(String(lancamento.valor ?? ''));
   const [cadObs, setCadObs] = useState(lancamento.observacoes || '');
   const dataLancamentoOriginal = useMemo(
-    () => isoParaInputDatetimeLocal(lancamento.data_lancamento) || isoParaInputDatetimeLocal(lancamento.created_date) || '',
-    [lancamento.id, lancamento.data_lancamento, lancamento.created_date],
+    () => resolverDataLancamentoInput(lancamento),
+    [lancamento],
   );
   const [dataLancamentoLocal, setDataLancamentoLocal] = useState(dataLancamentoOriginal);
   const [dataLancamentoBase, setDataLancamentoBase] = useState(dataLancamentoOriginal);
@@ -124,7 +129,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const payloadDataLancamentoFromInput = (value = dataLancamentoLocal) => {
     const iso = datetimeLocalParaISO(value);
     if (!iso) return null;
-    return prepararMetadadosLancamentoFinanceiro({ dataLancamento: iso });
+    return prepararPayloadOrdemLancamento({ dataLancamento: iso, tags: lancamento.tags });
   };
 
   const metaDataLancamentoIfDirty = () => {
@@ -133,10 +138,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   };
 
   const aplicarDataLancamentoSalva = (updated) => {
-    const salvo =
-      isoParaInputDatetimeLocal(updated?.data_lancamento) ||
-      isoParaInputDatetimeLocal(updated?.created_date) ||
-      dataLancamentoLocal;
+    const salvo = resolverDataLancamentoInput(updated) || dataLancamentoLocal;
     setDataLancamentoBase(salvo);
     setDataLancamentoLocal(salvo);
   };
@@ -146,7 +148,19 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     if (!payload) {
       throw new Error('Data/hora inválida');
     }
-    const updated = await base44.entities.LancamentoFinanceiro.update(lancamento.id, payload);
+
+    let updated = await base44.entities.LancamentoFinanceiro.update(lancamento.id, payload);
+
+    if (!ordemLancamentoFoiPersistida(updated, payload.codigo_lancamento)) {
+      updated = await base44.entities.LancamentoFinanceiro.update(lancamento.id, {
+        tags: payload.tags,
+      });
+    }
+
+    if (!ordemLancamentoFoiPersistida(updated, payload.codigo_lancamento)) {
+      throw new Error('Ordem do lançamento não foi gravada no servidor');
+    }
+
     aplicarDataLancamentoSalva(updated);
     return updated;
   };
@@ -394,7 +408,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     try {
       const updated = await salvarDataLancamento();
       toast({ title: 'Data/hora do lançamento atualizada!', className: 'bg-muted text-foreground' });
-      onSaved?.({ keepOpen: true, updated });
+      onSaved?.({ keepOpen: true, updated, lancamentoId: lancamento.id });
     } catch {
       toast({ title: 'Não foi possível guardar', variant: 'destructive' });
     } finally {

@@ -4,6 +4,7 @@ import {
   codigoOrdenacaoDesdeInstante,
   toLocalDateKey,
 } from '@/components/utils/dateUtils';
+import { codigoOrdemLancamento, diaChaveOrdemLancamento } from '@/lib/lancamentoOrdemMeta';
 
 /**
  * Arredonda número (ou string numérica) para 2 casas decimais.
@@ -55,10 +56,8 @@ export const parseFinancialValue = (value) => {
  * Prioriza `data_lancamento` (data/hora informada pelo utilizador).
  */
 export function getDataChaveLancamento(l) {
-  if (l?.data_lancamento) {
-    const k = toLocalDateKey(l.data_lancamento);
-    if (k) return k;
-  }
+  const ordem = diaChaveOrdemLancamento(l);
+  if (ordem) return ordem;
   if (l?.forma_pagamento_tipo === 'Cartão Crédito' && l?.status_conciliacao === 'Pendente') {
     const d = l.data_liquidacao_prevista || l.data_vencimento;
     if (d) return toLocalDateKey(d);
@@ -73,11 +72,8 @@ export function getDataChaveLancamento(l) {
  * ou data de pagamento/vencimento (00:00:00).
  */
 export function codigoOrdenacaoLancamento(item) {
-  if (item?.codigo_lancamento) return String(item.codigo_lancamento);
-  if (item?.data_lancamento) {
-    const codigo = codigoOrdenacaoDesdeInstante(item.data_lancamento);
-    if (codigo) return codigo;
-  }
+  const codigo = codigoOrdemLancamento(item);
+  if (codigo) return codigo;
   if (item?.created_date) {
     const codigo = codigoOrdenacaoDesdeInstante(item.created_date);
     if (codigo) return codigo;

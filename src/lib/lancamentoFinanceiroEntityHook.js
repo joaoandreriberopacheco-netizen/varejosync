@@ -1,25 +1,35 @@
 import { prepararMetadadosLancamentoFinanceiro } from '@/lib/financialUtils';
+import { mergeTagsOrdem } from '@/lib/lancamentoOrdemMeta';
 
 const ENRICHED = Symbol('lancamentoFinanceiroEnriched');
 
-function enrichCreatePayload(payload) {
-  if (!payload || typeof payload !== 'object' || payload.codigo_lancamento) {
-    return payload;
-  }
+function enrichOrdemPayload(payload) {
   const meta = prepararMetadadosLancamentoFinanceiro({ dataLancamento: payload.data_lancamento });
-  return { ...payload, ...meta };
+  const codigo = payload.codigo_lancamento || meta.codigo_lancamento;
+  return {
+    ...payload,
+    data_lancamento: payload.data_lancamento ?? meta.data_lancamento,
+    codigo_lancamento: codigo,
+    tags: mergeTagsOrdem(payload.tags, codigo),
+  };
+}
+
+function enrichCreatePayload(payload) {
+  if (!payload || typeof payload !== 'object') return payload;
+  return enrichOrdemPayload(payload);
 }
 
 function enrichUpdatePayload(payload) {
-  if (!payload || typeof payload !== 'object' || !('data_lancamento' in payload)) {
-    return payload;
+  if (!payload || typeof payload !== 'object') return payload;
+  if ('data_lancamento' in payload || 'codigo_lancamento' in payload) {
+    return enrichOrdemPayload(payload);
   }
-  const meta = prepararMetadadosLancamentoFinanceiro({ dataLancamento: payload.data_lancamento });
-  return { ...payload, ...meta };
+  return payload;
 }
 
 /**
- * Garante `data_lancamento` + `codigo_lancamento` em create/update de LancamentoFinanceiro.
+ * Garante metadados de ordenação em create/update de LancamentoFinanceiro.
+ * Inclui tag `__ordem:AAAAMMDDHHMMSS` para persistir no Base44 legado (sem colunas novas).
  */
 export function wrapLegacyClientLancamentoFinanceiro(client) {
   if (!client?.entities?.LancamentoFinanceiro) return client;

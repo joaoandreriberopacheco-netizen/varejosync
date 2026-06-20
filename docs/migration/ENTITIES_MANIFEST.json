@@ -234,6 +234,18 @@
           "pg_type": "TEXT"
         },
         {
+          "name": "data_lancamento",
+          "type": "string (ISO8601)",
+          "pg_type": "TIMESTAMPTZ",
+          "description": "Instante do lançamento para ordenação no fluxo (editável)"
+        },
+        {
+          "name": "codigo_lancamento",
+          "type": "string",
+          "pg_type": "TEXT",
+          "description": "Código AAAAMMDDHHMMSS para ordenação no fluxo de caixa"
+        },
+        {
           "name": "observacoes",
           "type": "string",
           "pg_type": "TEXT"
