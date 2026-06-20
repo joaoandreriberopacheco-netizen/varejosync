@@ -37,9 +37,31 @@ Vite binds to **localhost:5173** by default (no `--host`). For browser testing f
 
 ### Environment variables
 
-- No `.env` files are committed. For **Base44** API access, configure `VITE_BASE44_APP_ID`, `VITE_BASE44_BACKEND_URL`, and auth token per `docs/migration/BASE44_TO_SUPABASE_GITHUB.md` and Base44 docs.
+- No `.env` files are committed. Copy `.env.example` → `.env.local` for scripts locais.
+- For **Base44** API access, configure `VITE_BASE44_APP_ID`, `VITE_BASE44_BACKEND_URL`, and auth per `docs/migration/BASE44_TO_SUPABASE_GITHUB.md`.
 - Optional **Supabase** hybrid testing: see `docs/migration/SUPABASE_TEST_SETUP.md` (`supabase start`, `VITE_USE_SUPABASE_ENTITIES=true`).
 - Build/dev may log `[base44] Proxy not enabled (VITE_BASE44_APP_BASE_URL not set)` — expected without proxy env; build still succeeds.
+
+### Base44 — acesso à base (Cloud Agent)
+
+Para o agente consultar **dados reais** (lançamentos, auditoria de fluxo, flares):
+
+1. **Cursor** → definições do **Cloud Agent** / **Secrets** do repositório (não colar tokens no chat).
+2. Adicionar variáveis (mesmos nomes que `.env.example`):
+
+| Variável | Obrigatório | Valor |
+|----------|-------------|--------|
+| `VITE_BASE44_APP_ID` | Sim | App ID P38 (painel Base44 ou localStorage `app_id`) |
+| `VITE_BASE44_BACKEND_URL` | Sim | `https://p38.base44.app` |
+| `BASE44_ACCESS_TOKEN` | Um dos dois | JWT — no browser logado: DevTools → Application → Local Storage → `base44_access_token` |
+| `BASE44_API_KEY` | Um dos dois | Chave API (mais estável; expira menos que JWT) |
+
+3. Reiniciar ou abrir nova sessão Cloud Agent após gravar secrets.
+4. O agente pode correr, por exemplo:
+   - `npm run audit:fluxo-dia -- --dia=2026-06-19` — audita entradas/saídas de um dia
+   - `npm run flare:export` — exporta flares pendentes
+
+**Segurança:** nunca commitar `.env.local` nem relatórios com dados sensíveis (`docs/audit/` está no `.gitignore`).
 
 ### Lint / typecheck expectations
 

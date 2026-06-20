@@ -1,6 +1,7 @@
 #env
 .env
 .env.*
+!.env.example
 
 # Logs
 logs
@@ -29,6 +30,9 @@ dist-ssr
 
 # Export local da fila Flare (pode conter dados sensíveis)
 docs/flare-export/flare-pending.json
+
+# Relatórios de auditoria com dados financeiros reais
+docs/audit/
 
 # Clone só-leitura do A29 para comparação (ver docs/reference-a29-erp/README.md)
 docs/reference-a29-erp/checkout/

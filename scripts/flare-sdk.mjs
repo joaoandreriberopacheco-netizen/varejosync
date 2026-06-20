@@ -5,27 +5,26 @@ import { createClient } from '@base44/sdk';
 import { mkdirSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { getBase44Env, loadDotEnvFiles, REPO_ROOT } from './base44-env.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-export const REPO_ROOT = join(__dirname, '..');
+export { REPO_ROOT };
 export const DEFAULT_EXPORT_REL = 'docs/flare-export/flare-pending.json';
 
 export function getFlareEnv() {
-  const appId = process.env.VITE_BASE44_APP_ID || process.env.BASE44_APP_ID || '';
-  const serverUrl =
-    process.env.VITE_BASE44_BACKEND_URL || process.env.BASE44_BACKEND_URL || 'https://base44.app';
-  const token = process.env.BASE44_ACCESS_TOKEN || process.env.ACCESS_TOKEN || '';
-  return { appId, serverUrl, token };
+  loadDotEnvFiles();
+  return getBase44Env();
 }
 
 export function tryFlareClient() {
-  const { appId, serverUrl, token } = getFlareEnv();
-  if (!appId || !token) return null;
+  const { appId, serverUrl, token, apiKey } = getFlareEnv();
+  if (!appId || (!token && !apiKey)) return null;
   return createClient({
     appId,
     serverUrl,
-    token,
-    requiresAuth: true,
+    ...(token ? { token } : {}),
+    ...(apiKey ? { headers: { api_key: apiKey } } : {}),
+    requiresAuth: Boolean(token || apiKey),
   });
 }
 
@@ -33,8 +32,9 @@ export function requireFlareClient() {
   const client = tryFlareClient();
   if (!client) {
     console.error(
-      '[flare] Defina VITE_BASE44_APP_ID e BASE44_ACCESS_TOKEN (ou ACCESS_TOKEN). ' +
-        'No browser: Application > Local Storage > base44_access_token / app_id.'
+      '[flare] Defina VITE_BASE44_APP_ID e BASE44_ACCESS_TOKEN (ou BASE44_API_KEY). ' +
+        'No browser: Application > Local Storage > base44_access_token / app_id. ' +
+        'No Cloud Agent: Secrets do repositório (ver AGENTS.md).'
     );
     process.exit(1);
   }
