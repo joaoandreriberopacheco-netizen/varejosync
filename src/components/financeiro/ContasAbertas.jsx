@@ -882,7 +882,22 @@ export function ContasAbertasListaPane() {
       </div>
 
       <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} origemContaPagar onClose={() => setShowNovo(false)} onSaved={load} />
-      {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
+      {detalhe && (
+        <LancamentoDetalheDialog
+          lancamento={detalhe}
+          contas={contas}
+          onClose={() => setDetalhe(null)}
+          onSaved={(opts) => {
+            if (opts?.keepOpen && opts?.updated) {
+              setDetalhe(opts.updated);
+              load();
+              return;
+            }
+            load();
+            setDetalhe(null);
+          }}
+        />
+      )}
       <CorrigirDataLoteDialog
         open={showCorrigirDataLote}
         onOpenChange={setShowCorrigirDataLote}

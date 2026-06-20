@@ -600,7 +600,22 @@ export default function ExecucaoOrcamentaria() {
             </button>
           </div>
 
-          {detalhe && <LancamentoDetalheDialog lancamento={detalhe} contas={contas} onClose={() => setDetalhe(null)} onSaved={() => { load(); setDetalhe(null); }} />}
+          {detalhe && (
+            <LancamentoDetalheDialog
+              lancamento={detalhe}
+              contas={contas}
+              onClose={() => setDetalhe(null)}
+              onSaved={(opts) => {
+                if (opts?.keepOpen && opts?.updated) {
+                  setDetalhe(opts.updated);
+                  load();
+                  return;
+                }
+                load();
+                setDetalhe(null);
+              }}
+            />
+          )}
           <NovoLancamentoDialog
             open={showNovoFluxo}
             tipoInicial={novoTipo}

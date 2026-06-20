@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatarSoData, dataHoje, toLocalDateKey, vencimentoComMesmoDiaNoMes, isoParaInputDatetimeLocal, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
-import { formatarCodigoLancamentoLegivel } from '@/lib/financialUtils';
+import { formatarCodigoLancamentoLegivel, prepararMetadadosLancamentoFinanceiro } from '@/lib/financialUtils';
 
 const mesAnoLabel = (dataStr) => {
   if (!dataStr) return '';
@@ -62,6 +62,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     [lancamento.id, lancamento.data_lancamento, lancamento.created_date],
   );
   const [dataLancamentoLocal, setDataLancamentoLocal] = useState(dataLancamentoOriginal);
+  const [dataLancamentoBase, setDataLancamentoBase] = useState(dataLancamentoOriginal);
   const { toast } = useToast();
   const isCancelado = lancamento.status === 'Cancelado';
   const isReceita = lancamento.tipo === 'Receita';
@@ -102,6 +103,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     setCadValor(String(lancamento.valor ?? ''));
     setCadObs(lancamento.observacoes || '');
     setDataLancamentoLocal(dataLancamentoOriginal);
+    setDataLancamentoBase(dataLancamentoOriginal);
   }, [
     lancamento.id,
     lancamento.descricao,
@@ -111,7 +113,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     dataLancamentoOriginal,
   ]);
 
-  const dataLancamentoDirty = dataLancamentoLocal !== dataLancamentoOriginal;
+  const dataLancamentoDirty = dataLancamentoLocal !== dataLancamentoBase;
   const previewOrdemLancamento = useMemo(() => {
     if (!dataLancamentoLocal) return null;
     const iso = datetimeLocalParaISO(dataLancamentoLocal);
@@ -119,16 +121,34 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     return formatarCodigoLancamentoLegivel(codigoOrdenacaoDesdeInstante(iso));
   }, [dataLancamentoLocal]);
 
-  const metaDataLancamentoIfDirty = () => {
-    if (!dataLancamentoDirty) return {};
-    const iso = datetimeLocalParaISO(dataLancamentoLocal);
-    return iso ? { data_lancamento: iso } : {};
+  const payloadDataLancamentoFromInput = (value = dataLancamentoLocal) => {
+    const iso = datetimeLocalParaISO(value);
+    if (!iso) return null;
+    return prepararMetadadosLancamentoFinanceiro({ dataLancamento: iso });
   };
 
-  const salvarDataLancamentoSeDirty = async () => {
-    const meta = metaDataLancamentoIfDirty();
-    if (!meta.data_lancamento) return;
-    await base44.entities.LancamentoFinanceiro.update(lancamento.id, meta);
+  const metaDataLancamentoIfDirty = () => {
+    if (!dataLancamentoDirty) return {};
+    return payloadDataLancamentoFromInput() || {};
+  };
+
+  const aplicarDataLancamentoSalva = (updated) => {
+    const salvo =
+      isoParaInputDatetimeLocal(updated?.data_lancamento) ||
+      isoParaInputDatetimeLocal(updated?.created_date) ||
+      dataLancamentoLocal;
+    setDataLancamentoBase(salvo);
+    setDataLancamentoLocal(salvo);
+  };
+
+  const salvarDataLancamento = async () => {
+    const payload = payloadDataLancamentoFromInput();
+    if (!payload) {
+      throw new Error('Data/hora inválida');
+    }
+    const updated = await base44.entities.LancamentoFinanceiro.update(lancamento.id, payload);
+    aplicarDataLancamentoSalva(updated);
+    return updated;
   };
 
   const isPagoOriginal = isLancamentoPago(lancamento);
@@ -243,7 +263,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       });
       toast({ title: 'Valor atualizado!', className: 'bg-muted text-foreground' });
     } else if (dataLancamentoDirty) {
-      await salvarDataLancamentoSeDirty();
+      await salvarDataLancamento();
       toast({ title: 'Data/hora do lançamento atualizada!', className: 'bg-muted text-foreground' });
     }
     onSaved?.();
@@ -372,9 +392,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     }
     setSaving(true);
     try {
-      await salvarDataLancamentoSeDirty();
+      const updated = await salvarDataLancamento();
       toast({ title: 'Data/hora do lançamento atualizada!', className: 'bg-muted text-foreground' });
-      onSaved?.();
+      onSaved?.({ keepOpen: true, updated });
     } catch {
       toast({ title: 'Não foi possível guardar', variant: 'destructive' });
     } finally {
