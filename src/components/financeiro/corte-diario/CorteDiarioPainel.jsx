@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowRight } from 'lucide-react';
 import CorteDiarioContaT from './CorteDiarioContaT';
+import CorteDiarioSeta, { CorteDiarioArcos } from './CorteDiarioSeta';
 
 function formatPeriodoLabel(dataInicio, dataFim) {
   if (!dataInicio && !dataFim) return 'Todo o período';
@@ -20,26 +20,54 @@ function formatValor(valor) {
   return (valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function buildTransferencias(contas) {
+  const links = [];
+  contas.forEach((origem) => {
+    origem.saidas?.forEach((saida) => {
+      if (!saida.isTransferencia || !saida.transferenciaDestinoId) return;
+      const destino = contas.find((c) => c.contaId === saida.transferenciaDestinoId);
+      if (!destino) return;
+      links.push({
+        id: `${origem.contaId}-${saida.id}-${destino.contaId}`,
+        origemId: origem.contaId,
+        destinoId: destino.contaId,
+        origemNome: origem.contaNome,
+        destinoNome: destino.contaNome,
+        valor: saida.valor,
+      });
+    });
+  });
+  return links;
+}
+
+function agregarPorPar(links) {
+  const map = new Map();
+  links.forEach((link) => {
+    const key = `${link.origemId}→${link.destinoId}`;
+    const prev = map.get(key) || { ...link, valor: 0 };
+    prev.valor = Math.round((prev.valor + link.valor) * 100) / 100;
+    map.set(key, prev);
+  });
+  return map;
+}
+
 export default function CorteDiarioPainel({ mapa }) {
   const { contas = [], previstos = [], dataInicio, dataFim } = mapa || {};
 
-  const transferencias = useMemo(() => {
-    const links = [];
-    contas.forEach((origem) => {
-      origem.saidas?.forEach((saida) => {
-        if (!saida.isTransferencia || !saida.transferenciaDestinoId) return;
-        const destino = contas.find((c) => c.contaId === saida.transferenciaDestinoId);
-        if (!destino) return;
-        links.push({
-          id: `${origem.contaId}-${saida.id}-${destino.contaId}`,
-          origemNome: origem.contaNome,
-          destinoNome: destino.contaNome,
-          valor: saida.valor,
-        });
-      });
-    });
-    return links;
-  }, [contas]);
+  const transferencias = useMemo(() => buildTransferencias(contas), [contas]);
+  const porPar = useMemo(() => agregarPorPar(transferencias), [transferencias]);
+
+  const transferenciasArco = useMemo(
+    () => transferencias.filter((link) => {
+      const oi = contas.findIndex((c) => c.contaId === link.origemId);
+      const di = contas.findIndex((c) => c.contaId === link.destinoId);
+      return di > oi + 1;
+    }),
+    [transferencias, contas],
+  );
+
+  const somaPar = (origemId, destinoId) =>
+    porPar.get(`${origemId}→${destinoId}`)?.valor || 0;
 
   if (!contas.length) {
     return (
@@ -62,28 +90,50 @@ export default function CorteDiarioPainel({ mapa }) {
         </p>
       </div>
 
+      {/* Mapa relacional com setas — PDV → Geral → Bancos */}
+      <div className="overflow-x-auto pb-2">
+        <div className="inline-block min-w-full">
+          <CorteDiarioArcos contas={contas} links={transferenciasArco} />
+
+          <div className="flex items-stretch">
+            {contas.map((conta, index) => {
+              const proxima = contas[index + 1];
+              const valorSeta = proxima ? somaPar(conta.contaId, proxima.contaId) : 0;
+
+              return (
+                <React.Fragment key={conta.contaId}>
+                  <div className="w-[18rem] shrink-0">
+                    <CorteDiarioContaT conta={conta} />
+                  </div>
+                  {proxima && (
+                    <CorteDiarioSeta valor={valorSeta} ativa={valorSeta > 0} />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       {transferencias.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {transferencias.map((link) => (
-            <span
-              key={link.id}
-              className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[11px] text-foreground/90"
-            >
-              {link.origemNome}
-              <ArrowRight className="h-3 w-3 opacity-60" />
-              {link.destinoNome}
-              <span className="font-semibold tabular-nums">R$ {formatValor(link.valor)}</span>
-            </span>
-          ))}
+        <div className="rounded-xl border border-border/30 bg-muted/10 px-3 py-2">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Fluxo entre contas
+          </p>
+          <ul className="space-y-1">
+            {Array.from(porPar.values()).map((link) => (
+              <li key={`${link.origemId}-${link.destinoId}`} className="text-[11px] text-foreground/85">
+                <span className="font-medium">{link.origemNome}</span>
+                <span className="mx-1.5 text-primary">→</span>
+                <span className="font-medium">{link.destinoNome}</span>
+                <span className="ml-2 tabular-nums text-muted-foreground">
+                  R$ {formatValor(link.valor)}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
-
-      {/* Palitos lado a lado — PDV | Geral | Bancos */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {contas.map((conta) => (
-          <CorteDiarioContaT key={conta.contaId} conta={conta} />
-        ))}
-      </div>
 
       {previstos.length > 0 && (
         <section className="rounded-xl border border-amber-500/30 bg-amber-50/80 px-4 py-3 dark:bg-amber-950/20">

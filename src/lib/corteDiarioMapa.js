@@ -168,6 +168,10 @@ function montarLinhaCorte(mov, conta, contasById, paresTransferencia) {
   if (isTransf) {
     if (lado === 'saida') {
       transferenciaDestinoId = par?.conta_financeira_id || mov.conta_destino_id || null;
+      if (!transferenciaDestinoId && mov.origem === 'movimento' && isMovimentoTransferenciaCaixaPDV(mov)) {
+        const caixaGeral = Object.values(contasById).find((c) => c.is_caixa_geral);
+        transferenciaDestinoId = caixaGeral?.id || null;
+      }
     } else {
       transferenciaOrigemId = par?.conta_financeira_id || mov.conta_origem_id || null;
     }
