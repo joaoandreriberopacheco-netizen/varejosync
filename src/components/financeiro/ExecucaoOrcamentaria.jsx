@@ -692,7 +692,9 @@ export default function ExecucaoOrcamentaria() {
             }}
           />
 
-          {fabOpen && !showNovoFluxo && <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />}
+          {fabOpen && !showNovoFluxo && !showPrintDialog && !showCorteDiario && (
+            <div className="fixed inset-0 z-[54] bg-muted/55 backdrop-blur-[2px]" onClick={() => setFabOpen(false)} />
+          )}
           <div className="fixed right-4 z-[55] flex flex-col items-end gap-2 p38-bottom-fab1 lg:right-6">
             {fabOpen && FAB_ITEMS.map(({ tipo, icon: Icon, label }) => (
               <button key={tipo}
@@ -722,29 +724,6 @@ export default function ExecucaoOrcamentaria() {
             referenciaTipo={urlReferenciaTipo}
             onClose={() => { setShowNovoFluxo(false); setFabOpen(false); setUrlDescricao(''); setUrlValor(''); setUrlReferenciaId(''); setUrlReferenciaTipo(''); }}
             onSaved={load}
-          />
-          <FluxoCaixaPrintDialog
-            open={showPrintDialog}
-            onOpenChange={setShowPrintDialog}
-            initialFilters={printFilterState}
-            contas={contasAtivas}
-            onBalanceteDiario={abrirBalanceteDiario}
-            onExtratoPdf={handlePrintExtratoLista}
-          />
-          <CorteDiarioDialog
-            open={showCorteDiario}
-            onOpenChange={(next) => {
-              setShowCorteDiario(next);
-              if (!next) setCorteDiarioInitial(null);
-            }}
-            contas={contas}
-            lancamentos={lancs}
-            movimentos={movimentos}
-            initialPeriodo={corteDiarioInitial?.periodo ?? periodo}
-            initialCustomStart={corteDiarioInitial?.customStart ?? cs}
-            initialCustomEnd={corteDiarioInitial?.customEnd ?? ce}
-            initialContasSel={corteDiarioInitial?.contasSel ?? contasSel}
-            abrirDiretoNoMapa={!!corteDiarioInitial}
           />
 
           <Dialog open={conciliacaoConta != null} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
@@ -798,6 +777,30 @@ export default function ExecucaoOrcamentaria() {
         </Dialog>
         </>
       )}
+
+      <FluxoCaixaPrintDialog
+        open={showPrintDialog}
+        onOpenChange={setShowPrintDialog}
+        initialFilters={printFilterState}
+        contas={contasAtivas}
+        onBalanceteDiario={abrirBalanceteDiario}
+        onExtratoPdf={handlePrintExtratoLista}
+      />
+      <CorteDiarioDialog
+        open={showCorteDiario}
+        onOpenChange={(next) => {
+          setShowCorteDiario(next);
+          if (!next) setCorteDiarioInitial(null);
+        }}
+        contas={contas}
+        lancamentos={lancs}
+        movimentos={movimentos}
+        initialPeriodo={corteDiarioInitial?.periodo ?? periodo}
+        initialCustomStart={corteDiarioInitial?.customStart ?? cs}
+        initialCustomEnd={corteDiarioInitial?.customEnd ?? ce}
+        initialContasSel={corteDiarioInitial?.contasSel ?? contasSel}
+        abrirDiretoNoMapa={!!corteDiarioInitial}
+      />
     </div>
     </ContasAbertasProvider>
     </GestaoContasEmbedded>

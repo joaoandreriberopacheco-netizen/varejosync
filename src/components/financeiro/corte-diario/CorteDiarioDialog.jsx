@@ -92,12 +92,13 @@ export default function CorteDiarioDialog({
       }}
     >
       <DialogContent
-        className={`flex max-h-[min(92dvh,900px)] flex-col gap-0 overflow-hidden border-0 p-0 shadow-2xl ${
+        overlayClassName="z-[100]"
+        className={`z-[100] flex max-h-[min(92dvh,900px)] flex-col gap-0 overflow-hidden border-0 p-0 shadow-2xl ${
           etapa === 'painel'
             ? 'h-[min(92dvh,900px)] w-[calc(100vw-1rem)] max-w-6xl'
             : 'w-[calc(100vw-1rem)] max-w-lg'
-        } z-[70] rounded-[28px] bg-card`}
-        overlayClassName="z-[70]"
+        } rounded-[28px] bg-card`}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader className="shrink-0 border-b border-border/30 px-5 pb-3 pt-5 text-left">
           <div className="flex items-center gap-2">

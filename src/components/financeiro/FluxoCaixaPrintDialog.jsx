@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Printer, FileText, LayoutGrid } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import PrintDialogFilters from '@/components/financeiro/PrintDialogFilters';
+import RelatoriosFiltros from '@/components/financeiro/RelatoriosFiltros';
 
 const DEFAULT_FILTERS = {
   periodo: 'hoje',
@@ -34,6 +34,15 @@ function OptionCard({ icon: IconComponent, title, description, onClick, highligh
   );
 }
 
+function buildInitialFilters(initialFilters, contas) {
+  const contasAtivasIds = (contas || []).filter((c) => c.ativo !== false).map((c) => c.id);
+  return {
+    ...DEFAULT_FILTERS,
+    ...(initialFilters || {}),
+    contasSel: initialFilters?.contasSel?.length ? initialFilters.contasSel : contasAtivasIds,
+  };
+}
+
 export default function FluxoCaixaPrintDialog({
   open,
   onOpenChange,
@@ -43,15 +52,13 @@ export default function FluxoCaixaPrintDialog({
   contas,
 }) {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
-    const contasAtivasIds = (contas || []).filter((c) => c.ativo !== false).map((c) => c.id);
-    setFilters({
-      ...DEFAULT_FILTERS,
-      ...(initialFilters || {}),
-      contasSel: initialFilters?.contasSel?.length ? initialFilters.contasSel : contasAtivasIds,
-    });
+    if (open && !wasOpenRef.current) {
+      setFilters(buildInitialFilters(initialFilters, contas));
+    }
+    wasOpenRef.current = open;
   }, [open, initialFilters, contas]);
 
   const patchFilters = (patch) => {
@@ -71,8 +78,9 @@ export default function FluxoCaixaPrintDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        overlayClassName="z-[70]"
-        className="z-[70] max-h-[min(90dvh,720px)] w-[calc(100vw-1rem)] max-w-md gap-0 overflow-visible rounded-[30px] border-0 bg-card p-0 shadow-2xl dark:bg-card"
+        overlayClassName="z-[100]"
+        className="z-[100] max-h-[min(90dvh,720px)] w-[calc(100vw-1rem)] max-w-md gap-0 overflow-hidden rounded-[30px] border-0 bg-card p-0 shadow-2xl dark:bg-card"
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader className="px-5 pb-3 pt-5 text-left">
           <DialogTitle className="flex items-center gap-2 font-glacial text-xl text-foreground">
@@ -80,30 +88,28 @@ export default function FluxoCaixaPrintDialog({
             Relatórios
           </DialogTitle>
           <DialogDescription className="text-xs leading-relaxed text-muted-foreground">
-            Escolha o formato abaixo. Período e contas valem para balancete e extrato.
+            Escolha o formato. Período e contas valem para balancete e extrato.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[calc(90dvh-5rem)] space-y-4 overflow-y-auto overflow-x-visible px-5 pb-5">
-          <PrintDialogFilters
+        <div className="max-h-[calc(90dvh-5rem)] space-y-4 overflow-y-auto px-5 pb-5">
+          <RelatoriosFiltros
             periodo={filters.periodo}
-            setPeriodo={(value) => patchFilters({ periodo: value })}
+            onPeriodo={(value) => patchFilters({ periodo: value })}
             customStart={filters.customStart}
             customEnd={filters.customEnd}
-            setCustomStart={(value) => patchFilters({ customStart: value })}
-            setCustomEnd={(value) => patchFilters({ customEnd: value })}
-            contas={contas || []}
+            onCustomStart={(value) => patchFilters({ customStart: value })}
+            onCustomEnd={(value) => patchFilters({ customEnd: value })}
+            contas={contas}
             contasSel={filters.contasSel}
-            setContasSel={(value) => patchFilters({ contasSel: value })}
-            showAdvancedFilters={false}
-            inDialog
+            onContasSel={(value) => patchFilters({ contasSel: value })}
           />
 
           <div className="space-y-3">
             <OptionCard
               icon={LayoutGrid}
               title="Balancete diário"
-              description="Mapa em T — PDV, Caixa Geral e bancos lado a lado. Só o que já está líquido no período."
+              description="Mapa em T — PDV, Caixa Geral e bancos. Só o que já está líquido."
               onClick={emitirBalancete}
               highlight
             />
@@ -111,7 +117,7 @@ export default function FluxoCaixaPrintDialog({
             <OptionCard
               icon={FileText}
               title="Extrato (PDF)"
-              description="Lista cronológica de lançamentos para impressão ou arquivo, com os filtros acima."
+              description="Lista cronológica para imprimir ou arquivar."
               onClick={emitirExtrato}
             />
           </div>
