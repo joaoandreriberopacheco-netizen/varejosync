@@ -1,6 +1,7 @@
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { getDataChaveLancamento, roundToTwoDecimals, sortLancamentosPorCodigo } from '@/lib/financialUtils';
 import {
+  buildMapaContrapartesTransferencia,
   contaUsaRegraCaixaPDV,
   getDataMovimentoCaixa,
   idsMovimentosComLancamentoFinanceiro,
@@ -246,6 +247,7 @@ export function montarGruposFluxoCaixa({
   ordemLancamentos = 'desc',
 }) {
   const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(todosLancamentos);
+  const mapaContrapartes = buildMapaContrapartesTransferencia(todosLancamentos);
   const pdvIds = new Set(
     contas
       .filter(
@@ -280,7 +282,11 @@ export function montarGruposFluxoCaixa({
         }
         return projetarLinhaFluxoCaixa(m);
       });
-      const totaisGrupo = totaisGrupoFluxoCaixa(itemsOrdenados, contasById);
+      const totaisGrupo = totaisGrupoFluxoCaixa(itemsOrdenados, contasById, {
+        contasSel,
+        mapaContrapartes,
+        todosLancamentos,
+      });
       const label = dia === 'sem-data' ? 'Sem data' : formatGrupoLabel(dia, hStr, oStr);
 
       return {
@@ -342,7 +348,11 @@ export function montarGruposPorDiaConta({
         const linha = m.origem === 'movimento' ? normalizarMovimentoCaixaParaLinha(m) : m;
         return projetarLinhaFluxoCaixa(linha);
       });
-      const totaisGrupo = totaisGrupoFluxoCaixa(brutos, contasById);
+      const totaisGrupo = totaisGrupoFluxoCaixa(brutos, contasById, {
+        contasSel: [conta.id],
+        mapaContrapartes: buildMapaContrapartesTransferencia(todosLancamentos),
+        todosLancamentos,
+      });
       const label =
         dia === 'sem-data' ? 'Sem data' : formatGrupoLabel(dia, hStr, oStr);
 

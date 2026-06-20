@@ -28,6 +28,7 @@ import { formatFinanceiroGrupoLabel } from '@/components/financeiro/fluxo/Financ
 import AjusteSaldoDialog from '@/components/config/AjusteSaldoDialog';
 import PinValidationDialog from '@/components/auth/PinValidationDialog';
 import {
+  buildMapaContrapartesTransferencia,
   calcularSaldoContaFinanceira,
   contaUsaRegraCaixaPDV,
   idsMovimentosComLancamentoFinanceiro,
@@ -366,24 +367,30 @@ export default function ExtratoContaPage() {
   const totalEntradasPeriodo = totaisEntradaSaidaMovimentos(
     movimentacoesNoPeriodo.filter(participaDoSaldo),
     conta,
+    {
+      contasSel: conta ? [conta.id] : null,
+      mapaContrapartes: buildMapaContrapartesTransferencia(lancamentos),
+      todosLancamentos: lancamentos,
+    },
   ).entradas;
   const totalSaidasPeriodo = totaisEntradaSaidaMovimentos(
     movimentacoesNoPeriodo.filter(participaDoSaldo),
     conta,
-  ).saidas;
-
-  const totalEntradasPeriodoKpi = totaisEntradaSaidaMovimentos(
-    movimentacoesNoPeriodo.filter(participaDoSaldo),
-    conta,
-    { excluirTransferencias: true },
-  ).entradas;
-  const totalSaidasPeriodoKpi = totaisEntradaSaidaMovimentos(
-    movimentacoesNoPeriodo.filter(participaDoSaldo),
-    conta,
-    { excluirTransferencias: true },
+    {
+      contasSel: conta ? [conta.id] : null,
+      mapaContrapartes: buildMapaContrapartesTransferencia(lancamentos),
+      todosLancamentos: lancamentos,
+    },
   ).saidas;
 
   let saldoAcumulado = saldoNoFimDoPeriodo - totalEntradasPeriodo + totalSaidasPeriodo;
+
+  const mapaContrapartesExtrato = buildMapaContrapartesTransferencia(lancamentos);
+  const optsTotaisExtrato = {
+    contasSel: conta ? [conta.id] : null,
+    mapaContrapartes: mapaContrapartesExtrato,
+    todosLancamentos: lancamentos,
+  };
 
   const diasComSaldo = diasOrdenados.reverse().map(dia => {
     const saldoAnterior = saldoAcumulado;
@@ -393,11 +400,7 @@ export default function ExtratoContaPage() {
     const { entradas: totalEntradas, saidas: totalSaidas } = totaisEntradaSaidaMovimentos(
       movsSaldo,
       conta,
-    );
-    const { entradas: totalEntradasKpi, saidas: totalSaidasKpi } = totaisEntradaSaidaMovimentos(
-      movsSaldo,
-      conta,
-      { excluirTransferencias: true },
+      optsTotaisExtrato,
     );
 
     saldoAcumulado = saldoAcumulado + totalEntradas - totalSaidas;
@@ -409,8 +412,6 @@ export default function ExtratoContaPage() {
       saldoFinal: saldoAcumulado,
       totalEntradas,
       totalSaidas,
-      totalEntradasKpi,
-      totalSaidasKpi,
     };
   }).reverse();
 
@@ -445,11 +446,11 @@ export default function ExtratoContaPage() {
       label: formatFinanceiroGrupoLabel(diaData.dia, hStr, oStr),
       items: diaData.movimentacoes.map(normalizeMov),
       totais: {
-        r: diaData.totalEntradasKpi,
-        d: diaData.totalSaidasKpi,
-        entrou: diaData.totalEntradasKpi,
-        saiu: diaData.totalSaidasKpi,
-        liquidoOperacional: roundToTwoDecimals(diaData.totalEntradasKpi - diaData.totalSaidasKpi),
+        r: diaData.totalEntradas,
+        d: diaData.totalSaidas,
+        entrou: diaData.totalEntradas,
+        saiu: diaData.totalSaidas,
+        liquidoOperacional: roundToTwoDecimals(diaData.totalEntradas - diaData.totalSaidas),
         saldoAcumulado: roundToTwoDecimals(diaData.saldoFinal),
       },
     }));
@@ -457,11 +458,11 @@ export default function ExtratoContaPage() {
 
   const totalMovimentacoes = movimentacoesFiltradas.length;
   const kpisExtrato = useMemo(() => ({
-    entradas: totalEntradasPeriodoKpi,
-    saidas: totalSaidasPeriodoKpi,
+    entradas: totalEntradasPeriodo,
+    saidas: totalSaidasPeriodo,
     saldo: saldoCalculado,
-    saldoPeriodo: roundToTwoDecimals(totalEntradasPeriodoKpi - totalSaidasPeriodoKpi),
-  }), [totalEntradasPeriodoKpi, totalSaidasPeriodoKpi, saldoCalculado]);
+    saldoPeriodo: roundToTwoDecimals(totalEntradasPeriodo - totalSaidasPeriodo),
+  }), [totalEntradasPeriodo, totalSaidasPeriodo, saldoCalculado]);
 
   const periodoLabel = PERIODOS_EXTRATO.find((p) => p.v === filtroPeriodo)?.l || 'Período';
   const hasActiveFilters = filtroPeriodo !== 'mes' || !!dataInicio || !!dataFim;

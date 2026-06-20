@@ -88,6 +88,93 @@ export function isTransferenciaEntreContas(l) {
   return false;
 }
 
+function chaveParTransferenciaLancamento(l) {
+  if (!isTransferenciaEntreContas(l) || l.origem === 'movimento') return null;
+  if (l.referencia_tipo === 'MovimentosCaixa' && l.referencia_id != null) {
+    return `mc:${l.referencia_id}`;
+  }
+  const data = l.data_pagamento || l.data_vencimento || '';
+  const valor = Number(l.valor || 0).toFixed(2);
+  if (l.categoria === 'Transferência entre Contas' || l.referencia_tipo === 'Manual') {
+    return `tr:${data}:${valor}`;
+  }
+  return null;
+}
+
+/** Mapa lancamentoId → conta_financeira_id da contraparte na transferência. */
+export function buildMapaContrapartesTransferencia(lancamentos = []) {
+  const porChave = new Map();
+  lancamentos.forEach((l) => {
+    const key = chaveParTransferenciaLancamento(l);
+    if (!key) return;
+    if (!porChave.has(key)) porChave.set(key, []);
+    porChave.get(key).push(l);
+  });
+
+  const mapa = new Map();
+  porChave.forEach((grupo) => {
+    const despesa = grupo.find((i) => i.tipo === 'Despesa');
+    const receita = grupo.find((i) => i.tipo === 'Receita');
+    if (!despesa || !receita) return;
+    if (Math.abs(Number(despesa.valor || 0) - Number(receita.valor || 0)) > 0.009) return;
+    mapa.set(despesa.id, receita.conta_financeira_id);
+    mapa.set(receita.id, despesa.conta_financeira_id);
+  });
+  return mapa;
+}
+
+/** Conta entra no conjunto visível do filtro de contas. */
+export function contaEstaNoFiltroFluxo(contaId, contasSel = [], contasById = {}) {
+  if (!contasSel.length) return true;
+  if (contaId && contasSel.includes(contaId)) return true;
+  if (!contaId) {
+    return contasSel.some((id) => contasById[id]?.is_caixa_geral === true);
+  }
+  return false;
+}
+
+/**
+ * Transferência interna ao filtro = contraparte também está nas contas selecionadas.
+ * Só nesse caso excluímos de entrou/saída (permutação entre contas visíveis).
+ */
+export function transferenciaInternaAoFiltro(
+  l,
+  contasSel = [],
+  contasById = {},
+  mapaContrapartes = null,
+) {
+  if (!isTransferenciaEntreContas(l)) return false;
+  const contraparteId = mapaContrapartes?.get(l.id);
+  if (contraparteId === undefined) return false;
+  return contaEstaNoFiltroFluxo(contraparteId, contasSel, contasById);
+}
+
+function contaContraparteMovimentoPDV(mov, todosLancamentos = [], mapaContrapartes = null) {
+  const despesa = todosLancamentos.find(
+    (l) =>
+      l.referencia_tipo === 'MovimentosCaixa' &&
+      String(l.referencia_id) === String(mov.id) &&
+      l.tipo === 'Despesa',
+  );
+  if (!despesa) return null;
+  return mapaContrapartes?.get(despesa.id) ?? null;
+}
+
+function movimentoPDVTransferenciaInternaAoFiltro(
+  mov,
+  contasSel = [],
+  contasById = {},
+  todosLancamentos = [],
+  mapaContrapartes = null,
+) {
+  const destinoId = contaContraparteMovimentoPDV(mov, todosLancamentos, mapaContrapartes);
+  if (!destinoId) return false;
+  return (
+    contaEstaNoFiltroFluxo(mov.conta_id, contasSel, contasById) &&
+    contaEstaNoFiltroFluxo(destinoId, contasSel, contasById)
+  );
+}
+
 export function isMovimentoTransferenciaCaixaPDV(m) {
   return m?.tipo === 'Sangria' || m?.tipo === 'Recolhimento de Caixa';
 }
@@ -246,8 +333,14 @@ export function movimentoParticipaExtrato(mov, conta = null) {
 export function totaisEntradaSaidaMovimentos(
   movimentos = [],
   conta = null,
-  { excluirTransferencias = false } = {},
+  {
+    contasSel = null,
+    contasById = {},
+    mapaContrapartes = null,
+    todosLancamentos = [],
+  } = {},
 ) {
+  const filtrarTransfInternas = contasSel !== null;
   let entradas = 0;
   let saidas = 0;
 
@@ -255,11 +348,23 @@ export function totaisEntradaSaidaMovimentos(
     if (mov.origem === 'movimento' || mov.conta_id) {
       if (mov.tipo === 'Reforço') entradas += Number(mov.valor || 0);
       else if (mov.tipo === 'Sangria' || mov.tipo === 'Recolhimento de Caixa') {
-        if (!excluirTransferencias) saidas += Number(mov.valor || 0);
+        const interna = filtrarTransfInternas && movimentoPDVTransferenciaInternaAoFiltro(
+          mov,
+          contasSel,
+          contasById,
+          todosLancamentos,
+          mapaContrapartes,
+        );
+        if (!interna) saidas += Number(mov.valor || 0);
       }
       return;
     }
-    if (excluirTransferencias && isTransferenciaEntreContas(mov)) return;
+    if (
+      filtrarTransfInternas &&
+      transferenciaInternaAoFiltro(mov, contasSel, contasById, mapaContrapartes)
+    ) {
+      return;
+    }
     if (!lancamentoParticipaSaldoConta(conta, mov)) return;
     if (mov.tipo === 'Receita') entradas += Number(mov.valor || 0);
     else if (mov.tipo === 'Despesa') saidas += Number(mov.valor || 0);
@@ -283,6 +388,7 @@ export function calcularKpisFluxoPeriodo(
   contasSel = [],
 ) {
   const movimentosJaNoFinanceiro = idsMovimentosComLancamentoFinanceiro(todosLancamentos);
+  const mapaContrapartes = buildMapaContrapartesTransferencia(todosLancamentos);
   const contaNoFiltro = (contaId) => !contasSel.length || contasSel.includes(contaId);
   let entrou = 0;
   let saiu = 0;
@@ -294,29 +400,14 @@ export function calcularKpisFluxoPeriodo(
   let vencidos = 0;
   let qtdVencidos = 0;
 
-  lancamentosPeriodo.forEach((l) => {
-    const valor = getValorFluxoCaixa(l);
-    const isPago = l.status === 'Pago' || !!l.data_pagamento;
-
-    if (isTransferenciaEntreContas(l)) {
-      totalTransferencias += Number(l.valor || 0);
-      if (contaNoFiltro(l.conta_financeira_id)) {
-        if (l.tipo === 'Receita') transfIn += Number(l.valor || 0);
-        else if (l.tipo === 'Despesa') transfOut += Number(l.valor || 0);
-      }
-      return;
-    }
-
+  const acumularOperacional = (l, valor, isPago) => {
     const conta = contasById[l.conta_financeira_id];
-
     if (l.status === 'Vencido') {
       vencidos += valor;
       qtdVencidos++;
     }
-
     const participaSaldo = lancamentoParticipaSaldoConta(conta, l);
     if (!participaSaldo) return;
-
     if (isPago) {
       if (l.tipo === 'Receita') entrou += valor;
       else if (l.tipo === 'Despesa') saiu += valor;
@@ -324,6 +415,26 @@ export function calcularKpisFluxoPeriodo(
       if (l.tipo === 'Receita') pEntrou += valor;
       else if (l.tipo === 'Despesa') pSaiu += valor;
     }
+  };
+
+  lancamentosPeriodo.forEach((l) => {
+    const valor = getValorFluxoCaixa(l);
+    const isPago = l.status === 'Pago' || !!l.data_pagamento;
+
+    if (isTransferenciaEntreContas(l)) {
+      totalTransferencias += Number(l.valor || 0);
+      if (transferenciaInternaAoFiltro(l, contasSel, contasById, mapaContrapartes)) {
+        if (contaNoFiltro(l.conta_financeira_id)) {
+          if (l.tipo === 'Receita') transfIn += Number(l.valor || 0);
+          else if (l.tipo === 'Despesa') transfOut += Number(l.valor || 0);
+        }
+        return;
+      }
+      acumularOperacional(l, valor, isPago);
+      return;
+    }
+
+    acumularOperacional(l, valor, isPago);
   });
 
   movimentosPeriodo.forEach((m) => {
@@ -337,7 +448,11 @@ export function calcularKpisFluxoPeriodo(
     }
     if (!isMovimentoTransferenciaCaixaPDV(m)) return;
     totalTransferencias += valor;
-    if (contaNoFiltro(m.conta_id)) transfOut += valor;
+    if (movimentoPDVTransferenciaInternaAoFiltro(m, contasSel, contasById, todosLancamentos, mapaContrapartes)) {
+      if (contaNoFiltro(m.conta_id)) transfOut += valor;
+      return;
+    }
+    saiu += valor;
   });
 
   return {
@@ -359,7 +474,15 @@ export function calcularKpisFluxoPeriodo(
  * Totais do grupo no Fluxo.
  * Transferências (recolhimento/fechamento) entram no líquido do dia mas fora de receita/despesa operacional.
  */
-export function totaisGrupoFluxoCaixa(items = [], contasById = {}) {
+export function totaisGrupoFluxoCaixa(
+  items = [],
+  contasById = {},
+  {
+    contasSel = [],
+    mapaContrapartes = null,
+    todosLancamentos = [],
+  } = {},
+) {
   let r = 0;
   let d = 0;
   let transfIn = 0;
@@ -372,13 +495,26 @@ export function totaisGrupoFluxoCaixa(items = [], contasById = {}) {
 
     if (l.origem === 'movimento' || (l.conta_id && !l.conta_financeira_id)) {
       if (l.tipo === 'Reforço') r += valor;
-      else if (isMovimentoTransferenciaCaixaPDV(l)) transfOut += valor;
+      else if (isMovimentoTransferenciaCaixaPDV(l)) {
+        if (movimentoPDVTransferenciaInternaAoFiltro(l, contasSel, contasById, todosLancamentos, mapaContrapartes)) {
+          transfOut += valor;
+        } else {
+          d += valor;
+        }
+      }
       return;
     }
 
     if (isTransferenciaEntreContas(l)) {
-      if (l.tipo === 'Receita') transfIn += valor;
-      else if (l.tipo === 'Despesa') transfOut += valor;
+      if (transferenciaInternaAoFiltro(l, contasSel, contasById, mapaContrapartes)) {
+        if (l.tipo === 'Receita') transfIn += valor;
+        else if (l.tipo === 'Despesa') transfOut += valor;
+      } else {
+        const participaSaldo = lancamentoParticipaSaldoConta(conta, l);
+        if (!participaSaldo) return;
+        if (l.tipo === 'Receita' && isPago) r += valor;
+        if (l.tipo === 'Despesa' && isPago) d += valor;
+      }
       return;
     }
 
