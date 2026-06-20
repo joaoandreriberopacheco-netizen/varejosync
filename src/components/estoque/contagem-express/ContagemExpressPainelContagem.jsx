@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
-import { Boxes, CheckCircle2, Loader2, Minus, Plus, X } from 'lucide-react';
+import { Boxes, CheckCircle2, Loader2, Minus, Plus, Trash2, X } from 'lucide-react';
 import { allowProgrammaticFocusBriefly, focusField } from '@/lib/focusPolicy';
 import { formatCountQuantity, getGroupDisplayFromBase } from '@/lib/inventoryCountUnits';
 
@@ -36,10 +36,12 @@ export default function ContagemExpressPainelContagem({
   onTrocarUnidade,
   onConfirmar,
   onCancelar,
+  onRemover,
   confirmLabel = 'Confirmar',
 }) {
   const quantidadeRef = useRef(null);
-  const qtdNum = parseFloat(quantidade) || 0;
+  const qtdNum = parseFloat(quantidade);
+  const quantidadeValida = quantidade !== '' && !Number.isNaN(qtdNum) && qtdNum >= 0;
 
   useEffect(() => {
     if (!produto?.id) return undefined;
@@ -69,7 +71,7 @@ export default function ContagemExpressPainelContagem({
 
   const handleConfirmarSubmit = (event) => {
     event?.preventDefault?.();
-    if (qtdNum <= 0) return;
+    if (!quantidadeValida) return;
     allowProgrammaticFocusBriefly();
     onConfirmar?.();
   };
@@ -169,12 +171,23 @@ export default function ContagemExpressPainelContagem({
 
         <button
           type="submit"
-          disabled={qtdNum <= 0}
+          disabled={!quantidadeValida}
           className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-semibold text-white disabled:opacity-40"
         >
           <CheckCircle2 className="h-4 w-4" />
           {confirmLabel}
         </button>
+
+        {onRemover ? (
+          <button
+            type="button"
+            onClick={onRemover}
+            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-red-500 hover:bg-red-500/10 dark:text-red-400"
+          >
+            <Trash2 className="h-4 w-4" />
+            Remover do carrinho
+          </button>
+        ) : null}
       </form>
     </div>
   );

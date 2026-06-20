@@ -1,5 +1,5 @@
 import {
-  ArrowLeft, Loader2, Package, Printer, Save, TrendingDown, TrendingUp,
+  ArrowLeft, Loader2, Package, Printer, Save, Trash2, TrendingDown, TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatCountQuantity, getGroupDisplayFromBase } from '@/lib/inventoryCountUnits';
@@ -42,6 +42,7 @@ export default function ContagemExpressCarrinho({
   onSalvar,
   onImprimir,
   onEditarItem,
+  onRemoverItem,
 }) {
   const mapaComparativo = Object.fromEntries((comparativo || []).map((r) => [r.produto_id, r]));
 
@@ -105,50 +106,65 @@ export default function ContagemExpressCarrinho({
           const Wrapper = onEditarItem ? 'button' : 'div';
 
           return (
-            <Wrapper
+            <div
               key={grupo.produto_id}
-              type={onEditarItem ? 'button' : undefined}
-              onClick={onEditarItem ? () => onEditarItem(grupo) : undefined}
-              className={`w-full rounded-2xl bg-muted/50 p-3.5 text-left ${onEditarItem ? 'transition-colors hover:bg-muted/70 active:bg-muted' : ''}`}
+              className="flex items-stretch gap-2"
             >
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card shadow-sm">
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium leading-snug text-foreground break-words whitespace-normal">
-                    {grupo.produto_nome}
-                  </p>
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-lg bg-card px-2 py-1.5">
-                      <div className="text-muted-foreground">Sistema</div>
-                      <div className="font-semibold text-foreground">
-                        {loadingComparativo || !sistemaDisplay
-                          ? '…'
-                          : `${formatCountQuantity(sistemaDisplay.quantidade)} ${sistemaDisplay.unidade}`}
+              <Wrapper
+                type={onEditarItem ? 'button' : undefined}
+                onClick={onEditarItem ? () => onEditarItem(grupo) : undefined}
+                className={`min-w-0 flex-1 rounded-2xl bg-muted/50 p-3.5 text-left ${onEditarItem ? 'transition-colors hover:bg-muted/70 active:bg-muted' : ''}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card shadow-sm">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium leading-snug text-foreground break-words whitespace-normal">
+                      {grupo.produto_nome}
+                    </p>
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-lg bg-card px-2 py-1.5">
+                        <div className="text-muted-foreground">Sistema</div>
+                        <div className="font-semibold text-foreground">
+                          {loadingComparativo || !sistemaDisplay
+                            ? '…'
+                            : `${formatCountQuantity(sistemaDisplay.quantidade)} ${sistemaDisplay.unidade}`}
+                        </div>
+                      </div>
+                      <div className="rounded-lg bg-card px-2 py-1.5">
+                        <div className="text-muted-foreground">Contado</div>
+                        <div className="font-semibold text-foreground">
+                          {formatCountQuantity(display?.quantidade ?? grupo.totalBase)}{' '}
+                          {display?.unidade || 'UN'}
+                        </div>
                       </div>
                     </div>
-                    <div className="rounded-lg bg-card px-2 py-1.5">
-                      <div className="text-muted-foreground">Contado</div>
-                      <div className="font-semibold text-foreground">
-                        {formatCountQuantity(display?.quantidade ?? grupo.totalBase)}{' '}
-                        {display?.unidade || 'UN'}
-                      </div>
+                    <div className="mt-2">
+                      {loadingComparativo ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : (
+                        <DiffBadge
+                          diferenca={diffValor}
+                          unidade={diffDisplay?.unidade || display?.unidade}
+                        />
+                      )}
                     </div>
                   </div>
-                  <div className="mt-2">
-                    {loadingComparativo ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    ) : (
-                      <DiffBadge
-                        diferenca={diffValor}
-                        unidade={diffDisplay?.unidade || display?.unidade}
-                      />
-                    )}
-                  </div>
                 </div>
-              </div>
-            </Wrapper>
+              </Wrapper>
+
+              {onRemoverItem ? (
+                <button
+                  type="button"
+                  onClick={() => onRemoverItem(grupo)}
+                  aria-label={`Remover ${grupo.produto_nome} do carrinho`}
+                  className="flex w-11 shrink-0 items-center justify-center rounded-2xl bg-muted/50 text-red-500 transition-colors hover:bg-red-500/10 active:bg-red-500/15 dark:text-red-400"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
           );
         })}
       </div>
