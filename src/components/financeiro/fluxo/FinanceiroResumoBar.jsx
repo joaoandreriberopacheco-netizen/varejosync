@@ -44,6 +44,7 @@ export default function FinanceiroResumoBar({
   variacao,
   saldo,
   saldoComSinal = false,
+  periodoLabel,
   variant = 'default',
   className,
 }) {
@@ -61,6 +62,7 @@ export default function FinanceiroResumoBar({
       : null;
 
   const title = [
+    periodoLabel ? `Período: ${periodoLabel}` : null,
     `Receitas ${formatKpiValor(receitas)}`,
     `Despesas ${formatKpiValor(despesas)}`,
     `Variação ${variacaoPos ? '+' : '−'}${formatKpiValor(Math.abs(variacaoVal))}`,
@@ -147,13 +149,18 @@ export default function FinanceiroResumoBar({
   }
 
   return (
-    <div
-      className={cn(
-        'flex min-w-0 items-center gap-2 md:gap-3 md:overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden',
-        className,
+    <div className={cn('flex min-w-0 flex-col gap-0.5', className)}>
+      {periodoLabel && !isBalancoDia && (
+        <p className="text-[10px] font-medium uppercase tracking-wide text-foreground/40 dark:text-foreground/45">
+          {periodoLabel}
+        </p>
       )}
-      title={title}
-    >
+      <div
+        className={cn(
+          'flex min-w-0 items-center gap-2 md:gap-3 md:overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden',
+        )}
+        title={title}
+      >
       <ResumoSegment icon={TrendingUp} value={`+${formatKpiValor(receitas)}`} valueClass={posClass} />
       <span className="shrink-0 text-muted-foreground/35" aria-hidden>
         ·
@@ -186,6 +193,7 @@ export default function FinanceiroResumoBar({
           />
         </>
       )}
+      </div>
     </div>
   );
 }

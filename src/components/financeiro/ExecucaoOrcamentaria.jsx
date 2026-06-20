@@ -468,7 +468,7 @@ export default function ExecucaoOrcamentaria() {
             )}
           </div>
 
-          {aba === 'fluxo' && <KpiFluxoBar kpis={kpis} />}
+          {aba === 'fluxo' && <KpiFluxoBar kpis={kpis} periodoLabel={periodoLabel} />}
 
           <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3">
             <FinanceiroPillTabs
