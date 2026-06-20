@@ -1,6 +1,5 @@
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { getDataAncoraFluxoKey, isLancamentoCancelado, isLancamentoEmAberto, isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import {
   calcularSaldoContaFinanceira,
   contaUsaRegraCaixaPDV,
@@ -11,8 +10,6 @@ import {
   idsMovimentosComLancamentoFinanceiro,
   isMovimentoTransferenciaCaixaPDV,
   isTransferenciaEntreContas,
-  lancamentoParticipaSaldoConta,
-  lancamentoPertenceContasSelecionadas,
   movimentoParticipaExtrato,
   totaisEntradaSaidaMovimentos,
 } from '@/lib/saldoContaFinanceira';
@@ -271,53 +268,6 @@ export function montarCorteDiarioConta({
   };
 }
 
-/** Lançamentos em aberto / a liquidar ligados às contas do corte. */
-export function listarPrevistosCorteDiario({
-  lancamentos = [],
-  contasSel = [],
-  contasById = {},
-  dataInicio,
-  dataFim,
-}) {
-  const hoje = dataFim || dataInicio;
-  const items = [];
-
-  lancamentos.forEach((l) => {
-    if (isLancamentoCancelado(l)) return;
-    if (isTransferenciaEntreContas(l)) return;
-    if (!lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return;
-    if (isLancamentoPago(l)) return;
-    if (!isLancamentoEmAberto(l)) return;
-
-    const dataKey = getDataAncoraFluxoKey(l);
-    const conta = contasById[l.conta_financeira_id];
-    const participa = conta ? lancamentoParticipaSaldoConta(conta, l) : true;
-
-    if (participa && dataKey && dataInicio && dataFim && dataKey >= dataInicio && dataKey <= dataFim) {
-      return;
-    }
-
-    const futuro = dataKey && hoje && dataKey > hoje;
-    const cartaoOuFiado =
-      l.forma_pagamento_tipo === 'Cartão Crédito' ||
-      l.forma_pagamento_tipo === 'Cartão Débito' ||
-      (Array.isArray(l.tags) && (l.tags.includes('CARTAO') || l.tags.includes('FIADO')));
-
-    if (!futuro && !cartaoOuFiado && dataKey && dataInicio && dataKey < dataInicio) return;
-
-    items.push({
-      id: l.id,
-      descricao: l.descricao || l.categoria || 'Previsto',
-      valor: roundToTwoDecimals(Number(l.valor || 0)),
-      contaNome: l.conta_financeira_nome || nomeConta(contasById, l.conta_financeira_id),
-      data: dataKey,
-      formaPagamento: l.forma_pagamento || l.forma_pagamento_tipo || '',
-    });
-  });
-
-  return items.sort((a, b) => String(a.data || '').localeCompare(String(b.data || '')));
-}
-
 export function montarCorteDiarioMapa({
   contas = [],
   lancamentos = [],
@@ -343,18 +293,9 @@ export function montarCorteDiarioMapa({
     }),
   );
 
-  const previstos = listarPrevistosCorteDiario({
-    lancamentos,
-    contasSel,
-    contasById,
-    dataInicio,
-    dataFim,
-  });
-
   return {
     dataInicio,
     dataFim,
     contas: contasMapa,
-    previstos,
   };
 }

@@ -50,3 +50,16 @@ export function dateRangeFinanceiroCurto(periodo, customStart = '', customEnd = 
   const { dataInicio, dataFim } = dateRangeFinanceiro(periodo, customStart, customEnd);
   return { s: dataInicio, e: dataFim };
 }
+
+/** Balancete diário é sempre um único dia — normaliza filtros do menu de relatórios. */
+export function diaBalanceteFromFiltros({ periodo, customStart, customEnd } = {}) {
+  const hoje = dataHoje();
+  if (periodo === 'hoje') return hoje;
+  if (periodo === 'ontem') {
+    return format(subDays(parseDateKey(hoje), 1), 'yyyy-MM-dd');
+  }
+  if (periodo === 'periodo') {
+    return customStart || customEnd || hoje;
+  }
+  return hoje;
+}

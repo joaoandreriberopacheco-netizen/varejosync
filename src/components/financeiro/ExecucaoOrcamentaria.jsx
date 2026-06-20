@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format, subDays } from 'date-fns';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { dateRangeFinanceiroCurto } from '@/lib/periodoFinanceiro';
+import { dateRangeFinanceiroCurto, diaBalanceteFromFiltros } from '@/lib/periodoFinanceiro';
 import {
   calcularKpisFluxoPeriodo,
   calcularSaldosTodasContas,
@@ -492,7 +492,11 @@ export default function ExecucaoOrcamentaria() {
   }, [periodo, cs, ce, contasSel, contasAtivas]);
 
   const abrirBalanceteDiario = useCallback((filters) => {
-    setCorteDiarioInitial(filters);
+    const dia = diaBalanceteFromFiltros(filters);
+    setCorteDiarioInitial({
+      dia,
+      contasSel: filters?.contasSel,
+    });
     setShowCorteDiario(true);
   }, []);
 
@@ -811,9 +815,7 @@ export default function ExecucaoOrcamentaria() {
         contas={contas}
         lancamentos={lancs}
         movimentos={movimentos}
-        initialPeriodo={corteDiarioInitial?.periodo ?? periodo}
-        initialCustomStart={corteDiarioInitial?.customStart ?? cs}
-        initialCustomEnd={corteDiarioInitial?.customEnd ?? ce}
+        initialDia={corteDiarioInitial?.dia ?? dataHoje()}
         initialContasSel={corteDiarioInitial?.contasSel ?? contasSel}
         abrirDiretoNoMapa={!!corteDiarioInitial}
       />
