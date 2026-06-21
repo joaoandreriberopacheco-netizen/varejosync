@@ -26,7 +26,10 @@ import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
 import { lancamentoMesmoRamoRecorrencia } from '@/lib/agefinLancamentosRecorrencia';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import TagsInput from './fluxo/TagsInput';
+import SeletorContaMobile from './fluxo/SeletorContaMobile';
+import MobileCampoFlow from './fluxo/MobileCampoFlow';
 import { tagsVisiveisFinanceiro } from './fluxo/FinanceiroLancRow';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 
 const R = (v) => `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -75,6 +78,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const [showCancelarDialog, setShowCancelarDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmDialogMode, setConfirmDialogMode] = useState('processing');
+  const [mobileEditStep, setMobileEditStep] = useState(0);
   const dataLancamentoOriginal = useMemo(
     () => resolverDataLancamentoInput(lancamento),
     [lancamento],
@@ -83,6 +87,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   const [dataLancamentoBase, setDataLancamentoBase] = useState(dataLancamentoOriginal);
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
+  const isMobile = useCompactShell();
 
   const isCancelado = lancamento.status === 'Cancelado';
   const isReceita = lancamento.tipo === 'Receita';
@@ -104,6 +109,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     setDataLancamentoLocal(dataLancamentoOriginal);
     setDataLancamentoBase(dataLancamentoOriginal);
     setModoEdicao(false);
+    setMobileEditStep(0);
   }, [
     lancamento.id,
     lancamento.descricao,
@@ -185,6 +191,166 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     && dataLiquidacao !== (lancamento.data_pagamento || dataHoje());
 
   const formDirty = cadastroDirty || dataLancamentoDirty || pagamentoDirty || conciliacaoDirty;
+
+  const mobileEditSteps = useMemo(() => {
+    if (!isMobile || !ehLancamentoEditavel) return [];
+    const steps = [
+      {
+        id: 'descricao',
+        label: 'Descrição',
+        type: 'text',
+        uppercase: true,
+        value: cadDescricao,
+        onChange: (e) => setCadDescricao(e.target.value),
+        placeholder: 'Descrição do lançamento',
+      },
+      {
+        id: 'valor',
+        label: 'Valor',
+        type: 'decimal',
+        value: cadValor,
+        onChange: (e) => setCadValor(e.target.value),
+      },
+      {
+        id: 'vencimento',
+        label: 'Vencimento',
+        type: 'date',
+        value: cadVencimento,
+        onChange: (e) => setCadVencimento(e.target.value),
+      },
+      {
+        id: 'observacoes',
+        label: 'Observações',
+        type: 'textarea',
+        optional: true,
+        uppercase: true,
+        value: cadObs,
+        onChange: (e) => setCadObs(e.target.value),
+        placeholder: 'Opcional',
+      },
+      {
+        id: 'categoria',
+        label: 'Categoria',
+        type: 'custom',
+        optional: true,
+        render: () => (
+          <SeletorCategoria
+            tipo={lancamento.tipo}
+            value={editCategoria}
+            onChange={(nome, id) => { setEditCategoria(nome); setEditCategoriaId(id || ''); }}
+            categorias={categorias}
+            onCriada={reloadCats}
+            mobileLarge
+          />
+        ),
+      },
+      {
+        id: 'tags',
+        label: 'Tags',
+        type: 'custom',
+        optional: true,
+        render: () => <TagsInput tags={editTags} onChange={setEditTags} defaultExpanded />,
+      },
+      {
+        id: 'dataFluxo',
+        label: 'Data/hora no fluxo',
+        hint: 'Posição na lista do fluxo de caixa',
+        type: 'datetime',
+        optional: true,
+        value: dataLancamentoLocal,
+        onChange: (e) => setDataLancamentoLocal(e.target.value),
+        preview: previewOrdemLancamento ? `Ordem: ${previewOrdemLancamento}` : null,
+      },
+      {
+        id: 'pago',
+        label: 'Situação de pagamento',
+        type: 'toggle',
+        value: isPagoLocal,
+        onChange: setIsPagoLocal,
+        onLabel: 'Pago',
+        offLabel: 'Em aberto',
+      },
+      {
+        id: 'dataPagamento',
+        label: 'Data do pagamento',
+        type: 'date',
+        hidden: !isPagoLocal,
+        value: dataPagamento,
+        onChange: (e) => setDataPagamento(e.target.value),
+      },
+      {
+        id: 'conta',
+        label: 'Conta',
+        type: 'custom',
+        hidden: !isPagoLocal,
+        render: () => (
+          <SeletorContaMobile
+            contas={contas}
+            value={contaId}
+            onChange={setContaId}
+            label="Conta do pagamento"
+            placeholder="Selecionar conta"
+          />
+        ),
+      },
+      {
+        id: 'liquidacao',
+        label: 'Data de liquidação',
+        type: 'date',
+        hidden: !(isPagoOriginal && isPendente),
+        value: dataLiquidacao,
+        onChange: (e) => setDataLiquidacao(e.target.value),
+      },
+    ];
+    return steps;
+  }, [
+    isMobile, ehLancamentoEditavel, cadDescricao, cadValor, cadVencimento, cadObs,
+    editCategoria, editTags, dataLancamentoLocal, previewOrdemLancamento, isPagoLocal,
+    dataPagamento, contaId, contas, isPagoOriginal, isPendente, dataLiquidacao,
+    lancamento.tipo, categorias, reloadCats,
+  ]);
+
+  const validateMobileEditStep = (stepId) => {
+    if (stepId === 'valor' && valorNumerico <= 0) {
+      toast({ title: 'Informe um valor válido', variant: 'destructive' });
+      return false;
+    }
+    if (stepId === 'descricao' && !(cadDescricao || '').trim()) {
+      toast({ title: 'Informe a descrição', variant: 'destructive' });
+      return false;
+    }
+    if (stepId === 'conta' && isPagoLocal && !contaId) {
+      toast({ title: 'Selecione uma conta', variant: 'destructive' });
+      return false;
+    }
+    return true;
+  };
+
+  const handleMobileEditNext = () => {
+    const visible = mobileEditSteps.filter((s) => !s.hidden);
+    const current = visible[mobileEditStep];
+    if (!current) return;
+    if (!validateMobileEditStep(current.id)) return;
+    if (mobileEditStep >= visible.length - 1) {
+      handleSalvarEdicao();
+      return;
+    }
+    setMobileEditStep((i) => i + 1);
+  };
+
+  const handleMobileEditBack = () => {
+    if (mobileEditStep > 0) setMobileEditStep((i) => i - 1);
+    else setModoEdicao(false);
+  };
+
+  const handleMobileEditSkip = () => {
+    const visible = mobileEditSteps.filter((s) => !s.hidden);
+    if (mobileEditStep < visible.length - 1) setMobileEditStep((i) => i + 1);
+  };
+
+  useEffect(() => {
+    if (modoEdicao) setMobileEditStep(0);
+  }, [modoEdicao, lancamento.id]);
 
   const data = lancamento.data_pagamento || lancamento.data_vencimento;
   const competenciaAtual = (lancamento.data_vencimento || '').slice(0, 7);
@@ -456,7 +622,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
   return (
     <>
     <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="flex max-h-[min(92vh,44rem)] min-h-0 w-[calc(100vw-1rem)] max-w-sm flex-col gap-0 overflow-hidden rounded-2xl p-0 dark:border-border/40 dark:bg-background sm:max-w-sm [&~div[data-radix-dialog-overlay]]:bg-card/30 [&~div[data-radix-dialog-overlay]]:backdrop-blur-sm [&~div[data-radix-dialog-overlay]]:dark:bg-black/30">
+      <DialogContent className={`flex max-h-[min(92vh,44rem)] min-h-0 w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden rounded-2xl p-0 dark:border-border/40 dark:bg-background sm:max-w-sm [&~div[data-radix-dialog-overlay]]:bg-card/30 [&~div[data-radix-dialog-overlay]]:backdrop-blur-sm [&~div[data-radix-dialog-overlay]]:dark:bg-black/30 ${isMobile && modoEdicao ? 'max-w-md sm:max-w-md' : ''}`}>
 
         <div className="shrink-0">
         <div className="flex items-start justify-between px-5 pt-5 pb-3">
@@ -536,6 +702,22 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
 
+        {isMobile && modoEdicao && ehLancamentoEditavel ? (
+          <div className="px-4 py-2 min-h-[min(60vh,28rem)] flex flex-col">
+            <MobileCampoFlow
+              steps={mobileEditSteps}
+              stepIndex={mobileEditStep}
+              onStepIndexChange={setMobileEditStep}
+              onBack={handleMobileEditBack}
+              onNext={handleMobileEditNext}
+              onSkip={handleMobileEditSkip}
+              showSkip={!!mobileEditSteps.filter((s) => !s.hidden)[mobileEditStep]?.optional}
+              finishLabel={saving ? 'A guardar…' : 'Salvar alterações'}
+              nextLabel="Próximo"
+            />
+          </div>
+        ) : (
+        <>
         {ehLancamentoEditavel && modoEdicao && (
           <div className="px-5 pt-4 space-y-3">
             <p className="text-xs font-medium text-foreground/90">Dados do lançamento</p>
@@ -686,7 +868,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
           </>
         )}
 
-        {modoEdicao && ehLancamentoEditavel && (
+        {modoEdicao && ehLancamentoEditavel && !isMobile && (
           <div className="px-5 py-4">
             <button
               type="button"
@@ -723,6 +905,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               </button>
             </div>
           </>
+        )}
+
+        </>
         )}
 
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,10 +11,13 @@ import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFina
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import RecorrenciaConfig from './fluxo/RecorrenciaConfig';
 import TagsInput from './fluxo/TagsInput';
+import SeletorContaMobile from './fluxo/SeletorContaMobile';
+import MobileCampoFlow from './fluxo/MobileCampoFlow';
 import { Checkbox } from '@/components/ui/checkbox';
 import LancamentoConfirmacaoDialog from './LancamentoConfirmacaoDialog';
 import { normalizeDataText } from '@/lib/normalizeDataText';
 import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 
 const TIPOS = [
   { value: 'Receita', label: 'Receita', icon: ArrowDownLeft },
@@ -59,8 +62,10 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pedidoCompraId, setPedidoCompraId] = useState('');
   const [pedidosCompra, setPedidosCompra] = useState([]);
+  const [mobileStep, setMobileStep] = useState(0);
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
+  const isMobile = useCompactShell();
 
   useEffect(() => {
     if (open) {
@@ -88,8 +93,13 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       setSaving(false);
       setConfirmDialogMode('processing');
       setShowConfirmDialog(false);
+      setMobileStep(0);
     }
-  }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial]);
+  }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial, origemContaPagar]);
+
+  useEffect(() => {
+    if (open) setMobileStep(0);
+  }, [open, tipo]);
 
   const previewOrdemLancamento = useMemo(() => {
     if (!dataLancamento) return null;
@@ -98,16 +108,217 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     return formatarCodigoLancamentoLegivel(codigoOrdenacaoDesdeInstante(iso));
   }, [dataLancamento]);
 
-  if (!open) return null;
-
-  const layout = presentation ?? (origemContaPagar ? 'bottomSheet' : 'center');
-  const rootClassName =
-    layout === 'bottomSheet'
-      ? 'relative flex h-[min(58dvh,520px)] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-background shadow-2xl'
-      : 'relative flex h-[min(100dvh,820px)] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-background shadow-2xl md:max-h-[calc(100vh-3rem)]';
-
   const valorNumerico = parseInt(valorCents || '0', 10) / 100;
   const display = valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+  const mobileSteps = useMemo(() => {
+    if (!isMobile) return [];
+    const steps = [
+      {
+        id: 'valor',
+        label: 'Valor',
+        type: 'decimal',
+        value: valorNumerico === 0 ? '' : String(valorNumerico),
+        onChange: (e) => setValorCents(Math.round(parseFloat(e.target.value || '0') * 100).toString() || '0'),
+      },
+      {
+        id: 'descricao',
+        label: tipo === 'Transferência' ? 'Observações' : 'Descrição',
+        type: 'text',
+        optional: tipo === 'Transferência',
+        uppercase: true,
+        value: descricao,
+        onChange: (e) => setDescricao(e.target.value),
+        placeholder: tipo === 'Transferência' ? 'Opcional' : 'Ex: Aluguel, fornecedor...',
+      },
+      {
+        id: 'data',
+        label: 'Data de vencimento',
+        type: 'date',
+        value: data,
+        onChange: (e) => setData(e.target.value),
+      },
+      {
+        id: 'dataLancamento',
+        label: 'Data do lançamento',
+        hint: 'Opcional — ordem no fluxo de caixa',
+        type: 'datetime',
+        optional: true,
+        value: dataLancamento,
+        onChange: (e) => setDataLancamento(e.target.value),
+        preview: previewOrdemLancamento ? `Ordem: ${previewOrdemLancamento}` : null,
+      },
+    ];
+
+    if (tipo === 'Transferência') {
+      steps.push(
+        {
+          id: 'contaOrigem',
+          type: 'custom',
+          label: 'Conta origem',
+          render: () => (
+            <SeletorContaMobile
+              contas={contas}
+              value={contaId}
+              onChange={setContaId}
+              label="De qual conta?"
+              placeholder="Selecionar origem"
+            />
+          ),
+        },
+        {
+          id: 'contaDestino',
+          type: 'custom',
+          label: 'Conta destino',
+          render: () => (
+            <SeletorContaMobile
+              contas={contas}
+              value={contaDestinoId}
+              onChange={setContaDestinoId}
+              excludeIds={contaId ? [contaId] : []}
+              label="Para qual conta?"
+              placeholder="Selecionar destino"
+            />
+          ),
+        },
+      );
+    } else {
+      steps.push(
+        {
+          id: 'conta',
+          type: 'custom',
+          label: 'Conta',
+          render: () => (
+            <SeletorContaMobile
+              contas={contas}
+              value={contaId}
+              onChange={setContaId}
+              label="Qual conta?"
+              placeholder="Selecionar conta"
+            />
+          ),
+        },
+        {
+          id: 'status',
+          type: 'choice',
+          label: 'Situação',
+          value: status,
+          onChange: setStatus,
+          options: [
+            { value: 'Em Aberto', label: 'Em aberto' },
+            { value: 'Pago', label: 'Já pago' },
+          ],
+        },
+        {
+          id: 'categoria',
+          type: 'custom',
+          label: 'Categoria',
+          optional: true,
+          render: () => (
+            <SeletorCategoria
+              tipo={tipo}
+              value={categoria}
+              onChange={(nome, id) => { setCategoria(nome); setCategoriaId(id || ''); }}
+              categorias={categorias}
+              onCriada={reloadCats}
+              mobileLarge
+            />
+          ),
+        },
+        {
+          id: 'tags',
+          type: 'custom',
+          label: 'Tags',
+          optional: true,
+          render: () => <TagsInput tags={tags} onChange={setTags} defaultExpanded />,
+        },
+        {
+          id: 'extras',
+          type: 'custom',
+          label: 'Mais opções',
+          optional: true,
+          render: () => (
+            <div className="space-y-3 max-h-[40vh] overflow-y-auto overscroll-contain -mx-1 px-1">
+              {tipo === 'Despesa' && (
+                <div className="bg-card rounded-2xl shadow-sm p-4">
+                  <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
+                    <Checkbox checked={isCustoMercadoria} onCheckedChange={setIsCustoMercadoria} />
+                    <div className="flex items-center gap-2">
+                      <ShoppingCart className="w-5 h-5 text-blue-500" />
+                      <span className="text-base text-foreground/90">Custo de Mercadoria (CMV)</span>
+                    </div>
+                  </label>
+                </div>
+              )}
+              <RecorrenciaConfig
+                isRecorrente={isRecorrente}
+                onToggle={setIsRecorrente}
+                frequencia={frequencia}
+                onFrequencia={setFrequencia}
+                parcelas={parcelas}
+                onParcelas={setParcelas}
+                dataFim={dataFim}
+                onDataFim={setDataFim}
+              />
+            </div>
+          ),
+        },
+      );
+    }
+
+    steps.push({
+      id: 'confirm',
+      type: 'custom',
+      label: 'Confirmar',
+      render: () => (
+        <div className="bg-card rounded-2xl p-5 shadow-sm space-y-3 text-center">
+          <p className="text-sm text-muted-foreground">{tipo}</p>
+          <p className="text-xl font-semibold text-foreground">{descricao || '—'}</p>
+          <p className="text-3xl font-bold text-foreground font-glacial">R$ {display}</p>
+          {contaId && (
+            <p className="text-base text-muted-foreground">
+              {contas.find((c) => c.id === contaId)?.nome}
+            </p>
+          )}
+          {categoria && <p className="text-sm text-muted-foreground">{categoria}</p>}
+        </div>
+      ),
+    });
+
+    return steps;
+  }, [
+    isMobile, tipo, valorNumerico, descricao, data, dataLancamento, previewOrdemLancamento,
+    contas, contaId, contaDestinoId, status, categoria, categorias, tags,
+    isCustoMercadoria, isRecorrente, frequencia, parcelas, dataFim, display, reloadCats,
+  ]);
+
+  const validateMobileStep = useCallback((stepId) => {
+    if (stepId === 'valor' && valorNumerico <= 0) {
+      toast({ title: 'Informe o valor', variant: 'destructive' });
+      return false;
+    }
+    if (stepId === 'descricao' && tipo !== 'Transferência' && !descricao.trim()) {
+      toast({ title: 'Informe a descrição', variant: 'destructive' });
+      return false;
+    }
+    if (stepId === 'conta' && !contaId) {
+      toast({ title: 'Selecione uma conta', variant: 'destructive' });
+      return false;
+    }
+    if (stepId === 'contaOrigem' && !contaId) {
+      toast({ title: 'Selecione a conta origem', variant: 'destructive' });
+      return false;
+    }
+    if (stepId === 'contaDestino' && !contaDestinoId) {
+      toast({ title: 'Selecione a conta destino', variant: 'destructive' });
+      return false;
+    }
+    if (stepId === 'status' && status === 'Pago' && !contaId) {
+      toast({ title: 'Selecione a conta para registrar o pagamento', variant: 'destructive' });
+      return false;
+    }
+    return true;
+  }, [valorNumerico, tipo, descricao, contaId, contaDestinoId, status, toast]);
 
   const gerarGrupoId = () => `grp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -234,6 +445,35 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     setConfirmDialogMode('success');
   };
 
+  const handleMobileNext = () => {
+    const current = mobileSteps[mobileStep];
+    if (!current) return;
+    if (!validateMobileStep(current.id)) return;
+    if (current.id === 'confirm') {
+      handleSave();
+      return;
+    }
+    if (mobileStep < mobileSteps.length - 1) setMobileStep((i) => i + 1);
+  };
+
+  const handleMobileBack = () => {
+    if (mobileStep > 0) setMobileStep((i) => i - 1);
+    else onClose();
+  };
+
+  const handleMobileSkip = () => {
+    if (mobileStep < mobileSteps.length - 1) setMobileStep((i) => i + 1);
+  };
+
+  if (!open) return null;
+
+  const layout = presentation ?? (origemContaPagar ? 'bottomSheet' : 'center');
+  const rootClassName = isMobile
+    ? 'relative flex h-[min(92dvh,720px)] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-background shadow-2xl'
+    : layout === 'bottomSheet'
+      ? 'relative flex h-[min(58dvh,520px)] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-t-[28px] bg-background shadow-2xl'
+      : 'relative flex h-[min(100dvh,820px)] min-h-0 w-full max-w-2xl flex-col overflow-hidden rounded-[28px] bg-background shadow-2xl md:max-h-[calc(100vh-3rem)]';
+
   const panel = (
     <div className={rootClassName} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Header */}
@@ -254,12 +494,32 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           })}
         </div>
         <div className="flex gap-1">
-          <div className={`w-2 h-2 rounded-full transition-all ${step === 'valor' ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`} />
-          <div className={`w-2 h-2 rounded-full transition-all ${step === 'detalhes' ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`} />
-          <div className={`w-2 h-2 rounded-full transition-all ${step === 'anexos' ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`} />
+          {!isMobile && (
+            <>
+              <div className={`w-2 h-2 rounded-full transition-all ${step === 'valor' ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`} />
+              <div className={`w-2 h-2 rounded-full transition-all ${step === 'detalhes' ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`} />
+              <div className={`w-2 h-2 rounded-full transition-all ${step === 'anexos' ? 'bg-primary dark:bg-muted' : 'bg-muted dark:bg-muted'}`} />
+            </>
+          )}
         </div>
       </div>
 
+      {isMobile ? (
+        <div className="flex-1 min-h-0 flex flex-col px-4 pb-4">
+          <MobileCampoFlow
+            steps={mobileSteps}
+            stepIndex={mobileStep}
+            onStepIndexChange={setMobileStep}
+            onBack={handleMobileBack}
+            onNext={handleMobileNext}
+            onSkip={handleMobileSkip}
+            showSkip={!!mobileSteps[mobileStep]?.optional}
+            finishLabel={saving ? 'Processando...' : 'Confirmar lançamento'}
+            nextLabel="Próximo"
+          />
+        </div>
+      ) : (
+      <>
       {step === 'valor' && (
         <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
           <div className="text-center w-full">
@@ -443,6 +703,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           </button>
         </div>
       )}
+      </>
+      )}
       <LancamentoConfirmacaoDialog
         open={showConfirmDialog}
         mode={confirmDialogMode}
@@ -468,6 +730,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           setLancamentoCriado(null);
           setIsCustoMercadoria(false);
           setPedidoCompraId('');
+          setMobileStep(0);
         }}
         onFinish={() => {
           setShowConfirmDialog(false);
@@ -477,7 +740,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     </div>
   );
 
-  if (layout === 'bottomSheet') {
+  if (layout === 'bottomSheet' || isMobile) {
     return createPortal(
       <>
         <button
