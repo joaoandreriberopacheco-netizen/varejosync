@@ -56,10 +56,10 @@ export function useCategorias() {
 }
 
 // Seletor de categoria com busca incremental
-export function SeletorCategoria({ tipo, value, onChange, categorias, onCriada, disabled = false }) {
+export function SeletorCategoria({ tipo, value, onChange, categorias, onCriada, disabled = false, mobileLarge = false }) {
   const [showNova, setShowNova] = useState(false);
   const [busca, setBusca] = useState('');
-  const [expandido, setExpandido] = useState(false);
+  const [expandido, setExpandido] = useState(mobileLarge || !!value);
 
   const filtradas = useMemo(() => {
     const doTipo = categorias.filter(c => c.tipo === tipo);
@@ -134,7 +134,9 @@ export function SeletorCategoria({ tipo, value, onChange, categorias, onCriada, 
                   key={c.id}
                   type="button"
                   onClick={() => selecionar(c.nome, c.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 text-sm text-left hover:bg-muted transition-colors ${value === c.nome ? 'bg-muted font-medium' : ''}`}
+                  className={`w-full flex items-center justify-between text-left hover:bg-muted transition-colors ${
+                    mobileLarge ? 'px-4 py-4 text-base min-h-[56px] rounded-xl' : 'px-3 py-2.5 text-sm'
+                  } ${value === c.nome ? 'bg-muted font-medium' : ''}`}
                 >
                   <span className="truncate">{c.nome}</span>
                   {value === c.nome && <Check className="w-4 h-4 text-primary shrink-0" />}
