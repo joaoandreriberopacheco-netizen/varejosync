@@ -25,6 +25,9 @@ export default function LancamentoMaisOpcoes({
   onParcelas,
   dataFim,
   onDataFim,
+  dataLancamento,
+  onDataLancamentoChange,
+  previewOrdemLancamento,
   defaultExpanded = false,
 }) {
   const [expandido, setExpandido] = useState(defaultExpanded);
@@ -33,7 +36,8 @@ export default function LancamentoMaisOpcoes({
     tags.length > 0 ||
     isCustoMercadoria ||
     isRecorrente ||
-    !!pedidoCompraId;
+    !!pedidoCompraId ||
+    !!dataLancamento;
 
   return (
     <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
@@ -53,6 +57,23 @@ export default function LancamentoMaisOpcoes({
 
       {expandido && (
         <div className="px-4 pb-4 space-y-3 border-t border-border/30 pt-3">
+          <div className="rounded-2xl bg-muted/30 p-3 space-y-2">
+            <p className="text-xs font-medium text-foreground">Quando aparece na lista?</p>
+            <p className="text-[11px] text-muted-foreground">Opcional — só muda a ordem no fluxo</p>
+            <input
+              autoComplete="off"
+              type="datetime-local"
+              value={dataLancamento || ''}
+              onChange={onDataLancamentoChange}
+              className="w-full h-11 px-2 text-sm rounded-xl bg-muted border-0 outline-none"
+            />
+            {previewOrdemLancamento && (
+              <p className="text-[11px] text-muted-foreground">
+                Ordem: <span className="font-mono text-foreground/80">{previewOrdemLancamento}</span>
+              </p>
+            )}
+          </div>
+
           <TagsInput tags={tags} onChange={onTagsChange} defaultExpanded />
 
           {tipo === 'Despesa' && (

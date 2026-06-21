@@ -62,7 +62,7 @@ export default function MobileCampoFlow({
           Voltar
         </button>
         {progress && (
-          <span className="text-xs text-muted-foreground font-medium tabular-nums">{progress}</span>
+          <span className="text-xs text-muted-foreground font-medium tabular-nums">Passo {progress}</span>
         )}
         <div className="w-[72px]" />
       </div>

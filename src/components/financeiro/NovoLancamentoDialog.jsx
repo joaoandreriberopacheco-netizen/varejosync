@@ -9,11 +9,17 @@ import { dataHoje, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/
 import { formatarCodigoLancamentoLegivel } from '@/lib/financialUtils';
 import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
-import SeletorContaMobile from './fluxo/SeletorContaMobile';
 import MobileCampoFlow from './fluxo/MobileCampoFlow';
 import LancamentoResumoConfirmacao from './fluxo/LancamentoResumoConfirmacao';
 import LancamentoMaisOpcoes from './fluxo/LancamentoMaisOpcoes';
 import LancamentoConfirmacaoDialog from './LancamentoConfirmacaoDialog';
+import {
+  PassoValorDescricao,
+  PassoDataVencimento,
+  PassoContaSituacao,
+  PassoContasTransferencia,
+  PassoCategoria,
+} from './fluxo/MobileLancamentoPassos';
 import { normalizeDataText } from '@/lib/normalizeDataText';
 import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
 import { useCompactShell } from '@/hooks/use-breakpoint';
@@ -120,135 +126,108 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
   const mobileSteps = useMemo(() => {
     if (!isMobile) return [];
+
     const steps = [
       {
-        id: 'valor',
-        label: 'Valor',
-        title: 'Quanto é?',
-        hint: 'Informe o valor do lançamento',
-        type: 'decimal',
-        value: valorNumerico === 0 ? '' : String(valorNumerico),
-        onChange: (e) => setValorCents(Math.round(parseFloat(e.target.value || '0') * 100).toString() || '0'),
+        id: 'basico',
+        title: 'Quanto e o quê?',
+        hint: 'Valor e descrição do lançamento',
+        type: 'custom',
+        render: () => (
+          <PassoValorDescricao
+            tipo={tipo}
+            valor={valorNumerico === 0 ? '' : String(valorNumerico)}
+            onValorChange={(e) => setValorCents(Math.round(parseFloat(e.target.value || '0') * 100).toString() || '0')}
+            descricao={descricao}
+            onDescricaoChange={(e) => setDescricao(e.target.value)}
+            descricaoOpcional={tipo === 'Transferência'}
+          />
+        ),
       },
       {
-        id: 'descricao',
-        label: 'Descrição',
-        title: tipo === 'Transferência' ? 'Alguma observação?' : 'Do que se trata?',
-        hint: tipo === 'Transferência' ? 'Opcional' : 'Ex: aluguel, fornecedor, cliente',
-        type: 'text',
-        optional: tipo === 'Transferência',
-        uppercase: true,
-        value: descricao,
-        onChange: (e) => setDescricao(e.target.value),
-        placeholder: tipo === 'Transferência' ? 'Opcional' : 'Ex: Aluguel',
-      },
-      {
-        id: 'data',
-        label: 'Vencimento',
+        id: 'quando',
         title: 'Quando vence?',
-        type: 'date',
-        value: data,
-        onChange: (e) => setData(e.target.value),
-      },
-      {
-        id: 'dataLancamento',
-        label: 'Ordem no fluxo',
-        title: 'Quando aparece na lista?',
-        hint: 'Opcional — só muda a posição na lista do fluxo',
-        type: 'datetime',
-        optional: true,
-        value: dataLancamento,
-        onChange: (e) => setDataLancamento(e.target.value),
-        preview: previewOrdemLancamento ? `Ordem: ${previewOrdemLancamento}` : null,
+        type: 'custom',
+        render: () => (
+          <PassoDataVencimento value={data} onChange={(e) => setData(e.target.value)} />
+        ),
       },
     ];
 
     if (tipo === 'Transferência') {
+      steps.push({
+        id: 'transferencia',
+        title: 'De onde para onde?',
+        type: 'custom',
+        render: () => (
+          <PassoContasTransferencia
+            contas={contas}
+            contaOrigemId={contaId}
+            onOrigemChange={setContaId}
+            contaDestinoId={contaDestinoId}
+            onDestinoChange={setContaDestinoId}
+          />
+        ),
+      });
+    } else {
       steps.push(
         {
-          id: 'contaOrigem',
+          id: 'contaSituacao',
+          title: 'Conta e situação',
+          hint: 'Onde entra e se já foi pago',
           type: 'custom',
-          label: 'Conta origem',
           render: () => (
-            <SeletorContaMobile
+            <PassoContaSituacao
               contas={contas}
-              value={contaId}
-              onChange={setContaId}
-              label="De qual conta?"
-              placeholder="Selecionar origem"
+              contaId={contaId}
+              onContaChange={setContaId}
+              status={status}
+              onStatusChange={setStatus}
             />
           ),
         },
         {
-          id: 'contaDestino',
+          id: 'categoria',
+          title: 'Qual categoria?',
+          hint: 'Opcional — ajuda nos relatórios',
           type: 'custom',
-          label: 'Conta destino',
+          optional: true,
           render: () => (
-            <SeletorContaMobile
-              contas={contas}
-              value={contaDestinoId}
-              onChange={setContaDestinoId}
-              excludeIds={contaId ? [contaId] : []}
-              label="Para qual conta?"
-              placeholder="Selecionar destino"
+            <PassoCategoria
+              tipo={tipo}
+              value={categoria}
+              categoriaId={categoriaId}
+              onChange={(nome, id) => { setCategoria(nome); setCategoriaId(id || ''); }}
+              categorias={categorias}
+              onCriada={reloadCats}
             />
           ),
         },
       );
-    } else {
-      steps.push(
-        {
-          id: 'conta',
-          type: 'custom',
-          label: 'Conta',
-          render: () => (
-            <SeletorContaMobile
-              contas={contas}
-              value={contaId}
-              onChange={setContaId}
-              label="Qual conta?"
-              placeholder="Selecionar conta"
-            />
-          ),
-        },
-        {
-          id: 'status',
-          type: 'choice',
-          label: 'Situação',
-          title: 'Já foi pago?',
-          value: status,
-          onChange: setStatus,
-          options: [
-            { value: 'Em Aberto', label: 'Ainda em aberto' },
-            { value: 'Pago', label: 'Sim, já pago' },
-          ],
-        },
-        {
-          id: 'categoria',
-          type: 'custom',
-          label: 'Categoria',
-          title: 'Qual categoria?',
-          hint: 'Opcional — ajuda nos relatórios',
-          optional: true,
-          render: () => (
-            <SeletorCategoria
-              tipo={tipo}
-              value={categoria}
-              onChange={(nome, id) => { setCategoria(nome); setCategoriaId(id || ''); }}
-              categorias={categorias}
-              onCriada={reloadCats}
-              mobileLarge
-            />
-          ),
-        },
-        {
-          id: 'extras',
-          type: 'custom',
-          label: 'Mais opções',
-          title: 'Precisa de mais alguma coisa?',
-          hint: 'Tags, recorrência ou CMV — só se precisar',
-          optional: true,
-          render: () => (
+    }
+
+    steps.push({
+      id: 'confirm',
+      title: 'Está tudo certo?',
+      type: 'custom',
+      render: () => (
+        <div className="space-y-4 w-full max-h-[55vh] overflow-y-auto overscroll-contain">
+          <LancamentoResumoConfirmacao
+            tipo={tipo}
+            descricao={descricao}
+            valorFormatado={display}
+            dataVencimento={data}
+            status={status}
+            contaNome={contas.find((c) => c.id === contaId)?.nome}
+            contaDestinoNome={contas.find((c) => c.id === contaDestinoId)?.nome}
+            categoria={categoria}
+            tags={tags}
+            isRecorrente={isRecorrente}
+            frequencia={frequencia}
+            parcelas={parcelas}
+            isCustoMercadoria={isCustoMercadoria}
+          />
+          {tipo !== 'Transferência' && (
             <LancamentoMaisOpcoes
               tipo={tipo}
               tags={tags}
@@ -266,68 +245,56 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
               onParcelas={setParcelas}
               dataFim={dataFim}
               onDataFim={setDataFim}
-              defaultExpanded
+              dataLancamento={dataLancamento}
+              onDataLancamentoChange={(e) => setDataLancamento(e.target.value)}
+              previewOrdemLancamento={previewOrdemLancamento}
             />
-          ),
-        },
-      );
-    }
-
-    steps.push({
-      id: 'confirm',
-      type: 'custom',
-      label: 'Confirmar',
-      title: 'Está tudo certo?',
-      render: () => (
-        <LancamentoResumoConfirmacao
-          tipo={tipo}
-          descricao={descricao}
-          valorFormatado={display}
-          dataVencimento={data}
-          status={status}
-          contaNome={contas.find((c) => c.id === contaId)?.nome}
-          contaDestinoNome={contas.find((c) => c.id === contaDestinoId)?.nome}
-          categoria={categoria}
-          tags={tags}
-          isRecorrente={isRecorrente}
-          frequencia={frequencia}
-          parcelas={parcelas}
-          isCustoMercadoria={isCustoMercadoria}
-        />
+          )}
+        </div>
       ),
     });
 
     return steps;
   }, [
     isMobile, tipo, valorNumerico, descricao, data, dataLancamento, previewOrdemLancamento,
-    contas, contaId, contaDestinoId, status, categoria, categorias, tags,
+    contas, contaId, contaDestinoId, status, categoria, categoriaId, categorias, tags,
     isCustoMercadoria, isRecorrente, frequencia, parcelas, dataFim, display, reloadCats,
+    pedidoCompraId, pedidosCompra,
   ]);
 
   const validateMobileStep = useCallback((stepId) => {
-    if (stepId === 'valor' && valorNumerico <= 0) {
-      toast({ title: 'Informe o valor', variant: 'destructive' });
-      return false;
+    if (stepId === 'basico') {
+      if (valorNumerico <= 0) {
+        toast({ title: 'Informe o valor', variant: 'destructive' });
+        return false;
+      }
+      if (tipo !== 'Transferência' && !descricao.trim()) {
+        toast({ title: 'Informe a descrição', variant: 'destructive' });
+        return false;
+      }
+      return true;
     }
-    if (stepId === 'descricao' && tipo !== 'Transferência' && !descricao.trim()) {
-      toast({ title: 'Informe a descrição', variant: 'destructive' });
-      return false;
+    if (stepId === 'contaSituacao') {
+      if (!contaId) {
+        toast({ title: 'Selecione uma conta', variant: 'destructive' });
+        return false;
+      }
+      if (status === 'Pago' && !contaId) {
+        toast({ title: 'Selecione a conta para o pagamento', variant: 'destructive' });
+        return false;
+      }
+      return true;
     }
-    if (stepId === 'conta' && !contaId) {
-      toast({ title: 'Selecione uma conta', variant: 'destructive' });
-      return false;
-    }
-    if (stepId === 'contaOrigem' && !contaId) {
-      toast({ title: 'Selecione a conta origem', variant: 'destructive' });
-      return false;
-    }
-    if (stepId === 'contaDestino' && !contaDestinoId) {
-      toast({ title: 'Selecione a conta destino', variant: 'destructive' });
-      return false;
-    }
-    if (stepId === 'status' && status === 'Pago' && !contaId) {
-      toast({ title: 'Selecione a conta para registrar o pagamento', variant: 'destructive' });
-      return false;
+    if (stepId === 'transferencia') {
+      if (!contaId) {
+        toast({ title: 'Selecione a conta origem', variant: 'destructive' });
+        return false;
+      }
+      if (!contaDestinoId) {
+        toast({ title: 'Selecione a conta destino', variant: 'destructive' });
+        return false;
+      }
+      return true;
     }
     return true;
   }, [valorNumerico, tipo, descricao, contaId, contaDestinoId, status, toast]);
@@ -573,34 +540,10 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
             <span className="text-lg font-semibold text-foreground">R$ {display}</span>
           </div>
 
-          {/* Data */}
           <div className="bg-card rounded-2xl shadow-sm">
             <div className="px-4 py-1 text-sm font-medium text-foreground pt-3">Quando vence?</div>
             <input autoComplete="off" type="date" value={data} onChange={e => setData(e.target.value)}
               className="w-full bg-transparent px-4 pb-3 text-sm text-foreground outline-none" />
-          </div>
-
-          <div className="bg-card rounded-2xl shadow-sm">
-            <div className="px-4 py-1 text-sm font-medium text-foreground pt-3">
-              Quando aparece na lista? <span className="font-normal text-muted-foreground">(opcional)</span>
-            </div>
-            <input
-              autoComplete="off"
-              type="datetime-local"
-              value={dataLancamento}
-              onChange={(e) => setDataLancamento(e.target.value)}
-              className="w-full bg-transparent px-4 pb-1 text-sm text-foreground outline-none"
-            />
-            <p className="px-4 pb-3 text-xs text-muted-foreground">
-              {previewOrdemLancamento ? (
-                <>
-                  Ordem no fluxo:{' '}
-                  <span className="font-mono text-foreground/80">{previewOrdemLancamento}</span>
-                </>
-              ) : (
-                'Se deixar vazio, usa a data e hora de agora.'
-              )}
-            </p>
           </div>
 
           {/* Conta */}
@@ -687,6 +630,9 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
                 onParcelas={setParcelas}
                 dataFim={dataFim}
                 onDataFim={setDataFim}
+                dataLancamento={dataLancamento}
+                onDataLancamentoChange={(e) => setDataLancamento(e.target.value)}
+                previewOrdemLancamento={previewOrdemLancamento}
               />
             </>
           )}

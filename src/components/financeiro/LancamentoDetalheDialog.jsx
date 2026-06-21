@@ -26,9 +26,13 @@ import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
 import { lancamentoMesmoRamoRecorrencia } from '@/lib/agefinLancamentosRecorrencia';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import TagsInput from './fluxo/TagsInput';
-import SeletorContaMobile from './fluxo/SeletorContaMobile';
 import MobileCampoFlow from './fluxo/MobileCampoFlow';
 import LancamentoResumoConfirmacao from './fluxo/LancamentoResumoConfirmacao';
+import {
+  PassoEssencialEdicao,
+  PassoOrganizacaoEdicao,
+  PassoPagamentoEdicao,
+} from './fluxo/MobileLancamentoPassos';
 import { tagsVisiveisFinanceiro } from './fluxo/FinanceiroLancRow';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { gravarPreferenciasLancamento } from '@/lib/lancamentoPreferencias';
@@ -198,127 +202,67 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     if (!isMobile || !ehLancamentoEditavel) return [];
     const steps = [
       {
-        id: 'descricao',
-        label: 'Descrição',
-        title: 'Do que se trata?',
-        type: 'text',
-        uppercase: true,
-        value: cadDescricao,
-        onChange: (e) => setCadDescricao(e.target.value),
-        placeholder: 'Descrição do lançamento',
+        id: 'essencial',
+        title: 'O essencial',
+        hint: 'Descrição, valor e vencimento',
+        type: 'custom',
+        render: () => (
+          <PassoEssencialEdicao
+            descricao={cadDescricao}
+            onDescricaoChange={(e) => setCadDescricao(e.target.value)}
+            valor={cadValor}
+            onValorChange={(e) => setCadValor(e.target.value)}
+            vencimento={cadVencimento}
+            onVencimentoChange={(e) => setCadVencimento(e.target.value)}
+            observacoes={cadObs}
+            onObservacoesChange={(e) => setCadObs(e.target.value)}
+          />
+        ),
       },
       {
-        id: 'valor',
-        label: 'Valor',
-        title: 'Quanto é?',
-        type: 'decimal',
-        value: cadValor,
-        onChange: (e) => setCadValor(e.target.value),
-      },
-      {
-        id: 'vencimento',
-        label: 'Vencimento',
-        title: 'Quando vence?',
-        type: 'date',
-        value: cadVencimento,
-        onChange: (e) => setCadVencimento(e.target.value),
-      },
-      {
-        id: 'observacoes',
-        label: 'Observações',
-        title: 'Alguma observação?',
-        hint: 'Opcional',
-        type: 'textarea',
-        optional: true,
-        uppercase: true,
-        value: cadObs,
-        onChange: (e) => setCadObs(e.target.value),
-        placeholder: 'Opcional',
-      },
-      {
-        id: 'categoria',
-        label: 'Categoria',
-        title: 'Qual categoria?',
+        id: 'organizacao',
+        title: 'Organização',
+        hint: 'Categoria, tags e ordem na lista — opcional',
         type: 'custom',
         optional: true,
         render: () => (
-          <SeletorCategoria
+          <PassoOrganizacaoEdicao
             tipo={lancamento.tipo}
-            value={editCategoria}
-            onChange={(nome, id) => { setEditCategoria(nome); setEditCategoriaId(id || ''); }}
+            categoria={editCategoria}
+            categoriaId={editCategoriaId}
+            onCategoriaChange={(nome, id) => { setEditCategoria(nome); setEditCategoriaId(id || ''); }}
             categorias={categorias}
             onCriada={reloadCats}
-            mobileLarge
+            tags={editTags}
+            onTagsChange={setEditTags}
+            dataFluxo={dataLancamentoLocal}
+            onDataFluxoChange={(e) => setDataLancamentoLocal(e.target.value)}
+            previewOrdem={previewOrdemLancamento}
           />
         ),
       },
       {
-        id: 'tags',
-        label: 'Tags',
-        title: 'Quer etiquetar?',
-        hint: 'Opcional — para organizar depois',
+        id: 'pagamento',
+        title: 'Pagamento',
+        hint: 'Situação e conta',
         type: 'custom',
-        optional: true,
-        render: () => <TagsInput tags={editTags} onChange={setEditTags} defaultExpanded />,
-      },
-      {
-        id: 'dataFluxo',
-        label: 'Ordem no fluxo',
-        title: 'Quando aparece na lista?',
-        hint: 'Opcional — só muda a posição no fluxo',
-        type: 'datetime',
-        optional: true,
-        value: dataLancamentoLocal,
-        onChange: (e) => setDataLancamentoLocal(e.target.value),
-        preview: previewOrdemLancamento ? `Ordem: ${previewOrdemLancamento}` : null,
-      },
-      {
-        id: 'pago',
-        label: 'Pagamento',
-        title: 'Já foi pago?',
-        type: 'toggle',
-        value: isPagoLocal,
-        onChange: setIsPagoLocal,
-        onLabel: 'Sim, já pago',
-        offLabel: 'Ainda em aberto',
-      },
-      {
-        id: 'dataPagamento',
-        label: 'Data do pagamento',
-        title: 'Quando foi pago?',
-        type: 'date',
-        hidden: !isPagoLocal,
-        value: dataPagamento,
-        onChange: (e) => setDataPagamento(e.target.value),
-      },
-      {
-        id: 'conta',
-        label: 'Conta',
-        type: 'custom',
-        hidden: !isPagoLocal,
         render: () => (
-          <SeletorContaMobile
+          <PassoPagamentoEdicao
+            isPago={isPagoLocal}
+            onPagoChange={setIsPagoLocal}
+            dataPagamento={dataPagamento}
+            onDataPagamentoChange={(e) => setDataPagamento(e.target.value)}
             contas={contas}
-            value={contaId}
-            onChange={setContaId}
-            label="Qual conta?"
-            placeholder="Selecionar conta"
+            contaId={contaId}
+            onContaChange={setContaId}
+            mostrarLiquidacao={isPagoOriginal && isPendente}
+            dataLiquidacao={dataLiquidacao}
+            onDataLiquidacaoChange={(e) => setDataLiquidacao(e.target.value)}
           />
         ),
-      },
-      {
-        id: 'liquidacao',
-        label: 'Liquidação',
-        title: 'Data de liquidação',
-        hint: 'Confirme quando o valor entrou na conta',
-        type: 'date',
-        hidden: !(isPagoOriginal && isPendente),
-        value: dataLiquidacao,
-        onChange: (e) => setDataLiquidacao(e.target.value),
       },
       {
         id: 'confirm',
-        label: 'Confirmar',
         title: 'Está tudo certo?',
         type: 'custom',
         render: () => (
@@ -338,21 +282,24 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     return steps;
   }, [
     isMobile, ehLancamentoEditavel, cadDescricao, cadValor, cadVencimento, cadObs,
-    editCategoria, editTags, dataLancamentoLocal, previewOrdemLancamento, isPagoLocal,
+    editCategoria, editCategoriaId, editTags, dataLancamentoLocal, previewOrdemLancamento, isPagoLocal,
     dataPagamento, contaId, contas, isPagoOriginal, isPendente, dataLiquidacao,
     lancamento.tipo, categorias, reloadCats, valorNumerico,
   ]);
 
   const validateMobileEditStep = (stepId) => {
-    if (stepId === 'valor' && valorNumerico <= 0) {
-      toast({ title: 'Informe um valor válido', variant: 'destructive' });
-      return false;
+    if (stepId === 'essencial') {
+      if (valorNumerico <= 0) {
+        toast({ title: 'Informe um valor válido', variant: 'destructive' });
+        return false;
+      }
+      if (!(cadDescricao || '').trim()) {
+        toast({ title: 'Informe a descrição', variant: 'destructive' });
+        return false;
+      }
+      return true;
     }
-    if (stepId === 'descricao' && !(cadDescricao || '').trim()) {
-      toast({ title: 'Informe a descrição', variant: 'destructive' });
-      return false;
-    }
-    if (stepId === 'conta' && isPagoLocal && !contaId) {
+    if (stepId === 'pagamento' && isPagoLocal && !contaId) {
       toast({ title: 'Selecione uma conta', variant: 'destructive' });
       return false;
     }
