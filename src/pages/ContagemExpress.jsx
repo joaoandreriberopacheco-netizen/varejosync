@@ -275,7 +275,9 @@ export default function ContagemExpress() {
     : 'UN';
 
   const confirmarProduto = () => {
-    if (!produtoSelecionado || !entradaPreview || pendenteBase <= 0) return;
+    if (!produtoSelecionado || !entradaPreview) return;
+    const qtd = parseFloat(quantidadePendente);
+    if (quantidadePendente === '' || Number.isNaN(qtd) || qtd < 0) return;
 
     let novosItens;
     if (modoContagem === 'substituir') {
@@ -290,6 +292,30 @@ export default function ContagemExpress() {
     allowProgrammaticFocusBriefly();
     persistItens(novosItens);
     limparSelecao({ focarBusca: true });
+  };
+
+  const removerDoCarrinho = async (produtoId) => {
+    if (!produtoId) return;
+    const novosItens = itens.filter((i) => i.produto_id !== produtoId);
+    allowProgrammaticFocusBriefly();
+    await persistItens(novosItens);
+    limparSelecao({ focarBusca: view === 'contagem' });
+
+    if (view === 'carrinho') {
+      if (novosItens.length === 0) {
+        setComparativo([]);
+        return;
+      }
+      setLoadingComparativo(true);
+      try {
+        const rows = await buildComparativoContagem(base44, novosItens, produtos);
+        setComparativo(rows);
+      } catch (error) {
+        console.error(error);
+        toast.error('Não foi possível atualizar as diferenças.');
+      }
+      setLoadingComparativo(false);
+    }
   };
 
   const abrirCarrinho = async () => {
@@ -446,6 +472,7 @@ export default function ContagemExpress() {
               quantidadeInicial: grupo.display?.quantidade ?? grupo.totalBase,
             });
           }}
+          onRemoverItem={(grupo) => removerDoCarrinho(grupo.produto_id)}
         />
       </div>
     );
@@ -522,7 +549,7 @@ export default function ContagemExpress() {
             onQuantidadeChange={setQuantidadePendente}
             onMenos={() => {
               const q = Math.max(0, (parseFloat(quantidadePendente) || 0) - 1);
-              setQuantidadePendente(q > 0 ? String(q) : '');
+              setQuantidadePendente(String(q));
             }}
             onMais={() => {
               const q = (parseFloat(quantidadePendente) || 0) + 1;
@@ -531,6 +558,10 @@ export default function ContagemExpress() {
             onTrocarUnidade={() => setUnitSelector({ open: true, product: produtoSelecionado })}
             onConfirmar={confirmarProduto}
             onCancelar={limparSelecao}
+            onRemover={modoContagem === 'substituir'
+              ? () => removerDoCarrinho(produtoSelecionado.id)
+              : undefined}
+            confirmLabel={modoContagem === 'substituir' ? 'Atualizar' : 'Confirmar'}
           />
         ) : produtosFiltrados.length > 0 ? (
           <div className="divide-y divide-border/30 overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm">
