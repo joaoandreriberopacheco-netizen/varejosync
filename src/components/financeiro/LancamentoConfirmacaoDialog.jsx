@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 
-export default function LancamentoConfirmacaoDialog({ open, mode, onCreateAnother, onFinish }) {
+export default function LancamentoConfirmacaoDialog({ open, mode, onCreateAnother, onFinish, successTitle, successMessage }) {
   const processing = mode === 'processing';
 
   useEffect(() => {
@@ -30,10 +30,10 @@ export default function LancamentoConfirmacaoDialog({ open, mode, onCreateAnothe
 
           <div className="space-y-1">
             <h3 className="text-lg font-semibold text-foreground font-glacial">
-              {processing ? 'Processando' : 'Lançamento confirmado'}
+              {processing ? 'Processando' : (successTitle || 'Lançamento confirmado')}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {processing ? 'Aguarde enquanto salvamos o lançamento.' : 'Deseja adicionar outro lançamento?'}
+              {processing ? 'Aguarde enquanto salvamos o lançamento.' : (successMessage || 'Deseja adicionar outro lançamento?')}
             </p>
           </div>
 

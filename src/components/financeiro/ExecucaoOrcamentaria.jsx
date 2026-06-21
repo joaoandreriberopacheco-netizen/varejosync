@@ -732,6 +732,10 @@ export default function ExecucaoOrcamentaria() {
                   return;
                 }
                 setDetalhe(null);
+                if (opts?.createAnother) {
+                  setNovoTipo('Despesa');
+                  setShowNovoFluxo(true);
+                }
               }}
             />
           )}

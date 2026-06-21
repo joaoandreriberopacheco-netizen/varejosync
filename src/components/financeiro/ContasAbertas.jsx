@@ -897,6 +897,10 @@ export function ContasAbertasListaPane() {
               return;
             }
             setDetalhe(null);
+            if (opts?.createAnother) {
+              setNovoTipo('Despesa');
+              setShowNovo(true);
+            }
           }}
         />
       )}
