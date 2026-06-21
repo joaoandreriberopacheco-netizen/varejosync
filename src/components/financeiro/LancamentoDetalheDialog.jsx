@@ -28,8 +28,10 @@ import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
 import TagsInput from './fluxo/TagsInput';
 import SeletorContaMobile from './fluxo/SeletorContaMobile';
 import MobileCampoFlow from './fluxo/MobileCampoFlow';
+import LancamentoResumoConfirmacao from './fluxo/LancamentoResumoConfirmacao';
 import { tagsVisiveisFinanceiro } from './fluxo/FinanceiroLancRow';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { gravarPreferenciasLancamento } from '@/lib/lancamentoPreferencias';
 
 const R = (v) => `R$ ${Math.abs(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -198,6 +200,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       {
         id: 'descricao',
         label: 'Descrição',
+        title: 'Do que se trata?',
         type: 'text',
         uppercase: true,
         value: cadDescricao,
@@ -207,6 +210,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       {
         id: 'valor',
         label: 'Valor',
+        title: 'Quanto é?',
         type: 'decimal',
         value: cadValor,
         onChange: (e) => setCadValor(e.target.value),
@@ -214,6 +218,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       {
         id: 'vencimento',
         label: 'Vencimento',
+        title: 'Quando vence?',
         type: 'date',
         value: cadVencimento,
         onChange: (e) => setCadVencimento(e.target.value),
@@ -221,6 +226,8 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       {
         id: 'observacoes',
         label: 'Observações',
+        title: 'Alguma observação?',
+        hint: 'Opcional',
         type: 'textarea',
         optional: true,
         uppercase: true,
@@ -231,6 +238,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       {
         id: 'categoria',
         label: 'Categoria',
+        title: 'Qual categoria?',
         type: 'custom',
         optional: true,
         render: () => (
@@ -247,14 +255,17 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       {
         id: 'tags',
         label: 'Tags',
+        title: 'Quer etiquetar?',
+        hint: 'Opcional — para organizar depois',
         type: 'custom',
         optional: true,
         render: () => <TagsInput tags={editTags} onChange={setEditTags} defaultExpanded />,
       },
       {
         id: 'dataFluxo',
-        label: 'Data/hora no fluxo',
-        hint: 'Posição na lista do fluxo de caixa',
+        label: 'Ordem no fluxo',
+        title: 'Quando aparece na lista?',
+        hint: 'Opcional — só muda a posição no fluxo',
         type: 'datetime',
         optional: true,
         value: dataLancamentoLocal,
@@ -263,16 +274,18 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       },
       {
         id: 'pago',
-        label: 'Situação de pagamento',
+        label: 'Pagamento',
+        title: 'Já foi pago?',
         type: 'toggle',
         value: isPagoLocal,
         onChange: setIsPagoLocal,
-        onLabel: 'Pago',
-        offLabel: 'Em aberto',
+        onLabel: 'Sim, já pago',
+        offLabel: 'Ainda em aberto',
       },
       {
         id: 'dataPagamento',
         label: 'Data do pagamento',
+        title: 'Quando foi pago?',
         type: 'date',
         hidden: !isPagoLocal,
         value: dataPagamento,
@@ -288,18 +301,38 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
             contas={contas}
             value={contaId}
             onChange={setContaId}
-            label="Conta do pagamento"
+            label="Qual conta?"
             placeholder="Selecionar conta"
           />
         ),
       },
       {
         id: 'liquidacao',
-        label: 'Data de liquidação',
+        label: 'Liquidação',
+        title: 'Data de liquidação',
+        hint: 'Confirme quando o valor entrou na conta',
         type: 'date',
         hidden: !(isPagoOriginal && isPendente),
         value: dataLiquidacao,
         onChange: (e) => setDataLiquidacao(e.target.value),
+      },
+      {
+        id: 'confirm',
+        label: 'Confirmar',
+        title: 'Está tudo certo?',
+        type: 'custom',
+        render: () => (
+          <LancamentoResumoConfirmacao
+            tipo={lancamento.tipo}
+            descricao={cadDescricao}
+            valorFormatado={valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            dataVencimento={cadVencimento}
+            status={isPagoLocal ? 'Pago' : 'Em Aberto'}
+            contaNome={contas.find((c) => c.id === contaId)?.nome}
+            categoria={editCategoria}
+            tags={editTags}
+          />
+        ),
       },
     ];
     return steps;
@@ -307,7 +340,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     isMobile, ehLancamentoEditavel, cadDescricao, cadValor, cadVencimento, cadObs,
     editCategoria, editTags, dataLancamentoLocal, previewOrdemLancamento, isPagoLocal,
     dataPagamento, contaId, contas, isPagoOriginal, isPendente, dataLiquidacao,
-    lancamento.tipo, categorias, reloadCats,
+    lancamento.tipo, categorias, reloadCats, valorNumerico,
   ]);
 
   const validateMobileEditStep = (stepId) => {
@@ -332,7 +365,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
     if (!current) return;
     if (!validateMobileEditStep(current.id)) return;
     if (mobileEditStep >= visible.length - 1) {
-      handleSalvarEdicao();
+      if (current.id === 'confirm') {
+        handleSalvarEdicao();
+      }
       return;
     }
     setMobileEditStep((i) => i + 1);
@@ -552,6 +587,13 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
       }
 
       toast({ title: 'Lançamento atualizado!', className: 'bg-muted text-foreground' });
+      if (lancamento.tipo !== 'Transferência') {
+        gravarPreferenciasLancamento(lancamento.tipo, {
+          contaId,
+          categoria: normalizeDataText(editCategoria),
+          categoriaId: editCategoriaId,
+        });
+      }
       await finalizarSalvo();
     } catch {
       toast({ title: 'Não foi possível guardar', variant: 'destructive' });
@@ -712,7 +754,7 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
               onNext={handleMobileEditNext}
               onSkip={handleMobileEditSkip}
               showSkip={!!mobileEditSteps.filter((s) => !s.hidden)[mobileEditStep]?.optional}
-              finishLabel={saving ? 'A guardar…' : 'Salvar alterações'}
+              finishLabel={saving ? 'A guardar…' : 'Guardar alterações'}
               nextLabel="Próximo"
             />
           </div>
@@ -778,9 +820,9 @@ export default function LancamentoDetalheDialog({ lancamento, contas, onClose, o
 
         {!isCancelado && (
           <div className="px-5 pt-4 space-y-2">
-            <p className="text-xs font-medium text-foreground/90">Data/hora no fluxo</p>
+            <p className="text-xs font-medium text-foreground/90">Quando aparece na lista?</p>
             <p className="text-[11px] text-muted-foreground leading-snug">
-              Define a posição deste lançamento na lista do fluxo de caixa (independente da data de pagamento).
+              Opcional — define a posição deste lançamento no fluxo (não é a data de pagamento).
             </p>
             {modoEdicao ? (
               <>

@@ -2,22 +2,22 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight, ShoppingCart } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ArrowRightLeft, X, CheckCircle2, ChevronRight } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { addWeeks, addMonths, addYears, format } from 'date-fns';
 import { dataHoje, datetimeLocalParaISO, codigoOrdenacaoDesdeInstante } from '@/components/utils/dateUtils';
 import { formatarCodigoLancamentoLegivel } from '@/lib/financialUtils';
 import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
 import { SeletorCategoria, useCategorias } from './fluxo/DialogCategoria';
-import RecorrenciaConfig from './fluxo/RecorrenciaConfig';
-import TagsInput from './fluxo/TagsInput';
 import SeletorContaMobile from './fluxo/SeletorContaMobile';
 import MobileCampoFlow from './fluxo/MobileCampoFlow';
-import { Checkbox } from '@/components/ui/checkbox';
+import LancamentoResumoConfirmacao from './fluxo/LancamentoResumoConfirmacao';
+import LancamentoMaisOpcoes from './fluxo/LancamentoMaisOpcoes';
 import LancamentoConfirmacaoDialog from './LancamentoConfirmacaoDialog';
 import { normalizeDataText } from '@/lib/normalizeDataText';
 import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { gravarPreferenciasLancamento, resolverPreferenciasLancamento } from '@/lib/lancamentoPreferencias';
 
 const TIPOS = [
   { value: 'Receita', label: 'Receita', icon: ArrowDownLeft },
@@ -99,7 +99,14 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
   useEffect(() => {
     if (open) setMobileStep(0);
-  }, [open, tipo]);
+    if (!open || tipo === 'Transferência') return;
+    const prefs = resolverPreferenciasLancamento(tipo, { contas, categorias });
+    if (!contaDefaultId && prefs.contaId) setContaId(prefs.contaId);
+    if (!origemContaPagar) {
+      setCategoria(prefs.categoria || '');
+      setCategoriaId(prefs.categoriaId || '');
+    }
+  }, [open, tipo, contas, categorias, contaDefaultId, origemContaPagar]);
 
   const previewOrdemLancamento = useMemo(() => {
     if (!dataLancamento) return null;
@@ -117,31 +124,37 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       {
         id: 'valor',
         label: 'Valor',
+        title: 'Quanto é?',
+        hint: 'Informe o valor do lançamento',
         type: 'decimal',
         value: valorNumerico === 0 ? '' : String(valorNumerico),
         onChange: (e) => setValorCents(Math.round(parseFloat(e.target.value || '0') * 100).toString() || '0'),
       },
       {
         id: 'descricao',
-        label: tipo === 'Transferência' ? 'Observações' : 'Descrição',
+        label: 'Descrição',
+        title: tipo === 'Transferência' ? 'Alguma observação?' : 'Do que se trata?',
+        hint: tipo === 'Transferência' ? 'Opcional' : 'Ex: aluguel, fornecedor, cliente',
         type: 'text',
         optional: tipo === 'Transferência',
         uppercase: true,
         value: descricao,
         onChange: (e) => setDescricao(e.target.value),
-        placeholder: tipo === 'Transferência' ? 'Opcional' : 'Ex: Aluguel, fornecedor...',
+        placeholder: tipo === 'Transferência' ? 'Opcional' : 'Ex: Aluguel',
       },
       {
         id: 'data',
-        label: 'Data de vencimento',
+        label: 'Vencimento',
+        title: 'Quando vence?',
         type: 'date',
         value: data,
         onChange: (e) => setData(e.target.value),
       },
       {
         id: 'dataLancamento',
-        label: 'Data do lançamento',
-        hint: 'Opcional — ordem no fluxo de caixa',
+        label: 'Ordem no fluxo',
+        title: 'Quando aparece na lista?',
+        hint: 'Opcional — só muda a posição na lista do fluxo',
         type: 'datetime',
         optional: true,
         value: dataLancamento,
@@ -202,17 +215,20 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           id: 'status',
           type: 'choice',
           label: 'Situação',
+          title: 'Já foi pago?',
           value: status,
           onChange: setStatus,
           options: [
-            { value: 'Em Aberto', label: 'Em aberto' },
-            { value: 'Pago', label: 'Já pago' },
+            { value: 'Em Aberto', label: 'Ainda em aberto' },
+            { value: 'Pago', label: 'Sim, já pago' },
           ],
         },
         {
           id: 'categoria',
           type: 'custom',
           label: 'Categoria',
+          title: 'Qual categoria?',
+          hint: 'Opcional — ajuda nos relatórios',
           optional: true,
           render: () => (
             <SeletorCategoria
@@ -226,41 +242,32 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           ),
         },
         {
-          id: 'tags',
-          type: 'custom',
-          label: 'Tags',
-          optional: true,
-          render: () => <TagsInput tags={tags} onChange={setTags} defaultExpanded />,
-        },
-        {
           id: 'extras',
           type: 'custom',
           label: 'Mais opções',
+          title: 'Precisa de mais alguma coisa?',
+          hint: 'Tags, recorrência ou CMV — só se precisar',
           optional: true,
           render: () => (
-            <div className="space-y-3 max-h-[40vh] overflow-y-auto overscroll-contain -mx-1 px-1">
-              {tipo === 'Despesa' && (
-                <div className="bg-card rounded-2xl shadow-sm p-4">
-                  <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
-                    <Checkbox checked={isCustoMercadoria} onCheckedChange={setIsCustoMercadoria} />
-                    <div className="flex items-center gap-2">
-                      <ShoppingCart className="w-5 h-5 text-blue-500" />
-                      <span className="text-base text-foreground/90">Custo de Mercadoria (CMV)</span>
-                    </div>
-                  </label>
-                </div>
-              )}
-              <RecorrenciaConfig
-                isRecorrente={isRecorrente}
-                onToggle={setIsRecorrente}
-                frequencia={frequencia}
-                onFrequencia={setFrequencia}
-                parcelas={parcelas}
-                onParcelas={setParcelas}
-                dataFim={dataFim}
-                onDataFim={setDataFim}
-              />
-            </div>
+            <LancamentoMaisOpcoes
+              tipo={tipo}
+              tags={tags}
+              onTagsChange={setTags}
+              isCustoMercadoria={isCustoMercadoria}
+              onCustoMercadoriaChange={setIsCustoMercadoria}
+              pedidoCompraId={pedidoCompraId}
+              onPedidoCompraIdChange={setPedidoCompraId}
+              pedidosCompra={pedidosCompra}
+              isRecorrente={isRecorrente}
+              onRecorrenteToggle={setIsRecorrente}
+              frequencia={frequencia}
+              onFrequencia={setFrequencia}
+              parcelas={parcelas}
+              onParcelas={setParcelas}
+              dataFim={dataFim}
+              onDataFim={setDataFim}
+              defaultExpanded
+            />
           ),
         },
       );
@@ -270,18 +277,23 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       id: 'confirm',
       type: 'custom',
       label: 'Confirmar',
+      title: 'Está tudo certo?',
       render: () => (
-        <div className="bg-card rounded-2xl p-5 shadow-sm space-y-3 text-center">
-          <p className="text-sm text-muted-foreground">{tipo}</p>
-          <p className="text-xl font-semibold text-foreground">{descricao || '—'}</p>
-          <p className="text-3xl font-bold text-foreground font-glacial">R$ {display}</p>
-          {contaId && (
-            <p className="text-base text-muted-foreground">
-              {contas.find((c) => c.id === contaId)?.nome}
-            </p>
-          )}
-          {categoria && <p className="text-sm text-muted-foreground">{categoria}</p>}
-        </div>
+        <LancamentoResumoConfirmacao
+          tipo={tipo}
+          descricao={descricao}
+          valorFormatado={display}
+          dataVencimento={data}
+          status={status}
+          contaNome={contas.find((c) => c.id === contaId)?.nome}
+          contaDestinoNome={contas.find((c) => c.id === contaDestinoId)?.nome}
+          categoria={categoria}
+          tags={tags}
+          isRecorrente={isRecorrente}
+          frequencia={frequencia}
+          parcelas={parcelas}
+          isCustoMercadoria={isCustoMercadoria}
+        />
       ),
     });
 
@@ -440,6 +452,13 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
     }
 
     toast({ title: 'Lançamento salvo!' });
+    if (tipo !== 'Transferência') {
+      gravarPreferenciasLancamento(tipo, {
+        contaId,
+        categoria: categoriaNorm,
+        categoriaId,
+      });
+    }
     onSaved?.(lancamentoParaCallback);
     setSaving(false);
     setConfirmDialogMode('success');
@@ -523,7 +542,8 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
       {step === 'valor' && (
         <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
           <div className="text-center w-full">
-            <p className="text-[0.7rem] uppercase tracking-widest text-muted-foreground mb-2">Valor</p>
+            <p className="text-lg font-semibold text-foreground mb-1">Quanto é?</p>
+            <p className="text-xs text-muted-foreground mb-3">Valor do lançamento</p>
             <input autoComplete="off"
               type="number" inputMode="decimal" min="0" step="0.01"
               value={valorNumerico === 0 ? '' : valorNumerico}
@@ -536,7 +556,7 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           <input autoComplete="off"
             value={descricao}
             onChange={createUppercaseInputChangeHandler((e) => setDescricao(e.target.value))}
-            placeholder={tipo === 'Transferência' ? 'Observações (opcional)' : 'Descrição *'}
+            placeholder={tipo === 'Transferência' ? 'Observações (opcional)' : 'Do que se trata? *'}
             className="w-full text-center bg-transparent border-0 border-b border-border/40 py-2 text-sm text-muted-foreground placeholder:text-muted-foreground outline-none focus:border-border/40 transition-colors p38-data-uppercase"
           />
           <button onClick={() => setStep('detalhes')}
@@ -555,14 +575,14 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
           {/* Data */}
           <div className="bg-card rounded-2xl shadow-sm">
-            <div className="px-4 py-1 text-[10px] text-muted-foreground uppercase tracking-wider pt-3">Data de Vencimento</div>
+            <div className="px-4 py-1 text-sm font-medium text-foreground pt-3">Quando vence?</div>
             <input autoComplete="off" type="date" value={data} onChange={e => setData(e.target.value)}
               className="w-full bg-transparent px-4 pb-3 text-sm text-foreground outline-none" />
           </div>
 
           <div className="bg-card rounded-2xl shadow-sm">
-            <div className="px-4 py-1 text-[10px] text-muted-foreground uppercase tracking-wider pt-3">
-              Data do lançamento <span className="normal-case text-muted-foreground/80">(opcional)</span>
+            <div className="px-4 py-1 text-sm font-medium text-foreground pt-3">
+              Quando aparece na lista? <span className="font-normal text-muted-foreground">(opcional)</span>
             </div>
             <input
               autoComplete="off"
@@ -571,14 +591,14 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
               onChange={(e) => setDataLancamento(e.target.value)}
               className="w-full bg-transparent px-4 pb-1 text-sm text-foreground outline-none"
             />
-            <p className="px-4 pb-3 text-[10px] text-muted-foreground">
+            <p className="px-4 pb-3 text-xs text-muted-foreground">
               {previewOrdemLancamento ? (
                 <>
                   Ordem no fluxo:{' '}
-                  <span className="font-mono text-[10px] text-foreground/80">{previewOrdemLancamento}</span>
+                  <span className="font-mono text-foreground/80">{previewOrdemLancamento}</span>
                 </>
               ) : (
-                'Se vazio, usa a data e hora atuais ao salvar.'
+                'Se deixar vazio, usa a data e hora de agora.'
               )}
             </p>
           </div>
@@ -611,10 +631,10 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
           ) : (
             <>
               <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
-                <div className="px-4 py-1 text-[10px] text-muted-foreground uppercase tracking-wider pt-3">Conta</div>
+                <div className="px-4 py-1 text-sm font-medium text-foreground pt-3">Qual conta?</div>
                 <Select value={contaId} onValueChange={setContaId}>
-                  <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-foreground text-sm px-4">
-                    <SelectValue placeholder="Informar conta" />
+                  <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-foreground text-base px-4">
+                    <SelectValue placeholder="Escolher conta" />
                   </SelectTrigger>
                   <SelectContent className="z-[70] dark:bg-muted dark:border-border/40">
                     {contas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
@@ -624,9 +644,12 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
               {/* Status — abaixo da conta */}
               <div className="flex gap-2">
+                <p className="w-full text-xs text-muted-foreground px-1 pb-1">Já foi pago?</p>
+              </div>
+              <div className="flex gap-2">
                 {[
-                  { value: 'Em Aberto', label: '(em aberto)' },
-                  { value: 'Pago', label: '(pago)' },
+                  { value: 'Em Aberto', label: 'Em aberto' },
+                  { value: 'Pago', label: 'Já pago' },
                 ].map(({ value, label }) => (
                   <button key={value} onClick={() => setStatus(value)}
                     className={`flex-1 h-12 rounded-2xl text-sm font-medium transition-all shadow-sm ${status === value ? 'bg-muted/400 dark:bg-card text-white dark:text-foreground' : 'bg-card text-muted-foreground'}`}>
@@ -639,8 +662,6 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
 
           {tipo !== 'Transferência' && (
             <>
-
-              {/* Categoria dinâmica */}
               <SeletorCategoria
                 tipo={tipo}
                 value={categoria}
@@ -649,51 +670,42 @@ export default function NovoLancamentoDialog({ open, onClose, onSaved, contaDefa
                 onCriada={reloadCats}
               />
 
-              {/* Tags */}
-              <TagsInput tags={tags} onChange={setTags} />
-
-              {/* Custo de Mercadoria - Apenas para Despesa */}
-              {tipo === 'Despesa' && (
-                <>
-                  <div className="bg-card rounded-2xl shadow-sm p-4">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <Checkbox checked={isCustoMercadoria} onCheckedChange={setIsCustoMercadoria} />
-                      <div className="flex items-center gap-2">
-                        <ShoppingCart className="w-4 h-4 text-blue-500" />
-                        <span className="text-sm text-foreground/90">Custo de Mercadoria Vendida (CMV)</span>
-                      </div>
-                    </label>
-                  </div>
-
-                  {isCustoMercadoria && (
-                    <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
-                      <Select value={pedidoCompraId || '__none__'} onValueChange={(value) => setPedidoCompraId(value === '__none__' ? '' : value)}>
-                        <SelectTrigger className="border-0 shadow-none bg-transparent h-12 dark:text-foreground text-sm px-4">
-                          <SelectValue placeholder="Vincular a Pedido de Compra (opcional)" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[70] dark:bg-muted dark:border-border/40">
-                          <SelectItem value="__none__">Nenhum</SelectItem>
-                          {pedidosCompra.map(p => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.numero} - {p.fornecedor_nome} - R$ {(p.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Recorrência */}
-              <RecorrenciaConfig
-                isRecorrente={isRecorrente} onToggle={setIsRecorrente}
-                frequencia={frequencia} onFrequencia={setFrequencia}
-                parcelas={parcelas} onParcelas={setParcelas}
-                dataFim={dataFim} onDataFim={setDataFim}
+              <LancamentoMaisOpcoes
+                tipo={tipo}
+                tags={tags}
+                onTagsChange={setTags}
+                isCustoMercadoria={isCustoMercadoria}
+                onCustoMercadoriaChange={setIsCustoMercadoria}
+                pedidoCompraId={pedidoCompraId}
+                onPedidoCompraIdChange={setPedidoCompraId}
+                pedidosCompra={pedidosCompra}
+                isRecorrente={isRecorrente}
+                onRecorrenteToggle={setIsRecorrente}
+                frequencia={frequencia}
+                onFrequencia={setFrequencia}
+                parcelas={parcelas}
+                onParcelas={setParcelas}
+                dataFim={dataFim}
+                onDataFim={setDataFim}
               />
             </>
           )}
+
+          <LancamentoResumoConfirmacao
+            tipo={tipo}
+            descricao={descricao}
+            valorFormatado={display}
+            dataVencimento={data}
+            status={status}
+            contaNome={contas.find((c) => c.id === contaId)?.nome}
+            contaDestinoNome={contas.find((c) => c.id === contaDestinoId)?.nome}
+            categoria={categoria}
+            tags={tags}
+            isRecorrente={isRecorrente}
+            frequencia={frequencia}
+            parcelas={parcelas}
+            isCustoMercadoria={isCustoMercadoria}
+          />
 
           <button onClick={handleSave}
             disabled={saving}

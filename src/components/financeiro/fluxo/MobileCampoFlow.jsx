@@ -69,7 +69,7 @@ export default function MobileCampoFlow({
 
       <div className="flex-1 flex flex-col justify-center min-h-0 px-2 pb-4">
         <div className="text-center mb-6">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">{step.label}</p>
+          <p className="text-lg font-semibold text-foreground mb-1">{step.title || step.label}</p>
           {step.hint && (
             <p className="text-sm text-muted-foreground leading-snug px-4">{step.hint}</p>
           )}
@@ -215,7 +215,7 @@ export default function MobileCampoFlow({
             onClick={onSkip}
             className="w-full h-11 rounded-xl text-sm text-muted-foreground"
           >
-            Saltar (opcional)
+            Saltar por agora
           </button>
         )}
       </div>
