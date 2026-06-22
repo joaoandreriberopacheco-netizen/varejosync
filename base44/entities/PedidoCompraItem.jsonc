@@ -2,75 +2,90 @@
   "name": "PedidoCompraItem",
   "type": "object",
   "title": "Item canonico de Pedido de Compra",
-  "description": "Linha canonica de um item de pedido de compra. Substitui o array PedidoCompra.itens[]. FK pedido_compra_id, FK produto_unidade_id; preco canonico em custo_unitario_fator1.",
+  "description": "Linha canonica de um item de pedido de compra. Cada registro corresponde a uma linha do array legado PedidoCompra.itens[], com FK pedido_compra_id apontando para o pedido pai e produto_unidade_id apontando para a unidade comercial usada na linha. O preco canonico e custo_unitario_fator1 (R$/[unidade base]); o custo comercial e snapshot derivado.",
   "properties": {
     "pedido_compra_id": {
       "type": "string",
-      "description": "FK para PedidoCompra.id"
+      "description": "FK para PedidoCompra.id (pai)"
     },
     "pedido_compra_numero": {
-      "type": "string"
+      "type": "string",
+      "description": "Cache do numero do pedido para listagens rapidas"
     },
     "produto_id": {
       "type": "string",
       "description": "FK para Produto.id"
     },
     "produto_nome": {
-      "type": "string"
+      "type": "string",
+      "description": "Cache do nome do produto"
     },
     "produto_unidade_id": {
       "type": "string",
-      "description": "FK para Produto.unidades[].id"
+      "description": "FK para Produto.unidades[].id (unidade comercial usada nesta linha) - chave da resolucao canonica"
     },
     "unidade_sigla": {
-      "type": "string"
+      "type": "string",
+      "description": "Cache da sigla da unidade da linha (M2, CX, etc.)"
     },
     "fator_aplicado": {
       "type": "number",
-      "default": 1
+      "default": 1,
+      "description": "Snapshot do fator_conversao no momento da gravacao (qty_base = qty_comercial x fator_aplicado)"
     },
     "fator_preco_aplicado": {
       "type": "number",
-      "default": 1
+      "default": 1,
+      "description": "Snapshot do fator_preco no momento da gravacao"
     },
     "quantidade_comercial": {
-      "type": "number"
+      "type": "number",
+      "description": "Quantidade na unidade comercial da linha (CX, SC, etc.)"
     },
     "quantidade_base": {
-      "type": "number"
+      "type": "number",
+      "description": "Quantidade na unidade fator-1 do produto (M2, KG, etc.) = quantidade_comercial x fator_aplicado"
     },
     "custo_unitario_fator1": {
       "type": "number",
-      "description": "R$/[unidade base], FONTE CANONICA"
+      "description": "Preco unitario na unidade fator-1 (R$/[unidade base]). FONTE CANONICA do preco."
     },
     "custo_unitario_comercial": {
-      "type": "number"
+      "type": "number",
+      "description": "Snapshot derivado: custo_unitario_fator1 x fator_aplicado (apenas para UI/relatorios)"
     },
     "frete_unitario_fator1": {
       "type": "number",
-      "default": 0
+      "default": 0,
+      "description": "Frete unitario alocado na unidade fator-1"
     },
     "outros_unitario_fator1": {
       "type": "number",
-      "default": 0
+      "default": 0,
+      "description": "Demais custos unitarios consolidados na unidade fator-1"
     },
     "desconto_unitario_fator1": {
       "type": "number",
-      "default": 0
+      "default": 0,
+      "description": "Desconto unitario aplicado na unidade fator-1"
     },
     "custo_total_unitario_fator1": {
-      "type": "number"
+      "type": "number",
+      "description": "Soma derivada: custo + frete + outros - desconto, sempre fator-1"
     },
     "total": {
-      "type": "number"
+      "type": "number",
+      "description": "Total da linha = quantidade_base x custo_total_unitario_fator1"
     },
     "quantidade_vinculada": {
       "type": "number",
-      "default": 0
+      "default": 0,
+      "description": "Quantidade ja vinculada a embarques (na unidade fator-1)"
     },
     "ordem": {
       "type": "number",
-      "default": 0
+      "default": 0,
+      "description": "Posicao da linha no pedido"
     },
     "observacoes": {
       "type": "string"

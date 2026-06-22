@@ -8,13 +8,6 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
-import {
-  P38MobileLineList,
-  P38MobileLine,
-  p38StatusTone,
-  p38AccentKeyFromTone,
-  P38StatusLabel,
-} from '@/components/ui/p38-mobile-line';
 
 const TIPOS_DOCUMENTO = [
   { value: 'prevenda', label: 'Pré-Vendas', icon: FileText, entity: 'PedidoVenda', filter: (d) => d.tipo === 'Pedido' },

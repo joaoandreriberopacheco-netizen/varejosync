@@ -10,14 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
-import {
-  P38MobileLineList,
-  P38MobileLine,
-  p38StatusTone,
-  p38AccentKeyFromTone,
-  P38StatusLabel,
-} from '@/components/ui/p38-mobile-line';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Package, CheckCircle, Clock, Play, X, Camera, Barcode } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 
@@ -190,30 +183,6 @@ export default function FilaSeparacao() {
       </Badge>
     );
   };
-
-  const renderOrdemTrailing = (ordem) => (
-    <div className="flex flex-col gap-1 shrink-0">
-      {ordem.status === 'Pendente' && (
-        <Button size="sm" onClick={() => handleIniciarSeparacao(ordem)} variant="outline" className="h-7 text-xs px-2">
-          Iniciar
-        </Button>
-      )}
-      {ordem.status === 'Em Separação' && ordem.estoquista_id === currentUser?.id && (
-        <Button
-          size="sm"
-          onClick={() => {
-            setOrdemSelecionada(ordem);
-            setItemAtualIndex(0);
-            setIsDialogOpen(true);
-          }}
-          variant="outline"
-          className="h-7 text-xs px-2"
-        >
-          Continuar
-        </Button>
-      )}
-    </div>
-  );
 
   const itemAtual = ordemSelecionada?.itens?.[itemAtualIndex];
   const progresso = ordemSelecionada ? `Item ${itemAtualIndex + 1}/${ordemSelecionada.itens.length}` : '';

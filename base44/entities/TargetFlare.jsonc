@@ -6,14 +6,9 @@
       "type": "string",
       "enum": [
         "pending",
-        "in_progress",
-        "ready_for_verify",
-        "resolved",
-        "reopened",
-        "ignored"
+        "resolved"
       ],
-      "default": "pending",
-      "description": "Estado formal do ciclo de vida do flare"
+      "description": "Estado do alvo de manuten\u00e7\u00e3o"
     },
     "file_path": {
       "type": "string",
@@ -41,11 +36,11 @@
     },
     "action_briefing": {
       "type": "string",
-      "description": "Ac\u00e7\u00e3o objectiva esperada para correc\u00e7\u00e3o"
+      "description": "A\u00e7\u00e3o objetiva esperada para corre\u00e7\u00e3o"
     },
     "context_image_url": {
       "type": "string",
-      "description": "URL opcional de imagem de contexto ou PR URL"
+      "description": "URL opcional de imagem para contexto visual"
     },
     "confidence": {
       "type": "string",

@@ -1,8 +1,8 @@
 {
-  "name": "OrdemSeparacao",
+  "name": "CustoDetalhado",
   "type": "object",
   "properties": {
     "id": { "type": "string" },
-    "status": { "type": "string" }
+    "valor": { "type": "number" }
   }
 }

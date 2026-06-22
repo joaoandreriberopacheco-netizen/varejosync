@@ -1,15 +1,14 @@
 {
   "name": "ConferenciaItem",
   "type": "object",
-  "title": "Item canonico de Conferencia de Estoque",
-  "description": "Linha canonica de item de conferencia, com qtds sistema vs contada e divergencia em fator-1.",
   "properties": {
     "conferencia_id": {
       "type": "string",
-      "description": "FK para ConferenciaEstoque.id"
+      "description": "FK para ConferenciaEstoque.id (pai)"
     },
     "conferencia_nome": {
-      "type": "string"
+      "type": "string",
+      "description": "Cache do nome da conferencia"
     },
     "produto_id": {
       "type": "string"
@@ -18,7 +17,8 @@
       "type": "string"
     },
     "produto_unidade_id": {
-      "type": "string"
+      "type": "string",
+      "description": "FK para Produto.unidades[].id (snapshot da unidade usada na contagem)"
     },
     "unidade_sigla": {
       "type": "string"
@@ -28,24 +28,24 @@
       "default": 1
     },
     "quantidade_sistema_base": {
-      "type": "number"
+      "type": "number",
+      "description": "Estoque registrado no sistema no momento da conferencia (em unidade fator-1)"
     },
     "quantidade_contada_comercial": {
-      "type": "number"
+      "type": "number",
+      "description": "Quantidade contada na unidade comercial usada"
     },
     "quantidade_contada_base": {
-      "type": "number"
+      "type": "number",
+      "description": "Quantidade contada convertida para fator-1"
     },
     "divergencia_base": {
-      "type": "number"
+      "type": "number",
+      "description": "Diferenca contada - sistema, em fator-1 (positivo = sobra; negativo = falta)"
     },
     "divergencia_sinal": {
       "type": "string",
-      "enum": [
-        "zero",
-        "positivo",
-        "negativo"
-      ],
+      "enum": ["zero", "positivo", "negativo"],
       "default": "zero"
     },
     "ordem": {

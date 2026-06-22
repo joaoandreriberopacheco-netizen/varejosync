@@ -1,33 +1,34 @@
 {
   "name": "EmbarqueItem",
   "type": "object",
-  "title": "Item canonico de Embarque",
-  "description": "Linha canonica de item de embarque, com qtds pedida/embarcada/recebida e FK para PedidoCompraItem para rastreio fino.",
   "properties": {
     "embarque_id": {
       "type": "string",
-      "description": "FK para Embarque.id"
+      "description": "FK para Embarque.id (pai)"
     },
     "embarque_numero": {
-      "type": "string"
+      "type": "string",
+      "description": "Cache do numero do embarque"
     },
     "pedido_compra_id": {
       "type": "string",
-      "description": "FK para PedidoCompra.id (denormalizado)"
+      "description": "FK para PedidoCompra.id (denormalizado para queries cross-pedido)"
     },
     "pedido_compra_item_id": {
       "type": "string",
-      "description": "FK para PedidoCompraItem.id"
+      "description": "FK para PedidoCompraItem.id - rastreio fino de qual linha de pedido foi embarcada"
     },
     "produto_id": {
       "type": "string",
       "description": "FK para Produto.id"
     },
     "produto_nome": {
-      "type": "string"
+      "type": "string",
+      "description": "Cache do nome do produto"
     },
     "produto_unidade_id": {
-      "type": "string"
+      "type": "string",
+      "description": "FK para Produto.unidades[].id (snapshot da unidade da linha)"
     },
     "unidade_sigla": {
       "type": "string"
@@ -37,13 +38,16 @@
       "default": 1
     },
     "quantidade_pedida_comercial": {
-      "type": "number"
+      "type": "number",
+      "description": "Quantidade originalmente pedida (em unidade comercial)"
     },
     "quantidade_pedida_base": {
-      "type": "number"
+      "type": "number",
+      "description": "Mesma quantidade pedida em unidade fator-1"
     },
     "quantidade_embarcada_comercial": {
-      "type": "number"
+      "type": "number",
+      "description": "Quantidade efetivamente embarcada (em unidade comercial)"
     },
     "quantidade_embarcada_base": {
       "type": "number"

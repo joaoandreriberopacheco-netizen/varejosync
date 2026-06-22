@@ -27,16 +27,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  P38TableShell,
-} from '@/components/ui/table';
-import { P38MobileLineList, P38MobileLine } from '@/components/ui/p38-mobile-line';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : 'N/A';
 const fmtData = (d) => d ? formatarSoData(d) : '-';
 

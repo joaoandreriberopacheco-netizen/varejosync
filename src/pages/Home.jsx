@@ -26,7 +26,7 @@ import {
   perfilResolvidoParaUsuario,
 } from '@/lib/perfilPermissoes';
 
-const STORAGE_KEY = 'home_quick_actions'; // user-customized quick actions order
+const STORAGE_KEY = 'home_quick_actions';
 
 export default function HomePage() {
   const [currentUser, setCurrentUser] = useState(null);
