@@ -13,6 +13,14 @@ import LancamentoFormUnico, { formatarDataFormulario } from './fluxo/LancamentoF
 import { LancamentoFormSheet } from './fluxo/LancamentoPickerDialog';
 import { normalizeDataText } from '@/lib/normalizeDataText';
 import { gravarPreferenciasLancamento, resolverPreferenciasLancamento } from '@/lib/lancamentoPreferencias';
+import { resolverDataLancamentoInput } from '@/lib/lancamentoOrdemMeta';
+import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
+import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
+import {
+  precisaEscopoRecorrenciaCadastro,
+  precisaEscopoRecorrenciaPagamento,
+  salvarEdicaoLancamentoFinanceiro,
+} from '@/lib/editarLancamentoFinanceiro';
 
 const FREQS_MAP = {
   Semanal: (d, i) => addWeeks(d, i),
@@ -44,6 +52,7 @@ export default function NovoLancamentoDialog({
   referenciaTipo,
   origemContaPagar,
   presentation,
+  lancamentoExistente = null,
 }) {
   const [tipo, setTipo] = useState(tipoInicial || 'Despesa');
   const [contas, setContas] = useState([]);
@@ -70,8 +79,14 @@ export default function NovoLancamentoDialog({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pedidoCompraId, setPedidoCompraId] = useState('');
   const [pedidosCompra, setPedidosCompra] = useState([]);
+  const [observacoes, setObservacoes] = useState('');
+  const [showEscopoPagamento, setShowEscopoPagamento] = useState(false);
+  const [showEscopoCadastro, setShowEscopoCadastro] = useState(false);
+  const [pendingEscopoPagamento, setPendingEscopoPagamento] = useState('apenas_esta');
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
+
+  const modoEdicao = !!lancamentoExistente;
 
   const resetForm = () => {
     setTipo(tipoInicial || 'Despesa');
@@ -92,20 +107,61 @@ export default function NovoLancamentoDialog({
     setDataFim('');
     setIsCustoMercadoria(false);
     setPedidoCompraId('');
+    setObservacoes('');
     setSaving(false);
     setConfirmDialogMode('processing');
     setShowConfirmDialog(false);
+    setShowEscopoPagamento(false);
+    setShowEscopoCadastro(false);
+    setPendingEscopoPagamento('apenas_esta');
+  };
+
+  const popularDeLancamento = (l) => {
+    if (!l) return;
+    setTipo(l.tipo || 'Despesa');
+    setValorCents(Math.round((parseFloat(l.valor) || 0) * 100).toString());
+    setDescricao(l.descricao || '');
+    const venc = (l.data_vencimento || '').slice(0, 10);
+    const pag = (l.data_pagamento || '').slice(0, 10);
+    if (pag) {
+      setDataCustomizada(pag);
+      setDataHoraCustomizada(null);
+    } else if (venc) {
+      setDataCustomizada(venc);
+      setDataHoraCustomizada(null);
+    } else {
+      setDataCustomizada(null);
+      setDataHoraCustomizada(null);
+    }
+    setDataLancamento(resolverDataLancamentoInput(l));
+    setCategoria(l.categoria || '');
+    setCategoriaId(l.categoria_id || '');
+    setContaId(l.conta_financeira_id || '');
+    setContaDestinoId('');
+    setStatus(isLancamentoPago(l) ? 'Pago' : 'Em Aberto');
+    setTags(l.tags || []);
+    setIsRecorrente(!!l.is_recorrente);
+    setFrequencia(l.frequencia_recorrencia || '');
+    setParcelas(l.numero_parcelas_total || 2);
+    setDataFim((l.data_fim_recorrencia || '').slice(0, 10));
+    setIsCustoMercadoria(!!l.is_custo_mercadoria);
+    setPedidoCompraId(l.pedido_compra_vinculado_id || '');
+    setObservacoes((l.observacoes || '').replace(/\[CANCELADO.*?\]/gs, '').trim());
   };
 
   useEffect(() => {
     if (!open) return;
     base44.entities.ContasFinanceiras.filter({ ativo: true }).then(setContas);
     base44.entities.PedidoCompra.list('-created_date', 50).then(setPedidosCompra);
+    if (lancamentoExistente) {
+      popularDeLancamento(lancamentoExistente);
+      return;
+    }
     resetForm();
-  }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial, origemContaPagar]);
+  }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial, origemContaPagar, lancamentoExistente?.id]);
 
   useEffect(() => {
-    if (!open || tipo === 'Transferência') return;
+    if (!open || modoEdicao || tipo === 'Transferência') return;
     const prefs = resolverPreferenciasLancamento(tipo, { contas, categorias });
     if (!contaDefaultId && prefs.contaId) setContaId(prefs.contaId);
     if (!origemContaPagar) {
@@ -185,7 +241,106 @@ export default function NovoLancamentoDialog({
     return iso ? { data_lancamento: iso } : {};
   };
 
+  const resolverDataVencimentoEdicao = () => {
+    if (dataHoraCustomizada) return (dataHoraCustomizada || '').slice(0, 10);
+    if (dataCustomizada) return dataCustomizada;
+    return (lancamentoExistente?.data_vencimento || '').slice(0, 10) || dataHoje();
+  };
+
+  const resolverDataPagamentoEdicao = () => {
+    if (!realizado) return null;
+    if (dataHoraCustomizada) return (dataHoraCustomizada || '').slice(0, 10);
+    if (dataCustomizada) return dataCustomizada;
+    return lancamentoExistente?.data_pagamento || dataHoje();
+  };
+
+  const aplicarEdicao = async (escopoCadastro = 'apenas_esta', escopoPagamento = 'apenas_esta') => {
+    setSaving(true);
+    setConfirmDialogMode('processing');
+    setShowConfirmDialog(true);
+    try {
+      const result = await salvarEdicaoLancamentoFinanceiro({
+        lancamento: lancamentoExistente,
+        contas,
+        descricao,
+        valorNumerico,
+        dataVencimento: resolverDataVencimentoEdicao(),
+        observacoes,
+        categoria,
+        categoriaId,
+        tags,
+        contaId,
+        realizado,
+        dataPagamento: resolverDataPagamentoEdicao(),
+        dataLancamentoInput: dataLancamento,
+        escopoCadastro,
+        escopoPagamento,
+      });
+      if (!result.changed) {
+        toast({ title: 'Nada foi alterado', className: 'bg-muted text-foreground' });
+        setShowConfirmDialog(false);
+        return;
+      }
+      const batchMsg = result.batchCount ? ` (${result.batchCount} lançamentos)` : '';
+      toast({ title: `Lançamento atualizado${batchMsg}!`, className: 'bg-muted text-foreground' });
+      if (tipo !== 'Transferência') {
+        gravarPreferenciasLancamento(tipo, { contaId, categoria: normalizeDataText(categoria), categoriaId });
+      }
+      onSaved?.(result.updated);
+      setSaving(false);
+      setConfirmDialogMode('success');
+    } catch (error) {
+      toast({
+        title: 'Não foi possível guardar',
+        description: error?.message,
+        variant: 'destructive',
+      });
+      setShowConfirmDialog(false);
+      setSaving(false);
+    }
+  };
+
+  const handleSaveEdicao = async () => {
+    if (saving) return;
+    if (!valorNumerico || valorNumerico <= 0) {
+      toast({ title: 'Informe o valor', variant: 'destructive' });
+      return;
+    }
+    if (tipo !== 'Transferência' && !descricao.trim()) {
+      toast({ title: 'Informe a descrição', variant: 'destructive' });
+      return;
+    }
+    if (realizado && tipo !== 'Transferência' && !contaId) {
+      toast({ title: 'Selecione a conta', variant: 'destructive' });
+      return;
+    }
+
+    const cadastroMudou =
+      (lancamentoExistente.descricao || '').trim() !== descricao.trim() ||
+      Math.abs((parseFloat(lancamentoExistente.valor) || 0) - valorNumerico) > 0.009 ||
+      (lancamentoExistente.data_vencimento || '').slice(0, 10) !== resolverDataVencimentoEdicao() ||
+      (lancamentoExistente.categoria || '') !== categoria ||
+      JSON.stringify(lancamentoExistente.tags || []) !== JSON.stringify(tags || []);
+
+    const pagamentoMudou = realizado !== isLancamentoPago(lancamentoExistente);
+
+    if (pagamentoMudou && precisaEscopoRecorrenciaPagamento(lancamentoExistente, realizado)) {
+      setShowEscopoPagamento(true);
+      return;
+    }
+    if (cadastroMudou && precisaEscopoRecorrenciaCadastro(lancamentoExistente)) {
+      setPendingEscopoPagamento('apenas_esta');
+      setShowEscopoCadastro(true);
+      return;
+    }
+    await aplicarEdicao('apenas_esta', 'apenas_esta');
+  };
+
   const handleSave = async () => {
+    if (modoEdicao) {
+      await handleSaveEdicao();
+      return;
+    }
     if (saving) return;
     if (!valorNumerico || valorNumerico <= 0) {
       toast({ title: 'Informe o valor', variant: 'destructive' });
@@ -383,13 +538,16 @@ export default function NovoLancamentoDialog({
         >
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
-        <p className="text-sm font-semibold text-foreground">Novo lançamento</p>
+        <p className="text-sm font-semibold text-foreground">
+          {modoEdicao ? 'Editar lançamento' : 'Novo lançamento'}
+        </p>
         <div className="w-9" />
       </div>
 
       <LancamentoFormUnico
         tipo={tipo}
         onTipoChange={setTipo}
+        bloquearTipo={modoEdicao}
         valorNumerico={valorNumerico}
         onValorChange={(v) => setValorCents(Math.round(parseFloat(v || '0') * 100).toString() || '0')}
         descricao={descricao}
@@ -429,6 +587,8 @@ export default function NovoLancamentoDialog({
         saving={saving}
         onSalvar={handleSave}
         onCancelar={onClose}
+        salvarLabel={modoEdicao ? 'Salvar alterações' : 'Salvar'}
+        bloquearRecorrencia={modoEdicao}
       />
 
       <LancamentoFormSheet
@@ -465,14 +625,46 @@ export default function NovoLancamentoDialog({
         open={showConfirmDialog}
         mode={confirmDialogMode}
         stackElevated
+        successTitle={modoEdicao ? 'Alterações guardadas' : undefined}
+        successMessage={modoEdicao ? undefined : undefined}
         onCreateAnother={() => {
           setShowConfirmDialog(false);
           setConfirmDialogMode('processing');
+          if (modoEdicao) {
+            onClose();
+            return;
+          }
           resetForm();
         }}
         onFinish={() => {
           setShowConfirmDialog(false);
           onClose();
+        }}
+      />
+
+      <RecorrenciaEscopoDialog
+        open={showEscopoPagamento}
+        onClose={() => setShowEscopoPagamento(false)}
+        onConfirm={(escopo) => {
+          setShowEscopoPagamento(false);
+          setPendingEscopoPagamento(escopo);
+          const cadastroMudou =
+            (lancamentoExistente?.descricao || '').trim() !== descricao.trim() ||
+            Math.abs((parseFloat(lancamentoExistente?.valor) || 0) - valorNumerico) > 0.009;
+          if (cadastroMudou && precisaEscopoRecorrenciaCadastro(lancamentoExistente)) {
+            setShowEscopoCadastro(true);
+            return;
+          }
+          aplicarEdicao('apenas_esta', escopo);
+        }}
+      />
+      <RecorrenciaEscopoDialog
+        mode="cadastro"
+        open={showEscopoCadastro}
+        onClose={() => setShowEscopoCadastro(false)}
+        onConfirm={(escopo) => {
+          setShowEscopoCadastro(false);
+          aplicarEdicao(escopo, pendingEscopoPagamento);
         }}
       />
     </div>

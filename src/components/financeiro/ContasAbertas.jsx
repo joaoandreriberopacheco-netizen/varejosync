@@ -140,6 +140,7 @@ function useContasAbertasModel(onOpenImportador, shared) {
   const [novoTipo, setNovoTipo]       = useState('Despesa');
   const [fabOpen, setFabOpen]         = useState(false);
   const [detalhe, setDetalhe]         = useState(null);
+  const [editando, setEditando]         = useState(null);
   const [mostrarPagas, setMostrarPagas] = useState(false);
   const [campoPeriodo, setCampoPeriodo] = useState('vencimento');
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
@@ -882,25 +883,26 @@ export function ContasAbertasListaPane() {
         </button>
       </div>
 
-      <NovoLancamentoDialog open={showNovo} tipoInicial={novoTipo} origemContaPagar onClose={() => setShowNovo(false)} onSaved={load} />
+      <NovoLancamentoDialog
+        open={showNovo}
+        lancamentoExistente={editando}
+        tipoInicial={novoTipo}
+        origemContaPagar
+        onClose={() => { setShowNovo(false); setEditando(null); }}
+        onSaved={async () => { setEditando(null); await load(); }}
+      />
       {detalhe && (
         <LancamentoDetalheDialog
           lancamento={detalhe}
-          contas={contas}
           onClose={() => setDetalhe(null)}
-          onSaved={async (opts) => {
-            const refreshed = await load();
-            if (opts?.keepOpen) {
-              const id = opts?.lancamentoId || opts?.updated?.id;
-              const fresh = refreshed?.ls?.find((l) => l.id === id) || opts?.updated;
-              if (fresh) setDetalhe(fresh);
-              return;
-            }
+          onEdit={(l) => {
             setDetalhe(null);
-            if (opts?.createAnother) {
-              setNovoTipo('Despesa');
-              setShowNovo(true);
-            }
+            setEditando(l);
+            setShowNovo(true);
+          }}
+          onSaved={async () => {
+            await load();
+            setDetalhe(null);
           }}
         />
       )}

@@ -91,6 +91,9 @@ export default function LancamentoFormUnico({
   saving,
   onSalvar,
   onCancelar,
+  bloquearTipo = false,
+  bloquearRecorrencia = false,
+  salvarLabel = 'Salvar',
 }) {
   const [campoAtivo, setCampoAtivo] = useState('valor');
   const [picker, setPicker] = useState(null); // 'conta' | 'contaDestino' | 'categoria' | 'tags'
@@ -116,6 +119,7 @@ export default function LancamentoFormUnico({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="shrink-0 px-4 pb-2">
+        {!bloquearTipo ? (
         <div className="flex gap-1 bg-muted dark:bg-muted rounded-2xl p-1">
           {TIPOS.map((t) => {
             const Icon = t.icon;
@@ -136,6 +140,12 @@ export default function LancamentoFormUnico({
             );
           })}
         </div>
+        ) : (
+          <div className="rounded-2xl bg-muted px-4 py-2.5 text-center">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Tipo</p>
+            <p className="text-sm font-semibold text-foreground">{tipo}</p>
+          </div>
+        )}
       </div>
 
       <div
@@ -272,6 +282,7 @@ export default function LancamentoFormUnico({
             pedidosCompra={pedidosCompra}
             isRecorrente={isRecorrente}
             onRecorrenteToggle={onRecorrenteToggle}
+            bloquearRecorrencia={bloquearRecorrencia}
             frequencia={frequencia}
             onFrequencia={onFrequencia}
             parcelas={parcelas}
@@ -300,7 +311,7 @@ export default function LancamentoFormUnico({
           disabled={saving}
           className="flex-[2] h-12 rounded-2xl bg-[#4a5240] text-sm font-semibold text-white disabled:opacity-50 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
         >
-          {saving ? 'Salvando…' : 'Salvar'}
+          {saving ? 'Salvando…' : salvarLabel}
         </button>
       </div>
 

@@ -30,6 +30,7 @@ export default function LancamentoMaisOpcoes({
   previewOrdemLancamento,
   defaultExpanded = false,
   hideTags = false,
+  bloquearRecorrencia = false,
 }) {
   const [expandido, setExpandido] = useState(defaultExpanded);
 
@@ -112,6 +113,7 @@ export default function LancamentoMaisOpcoes({
             </>
           )}
 
+          {!bloquearRecorrencia && (
           <RecorrenciaConfig
             isRecorrente={isRecorrente}
             onToggle={onRecorrenteToggle}
@@ -122,6 +124,7 @@ export default function LancamentoMaisOpcoes({
             dataFim={dataFim}
             onDataFim={onDataFim}
           />
+          )}
         </div>
       )}
     </div>

@@ -99,6 +99,7 @@ export default function ExecucaoOrcamentaria() {
   const [fabOpen, setFabOpen] = useState(false);
   const [novoTipo, setNovoTipo] = useState('Despesa');
   const [detalhe, setDetalhe] = useState(null);
+  const [editando, setEditando] = useState(null);
   const [conciliacaoConta, setConciliacaoConta] = useState(null);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [showCorteDiario, setShowCorteDiario] = useState(false);
@@ -841,33 +842,39 @@ export default function ExecucaoOrcamentaria() {
           {detalhe && (
             <LancamentoDetalheDialog
               lancamento={detalhe}
-              contas={contas}
               onClose={() => setDetalhe(null)}
-              onSaved={async (opts) => {
-                const refreshed = await load();
-                if (opts?.keepOpen) {
-                  const id = opts?.lancamentoId || opts?.updated?.id;
-                  const fresh = refreshed?.ls?.find((l) => l.id === id) || opts?.updated;
-                  if (fresh) setDetalhe(fresh);
-                  return;
-                }
+              onEdit={(l) => {
                 setDetalhe(null);
-                if (opts?.createAnother) {
-                  setNovoTipo('Despesa');
-                  setShowNovoFluxo(true);
-                }
+                setEditando(l);
+                setShowNovoFluxo(true);
+              }}
+              onSaved={async () => {
+                await load();
+                setDetalhe(null);
               }}
             />
           )}
           <NovoLancamentoDialog
             open={showNovoFluxo}
+            lancamentoExistente={editando}
             tipoInicial={novoTipo}
             descricaoInicial={urlDescricao}
             valorInicial={urlValor}
             referenciaId={urlReferenciaId}
             referenciaTipo={urlReferenciaTipo}
-            onClose={() => { setShowNovoFluxo(false); setFabOpen(false); setUrlDescricao(''); setUrlValor(''); setUrlReferenciaId(''); setUrlReferenciaTipo(''); }}
-            onSaved={load}
+            onClose={() => {
+              setShowNovoFluxo(false);
+              setEditando(null);
+              setFabOpen(false);
+              setUrlDescricao('');
+              setUrlValor('');
+              setUrlReferenciaId('');
+              setUrlReferenciaTipo('');
+            }}
+            onSaved={async () => {
+              setEditando(null);
+              await load();
+            }}
           />
 
           <Dialog open={conciliacaoConta != null} onOpenChange={(open) => !open && setConciliacaoConta(null)}>
