@@ -23,7 +23,7 @@ export default function QuickBudgetItemList({ items, onUpdateItem, onRemoveItem 
                 <span>Estoque: {item.estoque_atual}</span>
                 <span>Preço tabela: {formatCurrency(item.preco_cheio)}</span>
                 {item.preco_livre && (
-                  <span className="text-muted-foreground">Piso: {formatCurrency(item.preco_minimo)}</span>
+                  <span className="text-muted-foreground">Piso custo: {formatCurrency(item.preco_minimo)}</span>
                 )}
                 {item.preco_livre && <span className="text-emerald-600 dark:text-emerald-400">Preço livre</span>}
               </div>
@@ -60,11 +60,11 @@ export default function QuickBudgetItemList({ items, onUpdateItem, onRemoveItem 
               <div>
                 <p className="text-[11px] text-muted-foreground mb-1">Preço unitário</p>
                 <Input
-                  type="number"
+                  type="text"
                   step="0.01"
-                  min={item.preco_livre ? 0 : item.preco_minimo}
-                  value={item.preco_unitario}
-                  onChange={(e) => onUpdateItem(item.produto_id, { preco_unitario: e.target.value })}
+                  value={item.preco_editando ?? item.preco_unitario}
+                  onChange={(e) => onUpdateItem(item.produto_id, { preco_editando: e.target.value })}
+                  onBlur={() => onUpdateItem(item.produto_id, { preco_commit: true })}
                   inputMode="decimal"
                   className="h-14 md:h-10 border-0 bg-muted/50 rounded-2xl shadow-sm text-base md:text-sm"
                 />

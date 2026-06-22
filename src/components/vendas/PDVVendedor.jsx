@@ -567,7 +567,19 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     }
 
     let precoFinal = produtoSelecionado._preco_sugerido_unitade ?? produtoSelecionado.preco_venda_padrao;
-    if (produtoSelecionado._preco_digitado !== undefined) {
+    if (produtoSelecionado._preco_digitado_raw !== undefined) {
+      const precoDigitado = parseFloat(String(produtoSelecionado._preco_digitado_raw).replace(',', '.'));
+      const custoMinimo = (produtoSelecionado.preco_custo_calculado || 0) * fatorConversao;
+      if (!Number.isFinite(precoDigitado)) {
+        showFeedback('error', 'Informe um preço válido', 3000);
+        return;
+      }
+      if (precoDigitado < custoMinimo) {
+        showFeedback('error', `Preço não pode ser menor que o custo da unidade escolhida (R$ ${custoMinimo.toFixed(2)})`, 3000);
+        return;
+      }
+      precoFinal = precoDigitado;
+    } else if (produtoSelecionado._preco_digitado !== undefined) {
       const custoMinimo = (produtoSelecionado.preco_custo_calculado || 0) * fatorConversao;
       if (produtoSelecionado._preco_digitado < custoMinimo) {
         showFeedback('error', `Preço não pode ser menor que o custo da unidade escolhida (R$ ${custoMinimo.toFixed(2)})`, 3000);
@@ -661,10 +673,9 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   };
 
   const handleUpdatePrecoLivre = (itemKey, novoPreco) => {
-    const preco = parseFloat(novoPreco) || 0;
     setCarrinho(carrinho.map((i) =>
       i.item_key === itemKey
-        ? { ...i, preco_unitario: preco, preco_unitario_praticado: preco, total: i.quantidade * preco }
+        ? { ...i, _preco_editando: novoPreco }
         : i
     ));
   };
@@ -672,15 +683,35 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const handleBlurPrecoLivre = (itemKey) => {
     const item = carrinho.find((i) => i.item_key === itemKey);
     if (!item) return;
+    const raw = item._preco_editando ?? String(item.preco_unitario_praticado ?? '');
+    const preco = parseFloat(String(raw).replace(',', '.'));
     const custoMinimo = (item.custo_unitario_momento || 0) * (item.fator_conversao || 1);
-    if (item.preco_unitario_praticado < custoMinimo) {
+    if (!Number.isFinite(preco)) {
+      setCarrinho(carrinho.map((i) =>
+        i.item_key === itemKey ? { ...i, _preco_editando: undefined } : i
+      ));
+      return;
+    }
+    if (preco < custoMinimo) {
       showFeedback('error', `Preço mínimo: R$ ${custoMinimo.toFixed(2)} (custo)`, 2500);
       setCarrinho(carrinho.map((i) =>
         i.item_key === itemKey
-          ? { ...i, preco_unitario: custoMinimo, preco_unitario_praticado: custoMinimo, total: i.quantidade * custoMinimo }
+          ? { ...i, _preco_editando: undefined }
           : i
       ));
+      return;
     }
+    setCarrinho(carrinho.map((i) =>
+      i.item_key === itemKey
+        ? {
+            ...i,
+            preco_unitario: preco,
+            preco_unitario_praticado: preco,
+            total: i.quantidade * preco,
+            _preco_editando: undefined,
+          }
+        : i
+    ));
   };
 
   const handleRemoveItem = (itemKey) => {
@@ -1183,12 +1214,11 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                         <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground dark:text-muted-foreground">R$</span>
                         <input autoComplete="off"
                           ref={precoLivreInputRef}
-                          type="number" step="0.01" inputMode="decimal" min={(produtoSelecionado.preco_custo_calculado || 0) * (produtoSelecionado.fator_conversao || 1)}
+                          type="text" inputMode="decimal"
                           placeholder={((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)}
                           defaultValue={((produtoSelecionado._preco_sugerido_unitade ?? (produtoSelecionado.preco_venda_padrao * (tabelaPreco?.fator_ajuste || 1))) || 0).toFixed(2)}
                           onChange={(e) => {
-                            const precoDigitado = parseFloat(e.target.value) || 0;
-                            setProdutoSelecionado({...produtoSelecionado, _preco_digitado: precoDigitado});
+                            setProdutoSelecionado({...produtoSelecionado, _preco_digitado_raw: e.target.value});
                           }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
@@ -1267,8 +1297,8 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                          <div className="relative flex-1">
                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground dark:text-muted-foreground">R$</span>
                            <input autoComplete="off"
-                             type="number" step="0.01" inputMode="decimal"
-                             value={item.preco_unitario_praticado?.toFixed(2)}
+                             type="text" inputMode="decimal"
+                             value={item._preco_editando ?? String(item.preco_unitario_praticado ?? '')}
                              onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
                              onBlur={() => handleBlurPrecoLivre(item.item_key)}
                              className="w-full pl-8 h-10 bg-muted/40 dark:bg-muted/70 rounded-lg text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-foreground dark:text-foreground font-semibold"
@@ -1732,8 +1762,8 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                           <div className="relative flex-1 max-w-[160px]">
                             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground dark:text-muted-foreground">R$</span>
                             <input autoComplete="off"
-                              type="number" step="0.01" inputMode="decimal"
-                              value={item.preco_unitario_praticado?.toFixed(2)}
+                              type="text" inputMode="decimal"
+                              value={item._preco_editando ?? String(item.preco_unitario_praticado ?? '')}
                               onChange={e => handleUpdatePrecoLivre(item.item_key, e.target.value)}
                               onBlur={() => handleBlurPrecoLivre(item.item_key)}
                               className="w-full pl-8 h-10 bg-muted/40 dark:bg-muted/70 rounded-lg text-sm text-right border-0 outline-none ring-0 shadow-sm focus:ring-0 focus:outline-none focus-visible:ring-0 text-foreground dark:text-foreground font-semibold"
