@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, X, ShoppingCart, Printer, ArrowLeft, AlertCircle, Trash2, Plus, Minus, Check, User, CreditCard } from 'lucide-react';
 import SimuladorCartaoSheet from '@/components/vendas/SimuladorCartaoSheet';
 import { Input } from '@/components/ui/input';
@@ -12,8 +13,8 @@ import { getPrecoPisoCustoUnidade, parsePrecoDigitado } from '@/lib/orcamentoPre
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// ── Bottom-sheet de quantidade ao selecionar produto ──────────────────────────
-function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOptions = [], onConfirm, onClose }) {
+// ── Diálogo centralizado: quantidade, unidade e preço livre ───────────────────
+function ProdutoQuantidadeDialog({ produto, preco, qtdAtual, unidadeSelecionada, unitOptions = [], onConfirm, onClose }) {
   const [qtd, setQtd] = useState(qtdAtual > 0 ? String(qtdAtual) : '1');
   const [selectedUnitCode, setSelectedUnitCode] = useState(unidadeSelecionada?.unidade || produto?.unidade_principal || 'UN');
   const [precoEditado, setPrecoEditado] = useState(String(preco ?? ''));
@@ -31,12 +32,17 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
   const precoPisoCusto = getPrecoPisoCustoUnidade(produto, selectedUnit);
 
   useEffect(() => {
-    // Pequeno delay para garantir que o bottom-sheet está visível antes do focus
     const t = setTimeout(() => {
       inputRef.current?.focus();
       inputRef.current?.select();
-    }, 120);
+    }, 80);
     return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
   }, []);
 
   useEffect(() => {
@@ -84,35 +90,54 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
     setPrecoErro('');
   };
 
-  return (
-    // Overlay
-    <div className="fixed inset-0 z-[60]" onClick={onClose}>
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40" />
+  const handleQtdKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (precoLivre) {
+        setTimeout(() => precoRef.current?.focus(), 50);
+      } else {
+        handleConfirm();
+      }
+    }
+  };
 
-      {/* Sheet */}
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" aria-hidden="true" />
+
       <div
-      className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl shadow-2xl"
+        className="relative w-full max-w-md bg-card rounded-3xl shadow-2xl max-h-[min(90dvh,640px)] overflow-y-auto"
         onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="orcamento-item-dialog-title"
       >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-muted rounded-full" />
-        </div>
+        <div className="px-5 pt-5 pb-2">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="min-w-0 flex-1">
+              <p id="orcamento-item-dialog-title" className="text-[15px] font-semibold text-foreground line-clamp-3">{produto.nome}</p>
+              <p className="text-[12px] text-muted-foreground mt-1">
+                R$ {fmtR(unitPrice)} / {selectedUnit?.unidade || produto.unidade_principal || 'UN'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0"
+              aria-label="Fechar"
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
 
-        <div className="px-5 pb-2 pt-1">
-          {/* Produto info */}
-          <p className="text-[13px] font-semibold text-foreground line-clamp-2 mb-0.5">{produto.nome}</p>
-          <p className="text-[11px] text-muted-foreground mb-2">
-            R$ {fmtR(unitPrice)} / {selectedUnit?.unidade || produto.unidade_principal || 'UN'}
-          </p>
           {unitOptions.length > 1 && (
             <div className="mb-4">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium mb-1.5">Embalagem</p>
               <Select value={selectedUnitCode} onValueChange={setSelectedUnitCode}>
-                <SelectTrigger className="h-10 bg-muted/50 border-0 rounded-xl">
+                <SelectTrigger className="h-11 bg-muted/50 border-0 rounded-xl">
                   <SelectValue placeholder="Selecione a unidade" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[90]">
                   {unitOptions.map((opt) => (
                     <SelectItem key={opt.unidade} value={opt.unidade}>
                       {opt.unidade} · R$ {fmtR(opt.valor_unitario)} · fator {opt.fator_conversao || 1}
@@ -123,39 +148,44 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
             </div>
           )}
 
-          {/* Input de quantidade com teclado nativo numérico */}
-          <div className="flex items-center gap-3 mb-4">
-            <button
-              onClick={() => setQtd(prev => {
-                const n = Math.max(0, (parseFloat(prev.replace(',', '.')) || 0) - 1);
-                return String(n % 1 === 0 ? n : n.toFixed(2));
-              })}
-              className="w-11 h-11 rounded-full bg-muted flex items-center justify-center active:bg-muted dark:active:bg-muted flex-shrink-0"
-            >
-              <Minus className="w-4 h-4 text-muted-foreground" />
-            </button>
+          <div className="mb-4">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium mb-2">Quantidade</p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setQtd(prev => {
+                  const n = Math.max(0, (parseFloat(prev.replace(',', '.')) || 0) - 1);
+                  return String(n % 1 === 0 ? n : n.toFixed(2));
+                })}
+                className="w-11 h-11 rounded-full bg-muted flex items-center justify-center active:bg-muted dark:active:bg-muted flex-shrink-0"
+              >
+                <Minus className="w-4 h-4 text-muted-foreground" />
+              </button>
 
-            <Input
-              ref={inputRef}
-              type="number"
-              inputMode="decimal"
-              value={qtd}
-              onChange={e => setQtd(e.target.value)}
-              onFocus={e => e.target.select()}
-              onKeyDown={e => { if (e.key === 'Enter') handleConfirm(); }}
-              className="flex-1 text-center text-2xl font-bold h-12 bg-muted/50 border-0 shadow-none focus-visible:ring-0 text-foreground rounded-2xl"
-              placeholder="0"
-            />
+              <Input
+                ref={inputRef}
+                type="number"
+                inputMode="decimal"
+                enterKeyHint={precoLivre ? 'next' : 'done'}
+                value={qtd}
+                onChange={e => setQtd(e.target.value)}
+                onFocus={e => e.target.select()}
+                onKeyDown={handleQtdKeyDown}
+                className="flex-1 text-center text-2xl font-bold h-12 bg-muted/50 border-0 shadow-none focus-visible:ring-0 text-foreground rounded-2xl"
+                placeholder="0"
+              />
 
-            <button
-              onClick={() => setQtd(prev => {
-                const n = (parseFloat(prev.replace(',', '.')) || 0) + 1;
-                return String(n % 1 === 0 ? n : n.toFixed(2));
-              })}
-              className="w-11 h-11 rounded-full bg-background dark:bg-muted flex items-center justify-center active:opacity-70 flex-shrink-0"
-            >
-              <Plus className="w-4 h-4 text-white dark:text-foreground" />
-            </button>
+              <button
+                type="button"
+                onClick={() => setQtd(prev => {
+                  const n = (parseFloat(prev.replace(',', '.')) || 0) + 1;
+                  return String(n % 1 === 0 ? n : n.toFixed(2));
+                })}
+                className="w-11 h-11 rounded-full bg-background dark:bg-muted flex items-center justify-center active:opacity-70 flex-shrink-0"
+              >
+                <Plus className="w-4 h-4 text-white dark:text-foreground" />
+              </button>
+            </div>
           </div>
 
           {/* Campo de preço livre */}
@@ -167,10 +197,12 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
                 <input autoComplete="off"
                   ref={precoRef}
                   type="text" inputMode="decimal"
+                  enterKeyHint="done"
                   value={precoEditado}
                   onChange={e => { setPrecoEditado(e.target.value); setPrecoErro(''); }}
                   onBlur={handlePrecoBlur}
                   onFocus={e => e.target.select()}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleConfirm(); } }}
                   className="w-full pl-9 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-2xl text-sm text-right border border-amber-200 dark:border-amber-800 focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                 />
               </div>
@@ -188,10 +220,10 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
             </div>
           )}
 
-          {/* Botões */}
-          <div className="flex gap-2 pb-safe" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+          <div className="flex gap-2 pb-5" style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}>
             {qtdAtual > 0 && (
               <button
+                type="button"
                 onClick={() => onConfirm(0)}
                 className="w-11 h-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0 active:bg-red-100"
               >
@@ -199,12 +231,14 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
               </button>
             )}
             <button
+              type="button"
               onClick={onClose}
               className="flex-1 h-12 rounded-2xl bg-muted text-muted-foreground text-sm font-medium active:bg-muted"
             >
               Cancelar
             </button>
             <button
+              type="button"
               onClick={handleConfirm}
               disabled={qtdNum <= 0}
               className="flex-1 h-12 rounded-2xl bg-background dark:bg-muted text-white dark:text-foreground text-sm font-semibold flex items-center justify-center gap-2 active:opacity-80 disabled:opacity-40"
@@ -215,7 +249,8 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -260,10 +295,19 @@ function ProdutoLinha({ produto, preco, unidadeSelecionada, unitOptions, qtdNoCa
 }
 
 // ── Tela de busca de produtos ─────────────────────────────────────────────────
-function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) {
+function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho, onOpenItemDialog, searchInputRef }) {
   const [search, setSearch] = useState('');
-  const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const searchRef = useRef(null);
+
+  useEffect(() => {
+    if (!searchInputRef) return;
+    searchInputRef.current = searchRef.current;
+  }, [searchInputRef]);
+
+  useEffect(() => {
+    const t = setTimeout(() => searchRef.current?.focus(), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   const filtrados = useMemo(() => {
     if (!search.trim()) return [];
@@ -285,16 +329,17 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
 
   const handleSelect = (produto) => {
     const { unitOptions, unidadeDefault, precoSelecionado } = getUnitContext(produto);
-    setProdutoSelecionado({ produto, preco: precoSelecionado, unidadeSelecionada: unidadeDefault, unitOptions });
-  };
-
-  const handleConfirmQtd = (qtd, novoPreco, unidadeEscolhida) => {
-    const { produto, preco, unidadeSelecionada } = produtoSelecionado;
-    const unidadeFinal = unidadeEscolhida || unidadeSelecionada;
-    onSetQtd(produto, novoPreco ?? preco, qtd, unidadeFinal);
-    setProdutoSelecionado(null);
-    // Manter o search para continuar adicionando itens
-    setTimeout(() => searchRef.current?.focus(), 50);
+    onOpenItemDialog({
+      produto,
+      preco: precoSelecionado,
+      unidadeSelecionada: unidadeDefault,
+      unitOptions,
+      qtdAtual: itens.find(i => i.id === produto.id)?.qtd || 0,
+      onConfirm: (qtd, novoPreco, unidadeEscolhida) => {
+        onSetQtd(produto, novoPreco ?? precoSelecionado, qtd, unidadeEscolhida || unidadeDefault);
+      },
+      onAfterConfirm: () => setTimeout(() => searchRef.current?.focus(), 80),
+    });
   };
 
   return (
@@ -379,18 +424,6 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
         </div>
       )}
 
-      {/* Bottom-sheet de quantidade */}
-      {produtoSelecionado && (
-        <QuantidadeSheet
-          produto={produtoSelecionado.produto}
-          preco={produtoSelecionado.preco}
-          qtdAtual={itens.find(i => i.id === produtoSelecionado.produto.id)?.qtd || 0}
-          onConfirm={handleConfirmQtd}
-          unidadeSelecionada={produtoSelecionado.unidadeSelecionada}
-          unitOptions={produtoSelecionado.unitOptions}
-          onClose={() => setProdutoSelecionado(null)}
-        />
-      )}
     </div>
   );
 }
@@ -461,8 +494,7 @@ function ItemCarrinho({ item, onSelect, onRemove, onUpdatePreco }) {
 }
 
 // ── Tela do carrinho ──────────────────────────────────────────────────────────
-function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGerar, onSimularCartao, formatoCupom, setFormatoCupom, clienteNome, setClienteNome, onVendaPerdida, desconto, setDesconto, tipoDesconto, setTipoDesconto, observacoes, setObservacoes, onUpdatePreco }) {
-  const [editandoItem, setEditandoItem] = useState(null);
+function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGerar, onSimularCartao, formatoCupom, setFormatoCupom, clienteNome, setClienteNome, onVendaPerdida, desconto, setDesconto, tipoDesconto, setTipoDesconto, observacoes, setObservacoes, onUpdatePreco, onOpenItemDialog }) {
   const subtotal = useMemo(() => itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0), [itens]);
   const valorDesconto = useMemo(() => {
     if (!desconto || desconto <= 0) return 0;
@@ -480,12 +512,16 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
       : 1;
     const unitOptions = buildSaleUnitOptions(produto, mult);
     const unidadeSelecionada = unitOptions.find((opt) => opt.unidade === item.unidade) || pickDefaultSaleUnit(produto, mult);
-    setEditandoItem({ produto, preco: item.preco_unit, unitOptions, unidadeSelecionada });
-  };
-
-  const handleConfirmQtd = (qtd, novoPreco, unidadeEscolhida) => {
-    onSetQtd(editandoItem.produto, novoPreco ?? editandoItem.preco, qtd, unidadeEscolhida || editandoItem.unidadeSelecionada);
-    setEditandoItem(null);
+    onOpenItemDialog({
+      produto,
+      preco: item.preco_unit,
+      unidadeSelecionada,
+      unitOptions,
+      qtdAtual: item.qtd,
+      onConfirm: (qtd, novoPreco, unidadeEscolhida) => {
+        onSetQtd(produto, novoPreco ?? item.preco_unit, qtd, unidadeEscolhida || unidadeSelecionada);
+      },
+    });
   };
 
   return (
@@ -611,19 +647,6 @@ function TelaCarrinho({ itens, calcularPreco, produtos, onSetQtd, onRemove, onGe
         </div>
       )}
 
-      {/* Bottom-sheet de edição de quantidade */}
-      {editandoItem && (
-        <QuantidadeSheet
-          produto={editandoItem.produto}
-          preco={editandoItem.preco}
-          qtdAtual={itens.find(i => i.id === editandoItem.produto.id)?.qtd || 0}
-          onConfirm={handleConfirmQtd}
-          unidadeSelecionada={editandoItem.unidadeSelecionada}
-          unitOptions={editandoItem.unitOptions}
-          onClose={() => setEditandoItem(null)}
-        />
-      )}
-    
     </div>
   );
 }
@@ -640,6 +663,17 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
   const [desconto, setDesconto] = useState(0);
   const [tipoDesconto, setTipoDesconto] = useState('percentual');
   const [observacoes, setObservacoes] = useState('');
+  const [itemDialog, setItemDialog] = useState(null);
+  const searchInputRef = useRef(null);
+
+  const openItemDialog = useCallback((payload) => setItemDialog(payload), []);
+  const closeItemDialog = useCallback(() => setItemDialog(null), []);
+
+  useEffect(() => {
+    if (!isOpen || tela !== 'busca') return;
+    const t = setTimeout(() => searchInputRef.current?.focus(), 120);
+    return () => clearTimeout(t);
+  }, [isOpen, tela]);
 
   const subtotal = useMemo(() => itens.reduce((s, i) => s + i.preco_unit * i.qtd, 0), [itens]);
   const valorDesconto = useMemo(() => {
@@ -786,6 +820,8 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
             itens={itens}
             onSetQtd={handleSetQtd}
             onVerCarrinho={() => setTela('carrinho')}
+            onOpenItemDialog={openItemDialog}
+            searchInputRef={searchInputRef}
           />
         ) : (
            <>
@@ -796,6 +832,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
                onSetQtd={handleSetQtd}
                onRemove={handleRemove}
                onUpdatePreco={handleUpdatePreco}
+               onOpenItemDialog={openItemDialog}
                onGerar={() => setShowCupom(true)}
                onSimularCartao={() => setShowSimuladorCartao(true)}
                formatoCupom={formatoCupom}
@@ -819,6 +856,22 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
            </>
          )}
       </div>
+
+      {itemDialog && (
+        <ProdutoQuantidadeDialog
+          produto={itemDialog.produto}
+          preco={itemDialog.preco}
+          qtdAtual={itemDialog.qtdAtual}
+          unidadeSelecionada={itemDialog.unidadeSelecionada}
+          unitOptions={itemDialog.unitOptions}
+          onClose={closeItemDialog}
+          onConfirm={(qtd, novoPreco, unidadeEscolhida) => {
+            itemDialog.onConfirm(qtd, novoPreco, unidadeEscolhida);
+            closeItemDialog();
+            itemDialog.onAfterConfirm?.();
+          }}
+        />
+      )}
     </div>
   );
 }
