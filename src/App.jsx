@@ -16,7 +16,7 @@ import ModoFlareProvider from '@/features/modo-flare/ModoFlareProvider';
 import CatalogOverlay from '@/features/catalog-overlay/CatalogOverlay';
 import LoginPage from '@/components/auth/LoginPage';
 import GlobalQuickAccessLaunchers from '@/components/global/GlobalQuickAccessLaunchers';
-import { PageLoadFallback } from '@/lib/lazyPage';
+import { PageLoadFallback, ChunkErrorBoundary } from '@/lib/lazyPage';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const MainPage = Pages[mainPage] ?? Pages.Home;
@@ -58,8 +58,9 @@ const AuthenticatedApp = () => {
 
   return (
     <>
-      <Suspense fallback={<PageLoadFallback />}>
-        <Routes>
+      <ChunkErrorBoundary>
+        <Suspense fallback={<PageLoadFallback />}>
+          <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/"
@@ -82,7 +83,8 @@ const AuthenticatedApp = () => {
           ))}
           <Route path="*" element={<PageNotFound />} />
         </Routes>
-      </Suspense>
+        </Suspense>
+      </ChunkErrorBoundary>
       <GlobalQuickAccessLaunchers />
     </>
   );

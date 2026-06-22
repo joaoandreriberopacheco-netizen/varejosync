@@ -4,6 +4,7 @@ import App from '@/App.jsx'
 import '@/index.css'
 import { installMobileFocusPolicy } from '@/lib/focusPolicy'
 import { uppercaseInputValue } from '@/lib/uppercaseInputHandlers'
+import { reloadOnceOnChunkError } from '@/lib/lazyPage'
 
 // Tema antes da primeira pintura (splash, login, etc.)
 try {
@@ -29,6 +30,13 @@ document.addEventListener('focusin', (e) => {
 document.addEventListener('blur', (e) => uppercaseInputValue(e.target), true);
 
 installMobileFocusPolicy();
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    reloadOnceOnChunkError();
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   // <React.StrictMode>

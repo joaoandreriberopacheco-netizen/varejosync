@@ -3,7 +3,7 @@
  *
  * mainPage: landing após login
  */
-import { lazy } from 'react';
+import { lazyPage } from '@/lib/lazyPage';
 import __Layout from './Layout.jsx';
 
 const pageModules = import.meta.glob('./pages/*.jsx');
@@ -11,7 +11,7 @@ const pageModules = import.meta.glob('./pages/*.jsx');
 export const PAGES = Object.fromEntries(
   Object.entries(pageModules).map(([path, load]) => {
     const name = path.replace(/^\.\/pages\//, '').replace(/\.jsx$/, '');
-    return [name, lazy(load)];
+    return [name, lazyPage(load)];
   })
 );
 
