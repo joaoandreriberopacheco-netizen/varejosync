@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import {
   ArrowDownLeft, ArrowUpRight, ArrowRightLeft,
   Calendar, ChevronRight, Tag, Wallet,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { dataHoje, formatarSoData } from '@/components/utils/dateUtils';
 import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
@@ -13,6 +12,7 @@ import SeletorContaMobile from './SeletorContaMobile';
 import { SeletorCategoria } from './DialogCategoria';
 import TagsInput from './TagsInput';
 import LancamentoMaisOpcoes from './LancamentoMaisOpcoes';
+import LancamentoPickerDialog from './LancamentoPickerDialog';
 
 const TIPOS = [
   { value: 'Receita', label: 'Receita', icon: ArrowDownLeft },
@@ -94,6 +94,14 @@ export default function LancamentoFormUnico({
 }) {
   const [campoAtivo, setCampoAtivo] = useState('valor');
   const [picker, setPicker] = useState(null); // 'conta' | 'contaDestino' | 'categoria' | 'tags'
+  const scrollRef = useRef(null);
+
+  const focarCampo = (campo, el) => {
+    setCampoAtivo(campo);
+    requestAnimationFrame(() => {
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+  };
 
   const display = valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   const contaNome = contas.find((c) => c.id === contaId)?.nome;
@@ -131,7 +139,10 @@ export default function LancamentoFormUnico({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pb-4 space-y-3">
+      <div
+        ref={scrollRef}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pb-8 space-y-3 scroll-pb-24"
+      >
         <div className="flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-sm">
           <div>
             <p className="text-sm font-medium text-foreground">{toggleLabel}</p>
@@ -160,7 +171,7 @@ export default function LancamentoFormUnico({
             min="0"
             step="0.01"
             value={valorNumerico === 0 ? '' : valorNumerico}
-            onFocus={() => setCampoAtivo('valor')}
+            onFocus={(e) => focarCampo('valor', e.currentTarget)}
             onChange={(e) => onValorChange(e.target.value)}
             placeholder="0,00"
             className={cn(
@@ -185,7 +196,7 @@ export default function LancamentoFormUnico({
           <input
             autoComplete="off"
             value={descricao}
-            onFocus={() => setCampoAtivo('descricao')}
+            onFocus={(e) => focarCampo('descricao', e.currentTarget)}
             onChange={createUppercaseInputChangeHandler((e) => onDescricaoChange(e.target.value))}
             placeholder={isTransfer ? 'Ex.: repasse mensal' : 'Do que se trata?'}
             className={cn(
@@ -294,63 +305,57 @@ export default function LancamentoFormUnico({
         </button>
       </div>
 
-      <Dialog open={picker === 'conta'} onOpenChange={(o) => !o && setPicker(null)}>
-        <DialogContent className="max-h-[85dvh] overflow-hidden flex flex-col gap-0 p-0 sm:max-w-md">
-          <DialogHeader className="px-5 pt-5 pb-2">
-            <DialogTitle>{isTransfer ? 'Conta origem' : 'Qual conta?'}</DialogTitle>
-          </DialogHeader>
-          <div className="px-5 pb-5 overflow-y-auto">
-            <SeletorContaMobile
-              contas={contas}
-              value={contaId}
-              onChange={(id) => { onContaChange(id); setPicker(null); }}
-              label="Conta"
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LancamentoPickerDialog
+        open={picker === 'conta'}
+        onOpenChange={(o) => !o && setPicker(null)}
+        title={isTransfer ? 'Conta origem' : 'Qual conta?'}
+      >
+        <SeletorContaMobile
+          contas={contas}
+          value={contaId}
+          onChange={(id) => { onContaChange(id); setPicker(null); }}
+          label="Conta"
+        />
+      </LancamentoPickerDialog>
 
-      <Dialog open={picker === 'contaDestino'} onOpenChange={(o) => !o && setPicker(null)}>
-        <DialogContent className="max-h-[85dvh] overflow-hidden flex flex-col gap-0 p-0 sm:max-w-md">
-          <DialogHeader className="px-5 pt-5 pb-2">
-            <DialogTitle>Conta destino</DialogTitle>
-          </DialogHeader>
-          <div className="px-5 pb-5 overflow-y-auto">
-            <SeletorContaMobile
-              contas={contas}
-              value={contaDestinoId}
-              onChange={(id) => { onContaDestinoChange(id); setPicker(null); }}
-              excludeIds={contaId ? [contaId] : []}
-              label="Destino"
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LancamentoPickerDialog
+        open={picker === 'contaDestino'}
+        onOpenChange={(o) => !o && setPicker(null)}
+        title="Conta destino"
+      >
+        <SeletorContaMobile
+          contas={contas}
+          value={contaDestinoId}
+          onChange={(id) => { onContaDestinoChange(id); setPicker(null); }}
+          excludeIds={contaId ? [contaId] : []}
+          label="Destino"
+        />
+      </LancamentoPickerDialog>
 
-      <Dialog open={picker === 'categoria'} onOpenChange={(o) => !o && setPicker(null)}>
-        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Categoria</DialogTitle>
-          </DialogHeader>
-          <SeletorCategoria
-            tipo={tipo}
-            value={categoria}
-            onChange={(nome, id) => { onCategoriaChange(nome, id); setPicker(null); }}
-            categorias={categorias}
-            onCriada={onCategoriaCriada}
-            mobileLarge
-          />
-        </DialogContent>
-      </Dialog>
+      <LancamentoPickerDialog
+        open={picker === 'categoria'}
+        onOpenChange={(o) => !o && setPicker(null)}
+        title="Categoria"
+        bodyClassName="px-4"
+      >
+        <SeletorCategoria
+          tipo={tipo}
+          value={categoria}
+          onChange={(nome, id) => { onCategoriaChange(nome, id); setPicker(null); }}
+          categorias={categorias}
+          onCriada={onCategoriaCriada}
+          mobileLarge
+        />
+      </LancamentoPickerDialog>
 
-      <Dialog open={picker === 'tags'} onOpenChange={(o) => !o && setPicker(null)}>
-        <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Tags</DialogTitle>
-          </DialogHeader>
-          <TagsInput tags={tags} onChange={onTagsChange} defaultExpanded />
-        </DialogContent>
-      </Dialog>
+      <LancamentoPickerDialog
+        open={picker === 'tags'}
+        onOpenChange={(o) => !o && setPicker(null)}
+        title="Tags"
+        bodyClassName="px-4"
+      >
+        <TagsInput tags={tags} onChange={onTagsChange} defaultExpanded />
+      </LancamentoPickerDialog>
     </div>
   );
 }

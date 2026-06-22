@@ -10,6 +10,10 @@ import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFina
 import { useCategorias } from './fluxo/DialogCategoria';
 import LancamentoConfirmacaoDialog from './LancamentoConfirmacaoDialog';
 import LancamentoFormUnico, { formatarDataFormulario } from './fluxo/LancamentoFormUnico';
+import {
+  lancamentoStackDialogClass,
+  lancamentoStackOverlayClass,
+} from './fluxo/LancamentoPickerDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { normalizeDataText } from '@/lib/normalizeDataText';
 import { gravarPreferenciasLancamento, resolverPreferenciasLancamento } from '@/lib/lancamentoPreferencias';
@@ -432,7 +436,10 @@ export default function NovoLancamentoDialog({
       />
 
       <Dialog open={showDataDialog} onOpenChange={setShowDataDialog}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent
+          overlayClassName={lancamentoStackOverlayClass}
+          className={lancamentoStackDialogClass('rounded-2xl')}
+        >
           <DialogHeader>
             <DialogTitle>Data e hora</DialogTitle>
           </DialogHeader>
@@ -465,6 +472,7 @@ export default function NovoLancamentoDialog({
       <LancamentoConfirmacaoDialog
         open={showConfirmDialog}
         mode={confirmDialogMode}
+        stackElevated
         onCreateAnother={() => {
           setShowConfirmDialog(false);
           setConfirmDialogMode('processing');

@@ -1,8 +1,20 @@
 import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CheckCircle2, Loader2 } from 'lucide-react';
+import {
+  lancamentoStackDialogClass,
+  lancamentoStackOverlayClass,
+} from './fluxo/LancamentoPickerDialog';
 
-export default function LancamentoConfirmacaoDialog({ open, mode, onCreateAnother, onFinish, successTitle, successMessage }) {
+export default function LancamentoConfirmacaoDialog({
+  open,
+  mode,
+  onCreateAnother,
+  onFinish,
+  successTitle,
+  successMessage,
+  stackElevated = false,
+}) {
   const processing = mode === 'processing';
 
   useEffect(() => {
@@ -18,7 +30,12 @@ export default function LancamentoConfirmacaoDialog({ open, mode, onCreateAnothe
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-sm rounded-3xl border-0 bg-card shadow-xl p-6 [&>button]:hidden">
+      <DialogContent
+        overlayClassName={stackElevated ? lancamentoStackOverlayClass : undefined}
+        className={stackElevated
+          ? lancamentoStackDialogClass('rounded-3xl border-0 bg-card shadow-xl p-6 [&>button]:hidden')
+          : 'max-w-sm rounded-3xl border-0 bg-card shadow-xl p-6 [&>button]:hidden'}
+      >
         <div className="flex flex-col items-center text-center gap-4 py-2">
           <div className={`w-16 h-16 rounded-full flex items-center justify-center ${processing ? 'bg-muted' : 'bg-green-50 dark:bg-green-900/20'}`}>
             {processing ? (

@@ -98,7 +98,7 @@ export default function LancamentoMaisOpcoes({
                     <SelectTrigger className="border-0 shadow-none bg-transparent h-12 text-sm px-4">
                       <SelectValue placeholder="Ligar a pedido de compra (opcional)" />
                     </SelectTrigger>
-                    <SelectContent className="z-[70]">
+                    <SelectContent className="z-[75]">
                       <SelectItem value="__none__">Nenhum</SelectItem>
                       {pedidosCompra.map((p) => (
                         <SelectItem key={p.id} value={p.id}>

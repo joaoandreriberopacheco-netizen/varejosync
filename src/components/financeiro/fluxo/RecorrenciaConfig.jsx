@@ -29,7 +29,7 @@ export default function RecorrenciaConfig({ isRecorrente, onToggle, frequencia, 
               <SelectTrigger className="border-0 shadow-none bg-transparent h-11 dark:text-foreground text-sm px-4">
                 <SelectValue placeholder="Frequência *" />
               </SelectTrigger>
-              <SelectContent className="z-[70] dark:bg-muted dark:border-border/40">
+              <SelectContent className="z-[75] dark:bg-muted dark:border-border/40">
                 {FREQUENCIAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
               </SelectContent>
             </Select>
