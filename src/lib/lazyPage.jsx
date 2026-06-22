@@ -1,6 +1,12 @@
 import React, { lazy, Suspense } from 'react';
 
 const CHUNK_RELOAD_KEY = 'p38-chunk-reload';
+const CHUNK_RELOAD_COUNT_KEY = 'p38-chunk-reload-count';
+const CHUNK_RELOAD_WINDOW_KEY = 'p38-chunk-reload-window';
+const MAX_CHUNK_RELOADS = 3;
+const CHUNK_RELOAD_WINDOW_MS = 60_000;
+const IMPORT_RETRY_ATTEMPTS = 3;
+const IMPORT_RETRY_BASE_MS = 250;
 
 /** Erros típicos de chunk/HMR desatualizado (Vite + preview Base44). */
 export function isChunkLoadError(error) {
@@ -11,21 +17,51 @@ export function isChunkLoadError(error) {
     || msg.includes('error loading dynamically imported module')
     || msg.includes('Failed to load module script')
     || msg.includes('dynamically imported module')
+    || msg.includes('Loading chunk')
+    || msg.includes('ChunkLoadError')
   );
 }
 
 export function clearChunkReloadFlag() {
   try {
     sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+    sessionStorage.removeItem(CHUNK_RELOAD_COUNT_KEY);
+    sessionStorage.removeItem(CHUNK_RELOAD_WINDOW_KEY);
   } catch {
     /* ignore */
   }
 }
 
-/** Recarrega a página uma vez por sessão quando um chunk falha (cache/HMR). */
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+/** Evita que o modal "Problemas encontrados" do preview Base44 apareça por HMR. */
+export function suppressChunkErrorPropagation(event) {
+  const reason = event?.reason ?? event?.error ?? event;
+  if (!isChunkLoadError(reason)) return false;
+  event?.preventDefault?.();
+  event?.stopImmediatePropagation?.();
+  return true;
+}
+
+/** Recarrega a página até N vezes por janela quando um chunk falha (cache/HMR). */
 export function reloadOnceOnChunkError() {
   try {
-    if (sessionStorage.getItem(CHUNK_RELOAD_KEY)) return false;
+    const now = Date.now();
+    const windowStart = Number(sessionStorage.getItem(CHUNK_RELOAD_WINDOW_KEY) || 0);
+    let count = Number(sessionStorage.getItem(CHUNK_RELOAD_COUNT_KEY) || 0);
+
+    if (!windowStart || now - windowStart > CHUNK_RELOAD_WINDOW_MS) {
+      sessionStorage.setItem(CHUNK_RELOAD_WINDOW_KEY, String(now));
+      count = 0;
+    }
+
+    if (count >= MAX_CHUNK_RELOADS) return false;
+
+    sessionStorage.setItem(CHUNK_RELOAD_COUNT_KEY, String(count + 1));
     sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
   } catch {
     /* ignore */
@@ -34,13 +70,29 @@ export function reloadOnceOnChunkError() {
   return true;
 }
 
-/** Envolve import dinâmico com retry via reload automático. */
-export function wrapDynamicImport(importFn) {
-  return async () => {
+async function importWithChunkRetry(importFn) {
+  let lastError;
+  for (let attempt = 0; attempt < IMPORT_RETRY_ATTEMPTS; attempt += 1) {
     try {
       const mod = await importFn();
       clearChunkReloadFlag();
       return mod;
+    } catch (error) {
+      lastError = error;
+      if (!isChunkLoadError(error) || attempt === IMPORT_RETRY_ATTEMPTS - 1) {
+        throw error;
+      }
+      await sleep(IMPORT_RETRY_BASE_MS * (attempt + 1));
+    }
+  }
+  throw lastError;
+}
+
+/** Envolve import dinâmico com retry via reload automático. */
+export function wrapDynamicImport(importFn) {
+  return async () => {
+    try {
+      return await importWithChunkRetry(importFn);
     } catch (error) {
       if (isChunkLoadError(error) && reloadOnceOnChunkError()) {
         return new Promise(() => {});
@@ -48,6 +100,24 @@ export function wrapDynamicImport(importFn) {
       throw error;
     }
   };
+}
+
+/** Intercepta erros globais de chunk antes do handler do preview Base44. */
+export function installChunkErrorHandlers() {
+  if (typeof window === 'undefined') return;
+
+  const onUnhandledRejection = (event) => {
+    if (!suppressChunkErrorPropagation(event)) return;
+    reloadOnceOnChunkError();
+  };
+
+  const onWindowError = (event) => {
+    if (!suppressChunkErrorPropagation(event)) return;
+    reloadOnceOnChunkError();
+  };
+
+  window.addEventListener('unhandledrejection', onUnhandledRejection, true);
+  window.addEventListener('error', onWindowError, true);
 }
 
 export function lazyPage(importFn) {
