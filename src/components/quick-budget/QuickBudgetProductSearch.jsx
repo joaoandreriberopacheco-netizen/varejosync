@@ -48,7 +48,7 @@ export default function QuickBudgetProductSearch({ inputRef, query, onQueryChang
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground break-words">{produto.nome}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span>Estoque: {Number(produto.estoque_atual || 0)}</span>
+                    <span>Estoque: {Number(produto.estoque_atual || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</span>
                     {produto.codigo_interno && <span>#{produto.codigo_interno}</span>}
                   </div>
                 </div>

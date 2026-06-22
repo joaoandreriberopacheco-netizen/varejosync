@@ -4,20 +4,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Check, Loader2, MessageCircle, Search, ShoppingCart, X } from 'lucide-react';
 import QuickBudgetProductSearch from './QuickBudgetProductSearch';
-import QuickBudgetFlowItemEditor from './QuickBudgetFlowItemEditor';
 import QuickBudgetCartView from './QuickBudgetCartView';
+import ProdutoQuantidadeDialog from '@/components/orcamento/ProdutoQuantidadeDialog';
 import {
   buildQuickBudgetItem,
   getBudgetSummary,
   getFullPrice,
-  getMinimumPrice,
   getQuickBudgetUnitContext,
   recalculateItem,
 } from './quickBudgetUtils';
-import { parsePrecoDigitado } from '@/lib/orcamentoPrecoTabela';
 import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { toast } from 'sonner';
-import { QUICK_ACCESS_PANEL_CLASS, QUICK_ACCESS_PANEL_SHELL_CLASS } from '@/lib/quickAccessOverlay';
+import {
+  QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS,
+  QUICK_ACCESS_PANEL_CLASS,
+  QUICK_ACCESS_PANEL_SHELL_CLASS,
+} from '@/lib/quickAccessOverlay';
+import { getItemUnitKey } from '@/lib/productUnits';
+
+const NESTED_SELECT_Z = 'z-[80080]';
 
 export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 }) {
   const [produtos, setProdutos] = useState([]);
@@ -25,17 +30,10 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
   const [query, setQuery] = useState('');
   const [items, setItems] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [flowStage, setFlowStage] = useState('quantity');
-  const [quantityDraft, setQuantityDraft] = useState('1');
-  const [priceDraft, setPriceDraft] = useState('0');
-  const [unitOptions, setUnitOptions] = useState([]);
-  const [selectedUnit, setSelectedUnit] = useState(null);
+  const [itemDialog, setItemDialog] = useState(null);
   const [isSharing, setIsSharing] = useState(false);
   const [showCartMobile, setShowCartMobile] = useState(false);
   const searchInputRef = useRef(null);
-  const quantityInputRef = useRef(null);
-  const priceInputRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -81,30 +79,25 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
 
   const handleSelectProduct = (produto) => {
     const ctx = getQuickBudgetUnitContext(produto, tabelaSelecionada);
-    setSelectedProduct(produto);
-    setUnitOptions(ctx.unitOptions || []);
-    setSelectedUnit(ctx.unidadeDefault);
-    setFlowStage('quantity');
-    setQuantityDraft('1');
-    setPriceDraft(String(getFullPrice(produto, tabelaSelecionada, ctx.unidadeDefault)));
-    setTimeout(() => quantityInputRef.current?.focus(), 50);
+    const unidadeDefault = ctx.unidadeDefault;
+    const sigla = unidadeDefault?.unidade || produto.unidade_principal || 'UN';
+    const lineKey = getItemUnitKey(produto.id, sigla);
+    const existing = items.find((item) => item.item_key === lineKey);
+    setItemDialog({
+      produto,
+      preco: getFullPrice(produto, tabelaSelecionada, unidadeDefault),
+      unidadeSelecionada: unidadeDefault,
+      unitOptions: ctx.unitOptions || [],
+      qtdAtual: existing?.quantidade || 0,
+    });
   };
 
-  const handleUnitChange = (unit) => {
-    if (!selectedProduct || !unit) return;
-    setSelectedUnit(unit);
-    setPriceDraft(String(getFullPrice(selectedProduct, tabelaSelecionada, unit)));
-  };
+  const closeItemDialog = () => setItemDialog(null);
 
   const resetFlow = () => {
-    setSelectedProduct(null);
-    setUnitOptions([]);
-    setSelectedUnit(null);
-    setFlowStage('quantity');
-    setQuantityDraft('1');
-    setPriceDraft('0');
+    setItemDialog(null);
     setQuery('');
-    setTimeout(() => searchInputRef.current?.focus(), 50);
+    setTimeout(() => searchInputRef.current?.focus(), 80);
   };
 
   const resetPanel = () => {
@@ -114,27 +107,24 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     setShowCartMobile(false);
   };
 
-  const handleSaveItem = () => {
-    if (!selectedProduct) return;
-    const draft = buildQuickBudgetItem(selectedProduct, tabelaSelecionada, selectedUnit);
-    const pisoCusto = getMinimumPrice(selectedProduct, tabelaSelecionada, selectedUnit);
-    let precoUnitario = draft.preco_unitario;
-    if (selectedProduct.preco_livre) {
-      const parsed = parsePrecoDigitado(priceDraft);
-      if (!Number.isFinite(parsed)) {
-        toast.error('Informe um preço válido');
-        return;
-      }
-      if (parsed < pisoCusto) {
-        toast.error(`Preço mínimo: ${pisoCusto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} (custo)`);
-        return;
-      }
-      precoUnitario = parsed;
+  const handleDialogConfirm = (qtd, novoPreco, unidadeEscolhida) => {
+    if (!itemDialog) return;
+    const { produto } = itemDialog;
+    const selectedUnit = unidadeEscolhida || itemDialog.unidadeSelecionada;
+
+    if (qtd <= 0) {
+      const lineKey = getItemUnitKey(produto.id, selectedUnit?.unidade || produto.unidade_principal || 'UN');
+      setItems((prev) => prev.filter((item) => item.item_key !== lineKey));
+      resetFlow();
+      return;
     }
+
+    const draft = buildQuickBudgetItem(produto, tabelaSelecionada, selectedUnit);
+    const precoUnitario = produto.preco_livre && novoPreco != null ? novoPreco : draft.preco_unitario;
     const nextItem = recalculateItem({
       ...draft,
-      quantidade: quantityDraft,
-      preco_unitario: selectedProduct.preco_livre ? precoUnitario : draft.preco_unitario,
+      quantidade: qtd,
+      preco_unitario: precoUnitario,
     });
     const lineKey = nextItem.item_key;
 
@@ -148,7 +138,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
               tem_ajuste_tabela: nextItem.tem_ajuste_tabela,
               preco_cheio: nextItem.preco_cheio,
               preco_minimo: nextItem.preco_minimo,
-              quantidade: Number(item.quantidade || 0) + Number(nextItem.quantidade || 0),
+              quantidade: qtd,
               preco_unitario: nextItem.preco_unitario,
               unidade: nextItem.unidade,
               unidade_medida: nextItem.unidade_medida,
@@ -161,16 +151,6 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     });
 
     resetFlow();
-  };
-
-  const handleNextStep = () => {
-    if (!selectedProduct) return;
-    if (selectedProduct.preco_livre) {
-      setFlowStage('price');
-      setTimeout(() => priceInputRef.current?.focus(), 50);
-      return;
-    }
-    handleSaveItem();
   };
 
   const handleShare = async () => {
@@ -291,30 +271,29 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
           onSubmitFirstResult={handleSelectProduct}
         />
 
-        {selectedProduct ? (
-          <QuickBudgetFlowItemEditor
-            selectedProduct={selectedProduct}
-            tabelaPreco={tabelaSelecionada}
-            stage={flowStage}
-            quantity={quantityDraft}
-            price={priceDraft}
-            unitOptions={unitOptions}
-            selectedUnit={selectedUnit}
-            onUnitChange={handleUnitChange}
-            onQuantityChange={setQuantityDraft}
-            onPriceChange={setPriceDraft}
-            onNext={handleNextStep}
-            onSave={handleSaveItem}
-            quantityInputRef={quantityInputRef}
-            priceInputRef={priceInputRef}
-          />
-        ) : (
+        {!itemDialog && (
           <div className="rounded-3xl bg-card shadow-sm px-4 py-4 flex items-center gap-3 text-xs text-muted-foreground">
             <Search className="w-4 h-4" />
             Os itens ficam guardados no carrinho para você continuar buscando sem fechar o teclado.
           </div>
         )}
       </div>
+
+      {itemDialog && (
+        <ProdutoQuantidadeDialog
+          produto={itemDialog.produto}
+          preco={itemDialog.preco}
+          qtdAtual={itemDialog.qtdAtual}
+          unidadeSelecionada={itemDialog.unidadeSelecionada}
+          unitOptions={itemDialog.unitOptions}
+          onClose={closeItemDialog}
+          onConfirm={handleDialogConfirm}
+          confirmLabel="Salvar carrinho"
+          dialogTitleId="quick-budget-item-dialog-title"
+          overlayClassName={QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS}
+          selectContentClassName={NESTED_SELECT_Z}
+        />
+      )}
 
       {isMobile && items.length > 0 && (
         <div className={`absolute inset-0 z-[100] ${QUICK_ACCESS_PANEL_SHELL_CLASS} flex flex-col`} style={{ display: showCartMobile ? 'flex' : 'none' }}>
