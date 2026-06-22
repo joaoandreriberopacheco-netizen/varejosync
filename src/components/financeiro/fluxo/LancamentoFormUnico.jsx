@@ -103,7 +103,6 @@ export default function LancamentoFormUnico({
     });
   };
 
-  const display = valorNumerico.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
   const contaNome = contas.find((c) => c.id === contaId)?.nome;
   const contaDestinoNome = contas.find((c) => c.id === contaDestinoId)?.nome;
   const isTransfer = tipo === 'Transferência';
