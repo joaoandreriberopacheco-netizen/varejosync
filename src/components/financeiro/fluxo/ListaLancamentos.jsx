@@ -3,7 +3,14 @@ import { Scale } from 'lucide-react';
 import FinanceiroLancRow from './FinanceiroLancRow';
 import { FinanceiroGrupo, FinanceiroListaEstado } from './FinanceiroListaShared';
 
-export default function ListaLancamentos({ grupos, loading, onRow }) {
+export default function ListaLancamentos({
+  grupos,
+  loading,
+  onRow,
+  emSelecao = false,
+  selecionados = [],
+  onToggleSelecionado,
+}) {
   return (
     <FinanceiroListaEstado
       loading={loading}
@@ -22,7 +29,17 @@ export default function ListaLancamentos({ grupos, loading, onRow }) {
           saldoAcumulado={totais.saldoAcumulado}
         >
           {items.map((l, index) => (
-            <FinanceiroLancRow key={l.id} l={l} onClick={onRow} striped={index % 2 === 1} />
+            <FinanceiroLancRow
+              key={l.id}
+              l={l}
+              onClick={onRow}
+              striped={index % 2 === 1}
+              dimProgramada={!!l._isProgramada}
+              dataField={l._isProgramada ? 'vencimento' : 'auto'}
+              emSelecao={emSelecao && !!l._isProgramada}
+              selecionado={selecionados.includes(l.id)}
+              onToggleSelecionado={onToggleSelecionado}
+            />
           ))}
         </FinanceiroGrupo>
       ))}

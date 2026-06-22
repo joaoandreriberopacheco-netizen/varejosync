@@ -33,12 +33,6 @@ import KpiFluxoBar from './fluxo/KpiFluxoBar';
 import ListaLancamentos from './fluxo/ListaLancamentos';
 import { formatFinanceiroGrupoLabel } from './fluxo/FinanceiroListaShared';
 import {
-  ContasAbertasProvider,
-  ContasAbertasKpis,
-  ContasAbertasFiltros,
-  ContasAbertasListaPane,
-} from './ContasAbertas';
-import {
   GestaoContasEmbedded,
   GestaoContasKpis,
   GestaoContasPane,
@@ -46,6 +40,19 @@ import {
 import AgefinRecorrentes from './AgefinRecorrentes';
 import AgefinImportador from '../agefin/AgefinImportador';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
+import PagamentoLoteDialog from './PagamentoLoteDialog';
+import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
+import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
+import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
+import {
+  calcularKpisProgramadas,
+  calcularSaldoPrevisto,
+  contarItensGrupos,
+  filtrarProgramadasFluxo,
+  mesclarProgramadasNosGrupos,
+} from '@/lib/fluxoUnificado';
+import { lerPreferenciasFluxoUnificado, gravarPreferenciasFluxoUnificado } from '@/lib/fluxoUnificadoPreferencias';
+import { consolidarTransferenciasListaFluxo } from '@/lib/gruposMovimentacaoConta';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DATA_CORTE_HISTORICO_PADRAO,
@@ -102,9 +109,11 @@ export default function ExecucaoOrcamentaria() {
     contasSel: [],
   });
   const [corteDiarioInitial, setCorteDiarioInitial] = useState(null);
-  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'contas'
-  const [abaContas, setAbaContas] = useState('contas');
+  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'agefin'
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
+  const [mostrarProgramadas, setMostrarProgramadas] = useState(
+    () => lerPreferenciasFluxoUnificado().mostrarProgramadas,
+  );
   const [showNovoFluxo, setShowNovoFluxo] = useState(false);
   const [ordemLancamentos, setOrdemLancamentos] = useState('desc');
   const [urlDescricao, setUrlDescricao] = useState('');
@@ -127,8 +136,7 @@ export default function ExecucaoOrcamentaria() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('aba') === 'agefin') {
-      setAba('contas');
-      setAbaContas('agefin');
+      setAba('agefin');
       params.delete('aba');
       const next = params.toString();
       window.history.replaceState({}, '', next ? `${window.location.pathname}?${next}` : window.location.pathname);
@@ -349,6 +357,52 @@ export default function ExecucaoOrcamentaria() {
     });
   }, [filtrados, movimentosFiltrados, lancs, contas, contasFiltroIds, contasById, ordemLancamentos, kpis.saldoContas, movimentos]);
 
+  const programadasFiltradas = useMemo(() => filtrarProgramadasFluxo(lancs, {
+    ds,
+    de,
+    contasSel,
+    contasById,
+    contasAtivas,
+    tiposSel,
+    cmvOnly,
+    search,
+    mostrarHistoricoAnterior,
+    dataCorteHistorico,
+  }), [lancs, ds, de, contasSel, contasById, contasAtivas, tiposSel, cmvOnly, search, mostrarHistoricoAnterior, dataCorteHistorico]);
+
+  const programadasLista = useMemo(
+    () => consolidarTransferenciasListaFluxo(programadasFiltradas),
+    [programadasFiltradas],
+  );
+
+  const kpisProgramadas = useMemo(
+    () => calcularKpisProgramadas(programadasFiltradas),
+    [programadasFiltradas],
+  );
+
+  const saldoPrevisto = useMemo(
+    () => calcularSaldoPrevisto(kpis.saldoContas, kpisProgramadas),
+    [kpis.saldoContas, kpisProgramadas],
+  );
+
+  const gruposExibicao = useMemo(() => {
+    if (!mostrarProgramadas) return grupos;
+    const hStr = dataHoje();
+    const oStr = format(subDays(parseDateKey(hStr), 1), 'yyyy-MM-dd');
+    const merged = mesclarProgramadasNosGrupos(grupos, programadasLista, ordemLancamentos);
+    return merged.map((g) => ({
+      ...g,
+      label: g.label || (g.k === 'sem-data' ? 'Sem data' : formatFinanceiroGrupoLabel(g.k, hStr, oStr)),
+    }));
+  }, [grupos, mostrarProgramadas, programadasLista, ordemLancamentos]);
+
+  const lote = usePagamentoLoteFluxo({
+    programadas: programadasLista,
+    contas: contasAtivas,
+    movimentos,
+    reload: load,
+  });
+
   const totalPend = useMemo(() => lancs.filter(l => l.status_conciliacao === 'Pendente').length, [lancs]);
   const hasActiveFilters = tiposSel.length > 0 || contasSel.length > 0 || statusSel.length > 0 || pendentes || cmvOnly || mostrarHistoricoAnterior || !!search;
 
@@ -539,8 +593,8 @@ export default function ExecucaoOrcamentaria() {
     window.URL.revokeObjectURL(url);
   }, [buildGruposComFiltros, contasAtivas.length]);
 
-  const contasPagarAtiva = aba === 'contas' && abaContas === 'contas';
   const caixasAtiva = aba === 'caixas';
+  const agefinAtiva = aba === 'agefin';
   const financeiroShared = useMemo(
     () => ({
       lancs,
@@ -552,21 +606,21 @@ export default function ExecucaoOrcamentaria() {
     }),
     [lancs, movimentos, contas, contasAtivas, loading],
   );
-  const contasShared = financeiroShared;
 
   const abasPrincipais = [
     { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
     { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Caixas' },
-    { value: 'contas', label: 'Contas Abertas', shortLabel: 'Contas' },
+    { value: 'agefin', label: 'Atualizar boletos', shortLabel: 'Boletos' },
   ];
+
+  const handleToggleProgramadas = useCallback((next) => {
+    setMostrarProgramadas(next);
+    gravarPreferenciasFluxoUnificado({ mostrarProgramadas: next });
+    if (!next) lote.sairModoLote();
+  }, [lote.sairModoLote]);
 
   return (
     <GestaoContasEmbedded active={caixasAtiva} shared={financeiroShared}>
-    <ContasAbertasProvider
-      active={contasPagarAtiva}
-      shared={contasShared}
-      onOpenImportador={() => setShowImportadorAgefin(true)}
-    >
     <div className="w-full min-w-0 max-w-full space-y-3 pb-[var(--p38-scroll-pad-below-nav)] font-din-1451">
       {/* Header unificado — título, KPIs do fluxo, abas */}
       <div className="min-w-0 max-w-full space-y-2">
@@ -584,7 +638,16 @@ export default function ExecucaoOrcamentaria() {
             )}
           </div>
 
-          {aba === 'fluxo' && <KpiFluxoBar kpis={kpis} periodoLabel={periodoLabel} />}
+          {aba === 'fluxo' && (
+            <KpiFluxoBar
+              kpis={kpis}
+              periodoLabel={periodoLabel}
+              mostrarProgramadas={mostrarProgramadas}
+              saldoPrevisto={saldoPrevisto}
+              aReceber={kpisProgramadas.aReceber}
+              aPagar={kpisProgramadas.aPagar}
+            />
+          )}
 
           <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3">
             <FinanceiroPillTabs
@@ -595,29 +658,21 @@ export default function ExecucaoOrcamentaria() {
               items={abasPrincipais}
               className="md:w-auto md:shrink-0"
             />
-            {aba === 'contas' && (
-              <FinanceiroPillTabs
-                stretch
-                compact
-                value={abaContas}
-                onChange={setAbaContas}
-                items={[
-                  { value: 'contas', label: 'Contas a pagar', shortLabel: 'A pagar' },
-                  { value: 'agefin', label: 'Atualizar boletos', shortLabel: 'Boletos' },
-                ]}
-                className="md:w-auto md:shrink-0"
-              />
-            )}
           </div>
 
           {caixasAtiva && <GestaoContasKpis />}
-          {aba === 'contas' && abaContas === 'contas' && <ContasAbertasKpis layout="stack" />}
-          {aba === 'contas' && abaContas === 'agefin' && <AgefinRecorrentes />}
+          {agefinAtiva && <AgefinRecorrentes />}
         </div>
       </div>
 
       {aba === 'fluxo' && (
         <>
+          <FluxoToggleProgramadas
+            checked={mostrarProgramadas}
+            onCheckedChange={handleToggleProgramadas}
+            qtdProgramadas={programadasLista.length}
+          />
+
           <FiltrosFluxoCaixa
             search={search}
             onSearch={setSearch}
@@ -648,8 +703,8 @@ export default function ExecucaoOrcamentaria() {
           />
 
           <FinanceiroListaMeta
-            total={filtrados.length}
-            totalLabel={filtrados.length === 1 ? 'lançamento' : 'lançamentos'}
+            total={contarItensGrupos(gruposExibicao)}
+            totalLabel={contarItensGrupos(gruposExibicao) === 1 ? 'lançamento' : 'lançamentos'}
             hasActiveFilters={hasActiveFilters}
             onLimparFiltros={() => {
               setPeriodo('mes');
@@ -664,6 +719,11 @@ export default function ExecucaoOrcamentaria() {
             }}
             summaryChips={
               <>
+                {mostrarProgramadas && (
+                  <FinanceiroSummaryChip className="text-amber-700 dark:text-amber-400">
+                    Com programadas
+                  </FinanceiroSummaryChip>
+                )}
                 {periodo !== 'mes' && (
                   <FinanceiroSummaryChip>{PERIODO_LABELS[periodo] || periodo}</FinanceiroSummaryChip>
                 )}
@@ -685,11 +745,59 @@ export default function ExecucaoOrcamentaria() {
                 )}
               </>
             }
+            extraActions={mostrarProgramadas ? (
+              <button
+                type="button"
+                onClick={lote.entrarModoPagarLote}
+                className={`rounded-full px-2 py-0.5 text-[10px] transition-colors ${lote.modoSelecaoLote ? 'bg-[#4a5240] text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]' : 'bg-secondary/80 text-muted-foreground dark:bg-[#383e47]'}`}
+              >
+                {lote.modoSelecaoLote ? 'Cancelar lote' : 'Pagar em lote'}
+              </button>
+            ) : null}
           />
 
+          {lote.modoSelecaoLote && (
+            <div className="min-w-0 overflow-hidden rounded-xl border border-border/40 bg-card/60 p-3 dark:border-white/10 dark:bg-[#26262e]/80">
+              <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Pagamento em lote</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {lote.lancamentosSelecionados.length} de {lote.idsSelecionaveis.length} programada(s) selecionada(s)
+                  </p>
+                  {lote.lancamentosSelecionados.length > CONCILIACAO_LOTE_TAMANHO && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Serão processados em {Math.ceil(lote.lancamentosSelecionados.length / CONCILIACAO_LOTE_TAMANHO)} lotes de {CONCILIACAO_LOTE_TAMANHO}
+                    </p>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={lote.handleSelecionarTodos}
+                    disabled={lote.idsSelecionaveis.length === 0}
+                    className="h-9 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/80 disabled:opacity-40"
+                  >
+                    {lote.todosSelecionados ? 'Limpar tudo' : 'Selecionar filtradas'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => lote.setShowPagamentoLote(true)}
+                    disabled={lote.lancamentosSelecionados.length === 0}
+                    className="h-9 shrink-0 rounded-xl bg-[#4a5240] px-4 text-sm font-medium text-white disabled:opacity-40 dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+                  >
+                    Continuar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <ListaLancamentos
-            grupos={grupos}
+            grupos={gruposExibicao}
             loading={loading}
+            emSelecao={lote.modoSelecaoLote}
+            selecionados={lote.selectedIds}
+            onToggleSelecionado={lote.handleToggleSelecionado}
             onRow={(l) => {
               if (l.origem === 'movimento') return;
               setDetalhe(l);
@@ -717,6 +825,21 @@ export default function ExecucaoOrcamentaria() {
               <Plus className={`w-6 h-6 ${fabOpen ? 'text-white' : 'text-white dark:text-[#1f1d22]'}`} />
             </button>
           </div>
+
+          <PagamentoLoteDialog
+            open={lote.showPagamentoLote}
+            onOpenChange={lote.setShowPagamentoLote}
+            contas={contasAtivas}
+            contaId={lote.contaLoteId}
+            setContaId={lote.setContaLoteId}
+            dataPagamento={lote.dataPagamentoLote}
+            setDataPagamento={lote.setDataPagamentoLote}
+            selecionados={lote.lancamentosSelecionados}
+            onConfirm={lote.handleConfirmarPagamentoLote}
+            loading={lote.processingLote}
+            progresso={lote.progressoLote}
+            tamanhoLote={CONCILIACAO_LOTE_TAMANHO}
+          />
 
           {detalhe && (
             <LancamentoDetalheDialog
@@ -773,15 +896,7 @@ export default function ExecucaoOrcamentaria() {
 
       {caixasAtiva && <GestaoContasPane />}
 
-      {contasPagarAtiva && (
-        <>
-          <ContasAbertasFiltros />
-          <ContasAbertasListaPane />
-        </>
-      )}
-
-      {aba === 'contas' && (
-        <>
+      {agefinAtiva && (
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
           <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-card/95 p-0 shadow-xl backdrop-blur-xl dark:bg-card/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
             <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-border/40">
@@ -799,7 +914,6 @@ export default function ExecucaoOrcamentaria() {
             </div>
           </DialogContent>
         </Dialog>
-        </>
       )}
 
       <FluxoCaixaPrintDialog
@@ -824,7 +938,6 @@ export default function ExecucaoOrcamentaria() {
         abrirDiretoNoMapa={!!corteDiarioInitial}
       />
     </div>
-    </ContasAbertasProvider>
     </GestaoContasEmbedded>
   );
 }

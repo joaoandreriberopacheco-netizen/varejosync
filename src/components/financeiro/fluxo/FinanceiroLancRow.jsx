@@ -84,16 +84,20 @@ function valorNode(l) {
   );
 }
 
-function rowMeta(l, { showPago = false } = {}) {
+function rowMeta(l, { showPago = false, dimProgramada = false } = {}) {
   const cancelado = l.status === 'Cancelado';
   const isPago = l.status === 'Pago' || !!l.data_pagamento;
   const visiveis = tagsVisiveisFinanceiro(l.tags);
+  const programada = l._isProgramada || dimProgramada;
 
   return (
     <>
       {l.categoria && l.categoria !== 'Transferência entre Contas' && <span>{l.categoria}</span>}
       {isTransferenciaEntreContas(l) && !l.isTransferenciaConsolidada && <span>Transferência entre contas</span>}
-      {l.status && l.status !== 'Pago' && (
+      {programada && !isPago && (
+        <P38StatusLabel tone="warning">Programado</P38StatusLabel>
+      )}
+      {l.status && l.status !== 'Pago' && !programada && (
         showPago && l.status === 'Vencido' ? (
           <P38StatusPill tone="danger">{l.status}</P38StatusPill>
         ) : (
@@ -122,6 +126,7 @@ export default function FinanceiroLancRow({
   striped,
   dataField = 'auto',
   showPago = false,
+  dimProgramada = false,
   emSelecao = false,
   selecionarPagos = false,
   selecionado = false,
@@ -176,14 +181,16 @@ export default function FinanceiroLancRow({
 
   const lancamentoClick = isTransfConsolidada ? (l._lancamentoDespesa || l) : l;
 
+  const esmaecido = cancelado || (showPago && isPago) || dimProgramada || l._isProgramada;
+
   const commonProps = {
     thinAccent: true,
     striped,
-    accent: p38AccentKeyFromTone(rowAccent(l, { dimPago: showPago })),
-    className: `w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] [&>div:last-child]:max-w-[50%] sm:[&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${cancelado || (showPago && isPago) ? 'opacity-60' : ''}`,
+    accent: p38AccentKeyFromTone(rowAccent(l, { dimPago: showPago || dimProgramada || l._isProgramada })),
+    className: `w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] [&>div:last-child]:max-w-[50%] sm:[&>div:last-child]:max-w-[46%] [&>div:first-child]:min-w-0 ${esmaecido ? 'opacity-50' : ''}`,
     title,
     subtitle,
-    meta: rowMeta(l, { showPago }),
+    meta: rowMeta(l, { showPago, dimProgramada: dimProgramada || l._isProgramada }),
     value: valorNode(l),
     trailing,
   };

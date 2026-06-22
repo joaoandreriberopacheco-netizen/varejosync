@@ -29,6 +29,7 @@ export default function LancamentoMaisOpcoes({
   onDataLancamentoChange,
   previewOrdemLancamento,
   defaultExpanded = false,
+  hideTags = false,
 }) {
   const [expandido, setExpandido] = useState(defaultExpanded);
 
@@ -74,7 +75,7 @@ export default function LancamentoMaisOpcoes({
             )}
           </div>
 
-          <TagsInput tags={tags} onChange={onTagsChange} defaultExpanded />
+          {!hideTags && <TagsInput tags={tags} onChange={onTagsChange} defaultExpanded />}
 
           {tipo === 'Despesa' && (
             <>
