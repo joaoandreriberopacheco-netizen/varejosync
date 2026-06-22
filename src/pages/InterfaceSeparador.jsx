@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  QrCode, 
-  CheckCircle, 
-  Package, 
-  User, 
+import {
+  QrCode,
+  CheckCircle,
+  Package,
+  User,
   MapPin,
   Truck,
   AlertCircle,
@@ -17,6 +17,7 @@ import {
   Camera,
   X
 } from 'lucide-react';
+import { P38MobileLineList, P38MobileLine, P38StatusLabel } from '@/components/ui/p38-mobile-line';
 export default function InterfaceSeparador() {
   const queryClient = useQueryClient();
   const [qrInput, setQrInput] = useState('');

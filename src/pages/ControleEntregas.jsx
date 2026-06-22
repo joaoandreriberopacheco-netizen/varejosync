@@ -24,6 +24,13 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import LiberacaoEntrega from '@/components/vendas/LiberacaoEntrega';
 import { dataHoje, dataMenosDiasSistema, inicioDiaSistemaISO, fimDiaSistemaISO } from '@/components/utils/dateUtils';
+import {
+  P38MobileLineList,
+  P38MobileLine,
+  p38StatusTone,
+  p38AccentKeyFromTone,
+  P38StatusLabel,
+} from '@/components/ui/p38-mobile-line';
 
 export default function ControleEntregas() {
   const queryClient = useQueryClient();
