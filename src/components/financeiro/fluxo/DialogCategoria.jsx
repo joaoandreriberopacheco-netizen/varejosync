@@ -56,10 +56,10 @@ export function useCategorias() {
 }
 
 // Seletor de categoria com busca incremental
-export function SeletorCategoria({ tipo, value, onChange, categorias, onCriada, disabled = false, mobileLarge = false }) {
+export function SeletorCategoria({ tipo, value, onChange, categorias, onCriada, disabled = false, mobileLarge = false, pickerMode = false }) {
   const [showNova, setShowNova] = useState(false);
   const [busca, setBusca] = useState('');
-  const [expandido, setExpandido] = useState(mobileLarge || !!value);
+  const [expandido, setExpandido] = useState(pickerMode || mobileLarge || !!value);
 
   const filtradas = useMemo(() => {
     const doTipo = categorias.filter(c => c.tipo === tipo);
@@ -71,8 +71,76 @@ export function SeletorCategoria({ tipo, value, onChange, categorias, onCriada, 
   const selecionar = (nome, id) => {
     onChange(nome, id);
     setBusca('');
-    setExpandido(false);
+    if (!pickerMode) setExpandido(false);
   };
+
+  const listaCategorias = (
+    <>
+      <div className="relative shrink-0">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          autoComplete="off"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar categoria..."
+          className={`w-full rounded-xl border-0 bg-muted pl-9 pr-3 text-foreground outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring ${
+            mobileLarge || pickerMode ? 'h-12 text-base' : 'h-10 text-sm'
+          }`}
+        />
+      </div>
+
+      <div
+        className={
+          pickerMode
+            ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl bg-muted/50 divide-y divide-border/30'
+            : 'max-h-44 overflow-y-auto rounded-xl bg-muted/50 divide-y divide-border/30'
+        }
+      >
+        {filtradas.length === 0 ? (
+          <p className="px-3 py-3 text-center text-xs text-muted-foreground">
+            {busca.trim() ? 'Nenhuma categoria encontrada' : 'Sem categorias deste tipo'}
+          </p>
+        ) : (
+          filtradas.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => selecionar(c.nome, c.id)}
+              className={`flex w-full items-center justify-between text-left transition-colors hover:bg-muted ${
+                mobileLarge || pickerMode ? 'min-h-[56px] rounded-xl px-4 py-4 text-base' : 'px-3 py-2.5 text-sm'
+              } ${value === c.nome ? 'bg-muted font-medium' : ''}`}
+            >
+              <span className="truncate">{c.nome}</span>
+              {value === c.nome && <Check className="h-4 w-4 shrink-0 text-primary" />}
+            </button>
+          ))
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowNova(true)}
+        className="flex w-full shrink-0 items-center justify-center gap-1 rounded-xl border border-dashed border-border/40 bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground dark:bg-muted"
+      >
+        <Plus className="h-3 w-3" /> Nova categoria
+      </button>
+    </>
+  );
+
+  if (pickerMode) {
+    return (
+      <div className="flex h-full min-h-0 flex-col gap-3">
+        {listaCategorias}
+        {showNova && (
+          <NovaCategoriaInline
+            tipo={tipo}
+            onCriada={(cat) => { onCriada(cat); onChange(cat.nome, cat.id); setShowNova(false); }}
+            onCancelar={() => setShowNova(false)}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (disabled) {
     return (
@@ -112,50 +180,11 @@ export function SeletorCategoria({ tipo, value, onChange, categorias, onCriada, 
 
       {expandido && (
         <>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-            <input
-              autoComplete="off"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar categoria..."
-              className="w-full h-10 pl-9 pr-3 text-sm rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40 dark:focus:ring-ring"
-            />
-          </div>
-
-          <div className="max-h-44 overflow-y-auto rounded-xl bg-muted/50 divide-y divide-border/30">
-            {filtradas.length === 0 ? (
-              <p className="px-3 py-3 text-xs text-muted-foreground text-center">
-                {busca.trim() ? 'Nenhuma categoria encontrada' : 'Sem categorias deste tipo'}
-              </p>
-            ) : (
-              filtradas.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => selecionar(c.nome, c.id)}
-                  className={`w-full flex items-center justify-between text-left hover:bg-muted transition-colors ${
-                    mobileLarge ? 'px-4 py-4 text-base min-h-[56px] rounded-xl' : 'px-3 py-2.5 text-sm'
-                  } ${value === c.nome ? 'bg-muted font-medium' : ''}`}
-                >
-                  <span className="truncate">{c.nome}</span>
-                  {value === c.nome && <Check className="w-4 h-4 text-primary shrink-0" />}
-                </button>
-              ))
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowNova(true)}
-            className="w-full px-3 py-2 rounded-xl text-xs font-medium bg-muted/40 dark:bg-muted text-muted-foreground border border-dashed border-border/40 flex items-center justify-center gap-1"
-          >
-            <Plus className="w-3 h-3" /> Nova categoria
-          </button>
+          {listaCategorias}
         </>
       )}
 
-      {showNova && (
+      {showNova && !pickerMode && (
         <NovaCategoriaInline
           tipo={tipo}
           onCriada={(cat) => { onCriada(cat); onChange(cat.nome, cat.id); setShowNova(false); setExpandido(false); }}

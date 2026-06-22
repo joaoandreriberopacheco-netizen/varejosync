@@ -314,6 +314,7 @@ export default function LancamentoFormUnico({
           value={contaId}
           onChange={(id) => { onContaChange(id); setPicker(null); }}
           label="Conta"
+          pickerMode
         />
       </LancamentoPickerDialog>
 
@@ -328,6 +329,7 @@ export default function LancamentoFormUnico({
           onChange={(id) => { onContaDestinoChange(id); setPicker(null); }}
           excludeIds={contaId ? [contaId] : []}
           label="Destino"
+          pickerMode
         />
       </LancamentoPickerDialog>
 
@@ -343,7 +345,7 @@ export default function LancamentoFormUnico({
           onChange={(nome, id) => { onCategoriaChange(nome, id); setPicker(null); }}
           categorias={categorias}
           onCriada={onCategoriaCriada}
-          mobileLarge
+          pickerMode
         />
       </LancamentoPickerDialog>
 
@@ -353,7 +355,7 @@ export default function LancamentoFormUnico({
         title="Tags"
         bodyClassName="px-4"
       >
-        <TagsInput tags={tags} onChange={onTagsChange} defaultExpanded />
+        <TagsInput tags={tags} onChange={onTagsChange} pickerMode />
       </LancamentoPickerDialog>
     </div>
   );

@@ -10,11 +10,7 @@ import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFina
 import { useCategorias } from './fluxo/DialogCategoria';
 import LancamentoConfirmacaoDialog from './LancamentoConfirmacaoDialog';
 import LancamentoFormUnico, { formatarDataFormulario } from './fluxo/LancamentoFormUnico';
-import {
-  lancamentoStackDialogClass,
-  lancamentoStackOverlayClass,
-} from './fluxo/LancamentoPickerDialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { LancamentoFormSheet } from './fluxo/LancamentoPickerDialog';
 import { normalizeDataText } from '@/lib/normalizeDataText';
 import { gravarPreferenciasLancamento, resolverPreferenciasLancamento } from '@/lib/lancamentoPreferencias';
 
@@ -435,39 +431,35 @@ export default function NovoLancamentoDialog({
         onCancelar={onClose}
       />
 
-      <Dialog open={showDataDialog} onOpenChange={setShowDataDialog}>
-        <DialogContent
-          overlayClassName={lancamentoStackOverlayClass}
-          className={lancamentoStackDialogClass('rounded-2xl')}
-        >
-          <DialogHeader>
-            <DialogTitle>Data e hora</DialogTitle>
-          </DialogHeader>
-          <input
-            autoComplete="off"
-            type="datetime-local"
-            value={dataTemp}
-            onChange={(e) => setDataTemp(e.target.value)}
-            className="w-full h-12 px-3 rounded-xl bg-muted border-0 outline-none text-sm"
-          />
-          <div className="flex gap-2 pt-2">
-            <button
-              type="button"
-              onClick={cancelarData}
-              className="flex-1 h-11 rounded-xl bg-muted text-sm font-medium text-muted-foreground"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={confirmarData}
-              className="flex-1 h-11 rounded-xl bg-[#4a5240] text-sm font-semibold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
-            >
-              Confirmar
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LancamentoFormSheet
+        open={showDataDialog}
+        onOpenChange={setShowDataDialog}
+        title="Data e hora"
+      >
+        <input
+          autoComplete="off"
+          type="datetime-local"
+          value={dataTemp}
+          onChange={(e) => setDataTemp(e.target.value)}
+          className="h-12 w-full rounded-xl border-0 bg-muted px-3 text-sm outline-none"
+        />
+        <div className="flex gap-2 pt-4">
+          <button
+            type="button"
+            onClick={cancelarData}
+            className="h-11 flex-1 rounded-xl bg-muted text-sm font-medium text-muted-foreground"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={confirmarData}
+            className="h-11 flex-1 rounded-xl bg-[#4a5240] text-sm font-semibold text-white dark:bg-[#a4ce33] dark:text-[#1f1d22]"
+          >
+            Confirmar
+          </button>
+        </div>
+      </LancamentoFormSheet>
 
       <LancamentoConfirmacaoDialog
         open={showConfirmDialog}

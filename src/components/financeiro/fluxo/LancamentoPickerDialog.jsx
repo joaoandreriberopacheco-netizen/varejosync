@@ -1,5 +1,12 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/lib/utils';
 
 /** Camadas do stack de diálogos do formulário de lançamento. */
@@ -12,16 +19,32 @@ export const Z_LANCAMENTO = {
   confirm: 72,
 };
 
-const pickerSheetClass =
-  'fixed z-[70] gap-0 border-0 bg-background p-0 shadow-2xl duration-200 ' +
-  'inset-x-0 bottom-0 top-auto max-h-[min(88dvh,640px)] w-full max-w-none translate-x-0 translate-y-0 rounded-t-[28px] ' +
-  'data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom ' +
-  'sm:inset-auto sm:left-[50%] sm:top-[50%] sm:max-h-[85dvh] sm:max-w-md sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl ' +
-  'sm:data-[state=open]:slide-in-from-left-1/2 sm:data-[state=open]:slide-in-from-top-[48%] sm:data-[state=closed]:slide-out-to-left-1/2 sm:data-[state=closed]:slide-out-to-top-[48%]';
+const sheetBodyClass = 'flex min-h-0 flex-1 flex-col overflow-hidden';
+
+const drawerSheetClass =
+  'z-[70] mt-0 flex h-[min(85dvh,640px)] max-h-[85dvh] flex-col gap-0 rounded-t-[28px] border-0 bg-background p-0 shadow-2xl ' +
+  '[&>:first-child]:hidden';
+
+const dialogSheetClass =
+  'z-[70] flex max-h-[85dvh] w-full max-w-md flex-col gap-0 overflow-hidden rounded-2xl border-0 p-0 shadow-2xl';
+
+function SheetChrome({ title, children, bodyClassName }) {
+  return (
+    <>
+      <div className="shrink-0 border-b border-border/30 px-5 pb-3 pt-5">
+        <p className="text-lg font-semibold leading-tight text-foreground">{title}</p>
+      </div>
+      <div className={cn(sheetBodyClass, 'px-5 pb-5 pt-3', bodyClassName)}>
+        {children}
+      </div>
+    </>
+  );
+}
 
 /**
- * Dialog de picker acima do NovoLancamentoDialog (z-60).
- * Mobile: bottom sheet; desktop: centrado.
+ * Picker do formulário de lançamento.
+ * Mobile: bottom sheet fixo (Vaul, sem reposicionar com teclado).
+ * Desktop: dialog centrado.
  */
 export default function LancamentoPickerDialog({
   open,
@@ -31,26 +54,115 @@ export default function LancamentoPickerDialog({
   className,
   bodyClassName,
 }) {
+  const isMobile = useCompactShell();
+
+  if (isMobile) {
+    return (
+      <Drawer
+        open={open}
+        onOpenChange={onOpenChange}
+        repositionInputs={false}
+        shouldScaleBackground={false}
+      >
+        <DrawerContent
+          overlayClassName="z-[68] bg-black/70"
+          className={cn(drawerSheetClass, className)}
+        >
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>{title}</DrawerTitle>
+          </DrawerHeader>
+          <SheetChrome title={title} bodyClassName={bodyClassName}>
+            {children}
+          </SheetChrome>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         overlayClassName="z-[68] bg-black/70"
-        className={cn(pickerSheetClass, className)}
+        className={cn(dialogSheetClass, className)}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <DialogHeader className="shrink-0 px-5 pt-5 pb-2 text-left">
+        <DialogHeader className="sr-only">
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-5', bodyClassName)}>
+        <SheetChrome title={title} bodyClassName={bodyClassName}>
           {children}
-        </div>
+        </SheetChrome>
       </DialogContent>
     </Dialog>
   );
 }
 
-/** Classes para diálogos de confirmação / data acima do formulário. */
+/** Sheet/dialog compacto — data, confirmação, etc. */
+export function LancamentoFormSheet({
+  open,
+  onOpenChange,
+  title,
+  children,
+  className,
+  elevated = false,
+}) {
+  const isMobile = useCompactShell();
+  const overlayZ = elevated ? 'z-[72]' : 'z-[68]';
+  const contentZ = elevated ? 'z-[72]' : 'z-[70]';
+
+  if (isMobile) {
+    return (
+      <Drawer
+        open={open}
+        onOpenChange={onOpenChange}
+        repositionInputs={false}
+        shouldScaleBackground={false}
+      >
+        <DrawerContent
+          overlayClassName={cn(overlayZ, 'bg-black/70')}
+          className={cn(
+            drawerSheetClass,
+            'h-auto max-h-[min(70dvh,420px)]',
+            contentZ,
+            className,
+          )}
+        >
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>{title}</DrawerTitle>
+          </DrawerHeader>
+          <div className="px-5 pb-5 pt-5">
+            {title && (
+              <p className="mb-4 text-lg font-semibold leading-tight text-foreground">{title}</p>
+            )}
+            {children}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        overlayClassName={cn(overlayZ, 'bg-black/70')}
+        className={cn('max-w-sm rounded-2xl', contentZ, className)}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        {title && (
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
+        )}
+        {children}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** @deprecated Use LancamentoFormSheet */
 export function lancamentoStackDialogClass(extra = '') {
   return cn('z-[72] sm:max-w-sm', extra);
 }
 
+/** @deprecated Use LancamentoFormSheet */
 export const lancamentoStackOverlayClass = 'z-[72] bg-black/70';

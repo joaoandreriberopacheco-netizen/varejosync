@@ -1,10 +1,50 @@
 import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CheckCircle2, Loader2 } from 'lucide-react';
-import {
-  lancamentoStackDialogClass,
-  lancamentoStackOverlayClass,
-} from './fluxo/LancamentoPickerDialog';
+import { LancamentoFormSheet } from './fluxo/LancamentoPickerDialog';
+import { useCompactShell } from '@/hooks/use-breakpoint';
+
+function ConfirmacaoBody({ processing, successTitle, successMessage, onCreateAnother, onFinish }) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-2 text-center">
+      <div className={`flex h-16 w-16 items-center justify-center rounded-full ${processing ? 'bg-muted' : 'bg-green-50 dark:bg-green-900/20'}`}>
+        {processing ? (
+          <Loader2 className="h-7 w-7 animate-spin text-muted-foreground dark:text-foreground/90" />
+        ) : (
+          <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" />
+        )}
+      </div>
+
+      <div className="space-y-1">
+        <h3 className="font-glacial text-lg font-semibold text-foreground">
+          {processing ? 'Processando' : (successTitle || 'Lançamento confirmado')}
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          {processing ? 'Aguarde enquanto salvamos o lançamento.' : (successMessage || 'Deseja adicionar outro lançamento?')}
+        </p>
+      </div>
+
+      {!processing && (
+        <div className="flex w-full flex-col gap-2 pt-2">
+          <button
+            type="button"
+            onClick={onCreateAnother}
+            className="h-12 w-full rounded-2xl bg-background text-sm font-semibold text-white dark:bg-muted dark:text-foreground"
+          >
+            Sim (S)
+          </button>
+          <button
+            type="button"
+            onClick={onFinish}
+            className="h-12 w-full rounded-2xl bg-muted text-sm font-medium text-foreground"
+          >
+            Não (N)
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function LancamentoConfirmacaoDialog({
   open,
@@ -16,6 +56,7 @@ export default function LancamentoConfirmacaoDialog({
   stackElevated = false,
 }) {
   const processing = mode === 'processing';
+  const isMobile = useCompactShell();
 
   useEffect(() => {
     if (!open || processing) return;
@@ -28,49 +69,34 @@ export default function LancamentoConfirmacaoDialog({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, processing, onCreateAnother, onFinish]);
 
+  const body = (
+    <ConfirmacaoBody
+      processing={processing}
+      successTitle={successTitle}
+      successMessage={successMessage}
+      onCreateAnother={onCreateAnother}
+      onFinish={onFinish}
+    />
+  );
+
+  if (stackElevated && isMobile) {
+    return (
+      <LancamentoFormSheet open={open} onOpenChange={() => {}} elevated>
+        {body}
+      </LancamentoFormSheet>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
-        overlayClassName={stackElevated ? lancamentoStackOverlayClass : undefined}
+        overlayClassName={stackElevated ? 'z-[72] bg-black/70' : undefined}
         className={stackElevated
-          ? lancamentoStackDialogClass('rounded-3xl border-0 bg-card shadow-xl p-6 [&>button]:hidden')
-          : 'max-w-sm rounded-3xl border-0 bg-card shadow-xl p-6 [&>button]:hidden'}
+          ? 'z-[72] max-w-sm rounded-3xl border-0 bg-card p-6 shadow-xl [&>button]:hidden'
+          : 'max-w-sm rounded-3xl border-0 bg-card p-6 shadow-xl [&>button]:hidden'}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <div className="flex flex-col items-center text-center gap-4 py-2">
-          <div className={`w-16 h-16 rounded-full flex items-center justify-center ${processing ? 'bg-muted' : 'bg-green-50 dark:bg-green-900/20'}`}>
-            {processing ? (
-              <Loader2 className="w-7 h-7 text-muted-foreground dark:text-foreground/90 animate-spin" />
-            ) : (
-              <CheckCircle2 className="w-7 h-7 text-green-600 dark:text-green-400" />
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-foreground font-glacial">
-              {processing ? 'Processando' : (successTitle || 'Lançamento confirmado')}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {processing ? 'Aguarde enquanto salvamos o lançamento.' : (successMessage || 'Deseja adicionar outro lançamento?')}
-            </p>
-          </div>
-
-          {!processing && (
-            <div className="w-full flex flex-col gap-2 pt-2">
-              <button
-                onClick={onCreateAnother}
-                className="w-full h-12 rounded-2xl bg-background dark:bg-muted text-white dark:text-foreground text-sm font-semibold"
-              >
-                Sim (S)
-              </button>
-              <button
-                onClick={onFinish}
-                className="w-full h-12 rounded-2xl bg-muted text-foreground text-sm font-medium"
-              >
-                Não (N)
-              </button>
-            </div>
-          )}
-        </div>
+        {body}
       </DialogContent>
     </Dialog>
   );

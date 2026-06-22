@@ -19,11 +19,11 @@ async function carregarTagsUsadas() {
   }
 }
 
-export default function TagsInput({ tags, onChange, disabled = false, defaultExpanded = false }) {
+export default function TagsInput({ tags, onChange, disabled = false, defaultExpanded = false, pickerMode = false }) {
   const [input, setInput] = useState('');
   const [filtro, setFiltro] = useState('');
   const [todasTags, setTodasTags] = useState([]);
-  const [expandido, setExpandido] = useState(defaultExpanded);
+  const [expandido, setExpandido] = useState(pickerMode || defaultExpanded);
 
   useEffect(() => {
     carregarTagsUsadas().then(setTodasTags);
@@ -52,6 +52,64 @@ export default function TagsInput({ tags, onChange, disabled = false, defaultExp
     if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(input); }
     if (e.key === 'Backspace' && !input && tags.length > 0) removeTag(tags[tags.length - 1]);
   };
+
+  const editor = (
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {tags.map((t) => (
+            <span key={t} className="flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-xs text-white dark:bg-muted dark:text-foreground">
+              {t}
+              <button type="button" onClick={() => removeTag(t)} className="hover:opacity-70">
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="relative shrink-0">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          autoComplete="off"
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          placeholder="Filtrar tags..."
+          className="h-12 w-full rounded-xl border-0 bg-muted pl-9 pr-3 text-base text-foreground outline-none focus:ring-2 focus:ring-border/40"
+        />
+      </div>
+
+      {sugestoesFiltradas.length > 0 && (
+        <div className="flex max-h-32 flex-wrap gap-1 overflow-y-auto overscroll-contain">
+          {sugestoesFiltradas.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => addTag(t)}
+              className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/80"
+            >
+              + {t}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <input
+        autoComplete="off"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder="Nova tag..."
+        className="h-12 w-full shrink-0 rounded-xl border-0 bg-muted px-3 text-base text-foreground outline-none placeholder:text-muted-foreground"
+      />
+
+      <p className="text-[11px] text-muted-foreground">Enter ou vírgula para adicionar</p>
+    </div>
+  );
+
+  if (pickerMode) {
+    return editor;
+  }
 
   if (disabled) {
     return (
@@ -99,58 +157,8 @@ export default function TagsInput({ tags, onChange, disabled = false, defaultExp
       )}
 
       {expandido && (
-        <div className="px-4 pb-4 space-y-2 border-t border-border/30">
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-3">
-              {tags.map(t => (
-                <span key={t} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary dark:bg-muted text-xs text-white dark:text-foreground">
-                  {t}
-                  <button type="button" onClick={() => removeTag(t)} className="hover:opacity-70">
-                    <X className="w-2.5 h-2.5" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-            <input
-              autoComplete="off"
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
-              placeholder="Filtrar tags..."
-              className="w-full h-9 pl-9 pr-3 text-xs rounded-xl bg-muted text-foreground border-0 outline-none focus:ring-2 focus:ring-border/40"
-            />
-          </div>
-
-          {sugestoesFiltradas.length > 0 && (
-            <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto">
-              {sugestoesFiltradas.map(t => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => addTag(t)}
-                  className="px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-muted/80 transition-colors"
-                >
-                  + {t}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-1.5 min-h-[32px] items-center">
-            <input
-              autoComplete="off"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKey}
-              placeholder="Nova tag..."
-              className="flex-1 min-w-[80px] h-9 px-3 rounded-xl bg-muted text-xs text-foreground/90 placeholder:text-muted-foreground outline-none"
-            />
-          </div>
-
-          <p className="text-[0.6rem] text-muted-foreground">Enter ou vírgula para adicionar</p>
+        <div className="space-y-2 border-t border-border/30 px-4 pb-4">
+          {editor}
         </div>
       )}
     </div>
