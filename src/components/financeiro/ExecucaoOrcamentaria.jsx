@@ -668,7 +668,6 @@ export default function ExecucaoOrcamentaria() {
           <FluxoToggleProgramadas
             checked={mostrarProgramadas}
             onCheckedChange={handleToggleProgramadas}
-            qtdProgramadas={programadasLista.length}
           />
 
           <FiltrosFluxoCaixa
