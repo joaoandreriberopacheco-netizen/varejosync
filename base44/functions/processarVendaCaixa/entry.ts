@@ -387,7 +387,7 @@ Deno.serve(async (req) => {
           valor_liquido: valorLiquido,
           data_vencimento: dataVencimento,
           data_liquidacao_prevista: dataVencimento,
-          // Em Aberto (Contas Abertas) até liquidação automática 09:00 no crédito
+          // Em Aberto (Contas Abertas) até liquidação automática 09:00 (débito e crédito)
           status: 'Em Aberto',
           status_conciliacao: 'Pendente',
           forma_pagamento: pag.forma_pagamento,

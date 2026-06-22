@@ -10,13 +10,13 @@ export function isLancamentoCancelado(l) {
   return l?.status === 'Cancelado';
 }
 
-/** Cartão de crédito aguardando liquidação automática (só Contas Abertas até o job das 09:00). */
+/** Cartão de crédito aguardando liquidação automática (Contas Abertas até o job das 09:00 GMT-5). */
 export function isCartaoCreditoAguardandoLiquidacao(l) {
   if (!l || isLancamentoPago(l) || isLancamentoCancelado(l)) return false;
   return l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente';
 }
 
-/** Cartão débito aguardando liquidação (Contas Abertas; fluxo só após Pago). */
+/** Cartão débito aguardando liquidação automática (mesma rotina das 09:00 GMT-5). */
 export function isCartaoDebitoAguardandoLiquidacao(l) {
   if (!l || isLancamentoPago(l) || isLancamentoCancelado(l)) return false;
   return l.forma_pagamento_tipo === 'Cartão Débito' && l.status_conciliacao === 'Pendente';
@@ -47,7 +47,7 @@ export function getValorEfetivoLancamento(l) {
   return getValorFluxoCaixa(l);
 }
 
-/** Visível no Fluxo de Caixa somente após pago (ex.: liquidação automática 09:00 no crédito). */
+/** Visível no Fluxo de Caixa somente após pago (ex.: liquidação automática 09:00 GMT-5 no cartão). */
 export function isLancamentoRealizadoFluxo(l) {
   return isLancamentoPago(l);
 }

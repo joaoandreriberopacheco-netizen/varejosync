@@ -19,8 +19,14 @@ Deno.serve(async (req) => {
 
     for (const l of lancamentos) {
       if (!l.data_vencimento) continue;
-      // Cartão de crédito aguarda liquidação automática — não marcar como Vencido
-      if (l.forma_pagamento_tipo === 'Cartão Crédito' && l.status_conciliacao === 'Pendente') continue;
+      // Cartão (débito/crédito) aguarda liquidação automática — não marcar como Vencido
+      const fpt = l.forma_pagamento_tipo;
+      if (
+        (fpt === 'Cartão Crédito' || fpt === 'Cartão Débito') &&
+        l.status_conciliacao === 'Pendente'
+      ) {
+        continue;
+      }
       // Vencimento anterior a hoje → marcar como Vencido
       if (l.data_vencimento < hojeStr) {
         promises.push(
