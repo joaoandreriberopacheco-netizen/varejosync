@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 /**
- * Rotina diária (agendar 09:00 America/Rio_Branco, GMT-5).
+ * Rotina diária (agendar 08:00 America/Rio_Branco, GMT-5).
  * Credita no fluxo as vendas em cartão (débito e crédito) cuja data prevista chegou:
  * marca como Pago com data_pagamento = data de liquidação prevista.
  * Até lá ficam apenas em Contas Abertas (conta a receber).

@@ -33,9 +33,9 @@
     },
     {
       "name": "processarLiquidacaoCartaoCredito",
-      "description": "09:00 GMT-5: marca como Pago receitas de cartão de crédito com data de liquidação prevista ≤ hoje (entram no fluxo de caixa).",
+      "description": "08:00 GMT-5: marca como Pago receitas de cartão (débito/crédito) com data de liquidação prevista ≤ hoje (entram no fluxo de caixa).",
       "entities_written": ["LancamentoFinanceiro"],
-      "trigger": "scheduled daily 14:00 UTC (09:00 America/Rio_Branco)",
+      "trigger": "scheduled daily 13:00 UTC (08:00 America/Rio_Branco)",
       "critical": true
     },
     {
