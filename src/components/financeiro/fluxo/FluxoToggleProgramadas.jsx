@@ -25,8 +25,8 @@ export default function FluxoToggleProgramadas({
         <p className="truncate text-[10px] text-muted-foreground">
           {checked
             ? qtdProgramadas > 0
-              ? `${qtdProgramadas} programada${qtdProgramadas === 1 ? '' : 's'} no filtro`
-              : 'Nenhuma programada no filtro'
+              ? `${qtdProgramadas} — vencidas e deste mês`
+              : 'Vencidas e vencimento neste mês'
             : 'Mostra saldo previsto se estiver ligado'}
         </p>
       </div>

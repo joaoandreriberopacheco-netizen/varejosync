@@ -358,8 +358,6 @@ export default function ExecucaoOrcamentaria() {
   }, [filtrados, movimentosFiltrados, lancs, contas, contasFiltroIds, contasById, ordemLancamentos, kpis.saldoContas, movimentos]);
 
   const programadasFiltradas = useMemo(() => filtrarProgramadasFluxo(lancs, {
-    ds,
-    de,
     contasSel,
     contasById,
     contasAtivas,
@@ -368,7 +366,7 @@ export default function ExecucaoOrcamentaria() {
     search,
     mostrarHistoricoAnterior,
     dataCorteHistorico,
-  }), [lancs, ds, de, contasSel, contasById, contasAtivas, tiposSel, cmvOnly, search, mostrarHistoricoAnterior, dataCorteHistorico]);
+  }), [lancs, contasSel, contasById, contasAtivas, tiposSel, cmvOnly, search, mostrarHistoricoAnterior, dataCorteHistorico]);
 
   const programadasLista = useMemo(
     () => consolidarTransferenciasListaFluxo(programadasFiltradas),

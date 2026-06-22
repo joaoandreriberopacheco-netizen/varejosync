@@ -13,11 +13,27 @@ import {
 import { passaFiltroCorteHistorico } from '@/lib/filtroDataFinanceiro';
 import { lancamentoPassaBuscaFluxo } from '@/lib/buscaFluxoCaixa';
 import { dataHoje } from '@/components/utils/dateUtils';
+import { endOfMonth, format, startOfMonth } from 'date-fns';
+
+/** Escopo inicial das programadas: vencidas + vencimento no mês corrente. */
+export function escopoProgramadasPadrao(hojeKey = dataHoje()) {
+  const hoje = new Date(`${hojeKey}T12:00:00`);
+  return {
+    hojeKey,
+    inicioMes: format(startOfMonth(hoje), 'yyyy-MM-dd'),
+    fimMes: format(endOfMonth(hoje), 'yyyy-MM-dd'),
+  };
+}
+
+/** Vencidas (qualquer mês) ou com vencimento ainda neste mês. */
+export function passaFiltroProgramadasEscopoPadrao(dataKey, escopo = escopoProgramadasPadrao()) {
+  if (!dataKey) return false;
+  if (dataKey < escopo.hojeKey) return true;
+  return dataKey >= escopo.inicioMes && dataKey <= escopo.fimMes;
+}
 
 /** Lançamentos programados (não realizados) visíveis no fluxo unificado. */
 export function filtrarProgramadasFluxo(lancs, {
-  ds,
-  de,
   contasSel = [],
   contasById = {},
   contasAtivas = [],
@@ -26,7 +42,10 @@ export function filtrarProgramadasFluxo(lancs, {
   search = '',
   mostrarHistoricoAnterior,
   dataCorteHistorico,
+  hojeKey = dataHoje(),
 }) {
+  const escopo = escopoProgramadasPadrao(hojeKey);
+
   return lancs.filter((l) => {
     if (isLancamentoCancelado(l)) return false;
     if (isLancamentoRealizadoFluxo(l)) return false;
@@ -34,9 +53,7 @@ export function filtrarProgramadasFluxo(lancs, {
     if (!isLancamentoEmAberto(l)) return false;
 
     const dataKey = (l.data_vencimento || '').slice(0, 10) || null;
-    if ((ds || de) && !dataKey) return false;
-    if (ds && dataKey < ds) return false;
-    if (de && dataKey > de) return false;
+    if (!passaFiltroProgramadasEscopoPadrao(dataKey, escopo)) return false;
     if (!passaFiltroCorteHistorico(dataKey, { mostrarHistoricoAnterior, dataCorte: dataCorteHistorico })) return false;
 
     if (contasSel.length && !lancamentoPertenceContasSelecionadas(l, contasSel, contasById)) return false;
