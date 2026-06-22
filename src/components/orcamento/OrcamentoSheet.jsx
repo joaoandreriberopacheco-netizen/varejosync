@@ -8,6 +8,7 @@ import OrcamentoCupom from './OrcamentoCupom';
 import LostSalesForm from '@/components/vendas/LostSalesForm';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 import { buildSaleUnitOptions, formatEstoqueApresentacao, pickDefaultSaleUnit } from '@/lib/productUnits';
+import { getPrecoPisoCustoUnidade, parsePrecoDigitado } from '@/lib/orcamentoPrecoTabela';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -15,18 +16,19 @@ const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2,
 function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOptions = [], onConfirm, onClose }) {
   const [qtd, setQtd] = useState(qtdAtual > 0 ? String(qtdAtual) : '1');
   const [selectedUnitCode, setSelectedUnitCode] = useState(unidadeSelecionada?.unidade || produto?.unidade_principal || 'UN');
-  const [precoEditado, setPrecoEditado] = useState(preco);
+  const [precoEditado, setPrecoEditado] = useState(String(preco ?? ''));
+  const [precoErro, setPrecoErro] = useState('');
   const inputRef = useRef(null);
   const precoRef = useRef(null);
   const precoLivre = produto?.preco_livre || false;
-  /** `preco` já é o valor da tabela (calcularPreco) — piso de venda, não custo. */
+  /** `preco` já é o valor da tabela (calcularPreco) — sugestão inicial, não piso de preço livre. */
   const selectedUnit =
     unitOptions.find((opt) => opt.unidade === selectedUnitCode)
     || unidadeSelecionada
     || unitOptions[0]
     || { unidade: produto?.unidade_principal || 'UN', fator_conversao: 1, valor_unitario: preco };
   const unitPrice = selectedUnit?.valor_unitario ?? preco;
-  const precoMinimoVenda = unitPrice;
+  const precoPisoCusto = getPrecoPisoCustoUnidade(produto, selectedUnit);
 
   useEffect(() => {
     // Pequeno delay para garantir que o bottom-sheet está visível antes do focus
@@ -38,17 +40,48 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
   }, []);
 
   useEffect(() => {
-    setPrecoEditado(unitPrice);
+    setPrecoEditado(String(unitPrice ?? ''));
+    setPrecoErro('');
   }, [unitPrice, selectedUnitCode]);
 
   const qtdNum = parseFloat(qtd.replace(',', '.')) || 0;
-  const precoFinal = precoLivre ? (parseFloat(precoEditado) || unitPrice) : unitPrice;
+  const precoParsed = parsePrecoDigitado(precoEditado);
+  const precoFinal = precoLivre
+    ? (Number.isFinite(precoParsed) ? precoParsed : unitPrice)
+    : unitPrice;
   const total = qtdNum * precoFinal;
 
   const handleConfirm = () => {
     if (qtdNum <= 0) return;
-    if (precoLivre && precoFinal < precoMinimoVenda) return;
+    if (precoLivre) {
+      if (!Number.isFinite(precoParsed)) {
+        setPrecoErro('Informe um preço válido');
+        precoRef.current?.focus();
+        return;
+      }
+      if (precoParsed < precoPisoCusto) {
+        setPrecoErro(`Mínimo: R$ ${fmtR(precoPisoCusto)} (custo)`);
+        precoRef.current?.focus();
+        return;
+      }
+    }
+    setPrecoErro('');
     onConfirm(qtdNum, precoLivre ? precoFinal : undefined, selectedUnit);
+  };
+
+  const handlePrecoBlur = () => {
+    if (!precoLivre) return;
+    if (!Number.isFinite(precoParsed)) {
+      setPrecoEditado(String(unitPrice ?? ''));
+      setPrecoErro('');
+      return;
+    }
+    if (precoParsed < precoPisoCusto) {
+      setPrecoEditado(String(unitPrice ?? ''));
+      setPrecoErro(`Mínimo: R$ ${fmtR(precoPisoCusto)} (custo)`);
+      return;
+    }
+    setPrecoErro('');
   };
 
   return (
@@ -133,15 +166,16 @@ function QuantidadeSheet({ produto, preco, qtdAtual, unidadeSelecionada, unitOpt
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">R$</span>
                 <input autoComplete="off"
                   ref={precoRef}
-                  type="number" step="0.01" inputMode="decimal"
+                  type="text" inputMode="decimal"
                   value={precoEditado}
-                  onChange={e => setPrecoEditado(e.target.value)}
+                  onChange={e => { setPrecoEditado(e.target.value); setPrecoErro(''); }}
+                  onBlur={handlePrecoBlur}
                   onFocus={e => e.target.select()}
                   className="w-full pl-9 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-2xl text-sm text-right border border-amber-200 dark:border-amber-800 focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
                 />
               </div>
-              {precoLivre && parseFloat(precoEditado) < precoMinimoVenda && precoMinimoVenda > 0 && (
-                <p className="text-[11px] text-red-500 mt-1">Mínimo: R$ {fmtR(precoMinimoVenda)} (preço da tabela)</p>
+              {precoErro && (
+                <p className="text-[11px] text-red-500 mt-1">{precoErro}</p>
               )}
             </div>
           )}
@@ -363,6 +397,29 @@ function TelaBusca({ produtos, calcularPreco, itens, onSetQtd, onVerCarrinho }) 
 
 // ── Item no carrinho ──────────────────────────────────────────────────────────
 function ItemCarrinho({ item, onSelect, onRemove, onUpdatePreco }) {
+  const [precoDraft, setPrecoDraft] = useState(null);
+  const [precoErro, setPrecoErro] = useState('');
+  const displayPreco = precoDraft ?? String(item.preco_unit ?? '');
+
+  const commitPreco = () => {
+    if (!item.preco_livre) return;
+    const parsed = parsePrecoDigitado(precoDraft ?? item.preco_unit);
+    if (!Number.isFinite(parsed)) {
+      setPrecoDraft(null);
+      setPrecoErro('');
+      return;
+    }
+    const piso = Number(item.preco_piso_custo ?? 0);
+    if (parsed < piso) {
+      setPrecoDraft(null);
+      setPrecoErro(`Mínimo: R$ ${fmtR(piso)} (custo)`);
+      return;
+    }
+    setPrecoDraft(null);
+    setPrecoErro('');
+    onUpdatePreco(item.id, parsed);
+  };
+
   return (
     <div className="mx-3 my-1.5 px-4 py-3 bg-muted/50/60 rounded-2xl shadow-sm">
       <div className="flex items-center gap-3 cursor-pointer" onClick={() => onSelect(item)}>
@@ -388,13 +445,15 @@ function ItemCarrinho({ item, onSelect, onRemove, onUpdatePreco }) {
           <div className="relative flex-1">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-amber-600 dark:text-amber-400">R$</span>
             <input autoComplete="off"
-              type="number" step="0.01" inputMode="decimal"
-              value={item.preco_unit.toFixed(2)}
-              onChange={e => onUpdatePreco(item.id, parseFloat(e.target.value) || 0)}
+              type="text" inputMode="decimal"
+              value={displayPreco}
+              onChange={e => { setPrecoDraft(e.target.value); setPrecoErro(''); }}
+              onBlur={commitPreco}
               onClick={e => e.stopPropagation()}
               className="w-full pl-8 h-9 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-sm text-right border border-amber-200 dark:border-amber-800 focus:ring-1 focus:ring-amber-300 dark:focus:ring-amber-600 text-amber-900 dark:text-amber-100 font-semibold"
             />
           </div>
+          {precoErro && <p className="text-[10px] text-red-500 mt-1">{precoErro}</p>}
         </div>
       )}
     </div>
@@ -597,6 +656,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
       const existe = prev.find(i => i.id === produto.id);
       const unidade = unidadeSelecionada?.unidade || produto.unidade_principal || 'UN';
       const fator = unidadeSelecionada?.fator_conversao ?? 1;
+      const precoPisoCusto = getPrecoPisoCustoUnidade(produto, unidadeSelecionada);
       if (existe) {
         return prev.map(i =>
           i.id === produto.id
@@ -610,6 +670,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
                 fator_conversao: fator,
                 quantidade_base: qtd * fator,
                 preco_referencia_tabela: i.preco_referencia_tabela ?? preco,
+                preco_piso_custo: precoPisoCusto,
               }
             : i
         );
@@ -626,6 +687,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
         quantidade_base: qtd * fator,
         preco_livre: produto.preco_livre || false,
         preco_referencia_tabela: preco,
+        preco_piso_custo: precoPisoCusto,
       }];
     });
   }, []);
@@ -633,11 +695,9 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
   const handleUpdatePreco = useCallback((id, novoPreco) => {
     setItens(prev => prev.map(i => {
       if (i.id !== id) return i;
-      const piso = i.preco_referencia_tabela ?? calcularPreco(produtos.find((p) => p.id === id) || {});
-      const preco = Math.max(Number(novoPreco) || 0, piso || 0);
-      return { ...i, preco_unit: preco };
+      return { ...i, preco_unit: Number(novoPreco) || 0 };
     }));
-  }, [calcularPreco, produtos]);
+  }, []);
 
   const handleRemove = useCallback((id) => setItens(prev => prev.filter(i => i.id !== id)), []);
 

@@ -10,9 +10,11 @@ import {
   buildQuickBudgetItem,
   getBudgetSummary,
   getFullPrice,
+  getMinimumPrice,
   getQuickBudgetUnitContext,
   recalculateItem,
 } from './quickBudgetUtils';
+import { parsePrecoDigitado } from '@/lib/orcamentoPrecoTabela';
 import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { toast } from 'sonner';
 import { QUICK_ACCESS_PANEL_CLASS, QUICK_ACCESS_PANEL_SHELL_CLASS } from '@/lib/quickAccessOverlay';
@@ -115,10 +117,19 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
   const handleSaveItem = () => {
     if (!selectedProduct) return;
     const draft = buildQuickBudgetItem(selectedProduct, tabelaSelecionada, selectedUnit);
-    const piso = getFullPrice(selectedProduct, tabelaSelecionada, selectedUnit);
+    const pisoCusto = getMinimumPrice(selectedProduct, tabelaSelecionada, selectedUnit);
     let precoUnitario = draft.preco_unitario;
     if (selectedProduct.preco_livre) {
-      precoUnitario = String(Math.max(Number(priceDraft) || 0, piso));
+      const parsed = parsePrecoDigitado(priceDraft);
+      if (!Number.isFinite(parsed)) {
+        toast.error('Informe um preço válido');
+        return;
+      }
+      if (parsed < pisoCusto) {
+        toast.error(`Preço mínimo: ${pisoCusto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} (custo)`);
+        return;
+      }
+      precoUnitario = parsed;
     }
     const nextItem = recalculateItem({
       ...draft,

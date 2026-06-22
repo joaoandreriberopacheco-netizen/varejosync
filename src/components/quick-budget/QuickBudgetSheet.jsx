@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Package, FileText, X, Percent, Minus, Plus } from 'lucide-react';
 import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { getPrecoPisoCustoUnidade, parsePrecoDigitado } from '@/lib/orcamentoPrecoTabela';
 import { toast } from 'sonner';
 
 const fmtCurrency = (value) => `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -20,7 +21,7 @@ function resolveMinPrice(product) {
   return product?.preco_venda_padrao || 0;
 }
 
-function QuoteRow({ item, onQtyChange, onDiscountChange, onPriceChange, onRemove }) {
+function QuoteRow({ item, onQtyChange, onDiscountChange, onPriceChange, onPriceBlur, onRemove }) {
   const subtotal = item.price * item.quantity;
   const total = Math.max(subtotal - item.discount, 0);
 
@@ -33,7 +34,7 @@ function QuoteRow({ item, onQtyChange, onDiscountChange, onPriceChange, onRemove
             <span>Estoque {fmtNumber(item.stock)}</span>
             <span>Unit. {fmtCurrency(item.price)}</span>
             {item.freePrice && (
-              <span className="text-amber-600 dark:text-amber-300">Piso tabela {fmtCurrency(item.minPrice)}</span>
+              <span className="text-amber-600 dark:text-amber-300">Piso custo {fmtCurrency(item.minPrice)}</span>
             )}
           </div>
         </div>
@@ -67,11 +68,11 @@ function QuoteRow({ item, onQtyChange, onDiscountChange, onPriceChange, onRemove
           <div className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground dark:text-foreground/90">Preço unit.</div>
           <div className="relative">
             <Input
-              type="number"
+              type="text"
               inputMode="decimal"
-              min={item.minPrice}
-              value={item.price}
+              value={item.priceDraft ?? item.price}
               onChange={(e) => onPriceChange(item.id, e.target.value)}
+              onBlur={() => onPriceBlur(item.id)}
               className="h-9 border-0 bg-card dark:bg-[#1f2737] pr-10 text-right text-sm font-semibold text-foreground shadow-sm focus-visible:ring-0 dark:text-white"
             />
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground dark:text-foreground/90">R$</span>
@@ -154,10 +155,20 @@ function BudgetContent({ onClose, isMobile }) {
     if (!selectedProduct) return;
     const quantity = Math.max(Number(selectedQuantity) || 1, 1);
     const precoTabela = resolvePrice(selectedProduct, priceTable?.fator_ajuste || 1);
-    const parsed = Number(selectedPrice) || 0;
-    const price = selectedProduct.preco_livre
-      ? Math.max(parsed, precoTabela)
-      : precoTabela;
+    const pisoCusto = getPrecoPisoCustoUnidade(selectedProduct);
+    let price = precoTabela;
+    if (selectedProduct.preco_livre) {
+      const parsed = parsePrecoDigitado(selectedPrice);
+      if (!Number.isFinite(parsed)) {
+        toast.error('Informe um preço válido');
+        return;
+      }
+      if (parsed < pisoCusto) {
+        toast.error(`Preço mínimo: ${fmtCurrency(pisoCusto)} (custo)`);
+        return;
+      }
+      price = parsed;
+    }
     const existing = items.find((item) => item.id === selectedProduct.id);
     if (existing) {
       setItems((current) => current.map((item) => item.id === selectedProduct.id ? { ...item, quantity: item.quantity + quantity, price } : item));
@@ -168,7 +179,7 @@ function BudgetContent({ onClose, isMobile }) {
         stock: selectedProduct.estoque_atual || 0,
         quantity,
         price,
-        minPrice: precoTabela,
+        minPrice: getPrecoPisoCustoUnidade(selectedProduct),
         discount: 0,
         freePrice: !!selectedProduct.preco_livre,
       }]);
@@ -189,11 +200,29 @@ function BudgetContent({ onClose, isMobile }) {
   };
 
   const handlePriceChange = (id, value) => {
-    const num = Number(value) || 0;
     setItems((current) => current.map((item) => {
       if (item.id !== id) return item;
-      const price = item.freePrice ? Math.max(num, item.minPrice) : item.price;
-      return { ...item, price };
+      return { ...item, priceDraft: value };
+    }));
+  };
+
+  const handlePriceBlur = (id) => {
+    setItems((current) => current.map((item) => {
+      if (item.id !== id) return item;
+      const raw = item.priceDraft ?? String(item.price);
+      const parsed = parsePrecoDigitado(raw);
+      if (!item.freePrice) {
+        return { ...item, priceDraft: undefined };
+      }
+      if (!Number.isFinite(parsed)) {
+        toast.error('Preço inválido — voltou ao valor anterior');
+        return { ...item, priceDraft: undefined };
+      }
+      if (parsed < item.minPrice) {
+        toast.error(`Preço mínimo: ${fmtCurrency(item.minPrice)} (custo)`);
+        return { ...item, priceDraft: undefined };
+      }
+      return { ...item, price: parsed, priceDraft: undefined };
     }));
   };
 
@@ -330,10 +359,9 @@ function BudgetContent({ onClose, isMobile }) {
                   <div className="rounded-2xl bg-muted/40 p-3 dark:bg-[#2b3446]">
                     <div className="mb-2 text-[11px] uppercase tracking-wide text-muted-foreground dark:text-foreground/90">Preço unit.</div>
                     <Input
-                      type="number"
+                      type="text"
                       inputMode="decimal"
                       value={selectedPrice}
-                      min={selectedProduct.preco_livre ? 0 : resolveMinPrice(selectedProduct)}
                       onChange={(e) => setSelectedPrice(e.target.value)}
                       className="h-10 rounded-2xl border-0 bg-card text-right text-sm font-semibold text-foreground shadow-sm focus-visible:ring-0 dark:bg-[#1f2737] dark:text-white"
                     />
@@ -394,6 +422,7 @@ function BudgetContent({ onClose, isMobile }) {
                 onQtyChange={handleQtyChange}
                 onDiscountChange={handleDiscountChange}
                 onPriceChange={handlePriceChange}
+                onPriceBlur={handlePriceBlur}
                 onRemove={handleRemove}
               />
             ))}

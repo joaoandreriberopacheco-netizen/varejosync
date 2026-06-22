@@ -1,10 +1,10 @@
 /**
  * Regras alinhadas à Tabela de Preços / OrcamentoSheet (TabelaPrecosConsulta).
  * O preço de referência comercial é sempre preco_venda_padrao × fator da tabela.
- * O piso de venda é esse valor — não o custo calculado.
+ * Para produtos com preço livre, o piso permitido é o custo na embalagem — não o preço da tabela.
  */
 
-import { buildSaleUnitOptions, pickDefaultSaleUnit } from '@/lib/productUnits';
+import { buildSaleUnitOptions, pickDefaultSaleUnit, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 
 export function calcularPrecoVendaTabela(produto, tabelaPreco) {
   if (!produto) return 0;
@@ -41,4 +41,18 @@ export function getPrecoUnitarioNaUnidade(produto, tabelaPreco, unitOption) {
 /** Alias semântico: piso mínimo permitido para o unitário (política de preço da tabela). */
 export function getPrecoMinimoUnitarioVenda(produto, tabelaPreco, unitOption = null) {
   return getPrecoUnitarioNaUnidade(produto, tabelaPreco, unitOption);
+}
+
+/** Piso de preço livre: custo total na embalagem escolhida (fator-1 × fator da embalagem). */
+export function getPrecoPisoCustoUnidade(produto, unitOption = null) {
+  if (!produto) return 0;
+  const custoBase = resolveCustoTotalUnitBaseProduto(produto);
+  const fator = Number(unitOption?.fator_conversao) || 1;
+  return custoBase * fator;
+}
+
+export function parsePrecoDigitado(value) {
+  if (value == null || value === '') return NaN;
+  const n = parseFloat(String(value).replace(',', '.'));
+  return Number.isFinite(n) ? n : NaN;
 }

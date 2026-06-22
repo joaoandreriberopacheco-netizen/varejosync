@@ -1,5 +1,5 @@
 import React from 'react';
-import { getPrecoUnitarioNaUnidade, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
+import { getPrecoPisoCustoUnidade, getPrecoUnitarioNaUnidade, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
 import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
 
 export function formatCurrency(value) {
@@ -24,9 +24,10 @@ export function getQuickBudgetUnitContext(produto, tabelaPreco) {
   return getSaleUnitContextForTabela(produto, tabelaPreco);
 }
 
-/** Piso e referência: preço de venda da tabela na embalagem (não custo). */
+/** Piso de preço livre: custo na embalagem (não preço da tabela). */
 export function getMinimumPrice(produto, tabelaPreco, unitOption = null) {
-  return getPrecoUnitarioNaUnidade(produto, tabelaPreco, unitOption);
+  void tabelaPreco;
+  return getPrecoPisoCustoUnidade(produto, unitOption);
 }
 
 /** Preço de tabela aplicado ao produto na embalagem escolhida. */
@@ -95,6 +96,7 @@ export function buildQuickBudgetItem(produto, tabelaPreco, unitOption = null) {
   };
   const sigla = unitPick.unidade || 'UN';
   const precoTabela = getPrecoUnitarioNaUnidade(produto, tabelaPreco, unitPick);
+  const precoPisoCusto = getPrecoPisoCustoUnidade(produto, unitPick);
   const quantidade = 1;
   const listaOpts = buildSaleUnitOptions(produto, 1);
   const listaUnit = listaOpts.find((o) => o.unidade === sigla) || listaOpts[0];
@@ -109,7 +111,7 @@ export function buildQuickBudgetItem(produto, tabelaPreco, unitOption = null) {
     estoque_atual: Number(produto.estoque_atual || 0),
     item_key: getItemUnitKey(produto.id, sigla),
     preco_cheio: precoTabela,
-    preco_minimo: precoTabela,
+    preco_minimo: precoPisoCusto,
     preco_unitario: precoTabela,
     preco_venda_lista: precoLista,
     tem_ajuste_tabela: temAjusteTabela,
@@ -128,9 +130,7 @@ export function buildQuickBudgetItem(produto, tabelaPreco, unitOption = null) {
 export function recalculateItem(item) {
   const quantidade = Math.max(Number(item.quantidade || 0), 1);
   const desconto = Math.max(Number(item.desconto || 0), 0);
-  const precoMin = Number(item.preco_minimo || 0);
-  const precoBase = Number(item.preco_unitario || 0);
-  const preco = Math.max(precoBase, precoMin);
+  const preco = Number(item.preco_unitario || 0);
   const subtotal = quantidade * preco;
   const fator = Number(item.fator_conversao) || 1;
   return {

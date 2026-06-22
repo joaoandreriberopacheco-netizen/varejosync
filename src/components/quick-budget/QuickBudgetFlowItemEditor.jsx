@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowRight, Package, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PrecoVendaTabelaLinhas, getMinimumPrice } from './quickBudgetUtils';
+import { PrecoVendaTabelaLinhas } from './quickBudgetUtils';
 
 export default function QuickBudgetFlowItemEditor({
   selectedProduct,
@@ -43,7 +43,6 @@ export default function QuickBudgetFlowItemEditor({
   }
 
   const isFreePrice = !!selectedProduct.preco_livre;
-  const pisoVenda = getMinimumPrice(selectedProduct, tabelaPreco, selectedUnit);
   const siglaAtiva = selectedUnit?.unidade || selectedProduct.unidade_principal || 'UN';
 
   return (
@@ -119,12 +118,11 @@ export default function QuickBudgetFlowItemEditor({
         {isFreePrice && (
           <div className={`rounded-2xl bg-muted/50 shadow-sm p-3 ${stage !== 'price' ? 'opacity-60' : ''}`}>
             <p className="text-[11px] text-muted-foreground mb-2 uppercase tracking-wide">Preço livre</p>
+            <p className="text-[10px] text-muted-foreground mb-2">Piso custo: validado ao salvar</p>
             <Input
               ref={priceInputRef}
-              type="number"
+              type="text"
               inputMode="decimal"
-              min={pisoVenda}
-              step="0.01"
               value={price}
               onChange={(e) => onPriceChange(e.target.value)}
               onKeyDown={handlePriceKeyDown}
