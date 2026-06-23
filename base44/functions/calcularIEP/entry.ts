@@ -1,106 +1,119 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 // ═══════════════════════════════════════════════════════════════
-// UTILITÁRIOS
+// QUARTIS — desconsidera o 4.º quartil (valores acima de Q3)
 // ═══════════════════════════════════════════════════════════════
 
-function calculateIQR(data) {
-  if (data.length < 3) return { lowerBound: -Infinity, upperBound: Infinity };
-
-  const sorted = [...data].sort((a, b) => a - b);
-  const q1 = sorted[Math.floor(sorted.length * 0.25)];
-  const q3 = sorted[Math.floor(sorted.length * 0.75)];
-  const iqr = q3 - q1;
-
-  return {
-    lowerBound: q1 - 1.5 * iqr,
-    upperBound: q3 + 1.5 * iqr
-  };
+/** Q3 — limite superior do miolo (exclui 4.º quartil). */
+function q3(values) {
+  if (!values || values.length === 0) return Infinity;
+  const sorted = [...values].sort((a, b) => a - b);
+  if (sorted.length === 1) return sorted[0];
+  const idx = Math.ceil(sorted.length * 0.75) - 1;
+  return sorted[Math.max(0, Math.min(sorted.length - 1, idx))];
 }
 
-function filterOutliers(values) {
-  if (values.length === 0) return [];
-  const { lowerBound, upperBound } = calculateIQR(values);
-  return values.filter(v => v >= lowerBound && v <= upperBound);
+function average(values) {
+  if (!values || values.length === 0) return 0;
+  return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-function calculateAverageAfterIQR(values) {
-  if (values.length === 0) return 0;
-  const filtered = filterOutliers(values);
-  if (filtered.length === 0) return 0;
-  return filtered.reduce((a, b) => a + b, 0) / filtered.length;
+function hierarchyKey(parts) {
+  return parts.filter(Boolean).join('\x00');
+}
+
+function resolveCustoCalculado(produto) {
+  const salvo = Number(produto?.preco_custo_calculado) || 0;
+  if (salvo > 0) return salvo;
+  return (
+    (Number(produto?.valor_compra) || 0) +
+    (Number(produto?.custo_frete_padrao) || 0) +
+    (Number(produto?.custo_imposto1_padrao) || 0) +
+    (Number(produto?.custo_imposto2_padrao) || 0) +
+    (Number(produto?.custo_outros_padrao) || 0) -
+    (Number(produto?.desconto_compra_padrao) || 0)
+  );
+}
+
+function lineQuantity(item) {
+  const qty = item?.quantidade_base ?? item?.quantidade ?? 0;
+  return Number(qty) || 0;
+}
+
+function lineUnitPrice(item) {
+  const qty = lineQuantity(item);
+  const total = Number(item?.total) || 0;
+  if (qty <= 0) return 0;
+  return total / qty;
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CÁLCULO DO SCORE IEP (COM FALLBACKS)
+// LUCRO POR SKU — IQR por SKU, custo calculado + preço médio de venda
 // ═══════════════════════════════════════════════════════════════
 
-function calcularScoreIEPcomFallbacks(produto, vendas90d) {
-  // Sem histórico → score mínimo de 10
-  if (!vendas90d || vendas90d.length === 0) {
-    return 10;
-  }
+function calcularLucroSkuComQ4(produto, pedidos90d) {
+  const custoUnit = resolveCustoCalculado(produto);
+  const itens = pedidos90d
+    .flatMap((p) => p.itens || [])
+    .filter((it) => it.produto_id === produto.id);
 
-  const itens = vendas90d.flatMap(p => p.itens || []).filter(it => it.produto_id === produto.id);
-  
   if (itens.length === 0) {
-    return 10;
+    return { lucro: 0, precoMedio: 0, quantidade: 0 };
   }
 
-  // Pilar 1: Margem Relativa (40%)
-  const faturamento = itens.reduce((acc, i) => acc + (i.total || 0), 0);
-  const custo = itens.reduce((acc, i) => acc + ((i.custo_unitario_momento || 0) * (i.quantidade || 0)), 0);
-  const lucro = faturamento - custo;
+  const linhas = itens
+    .map((it) => ({
+      unitPrice: lineUnitPrice(it),
+      qty: lineQuantity(it),
+      total: Number(it.total) || 0,
+    }))
+    .filter((l) => l.qty > 0 && l.unitPrice > 0);
 
-  let scoreMargem = 0;
-  if (faturamento > 0) {
-    const margemPct = (lucro / faturamento) * 100;
-    scoreMargem = Math.min(100, Math.max(0, margemPct * 2.5));
+  if (linhas.length === 0) {
+    return { lucro: 0, precoMedio: 0, quantidade: 0 };
   }
 
-  // Pilar 2: Frequência de Venda (30%)
-  const diasComVenda = new Set(vendas90d.map(p => new Date(p.created_date).toISOString().split('T')[0])).size;
-  const scoreFrequencia = Math.min(100, (diasComVenda / 90) * 100);
+  const unitPrices = linhas.map((l) => l.unitPrice);
+  const limiteQ3 = q3(unitPrices);
+  const linhasCore =
+    linhas.length < 4 ? linhas : linhas.filter((l) => l.unitPrice <= limiteQ3);
 
-  // Pilar 3: Taxa de Anexação (30%)
-  const vendasComMultiplosItens = vendas90d.filter(p => (p.itens || []).length > 1).length;
-  const taxaAnexacao = vendas90d.length > 0 ? (vendasComMultiplosItens / vendas90d.length) * 100 : 0;
-  const scoreAnexacao = Math.min(100, Math.max(0, taxaAnexacao));
+  const quantidade = linhasCore.reduce((acc, l) => acc + l.qty, 0);
+  const receita = linhasCore.reduce((acc, l) => acc + l.total, 0);
+  const precoMedio = quantidade > 0 ? receita / quantidade : 0;
+  const lucro = receita - custoUnit * quantidade;
 
-  // Score final ponderado
-  const score = Math.round((scoreMargem * 0.4) + (scoreFrequencia * 0.3) + (scoreAnexacao * 0.3));
-  
-  return Math.max(10, Math.min(100, score));
+  return { lucro, precoMedio, quantidade };
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ROLL-UP HIERÁRQUICO (SEM MÉDIA DE MÉDIA)
+// CURVA ABCD — Pareto 70 / 15 / 10 / 5 por lucro agregado
 // ═══════════════════════════════════════════════════════════════
 
-function flattenAllSKUsUnderNode(nivelId, produtos, nivelCampo) {
-  // Retorna todos os SKUs (produtos folha) que pertencem a este nó hierárquico
-  return produtos.filter(p => p[nivelCampo] === nivelId);
+function classificarParetoABCD(ranking, totalLucro) {
+  const mapa = {};
+  const base = totalLucro > 0 ? totalLucro : 1;
+  let acumulado = 0;
+
+  ranking.forEach((entry) => {
+    acumulado += Math.max(0, entry.lucro);
+    const percentual = (acumulado / base) * 100;
+    if (percentual <= 70) mapa[entry.id] = 'A';
+    else if (percentual <= 85) mapa[entry.id] = 'B';
+    else if (percentual <= 95) mapa[entry.id] = 'C';
+    else mapa[entry.id] = 'D';
+  });
+
+  return mapa;
 }
 
-function calculateHierarchyScoreWithIQR(nivelId, produtos, metricas, nivelCampo) {
-  // Flatten: obter todos os SKUs folha sob este nó
-  const skusFolha = flattenAllSKUsUnderNode(nivelId, produtos, nivelCampo);
-  
-  if (skusFolha.length === 0) return 0;
-
-  // Coletar scores individuais dos SKUs
-  const scores = skusFolha
-    .map(sku => metricas[sku.id]?.score || 0)
-    .filter(score => score > 0);
-
-  if (scores.length === 0) return 0;
-
-  // Aplicar IQR e retornar média suavizada
-  return Math.round(calculateAverageAfterIQR(scores));
+function normalizarScore0a100(lucro, lucroMax) {
+  if (lucroMax <= 0) return lucro > 0 ? 50 : 10;
+  return Math.round(Math.max(10, Math.min(100, (lucro / lucroMax) * 100)));
 }
 
 // ═══════════════════════════════════════════════════════════════
-// FETCH COM PAGINAÇÃO (OTIMIZAÇÃO DE MEMÓRIA)
+// FETCH COM PAGINAÇÃO
 // ═══════════════════════════════════════════════════════════════
 
 async function fetchPedidosComPaginacao(base44, dataISO, pageSize = 500) {
@@ -128,7 +141,7 @@ async function fetchPedidosComPaginacao(base44, dataISO, pageSize = 500) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// JOB PRINCIPAL - CALCULARÍEP V7
+// JOB PRINCIPAL — IQR por SKU + ABCD no nível hierárquico 2
 // ═══════════════════════════════════════════════════════════════
 
 Deno.serve(async (req) => {
@@ -145,112 +158,140 @@ Deno.serve(async (req) => {
     data90d.setDate(hoje.getDate() - 90);
     const dataISO = data90d.toISOString();
 
-    // 1. CARREGAMENTO DE DADOS (COM PAGINAÇÃO PARA OTIMIZAÇÃO)
     const [produtos, todosPedidos] = await Promise.all([
       base44.entities.Produto.list('-created_date'),
-      fetchPedidosComPaginacao(base44, dataISO)
+      fetchPedidosComPaginacao(base44, dataISO),
     ]);
 
-    // 2. CÁLCULO INDIVIDUAL DE SCORE IEP (FALLBACKS INCLUSOS)
-    const metricasPorSKU = {};
-    const metricas = produtos.map(produto => {
-      const vendas = todosPedidos.filter(p => p.itens?.some(it => it.produto_id === produto.id));
-      const score = calcularScoreIEPcomFallbacks(produto, vendas);
-      
-      const lucro = vendas.length > 0
-        ? vendas
-            .flatMap(p => p.itens.filter(it => it.produto_id === produto.id))
-            .reduce((acc, i) => acc + ((i.total || 0) - ((i.custo_unitario_momento || 0) * (i.quantidade || 0))), 0)
-        : 0;
+    // 1. Lucro por SKU (IQR/Q4 por SKU; custo calculado + preço médio sem 4.º quartil)
+    const metricasPorSku = {};
+    for (const produto of produtos) {
+      const { lucro, precoMedio, quantidade } = calcularLucroSkuComQ4(produto, todosPedidos);
+      metricasPorSku[produto.id] = { lucro, precoMedio, quantidade };
+    }
 
-      metricasPorSKU[produto.id] = { score, lucro };
+    const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => m.lucro));
 
-      return {
-        id: produto.id,
-        score,
-        lucro,
-        grupo_id: produto.campo_hierarquico_1 || 'unassigned',
-        trava: produto.iep_trava_manual || false
-      };
-    });
+    // 2. ABCD no nível 2 (campo_hierarquico_1 + campo_hierarquico_2)
+    const lucroPorNivel2 = {};
+    for (const produto of produtos) {
+      const h1 = produto.campo_hierarquico_1 || 'unassigned';
+      const h2 = produto.campo_hierarquico_2;
+      if (!h2) continue;
+      const key = hierarchyKey([h1, h2]);
+      lucroPorNivel2[key] = (lucroPorNivel2[key] || 0) + (metricasPorSku[produto.id]?.lucro || 0);
+    }
 
-    // 3. CÁLCULO DE CLASSE ABCD (PARETO POR NÍVEL 1)
-    const lucroPorGrupo = metricas.reduce((acc, curr) => {
-      acc[curr.grupo_id] = (acc[curr.grupo_id] || 0) + curr.lucro;
-      return acc;
-    }, {});
-
-    const rankingGrupos = Object.entries(lucroPorGrupo)
+    const rankingNivel2 = Object.entries(lucroPorNivel2)
       .map(([id, lucro]) => ({ id, lucro }))
       .sort((a, b) => b.lucro - a.lucro);
 
-    const lucroTotalCompanhia = rankingGrupos.reduce((acc, g) => acc + g.lucro, 0) || 1;
-    let acumulado = 0;
-    const mapaClassesGrupo = {};
+    const lucroTotalNivel2 = rankingNivel2.reduce((acc, g) => acc + Math.max(0, g.lucro), 0);
+    const mapaAbcdNivel2 = classificarParetoABCD(rankingNivel2, lucroTotalNivel2);
 
-    rankingGrupos.forEach(grupo => {
-      acumulado += grupo.lucro;
-      const percentual = (acumulado / lucroTotalCompanhia) * 100;
-
-      if (percentual <= 70) mapaClassesGrupo[grupo.id] = 'A';
-      else if (percentual <= 85) mapaClassesGrupo[grupo.id] = 'B';
-      else if (percentual <= 95) mapaClassesGrupo[grupo.id] = 'C';
-      else mapaClassesGrupo[grupo.id] = 'D';
-    });
-
-    // 4. ROLL-UP HIERÁRQUICO (PARA NÍVEIS 2-5)
-    const metricsRollup = {};
-
-    // Nível 2
-    const nivel2Unicos = [...new Set(produtos.map(p => p.campo_hierarquico_2).filter(Boolean))];
-    nivel2Unicos.forEach(nivel2 => {
-      metricsRollup[nivel2] = calculateHierarchyScoreWithIQR(nivel2, produtos, metricasPorSKU, 'campo_hierarquico_2');
-    });
-
-    // Nível 3
-    const nivel3Unicos = [...new Set(produtos.map(p => p.campo_hierarquico_3).filter(Boolean))];
-    nivel3Unicos.forEach(nivel3 => {
-      metricsRollup[nivel3] = calculateHierarchyScoreWithIQR(nivel3, produtos, metricasPorSKU, 'campo_hierarquico_3');
-    });
-
-    // Nível 4
-    const nivel4Unicos = [...new Set(produtos.map(p => p.campo_hierarquico_4).filter(Boolean))];
-    nivel4Unicos.forEach(nivel4 => {
-      metricsRollup[nivel4] = calculateHierarchyScoreWithIQR(nivel4, produtos, metricasPorSKU, 'campo_hierarquico_4');
-    });
-
-    // Nível 5
-    const nivel5Unicos = [...new Set(produtos.map(p => p.campo_hierarquico_5).filter(Boolean))];
-    nivel5Unicos.forEach(nivel5 => {
-      metricsRollup[nivel5] = calculateHierarchyScoreWithIQR(nivel5, produtos, metricasPorSKU, 'campo_hierarquico_5');
-    });
-
-    // 5. ATUALIZAÇÃO DOS PRODUTOS NO BANCO
-    for (const p of metricas) {
-      const classeDoGrupo = mapaClassesGrupo[p.grupo_id] || 'D';
-
-      const updateData = { 
-        iep_score: p.score,
-        iep_score_nivel_2: metricsRollup[produtos.find(x => x.id === p.id)?.campo_hierarquico_2] || 0,
-        iep_score_nivel_3: metricsRollup[produtos.find(x => x.id === p.id)?.campo_hierarquico_3] || 0,
-        iep_score_nivel_4: metricsRollup[produtos.find(x => x.id === p.id)?.campo_hierarquico_4] || 0,
-        iep_score_nivel_5: metricsRollup[produtos.find(x => x.id === p.id)?.campo_hierarquico_5] || 0
-      };
-
-      if (!p.trava) {
-        updateData.iep_classe = classeDoGrupo;
-      }
-
-      await base44.entities.Produto.update(p.id, updateData);
+    function classeAbcdProduto(produto) {
+      const h1 = produto.campo_hierarquico_1 || 'unassigned';
+      const h2 = produto.campo_hierarquico_2;
+      if (!h2) return 'D';
+      const key = hierarchyKey([h1, h2]);
+      return mapaAbcdNivel2[key] || 'D';
     }
 
-    return Response.json({ 
-      status: 'sucesso', 
-      processados: metricas.length,
-      versao: 'V7',
-      timestamp: new Date().toISOString()
-    });
+    // 3. Médias por nível — IQR só no SKU; níveis recebem média simples dos filhos
+    const skusPorChaveNivel = (nivel) => {
+      const map = {};
+      for (const produto of produtos) {
+        const parts = [
+          produto.campo_hierarquico_1,
+          produto.campo_hierarquico_2,
+          produto.campo_hierarquico_3,
+          produto.campo_hierarquico_4,
+          produto.campo_hierarquico_5,
+        ].slice(0, nivel);
+        if (parts.filter(Boolean).length < nivel) continue;
+        const key = hierarchyKey(parts);
+        if (!map[key]) map[key] = [];
+        map[key].push(produto.id);
+      }
+      return map;
+    };
 
+    const mediaLucroPorChave = {};
+    for (let nivel = 2; nivel <= 5; nivel += 1) {
+      const grupos = skusPorChaveNivel(nivel);
+      for (const [key, skuIds] of Object.entries(grupos)) {
+        const lucros = skuIds.map((id) => metricasPorSku[id]?.lucro ?? 0);
+        mediaLucroPorChave[`n${nivel}:${key}`] = average(lucros);
+      }
+    }
+
+    // Nível 1: média dos filhos de nível 2 (não média direta de todos os SKUs)
+    const mediaNivel2PorH1 = {};
+    for (const [key, media] of Object.entries(mediaLucroPorChave)) {
+      if (!key.startsWith('n2:')) continue;
+      const h1 = key.slice(3).split('\x00')[0];
+      if (!h1) continue;
+      if (!mediaNivel2PorH1[h1]) mediaNivel2PorH1[h1] = [];
+      mediaNivel2PorH1[h1].push(media);
+    }
+    const mediaNivel1PorH1 = {};
+    for (const [h1, medias] of Object.entries(mediaNivel2PorH1)) {
+      mediaNivel1PorH1[h1] = average(medias);
+    }
+
+    function rollupNivel(produto, nivel) {
+      const parts = [
+        produto.campo_hierarquico_1,
+        produto.campo_hierarquico_2,
+        produto.campo_hierarquico_3,
+        produto.campo_hierarquico_4,
+        produto.campo_hierarquico_5,
+      ].slice(0, nivel);
+      if (parts.filter(Boolean).length < nivel) return 0;
+      const key = `n${nivel}:${hierarchyKey(parts)}`;
+      return Math.round(mediaLucroPorChave[key] || 0);
+    }
+
+    // 4. Persistência
+    for (const produto of produtos) {
+      const sku = metricasPorSku[produto.id];
+      const h1 = produto.campo_hierarquico_1 || 'unassigned';
+      const classe = classeAbcdProduto(produto);
+      const trava = produto.iep_trava_manual || false;
+
+      const updateData = {
+        abcd: classe,
+        iep_score: normalizarScore0a100(sku.lucro, lucroMax),
+        iep_score_nivel_1: Math.round(mediaNivel1PorH1[h1] || 0),
+        iep_score_nivel_2: rollupNivel(produto, 2),
+        iep_score_nivel_3: rollupNivel(produto, 3),
+        iep_score_nivel_4: rollupNivel(produto, 4),
+        iep_score_nivel_5: rollupNivel(produto, 5),
+      };
+
+      if (!trava) {
+        updateData.iep_classe = classe;
+      }
+
+      await base44.entities.Produto.update(produto.id, updateData);
+    }
+
+    return Response.json({
+      status: 'sucesso',
+      processados: produtos.length,
+      grupos_nivel_2: Object.keys(lucroPorNivel2).length,
+      versao: 'V8-abcd-iqr-nivel2',
+      regras: {
+        janela_dias: 90,
+        custo: 'preco_custo_calculado',
+        preco: 'media_venda_sem_4_quartil_por_sku',
+        abcd_nivel: 'campo_hierarquico_2',
+        pareto: '70/15/10/5',
+        iqr: 'por_sku_exclui_q4',
+        nivel_1: 'media_dos_filhos_nivel_2',
+      },
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
