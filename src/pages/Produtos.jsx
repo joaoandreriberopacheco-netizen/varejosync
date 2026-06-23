@@ -41,7 +41,7 @@ import {
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import { useDesktopContent } from '@/hooks/use-breakpoint';
 import {
-  useProdutosListQuery,
+  useProdutosComIepQuery,
   useFornecedoresQuery,
 } from '@/hooks/useP38Entities';
 
@@ -144,7 +144,7 @@ function ProdutosPageContent() {
 
   const { toast } = useToast();
   const isDesktop = useDesktopContent();
-  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosListQuery();
+  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosComIepQuery();
   const { data: fornecedoresQuery, refetch: refetchFornecedores } = useFornecedoresQuery();
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */

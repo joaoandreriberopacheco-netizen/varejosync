@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
+import { enrichProdutosComIep, iso90DiasAtras } from '@/lib/calcularIepProdutos';
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
@@ -17,6 +19,29 @@ const entityQueryDefaults = {
 
 export function fetchProdutosList(sort = '-created_date') {
   return base44.entities.Produto.list(sort);
+}
+
+export async function fetchPedidosVenda90d() {
+  const dataISO = iso90DiasAtras();
+  const todosPedidos = [];
+  let skip = 0;
+  const pageSize = 500;
+
+  while (true) {
+    const batch = await base44.entities.PedidoVenda.filter(
+      { created_date: { $gte: dataISO }, status: { $ne: 'Cancelado' } },
+      '-created_date',
+      pageSize,
+      skip,
+    );
+    const rows = Array.isArray(batch) ? batch : batch?.data ?? [];
+    if (!rows.length) break;
+    todosPedidos.push(...rows);
+    if (rows.length < pageSize) break;
+    skip += pageSize;
+  }
+
+  return todosPedidos;
 }
 
 export function fetchTerceirosList() {
@@ -75,13 +100,45 @@ export async function fetchHomeKpis(dateKey, queryClient) {
 
 export function useProdutosListQuery(options = {}) {
   const sort = options.sort ?? '-created_date';
-  const { sort: _sort, ...rest } = options;
+  const { sort: _sort, enrichIep = false, ...rest } = options;
   return useQuery({
-    queryKey: p38Keys.produtos(sort),
+    queryKey: enrichIep ? [...p38Keys.produtos(sort), 'iep-enriched'] : p38Keys.produtos(sort),
     queryFn: () => fetchProdutosList(sort),
     ...entityQueryDefaults,
     ...rest,
   });
+}
+
+export function usePedidosVenda90dQuery(options = {}) {
+  return useQuery({
+    queryKey: [...p38Keys.all, 'pedido-venda', '90d'],
+    queryFn: fetchPedidosVenda90d,
+    staleTime: 10 * 60 * 1000,
+    gcTime: P38_GC_TIME,
+    ...options,
+  });
+}
+
+/** Lista de produtos com ABCD/IEP calculados no cliente quando ainda não persistidos. */
+export function useProdutosComIepQuery(options = {}) {
+  const sort = options.sort ?? '-created_date';
+  const { sort: _sort, ...rest } = options;
+  const produtosQuery = useProdutosListQuery({ sort, ...rest });
+  const pedidosQuery = usePedidosVenda90dQuery({
+    enabled: (rest.enabled ?? true) && Boolean(produtosQuery.data?.length),
+  });
+
+  const data = useMemo(() => {
+    if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
+    return enrichProdutosComIep(produtosQuery.data, pedidosQuery.data ?? []);
+  }, [produtosQuery.data, pedidosQuery.data]);
+
+  return {
+    ...produtosQuery,
+    data,
+    isLoading: produtosQuery.isLoading || pedidosQuery.isLoading,
+    isFetching: produtosQuery.isFetching || pedidosQuery.isFetching,
+  };
 }
 
 export function useFornecedoresQuery(options = {}) {
