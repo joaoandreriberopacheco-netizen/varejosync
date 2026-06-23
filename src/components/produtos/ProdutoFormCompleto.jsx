@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, Undo2, Redo2, Copy, Trash2, Package, Boxes } from 'lucide-react';
+import { DollarSign, Warehouse, Settings, Save, X, Plus, Upload, Loader2, ChevronRight, Truck, Box, FileText, Tag, TrendingUp, Target, History, Undo2, Redo2, Copy, Trash2, Package, Boxes, BarChart3 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { useUnsavedChangesWarning } from '../utils/useUnsavedChangesWarning';
 import TagGenerator from './TagGenerator';
@@ -16,6 +16,7 @@ import UnidadesAlternativasEditor from './UnidadesAlternativasEditor';
 import ProductUnitSelectorDialog from './ProductUnitSelectorDialog';
 import { useToast } from "@/components/ui/use-toast";
 import ProdutoHistoricoEstoqueTab from '@/components/produtos/ProdutoHistoricoEstoqueTab';
+import ProdutoIepTab from '@/components/produtos/ProdutoIepTab';
 import { applyUnidadesToProduto, makeUnidade, normalizeSigla } from '@/lib/productUnitsCrud';
 import {
   buildProductSnapshotForPricing,
@@ -41,7 +42,7 @@ import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibili
 
 const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
 const P38_FORM_HEADER = 'flex-none border-b border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]';
-const P38_TAB_LIST = 'grid grid-cols-5 w-full bg-transparent border-b border-border/40 dark:border-white/10 rounded-none h-auto p-0 flex-shrink-0';
+const P38_TAB_LIST = 'grid grid-cols-6 w-full bg-transparent border-b border-border/40 dark:border-white/10 rounded-none h-auto p-0 flex-shrink-0';
 const P38_TAB_TRIGGER = 'group border-b-2 border-transparent data-[state=active]:border-[#4a5240] dark:data-[state=active]:border-[#a4ce33] data-[state=active]:bg-[#26262e]/35 dark:data-[state=active]:bg-[#26262e]/70 rounded-none py-3 text-xs md:text-sm';
 const P38_TAB_ICON = 'w-4 h-4 md:w-5 md:h-5 text-muted-foreground group-data-[state=active]:text-[#4a5240] dark:group-data-[state=active]:text-[#a4ce33]';
 const P38_TAB_LABEL = 'hidden sm:inline ml-2 text-muted-foreground group-data-[state=active]:text-foreground';
@@ -1250,6 +1251,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
             <History className={P38_TAB_ICON} />
             <span className={P38_TAB_LABEL}>Histórico</span>
           </TabsTrigger>
+          <TabsTrigger value="iep" className={P38_TAB_TRIGGER} disabled={!produto?.id}>
+            <BarChart3 className={P38_TAB_ICON} />
+            <span className={P38_TAB_LABEL}>Desempenho</span>
+          </TabsTrigger>
           <TabsTrigger value="sistema" className={P38_TAB_TRIGGER}>
             <Settings className={P38_TAB_ICON} />
             <span className={P38_TAB_LABEL}>Avançado</span>
@@ -1974,6 +1979,10 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
               onRefresh={loadMovimentacoes}
               chromeExpanded={historicoChromeExpanded}
             />
+          </TabsContent>
+
+          <TabsContent value="iep" className="space-y-6 mt-0">
+            <ProdutoIepTab produto={produto} />
           </TabsContent>
 
           {/* ABA AVANÇADO — tipo, PDV, rastreio */}
