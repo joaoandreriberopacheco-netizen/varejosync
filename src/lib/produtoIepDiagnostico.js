@@ -12,13 +12,13 @@ const CLASSE_LABEL = {
 export function produtoTemMetricasIep(produto) {
   if (!produto?.id) return false;
   const classe = String(produto.abcd || produto.iep_classe || '').toUpperCase();
-  const score = Number(produto.iep_score) || 0;
-  return Boolean(classe) || score > 10;
+  const score = produto?.iep_score;
+  return Boolean(classe) && score != null && Number.isFinite(Number(score));
 }
 
 export function gerarDiagnosticoProdutoIep(produto) {
   const classe = String(produto?.abcd || produto?.iep_classe || '').toUpperCase() || null;
-  const iep = Number(produto?.iep_score) || 0;
+  const iep = produto?.iep_score != null ? Number(produto.iep_score) : null;
 
   if (!produto?.id) {
     return {
@@ -28,7 +28,7 @@ export function gerarDiagnosticoProdutoIep(produto) {
     };
   }
 
-  if (!classe && iep <= 10) {
+  if (!classe && (iep == null || !Number.isFinite(iep))) {
     return {
       temDados: false,
       titulo: 'Sem análise disponível',

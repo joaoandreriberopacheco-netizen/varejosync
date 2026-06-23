@@ -35,42 +35,45 @@ function resolveCustoCalculado(produto) {
   );
 }
 
-function lineQuantity(item) {
-  const qty = item?.quantidade_base ?? item?.quantidade ?? 0;
-  return Number(qty) || 0;
+function lineQuantityBase(item) {
+  const qtyBase = item?.quantidade_base;
+  if (qtyBase != null && Number.isFinite(Number(qtyBase))) {
+    return Number(qtyBase) || 0;
+  }
+  const qty = Number(item?.quantidade) || 0;
+  const fator = Number(item?.fator_conversao) || 1;
+  return qty * fator;
 }
 
-function lineUnitPrice(item) {
-  const qty = lineQuantity(item);
-  const total = Number(item?.total) || 0;
-  if (qty <= 0) return 0;
-  return total / qty;
+function grupoAbcdKey(produto) {
+  const h1 = (produto.campo_hierarquico_1 || 'unassigned').trim();
+  const h2 = (produto.campo_hierarquico_2 || '').trim();
+  if (h2) return hierarchyKey([h1, h2]);
+  return hierarchyKey([h1, '__familia__']);
 }
-
-// ═══════════════════════════════════════════════════════════════
-// LUCRO POR SKU — IQR por SKU, custo calculado + preço médio de venda
-// ═══════════════════════════════════════════════════════════════
 
 function calcularLucroSkuComQ4(produto, pedidos90d) {
   const custoUnit = resolveCustoCalculado(produto);
+  const pid = String(produto.id ?? '');
   const itens = pedidos90d
     .flatMap((p) => p.itens || [])
-    .filter((it) => it.produto_id === produto.id);
+    .filter((it) => String(it?.produto_id ?? '') === pid);
 
   if (itens.length === 0) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0 };
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
   }
 
   const linhas = itens
-    .map((it) => ({
-      unitPrice: lineUnitPrice(it),
-      qty: lineQuantity(it),
-      total: Number(it.total) || 0,
-    }))
-    .filter((l) => l.qty > 0 && l.unitPrice > 0);
+    .map((it) => {
+      const qtyBase = lineQuantityBase(it);
+      const total = Number(it.total) || 0;
+      const unitPrice = qtyBase > 0 ? total / qtyBase : 0;
+      return { unitPrice, qtyBase, total };
+    })
+    .filter((l) => l.qtyBase > 0 && l.total > 0);
 
   if (linhas.length === 0) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0 };
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
   }
 
   const unitPrices = linhas.map((l) => l.unitPrice);
@@ -78,38 +81,42 @@ function calcularLucroSkuComQ4(produto, pedidos90d) {
   const linhasCore =
     linhas.length < 4 ? linhas : linhas.filter((l) => l.unitPrice <= limiteQ3);
 
-  const quantidade = linhasCore.reduce((acc, l) => acc + l.qty, 0);
+  const quantidade = linhasCore.reduce((acc, l) => acc + l.qtyBase, 0);
   const receita = linhasCore.reduce((acc, l) => acc + l.total, 0);
   const precoMedio = quantidade > 0 ? receita / quantidade : 0;
   const lucro = receita - custoUnit * quantidade;
 
-  return { lucro, precoMedio, quantidade };
+  return { lucro, precoMedio, quantidade, teveVenda: quantidade > 0 };
 }
 
 // ═══════════════════════════════════════════════════════════════
 // CURVA ABCD — Pareto 70 / 15 / 10 / 5 por lucro agregado
 // ═══════════════════════════════════════════════════════════════
 
-function classificarParetoABCD(ranking, totalLucro) {
+function classificarParetoABCD(ranking, totalLucroPositivo) {
   const mapa = {};
-  const base = totalLucro > 0 ? totalLucro : 1;
+  if (totalLucroPositivo <= 0) {
+    ranking.forEach((entry) => { mapa[entry.id] = 'D'; });
+    return mapa;
+  }
+  const comLucro = ranking.filter((entry) => entry.lucro > 0);
   let acumulado = 0;
-
-  ranking.forEach((entry) => {
-    acumulado += Math.max(0, entry.lucro);
-    const percentual = (acumulado / base) * 100;
+  comLucro.forEach((entry) => {
+    acumulado += entry.lucro;
+    const percentual = (acumulado / totalLucroPositivo) * 100;
     if (percentual <= 70) mapa[entry.id] = 'A';
     else if (percentual <= 85) mapa[entry.id] = 'B';
     else if (percentual <= 95) mapa[entry.id] = 'C';
     else mapa[entry.id] = 'D';
   });
-
+  ranking.filter((entry) => entry.lucro <= 0).forEach((entry) => { mapa[entry.id] = 'D'; });
   return mapa;
 }
 
-function normalizarScore0a100(lucro, lucroMax) {
-  if (lucroMax <= 0) return lucro > 0 ? 50 : 10;
-  return Math.round(Math.max(10, Math.min(100, (lucro / lucroMax) * 100)));
+function normalizarScore0a100(lucro, lucroMax, teveVenda) {
+  if (!teveVenda) return 0;
+  if (lucroMax <= 0) return lucro > 0 ? 50 : 1;
+  return Math.round(Math.max(1, Math.min(100, (Math.max(0, lucro) / lucroMax) * 100)));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -123,7 +130,7 @@ async function fetchPedidosComPaginacao(base44, dataISO, pageSize = 500) {
 
   while (temMais) {
     const batch = await base44.entities.PedidoVenda.filter(
-      { created_date: { $gte: dataISO }, status: { $ne: 'Cancelado' } },
+      { tipo: 'PDV', status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
       '-created_date',
       pageSize,
       skip
@@ -170,31 +177,24 @@ Deno.serve(async (req) => {
       metricasPorSku[produto.id] = { lucro, precoMedio, quantidade };
     }
 
-    const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => m.lucro));
+    const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => Math.max(0, m.lucro)));
 
-    // 2. ABCD no nível 2 (campo_hierarquico_1 + campo_hierarquico_2)
-    const lucroPorNivel2 = {};
+    const lucroPorGrupo = {};
     for (const produto of produtos) {
-      const h1 = produto.campo_hierarquico_1 || 'unassigned';
-      const h2 = produto.campo_hierarquico_2;
-      if (!h2) continue;
-      const key = hierarchyKey([h1, h2]);
-      lucroPorNivel2[key] = (lucroPorNivel2[key] || 0) + (metricasPorSku[produto.id]?.lucro || 0);
+      const key = grupoAbcdKey(produto);
+      lucroPorGrupo[key] = (lucroPorGrupo[key] || 0) + (metricasPorSku[produto.id]?.lucro || 0);
     }
 
-    const rankingNivel2 = Object.entries(lucroPorNivel2)
+    const rankingGrupos = Object.entries(lucroPorGrupo)
       .map(([id, lucro]) => ({ id, lucro }))
       .sort((a, b) => b.lucro - a.lucro);
 
-    const lucroTotalNivel2 = rankingNivel2.reduce((acc, g) => acc + Math.max(0, g.lucro), 0);
-    const mapaAbcdNivel2 = classificarParetoABCD(rankingNivel2, lucroTotalNivel2);
+    const lucroTotalPositivo = rankingGrupos.reduce((acc, g) => acc + Math.max(0, g.lucro), 0);
+    const mapaAbcdGrupo = classificarParetoABCD(rankingGrupos, lucroTotalPositivo);
 
     function classeAbcdProduto(produto) {
-      const h1 = produto.campo_hierarquico_1 || 'unassigned';
-      const h2 = produto.campo_hierarquico_2;
-      if (!h2) return 'D';
-      const key = hierarchyKey([h1, h2]);
-      return mapaAbcdNivel2[key] || 'D';
+      const key = grupoAbcdKey(produto);
+      return mapaAbcdGrupo[key] || 'D';
     }
 
     // 3. Médias por nível — IQR só no SKU; níveis recebem média simples dos filhos
@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
 
       const updateData = {
         abcd: classe,
-        iep_score: normalizarScore0a100(sku.lucro, lucroMax),
+        iep_score: normalizarScore0a100(sku.lucro, lucroMax, sku.teveVenda),
         iep_score_nivel_1: Math.round(mediaNivel1PorH1[h1] || 0),
         iep_score_nivel_2: rollupNivel(produto, 2),
         iep_score_nivel_3: rollupNivel(produto, 3),
@@ -279,7 +279,7 @@ Deno.serve(async (req) => {
     return Response.json({
       status: 'sucesso',
       processados: produtos.length,
-      grupos_nivel_2: Object.keys(lucroPorNivel2).length,
+      grupos_nivel_2: Object.keys(lucroPorGrupo).length,
       versao: 'V8-abcd-iqr-nivel2',
       regras: {
         janela_dias: 90,

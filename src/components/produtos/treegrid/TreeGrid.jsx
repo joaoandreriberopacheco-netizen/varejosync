@@ -30,7 +30,7 @@ function AbcdBadge({ letter }) {
 
 function scoreCell(value, tilde = false) {
   const num = Number(value);
-  if (!Number.isFinite(num)) {
+  if (value == null || !Number.isFinite(num)) {
     return <span className="text-xs text-muted-foreground">—</span>;
   }
   const text = Math.round(num).toLocaleString('pt-BR');

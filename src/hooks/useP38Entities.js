@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
-import { enrichProdutosComIep, iso90DiasAtras } from '@/lib/calcularIepProdutos';
+import { enrichProdutosComIep, iso90DiasAtras, pedidoDentroJanela90d, pedidoElegivelIep } from '@/lib/calcularIepProdutos';
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
@@ -29,7 +29,7 @@ export async function fetchPedidosVenda90d() {
 
   while (true) {
     const batch = await base44.entities.PedidoVenda.filter(
-      { created_date: { $gte: dataISO }, status: { $ne: 'Cancelado' } },
+      { tipo: 'PDV', status: { $ne: 'Cancelado' } },
       '-created_date',
       pageSize,
       skip,
@@ -41,7 +41,9 @@ export async function fetchPedidosVenda90d() {
     skip += pageSize;
   }
 
-  return todosPedidos;
+  return todosPedidos.filter(
+    (p) => pedidoElegivelIep(p) && pedidoDentroJanela90d(p, dataISO),
+  );
 }
 
 export function fetchTerceirosList() {
@@ -130,8 +132,9 @@ export function useProdutosComIepQuery(options = {}) {
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
+    if (!pedidosQuery.isFetched) return produtosQuery.data;
     return enrichProdutosComIep(produtosQuery.data, pedidosQuery.data ?? []);
-  }, [produtosQuery.data, pedidosQuery.data]);
+  }, [produtosQuery.data, pedidosQuery.data, pedidosQuery.isFetched]);
 
   return {
     ...produtosQuery,

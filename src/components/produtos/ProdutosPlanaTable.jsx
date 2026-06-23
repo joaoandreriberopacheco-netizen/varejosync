@@ -193,7 +193,9 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
     case 'iep_score_nivel_5':
       return (
         <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
-          {Number.isFinite(Number(produto[col])) ? Math.round(Number(produto[col])).toLocaleString('pt-BR') : '—'}
+          {produto[col] != null && Number.isFinite(Number(produto[col]))
+            ? Math.round(Number(produto[col])).toLocaleString('pt-BR')
+            : '—'}
         </TableCell>
       );
     default:
