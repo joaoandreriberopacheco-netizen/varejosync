@@ -24,6 +24,7 @@
     "db:cold-start-keep-produto": "node scripts/cold-start-keep-produto.mjs",
     "migrate:base44-to-supabase": "node scripts/migrate-base44-to-supabase.mjs",
     "retificar:5r8b3": "node scripts/retificar-embarque-5r8b3-once.mjs",
+    "corrigir:recepcao": "node scripts/corrigir-recepcao-pedido.mjs",
     "git:ship": "node scripts/git-ship.mjs",
     "p38:color-audit": "node scripts/p38-color-audit.mjs",
     "p38:color-fix": "node scripts/p38-color-audit.mjs --fix",
