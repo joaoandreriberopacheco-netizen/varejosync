@@ -44,11 +44,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   // </React.StrictMode>,
 )
 
-/** Remover após executar `await window.__retificarEmbarque5r8b3()` uma vez com sessão Base44 (stock 5R8B3-A). */
+/** Remover após executar `await window.__corrigirRecepcaoWX7A5N(true)` com sessão Base44 (stock WX7-A5N). */
 if (import.meta.env.DEV) {
   import('@/api/base44Client').then(({ base44 }) =>
-    import('@/lib/oneOffRetificarEmbarque5r8b3.js').then((m) => {
-      window.__retificarEmbarque5r8b3 = () => m.retificarEmbarque5r8b3UmaVez(base44);
+    import('@/lib/oneOffCorrigirRecepcaoPedido.js').then((m) => {
+      window.__corrigirRecepcaoPedido = (opts) => m.corrigirRecepcaoPedido(base44, opts);
+      window.__corrigirRecepcaoWX7A5N = (apply = false) =>
+        m.corrigirRecepcaoPedido(base44, { numero: 'WX7-A5N', apply: Boolean(apply) });
     })
   );
 }
