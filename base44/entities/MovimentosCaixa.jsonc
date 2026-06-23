@@ -22,11 +22,6 @@
       "type": "string",
       "description": "Motivo ou observa\u00e7\u00e3o do movimento"
     },
-    "data_movimento": {
-      "type": "string",
-      "format": "date",
-      "description": "Data em que o movimento ocorreu (permite lan\u00e7amento retroativo)"
-    },
     "conta_id": {
       "type": "string",
       "description": "ID da conta financeira afetada"
