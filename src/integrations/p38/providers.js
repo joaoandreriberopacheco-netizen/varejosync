@@ -27,6 +27,14 @@ export function hasBase44Credentials() {
 }
 
 /**
+ * Credenciais Base44 disponíveis em runtime (localStorage após login Base44),
+ * mesmo quando o build Vercel não embutiu VITE_BASE44_*.
+ */
+export function hasBase44RuntimeCredentials(appId, serverUrl) {
+  return nonEmptyString(appId) && nonEmptyString(serverUrl);
+}
+
+/**
  * `true` quando temos URL + ANON_KEY do Supabase no build. Não inicializa client aqui;
  * usado apenas para autodetecção de provider.
  */
@@ -49,14 +57,9 @@ export function resolveP38ProviderName() {
     return PROVIDERS.BASE44;
   }
 
-  // Provider não definido explicitamente: autodetecta pelo que está disponível.
-  // Preferência: Supabase > Base44. Se nenhum dos dois, marca como Base44 (vai cair no stub).
-  if (hasSupabaseCredentials() && !hasBase44Credentials()) {
-    return PROVIDERS.SUPABASE;
-  }
-  if (hasSupabaseCredentials() && parseBooleanEnv(import.meta.env.VITE_P38_BYPASS_BASE44, false)) {
-    return PROVIDERS.SUPABASE;
-  }
+  // VarejoSync em produção usa Base44. Supabase só com VITE_P38_PROVIDER=supabase explícito
+  // (repo a29-erp / migração). Não autodetectar Supabase — isso desviava gravações
+  // (senhas, despesas, etc.) para um banco vazio no Vercel.
   return PROVIDERS.BASE44;
 }
 
@@ -93,9 +96,6 @@ export function isBase44BypassEnabled() {
   }
   if (import.meta.env.VITE_P38_BYPASS_BASE44 !== undefined) {
     return parseBooleanEnv(import.meta.env.VITE_P38_BYPASS_BASE44, false);
-  }
-  if (!hasBase44Credentials()) {
-    return true;
   }
   return false;
 }

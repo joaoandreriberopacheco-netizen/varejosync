@@ -9,6 +9,7 @@ import { wrapLegacyClientLancamentoFinanceiro } from '@/lib/lancamentoFinanceiro
 import {
   getP38Providers,
   hasBase44Credentials,
+  hasBase44RuntimeCredentials,
   hasSupabaseCredentials,
   isBase44BypassEnabled,
   isP38SafeModeEnabled,
@@ -35,7 +36,11 @@ const { appId, serverUrl, token, functionsVersion } = appParams;
  */
 function createBase44StubClient(reason) {
   const fail = () => {
-    throw new Error(`[P38] Base44 desativado (${reason}). Migre a chamada para Supabase Edge Function.`);
+    throw new Error(
+      `[P38] Base44 indisponível (${reason}). ` +
+        'Confirme VITE_BASE44_APP_ID e VITE_BASE44_BACKEND_URL no build do Vercel ' +
+        'e que VITE_P38_PROVIDER não está como supabase.'
+    );
   };
   const handler = {
     get: () =>
@@ -50,7 +55,10 @@ function createBase44StubClient(reason) {
 // Guarda extra: mesmo que `bypassBase44` esteja false por algum motivo, NUNCA
 // instanciamos o SDK real sem credenciais Base44 — caso contrário o analytics
 // tracker do SDK começa a martelar `null/api/apps/null/...` e o app quebra.
-const canUseBase44Sdk = !bypassBase44 && hasBase44Credentials();
+const canUseBase44Sdk =
+  providerName !== providers.SUPABASE &&
+  !bypassBase44 &&
+  (hasBase44Credentials() || hasBase44RuntimeCredentials(appId, serverUrl));
 
 const base44SdkClient = canUseBase44Sdk
   ? createClient({
@@ -69,7 +77,7 @@ const base44SdkClient = canUseBase44Sdk
 /** Exportado como `base44` em `base44Client.js` — pode incluir datalink Supabase nas entidades mapeadas. */
 const linkedLegacyClient = resolveLegacyClient(base44SdkClient);
 
-const base44Adapter = bypassBase44 ? null : createBase44Adapter(base44SdkClient);
+const base44Adapter = createBase44Adapter(base44SdkClient);
 const subpayzeAdapter = createSubpayzeAdapter({
   apiUrl: import.meta.env.VITE_SUBPAYZE_API_URL,
   apiKey: import.meta.env.VITE_SUBPAYZE_API_KEY,
@@ -93,7 +101,7 @@ const activeAdapter = shouldUseSupabase
   ? supabaseAdapter
   : shouldUseSubpayze
     ? subpayzeAdapter
-    : base44Adapter || supabaseAdapter;
+    : base44Adapter;
 const activeLegacyClient = wrapLegacyClientLancamentoFinanceiro(
   activeAdapter.legacyClient || linkedLegacyClient,
 );
@@ -179,10 +187,19 @@ if (typeof window !== 'undefined') {
   if (activeAdapter.name === providers.SUPABASE) {
     console.info('[P38] boot OK — provider=supabase', summary);
   } else if (activeAdapter.name === providers.BASE44 && !canUseBase44Sdk) {
-    console.warn(
-      '[P38] boot DEGRADADO — Base44 sem credenciais e Supabase indisponível. ' +
-        'Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (e VITE_P38_PROVIDER=supabase) ' +
-        'no Vercel para ativar o bypass.',
+    console.error(
+      '[P38] boot CRÍTICO — Base44 sem credenciais no build nem em runtime. ' +
+        'Gravações (senhas, despesas, lançamentos) vão falhar. ' +
+        'No Vercel: defina VITE_BASE44_APP_ID, VITE_BASE44_BACKEND_URL e remova VITE_P38_PROVIDER=supabase.',
+      summary
+    );
+  } else if (
+    providerName === providers.BASE44 &&
+    activeAdapter.name === providers.SUPABASE
+  ) {
+    console.error(
+      '[P38] boot CRÍTICO — provider pedido=base44 mas adapter ativo=supabase. ' +
+        'Corrija as variáveis de ambiente no Vercel.',
       summary
     );
   } else {
