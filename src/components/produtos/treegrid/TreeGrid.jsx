@@ -179,13 +179,8 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
       const qtdExibicao = apresent ? apresent.quantidade : produto.estoque_atual;
       const unExibicao = apresent ? apresent.sigla : (produto.unidade_principal || 'UN');
       return (
-        <span className="flex flex-col text-xs text-muted-foreground tabular-nums leading-tight">
-          <span>{fmtN(qtdExibicao)} {unExibicao}</span>
-          {apresent && (
-            <span className="text-[10px] text-muted-foreground mt-0.5">
-              {apresent.rotulo ? `(${apresent.rotulo})` : '(unidade de vitrine)'}
-            </span>
-          )}
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {fmtN(qtdExibicao)} {unExibicao}
         </span>
       );
     }
@@ -239,15 +234,8 @@ function groupCellValue(colId, row) {
         );
       }
       return (
-        <span className="flex flex-col text-xs text-muted-foreground tabular-nums leading-tight items-end">
-          <span>
-            {fmtN(disp.quantidade)} {disp.sigla || (skus[0]?.unidade_principal || 'UN')}
-          </span>
-          {disp.mode === 'display' ? (
-            <span className="text-[10px] text-muted-foreground mt-0.5">
-              {disp.rotulo ? `(${disp.rotulo})` : '(unidade de vitrine)'}
-            </span>
-          ) : null}
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {fmtN(disp.quantidade)} {disp.sigla || (skus[0]?.unidade_principal || 'UN')}
         </span>
       );
     }
