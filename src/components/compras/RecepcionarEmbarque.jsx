@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Package, Search, Plus, X, Play, Copy, Eye, EyeOff, Loader2, Undo2 } from 'lucide-react';
 import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 import { roundToTwoDecimals, formatQuantity } from '@/lib/financialUtils';
 import { saveEmbarqueItem } from '@/functions/saveEmbarqueItem';
@@ -17,6 +17,7 @@ import {
   invokeRecalcularEstoqueProduto,
 } from '@/lib/p38StockRecalc';
 import { buildMovimentacaoRecepcaoCompraPayload } from '@/lib/movimentacaoRecepcaoCompra';
+import { reverterRecepcaoEmbarque } from '@/lib/reverterRecepcaoEmbarque';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
 
 function getItensDoEmbarque(embarque) {
@@ -46,7 +47,7 @@ function getItensDoEmbarque(embarque) {
   });
 }
 
-export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido, onRecebido }) {
+export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido, onRecebido, onRevertido }) {
   const { toast } = useToast();
   const [itens, setItens] = useState(() => getItensDoEmbarque(embarque));
   const [dataEntrada, setDataEntrada] = useState(() => dataHoje());
@@ -58,6 +59,8 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   const [showNovoProduct, setShowNovoProduct] = useState(false);
   const [novoProduto, setNovoProduto] = useState({ nome: '', hierarquico_1: '' });
   const [isSaving, setIsSaving] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
+  const [showRevertDialog, setShowRevertDialog] = useState(false);
   const [showCodigoConferencia, setShowCodigoConferencia] = useState(false);
   const [codigoConferencia, setCodigoConferencia] = useState('');
   const [showCodigoDecrypt, setShowCodigoDecrypt] = useState(false);
@@ -365,6 +368,28 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
   const temDivergencias = itens.some(i => i.divergencia_tipo !== 'Nenhuma');
   const isReadOnly = embarque?.status_recebimento && embarque.status_recebimento !== 'Pendente';
 
+  const handleReverterRecebimento = async () => {
+    setIsReverting(true);
+    try {
+      const resultado = await reverterRecepcaoEmbarque(base44, { pedido, embarque });
+      toast({
+        title: 'Recebimento revertido',
+        description:
+          resultado.movimentosRemovidos > 0
+            ? `${resultado.movimentosRemovidos} entrada(s) de stock removida(s). O embarque voltou a «Pendente» — pode receber de novo.`
+            : 'Embarque reposto como pendente. Não havia movimentos de stock ligados a este código.',
+        className: 'bg-green-100 text-green-800',
+      });
+      setShowRevertDialog(false);
+      onRevertido?.(resultado);
+      onClose();
+    } catch (error) {
+      toast({ title: 'Erro ao reverter', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsReverting(false);
+    }
+  };
+
   const iniciarRecepção = () => {
     setShowModoDialog(true);
   };
@@ -547,14 +572,69 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               </Button>
               )}
               {isReadOnly && (
-              <div className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl text-center">
-                <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">✓ Recebimento concluído</p>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Visualizando dados registrados</p>
+              <div className="space-y-3">
+                <div className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl text-center">
+                  <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">✓ Recebimento concluído</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Visualizando dados registrados</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowRevertDialog(true)}
+                  disabled={isReverting}
+                  className="w-full h-12 border-red-200 bg-red-50 text-red-800 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-900/40 rounded-xl font-semibold"
+                >
+                  {isReverting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      A reverter…
+                    </>
+                  ) : (
+                    <>
+                      <Undo2 className="w-4 h-4 mr-2" />
+                      Reverter recebimento
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-center text-muted-foreground px-2">
+                  Remove as entradas de stock deste embarque e deixa-o pendente para receber de novo (ex.: corrigir quantidade ou fator).
+                </p>
               </div>
               )}
           </div>
           </DialogContent>
           </Dialog>
+
+      <AlertDialog open={showRevertDialog} onOpenChange={setShowRevertDialog}>
+        <AlertDialogContent className="max-w-lg bg-card border-0 rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold text-foreground">Reverter recebimento?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-muted-foreground leading-relaxed">
+              O embarque <strong>{embarque?.codigo_exibicao || ''}</strong> voltará ao estado{' '}
+              <strong>Pendente</strong>. As entradas de stock ligadas a este recebimento serão removidas e o estoque
+              recalculado. Depois pode confirmar o recebimento outra vez com as quantidades corretas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <AlertDialogCancel
+              disabled={isReverting}
+              className="border-0 bg-muted text-foreground hover:bg-muted rounded-xl font-semibold"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleReverterRecebimento();
+              }}
+              disabled={isReverting}
+              className="bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold"
+            >
+              {isReverting ? 'A reverter…' : 'Sim, reverter'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialog de Divergência - PDV Style */}
       <Dialog open={showDivergenciaDialog} onOpenChange={setShowDivergenciaDialog}>

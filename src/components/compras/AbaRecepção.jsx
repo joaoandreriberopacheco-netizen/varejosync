@@ -375,6 +375,21 @@ export default function AbaRecepção({ pedido }) {
               recebimentoNumero: recebimentoNumero || `REC-${(selectedEmbarque?.id || '').slice(-6)}`,
             });
           }}
+          onRevertido={async () => {
+            const pedidoId = (pedidoAtual || pedido)?.id;
+            if (pedidoId) {
+              const [atualizado, embarquesAtualizados] = await Promise.all([
+                base44.entities.PedidoCompra.filter({ id: pedidoId }),
+                base44.entities.Embarque.filter({ pedido_compra_id: pedidoId }),
+              ]);
+              if (atualizado?.[0]) {
+                setPedidoAtual({ ...atualizado[0], _embarques: embarquesAtualizados || [] });
+              }
+            }
+            setSelectedEmbarque(null);
+            await loadMovimentos();
+            toast.success('Embarque pendente — pode receber de novo.');
+          }}
         />
       )}
 
