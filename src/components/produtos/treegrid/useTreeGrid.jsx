@@ -1,11 +1,16 @@
 import { useMemo } from 'react';
 import { getCatalogoComercialView, formatEstoqueApresentacao } from '@/lib/productUnits';
 import { compareTreeLabels, sortedTreeChildEntries } from '@/lib/treeSort';
+import {
+  aggregatePerformanceFromSkus,
+  compareCatalogSortValues,
+  compareProdutosForCatalogSort,
+  getGroupPerformanceSortValue,
+  parseCatalogSortOrder,
+} from '@/lib/catalogProdutoPerformance';
 
-function sortedSkus(skus) {
-  return [...(skus || [])].sort((a, b) =>
-    compareTreeLabels(a?.nome || '', b?.nome || '')
-  );
+function sortSkus(skus, sortOrder = 'az') {
+  return [...(skus || [])].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 }
 
 // ── IQR Mean: remove outliers e retorna média do miolo ───────────────────────
@@ -165,6 +170,7 @@ export function aggregateSkus(skus) {
     })
     .filter((v) => v > 0);
   const lastros = skus.map((p) => calcCusto(p) * (p.estoque_atual || 0));
+  const perf = aggregatePerformanceFromSkus(skus);
 
   return {
     precoMedio:      iqrMean(precos),
@@ -180,6 +186,7 @@ export function aggregateSkus(skus) {
     pesoTotal:       skus.reduce((s, p) => s + (p.peso_kg || 0), 0),
     count: skus.length,
     criticalCount: skus.filter(p => p.ativo && (p.estoque_atual || 0) <= 0).length,
+    ...perf,
   };
 }
 
@@ -277,7 +284,27 @@ function makeSkuRow(sku, level) {
   };
 }
 
-function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel) {
+function sortTreeChildEntries(nodeMap, sortOrder = 'az') {
+  const entries = sortedTreeChildEntries(nodeMap);
+  const parsed = parseCatalogSortOrder(sortOrder);
+  if (parsed.mode === 'name') {
+    return parsed.direction === 'desc'
+      ? [...entries].reverse()
+      : entries;
+  }
+  return [...entries].sort(([, nodeA], [, nodeB]) => {
+    const aggA = nodeA?._agg || aggregateSkus(collectSkus(nodeA));
+    const aggB = nodeB?._agg || aggregateSkus(collectSkus(nodeB));
+    const cmp = compareCatalogSortValues(
+      getGroupPerformanceSortValue(aggA, sortOrder),
+      getGroupPerformanceSortValue(aggB, sortOrder),
+      sortOrder,
+    );
+    if (cmp !== 0) return cmp;
+    return compareTreeLabels(nodeA?.label, nodeB?.label);
+  });
+}
+function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sortOrder = 'az') {
   const rows = [];
   const rawKey = parentKey ? `${parentKey}||${key}` : key;
   const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
@@ -296,7 +323,7 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel) {
   }
 
   if (!isRoot && isLeafGroup) {
-    for (const sku of sortedSkus(finalNode.skus)) {
+    for (const sku of sortSkus(finalNode.skus, sortOrder)) {
       rows.push(makeSkuRow(sku, rowLevel));
     }
     return rows;
@@ -315,9 +342,9 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel) {
   if (isLeafGroup || expandedKeys.has(nodeKey)) {
     const childMap = finalNode.children || {};
     if (Object.keys(childMap).length > 0) {
-      rows.push(...flattenTree(childMap, expandedKeys, nodeKey, rowLevel));
+      rows.push(...flattenTree(childMap, expandedKeys, nodeKey, rowLevel, sortOrder));
     }
-    for (const sku of sortedSkus(finalNode.skus)) {
+    for (const sku of sortSkus(finalNode.skus, sortOrder)) {
       rows.push(makeSkuRow(sku, rowLevel + 1));
     }
   }
@@ -326,30 +353,51 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel) {
 }
 
 // ── Flatten recursivo com deep collapsing ─────────────────────────────────────
-export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel = 0) {
+export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel = 0, sortOrder = 'az') {
   const rows = [];
+  const parsed = parseCatalogSortOrder(sortOrder);
 
   if (visualLevel === 0) {
     const rootEntries = [];
-    for (const sku of sortedSkus(treeNode._rootSkus)) {
+    for (const sku of sortSkus(treeNode._rootSkus, sortOrder)) {
       rootEntries.push({ sortLabel: sku.nome || '', kind: 'orphan', sku });
     }
-    for (const [key, node] of sortedTreeChildEntries(treeNode)) {
-      rootEntries.push({ sortLabel: key, kind: 'group', key, node });
+    for (const [key, node] of sortTreeChildEntries(treeNode, sortOrder)) {
+      const agg = node?._agg || aggregateSkus(collectSkus(node));
+      rootEntries.push({
+        sortLabel: parsed.mode === 'name' ? key : getGroupPerformanceSortValue(agg, sortOrder),
+        kind: 'group',
+        key,
+        node,
+      });
     }
-    rootEntries.sort((a, b) => compareTreeLabels(a.sortLabel, b.sortLabel));
+    if (parsed.mode === 'name') {
+      rootEntries.sort((a, b) =>
+        parsed.direction === 'desc'
+          ? compareTreeLabels(b.sortLabel, a.sortLabel)
+          : compareTreeLabels(a.sortLabel, b.sortLabel)
+      );
+    } else {
+      rootEntries.sort((a, b) => {
+        const cmp = compareCatalogSortValues(a.sortLabel, b.sortLabel, sortOrder);
+        if (cmp !== 0) return cmp;
+        const labelA = a.kind === 'orphan' ? a.sku?.nome : a.key;
+        const labelB = b.kind === 'orphan' ? b.sku?.nome : b.key;
+        return compareTreeLabels(labelA, labelB);
+      });
+    }
     for (const entry of rootEntries) {
       if (entry.kind === 'orphan') {
         rows.push(makeSkuRow(entry.sku, 1));
       } else {
-        rows.push(...flattenGroupBranch(entry.key, entry.node, expandedKeys, parentKey, visualLevel));
+        rows.push(...flattenGroupBranch(entry.key, entry.node, expandedKeys, parentKey, visualLevel, sortOrder));
       }
     }
     return rows;
   }
 
-  for (const [key, node] of sortedTreeChildEntries(treeNode)) {
-    rows.push(...flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel));
+  for (const [key, node] of sortTreeChildEntries(treeNode, sortOrder)) {
+    rows.push(...flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sortOrder));
   }
 
   return rows;
@@ -398,6 +446,10 @@ function catalogTreeSignature(produtos) {
         p?.preco_custo_calculado ?? '',
         p?.preco_venda_padrao ?? '',
         p?.ativo ? 1 : 0,
+        p?.abcd ?? '',
+        p?.iep_score ?? '',
+        p?.iep_score_nivel_1 ?? '',
+        p?.iep_score_nivel_2 ?? '',
       ].join('|')
     )
     .sort()

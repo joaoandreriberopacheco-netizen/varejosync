@@ -36,6 +36,13 @@ const KNOWN_CATALOG_PRODUTO_COLUMNS = new Set([
   'show_comercial',
   'show_logistica',
   'inventario_valorizado',
+  'abcd',
+  'iep_score',
+  'iep_score_nivel_1',
+  'iep_score_nivel_2',
+  'iep_score_nivel_3',
+  'iep_score_nivel_4',
+  'iep_score_nivel_5',
 ]);
 
 export function normalizeCatalogProdutoColumns(raw) {
