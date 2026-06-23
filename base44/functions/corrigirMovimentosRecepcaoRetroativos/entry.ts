@@ -16,7 +16,14 @@ function parseEmbarquesRegistrados(pedido: Record<string, unknown>): unknown[] {
   return [];
 }
 
-function sumReceivedByProduct(embarques: unknown[]): Record<string, number> {
+function fatorProdutoPedido(pedido: Record<string, unknown>, produtoId: string): number {
+  const itens = Array.isArray(pedido?.itens) ? (pedido.itens as Record<string, unknown>[]) : [];
+  const hit = itens.find((it) => String(it?.produto_id) === produtoId);
+  const f = Number(hit?.fator_conversao ?? hit?.fator_aplicado ?? 1) || 1;
+  return f > 0 ? f : 1;
+}
+
+function sumReceivedByProduct(embarques: unknown[], pedido?: Record<string, unknown>): Record<string, number> {
   const acc: Record<string, number> = {};
   for (const emb of embarques) {
     const e = emb as Record<string, unknown>;
@@ -31,7 +38,8 @@ function sumReceivedByProduct(embarques: unknown[]): Record<string, number> {
       if (q <= 0) continue;
       const pid = String(item?.produto_id_recebido_diferente || item?.produto_id || '');
       if (!pid) continue;
-      acc[pid] = roundQty((acc[pid] || 0) + q);
+      const fator = pedido ? fatorProdutoPedido(pedido, pid) : 1;
+      acc[pid] = roundQty((acc[pid] || 0) + q * fator);
     }
   }
   return acc;
@@ -116,7 +124,7 @@ function buildDeltas(
 
 async function computeDeltasPedido(svc: any, pedido: Record<string, unknown>) {
   const embarques = await loadEmbarquesForPedido(svc, pedido);
-  const recebido = sumReceivedByProduct(embarques);
+  const recebido = sumReceivedByProduct(embarques, pedido);
   const movimentado = await sumMovedByProduct(svc, String(pedido.id));
   const deltas = buildDeltas(recebido, movimentado);
   return { embarques, recebido, movimentado, deltas };
@@ -126,6 +134,11 @@ function nomeProdutoPedido(pedido: Record<string, unknown>, produtoId: string): 
   const itens = Array.isArray(pedido?.itens) ? (pedido.itens as Record<string, unknown>[]) : [];
   const hit = itens.find((it) => String(it?.produto_id) === produtoId);
   return String(hit?.produto_nome || '');
+}
+
+function linhaProdutoPedido(pedido: Record<string, unknown>, produtoId: string): Record<string, unknown> | undefined {
+  const itens = Array.isArray(pedido?.itens) ? (pedido.itens as Record<string, unknown>[]) : [];
+  return itens.find((it) => String(it?.produto_id) === produtoId);
 }
 
 async function recalcularEstoqueLocal(svc: any, produtoId: string) {
@@ -281,12 +294,18 @@ Deno.serve(async (req) => {
         const obsBase = `Correção retroativa recepção→estoque (admin ${user.email || ''}); reconcilia embarques vs MovimentacaoEstoque Compra.`;
 
         for (const d of deltas) {
+          const linha = linhaProdutoPedido(pedido, d.produto_id);
+          const fator = fatorProdutoPedido(pedido, d.produto_id);
+          const unidade = String(linha?.unidade_medida || linha?.unidade_sigla || '');
           await svc.entities.MovimentacaoEstoque.create({
             produto_id: d.produto_id,
             produto_nome: nomeProdutoPedido(pedido, d.produto_id) || 'Produto',
             tipo: 'Entrada',
             motivo: 'Compra',
             quantidade: d.faltante,
+            quantidade_base: d.faltante,
+            ...(fator > 1 ? { fator_conversao: fator } : {}),
+            ...(unidade ? { unidade_medida: unidade, unidade_sigla: unidade } : {}),
             referencia_tipo: 'PedidoCompra',
             referencia_id: pedido.id,
             referencia_numero: pedido.numero,

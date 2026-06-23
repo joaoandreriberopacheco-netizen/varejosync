@@ -276,6 +276,7 @@ export default function RecepcionarEmbarque({ isOpen, onClose, embarque, pedido,
               pedido,
               embarque,
               purchaseItem: linhaPedido || item,
+              receiptItem: item,
             })
           );
           await invokeRecalcularEstoqueProduto(base44, produtoId);

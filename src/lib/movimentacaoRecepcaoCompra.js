@@ -7,7 +7,31 @@
  */
 
 import { invokeRecalcularEstoqueProduto } from './p38StockRecalc.js';
-import { getCustoCompraLiquidoFator1 } from './productUnits.js';
+import { calculateBaseQuantity, getCustoCompraLiquidoFator1 } from './productUnits.js';
+
+const round6 = (n) => Math.round((Number(n) || 0) * 1_000_000) / 1_000_000;
+
+/** Fator da linha do pedido/embarque (ex.: 200 para CX de estribo). */
+export function resolveFatorRecepcaoCompra(purchaseItem = {}, receiptItem = {}) {
+  const fator = Number(
+    purchaseItem?.fator_conversao
+      ?? purchaseItem?.fator_aplicado
+      ?? receiptItem?.fator_conversao
+      ?? receiptItem?.fator_aplicado
+      ?? 1,
+  ) || 1;
+  return fator > 0 ? fator : 1;
+}
+
+function resolveUnidadeRecepcaoCompra(purchaseItem = {}, receiptItem = {}) {
+  return (
+    purchaseItem?.unidade_medida
+    || purchaseItem?.unidade_sigla
+    || receiptItem?.unidade_medida
+    || receiptItem?.unidade_sigla
+    || ''
+  );
+}
 
 /** Compara código do embarque com observações/documento (Base44 pode gravar maiúsculas diferentes). */
 export function movimentoCombinaCodigoEmbarque(mov, codigoExibicao) {
@@ -22,10 +46,12 @@ export function movimentoCombinaCodigoEmbarque(mov, codigoExibicao) {
 export function buildMovimentacaoRecepcaoCompraPayload({
   produtoId,
   produtoNome,
+  /** Quantidade comercial (ex.: 30 CX) — convertida para base antes de gravar em `quantidade`. */
   quantidade,
   pedido,
   embarque,
   purchaseItem,
+  receiptItem,
 }) {
   const refTipo = 'PedidoCompra';
   const refId = pedido?.id;
@@ -37,8 +63,13 @@ export function buildMovimentacaoRecepcaoCompraPayload({
         ? String(embarque.numero)
         : '';
 
+  const fator = resolveFatorRecepcaoCompra(purchaseItem, receiptItem);
+  const qtyComercial = Number(quantidade) || 0;
+  const qtyBase = round6(calculateBaseQuantity(qtyComercial, fator));
+  const unidade = resolveUnidadeRecepcaoCompra(purchaseItem, receiptItem);
+
   const observacoes = embCodigo
-    ? `Recepção pedido ${refNumero} · embarque ${embCodigo}`
+    ? `Recepção pedido ${refNumero} · embarque ${embCodigo}${unidade && fator > 1 ? ` · ${qtyComercial} ${unidade}` : ''}`
     : `Recepção pedido ${refNumero}`;
   const custoLiquido = getCustoCompraLiquidoFator1(purchaseItem);
 
@@ -47,7 +78,12 @@ export function buildMovimentacaoRecepcaoCompraPayload({
     produto_nome: produtoNome,
     tipo: 'Entrada',
     motivo: 'Compra',
-    quantidade,
+    quantidade: qtyBase,
+    quantidade_base: qtyBase,
+    quantidade_comercial: qtyComercial,
+    fator_conversao: fator,
+    ...(unidade ? { unidade_medida: unidade, unidade_sigla: unidade } : {}),
+    ...(purchaseItem?.produto_unidade_id ? { produto_unidade_id: purchaseItem.produto_unidade_id } : {}),
     ...(custoLiquido > 0 ? { custo_unitario: custoLiquido } : {}),
     referencia_tipo: refTipo,
     referencia_id: refId,
@@ -93,6 +129,10 @@ export async function criarMovimentosStockRecepcaoEmFalta(base44, { pedido, emba
 
     if (jaExiste) continue;
 
+    const purchaseItem = (Array.isArray(pedido?.itens) ? pedido.itens : []).find(
+      (pi) => String(pi?.produto_id) === String(item?.produto_id),
+    ) || item;
+
     await base44.entities.MovimentacaoEstoque.create(
       buildMovimentacaoRecepcaoCompraPayload({
         produtoId,
@@ -100,7 +140,8 @@ export async function criarMovimentosStockRecepcaoEmFalta(base44, { pedido, emba
         quantidade: qRec,
         pedido,
         embarque,
-        purchaseItem: (Array.isArray(pedido?.itens) ? pedido.itens : []).find((pi) => String(pi?.produto_id) === String(item?.produto_id)) || item,
+        purchaseItem,
+        receiptItem: item,
       })
     );
     await invokeRecalcularEstoqueProduto(base44, produtoId);
