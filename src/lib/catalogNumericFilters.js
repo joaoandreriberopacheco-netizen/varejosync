@@ -21,6 +21,9 @@ export const CATALOG_NUMERIC_METRIC_FIELDS = [
   { value: 'preco_venda', label: 'Preço de venda' },
   { value: 'valor_compra', label: 'Valor de compra' },
   { value: 'custo_total', label: 'Custo total' },
+  { value: 'iep_score', label: 'Score IEP' },
+  { value: 'iep_score_nivel_1', label: 'Média nível 1' },
+  { value: 'iep_score_nivel_2', label: 'Média nível 2' },
 ];
 
 export const CATALOG_NUMERIC_METRIC_LABELS = Object.fromEntries(
@@ -101,6 +104,13 @@ export function getProdutoNumericMetricValue(produto, campo) {
       return cat.valorCompraNaEmbalagem;
     case 'custo_total':
       return cat.custoNaEmbalagem;
+    case 'iep_score':
+    case 'iep_score_nivel_1':
+    case 'iep_score_nivel_2':
+    case 'iep_score_nivel_3':
+    case 'iep_score_nivel_4':
+    case 'iep_score_nivel_5':
+      return Number(produto?.[campo]) || 0;
     default:
       return null;
   }

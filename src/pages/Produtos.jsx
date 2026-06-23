@@ -38,6 +38,7 @@ import {
   loadCatalogProdutoColumns,
   saveCatalogProdutoColumns,
 } from '@/lib/catalogProdutoColumnsStorage';
+import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import { useDesktopContent } from '@/hooks/use-breakpoint';
 import {
   useProdutosListQuery,
@@ -1046,18 +1047,7 @@ function ProdutosPageContent() {
   const filteredProdutos = useMemo(() => {
     let filtered = filterProdutos(produtos, filters);
 
-    filtered = [...filtered].sort((a, b) => {
-      // Default: sort by created_date descending (newest first)
-      if (!sortOrder || sortOrder === 'default') {
-        return new Date(b.created_date || 0) - new Date(a.created_date || 0);
-      }
-      if (sortOrder === 'az') {
-        return (a.nome || '').localeCompare(b.nome || '');
-      } else if (sortOrder === 'za') {
-        return (b.nome || '').localeCompare(a.nome || '');
-      }
-      return 0;
-    });
+    filtered = [...filtered].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 
     return filtered;
   }, [produtos, filters, sortOrder]);
@@ -1125,7 +1115,7 @@ function ProdutosPageContent() {
 
               {isDesktop && viewMode === 'dinamica' && (
                 <div className="flex flex-col w-full h-full min-h-0">
-                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} />
+                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} />
                 </div>
               )}
 
