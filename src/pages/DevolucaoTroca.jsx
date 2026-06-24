@@ -10,6 +10,14 @@ import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { createPageUrl } from '@/components/utils';
 import { openPrintWindowOrShareHtml } from '@/lib/mobilePrintAndShare';
+import SelecionarTrocaStep from '@/components/vendas/SelecionarTrocaStep';
+import {
+  calcularCreditoDevolucao,
+  calcularLinhaCreditoDevolucao,
+  calcularPrecoUnitarioCredito,
+  formatValorBRL,
+  pedidoItemKey,
+} from '@/lib/creditoDevolucaoTroca';
 
 function tituloModulo(tipo) {
   if (tipo === 'Troca') return 'Troca de Produto';
@@ -70,7 +78,7 @@ function BuscarPedidoStep({ onFound }) {
 // Step 2: Selecionar itens, forma de reembolso, fotos
 function SelecionarItensStep({ pedido, tipo, onConfirm }) {
   const [qtds, setQtds] = useState(
-    Object.fromEntries((pedido.itens || []).map(i => [i.produto_id + '_' + i.produto_nome, 0]))
+    Object.fromEntries((pedido.itens || []).map((i) => [pedidoItemKey(i), 0]))
   );
   const [focusedKey, setFocusedKey] = useState(null);
   const [formaReembolso, setFormaReembolso] = useState('Vale Troca');
@@ -81,17 +89,9 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
   const fileInputRef = useRef(null);
   const { toast } = useToast();
 
-  const totalDevolvido = (pedido.itens || []).reduce((sum, i) => {
-    const key = i.produto_id + '_' + i.produto_nome;
-    return sum + (qtds[key] || 0) * (i.preco_unitario_praticado || 0);
-  }, 0);
+  const totalDevolvido = calcularCreditoDevolucao(pedido, qtds);
 
-  const itensSelecionados = (pedido.itens || []).filter(i => {
-    const key = i.produto_id + '_' + i.produto_nome;
-    return (qtds[key] || 0) > 0;
-  });
-
-  const formatValor = v => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  const itensSelecionados = (pedido.itens || []).filter((i) => (qtds[pedidoItemKey(i)] || 0) > 0);
 
   const handleAdicionarFotos = async (files) => {
     const novasFotos = Array.from(files).slice(0, 5 - fotos.length);
@@ -150,7 +150,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
             <div className="text-base font-semibold text-foreground">{pedido.numero}</div>
             <div className="text-sm text-muted-foreground">{pedido.cliente_nome}</div>
           </div>
-          <div className="text-base font-bold text-foreground/90">{formatValor(pedido.valor_total)}</div>
+          <div className="text-base font-bold text-foreground/90">{formatValorBRL(pedido.valor_total)}</div>
         </div>
       </div>
 
@@ -161,8 +161,11 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
         </div>
         <P38MobileLineList allViewports>
           {(pedido.itens || []).map((item, index) => {
-            const key = item.produto_id + '_' + item.produto_nome;
+            const key = pedidoItemKey(item);
             const qtd = qtds[key] || 0;
+            const unitCredito = calcularPrecoUnitarioCredito(item, pedido);
+            const unitLista = Number(item.preco_unitario_praticado) || 0;
+            const temDesconto = unitCredito < unitLista - 0.009;
             return (
               <P38MobileLine
                 key={key}
@@ -173,7 +176,17 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium">{item.produto_nome}</div>
                   <div className="text-xs text-muted-foreground mt-0.5">
-                    {item.quantidade}x · {formatValor(item.preco_unitario_praticado)}/un
+                    {item.quantidade}x ·{' '}
+                    {temDesconto ? (
+                      <>
+                        <span className="line-through">{formatValorBRL(unitLista)}</span>{' '}
+                        <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                          {formatValorBRL(unitCredito)}/un
+                        </span>
+                      </>
+                    ) : (
+                      <>{formatValorBRL(unitLista)}/un</>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
@@ -308,7 +321,7 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
       <div className="fixed left-0 right-0 z-[55] space-y-3 border-t border-border/40 bg-card p-4 dark:border-border/40 dark:bg-background p38-bottom-dock">
         <div className="flex justify-between items-center max-w-lg mx-auto">
           <span className="text-sm text-muted-foreground">Total a reembolsar</span>
-          <span className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">{formatValor(totalDevolvido)}</span>
+          <span className="text-2xl font-bold text-red-600 dark:text-red-400 font-glacial">{formatValorBRL(totalDevolvido)}</span>
         </div>
         <Button
           disabled={itensSelecionados.length === 0 || totalDevolvido === 0}
@@ -324,31 +337,39 @@ function SelecionarItensStep({ pedido, tipo, onConfirm }) {
 
 // Step 3: Comprovante
 function ComprovanteStep({ resultado, onClose }) {
-  const formatValor = v => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  const isTroca = resultado.tipo === 'Troca';
+  const titulo = isTroca ? 'Comprovante de Troca' : 'Comprovante de Devolução';
 
   const imprimir = async () => {
-    const html = `<html><head><title>Comprovante de Devolução</title>
+    const html = `<html><head><title>${titulo}</title>
       <style>body{font-family:monospace;font-size:13px;padding:20px;max-width:320px;margin:0 auto}
       .center{text-align:center}.dashed{border-top:2px dashed #aaa;margin:12px 0}.big{font-size:20px;font-weight:bold}.row{display:flex;justify-content:space-between;margin:6px 0}
       .alert{background:#f0fdf4;border:1px solid #86efac;padding:10px;border-radius:6px;margin:8px 0;text-align:center}
       </style></head><body>
-      <div class="center"><b>VAREJOSYNC</b><br/><small>Comprovante de Devolução</small></div>
+      <div class="center"><b>VAREJOSYNC</b><br/><small>${titulo}</small></div>
       <div class="dashed"></div>
       <div class="row"><span>Nº:</span><b>${resultado.numero}</b></div>
       <div class="row"><span>Pedido Origem:</span><b>${resultado.pedidoNumero}</b></div>
       <div class="row"><span>Cliente:</span><span>${resultado.clienteNome}</span></div>
       <div class="row"><span>Data/Hora:</span><span>${format(new Date(), 'dd/MM/yyyy HH:mm')}</span></div>
       <div class="dashed"></div>
+      ${isTroca ? `
+      <div class="row"><span>Crédito devolução:</span><b>R$ ${(resultado.creditoDevolucao || 0).toFixed(2).replace('.', ',')}</b></div>
+      <div class="row"><span>Novos produtos:</span><b>R$ ${(resultado.valorSubstitutos || 0).toFixed(2).replace('.', ',')}</b></div>
+      <div class="row big"><span>Saldo:</span><span>R$ ${(resultado.saldoLiquido || 0).toFixed(2).replace('.', ',')}</span></div>
+      ` : `
       <div class="row big"><span>VALOR:</span><span>-R$ ${(resultado.valorTotal || 0).toFixed(2).replace('.', ',')}</span></div>
       <div class="row"><span>Reembolso:</span><b>${resultado.formaReembolso}</b></div>
+      `}
       ${resultado.valeCode ? `
         <div class="dashed"></div>
         <div class="alert">
           <b>VALE TROCA: ${resultado.valeCode}</b><br/>
-          <small>Saldo: R$ ${(resultado.valorTotal || 0).toFixed(2).replace('.', ',')}</small><br/>
+          <small>Saldo: R$ ${(resultado.valeValor || resultado.valorTotal || 0).toFixed(2).replace('.', ',')}</small><br/>
           <small>Apresente este código na próxima compra</small><br/>
           <small>O código permanece válido enquanto houver saldo</small>
         </div>` : ''}
+      ${resultado.diferencaPagar > 0 ? `<div class="row"><span>A pagar no caixa:</span><b>R$ ${resultado.diferencaPagar.toFixed(2).replace('.', ',')}</b></div>` : ''}
       <div class="dashed"></div>
       ${resultado.motivo ? `<p><small>Motivo: ${resultado.motivo}</small></p>` : ''}
       <div class="center"><small>Não é documento fiscal</small></div>
@@ -371,7 +392,7 @@ function ComprovanteStep({ resultado, onClose }) {
       <div className="w-full bg-card rounded-2xl shadow-sm overflow-hidden" style={{ fontFamily: 'Courier New, monospace' }}>
         <div className="px-5 py-4 text-center border-b-2 border-dashed border-border/40">
           <div className="text-sm font-bold text-foreground">VAREJOSYNC</div>
-          <div className="text-xs text-muted-foreground">Comprovante de Devolução</div>
+          <div className="text-xs text-muted-foreground">{titulo}</div>
         </div>
         <div className="px-5 py-4 space-y-3">
           {[
@@ -387,26 +408,63 @@ function ComprovanteStep({ resultado, onClose }) {
           ))}
         </div>
         <div className="px-5 py-4 border-t-2 border-b-2 border-dashed border-border/40 space-y-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Valor reembolsado:</span>
-            <span className="text-xl font-bold text-red-600 dark:text-red-400 font-glacial">−{formatValor(resultado.valorTotal)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Forma:</span>
-            <span className="font-semibold text-foreground">{resultado.formaReembolso}</span>
-          </div>
+          {isTroca ? (
+            <>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Crédito devolução:</span>
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                  {formatValorBRL(resultado.creditoDevolucao)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Novos produtos:</span>
+                <span className="font-semibold text-foreground">
+                  −{formatValorBRL(resultado.valorSubstitutos)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Saldo:</span>
+                <span className="text-xl font-bold font-glacial text-foreground">
+                  {formatValorBRL(resultado.saldoLiquido)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Valor reembolsado:</span>
+                <span className="text-xl font-bold text-red-600 dark:text-red-400 font-glacial">
+                  −{formatValorBRL(resultado.valorTotal)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Forma:</span>
+                <span className="font-semibold text-foreground">{resultado.formaReembolso}</span>
+              </div>
+            </>
+          )}
         </div>
 
         {resultado.valeCode && (
           <div className="px-5 py-4 bg-emerald-50 dark:bg-emerald-900/20 space-y-2">
             <p className="text-xs text-[#4A5D23] dark:text-[#a4ce33] text-center font-medium">Vale Troca Gerado</p>
             <p className="text-2xl font-bold text-[#4A5D23] dark:text-[#a4ce33] font-mono text-center">{resultado.valeCode}</p>
-            <p className="text-xs text-muted-foreground text-center">Saldo: {formatValor(resultado.valorTotal)}</p>
+            <p className="text-xs text-muted-foreground text-center">
+              Saldo: {formatValorBRL(resultado.valeValor ?? resultado.valorTotal)}
+            </p>
             <div className="bg-emerald-100/60 dark:bg-emerald-900/30 rounded-xl p-3 mt-1">
               <p className="text-xs text-[#4A5D23] dark:text-[#a4ce33] text-center leading-relaxed">
                 📌 Se o cliente usar apenas parte do saldo, o mesmo código continuará válido com o saldo restante.
               </p>
             </div>
+          </div>
+        )}
+
+        {resultado.diferencaPagar > 0 && (
+          <div className="px-5 py-3 border-t border-border/40 bg-amber-50 dark:bg-amber-900/20">
+            <p className="text-sm text-amber-900 dark:text-amber-200 text-center">
+              Cliente deve pagar <strong>{formatValorBRL(resultado.diferencaPagar)}</strong> no caixa.
+            </p>
           </div>
         )}
 
@@ -463,14 +521,15 @@ export default function DevolucaoTrocaPage() {
     const numeroDev = `DT-${String(nextNum).padStart(5, '0')}`;
 
     const itensDevolvidos = itensSelecionados.map(item => {
-      const key = item.produto_id + '_' + item.produto_nome;
+      const key = pedidoItemKey(item);
       const qtd = qtds[key] || 0;
+      const linha = calcularLinhaCreditoDevolucao(item, pedido, qtd);
       return {
         produto_id: item.produto_id,
         produto_nome: item.produto_nome,
         quantidade_devolvida: qtd,
-        preco_unitario: item.preco_unitario_praticado || 0,
-        total: qtd * (item.preco_unitario_praticado || 0),
+        preco_unitario: linha.unitCredito,
+        total: linha.total,
       };
     });
 
@@ -607,6 +666,181 @@ export default function DevolucaoTrocaPage() {
     setProcessando(false);
   };
 
+  const handleConfirmTroca = async ({
+    itensSelecionados,
+    qtds,
+    substitutos,
+    creditoDevolucao,
+    valorSubstitutos,
+    saldoLiquido,
+    saldoVale,
+    diferencaPagar,
+    motivo,
+    fotosUrls,
+  }) => {
+    setProcessando(true);
+    try {
+      const user = await base44.auth.me();
+      const todos = await base44.entities.DevolucaoTroca.list();
+      const nextNum =
+        (todos.length > 0
+          ? Math.max(...todos.map((d) => parseInt(d.numero?.split('-')[1] || 0, 10) || 0))
+          : 0) + 1;
+      const numeroDev = `DT-${String(nextNum).padStart(5, '0')}`;
+
+      const itensDevolvidos = itensSelecionados.map((item) => {
+        const key = pedidoItemKey(item);
+        const qtd = qtds[key] || 0;
+        const linha = calcularLinhaCreditoDevolucao(item, pedido, qtd);
+        return {
+          produto_id: item.produto_id,
+          produto_nome: item.produto_nome,
+          quantidade_devolvida: qtd,
+          preco_unitario: linha.unitCredito,
+          total: linha.total,
+        };
+      });
+
+      const itensSubstitutos = substitutos.map((sub) => ({
+        produto_id: sub.produto_id,
+        produto_nome: sub.produto_nome,
+        quantidade: sub.quantidade,
+        preco_unitario: sub.preco_unitario,
+        total: sub.total,
+      }));
+
+      let valeId = null;
+      let valeCodigo = null;
+      if (saldoVale > 0) {
+        const todosVales = await base44.entities.ValeCompra.list();
+        const nextVale =
+          (todosVales.length > 0
+            ? Math.max(...todosVales.map((v) => parseInt(v.codigo?.split('-')[1] || 0, 10) || 0))
+            : 0) + 1;
+        valeCodigo = `VC-${String(nextVale).padStart(5, '0')}`;
+        const vale = await base44.entities.ValeCompra.create({
+          codigo: valeCodigo,
+          valor_original: saldoVale,
+          valor_disponivel: saldoVale,
+          cliente_id: pedido.cliente_id,
+          cliente_nome: pedido.cliente_nome,
+          origem_tipo: 'Troca',
+          pedido_origem_id: pedido.id,
+          pedido_origem_numero: pedido.numero,
+          status: 'Ativo',
+        });
+        valeId = vale.id;
+      }
+
+      const formaReembolso = saldoVale > 0 ? 'Vale Troca' : diferencaPagar > 0 ? 'Dinheiro' : 'Vale Troca';
+
+      await base44.entities.DevolucaoTroca.create({
+        numero: numeroDev,
+        tipo: 'Troca',
+        pedido_origem_id: pedido.id,
+        pedido_origem_numero: pedido.numero,
+        cliente_id: pedido.cliente_id,
+        cliente_nome: pedido.cliente_nome,
+        itens_devolvidos: itensDevolvidos,
+        itens_substitutos: itensSubstitutos,
+        valor_total_devolvido: creditoDevolucao,
+        valor_substitutos: valorSubstitutos,
+        saldo_liquido: saldoLiquido,
+        forma_reembolso: formaReembolso,
+        vale_compra_id: valeId,
+        vale_compra_codigo: valeCodigo,
+        aguarda_substituto: diferencaPagar > 0,
+        motivo,
+        observacoes:
+          diferencaPagar > 0
+            ? `Troca no caixa — diferença a pagar: R$ ${diferencaPagar.toFixed(2)}`
+            : saldoVale > 0
+              ? `Vale troca gerado: ${valeCodigo}`
+              : 'Troca sem saldo',
+        fotos_mercadoria: fotosUrls || [],
+        operador_id: user?.id,
+        operador_nome: user?.full_name,
+        status: 'Processada',
+      });
+
+      for (const item of itensDevolvidos) {
+        const produto = await base44.entities.Produto.get(item.produto_id);
+        if (produto) {
+          await base44.entities.Produto.update(item.produto_id, {
+            estoque_atual: (produto.estoque_atual || 0) + item.quantidade_devolvida,
+          });
+          await base44.entities.MovimentacaoEstoque.create({
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            tipo: 'Entrada',
+            motivo: 'Troca',
+            quantidade: item.quantidade_devolvida,
+            custo_unitario: item.preco_unitario,
+            referencia_tipo: 'PedidoVenda',
+            referencia_id: pedido.id,
+            referencia_numero: pedido.numero,
+            ...(pedido.cliente_nome
+              ? {
+                  cliente_nome: pedido.cliente_nome,
+                  referencia_cliente_nome: pedido.cliente_nome,
+                  terceiro_nome: pedido.cliente_nome,
+                }
+              : {}),
+            usuario_responsavel: user?.full_name,
+          });
+        }
+      }
+
+      for (const item of itensSubstitutos) {
+        const produto = await base44.entities.Produto.get(item.produto_id);
+        if (produto) {
+          await base44.entities.Produto.update(item.produto_id, {
+            estoque_atual: Math.max(0, (produto.estoque_atual || 0) - item.quantidade),
+          });
+          await base44.entities.MovimentacaoEstoque.create({
+            produto_id: item.produto_id,
+            produto_nome: item.produto_nome,
+            tipo: 'Saída',
+            motivo: 'Troca',
+            quantidade: item.quantidade,
+            custo_unitario: item.preco_unitario,
+            referencia_tipo: 'PedidoVenda',
+            referencia_id: pedido.id,
+            referencia_numero: pedido.numero,
+            ...(pedido.cliente_nome
+              ? {
+                  cliente_nome: pedido.cliente_nome,
+                  referencia_cliente_nome: pedido.cliente_nome,
+                  terceiro_nome: pedido.cliente_nome,
+                }
+              : {}),
+            usuario_responsavel: user?.full_name,
+          });
+        }
+      }
+
+      setResultado({
+        numero: numeroDev,
+        pedidoNumero: pedido.numero,
+        clienteNome: pedido.cliente_nome,
+        valorTotal: creditoDevolucao,
+        creditoDevolucao,
+        valorSubstitutos,
+        saldoLiquido,
+        diferencaPagar,
+        valeValor: saldoVale,
+        formaReembolso,
+        valeCode: valeCodigo,
+        motivo,
+        tipo: 'Troca',
+      });
+      setStep('comprovante');
+    } catch (error) {
+      toast({ title: 'Erro ao processar troca', description: error.message, variant: 'destructive' });
+    }
+    setProcessando(false);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -632,7 +866,12 @@ export default function DevolucaoTrocaPage() {
           </div>
         )}
         {step === 'buscar' && <BuscarPedidoStep onFound={p => { setPedido(p); setStep('itens'); }} />}
-        {step === 'itens' && pedido && <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} />}
+        {step === 'itens' && pedido && tipo === 'Troca' && (
+          <SelecionarTrocaStep pedido={pedido} onConfirm={handleConfirmTroca} />
+        )}
+        {step === 'itens' && pedido && tipo !== 'Troca' && (
+          <SelecionarItensStep pedido={pedido} tipo={tipo} onConfirm={handleConfirm} />
+        )}
         {step === 'comprovante' && resultado && <ComprovanteStep resultado={resultado} onClose={handleClose} />}
       </div>
     </div>
