@@ -4,6 +4,7 @@ import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/produ
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { lineValorCustoTotal } from '@/lib/catalogStockTotals';
 import { prepareCatalogStockReportDocument } from './prepareCatalogStockReportRows';
+import { aggregateEstoqueDisplay, collectSkus } from '@/components/produtos/treegrid/useTreeGrid';
 
 const PDF_FONT_BOLD = 'bold';
 const PDF_FONT_NORMAL = 'normal';
@@ -12,6 +13,7 @@ const ENXUTO_LINE_W = 0.12;
 const ENXUTO = {
   black: [0, 0, 0] as [number, number, number],
   muted: [72, 72, 72] as [number, number, number],
+  faint: [130, 130, 130] as [number, number, number],
   line: [110, 110, 110] as [number, number, number],
 };
 
@@ -23,8 +25,12 @@ const FONT = {
   footer: 9,
 };
 
+const INDENT = {
+  /** Recuo por nível hierárquico (pais e solteiros). */
+  nivelMm: 4,
+};
+
 const DESC_LINE_LEAD = 4.15;
-/** Altura reservada para cabeçalho de colunas (repetido em cada página). */
 const COL_HDR_BLOCK = 7.5;
 const TABLE_TOP_CONTINUATION = 14;
 
@@ -45,16 +51,54 @@ function estoqueLinha(produto) {
   return `${qtd} ${un}`;
 }
 
+function groupEstoqueText(row: Record<string, unknown>) {
+  const skus = row.node ? collectSkus(row.node as never) : [];
+  const disp = aggregateEstoqueDisplay(skus);
+  if (disp.mode === 'display' || disp.mode === 'base') {
+    return `${fmtN(disp.quantidade)} ${disp.sigla}`;
+  }
+  if (disp.quantidade > 0) return fmtN(disp.quantidade);
+  const total = Number(row.estoqueTotal);
+  return total > 0 ? fmtN(total) : '—';
+}
+
+function familySummaryValues(row: Record<string, unknown>) {
+  const valorCompra = Number(row.valorCompraMedio) || 0;
+  const custo = Number(row.custoMedio) || 0;
+  const venda = Number(row.precoMedio) || 0;
+  const lastro = Number(row.lastroTotal) || 0;
+  return {
+    vlCompra: valorCompra > 0 ? `~${moedaSemSimbolo(valorCompra)}` : '—',
+    custo: custo > 0 ? `~${moedaSemSimbolo(custo)}` : '—',
+    venda: venda > 0 ? `~${moedaSemSimbolo(venda)}` : '—',
+    invent: lastro > 0 ? `~${moedaSemSimbolo(lastro)}` : '—',
+  };
+}
+
 function splitDescriptionLines(
   doc: jsPDF,
   pdfFontFamily: string,
   text: string,
   maxW: number,
+  descBold = false,
 ) {
-  doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+  doc.setFont(pdfFontFamily, descBold ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
   doc.setFontSize(FONT.row);
   const lines = doc.splitTextToSize(safe(text), maxW) as string[];
   return lines.length ? lines : [''];
+}
+
+/** Recuo dos pais por profundidade (nível 1 = 4 mm, nível 2 = 8 mm, …). */
+function parentDescIndent(level = 1) {
+  return (level ?? 1) * INDENT.nivelMm;
+}
+
+/** SKU filho de grupo: coluna fixa; solteiro: recuo de 1.º nível. */
+function skuDescIndent(row: { level?: number }, prev: { type?: string; level?: number } | undefined) {
+  const level = row.level ?? 1;
+  const isChild = prev?.type === 'group' && level > (prev.level ?? 0);
+  if (isChild) return 0;
+  return INDENT.nivelMm;
 }
 
 function produtoLastro(produto, rowLastro?: number) {
@@ -163,34 +207,44 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     }
   };
 
-  const descMaxW = () => Math.max(20, X.vlCompra - X.descricao - 6);
+  const descMaxW = (descX: number) => Math.max(16, X.vlCompra - descX - 6);
 
   const drawValueColumns = (
     baselineY: number,
     values: { vlCompra: string; custo: string; venda: string; invent: string },
+    { muted = false } = {},
   ) => {
-    doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+    doc.setFont(pdfFontFamily, muted ? PDF_FONT_NORMAL : PDF_FONT_BOLD);
     doc.setFontSize(FONT.row);
-    doc.setTextColor(...ENXUTO.black);
+    doc.setTextColor(...(muted ? ENXUTO.faint : ENXUTO.black));
     doc.text(values.vlCompra, X.vlCompra, baselineY, { align: 'right' });
     doc.text(values.custo, X.custo, baselineY, { align: 'right' });
     doc.text(values.venda, X.venda, baselineY, { align: 'right' });
     doc.text(values.invent, X.invent, baselineY, { align: 'right' });
   };
 
-  const drawSkuRow = (
+  const drawReportRow = (
     y0: number,
     {
-      estoqueText,
+      kind,
+      estoqueText = '',
       descricao,
+      descIndent = 0,
       values,
+      muted = false,
+      descBold = false,
     }: {
-      estoqueText: string;
+      kind: 'family' | 'sku';
+      estoqueText?: string;
       descricao: string;
-      values: { vlCompra: string; custo: string; venda: string; invent: string };
+      descIndent?: number;
+      values?: { vlCompra: string; custo: string; venda: string; invent: string };
+      muted?: boolean;
+      descBold?: boolean;
     },
   ) => {
-    const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW());
+    const descX = X.descricao + descIndent;
+    const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW(descX), descBold);
     const lineCount = descLines.length;
     const extraH = (lineCount - 1) * DESC_LINE_LEAD;
     const rowStep = ROW_STEP + extraH;
@@ -200,15 +254,21 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     const drawY = y;
     const firstBaseline = drawY + ROW_H * BASELINE_RATIO;
 
-    doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-    doc.setFontSize(FONT.row);
-    doc.setTextColor(...ENXUTO.black);
-    doc.text(estoqueText, X.estoque, firstBaseline, { align: 'right' });
+    if (estoqueText) {
+      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+      doc.setFontSize(FONT.row);
+      doc.setTextColor(...(muted ? ENXUTO.faint : ENXUTO.black));
+      doc.text(estoqueText, X.estoque, firstBaseline, { align: 'right' });
+    }
 
-    drawValueColumns(firstBaseline, values);
+    if (values) {
+      drawValueColumns(firstBaseline, values, { muted });
+    }
 
+    doc.setFont(pdfFontFamily, descBold ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
+    doc.setTextColor(...(muted ? ENXUTO.muted : ENXUTO.black));
     for (let i = 0; i < lineCount; i += 1) {
-      doc.text(descLines[i], X.descricao, firstBaseline + i * DESC_LINE_LEAD);
+      doc.text(descLines[i], descX, firstBaseline + i * DESC_LINE_LEAD);
     }
 
     return drawY + rowStep;
@@ -223,7 +283,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(8);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('A4 compacto   SKUs A-Z   DIN 1451', M, y);
+  doc.text('A4 compacto   hierarquia por familia   SKUs alinhados   DIN 1451', M, y);
   y += 4.5;
 
   doc.setFontSize(8.8);
@@ -249,7 +309,9 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Invent. venda: ${moeda(tVenda)}`, M + CW, y, { align: 'right' });
   y += 8;
 
-  if (!documento.rows?.length) {
+  const treeRows = (documento.rows || []).filter((row) => row.type === 'group' || row.type === 'sku');
+
+  if (!treeRows.length) {
     doc.setTextColor(...ENXUTO.muted);
     doc.text('Nenhum produto encontrado com os filtros actuais.', M, y);
   } else {
@@ -257,8 +319,25 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     dividerStartY = y;
     beginTablePage();
 
-    for (const row of documento.rows) {
-      if (row.type !== 'sku') continue;
+    for (let i = 0; i < treeRows.length; i += 1) {
+      const row = treeRows[i];
+      const prev = i > 0 ? treeRows[i - 1] : undefined;
+
+      if (row.type === 'group') {
+        const count = row.count ?? 0;
+        const level = row.level ?? 1;
+        y = drawReportRow(y, {
+          kind: 'family',
+          estoqueText: groupEstoqueText(row),
+          descricao: count > 0 ? `${row.label || '—'} (${count})` : (row.label || '—'),
+          descIndent: parentDescIndent(level),
+          muted: true,
+          descBold: true,
+          values: familySummaryValues(row),
+        });
+        continue;
+      }
+
       const p = row.produto;
       const cat = getCatalogoComercialView(p);
       const lastro = produtoLastro(p, row.lastro);
@@ -266,9 +345,11 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
         ? `${p.nome || '—'}  ${p.codigo_interno}`
         : (p.nome || '—');
 
-      y = drawSkuRow(y, {
+      y = drawReportRow(y, {
+        kind: 'sku',
         estoqueText: estoqueLinha(p),
         descricao: nome,
+        descIndent: skuDescIndent(row, prev),
         values: {
           vlCompra: moedaOuTraco(cat.valorCompraNaEmbalagem),
           custo: moedaOuTraco(cat.custoNaEmbalagem),
@@ -300,5 +381,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_plana_az_v2' };
+  return { data: pdfBytes, version: 'enxuto_hier_skus_alinhados' };
 }

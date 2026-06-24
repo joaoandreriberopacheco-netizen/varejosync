@@ -1,25 +1,48 @@
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
+import {
+  buildTree,
+  flattenTree,
+  mergeAdjacentDuplicateGroupHeaders,
+  buildExpandedForLevel,
+} from '@/components/produtos/treegrid/useTreeGrid';
+
+/** Árvore com cabeçalhos de família (incl. folhas) + SKUs na ordem do catálogo. */
+function prepareTreeRowsComDiagrama(produtos, sortOrder) {
+  const tree = buildTree(produtos || []);
+  const expanded = buildExpandedForLevel(tree, 99);
+  return mergeAdjacentDuplicateGroupHeaders(
+    flattenTree(tree, expanded, '', 0, sortOrder, { showLeafGroupHeaders: true }),
+  );
+}
+
+function prepareSkuRowsPlana(produtos, sortOrder) {
+  const list = [...(produtos || [])].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
+  return list.map((produto) => ({
+    type: 'sku',
+    produto,
+    level: 1,
+    key: produto.id,
+  }));
+}
 
 /**
- * Lista plana de SKUs em ordem alfabética (nome A → Z).
+ * Documento hierárquico: linhas de resumo nos pais; SKUs alinhados ao mesmo nível.
  */
 export function prepareCatalogStockReportDocument({
   produtos = [],
-  layoutMode: _layoutMode = 'tree',
+  layoutMode = 'tree',
   treeLevel: _treeLevel = 1,
-  sortOrder: _sortOrder = 'az',
+  sortOrder = 'az',
 } = {}) {
   const list = (produtos || []).filter((p) => p && typeof p === 'object');
-  const sorted = [...list].sort((a, b) => compareProdutosForCatalogSort(a, b, 'az'));
-  const rows = sorted.map((produto) => ({
-    type: 'sku',
-    produto,
-    key: produto.id,
-  }));
+  const isPlana = layoutMode === 'plana';
+  const rows = isPlana
+    ? prepareSkuRowsPlana(list, sortOrder)
+    : prepareTreeRowsComDiagrama(list, sortOrder);
 
   return {
-    mode: 'plana',
+    mode: isPlana ? 'plana' : 'tree',
     produtos: list,
     totals: sumCatalogStockTotals(list),
     rows,
