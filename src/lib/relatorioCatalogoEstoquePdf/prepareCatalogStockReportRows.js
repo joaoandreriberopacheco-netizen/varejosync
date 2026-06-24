@@ -1,4 +1,9 @@
-import { getAbcdRank, compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
+import {
+  aggregatePerformanceFromSkus,
+  getAbcdRank,
+  compareProdutosForCatalogSort,
+} from '@/lib/catalogProdutoPerformance';
+import { grupoAbcdKey } from '@/lib/calcularIepProdutos';
 import { sumCatalogStockTotals, lineEstoqueQuantidade } from '@/lib/catalogStockTotals';
 import {
   aggregateSkus,
@@ -13,6 +18,35 @@ const ABCD_LETTERS = ['A', 'B', 'C', 'D'];
 export function normalizeAbcdLetter(produto) {
   const letter = String(produto?.abcd || '').trim().toUpperCase();
   return ABCD_LETTERS.includes(letter) ? letter : '?';
+}
+
+/** ABCD da família (nível 2 / h1+h2); filhos herdam a mesma letra no relatório. */
+function buildFamilyAbcdLookup(produtos) {
+  const byFamily = new Map();
+  for (const p of produtos || []) {
+    if (!p || typeof p !== 'object') continue;
+    const key = grupoAbcdKey(p);
+    if (!byFamily.has(key)) byFamily.set(key, []);
+    byFamily.get(key).push(p);
+  }
+
+  const lookup = new Map();
+  for (const [key, skus] of byFamily) {
+    const { abcdDominante } = aggregatePerformanceFromSkus(skus);
+    const dominant = String(abcdDominante || '').trim().toUpperCase();
+    if (ABCD_LETTERS.includes(dominant)) {
+      lookup.set(key, dominant);
+      continue;
+    }
+    const fallback = skus.map(normalizeAbcdLetter).find((l) => l !== '?') || '?';
+    lookup.set(key, fallback);
+  }
+  return lookup;
+}
+
+function abcdLetterForReportBucket(produto, familyLookup) {
+  const key = grupoAbcdKey(produto);
+  return familyLookup.get(key) || normalizeAbcdLetter(produto);
 }
 
 export function abcdGroupLabel(letter) {
@@ -62,7 +96,7 @@ function prepareSkuRowsPlana(produtos, sortOrder) {
 }
 
 /**
- * Documento: blocos ABCD → SKUs contínuos; recuo da descrição reflecte profundidade na árvore.
+ * Documento: blocos ABCD (família nível 2) → SKUs contínuos com recuo na descrição.
  */
 export function prepareCatalogStockReportDocument({
   produtos = [],
@@ -71,10 +105,11 @@ export function prepareCatalogStockReportDocument({
   sortOrder = 'az',
 } = {}) {
   const isPlana = layoutMode === 'plana';
+  const familyAbcd = buildFamilyAbcdLookup(produtos);
   const buckets = new Map();
   for (const p of produtos || []) {
     if (!p || typeof p !== 'object') continue;
-    const letter = normalizeAbcdLetter(p);
+    const letter = abcdLetterForReportBucket(p, familyAbcd);
     if (!buckets.has(letter)) buckets.set(letter, []);
     buckets.get(letter).push(p);
   }

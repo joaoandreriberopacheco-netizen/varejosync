@@ -108,10 +108,10 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   const M = 8;
   const CW = pageW - M * 2;
 
-  /** Estoque à esquerda; mind map fixo (não acompanha recuo); valores à direita. */
+  /** Estoque | linha mind map | descrição (recuo) | valores à direita. */
   const X = {
-    estoque: M + 24,
-    mindMapLine: M + 14,
+    estoque: M + 17,
+    mindMapLine: M + 20.5,
     descricao: M + 28,
     vlCompra: M + CW - 58,
     custo: M + CW - 40,
@@ -234,7 +234,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(8);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('A4 compacto   agrupado por ABCD   recuo hierarquico na descricao   DIN 1451', M, y);
+  doc.text('A4 compacto   ABCD por familia (nivel 2)   recuo na descricao   DIN 1451', M, y);
   y += 4.5;
 
   doc.setFontSize(8.8);
@@ -347,5 +347,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_abcd_hier' };
+  return { data: pdfBytes, version: 'enxuto_abcd_familia_n2' };
 }
