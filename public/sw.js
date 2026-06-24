@@ -1,8 +1,9 @@
-const CACHE_NAME = 'p38-erp-v13';
+const CACHE_NAME = 'p38-erp-v14';
 const SHARED_CACHE = 'VarejoSync-shared-files';
 /** Ícone P38 (raio) — alinhado ao manifest; pré-cache para instalação PWA / notificações. */
 const APP_ICON_PATH = '/brand/p38-app-icon.png';
-const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', APP_ICON_PATH];
+const SHORTCUT_NOVO_LANCAMENTO_ICON = '/brand/shortcut-novo-lancamento-192.png';
+const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', APP_ICON_PATH, SHORTCUT_NOVO_LANCAMENTO_ICON];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

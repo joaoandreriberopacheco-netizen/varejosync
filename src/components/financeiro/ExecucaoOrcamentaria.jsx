@@ -145,23 +145,32 @@ export default function ExecucaoOrcamentaria() {
   }, []);
 
   useEffect(() => {
-    // Ler params de URL e abrir dialog se fornecidos
+    // Ler params de URL e abrir dialog ou seletor de tipo (atalho PWA ?novo=1)
     const params = new URLSearchParams(window.location.search);
     const desc = params.get('descricao');
     const valor = params.get('valor');
     const refId = params.get('referencia_id');
     const refTipo = params.get('referencia_tipo');
     const tipo = params.get('tipo');
-    
-    if (desc) {
+    const novoAtalho = params.get('novo');
+
+    if (novoAtalho === '1' || novoAtalho === 'true') {
+      if (tipo && FAB_ITEMS.some((item) => item.tipo === tipo)) {
+        setNovoTipo(tipo);
+        setShowNovoFluxo(true);
+      } else {
+        setFabOpen(true);
+      }
+    } else if (desc) {
       setUrlDescricao(desc);
       setShowNovoFluxo(true);
     }
+
     if (valor) setUrlValor(valor);
     if (refId) setUrlReferenciaId(refId);
     if (refTipo) setUrlReferenciaTipo(refTipo);
-    if (tipo) setNovoTipo(tipo);
-    
+    if (tipo && novoAtalho !== '1' && novoAtalho !== 'true') setNovoTipo(tipo);
+
     // Limpar URL
     window.history.replaceState({}, '', window.location.pathname);
   }, []);

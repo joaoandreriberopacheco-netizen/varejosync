@@ -26,6 +26,24 @@
   ],
   "shortcuts": [
     {
+      "name": "Novo lançamento",
+      "short_name": "Lançar",
+      "description": "Despesa, receita ou transferência",
+      "url": "/FluxoCaixa?novo=1",
+      "icons": [
+        {
+          "src": "/brand/shortcut-novo-lancamento-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "src": "/brand/shortcut-novo-lancamento-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
       "name": "Torre de controle",
       "short_name": "Torre",
       "description": "Classificar e distribuir anexos",
