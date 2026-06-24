@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import MassTagGenerator from '@/components/produtos/MassTagGenerator';
+import MassMarkupDialog from '@/components/produtos/MassMarkupDialog';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import { cn } from '@/components/utils';
 
@@ -87,6 +88,7 @@ export default function ProdutosHeader({
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
   const [isMassTagOpen, setIsMassTagOpen] = useState(false);
+  const [isMassMarkupOpen, setIsMassMarkupOpen] = useState(false);
 
   const clearFilters = () => {
     setFilters({ ...DEFAULT_PRODUTO_FILTERS });
@@ -181,11 +183,29 @@ export default function ProdutosHeader({
                 <PlusCircle className="h-4 w-4 text-foreground/90" />
               </Button>
             </div>
+            {filteredProdutos.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 flex-shrink-0"
+                title="Aplicar markup aos filtrados"
+                onClick={() => setIsMassMarkupOpen(true)}
+              >
+                <Percent className="w-4 h-4 p38-text-accent" />
+              </Button>
+            )}
             <MassTagGenerator
               products={filteredProdutos}
               onComplete={loadData}
               open={isMassTagOpen}
               onOpenChange={setIsMassTagOpen}
+              hideTrigger
+            />
+            <MassMarkupDialog
+              products={filteredProdutos}
+              onComplete={loadData}
+              open={isMassMarkupOpen}
+              onOpenChange={setIsMassMarkupOpen}
               hideTrigger
             />
           </div>
@@ -412,6 +432,16 @@ export default function ProdutosHeader({
                   className="h-9 w-full justify-between px-2.5"
                 />
               </div>
+              {filteredProdutos.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsMassMarkupOpen(true)}
+                  className="h-9 px-2.5 text-xs text-foreground flex items-center gap-1 rounded-xl bg-muted/80 hover:bg-muted flex-shrink-0"
+                >
+                  <Percent className="w-3.5 h-3.5 p38-text-accent" />
+                  Markup ({filteredProdutos.length})
+                </button>
+              )}
               {activeFilterCount > 0 && (
                 <button
                   type="button"
