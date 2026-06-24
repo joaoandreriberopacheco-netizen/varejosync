@@ -304,7 +304,8 @@ function sortTreeChildEntries(nodeMap, sortOrder = 'az') {
     return compareTreeLabels(nodeA?.label, nodeB?.label);
   });
 }
-function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sortOrder = 'az') {
+function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sortOrder = 'az', options = {}) {
+  const { showLeafGroupHeaders = false } = options;
   const rows = [];
   const rawKey = parentKey ? `${parentKey}||${key}` : key;
   const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
@@ -323,6 +324,21 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sor
   }
 
   if (!isRoot && isLeafGroup) {
+    if (showLeafGroupHeaders) {
+      rows.push({
+        type: 'group',
+        key: nodeKey,
+        label: collapsedLabel,
+        level: rowLevel,
+        node: finalNode,
+        isLeafGroup,
+        ...agg,
+      });
+      for (const sku of sortSkus(finalNode.skus, sortOrder)) {
+        rows.push(makeSkuRow(sku, rowLevel + 1));
+      }
+      return rows;
+    }
     for (const sku of sortSkus(finalNode.skus, sortOrder)) {
       rows.push(makeSkuRow(sku, rowLevel));
     }
@@ -342,7 +358,7 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sor
   if (isLeafGroup || expandedKeys.has(nodeKey)) {
     const childMap = finalNode.children || {};
     if (Object.keys(childMap).length > 0) {
-      rows.push(...flattenTree(childMap, expandedKeys, nodeKey, rowLevel, sortOrder));
+      rows.push(...flattenTree(childMap, expandedKeys, nodeKey, rowLevel, sortOrder, options));
     }
     for (const sku of sortSkus(finalNode.skus, sortOrder)) {
       rows.push(makeSkuRow(sku, rowLevel + 1));
@@ -353,7 +369,7 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sor
 }
 
 // ── Flatten recursivo com deep collapsing ─────────────────────────────────────
-export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel = 0, sortOrder = 'az') {
+export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel = 0, sortOrder = 'az', options = {}) {
   const rows = [];
   const parsed = parseCatalogSortOrder(sortOrder);
 
@@ -390,14 +406,14 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
       if (entry.kind === 'orphan') {
         rows.push(makeSkuRow(entry.sku, 1));
       } else {
-        rows.push(...flattenGroupBranch(entry.key, entry.node, expandedKeys, parentKey, visualLevel, sortOrder));
+        rows.push(...flattenGroupBranch(entry.key, entry.node, expandedKeys, parentKey, visualLevel, sortOrder, options));
       }
     }
     return rows;
   }
 
   for (const [key, node] of sortTreeChildEntries(treeNode, sortOrder)) {
-    rows.push(...flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sortOrder));
+    rows.push(...flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sortOrder, options));
   }
 
   return rows;

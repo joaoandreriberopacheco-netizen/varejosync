@@ -61,28 +61,13 @@ function sortAbcdLetters(a, b) {
   return String(a).localeCompare(String(b));
 }
 
-function produtoNivelDescricao(produto) {
-  const h2 = String(produto?.campo_hierarquico_2 || '').trim();
-  const h3 = String(produto?.campo_hierarquico_3 || '').trim();
-  const h4 = String(produto?.campo_hierarquico_4 || '').trim();
-  if (h4) return 4;
-  if (h3) return 3;
-  if (h2) return 2;
-  return 1;
-}
-
-/** Profundidade na ficha do produto (h2/h3/h4) — só para recuo da descrição, sem linhas de família. */
-function prepareSkuRowsComRecuoHierarquia(produtos, sortOrder) {
+/** Árvore completa (grupos + SKUs); nível visual vem do flattenTree. */
+function prepareTreeRowsComDiagrama(produtos, sortOrder) {
   const tree = buildTree(produtos || []);
-  // PDF lista todos os SKUs; treeLevel da UI não deve esconder ramos.
   const expanded = buildExpandedForLevel(tree, 99);
-  const rows = mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expanded, '', 0, sortOrder));
-  return rows
-    .filter((row) => row.type === 'sku')
-    .map((row) => ({
-      ...row,
-      level: produtoNivelDescricao(row.produto),
-    }));
+  return mergeAdjacentDuplicateGroupHeaders(
+    flattenTree(tree, expanded, '', 0, sortOrder, { showLeafGroupHeaders: true }),
+  );
 }
 
 function prepareSkuRowsPlana(produtos, sortOrder) {
@@ -90,13 +75,13 @@ function prepareSkuRowsPlana(produtos, sortOrder) {
   return list.map((produto) => ({
     type: 'sku',
     produto,
-    level: produtoNivelDescricao(produto),
+    level: 1,
     key: produto.id,
   }));
 }
 
 /**
- * Documento: blocos ABCD (família nível 2) → SKUs contínuos com recuo na descrição.
+ * Documento: blocos ABCD (família nível 2) → diagrama hierárquico + SKUs alinhados.
  */
 export function prepareCatalogStockReportDocument({
   produtos = [],
@@ -121,7 +106,7 @@ export function prepareCatalogStockReportDocument({
     const estoqueTotal = list.reduce((s, p) => s + lineEstoqueQuantidade(p), 0);
     const rows = isPlana
       ? prepareSkuRowsPlana(list, sortOrder)
-      : prepareSkuRowsComRecuoHierarquia(list, sortOrder);
+      : prepareTreeRowsComDiagrama(list, sortOrder);
     return {
       letter,
       label: abcdGroupLabel(letter),
