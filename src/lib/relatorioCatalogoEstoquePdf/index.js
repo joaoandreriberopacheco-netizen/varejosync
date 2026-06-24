@@ -1,2 +1,7 @@
 export { generateRelatorioCatalogoEstoquePdf } from './generateRelatorioCatalogoEstoquePdf';
-export { prepareCatalogStockReportRows } from './prepareCatalogStockReportRows';
+export {
+  prepareCatalogStockReportRows,
+  prepareCatalogStockReportDocument,
+  normalizeAbcdLetter,
+  abcdGroupLabel,
+} from './prepareCatalogStockReportRows';
