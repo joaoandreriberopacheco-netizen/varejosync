@@ -4,32 +4,21 @@ import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/produ
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { lineValorCustoTotal } from '@/lib/catalogStockTotals';
 import { prepareCatalogStockReportDocument } from './prepareCatalogStockReportRows';
-import { aggregateEstoqueDisplay, collectSkus } from '@/components/produtos/treegrid/useTreeGrid';
 
 const PDF_FONT_BOLD = 'bold';
 const PDF_FONT_NORMAL = 'normal';
 
-const ENXUTO_LINE_W = 0.12;
 const ENXUTO = {
   black: [0, 0, 0] as [number, number, number],
   muted: [72, 72, 72] as [number, number, number],
-  faint: [130, 130, 130] as [number, number, number],
-  line: [110, 110, 110] as [number, number, number],
 };
 
 const FONT = {
   title: 13,
   kpi: 9.8,
-  grupo: 11,
-  grupoMeta: 9,
   colHdr: 9.2,
   row: 10,
   footer: 9,
-};
-
-const INDENT = {
-  /** mm por nível na árvore (espinha + recuo da descrição). */
-  nivelMm: 4,
 };
 
 const DESC_LINE_LEAD = 4.15;
@@ -51,45 +40,16 @@ function estoqueLinha(produto) {
   return `${qtd} ${un}`;
 }
 
-function groupEstoqueText(row: Record<string, unknown>) {
-  const skus = row.node ? collectSkus(row.node as never) : [];
-  const disp = aggregateEstoqueDisplay(skus);
-  if (disp.mode === 'display' || disp.mode === 'base') {
-    return `${fmtN(disp.quantidade)} ${disp.sigla}`;
-  }
-  if (disp.quantidade > 0) return fmtN(disp.quantidade);
-  const total = Number(row.estoqueTotal);
-  return total > 0 ? fmtN(total) : '—';
-}
-
-function familySummaryValues(row: Record<string, unknown>) {
-  const valorCompra = Number(row.valorCompraMedio) || 0;
-  const custo = Number(row.custoMedio) || 0;
-  const venda = Number(row.precoMedio) || 0;
-  const lastro = Number(row.lastroTotal) || 0;
-  return {
-    vlCompra: valorCompra > 0 ? `~${moedaSemSimbolo(valorCompra)}` : '—',
-    custo: custo > 0 ? `~${moedaSemSimbolo(custo)}` : '—',
-    venda: venda > 0 ? `~${moedaSemSimbolo(venda)}` : '—',
-    invent: lastro > 0 ? `~${moedaSemSimbolo(lastro)}` : '—',
-  };
-}
-
 function splitDescriptionLines(
   doc: jsPDF,
   pdfFontFamily: string,
   text: string,
   maxW: number,
-  descBold: boolean,
 ) {
-  doc.setFont(pdfFontFamily, descBold ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
+  doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(FONT.row);
   const lines = doc.splitTextToSize(safe(text), maxW) as string[];
   return lines.length ? lines : [''];
-}
-
-function descIndentForLevel(level = 1) {
-  return Math.max(0, (level ?? 1) - 1) * INDENT.nivelMm;
 }
 
 function produtoLastro(produto, rowLastro?: number) {
@@ -131,11 +91,9 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   const M = 8;
   const CW = pageW - M * 2;
 
-  /** Estoque (esq.) | espinha mind map | descrição | valores (dir.). */
   const X = {
-    estoque: M + 20,
-    mindMapBase: M + 23,
-    descricao: M + 30,
+    estoque: M + 22,
+    descricao: M + 26,
     vlCompra: M + CW - 58,
     custo: M + CW - 40,
     venda: M + CW - 22,
@@ -149,12 +107,6 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
 
   let y = 16;
 
-  const strokeLine = (x0: number, y0: number, x1: number, y1: number, color = ENXUTO.line) => {
-    doc.setDrawColor(...color);
-    doc.setLineWidth(ENXUTO_LINE_W);
-    doc.line(x0, y0, x1, y1);
-  };
-
   const ensureSpace = (needed = ROW_STEP + 1) => {
     if (y + needed > pageH - 10) {
       doc.addPage();
@@ -162,9 +114,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     }
   };
 
-  const spineX = (level: number) => X.mindMapBase + descIndentForLevel(level);
-
-  const descMaxW = (descX: number) => Math.max(16, X.vlCompra - descX - 6);
+  const descMaxW = () => Math.max(20, X.vlCompra - X.descricao - 6);
 
   const drawColumnHeaders = (baselineY: number) => {
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
@@ -180,63 +130,29 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   const drawValueColumns = (
     baselineY: number,
     values: { vlCompra: string; custo: string; venda: string; invent: string },
-    { muted = false } = {},
   ) => {
-    doc.setFont(pdfFontFamily, muted ? PDF_FONT_NORMAL : PDF_FONT_BOLD);
+    doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
     doc.setFontSize(FONT.row);
-    doc.setTextColor(...(muted ? ENXUTO.faint : ENXUTO.black));
+    doc.setTextColor(...ENXUTO.black);
     doc.text(values.vlCompra, X.vlCompra, baselineY, { align: 'right' });
     doc.text(values.custo, X.custo, baselineY, { align: 'right' });
     doc.text(values.venda, X.venda, baselineY, { align: 'right' });
     doc.text(values.invent, X.invent, baselineY, { align: 'right' });
   };
 
-  const drawMindMapConnectors = (
-    drawY: number,
-    rowBottom: number,
-    level: number,
-    nextLevel: number | null,
-    descX: number,
-  ) => {
-    const branchY = drawY + ROW_H * 0.5;
-    const continues = (L: number) => nextLevel != null && nextLevel >= L;
-
-    for (let L = 1; L <= level; L += 1) {
-      const x = spineX(L);
-      const yEnd = continues(L) ? rowBottom + ROW_GAP : rowBottom;
-      strokeLine(x, drawY, x, yEnd);
-      if (L === level) {
-        strokeLine(x, branchY, Math.max(x + 1.5, descX - 1), branchY);
-      }
-    }
-  };
-
-  const drawReportRow = (
+  const drawSkuRow = (
     y0: number,
     {
-      kind,
-      level = 1,
-      nextLevel = null,
-      estoqueText = '',
+      estoqueText,
       descricao,
       values,
-      muted = false,
-      descBold = false,
-      mindMap = false,
     }: {
-      kind: 'family' | 'sku';
-      level?: number;
-      nextLevel?: number | null;
-      estoqueText?: string;
+      estoqueText: string;
       descricao: string;
-      values?: { vlCompra: string; custo: string; venda: string; invent: string };
-      muted?: boolean;
-      descBold?: boolean;
-      mindMap?: boolean;
+      values: { vlCompra: string; custo: string; venda: string; invent: string };
     },
   ) => {
-    const descX = X.descricao + descIndentForLevel(level);
-    const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW(descX), descBold);
+    const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW());
     const lineCount = descLines.length;
     const extraH = (lineCount - 1) * DESC_LINE_LEAD;
     const rowStep = ROW_STEP + extraH;
@@ -245,35 +161,21 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     ensureSpace(rowStep + 1);
     const drawY = y;
     const firstBaseline = drawY + ROW_H * BASELINE_RATIO;
-    const rowBottom = drawY + ROW_H + extraH;
 
-    if (mindMap) {
-      drawMindMapConnectors(drawY, rowBottom, level, nextLevel, descX);
-    }
-
-    const showData = kind === 'family' || kind === 'sku';
-    if (showData && estoqueText) {
-      doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-      doc.setFontSize(FONT.row);
-      doc.setTextColor(...(muted ? ENXUTO.faint : ENXUTO.black));
-      doc.text(estoqueText, X.estoque, firstBaseline, { align: 'right' });
-    }
-
-    if (showData && values) {
-      drawValueColumns(firstBaseline, values, { muted });
-    }
-
-    doc.setFont(pdfFontFamily, descBold ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
+    doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
     doc.setFontSize(FONT.row);
-    doc.setTextColor(...(muted ? ENXUTO.muted : ENXUTO.black));
+    doc.setTextColor(...ENXUTO.black);
+    doc.text(estoqueText, X.estoque, firstBaseline, { align: 'right' });
+
+    drawValueColumns(firstBaseline, values);
+
     for (let i = 0; i < lineCount; i += 1) {
-      doc.text(descLines[i], descX, firstBaseline + i * DESC_LINE_LEAD);
+      doc.text(descLines[i], X.descricao, firstBaseline + i * DESC_LINE_LEAD);
     }
 
     return drawY + rowStep;
   };
 
-  // ── Cabeçalho ────────────────────────────────────────────────────────────
   doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
   doc.setFontSize(FONT.title);
   doc.setTextColor(...ENXUTO.black);
@@ -283,7 +185,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(8);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('A4 compacto   hierarquia por familia   resumo nas familias   DIN 1451', M, y);
+  doc.text('A4 compacto   SKUs A-Z   DIN 1451', M, y);
   y += 4.5;
 
   doc.setFontSize(8.8);
@@ -317,29 +219,8 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     drawColumnHeaders(y + 4);
     y += 7.5;
 
-    const treeRows = documento.rows.filter((row) => row.type === 'group' || row.type === 'sku');
-    for (let i = 0; i < treeRows.length; i += 1) {
-      const row = treeRows[i];
-      const next = treeRows[i + 1];
-      const nextLevel = next ? (next.level ?? 1) : null;
-      const level = row.level ?? 1;
-
-      if (row.type === 'group') {
-        const count = row.count ?? 0;
-        y = drawReportRow(y, {
-          kind: 'family',
-          level,
-          nextLevel,
-          estoqueText: groupEstoqueText(row),
-          descricao: count > 0 ? `${row.label || '—'} (${count})` : (row.label || '—'),
-          mindMap: true,
-          muted: true,
-          descBold: true,
-          values: familySummaryValues(row),
-        });
-        continue;
-      }
-
+    for (const row of documento.rows) {
+      if (row.type !== 'sku') continue;
       const p = row.produto;
       const cat = getCatalogoComercialView(p);
       const lastro = produtoLastro(p, row.lastro);
@@ -347,13 +228,9 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
         ? `${p.nome || '—'}  ${p.codigo_interno}`
         : (p.nome || '—');
 
-      y = drawReportRow(y, {
-        kind: 'sku',
-        level,
-        nextLevel,
+      y = drawSkuRow(y, {
         estoqueText: estoqueLinha(p),
         descricao: nome,
-        mindMap: true,
         values: {
           vlCompra: moedaOuTraco(cat.valorCompraNaEmbalagem),
           custo: moedaOuTraco(cat.custoNaEmbalagem),
@@ -374,5 +251,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_familia_resumo' };
+  return { data: pdfBytes, version: 'enxuto_plana_az' };
 }
