@@ -2,6 +2,4 @@ export { generateRelatorioCatalogoEstoquePdf } from './generateRelatorioCatalogo
 export {
   prepareCatalogStockReportRows,
   prepareCatalogStockReportDocument,
-  normalizeAbcdLetter,
-  abcdGroupLabel,
 } from './prepareCatalogStockReportRows';

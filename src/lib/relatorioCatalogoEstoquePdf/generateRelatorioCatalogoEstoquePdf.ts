@@ -4,6 +4,7 @@ import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/produ
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { lineValorCustoTotal } from '@/lib/catalogStockTotals';
 import { prepareCatalogStockReportDocument } from './prepareCatalogStockReportRows';
+import { aggregateEstoqueDisplay, collectSkus } from '@/components/produtos/treegrid/useTreeGrid';
 
 const PDF_FONT_BOLD = 'bold';
 const PDF_FONT_NORMAL = 'normal';
@@ -27,8 +28,6 @@ const FONT = {
 };
 
 const INDENT = {
-  /** Tronco vertical do bloco ABCD (margem esquerda, fora das colunas de dados). */
-  abcdLine: 2,
   /** mm por nível na árvore (espinha + recuo da descrição). */
   nivelMm: 4,
 };
@@ -50,6 +49,30 @@ function estoqueLinha(produto) {
   const qtd = fmtN(produto?.estoque_atual);
   const un = String(produto?.unidade_principal || 'UN').toUpperCase();
   return `${qtd} ${un}`;
+}
+
+function groupEstoqueText(row: Record<string, unknown>) {
+  const skus = row.node ? collectSkus(row.node as never) : [];
+  const disp = aggregateEstoqueDisplay(skus);
+  if (disp.mode === 'display' || disp.mode === 'base') {
+    return `${fmtN(disp.quantidade)} ${disp.sigla}`;
+  }
+  if (disp.quantidade > 0) return fmtN(disp.quantidade);
+  const total = Number(row.estoqueTotal);
+  return total > 0 ? fmtN(total) : '—';
+}
+
+function familySummaryValues(row: Record<string, unknown>) {
+  const valorCompra = Number(row.valorCompraMedio) || 0;
+  const custo = Number(row.custoMedio) || 0;
+  const venda = Number(row.precoMedio) || 0;
+  const lastro = Number(row.lastroTotal) || 0;
+  return {
+    vlCompra: valorCompra > 0 ? `~${moedaSemSimbolo(valorCompra)}` : '—',
+    custo: custo > 0 ? `~${moedaSemSimbolo(custo)}` : '—',
+    venda: venda > 0 ? `~${moedaSemSimbolo(venda)}` : '—',
+    invent: lastro > 0 ? `~${moedaSemSimbolo(lastro)}` : '—',
+  };
 }
 
 function splitDescriptionLines(
@@ -117,7 +140,6 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     custo: M + CW - 40,
     venda: M + CW - 22,
     invent: M + CW,
-    abcdTrunk: M + INDENT.abcdLine,
   };
 
   const ROW_H = 5.4;
@@ -131,22 +153,6 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     doc.setDrawColor(...color);
     doc.setLineWidth(ENXUTO_LINE_W);
     doc.line(x0, y0, x1, y1);
-  };
-
-  const strokeBlack = (x0: number, y0: number, x1: number, y1: number) =>
-    strokeLine(x0, y0, x1, y1, ENXUTO.black);
-
-  const drawVerticalSpan = (x: number, yStart: number, yEnd: number, startPage: number, endPage: number) => {
-    const topPad = 14;
-    const bottomPad = 10;
-    const savedPage = doc.internal.getNumberOfPages();
-    for (let page = startPage; page <= endPage; page += 1) {
-      doc.setPage(page);
-      const segTop = page === startPage ? yStart : topPad;
-      const segBottom = page === endPage ? yEnd : pageH - bottomPad;
-      if (segBottom > segTop + 0.5) strokeBlack(x, segTop, x, segBottom);
-    }
-    doc.setPage(savedPage);
   };
 
   const ensureSpace = (needed = ROW_STEP + 1) => {
@@ -218,7 +224,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
       descBold = false,
       mindMap = false,
     }: {
-      kind: 'summary' | 'group' | 'sku';
+      kind: 'family' | 'sku';
       level?: number;
       nextLevel?: number | null;
       estoqueText?: string;
@@ -241,11 +247,11 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     const firstBaseline = drawY + ROW_H * BASELINE_RATIO;
     const rowBottom = drawY + ROW_H + extraH;
 
-    if (mindMap && kind !== 'summary') {
+    if (mindMap) {
       drawMindMapConnectors(drawY, rowBottom, level, nextLevel, descX);
     }
 
-    const showData = kind === 'summary' || kind === 'sku';
+    const showData = kind === 'family' || kind === 'sku';
     if (showData && estoqueText) {
       doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
       doc.setFontSize(FONT.row);
@@ -277,7 +283,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(8);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('A4 compacto   ABCD por familia (nivel 2)   diagrama hierarquico   DIN 1451', M, y);
+  doc.text('A4 compacto   hierarquia por familia   resumo nas familias   DIN 1451', M, y);
   y += 4.5;
 
   doc.setFontSize(8.8);
@@ -303,54 +309,15 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Invent. venda: ${moeda(tVenda)}`, M + CW, y, { align: 'right' });
   y += 8;
 
-  if (!documento.groups.length) {
+  if (!documento.rows?.length) {
     doc.setTextColor(...ENXUTO.muted);
     doc.text('Nenhum produto encontrado com os filtros actuais.', M, y);
-  }
-
-  for (const grupo of documento.groups) {
-    ensureSpace(20);
-    y += 3;
-
-    doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-    doc.setFontSize(FONT.grupo);
-    doc.setTextColor(...ENXUTO.black);
-    doc.text(safe(grupo.label), M + 6, y + 3.5);
-    doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
-    doc.setFontSize(FONT.grupoMeta);
-    doc.setTextColor(...ENXUTO.muted);
-    doc.text(
-      safe(`${grupo.produtos.length} SKU(s)`),
-      M + CW,
-      y + 3.5,
-      { align: 'right' },
-    );
-    y += 7;
-
+  } else {
+    ensureSpace(12);
     drawColumnHeaders(y + 4);
     y += 7.5;
 
-    const blockContentTop = y;
-    const blockStartPage = doc.internal.getNumberOfPages();
-
-    const agg = grupo.agg || {};
-    const estoqueResumo = agg.estoqueTotal > 0 ? fmtN(agg.estoqueTotal) : '—';
-    y = drawReportRow(y, {
-      kind: 'summary',
-      level: 1,
-      estoqueText: estoqueResumo,
-      descricao: `${grupo.label} — resumo (${grupo.produtos.length})`,
-      muted: true,
-      descBold: true,
-      values: {
-        vlCompra: agg.valorCompraMedio > 0 ? `~${moedaSemSimbolo(agg.valorCompraMedio)}` : '—',
-        custo: agg.custoMedio > 0 ? `~${moedaSemSimbolo(agg.custoMedio)}` : '—',
-        venda: agg.precoMedio > 0 ? `~${moedaSemSimbolo(agg.precoMedio)}` : '—',
-        invent: grupo.totals.totalCusto > 0 ? `~${moedaSemSimbolo(grupo.totals.totalCusto)}` : '—',
-      },
-    });
-
-    const treeRows = (grupo.rows || []).filter((row) => row.type === 'group' || row.type === 'sku');
+    const treeRows = documento.rows.filter((row) => row.type === 'group' || row.type === 'sku');
     for (let i = 0; i < treeRows.length; i += 1) {
       const row = treeRows[i];
       const next = treeRows[i + 1];
@@ -360,13 +327,15 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
       if (row.type === 'group') {
         const count = row.count ?? 0;
         y = drawReportRow(y, {
-          kind: 'group',
+          kind: 'family',
           level,
           nextLevel,
+          estoqueText: groupEstoqueText(row),
           descricao: count > 0 ? `${row.label || '—'} (${count})` : (row.label || '—'),
           mindMap: true,
           muted: true,
           descBold: true,
+          values: familySummaryValues(row),
         });
         continue;
       }
@@ -393,9 +362,6 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
         },
       });
     }
-
-    drawVerticalSpan(X.abcdTrunk, blockContentTop, y, blockStartPage, doc.internal.getNumberOfPages());
-    y += 6;
   }
 
   ensureSpace(10);
@@ -408,5 +374,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_abcd_diagrama_hier' };
+  return { data: pdfBytes, version: 'enxuto_familia_resumo' };
 }
