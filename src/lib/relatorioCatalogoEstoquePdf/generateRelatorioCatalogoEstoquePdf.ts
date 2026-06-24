@@ -8,9 +8,11 @@ import { prepareCatalogStockReportDocument } from './prepareCatalogStockReportRo
 const PDF_FONT_BOLD = 'bold';
 const PDF_FONT_NORMAL = 'normal';
 
+const ENXUTO_LINE_W = 0.12;
 const ENXUTO = {
   black: [0, 0, 0] as [number, number, number],
   muted: [72, 72, 72] as [number, number, number],
+  line: [110, 110, 110] as [number, number, number],
 };
 
 const FONT = {
@@ -22,6 +24,9 @@ const FONT = {
 };
 
 const DESC_LINE_LEAD = 4.15;
+/** Altura reservada para cabeçalho de colunas (repetido em cada página). */
+const COL_HDR_BLOCK = 7.5;
+const TABLE_TOP_CONTINUATION = 14;
 
 const fmtR = (n: number) =>
   (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -92,8 +97,9 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   const CW = pageW - M * 2;
 
   const X = {
-    estoque: M + 22,
-    descricao: M + 26,
+    estoque: M + 20,
+    divider: M + 24,
+    descricao: M + 28,
     vlCompra: M + CW - 58,
     custo: M + CW - 40,
     venda: M + CW - 22,
@@ -106,15 +112,32 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   const BASELINE_RATIO = 0.72;
 
   let y = 16;
+  let dividerStartY = 0;
+  let dividerStartPage = 1;
 
-  const ensureSpace = (needed = ROW_STEP + 1) => {
-    if (y + needed > pageH - 10) {
-      doc.addPage();
-      y = 14;
-    }
+  const strokeLine = (x0: number, y0: number, x1: number, y1: number, color = ENXUTO.line) => {
+    doc.setDrawColor(...color);
+    doc.setLineWidth(ENXUTO_LINE_W);
+    doc.line(x0, y0, x1, y1);
   };
 
-  const descMaxW = () => Math.max(20, X.vlCompra - X.descricao - 6);
+  const drawVerticalDivider = (
+    x: number,
+    yStart: number,
+    yEnd: number,
+    startPage: number,
+    endPage: number,
+  ) => {
+    const bottomPad = 10;
+    const savedPage = doc.internal.getNumberOfPages();
+    for (let page = startPage; page <= endPage; page += 1) {
+      doc.setPage(page);
+      const segTop = page === startPage ? yStart : TABLE_TOP_CONTINUATION;
+      const segBottom = page === endPage ? yEnd : pageH - bottomPad;
+      if (segBottom > segTop + 0.5) strokeLine(x, segTop, x, segBottom);
+    }
+    doc.setPage(savedPage);
+  };
 
   const drawColumnHeaders = (baselineY: number) => {
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
@@ -126,6 +149,21 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     doc.text('VENDA', X.venda, baselineY, { align: 'right' });
     doc.text('INVENT.', X.invent, baselineY, { align: 'right' });
   };
+
+  const beginTablePage = () => {
+    drawColumnHeaders(y + 4);
+    y += COL_HDR_BLOCK;
+  };
+
+  const ensureTableSpace = (needed = ROW_STEP + 1) => {
+    if (y + needed > pageH - 10) {
+      doc.addPage();
+      y = TABLE_TOP_CONTINUATION;
+      beginTablePage();
+    }
+  };
+
+  const descMaxW = () => Math.max(20, X.vlCompra - X.descricao - 6);
 
   const drawValueColumns = (
     baselineY: number,
@@ -158,7 +196,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     const rowStep = ROW_STEP + extraH;
 
     y = y0;
-    ensureSpace(rowStep + 1);
+    ensureTableSpace(rowStep + 1);
     const drawY = y;
     const firstBaseline = drawY + ROW_H * BASELINE_RATIO;
 
@@ -215,9 +253,9 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     doc.setTextColor(...ENXUTO.muted);
     doc.text('Nenhum produto encontrado com os filtros actuais.', M, y);
   } else {
-    ensureSpace(12);
-    drawColumnHeaders(y + 4);
-    y += 7.5;
+    dividerStartPage = doc.internal.getNumberOfPages();
+    dividerStartY = y;
+    beginTablePage();
 
     for (const row of documento.rows) {
       if (row.type !== 'sku') continue;
@@ -239,9 +277,20 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
         },
       });
     }
+
+    drawVerticalDivider(
+      X.divider,
+      dividerStartY,
+      y,
+      dividerStartPage,
+      doc.internal.getNumberOfPages(),
+    );
   }
 
-  ensureSpace(10);
+  if (y + 10 > pageH - 10) {
+    doc.addPage();
+    y = TABLE_TOP_CONTINUATION;
+  }
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(FONT.footer);
   doc.setTextColor(...ENXUTO.muted);
@@ -251,5 +300,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_plana_az' };
+  return { data: pdfBytes, version: 'enxuto_plana_az_v2' };
 }
