@@ -117,26 +117,30 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   const M = 6;
   const CW = pageW - M * 2;
 
-  /** Zonas: descrição ampla | respiro | quant | colunas de valor. */
+  /** Zonas: descrição ampla | respiro | quant | colunas de valor equidistantes. */
   const QUANT_COL_W = 17;
   const GUTTER_W = 5;
+  const VALUE_COL_STEP = 14;
   const descStart = M + 4;
-  const quantRight = M + 108;
+  const vendRight = M + CW;
+  const quantRight = M + 100;
   const quantLeft = quantRight - QUANT_COL_W;
   const descEnd = quantLeft - GUTTER_W;
   const divider = descEnd + GUTTER_W / 2;
+
+  const valueColX = (index: number) => quantRight + VALUE_COL_STEP * (index + 1);
 
   const X = {
     desc: descStart,
     divider,
     quant: quantRight,
-    vCompra: M + 124,
-    custos: M + 138,
-    soma: M + 151,
-    custoTot: M + 164,
-    markup: M + 176,
-    preco: M + 186,
-    vendTot: M + CW,
+    vCompra: valueColX(0),
+    custos: valueColX(1),
+    soma: valueColX(2),
+    custoTot: valueColX(3),
+    markup: valueColX(4),
+    preco: valueColX(5),
+    vendTot: vendRight,
   };
 
   const ROW_H = 5.9;
@@ -334,5 +338,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_colunas_custo_venda_v2' };
+  return { data: pdfBytes, version: 'enxuto_colunas_custo_venda_v3' };
 }
