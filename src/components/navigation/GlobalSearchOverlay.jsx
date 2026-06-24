@@ -48,7 +48,7 @@ export default function GlobalSearchOverlay({
         <div
           className={cn(
             'relative z-[1] w-full px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]',
-            !open && 'opacity-0 h-0 overflow-hidden pointer-events-none'
+            !open && 'pointer-events-none opacity-0'
           )}
           onClick={(e) => e.stopPropagation()}
         >
@@ -56,7 +56,7 @@ export default function GlobalSearchOverlay({
             isDark={isDark}
             searchableItems={searchableItems}
             active={open}
-            autoFocus={open}
+            autoFocus={false}
             showClose
             atTop
             onClose={onClose}

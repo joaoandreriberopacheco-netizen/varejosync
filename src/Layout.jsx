@@ -218,15 +218,6 @@ export default function Layout({ children, currentPageName }) {
   }, [openSearchOverlay]);
 
   useEffect(() => {
-    if (!searchOverlayOpen || !isMobile) return undefined;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [searchOverlayOpen, isMobile]);
-
-  useEffect(() => {
     if (!showDesktopUserPanel) return;
 
     const handleClickOutside = (event) => {

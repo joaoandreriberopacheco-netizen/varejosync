@@ -11,7 +11,7 @@ import {
   focusField,
 } from '@/lib/focusPolicy';
 import { SEARCH_INPUT_PROPS } from '@/lib/searchInputProps';
-import { registerGlobalSearchInput } from '@/lib/openGlobalSearch';
+import { registerGlobalSearchInput, shouldSuppressGlobalSearchBackdropClose } from '@/lib/openGlobalSearch';
 
 function filterSearchItems(items, query) {
   const trimmed = String(query || '').trim();
@@ -70,6 +70,7 @@ export default function GlobalSearchBar({
     if (!active) return undefined;
 
     const handlePointerDown = (event) => {
+      if (shouldSuppressGlobalSearchBackdropClose()) return;
       if (!rootRef.current?.contains(event.target)) {
         setFocused(false);
       }
@@ -118,6 +119,7 @@ export default function GlobalSearchBar({
           }}
           type="search"
           inputMode="search"
+          data-p38-skip-select-on-focus="true"
           {...SEARCH_INPUT_PROPS}
           placeholder={placeholder}
           value={query}

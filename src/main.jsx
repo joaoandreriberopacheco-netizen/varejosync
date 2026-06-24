@@ -22,6 +22,7 @@ document.addEventListener('focusin', (e) => {
     el.tagName === 'INPUT' &&
     ['text', 'number', 'tel', 'email', 'search', 'password', 'date', ''].includes(el.type)
   ) {
+    if (el.dataset?.p38SkipSelectOnFocus === 'true') return;
     setTimeout(() => el.select(), 0);
   }
 });

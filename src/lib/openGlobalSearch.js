@@ -1,7 +1,6 @@
 import {
   allowProgrammaticFocusBriefly,
   focusField,
-  isCoarsePointer,
 } from '@/lib/focusPolicy';
 
 let globalSearchInputEl = null;
@@ -21,17 +20,7 @@ export function registerOpenSearchOverlaySync(fn) {
 function focusGlobalSearchInput() {
   const el = globalSearchInputEl;
   if (!el) return;
-
   allowProgrammaticFocusBriefly(500);
-
-  if (isCoarsePointer()) {
-    el.readOnly = true;
-    focusField(el, { preventScroll: true });
-    el.readOnly = false;
-    focusField(el, { preventScroll: true });
-    return;
-  }
-
   focusField(el, { preventScroll: true });
 }
 
