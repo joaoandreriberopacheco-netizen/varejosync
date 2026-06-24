@@ -16,36 +16,24 @@ const ENXUTO = {
   line: [110, 110, 110] as [number, number, number],
 };
 
+const FONT = {
+  title: 13,
+  kpi: 9.8,
+  grupo: 11,
+  grupoMeta: 9,
+  colHdr: 9.2,
+  row: 10,
+  footer: 9,
+};
+
+/** Recuos e mind map (descricaoProduto aplicado só na coluna nome). */
 const INDENT = {
   abcd: 0,
   abcdLine: 5,
-  /** Recuo extra só na coluna descrição dos produtos (mind map). */
-  descricaoProduto: 10,
+  descricaoProduto: 9,
 };
 
-const FONT = {
-  title: 13,
-  kpi: 9.5,
-  grupo: 10.5,
-  grupoMeta: 8.5,
-  colHdr: 8.5,
-  row: 8.8,
-  footer: 8.5,
-};
-
-/** Âncoras fixas (mm desde a margem esquerda) — iguais para pais e filhos. */
-const X = {
-  line: 12,
-  estoque: 26,
-  descricao: 28,
-  vlCompra: 82,
-  custo: 98,
-  venda: 114,
-  invent: 130,
-};
-
-const ROW_H = 4.1;
-const BRANCH_LEN = 2.2;
+const BRANCH_LEN = 2.4;
 
 const fmtR = (n: number) =>
   (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -98,8 +86,24 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
 
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const M = 9;
+  const M = 8;
   const CW = pageW - M * 2;
+
+  /** Valores à direita; descrição ocupa o miolo largo da página. */
+  const X = {
+    line: 11,
+    estoque: M + 22,
+    descricao: M + 24,
+    vlCompra: M + CW - 58,
+    custo: M + CW - 40,
+    venda: M + CW - 22,
+    invent: M + CW,
+  };
+
+  const ROW_H = 5.4;
+  const ROW_GAP = 0.55;
+  const ROW_STEP = ROW_H + ROW_GAP;
+  const BASELINE_RATIO = 0.72;
 
   let y = 16;
 
@@ -125,14 +129,14 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     doc.setPage(savedPage);
   };
 
-  const ensureSpace = (needed = ROW_H + 1) => {
+  const ensureSpace = (needed = ROW_STEP + 1) => {
     if (y + needed > pageH - 10) {
       doc.addPage();
       y = 14;
     }
   };
 
-  const descMaxW = (descX: number) => Math.max(12, X.vlCompra - descX - 4);
+  const descMaxW = (descX: number) => Math.max(16, X.vlCompra - descX - 6);
 
   const drawColumnHeaders = (baselineY: number) => {
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
@@ -179,12 +183,12 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
       descBold?: boolean;
     },
   ) => {
-    const baseline = y0 + 3.2;
+    const baseline = y0 + ROW_H * BASELINE_RATIO;
     const descX = X.descricao + descIndent;
     const lineX = M + X.line + descIndent;
 
     if (mindMap) {
-      const branchY = y0 + ROW_H * 0.48;
+      const branchY = y0 + ROW_H * 0.5;
       strokeLine(lineX, y0, lineX, y0 + ROW_H);
       strokeLine(lineX, branchY, lineX + BRANCH_LEN, branchY);
     }
@@ -199,7 +203,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     doc.text(truncateOneLine(doc, descricao, descMaxW(descX)), descX, baseline);
 
     drawValueColumns(baseline, values, { muted });
-    return ROW_H;
+    return ROW_STEP;
   };
 
   // ── Cabeçalho ────────────────────────────────────────────────────────────
@@ -264,13 +268,13 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     );
     y += 7;
 
-    drawColumnHeaders(y + 3.5);
-    y += 6.5;
+    drawColumnHeaders(y + 4);
+    y += 7.5;
 
     const agg = grupo.agg || {};
     const estoqueResumo =
       agg.estoqueTotal > 0 ? fmtN(agg.estoqueTotal) : '—';
-    ensureSpace(ROW_H);
+    ensureSpace(ROW_STEP);
     y += drawFlatRow(y, {
       estoqueText: estoqueResumo,
       descricao: `${grupo.label} — resumo (${grupo.produtos.length})`,
@@ -286,7 +290,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     });
 
     for (const produto of grupo.produtos) {
-      ensureSpace(ROW_H);
+      ensureSpace(ROW_STEP);
       const cat = getCatalogoComercialView(produto);
       const lastro = lineValorCustoTotal(produto);
       const nome = produto?.codigo_interno
@@ -308,7 +312,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     }
 
     drawVerticalSpan(M + INDENT.abcdLine, blockTop, y + ROW_H, blockStartPage, doc.internal.getNumberOfPages());
-    y += 5;
+    y += 6;
   }
 
   ensureSpace(10);
