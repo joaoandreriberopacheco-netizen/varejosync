@@ -16,8 +16,34 @@ const KEYBOARD_FOCUS_KEYS = new Set([
 ]);
 
 /** Permite .focus() programático só após Tab/Enter/setas (próximo campo). */
-export function allowProgrammaticFocusBriefly() {
-  programmaticFocusAllowedUntil = Date.now() + 80;
+export function allowProgrammaticFocusBriefly(durationMs = 80) {
+  programmaticFocusAllowedUntil = Date.now() + durationMs;
+}
+
+/** Input oculto montado no shell — focado no toque para abrir o teclado nativo no mobile. */
+let mobileSearchFocusBridge = null;
+
+export function registerMobileSearchFocusBridge(el) {
+  mobileSearchFocusBridge = el;
+}
+
+/** No gesto do utilizador (ex.: bottom nav Busca), abre janela de foco e prime o teclado. */
+export function primeMobileSearchKeyboard() {
+  if (!isCoarsePointer()) return;
+  allowProgrammaticFocusBriefly(600);
+  const bridge = mobileSearchFocusBridge;
+  if (!bridge) return;
+  try {
+    bridge.focus({ preventScroll: true });
+  } catch {
+    /* ignore */
+  }
+}
+
+export function releaseMobileSearchFocusBridge() {
+  const bridge = mobileSearchFocusBridge;
+  if (!bridge || document.activeElement !== bridge) return;
+  bridge.blur();
 }
 
 export function isProgrammaticFocusAllowed() {

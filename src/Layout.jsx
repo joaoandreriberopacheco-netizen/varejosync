@@ -17,6 +17,7 @@ import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
 import { shouldOpenGlobalSearchFromKeyboard } from '@/lib/globalSearchShortcut';
+import { registerMobileSearchFocusBridge } from '@/lib/focusPolicy';
 import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
 
@@ -291,6 +292,19 @@ export default function Layout({ children, currentPageName }) {
     />
   );
 
+  const mobileSearchFocusBridge = isMobile ? (
+    <input
+      ref={registerMobileSearchFocusBridge}
+      type="text"
+      inputMode="search"
+      autoComplete="off"
+      tabIndex={-1}
+      aria-hidden="true"
+      className="fixed w-px h-px opacity-0 pointer-events-none"
+      style={{ top: 0, left: 0 }}
+    />
+  ) : null;
+
   const financeGateActive = isFinanceiroProtectedPage(currentPageName);
   const pageContent = financeGateActive ? (
     <FinanceiroAccessGuard>{children}</FinanceiroAccessGuard>
@@ -304,6 +318,7 @@ export default function Layout({ children, currentPageName }) {
         <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-white dark:bg-background p38-app">
           {pageContent}
         </div>
+        {mobileSearchFocusBridge}
         {searchOverlay}
       </div>
     );
@@ -312,6 +327,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <FontScaleInitializer />
+      {mobileSearchFocusBridge}
       <div className="min-h-screen flex font-din-1451 p38-app bg-background">
 
 

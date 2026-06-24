@@ -87,12 +87,17 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
           );
 
           if (item.action) {
+            const isSearch = item.action === 'search';
             return (
               <button
                 key={item.id}
                 type="button"
-                onMouseDown={(e) => handleClick(e, item)}
-                onClick={(e) => handleClick(e, item)}
+                {...(isSearch
+                  ? { onPointerDown: (e) => handleClick(e, item) }
+                  : {
+                      onMouseDown: (e) => handleClick(e, item),
+                      onClick: (e) => handleClick(e, item),
+                    })}
                 className="flex-1 relative touch-manipulation"
               >
                 {content}

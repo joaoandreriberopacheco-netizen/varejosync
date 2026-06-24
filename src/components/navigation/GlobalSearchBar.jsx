@@ -6,6 +6,12 @@ import { getP38ShellColors } from '@/lib/p38ShellColors';
 import { cn } from '@/components/utils';
 import { createUppercaseInputChangeHandler } from '@/lib/uppercaseInputHandlers';
 import { SHELL_SEARCH_DROPDOWN_CLASS } from '@/lib/quickAccessOverlay';
+import {
+  allowProgrammaticFocusBriefly,
+  focusField,
+  releaseMobileSearchFocusBridge,
+} from '@/lib/focusPolicy';
+import { SEARCH_INPUT_PROPS } from '@/lib/searchInputProps';
 
 function filterSearchItems(items, query) {
   const trimmed = String(query || '').trim();
@@ -45,11 +51,17 @@ export default function GlobalSearchBar({
   const resultsMaxHeight = atTop ? 'min(70vh, 28rem)' : 'min(50vh, 280px)';
 
   useEffect(() => {
-    if (autoFocus) {
-      const timer = window.setTimeout(() => inputRef.current?.focus(), 0);
-      return () => window.clearTimeout(timer);
-    }
-    return undefined;
+    if (!autoFocus) return undefined;
+
+    const focusSearchInput = () => {
+      allowProgrammaticFocusBriefly();
+      focusField(inputRef.current, { preventScroll: true });
+      releaseMobileSearchFocusBridge();
+    };
+
+    focusSearchInput();
+    const timer = window.setTimeout(focusSearchInput, 150);
+    return () => window.clearTimeout(timer);
   }, [autoFocus]);
 
   useEffect(() => {
@@ -98,10 +110,8 @@ export default function GlobalSearchBar({
         <input
           ref={inputRef}
           type="search"
-          autoComplete="off"
-          enterKeyHint="search"
-          autoCapitalize="characters"
-          name="p38-search-q"
+          inputMode="search"
+          {...SEARCH_INPUT_PROPS}
           placeholder={placeholder}
           value={query}
           className="p38-data-uppercase flex-1 bg-transparent text-sm outline-none min-w-0 font-din-1451"
