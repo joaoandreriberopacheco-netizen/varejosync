@@ -2,9 +2,12 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import GlobalSearchBar from '@/components/navigation/GlobalSearchBar';
 import { SHELL_Z } from '@/lib/quickAccessOverlay';
+import { cn } from '@/lib/utils';
 
 /**
  * Busca global (Ctrl+K / bottom nav) — portal no body para prevalecer sobre qualquer tela.
+ * No mobile o overlay fica sempre montado (invisível quando fechado) para o input existir
+ * no gesto do toque e o teclado nativo abrir de imediato.
  */
 export default function GlobalSearchOverlay({
   open,
@@ -14,21 +17,28 @@ export default function GlobalSearchOverlay({
   searchableItems,
   onNavigate,
 }) {
-  if (!open || typeof document === 'undefined') return null;
+  if (typeof document === 'undefined') return null;
+  if (!isMobile && !open) return null;
 
   const shellZ = SHELL_Z.search;
 
   if (isMobile) {
     return createPortal(
       <div
-        className="fixed inset-0 font-din-1451 desktop-layout:hidden"
+        className={cn(
+          'fixed inset-0 font-din-1451 desktop-layout:hidden',
+          !open && 'invisible pointer-events-none'
+        )}
         style={{ zIndex: shellZ }}
-        onClick={onClose}
+        onClick={open ? onClose : undefined}
         role="dialog"
         aria-modal="true"
+        aria-hidden={!open}
         aria-label="Busca de funcionalidades"
       >
-        <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-hidden />
+        {open ? (
+          <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-hidden />
+        ) : null}
         <div
           className="relative z-[1] w-full px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]"
           onClick={(e) => e.stopPropagation()}
@@ -36,7 +46,8 @@ export default function GlobalSearchOverlay({
           <GlobalSearchBar
             isDark={isDark}
             searchableItems={searchableItems}
-            autoFocus
+            active={open}
+            autoFocus={open}
             showClose
             atTop
             onClose={onClose}
@@ -65,6 +76,7 @@ export default function GlobalSearchOverlay({
           <GlobalSearchBar
             isDark={isDark}
             searchableItems={searchableItems}
+            active={open}
             autoFocus
             showClose
             onClose={onClose}

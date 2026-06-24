@@ -9,9 +9,9 @@ import { SHELL_SEARCH_DROPDOWN_CLASS } from '@/lib/quickAccessOverlay';
 import {
   allowProgrammaticFocusBriefly,
   focusField,
-  releaseMobileSearchFocusBridge,
 } from '@/lib/focusPolicy';
 import { SEARCH_INPUT_PROPS } from '@/lib/searchInputProps';
+import { registerGlobalSearchInput } from '@/lib/openGlobalSearch';
 
 function filterSearchItems(items, query) {
   const trimmed = String(query || '').trim();
@@ -31,6 +31,7 @@ export default function GlobalSearchBar({
   className = '',
   placeholder = 'Buscar…',
   autoFocus = false,
+  active = true,
   showClose = false,
   atTop = false,
   showShortcutHint = false,
@@ -52,19 +53,22 @@ export default function GlobalSearchBar({
 
   useEffect(() => {
     if (!autoFocus) return undefined;
-
-    const focusSearchInput = () => {
-      allowProgrammaticFocusBriefly();
-      focusField(inputRef.current, { preventScroll: true });
-      releaseMobileSearchFocusBridge();
-    };
-
-    focusSearchInput();
-    const timer = window.setTimeout(focusSearchInput, 150);
-    return () => window.clearTimeout(timer);
+    allowProgrammaticFocusBriefly();
+    focusField(inputRef.current, { preventScroll: true });
+    return undefined;
   }, [autoFocus]);
 
   useEffect(() => {
+    if (active) return undefined;
+    setQuery('');
+    setFocused(false);
+    inputRef.current?.blur();
+    return undefined;
+  }, [active]);
+
+  useEffect(() => {
+    if (!active) return undefined;
+
     const handlePointerDown = (event) => {
       if (!rootRef.current?.contains(event.target)) {
         setFocused(false);
@@ -76,7 +80,7 @@ export default function GlobalSearchBar({
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('touchstart', handlePointerDown);
     };
-  }, []);
+  }, [active]);
 
   const handleSelect = () => {
     setQuery('');
@@ -108,7 +112,10 @@ export default function GlobalSearchBar({
       >
         <Search className="w-4 h-4 flex-none" style={{ color: c.iconColor }} />
         <input
-          ref={inputRef}
+          ref={(el) => {
+            inputRef.current = el;
+            registerGlobalSearchInput(el);
+          }}
           type="search"
           inputMode="search"
           {...SEARCH_INPUT_PROPS}

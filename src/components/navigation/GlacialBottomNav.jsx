@@ -93,7 +93,12 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
                 key={item.id}
                 type="button"
                 {...(isSearch
-                  ? { onPointerDown: (e) => handleClick(e, item) }
+                  ? {
+                      onTouchStart: (e) => {
+                        e.preventDefault();
+                        handleClick(e, item);
+                      },
+                    }
                   : {
                       onMouseDown: (e) => handleClick(e, item),
                       onClick: (e) => handleClick(e, item),
