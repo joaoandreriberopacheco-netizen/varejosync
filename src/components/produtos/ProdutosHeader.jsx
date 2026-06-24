@@ -136,6 +136,17 @@ export default function ProdutosHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
+                  {filteredProdutos.length > 0 && (
+                    <DropdownMenuItem
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        setIsMassMarkupOpen(true);
+                      }}
+                      className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                    >
+                      <Percent className="w-4 h-4 mr-2 p38-text-accent" />Aplicar markup aos filtrados
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={handleBaixarTemplateUnificado} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
                     <Download className="w-4 h-4 mr-2" />Template
                   </DropdownMenuItem>
@@ -156,6 +167,17 @@ export default function ProdutosHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
+                  {filteredProdutos.length > 0 && (
+                    <DropdownMenuItem
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        setIsMassMarkupOpen(true);
+                      }}
+                      className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                    >
+                      <Percent className="w-4 h-4 mr-2 p38-text-accent" />Aplicar markup aos filtrados
+                    </DropdownMenuItem>
+                  )}
                   {filteredProdutos.length > 0 && (
                     <DropdownMenuItem
                       onSelect={(event) => {
@@ -186,12 +208,13 @@ export default function ProdutosHeader({
             {filteredProdutos.length > 0 && (
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-9 w-9 flex-shrink-0"
-                title="Aplicar markup aos filtrados"
+                size="sm"
+                className="h-9 px-2.5 flex-shrink-0 gap-1.5 text-xs font-medium"
+                title="Aplicar markup aos produtos filtrados"
                 onClick={() => setIsMassMarkupOpen(true)}
               >
                 <Percent className="w-4 h-4 p38-text-accent" />
+                <span className="hidden sm:inline">Markup</span>
               </Button>
             )}
             <MassTagGenerator
@@ -222,6 +245,18 @@ export default function ProdutosHeader({
             />
           </div>
           <ProdutosSomentePositivosToggle filters={filters} setFilters={setFilters} />
+          {filteredProdutos.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
+              onClick={() => setIsMassMarkupOpen(true)}
+              title="Aplicar markup aos produtos do filtro atual"
+            >
+              <Percent className="w-3.5 h-3.5 p38-text-accent" />
+              Markup
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
