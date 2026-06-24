@@ -1,6 +1,12 @@
 import { getAbcdRank, compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import { sumCatalogStockTotals, lineEstoqueQuantidade } from '@/lib/catalogStockTotals';
-import { aggregateSkus } from '@/components/produtos/treegrid/useTreeGrid';
+import {
+  aggregateSkus,
+  buildTree,
+  flattenTree,
+  mergeAdjacentDuplicateGroupHeaders,
+  buildExpandedForLevel,
+} from '@/components/produtos/treegrid/useTreeGrid';
 
 const ABCD_LETTERS = ['A', 'B', 'C', 'D'];
 
@@ -21,17 +27,27 @@ function sortAbcdLetters(a, b) {
   return String(a).localeCompare(String(b));
 }
 
-function sortProdutosFlat(produtos, sortOrder = 'az') {
-  return [...(produtos || [])].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
+function prepareTreeRows(produtos, treeLevel, sortOrder) {
+  const tree = buildTree(produtos || []);
+  const expanded = buildExpandedForLevel(tree, treeLevel);
+  return mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expanded, '', 0, sortOrder));
+}
+
+function prepareFlatSkuRows(produtos, sortOrder) {
+  const list = [...(produtos || [])].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
+  return list.map((produto) => ({ type: 'sku', produto, level: 1, key: produto.id }));
 }
 
 /**
- * Documento do relatório: blocos ABCD com lista plana de SKUs (sem hierarquia de catálogo).
+ * Documento: blocos ABCD → hierarquia do catálogo (ou lista plana) dentro de cada classe.
  */
 export function prepareCatalogStockReportDocument({
   produtos = [],
+  layoutMode = 'tree',
+  treeLevel = 1,
   sortOrder = 'az',
 } = {}) {
+  const isPlana = layoutMode === 'plana';
   const buckets = new Map();
   for (const p of produtos || []) {
     if (!p || typeof p !== 'object') continue;
@@ -42,23 +58,31 @@ export function prepareCatalogStockReportDocument({
 
   const letters = [...buckets.keys()].sort(sortAbcdLetters);
   const groups = letters.map((letter) => {
-    const list = sortProdutosFlat(buckets.get(letter) || [], sortOrder);
+    const list = buckets.get(letter) || [];
     const agg = aggregateSkus(list);
     const estoqueTotal = list.reduce((s, p) => s + lineEstoqueQuantidade(p), 0);
+    const rows = isPlana
+      ? prepareFlatSkuRows(list, sortOrder)
+      : prepareTreeRows(list, treeLevel, sortOrder);
     return {
       letter,
       label: abcdGroupLabel(letter),
       produtos: list,
       agg: { ...agg, estoqueTotal },
       totals: sumCatalogStockTotals(list),
+      rows,
     };
   });
 
-  return { mode: 'plana', groups };
+  return { mode: isPlana ? 'plana' : 'tree', groups };
 }
 
 /** @deprecated */
 export function prepareCatalogStockReportRows(opts = {}) {
   const doc = prepareCatalogStockReportDocument(opts);
-  return { mode: 'plana', produtos: doc.groups.flatMap((g) => g.produtos) };
+  return {
+    mode: doc.mode,
+    produtos: doc.groups.flatMap((g) => g.produtos),
+    rows: doc.groups.flatMap((g) => g.rows),
+  };
 }

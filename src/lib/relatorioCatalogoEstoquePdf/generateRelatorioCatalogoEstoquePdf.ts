@@ -26,14 +26,17 @@ const FONT = {
   footer: 9,
 };
 
-/** Recuos e mind map (descricaoProduto aplicado só na coluna nome). */
+/** Recuo só na descrição por nível hierárquico (colunas de valor inalteradas). */
 const INDENT = {
   abcd: 0,
   abcdLine: 5,
-  descricaoProduto: 9,
+  /** mm por nível na árvore (só descrição). */
+  nivelMm: 4,
+  /** Folga após o ramo do mind map antes do nome do SKU. */
+  aposMindMap: 3,
 };
 
-const BRANCH_LEN = 2.4;
+const BRANCH_LEN = 3;
 
 const fmtR = (n: number) =>
   (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -52,6 +55,13 @@ function estoqueLinha(produto) {
   return `${qtd} ${un}`;
 }
 
+function groupEstoqueText(row) {
+  if (row.estoqueTotal != null && row.estoqueTotal > 0) {
+    return fmtN(row.estoqueTotal);
+  }
+  return '—';
+}
+
 function truncateOneLine(doc, text: string, maxW: number) {
   const lines = doc.splitTextToSize(safe(text), maxW);
   let line = lines[0] || '';
@@ -61,23 +71,40 @@ function truncateOneLine(doc, text: string, maxW: number) {
   return line;
 }
 
+function descIndentForLevel(level = 1, { isSku = false } = {}) {
+  const depth = Math.max(0, (level ?? 1) - 1);
+  const base = isSku ? INDENT.aposMindMap : 0;
+  return base + depth * INDENT.nivelMm;
+}
+
+function produtoLastro(produto, rowLastro?: number) {
+  if (Number.isFinite(rowLastro) && rowLastro > 0) return rowLastro;
+  return lineValorCustoTotal(produto);
+}
+
 export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string, unknown> = {}) {
   const {
     produtos = [],
     filters_summary: filtersSummary = '',
     totals = {},
+    layout_mode: layoutMode = 'tree',
+    tree_level: treeLevel = 1,
     sort_order: sortOrder = 'az',
     generated_at: generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
   } = payload as {
     produtos?: unknown[];
     filters_summary?: string;
     totals?: { totalCompra?: number; totalCusto?: number; totalVenda?: number };
+    layout_mode?: string;
+    tree_level?: number;
     sort_order?: string;
     generated_at?: string;
   };
 
   const documento = prepareCatalogStockReportDocument({
     produtos: produtos as never[],
+    layoutMode: layoutMode as string,
+    treeLevel: Number(treeLevel) || 1,
     sortOrder: sortOrder as string,
   });
 
@@ -89,11 +116,11 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   const M = 8;
   const CW = pageW - M * 2;
 
-  /** Valores à direita; descrição ocupa o miolo largo da página. */
+  /** Estoque à esquerda; mind map fixo (não acompanha recuo); valores à direita. */
   const X = {
-    line: 11,
-    estoque: M + 22,
-    descricao: M + 24,
+    estoque: M + 24,
+    mindMapLine: M + 14,
+    descricao: M + 28,
     vlCompra: M + CW - 58,
     custo: M + CW - 40,
     venda: M + CW - 22,
@@ -185,12 +212,11 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   ) => {
     const baseline = y0 + ROW_H * BASELINE_RATIO;
     const descX = X.descricao + descIndent;
-    const lineX = M + X.line + descIndent;
 
     if (mindMap) {
       const branchY = y0 + ROW_H * 0.5;
-      strokeLine(lineX, y0, lineX, y0 + ROW_H);
-      strokeLine(lineX, branchY, lineX + BRANCH_LEN, branchY);
+      strokeLine(X.mindMapLine, y0, X.mindMapLine, y0 + ROW_H);
+      strokeLine(X.mindMapLine, branchY, X.mindMapLine + BRANCH_LEN, branchY);
     }
 
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
@@ -216,7 +242,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(8);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('A4 compacto   agrupado por ABCD   lista plana   DIN 1451', M, y);
+  doc.text('A4 compacto   agrupado por ABCD   hierarquia na descricao   DIN 1451', M, y);
   y += 4.5;
 
   doc.setFontSize(8.8);
@@ -289,18 +315,39 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
       },
     });
 
-    for (const produto of grupo.produtos) {
+    for (const row of grupo.rows || []) {
       ensureSpace(ROW_STEP);
-      const cat = getCatalogoComercialView(produto);
-      const lastro = lineValorCustoTotal(produto);
-      const nome = produto?.codigo_interno
-        ? `${produto.nome || '—'}  ${produto.codigo_interno}`
-        : (produto.nome || '—');
+
+      if (row.type === 'group') {
+        const level = row.level ?? 1;
+        y += drawFlatRow(y, {
+          estoqueText: groupEstoqueText(row),
+          descricao: `${row.label || '—'} (${row.count ?? 0})`,
+          descIndent: descIndentForLevel(level, { isSku: false }),
+          muted: true,
+          descBold: true,
+          values: {
+            vlCompra: row.valorCompraMedio > 0 ? `~${moedaSemSimbolo(row.valorCompraMedio)}` : '—',
+            custo: row.custoMedio > 0 ? `~${moedaSemSimbolo(row.custoMedio)}` : '—',
+            venda: row.precoMedio > 0 ? `~${moedaSemSimbolo(row.precoMedio)}` : '—',
+            invent: row.lastroTotal > 0 ? `~${moedaSemSimbolo(row.lastroTotal)}` : '—',
+          },
+        });
+        continue;
+      }
+
+      const p = row.produto;
+      const cat = getCatalogoComercialView(p);
+      const lastro = produtoLastro(p, row.lastro);
+      const level = row.level ?? 1;
+      const nome = p?.codigo_interno
+        ? `${p.nome || '—'}  ${p.codigo_interno}`
+        : (p.nome || '—');
 
       y += drawFlatRow(y, {
-        estoqueText: estoqueLinha(produto),
+        estoqueText: estoqueLinha(p),
         descricao: nome,
-        descIndent: INDENT.descricaoProduto,
+        descIndent: descIndentForLevel(level, { isSku: true }),
         mindMap: true,
         values: {
           vlCompra: moedaOuTraco(cat.valorCompraNaEmbalagem),
@@ -325,5 +372,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_abcd_plano' };
+  return { data: pdfBytes, version: 'enxuto_abcd_hier' };
 }

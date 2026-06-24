@@ -1078,6 +1078,8 @@ function ProdutosPageContent() {
         produtos: filteredProdutos,
         filters_summary: filtersSummary,
         totals,
+        layout_mode: viewMode === 'plana' ? 'plana' : 'tree',
+        tree_level: treeLevel,
         sort_order: sortOrder,
       });
 
@@ -1101,7 +1103,7 @@ function ProdutosPageContent() {
     } finally {
       setGerandoRelatorioEstoque(false);
     }
-  }, [filteredProdutos, filters, categorias, fornecedores, sortOrder, toast]);
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, toast]);
 
   useEffect(() => {
     if (relatorioEstoqueAutoRef.current) return;
