@@ -33,7 +33,7 @@ export default function GlobalSearchOverlay({
       <div
         className={cn(
           'fixed inset-0 font-din-1451 desktop-layout:hidden',
-          !open && 'invisible pointer-events-none'
+          !open && 'pointer-events-none'
         )}
         style={{ zIndex: shellZ }}
         onClick={open ? handleBackdropClose : undefined}
@@ -46,7 +46,10 @@ export default function GlobalSearchOverlay({
           <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" aria-hidden />
         ) : null}
         <div
-          className="relative z-[1] w-full px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]"
+          className={cn(
+            'relative z-[1] w-full px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]',
+            !open && 'opacity-0 h-0 overflow-hidden pointer-events-none'
+          )}
           onClick={(e) => e.stopPropagation()}
         >
           <GlobalSearchBar

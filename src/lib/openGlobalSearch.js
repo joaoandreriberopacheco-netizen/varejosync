@@ -1,17 +1,38 @@
-import { allowProgrammaticFocusBriefly, focusField } from '@/lib/focusPolicy';
+import {
+  allowProgrammaticFocusBriefly,
+  focusField,
+  isCoarsePointer,
+} from '@/lib/focusPolicy';
 
 let globalSearchInputEl = null;
 let suppressBackdropCloseUntil = 0;
+let openSearchOverlaySync = null;
 
 /** Regista o input da busca global (montado no mobile mesmo com overlay fechado). */
 export function registerGlobalSearchInput(el) {
   globalSearchInputEl = el;
 }
 
+/** Layout regista abertura síncrona (flushSync) para o input estar visível antes do foco. */
+export function registerOpenSearchOverlaySync(fn) {
+  openSearchOverlaySync = fn;
+}
+
 function focusGlobalSearchInput() {
-  if (!globalSearchInputEl) return;
-  allowProgrammaticFocusBriefly(400);
-  focusField(globalSearchInputEl, { preventScroll: true });
+  const el = globalSearchInputEl;
+  if (!el) return;
+
+  allowProgrammaticFocusBriefly(500);
+
+  if (isCoarsePointer()) {
+    el.readOnly = true;
+    focusField(el, { preventScroll: true });
+    el.readOnly = false;
+    focusField(el, { preventScroll: true });
+    return;
+  }
+
+  focusField(el, { preventScroll: true });
 }
 
 /** Evita fechar o overlay no mesmo toque que abriu (ghost click no mobile). */
@@ -26,8 +47,14 @@ export function armGlobalSearchOpenGuard() {
 /** Abre o diálogo de busca global (lupa mobile ou Ctrl/Cmd+K e / no desktop). */
 export function openGlobalSearch(initialQuery = '') {
   armGlobalSearchOpenGuard();
+
+  if (openSearchOverlaySync) {
+    openSearchOverlaySync();
+  } else {
+    window.dispatchEvent(
+      new CustomEvent('open-global-search', { detail: { query: initialQuery } })
+    );
+  }
+
   focusGlobalSearchInput();
-  window.dispatchEvent(
-    new CustomEvent('open-global-search', { detail: { query: initialQuery } })
-  );
 }

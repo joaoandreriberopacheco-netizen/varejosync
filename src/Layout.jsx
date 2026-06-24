@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
@@ -17,7 +18,7 @@ import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
 import { shouldOpenGlobalSearchFromKeyboard } from '@/lib/globalSearchShortcut';
-import { armGlobalSearchOpenGuard } from '@/lib/openGlobalSearch';
+import { armGlobalSearchOpenGuard, registerOpenSearchOverlaySync } from '@/lib/openGlobalSearch';
 import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
 
@@ -179,6 +180,16 @@ export default function Layout({ children, currentPageName }) {
 
   const closeSearchOverlay = React.useCallback(() => {
     setSearchOverlayOpen(false);
+  }, []);
+
+  useEffect(() => {
+    registerOpenSearchOverlaySync(() => {
+      flushSync(() => {
+        setSearchOverlayOpen(true);
+        setShowMobileMenu(false);
+      });
+    });
+    return () => registerOpenSearchOverlaySync(null);
   }, []);
 
   useEffect(() => {
