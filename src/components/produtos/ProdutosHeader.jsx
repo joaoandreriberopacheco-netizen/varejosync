@@ -153,7 +153,9 @@ export default function ProdutosHeader({
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
                   {filteredProdutos.length > 0 && (
                     <DropdownMenuItem
-                      onClick={() => onOpenMassTag?.()}
+                      onClick={() => {
+                        window.setTimeout(() => onOpenMassTag?.(), 0);
+                      }}
                       className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
                     >
                       <Sparkles className="w-4 h-4 mr-2 p38-text-accent" />Tagificação em Massa

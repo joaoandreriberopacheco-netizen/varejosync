@@ -152,14 +152,15 @@ const DropdownMenuContent = React.forwardRef(({ className, align = "center", chi
   )
 })
 
-const DropdownMenuItem = React.forwardRef(({ className, ...props }, ref) => {
-    const { setOpen } = useContext(DropdownMenuContext)
+const DropdownMenuItem = React.forwardRef(({ className, onClick, ...props }, ref) => {
+  const { setOpen } = useContext(DropdownMenuContext)
+
   return (
     <div
       ref={ref}
       onClick={(e) => {
-          setOpen(false)
-          props.onClick?.(e)
+        setOpen(false)
+        onClick?.(e)
       }}
       className={cn(
         "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 cursor-pointer",
