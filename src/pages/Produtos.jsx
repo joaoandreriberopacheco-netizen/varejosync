@@ -31,9 +31,13 @@ import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
 import {
   filterProdutos,
   countActiveProdutoFilters,
+  describeProdutoFilters,
   getCatalogProdutoEntryFilters,
 } from '@/lib/filterProdutos';
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
+import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
+import { gerarRelatorioCatalogoEstoque } from '@/functions/gerarRelatorioCatalogoEstoque';
+import { toast } from 'sonner';
 import {
   loadCatalogProdutoColumns,
   saveCatalogProdutoColumns,
@@ -141,6 +145,8 @@ function ProdutosPageContent() {
   const [isProcessingCustos, setIsProcessingCustos] = useState(false);
   const [previewCustosData, setPreviewCustosData] = useState(null);
   const [isPreviewCustosDialogOpen, setIsPreviewCustosDialogOpen] = useState(false);
+  const [gerandoRelatorioEstoque, setGerandoRelatorioEstoque] = useState(false);
+  const relatorioEstoqueAutoRef = useRef(false);
 
   const { toast } = useToast();
   const isDesktop = useDesktopContent();
@@ -1063,6 +1069,57 @@ function ProdutosPageContent() {
   const filteredStats = useMemo(() => calculateProdutoStats(filteredProdutos), [filteredProdutos]);
   const headerStats = filteredStats;
 
+  const handleGerarRelatorioEstoque = useCallback(async () => {
+    setGerandoRelatorioEstoque(true);
+    toast.loading('Gerando relatório de estoque...', { id: 'relatorio-estoque' });
+    try {
+      const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
+      const totals = sumCatalogStockTotals(filteredProdutos);
+      const resposta = await gerarRelatorioCatalogoEstoque({
+        produtos: filteredProdutos,
+        filters_summary: filtersSummary,
+        totals,
+        layout_mode: viewMode === 'plana' ? 'plana' : 'tree',
+        tree_level: treeLevel,
+        sort_order: sortOrder,
+      });
+
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RelatorioEstoque_${dataHoje()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.success('Relatório de estoque gerado', { id: 'relatorio-estoque' });
+    } catch (error) {
+      const msg = error?.message || String(error);
+      toast.error('Erro ao gerar relatório de estoque', {
+        id: 'relatorio-estoque',
+        description: msg.length > 300 ? `${msg.slice(0, 300)}…` : msg,
+      });
+      console.error(error);
+    } finally {
+      setGerandoRelatorioEstoque(false);
+    }
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder]);
+
+  useEffect(() => {
+    if (relatorioEstoqueAutoRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('relatorioEstoque') !== '1') return;
+    if (!produtos.length) return;
+
+    relatorioEstoqueAutoRef.current = true;
+    params.delete('relatorioEstoque');
+    const nextUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', nextUrl);
+    handleGerarRelatorioEstoque();
+  }, [produtos.length, handleGerarRelatorioEstoque]);
+
   const produtosHeader = (
     <ProdutosHeader
       stats={headerStats}
@@ -1085,6 +1142,8 @@ function ProdutosPageContent() {
       treeLevel={treeLevel}
       setTreeLevel={setTreeLevel}
       setIsColumnSelectorOpen={setIsColumnSelectorOpen}
+      onGerarRelatorioEstoque={handleGerarRelatorioEstoque}
+      gerandoRelatorioEstoque={gerandoRelatorioEstoque}
     />
   );
 
