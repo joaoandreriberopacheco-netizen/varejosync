@@ -55,13 +55,6 @@ function estoqueLinha(produto) {
   return `${qtd} ${un}`;
 }
 
-function groupEstoqueText(row) {
-  if (row.estoqueTotal != null && row.estoqueTotal > 0) {
-    return fmtN(row.estoqueTotal);
-  }
-  return '—';
-}
-
 function truncateOneLine(doc, text: string, maxW: number) {
   const lines = doc.splitTextToSize(safe(text), maxW);
   let line = lines[0] || '';
@@ -71,10 +64,9 @@ function truncateOneLine(doc, text: string, maxW: number) {
   return line;
 }
 
-function descIndentForLevel(level = 1, { isSku = false } = {}) {
+function descIndentForLevel(level = 1) {
   const depth = Math.max(0, (level ?? 1) - 1);
-  const base = isSku ? INDENT.aposMindMap : 0;
-  return base + depth * INDENT.nivelMm;
+  return INDENT.aposMindMap + depth * INDENT.nivelMm;
 }
 
 function produtoLastro(produto, rowLastro?: number) {
@@ -242,7 +234,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(8);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('A4 compacto   agrupado por ABCD   hierarquia na descricao   DIN 1451', M, y);
+  doc.text('A4 compacto   agrupado por ABCD   recuo hierarquico na descricao   DIN 1451', M, y);
   y += 4.5;
 
   doc.setFontSize(8.8);
@@ -316,25 +308,8 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     });
 
     for (const row of grupo.rows || []) {
+      if (row.type !== 'sku') continue;
       ensureSpace(ROW_STEP);
-
-      if (row.type === 'group') {
-        const level = row.level ?? 1;
-        y += drawFlatRow(y, {
-          estoqueText: groupEstoqueText(row),
-          descricao: `${row.label || '—'} (${row.count ?? 0})`,
-          descIndent: descIndentForLevel(level, { isSku: false }),
-          muted: true,
-          descBold: true,
-          values: {
-            vlCompra: row.valorCompraMedio > 0 ? `~${moedaSemSimbolo(row.valorCompraMedio)}` : '—',
-            custo: row.custoMedio > 0 ? `~${moedaSemSimbolo(row.custoMedio)}` : '—',
-            venda: row.precoMedio > 0 ? `~${moedaSemSimbolo(row.precoMedio)}` : '—',
-            invent: row.lastroTotal > 0 ? `~${moedaSemSimbolo(row.lastroTotal)}` : '—',
-          },
-        });
-        continue;
-      }
 
       const p = row.produto;
       const cat = getCatalogoComercialView(p);
@@ -347,7 +322,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
       y += drawFlatRow(y, {
         estoqueText: estoqueLinha(p),
         descricao: nome,
-        descIndent: descIndentForLevel(level, { isSku: true }),
+        descIndent: descIndentForLevel(level),
         mindMap: true,
         values: {
           vlCompra: moedaOuTraco(cat.valorCompraNaEmbalagem),
