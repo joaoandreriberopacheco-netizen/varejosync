@@ -37,6 +37,8 @@ const INDENT = {
 };
 
 const BRANCH_LEN = 3;
+/** Espaçamento entre linhas quando a descrição quebra. */
+const DESC_LINE_LEAD = 4.15;
 
 const fmtR = (n: number) =>
   (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -55,13 +57,17 @@ function estoqueLinha(produto) {
   return `${qtd} ${un}`;
 }
 
-function truncateOneLine(doc, text: string, maxW: number) {
-  const lines = doc.splitTextToSize(safe(text), maxW);
-  let line = lines[0] || '';
-  if (lines.length > 1 && line.length > 2) {
-    line = `${line.slice(0, Math.max(0, line.length - 1))}…`;
-  }
-  return line;
+function splitDescriptionLines(
+  doc: jsPDF,
+  pdfFontFamily: string,
+  text: string,
+  maxW: number,
+  descBold: boolean,
+) {
+  doc.setFont(pdfFontFamily, descBold ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
+  doc.setFontSize(FONT.row);
+  const lines = doc.splitTextToSize(safe(text), maxW) as string[];
+  return lines.length ? lines : [''];
 }
 
 function descIndentForLevel(level = 1) {
@@ -202,26 +208,38 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
       descBold?: boolean;
     },
   ) => {
-    const baseline = y0 + ROW_H * BASELINE_RATIO;
     const descX = X.descricao + descIndent;
+    const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW(descX), descBold);
+    const lineCount = descLines.length;
+    const extraH = (lineCount - 1) * DESC_LINE_LEAD;
+    const rowStep = ROW_STEP + extraH;
+
+    y = y0;
+    ensureSpace(rowStep + 1);
+    const drawY = y;
+    const firstBaseline = drawY + ROW_H * BASELINE_RATIO;
+    const rowBottom = drawY + ROW_H + extraH;
 
     if (mindMap) {
-      const branchY = y0 + ROW_H * 0.5;
-      strokeLine(X.mindMapLine, y0, X.mindMapLine, y0 + ROW_H);
+      const branchY = drawY + ROW_H * 0.5;
+      strokeLine(X.mindMapLine, drawY, X.mindMapLine, rowBottom);
       strokeLine(X.mindMapLine, branchY, X.mindMapLine + BRANCH_LEN, branchY);
     }
 
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
     doc.setFontSize(FONT.row);
     doc.setTextColor(...(muted ? ENXUTO.faint : ENXUTO.black));
-    doc.text(estoqueText, X.estoque, baseline, { align: 'right' });
+    doc.text(estoqueText, X.estoque, firstBaseline, { align: 'right' });
+
+    drawValueColumns(firstBaseline, values, { muted });
 
     doc.setFont(pdfFontFamily, descBold ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
     doc.setTextColor(...(muted ? ENXUTO.muted : ENXUTO.black));
-    doc.text(truncateOneLine(doc, descricao, descMaxW(descX)), descX, baseline);
+    for (let i = 0; i < lineCount; i += 1) {
+      doc.text(descLines[i], descX, firstBaseline + i * DESC_LINE_LEAD);
+    }
 
-    drawValueColumns(baseline, values, { muted });
-    return ROW_STEP;
+    return drawY + rowStep;
   };
 
   // ── Cabeçalho ────────────────────────────────────────────────────────────
@@ -292,8 +310,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     const agg = grupo.agg || {};
     const estoqueResumo =
       agg.estoqueTotal > 0 ? fmtN(agg.estoqueTotal) : '—';
-    ensureSpace(ROW_STEP);
-    y += drawFlatRow(y, {
+    y = drawFlatRow(y, {
       estoqueText: estoqueResumo,
       descricao: `${grupo.label} — resumo (${grupo.produtos.length})`,
       descIndent: 0,
@@ -309,7 +326,6 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
 
     for (const row of grupo.rows || []) {
       if (row.type !== 'sku') continue;
-      ensureSpace(ROW_STEP);
 
       const p = row.produto;
       const cat = getCatalogoComercialView(p);
@@ -319,7 +335,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
         ? `${p.nome || '—'}  ${p.codigo_interno}`
         : (p.nome || '—');
 
-      y += drawFlatRow(y, {
+      y = drawFlatRow(y, {
         estoqueText: estoqueLinha(p),
         descricao: nome,
         descIndent: descIndentForLevel(level),
@@ -347,5 +363,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_abcd_familia_n2' };
+  return { data: pdfBytes, version: 'enxuto_abcd_familia_n2_wrap' };
 }
