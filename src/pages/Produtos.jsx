@@ -37,7 +37,6 @@ import {
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
 import { gerarRelatorioCatalogoEstoque } from '@/functions/gerarRelatorioCatalogoEstoque';
-import { toast } from 'sonner';
 import {
   loadCatalogProdutoColumns,
   saveCatalogProdutoColumns,
@@ -1071,7 +1070,7 @@ function ProdutosPageContent() {
 
   const handleGerarRelatorioEstoque = useCallback(async () => {
     setGerandoRelatorioEstoque(true);
-    toast.loading('Gerando relatório de estoque...', { id: 'relatorio-estoque' });
+    toast({ title: 'Gerando relatório de estoque...' });
     try {
       const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
       const totals = sumCatalogStockTotals(filteredProdutos);
@@ -1092,18 +1091,19 @@ function ProdutosPageContent() {
       a.click();
       URL.revokeObjectURL(url);
 
-      toast.success('Relatório de estoque gerado', { id: 'relatorio-estoque' });
+      toast({ title: 'Relatório de estoque gerado' });
     } catch (error) {
       const msg = error?.message || String(error);
-      toast.error('Erro ao gerar relatório de estoque', {
-        id: 'relatorio-estoque',
+      toast({
+        title: 'Erro ao gerar relatório de estoque',
         description: msg.length > 300 ? `${msg.slice(0, 300)}…` : msg,
+        variant: 'destructive',
       });
       console.error(error);
     } finally {
       setGerandoRelatorioEstoque(false);
     }
-  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder]);
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, toast]);
 
   useEffect(() => {
     if (relatorioEstoqueAutoRef.current) return;
