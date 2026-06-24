@@ -17,6 +17,7 @@ import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
 import { shouldHideBottomNavOnScroll } from '@/config/bottomNavScrollPolicy';
 import { shouldOpenGlobalSearchFromKeyboard } from '@/lib/globalSearchShortcut';
+import { armGlobalSearchOpenGuard } from '@/lib/openGlobalSearch';
 import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
 
@@ -171,6 +172,7 @@ export default function Layout({ children, currentPageName }) {
   }, [menuItems]);
 
   const openSearchOverlay = React.useCallback(() => {
+    armGlobalSearchOpenGuard();
     setSearchOverlayOpen(true);
     setShowMobileMenu(false);
   }, []);

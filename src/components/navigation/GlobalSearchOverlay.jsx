@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import GlobalSearchBar from '@/components/navigation/GlobalSearchBar';
 import { SHELL_Z } from '@/lib/quickAccessOverlay';
 import { cn } from '@/lib/utils';
+import { shouldSuppressGlobalSearchBackdropClose } from '@/lib/openGlobalSearch';
 
 /**
  * Busca global (Ctrl+K / bottom nav) — portal no body para prevalecer sobre qualquer tela.
@@ -17,6 +18,11 @@ export default function GlobalSearchOverlay({
   searchableItems,
   onNavigate,
 }) {
+  const handleBackdropClose = useCallback(() => {
+    if (shouldSuppressGlobalSearchBackdropClose()) return;
+    onClose?.();
+  }, [onClose]);
+
   if (typeof document === 'undefined') return null;
   if (!isMobile && !open) return null;
 
@@ -30,7 +36,7 @@ export default function GlobalSearchOverlay({
           !open && 'invisible pointer-events-none'
         )}
         style={{ zIndex: shellZ }}
-        onClick={open ? onClose : undefined}
+        onClick={open ? handleBackdropClose : undefined}
         role="dialog"
         aria-modal="true"
         aria-hidden={!open}
@@ -66,7 +72,7 @@ export default function GlobalSearchOverlay({
         className="fixed inset-0 bg-black/25 backdrop-blur-[1px]"
         style={{ zIndex: shellZ }}
         aria-label="Fechar busca"
-        onClick={onClose}
+        onClick={handleBackdropClose}
       />
       <div
         className="fixed top-4 left-1/2 -translate-x-1/2 w-full max-w-xl px-3 font-din-1451 pointer-events-none"
