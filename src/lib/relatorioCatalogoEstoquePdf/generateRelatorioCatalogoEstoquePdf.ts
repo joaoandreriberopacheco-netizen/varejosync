@@ -8,10 +8,12 @@ const PDF_FONT_BOLD = 'bold';
 const PDF_FONT_NORMAL = 'normal';
 
 const ENXUTO_LINE_W = 0.12;
+const ROW_RULE_W = 0.07;
 const ENXUTO = {
   black: [0, 0, 0] as [number, number, number],
   muted: [72, 72, 72] as [number, number, number],
   line: [110, 110, 110] as [number, number, number],
+  rowRule: [210, 210, 210] as [number, number, number],
 };
 
 const FONT = {
@@ -143,8 +145,8 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     vendTot: vendRight,
   };
 
-  const ROW_H = 5.9;
-  const ROW_GAP = 0.75;
+  const ROW_H = 6.1;
+  const ROW_GAP = 1.15;
   const ROW_STEP = ROW_H + ROW_GAP;
   const BASELINE_RATIO = 0.72;
 
@@ -152,10 +154,21 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   let dividerStartY = 0;
   let dividerStartPage = 1;
 
-  const strokeLine = (x0: number, y0: number, x1: number, y1: number, color = ENXUTO.line) => {
+  const strokeLine = (
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    color = ENXUTO.line,
+    width = ENXUTO_LINE_W,
+  ) => {
     doc.setDrawColor(...color);
-    doc.setLineWidth(ENXUTO_LINE_W);
+    doc.setLineWidth(width);
     doc.line(x0, y0, x1, y1);
+  };
+
+  const drawRowSeparator = (yLine: number) => {
+    strokeLine(descStart, yLine, vendRight, yLine, ENXUTO.rowRule, ROW_RULE_W);
   };
 
   const drawVerticalDivider = (
@@ -219,7 +232,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     baselineY: number,
     vals: ReturnType<typeof linhaComercialPdf>,
   ) => {
-    doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+    doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
     doc.setFontSize(FONT.row);
     doc.setTextColor(...ENXUTO.black);
     doc.text(vals.quantTexto, X.quant, baselineY, { align: 'right' });
@@ -259,6 +272,8 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     for (let i = 0; i < lineCount; i += 1) {
       doc.text(descLines[i], X.desc, firstBaseline + i * DESC_LINE_LEAD);
     }
+
+    drawRowSeparator(drawY + rowStep - ROW_GAP * 0.35);
 
     return drawY + rowStep;
   };
@@ -338,5 +353,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_colunas_custo_venda_v3' };
+  return { data: pdfBytes, version: 'enxuto_colunas_custo_venda_v4' };
 }
