@@ -17,6 +17,7 @@ import { loadCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import RelatorioCatalogoEstoquePrint from '@/components/produtos/RelatorioCatalogoEstoquePrint';
+import '@/components/produtos/relatorioCatalogoEstoquePrint.css';
 
 const REPORT_COLS = ['estoque_atual', 'valor_compra', 'preco_custo', 'preco_venda', 'inventario_valorizado'];
 
@@ -111,52 +112,6 @@ export default function RelatorioCatalogoEstoque() {
 
   return (
     <>
-      <style>{`
-      @media print {
-        @page { size: A4 portrait; margin: 16mm 14mm; }
-        html, body {
-          margin: 0 !important;
-          padding: 0 !important;
-          background: #fff !important;
-          height: auto !important;
-          max-height: none !important;
-          overflow: visible !important;
-        }
-        body > *:not(#relatorio-catalogo-estoque-print) {
-          display: none !important;
-        }
-        body * {
-          print-color-adjust: exact;
-          -webkit-print-color-adjust: exact;
-        }
-        #relatorio-catalogo-estoque-print {
-          display: block !important;
-          position: static !important;
-          width: auto !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          background: #fff !important;
-          color: #111 !important;
-          height: auto !important;
-          max-height: none !important;
-          overflow: visible !important;
-        }
-        #relatorio-catalogo-estoque-print table {
-          page-break-inside: auto;
-        }
-        #relatorio-catalogo-estoque-print thead {
-          display: table-header-group;
-        }
-        #relatorio-catalogo-estoque-print tr {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        #relatorio-catalogo-estoque-print footer {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-      }
-    `}</style>
       <div
         id="relatorio-catalogo-estoque"
         className="flex flex-col h-full overflow-hidden w-full bg-card print:hidden"

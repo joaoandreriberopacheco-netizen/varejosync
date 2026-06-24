@@ -8,34 +8,11 @@ import {
 } from '@/components/produtos/treegrid/useTreeGrid';
 import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import './relatorioCatalogoEstoquePrint.css';
 
 const fmtR = (n) =>
   (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
-
-const PRINT_TIER = {
-  pai: {
-    bg: '#5c5c5c',
-    text: '#ffffff',
-    muted: 'rgba(255,255,255,0.82)',
-  },
-  solteiro: {
-    bg: '#5c5c5c',
-    text: '#ffffff',
-    muted: 'rgba(255,255,255,0.82)',
-  },
-  filho: {
-    bg: '#ffffff',
-    text: '#1a1a1a',
-    muted: '#4b5563',
-  },
-};
-
-/** `pai` = grupo; `solteiro` = produto nível 1; `filho` = produto em grupo. */
-function getPrintRowTier(row) {
-  if (row.type === 'group') return 'pai';
-  return (row.level ?? 1) <= 1 ? 'solteiro' : 'filho';
-}
 
 function printEstoqueCell(produto) {
   const apresent = formatEstoqueApresentacao(produto);
@@ -53,114 +30,58 @@ function printGroupEstoque(row) {
 
 function printPreco(valor) {
   if (!(valor > 0)) return '—';
-  return `R$ ${fmtR(valor)}`;
+  return fmtR(valor);
 }
 
-function printRowCells(style, cells, { firstCellPaddingLeft, tier = 'filho' } = {}) {
-  const cellPadding = tier === 'filho' ? '4px 6px' : '8px 6px';
-  return cells.map((content, index) => (
-    <td
-      key={index}
-      className="tabular-nums"
-      style={{
-        ...style,
-        textAlign: index === 0 ? 'left' : 'right',
-        padding: cellPadding,
-        paddingLeft: index === 0 && firstCellPaddingLeft != null ? firstCellPaddingLeft : undefined,
-        verticalAlign: 'middle',
-        borderBottom: '1px solid #d1d5db',
-      }}
-    >
-      {content}
-    </td>
-  ));
-}
-
-/**
- * Layout só para impressão — tabela clara em fundo branco, sem chrome da UI.
- */
-function PrintFooter({ totals }) {
+function TreeIndent({ level }) {
+  if (!level || level <= 1) return null;
   return (
-    <footer
-      style={{
-        marginTop: '16px',
-        paddingTop: '12px',
-        borderTop: '1px solid #d1d5db',
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        gap: '16px',
-      }}
-    >
-      <p style={{ fontSize: '10pt', color: '#6b7280', maxWidth: '20rem', margin: 0 }}>
-        Totais dos SKUs filtrados: estoque (vitrine quando activa) × valor de compra, custo total ou preço de venda.
-      </p>
-      <div style={{ textAlign: 'right' }}>
-        {[
-          ['Inventário (valor de compra)', totals.totalCompra],
-          ['Inventário (custo total)', totals.totalCusto],
-          ['Inventário (preço de venda)', totals.totalVenda],
-        ].map(([label, value]) => (
-          <div key={label} style={{ marginBottom: '6px' }}>
-            <span style={{ fontSize: '10pt', color: '#6b7280', textTransform: 'uppercase' }}>
-              {label}
-            </span>
-            <div style={{ fontSize: '12pt', fontWeight: 700, color: '#111111' }} className="tabular-nums">
-              R$ {fmtR(roundToTwoDecimals(value))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </footer>
+    <>
+      {Array.from({ length: level - 1 }, (_, i) => (
+        <span key={i} className="rce-tree-indent" aria-hidden="true" />
+      ))}
+    </>
   );
 }
 
-function PrintTableHeader({ firstColLabel, firstColWidth = '34%' }) {
-  const headerCellStyle = {
-    textAlign: 'left',
-    padding: '6px 6px',
-    fontSize: '11pt',
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '0.02em',
-    color: '#111111',
-    borderBottom: '2px solid #374151',
-    backgroundColor: '#f3f4f6',
-  };
+function ProdutoNome({ nome, codigo }) {
+  return (
+    <>
+      <span className="rce-nome">{nome || '—'}</span>
+      {codigo ? <span className="rce-print-codigo">{codigo}</span> : null}
+    </>
+  );
+}
 
+function PrintTableHeader({ firstColLabel }) {
   return (
     <thead>
       <tr>
-        <th style={{ ...headerCellStyle, width: firstColWidth }}>{firstColLabel}</th>
-        <th style={{ ...headerCellStyle, textAlign: 'right' }}>Estoque</th>
-        <th style={{ ...headerCellStyle, textAlign: 'right' }}>Vl. compra</th>
-        <th style={{ ...headerCellStyle, textAlign: 'right' }}>Custo total</th>
-        <th style={{ ...headerCellStyle, textAlign: 'right' }}>Preço venda</th>
-        <th style={{ ...headerCellStyle, textAlign: 'right' }}>Inventário R$</th>
+        <th className="col-produto">{firstColLabel}</th>
+        <th className="col-num col-estoque">Estoque</th>
+        <th className="col-num col-money">Vl. compra</th>
+        <th className="col-num col-money">Custo</th>
+        <th className="col-num col-money">Venda</th>
+        <th className="col-num col-money">Invent. R$</th>
       </tr>
     </thead>
   );
 }
 
-function PlanaPrintBody({ produtos }) {
-  const palette = PRINT_TIER.solteiro;
-  const cellStyle = {
-    backgroundColor: palette.bg,
-    color: palette.text,
-    fontWeight: 600,
-  };
+function EmptyBody() {
+  return (
+    <tbody>
+      <tr>
+        <td colSpan={6} style={{ textAlign: 'center', padding: '12px 4px', color: '#484848' }}>
+          Nenhum produto encontrado.
+        </td>
+      </tr>
+    </tbody>
+  );
+}
 
-  if (!produtos?.length) {
-    return (
-      <tbody>
-        <tr>
-          <td colSpan={6} style={{ padding: '32px 6px', textAlign: 'center', color: '#6b7280' }}>
-            Nenhum produto encontrado.
-          </td>
-        </tr>
-      </tbody>
-    );
-  }
+function PlanaPrintBody({ produtos }) {
+  if (!produtos?.length) return <EmptyBody />;
 
   return (
     <tbody>
@@ -168,33 +89,15 @@ function PlanaPrintBody({ produtos }) {
         const cat = getCatalogoComercialView(p);
         const lastro = calcCusto(p) * (p.estoque_atual || 0);
         return (
-          <tr key={p.id}>
-            {printRowCells(
-              cellStyle,
-              [
-                <>
-                  <span style={{ textTransform: 'uppercase' }}>{p.nome || '—'}</span>
-                  {p.codigo_interno ? (
-                    <span
-                      style={{
-                        marginLeft: 4,
-                        fontFamily: 'monospace',
-                        fontSize: '10pt',
-                        color: palette.muted,
-                      }}
-                    >
-                      {p.codigo_interno}
-                    </span>
-                  ) : null}
-                </>,
-                printEstoqueCell(p),
-                printPreco(cat.valorCompraNaEmbalagem),
-                printPreco(cat.custoNaEmbalagem),
-                printPreco(cat.precoVenda),
-                lastro > 0 ? fmtR(lastro) : '—',
-              ],
-              { firstCellPaddingLeft: 6, tier: 'solteiro' },
-            )}
+          <tr key={p.id} className="rce-print-row-produto">
+            <td>
+              <ProdutoNome nome={p.nome} codigo={p.codigo_interno} />
+            </td>
+            <td className="col-num">{printEstoqueCell(p)}</td>
+            <td className="col-num">{printPreco(cat.valorCompraNaEmbalagem)}</td>
+            <td className="col-num">{printPreco(cat.custoNaEmbalagem)}</td>
+            <td className="col-num">{printPreco(cat.precoVenda)}</td>
+            <td className="col-num">{lastro > 0 ? fmtR(lastro) : '—'}</td>
           </tr>
         );
       })}
@@ -203,85 +106,42 @@ function PlanaPrintBody({ produtos }) {
 }
 
 function TreePrintBody({ rows }) {
-  if (!rows.length) {
-    return (
-      <tbody>
-        <tr>
-          <td colSpan={6} style={{ padding: '32px 6px', textAlign: 'center', color: '#6b7280' }}>
-            Nenhum produto encontrado.
-          </td>
-        </tr>
-      </tbody>
-    );
-  }
+  if (!rows.length) return <EmptyBody />;
 
   return (
     <tbody>
       {rows.map((row) => {
-        const tier = getPrintRowTier(row);
-        const palette = PRINT_TIER[tier];
-        const cellStyle = {
-          backgroundColor: palette.bg,
-          color: palette.text,
-          fontWeight: tier === 'filho' ? 400 : 600,
-        };
-
         if (row.type === 'group') {
-          const indent = (row.level - 1) * 12;
           return (
-            <tr key={row.key}>
-              {printRowCells(
-                cellStyle,
-                [
-                  <>
-                    {row.label}
-                    <span style={{ fontWeight: 400, color: palette.muted, marginLeft: 4 }}>
-                      ({row.count})
-                    </span>
-                  </>,
-                  printGroupEstoque(row),
-                  row.valorCompraMedio > 0 ? `~${fmtR(row.valorCompraMedio)}` : '—',
-                  row.custoMedio > 0 ? `~${fmtR(row.custoMedio)}` : '—',
-                  row.precoMedio > 0 ? `~${fmtR(row.precoMedio)}` : '—',
-                  row.lastroTotal > 0 ? fmtR(row.lastroTotal) : '—',
-                ],
-                { firstCellPaddingLeft: 6 + indent, tier },
-              )}
+            <tr key={row.key} className="rce-print-row-group">
+              <td>
+                <TreeIndent level={row.level} />
+                {row.label}
+                <span style={{ fontWeight: 400, color: '#484848', marginLeft: 3 }}>({row.count})</span>
+              </td>
+              <td className="col-num">{printGroupEstoque(row)}</td>
+              <td className="col-num">{row.valorCompraMedio > 0 ? `~${fmtR(row.valorCompraMedio)}` : '—'}</td>
+              <td className="col-num">{row.custoMedio > 0 ? `~${fmtR(row.custoMedio)}` : '—'}</td>
+              <td className="col-num">{row.precoMedio > 0 ? `~${fmtR(row.precoMedio)}` : '—'}</td>
+              <td className="col-num">{row.lastroTotal > 0 ? fmtR(row.lastroTotal) : '—'}</td>
             </tr>
           );
         }
 
         const p = row.produto;
         const cat = getCatalogoComercialView(p);
-        const indent = tier === 'filho' ? 8 + (row.level - 1) * 12 : 6;
+        const level = row.level ?? 1;
         return (
-          <tr key={row.key}>
-            {printRowCells(
-              cellStyle,
-              [
-                <>
-                  <span style={{ textTransform: 'uppercase' }}>{p.nome || '—'}</span>
-                  {p.codigo_interno ? (
-                    <span
-                      style={{
-                        marginLeft: 4,
-                        fontFamily: 'monospace',
-                        fontSize: '10pt',
-                        color: palette.muted,
-                      }}
-                    >
-                      {p.codigo_interno}
-                    </span>
-                  ) : null}
-                </>,
-                printEstoqueCell(p),
-                printPreco(cat.valorCompraNaEmbalagem),
-                printPreco(cat.custoNaEmbalagem),
-                printPreco(cat.precoVenda),
-                row.lastro > 0 ? fmtR(row.lastro) : '—',
-              ],
-              { firstCellPaddingLeft: indent, tier },
-            )}
+          <tr key={row.key} className="rce-print-row-produto">
+            <td>
+              <TreeIndent level={level} />
+              <ProdutoNome nome={p.nome} codigo={p.codigo_interno} />
+            </td>
+            <td className="col-num">{printEstoqueCell(p)}</td>
+            <td className="col-num">{printPreco(cat.valorCompraNaEmbalagem)}</td>
+            <td className="col-num">{printPreco(cat.custoNaEmbalagem)}</td>
+            <td className="col-num">{printPreco(cat.precoVenda)}</td>
+            <td className="col-num">{row.lastro > 0 ? fmtR(row.lastro) : '—'}</td>
           </tr>
         );
       })}
@@ -289,6 +149,31 @@ function TreePrintBody({ rows }) {
   );
 }
 
+function PrintFooter({ totals }) {
+  return (
+    <footer className="rce-print-footer">
+      <p style={{ margin: 0, maxWidth: '22rem', color: '#484848' }}>
+        Totais dos SKUs filtrados: estoque × valor de compra, custo total ou preço de venda.
+      </p>
+      <div className="rce-print-footer-totals">
+        {[
+          ['Inventário (vl. compra)', totals.totalCompra],
+          ['Inventário (custo)', totals.totalCusto],
+          ['Inventário (venda)', totals.totalVenda],
+        ].map(([label, value]) => (
+          <div key={label}>
+            <span style={{ color: '#484848', textTransform: 'uppercase', fontSize: '6.5pt' }}>{label}</span>
+            <div className="rce-total-value">R$ {fmtR(roundToTwoDecimals(value))}</div>
+          </div>
+        ))}
+      </div>
+    </footer>
+  );
+}
+
+/**
+ * Layout só para impressão — diagramação enxuta preto e branco, grade com linhas verticais.
+ */
 export default function RelatorioCatalogoEstoquePrint({
   produtos,
   filtersSummary,
@@ -304,40 +189,35 @@ export default function RelatorioCatalogoEstoquePrint({
     return mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expanded));
   }, [produtos, isPlana]);
 
+  const skuCount = produtos?.length ?? 0;
+
   return (
-    <div
-      id="relatorio-catalogo-estoque-print"
-      className="hidden print:block"
-      style={{
-        fontSize: '12pt',
-        lineHeight: 1.35,
-        color: '#111111',
-        backgroundColor: '#ffffff',
-      }}
-      aria-hidden="true"
-    >
-      <header style={{ marginBottom: '14px', paddingBottom: '10px', borderBottom: '1px solid #d1d5db' }}>
-        <h1 style={{ fontSize: '14pt', fontWeight: 700, margin: 0, color: '#111111' }}>
-          Relatório de estoque
-        </h1>
-        <p style={{ fontSize: '11pt', color: '#4b5563', margin: '4px 0 0' }}>
-          {isPlana ? 'Lista plana do catálogo' : 'Hierarquia do catálogo'} · {produtos?.length ?? 0} SKU(s) filtrado(s)
-        </p>
-        <p style={{ fontSize: '11pt', color: '#4b5563', margin: '2px 0 0' }}>
-          Emitido em {generatedAt}
+    <div id="relatorio-catalogo-estoque-print" aria-hidden="true">
+      <header className="rce-print-header">
+        <h1 className="rce-print-title">Relatório de estoque</h1>
+        <p className="rce-print-meta">
+          {isPlana ? 'Lista plana' : 'Hierarquia'} · {skuCount} SKU(s) · Emitido em {generatedAt}
         </p>
         {filtersSummary ? (
-          <p style={{ fontSize: '11pt', color: '#1f2937', margin: '8px 0 0' }}>
-            <span style={{ fontWeight: 600 }}>Filtros:</span> {filtersSummary}
+          <p className="rce-print-meta">
+            <strong>Filtros:</strong> {filtersSummary}
           </p>
         ) : null}
+        <div className="rce-print-kpis">
+          <span>
+            <strong>Invent. compra:</strong> R$ {fmtR(roundToTwoDecimals(totals.totalCompra))}
+          </span>
+          <span>
+            <strong>Invent. custo:</strong> R$ {fmtR(roundToTwoDecimals(totals.totalCusto))}
+          </span>
+          <span>
+            <strong>Invent. venda:</strong> R$ {fmtR(roundToTwoDecimals(totals.totalVenda))}
+          </span>
+        </div>
       </header>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-        <PrintTableHeader
-          firstColLabel={isPlana ? 'Produto' : 'Produto / grupo'}
-          firstColWidth={isPlana ? '38%' : '34%'}
-        />
+      <table className="rce-print-table">
+        <PrintTableHeader firstColLabel={isPlana ? 'Produto' : 'Produto / grupo'} />
         {isPlana ? <PlanaPrintBody produtos={produtos} /> : <TreePrintBody rows={rows} />}
       </table>
 
