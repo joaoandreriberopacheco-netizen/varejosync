@@ -302,7 +302,7 @@ export default function RelatoriosPage() {
                   relatorio={rel}
                   onClickAbrir={(id) => {
                     if (id === 'inventario-valorizado') {
-                      window.location.href = '/RelatorioCatalogoEstoque';
+                      window.location.href = '/Produtos?relatorioEstoque=1';
                     } else if (id === 'consumo-interno') {
                       window.location.href = '/RelatorioConsumoInterno';
                     } else if (id === 'performance-produto') {

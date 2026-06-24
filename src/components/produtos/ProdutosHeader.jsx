@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2 } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
@@ -85,6 +85,8 @@ export default function ProdutosHeader({
   treeLevel,
   setTreeLevel,
   setIsColumnSelectorOpen,
+  onGerarRelatorioEstoque,
+  gerandoRelatorioEstoque = false,
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
   const [isMassTagOpen, setIsMassTagOpen] = useState(false);
@@ -118,12 +120,15 @@ export default function ProdutosHeader({
               variant="ghost"
               size="icon"
               className="h-9 w-9 flex-shrink-0"
-              asChild
-              title="Relatório de estoque"
+              title="Relatório de estoque (PDF)"
+              onClick={onGerarRelatorioEstoque}
+              disabled={gerandoRelatorioEstoque}
             >
-              <Link to={createPageUrl('RelatorioCatalogoEstoque')}>
+              {gerandoRelatorioEstoque ? (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              ) : (
                 <BarChart3 className="w-4 h-4 p38-text-accent" />
-              </Link>
+              )}
             </Button>
             <div className="flex items-center gap-0.5 flex-shrink-0">
               <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleExportarCatalogo} title="Exportar">
