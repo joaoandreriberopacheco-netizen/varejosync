@@ -88,17 +88,23 @@ function splitDescriptionLines(
   return lines.length ? lines : [''];
 }
 
-/** Recuo dos pais por profundidade (nível 1 = 4 mm, nível 2 = 8 mm, …). */
+/** Pai nível 1 / solteiro: margem esquerda (0). Níveis 2+ recuam +4 mm por nível. */
 function parentDescIndent(level = 1) {
-  return (level ?? 1) * INDENT.nivelMm;
+  return Math.max(0, (level ?? 1) - 1) * INDENT.nivelMm;
 }
 
-/** SKU filho de grupo: coluna fixa; solteiro: recuo de 1.º nível. */
-function skuDescIndent(row: { level?: number }, prev: { type?: string; level?: number } | undefined) {
-  const level = row.level ?? 1;
-  const isChild = prev?.type === 'group' && level > (prev.level ?? 0);
-  if (isChild) return 0;
-  return INDENT.nivelMm;
+/** Coluna única de descrição para todos os SKUs dentro de família. */
+const CHILD_SKU_DESC_INDENT = INDENT.nivelMm;
+
+function syncGroupStack(activeGroupLevels: number[], level: number) {
+  while (activeGroupLevels.length && activeGroupLevels[activeGroupLevels.length - 1] >= level) {
+    activeGroupLevels.pop();
+  }
+}
+
+/** Solteiro / pai de 1.º nível: esquerda; filhos: mesma coluna fixa. */
+function skuDescIndent(activeGroupLevels: number[]) {
+  return activeGroupLevels.length === 0 ? 0 : CHILD_SKU_DESC_INDENT;
 }
 
 function produtoLastro(produto, rowLastro?: number) {
@@ -319,13 +325,16 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     dividerStartY = y;
     beginTablePage();
 
+    const activeGroupLevels: number[] = [];
+
     for (let i = 0; i < treeRows.length; i += 1) {
       const row = treeRows[i];
-      const prev = i > 0 ? treeRows[i - 1] : undefined;
 
       if (row.type === 'group') {
         const count = row.count ?? 0;
         const level = row.level ?? 1;
+        syncGroupStack(activeGroupLevels, level);
+        activeGroupLevels.push(level);
         y = drawReportRow(y, {
           kind: 'family',
           estoqueText: groupEstoqueText(row),
@@ -349,7 +358,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
         kind: 'sku',
         estoqueText: estoqueLinha(p),
         descricao: nome,
-        descIndent: skuDescIndent(row, prev),
+        descIndent: skuDescIndent(activeGroupLevels),
         values: {
           vlCompra: moedaOuTraco(cat.valorCompraNaEmbalagem),
           custo: moedaOuTraco(cat.custoNaEmbalagem),
@@ -381,5 +390,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_hier_skus_alinhados' };
+  return { data: pdfBytes, version: 'enxuto_hier_skus_coluna_fixa' };
 }
