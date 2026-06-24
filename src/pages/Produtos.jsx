@@ -20,6 +20,7 @@ import { dataHoje } from '@/components/utils/dateUtils';
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
 import ColumnSelector from '../components/produtos/ColumnSelector';
 import MassImageUploader from '../components/produtos/MassImageUploader';
+import MassTagGenerator from '../components/produtos/MassTagGenerator';
 import TreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica, { CatalogoMobileScrollShell } from '../components/produtos/MobileHierarquica';
 import ProdutoFAB from '../components/produtos/ProdutoFAB';
@@ -128,6 +129,7 @@ function ProdutosPageContent() {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);
+  const [isMassTagOpen, setIsMassTagOpen] = useState(false);
   // States for unified import (products + costs)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -1081,10 +1083,10 @@ function ProdutosPageContent() {
       setFilters={setFilters}
       formatarNumero={formatarNumero}
       filteredProdutos={filteredProdutos}
-      loadData={loadData}
       treeLevel={treeLevel}
       setTreeLevel={setTreeLevel}
       setIsColumnSelectorOpen={setIsColumnSelectorOpen}
+      onOpenMassTag={() => setIsMassTagOpen(true)}
     />
   );
 
@@ -1383,6 +1385,14 @@ function ProdutosPageContent() {
         isOpen={isMassImageUploaderOpen}
         onClose={() => setIsMassImageUploaderOpen(false)}
         onComplete={() => { loadData(); }}
+      />
+
+      <MassTagGenerator
+        products={filteredProdutos}
+        onComplete={loadData}
+        open={isMassTagOpen}
+        onOpenChange={setIsMassTagOpen}
+        hideTrigger
       />
 
       <ExcluirProdutoDialog

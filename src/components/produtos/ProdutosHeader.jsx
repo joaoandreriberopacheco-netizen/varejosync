@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +9,6 @@ import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
-import MassTagGenerator from '@/components/produtos/MassTagGenerator';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import { cn } from '@/components/utils';
 
@@ -80,13 +78,12 @@ export default function ProdutosHeader({
   setFilters,
   formatarNumero,
   filteredProdutos = [],
-  loadData,
   treeLevel,
   setTreeLevel,
   setIsColumnSelectorOpen,
+  onOpenMassTag,
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
-  const [isMassTagOpen, setIsMassTagOpen] = useState(false);
 
   const clearFilters = () => {
     setFilters({ ...DEFAULT_PRODUTO_FILTERS });
@@ -156,10 +153,7 @@ export default function ProdutosHeader({
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
                   {filteredProdutos.length > 0 && (
                     <DropdownMenuItem
-                      onSelect={(event) => {
-                        event.preventDefault();
-                        setIsMassTagOpen(true);
-                      }}
+                      onClick={() => onOpenMassTag?.()}
                       className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
                     >
                       <Sparkles className="w-4 h-4 mr-2 p38-text-accent" />Tagificação em Massa
@@ -181,13 +175,6 @@ export default function ProdutosHeader({
                 <PlusCircle className="h-4 w-4 text-foreground/90" />
               </Button>
             </div>
-            <MassTagGenerator
-              products={filteredProdutos}
-              onComplete={loadData}
-              open={isMassTagOpen}
-              onOpenChange={setIsMassTagOpen}
-              hideTrigger
-            />
           </div>
         </div>
 

@@ -13,6 +13,9 @@ const TAG_MODES = {
   REPLACE_ALL: 'replace_all',
 };
 
+/** Acima do cabeçalho fixo do catálogo mobile (z-60), FAB (z-55) e bottom nav (z-50). */
+const MASS_TAG_DIALOG_Z = 'z-[100]';
+
 const normalizeTag = (tag) => {
   return String(tag || '')
     .trim()
@@ -235,7 +238,10 @@ export default function MassTagGenerator({ products, onComplete, open, onOpenCha
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={(nextOpen) => !isProcessing && setDialogOpen?.(nextOpen)}>
-        <DialogContent className="sm:max-w-md dark:bg-background dark:text-foreground dark:border-border/40">
+        <DialogContent
+          overlayClassName={`${MASS_TAG_DIALOG_Z} bg-black/80`}
+          className={`sm:max-w-md ${MASS_TAG_DIALOG_Z} dark:bg-background dark:text-foreground dark:border-border/40`}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Tag className="w-5 h-5 text-indigo-600" />
