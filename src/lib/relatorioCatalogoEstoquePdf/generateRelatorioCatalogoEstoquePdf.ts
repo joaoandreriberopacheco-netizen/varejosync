@@ -122,13 +122,13 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   /** Zonas: descrição ampla | respiro | quant | colunas de valor equidistantes. */
   const QUANT_COL_W = 17;
   const GUTTER_W = 5;
-  const VALUE_COL_STEP = 14;
   const descStart = M + 4;
   const vendRight = M + CW;
-  const quantRight = M + 100;
+  const quantRight = M + 90;
   const quantLeft = quantRight - QUANT_COL_W;
   const descEnd = quantLeft - GUTTER_W;
   const divider = descEnd + GUTTER_W / 2;
+  const VALUE_COL_STEP = (vendRight - quantRight) / 7;
 
   const valueColX = (index: number) => quantRight + VALUE_COL_STEP * (index + 1);
 
@@ -228,6 +228,22 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
 
   const descMaxW = () => Math.max(20, descEnd - descStart - 1);
 
+  /** Baselines alinhados; com descrição multilinha, valores centrados na célula. */
+  const rowBaselines = (drawY: number, lineCount: number, extraH: number) => {
+    const cellH = ROW_H + extraH;
+    if (lineCount <= 1) {
+      const baseline = drawY + ROW_H * BASELINE_RATIO;
+      return { valuesBaseline: baseline, descFirstBaseline: baseline };
+    }
+    const midY = drawY + cellH / 2;
+    const textLift = FONT.row * 0.36;
+    const descSpan = (lineCount - 1) * DESC_LINE_LEAD;
+    return {
+      valuesBaseline: midY + textLift * 0.35,
+      descFirstBaseline: midY - descSpan / 2 + textLift * 0.35,
+    };
+  };
+
   const drawValueColumns = (
     baselineY: number,
     vals: ReturnType<typeof linhaComercialPdf>,
@@ -263,14 +279,14 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     y = y0;
     ensureTableSpace(rowStep + 1);
     const drawY = y;
-    const firstBaseline = drawY + ROW_H * BASELINE_RATIO;
+    const { valuesBaseline, descFirstBaseline } = rowBaselines(drawY, lineCount, extraH);
 
-    drawValueColumns(firstBaseline, vals);
+    drawValueColumns(valuesBaseline, vals);
 
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
     doc.setTextColor(...ENXUTO.black);
     for (let i = 0; i < lineCount; i += 1) {
-      doc.text(descLines[i], X.desc, firstBaseline + i * DESC_LINE_LEAD);
+      doc.text(descLines[i], X.desc, descFirstBaseline + i * DESC_LINE_LEAD);
     }
 
     drawRowSeparator(drawY + rowStep - ROW_GAP * 0.35);
@@ -353,5 +369,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_colunas_custo_venda_v4' };
+  return { data: pdfBytes, version: 'enxuto_colunas_custo_venda_v5' };
 }
