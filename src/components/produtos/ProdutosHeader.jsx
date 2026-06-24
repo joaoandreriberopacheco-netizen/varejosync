@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
 import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2 } from 'lucide-react';
-import { DEFAULT_PRODUTO_FILTERS } from '@/lib/filterProdutos';
+import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
@@ -33,6 +33,14 @@ const CADASTRO_FILTER_CHIPS = [
   { value: 'all', label: 'Todos' },
   { value: 'completo', label: 'Completos' },
   { value: 'incompleto', label: 'Incompletos' },
+];
+
+const ABCD_FILTER_CHIPS = [
+  { value: 'all', label: 'Todas' },
+  ...ABCD_FILTER_VALUES.map((value) => ({
+    value,
+    label: value,
+  })),
 ];
 
 const FILTER_CHIP_BASE =
@@ -398,6 +406,37 @@ export default function ProdutosHeader({
                   <SelectItem value="all" className="text-sm md:text-xs">Todos os cadastros</SelectItem>
                   <SelectItem value="incompleto" className="text-sm md:text-xs">Incompleto</SelectItem>
                   <SelectItem value="completo" className="text-sm md:text-xs">Completo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5 desktop-layout:hidden">
+              <FilterSectionLabel>Curva ABCD</FilterSectionLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {ABCD_FILTER_CHIPS.map(({ value, label }) => (
+                  <FilterChip
+                    key={value}
+                    active={(filters.abcd || 'all') === value}
+                    onClick={() => handleFilterChange('abcd', value)}
+                  >
+                    {label}
+                  </FilterChip>
+                ))}
+              </div>
+            </div>
+
+            <div className="hidden desktop-layout:block">
+              <Select value={filters.abcd || 'all'} onValueChange={v => handleFilterChange('abcd', v)}>
+                <SelectTrigger className="bg-muted border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg">
+                  <SelectValue placeholder="Curva ABCD" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-muted dark:border-border/40">
+                  <SelectItem value="all" className="text-sm md:text-xs">Todas as classes</SelectItem>
+                  {ABCD_FILTER_VALUES.map((value) => (
+                    <SelectItem key={value} value={value} className="text-sm md:text-xs">
+                      {ABCD_FILTER_LABELS[value] || value}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
