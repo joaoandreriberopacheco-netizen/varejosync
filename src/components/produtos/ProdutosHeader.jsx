@@ -9,6 +9,7 @@ import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizont
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
+import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilter';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import MassTagGenerator from '@/components/produtos/MassTagGenerator';
 import MassMarkupDialog from '@/components/produtos/MassMarkupDialog';
@@ -218,18 +219,6 @@ export default function ProdutosHeader({
                 <PlusCircle className="h-4 w-4 text-foreground/90" />
               </Button>
             </div>
-            {filteredProdutos.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 px-2.5 flex-shrink-0 gap-1.5 text-xs font-medium"
-                title="Aplicar markup aos produtos filtrados"
-                onClick={() => setIsMassMarkupOpen(true)}
-              >
-                <Percent className="w-4 h-4 p38-text-accent" />
-                <span className="hidden sm:inline">Markup</span>
-              </Button>
-            )}
             <MassTagGenerator
               products={filteredProdutos}
               onComplete={loadData}
@@ -247,8 +236,8 @@ export default function ProdutosHeader({
           </div>
         </div>
 
-        <div className="flex gap-2 min-w-0 items-center">
-          <div className="relative flex-1 min-w-0">
+        <div className="flex gap-2 min-w-0 items-center overflow-x-auto overscroll-x-contain">
+          <div className="relative flex-1 min-w-[8rem]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Nome ou descrição (espaço ou ; para combinar termos)..."
@@ -258,6 +247,10 @@ export default function ProdutosHeader({
             />
           </div>
           <ProdutosSomentePositivosToggle filters={filters} setFilters={setFilters} />
+          <ProdutosAbcdQuickFilter
+            abcd={filters.abcd}
+            onChange={(value) => handleFilterChange('abcd', value)}
+          />
           {filteredProdutos.length > 0 && (
             <Button
               variant="outline"
@@ -511,16 +504,6 @@ export default function ProdutosHeader({
                   className="h-9 w-full justify-between px-2.5"
                 />
               </div>
-              {filteredProdutos.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setIsMassMarkupOpen(true)}
-                  className="h-9 px-2.5 text-xs text-foreground flex items-center gap-1 rounded-xl bg-muted/80 hover:bg-muted flex-shrink-0"
-                >
-                  <Percent className="w-3.5 h-3.5 p38-text-accent" />
-                  Markup ({filteredProdutos.length})
-                </button>
-              )}
               {activeFilterCount > 0 && (
                 <button
                   type="button"
