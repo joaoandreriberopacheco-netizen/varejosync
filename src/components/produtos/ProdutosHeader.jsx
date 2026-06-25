@@ -247,23 +247,36 @@ export default function ProdutosHeader({
               onChange={e => handleFilterChange('searchTerm', e.target.value)}
             />
           </div>
-          <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <div className="flex flex-nowrap desktop-layout:flex-wrap items-center gap-1.5 desktop-layout:gap-2 min-w-0">
             <ProdutosSomentePositivosToggle filters={filters} setFilters={setFilters} />
             <ProdutosAbcdQuickFilter
               abcd={filters.abcd}
               onChange={(value) => handleFilterChange('abcd', value)}
             />
             {filteredProdutos.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
-                onClick={() => setIsMassMarkupOpen(true)}
-                title="Aplicar markup aos produtos do filtro atual"
-              >
-                <Percent className="w-3.5 h-3.5 p38-text-accent" />
-                Markup
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
+                  onClick={() => setIsMassMarkupOpen(true)}
+                  title="Aplicar markup aos produtos do filtro atual"
+                  aria-label="Aplicar markup aos produtos do filtro atual"
+                >
+                  <Percent className="w-4 h-4 p38-text-accent" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
+                  onClick={() => setIsMassMarkupOpen(true)}
+                  title="Aplicar markup aos produtos do filtro atual"
+                >
+                  <Percent className="w-3.5 h-3.5 p38-text-accent" />
+                  Markup
+                </Button>
+              </>
             )}
             <Button
               variant="ghost"
