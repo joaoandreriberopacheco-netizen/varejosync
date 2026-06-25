@@ -236,7 +236,8 @@ export default function ProdutosHeader({
           </div>
         </div>
 
-        <div className="flex gap-2 min-w-0 items-center overflow-x-auto overscroll-x-contain">
+        {/* Mobile: busca e atalhos na mesma linha (scroll horizontal). */}
+        <div className="flex gap-2 min-w-0 items-center overflow-x-auto overscroll-x-contain desktop-layout:hidden">
           <div className="relative flex-1 min-w-[8rem]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
@@ -286,6 +287,61 @@ export default function ProdutosHeader({
           >
             <Columns className="w-4 h-4 text-muted-foreground" />
           </Button>
+        </div>
+
+        {/* Desktop: busca larga no topo; atalhos e filtros logo abaixo (sem scroll horizontal). */}
+        <div className="hidden desktop-layout:flex flex-col gap-2 min-w-0">
+          <div className="relative w-full min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Nome ou descrição (espaço ou ; para combinar termos)..."
+              className="border-none bg-muted h-11 text-sm pl-10 text-foreground/90 shadow-none focus-visible:ring-0 w-full rounded-xl"
+              value={filters.searchTerm}
+              onChange={e => handleFilterChange('searchTerm', e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <ProdutosSomentePositivosToggle filters={filters} setFilters={setFilters} />
+            <ProdutosAbcdQuickFilter
+              abcd={filters.abcd}
+              onChange={(value) => handleFilterChange('abcd', value)}
+            />
+            {filteredProdutos.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
+                onClick={() => setIsMassMarkupOpen(true)}
+                title="Aplicar markup aos produtos do filtro atual"
+              >
+                <Percent className="w-3.5 h-3.5 p38-text-accent" />
+                Markup
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                'h-10 w-10 flex-shrink-0 rounded-xl relative bg-muted',
+                isFilterOpen && 'ring-2 ring-[#4a5240]/40 dark:ring-[#a4ce33]/40',
+                activeFilterCount > 0 && 'text-[#4a5240] dark:text-[#a4ce33]',
+              )}
+              onClick={() => setIsFilterOpen(v => !v)}
+              title="Filtros"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+              {activeFilterCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted dark:bg-muted text-white dark:text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">{activeFilterCount}</span>}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted"
+              onClick={() => setIsColumnSelectorOpen(true)}
+              title="Colunas"
+            >
+              <Columns className="w-4 h-4 text-muted-foreground" />
+            </Button>
+          </div>
         </div>
 
         {isFilterOpen && (
