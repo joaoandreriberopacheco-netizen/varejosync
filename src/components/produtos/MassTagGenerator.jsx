@@ -201,7 +201,7 @@ export default function MassTagGenerator({ products, onComplete, open, onOpenCha
       )}
 
       <Dialog open={isDialogOpen} onOpenChange={(open) => !isProcessing && setDialogOpen?.(open)}>
-        <DialogContent className="sm:max-w-md dark:bg-background dark:text-foreground dark:border-border/40">
+        <DialogContent overlayClassName="z-[60]" className="z-[60] sm:max-w-md dark:bg-background dark:text-foreground dark:border-border/40">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Tag className="w-5 h-5 text-indigo-600" />

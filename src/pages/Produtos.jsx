@@ -20,6 +20,8 @@ import { dataHoje } from '@/components/utils/dateUtils';
 import ProdutoFormCompleto from '../components/produtos/ProdutoFormCompleto';
 import ColumnSelector from '../components/produtos/ColumnSelector';
 import MassImageUploader from '../components/produtos/MassImageUploader';
+import MassTagGenerator from '../components/produtos/MassTagGenerator';
+import MassMarkupDialog from '../components/produtos/MassMarkupDialog';
 import TreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica, { CatalogoMobileScrollShell } from '../components/produtos/MobileHierarquica';
 import ProdutoFAB from '../components/produtos/ProdutoFAB';
@@ -131,6 +133,8 @@ function ProdutosPageContent() {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMassImageUploaderOpen, setIsMassImageUploaderOpen] = useState(false);
+  const [isMassTagOpen, setIsMassTagOpen] = useState(false);
+  const [isMassMarkupOpen, setIsMassMarkupOpen] = useState(false);
   // States for unified import (products + costs)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -1120,37 +1124,37 @@ function ProdutosPageContent() {
     handleGerarRelatorioEstoque();
   }, [produtos.length, handleGerarRelatorioEstoque]);
 
-  const produtosHeader = (
-    <ProdutosHeader
-      stats={headerStats}
-      filters={filters}
-      categorias={categorias}
-      fornecedores={fornecedores}
-      activeFilterCount={activeFilterCount}
-      isSummaryFiltered={activeFilterCount > 0 || filteredStats.total !== stats.total}
-      isFilterOpen={isFilterOpen}
-      setIsFilterOpen={setIsFilterOpen}
-      handleFilterChange={handleFilterChange}
-      handleExportarCatalogo={handleExportarCatalogo}
-      handleBaixarTemplateUnificado={handleBaixarTemplateUnificado}
-      setIsMassImageUploaderOpen={setIsMassImageUploaderOpen}
-      handleAddNew={handleAddNew}
-      setFilters={setFilters}
-      formatarNumero={formatarNumero}
-      filteredProdutos={filteredProdutos}
-      loadData={loadData}
-      treeLevel={treeLevel}
-      setTreeLevel={setTreeLevel}
-      setIsColumnSelectorOpen={setIsColumnSelectorOpen}
-      onGerarRelatorioEstoque={handleGerarRelatorioEstoque}
-      gerandoRelatorioEstoque={gerandoRelatorioEstoque}
-    />
-  );
+  const produtosHeaderProps = {
+    stats: headerStats,
+    filters,
+    categorias,
+    fornecedores,
+    activeFilterCount,
+    isSummaryFiltered: activeFilterCount > 0 || filteredStats.total !== stats.total,
+    isFilterOpen,
+    setIsFilterOpen,
+    handleFilterChange,
+    handleExportarCatalogo,
+    handleBaixarTemplateUnificado,
+    setIsMassImageUploaderOpen,
+    handleAddNew,
+    setFilters,
+    formatarNumero,
+    filteredProdutos,
+    loadData,
+    treeLevel,
+    setTreeLevel,
+    setIsColumnSelectorOpen,
+    onGerarRelatorioEstoque: handleGerarRelatorioEstoque,
+    gerandoRelatorioEstoque,
+    onOpenMassTag: () => setIsMassTagOpen(true),
+    onOpenMassMarkup: () => setIsMassMarkupOpen(true),
+  };
 
   return (
     <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-background">
       <div className="hidden desktop-layout:block flex-none">
-        {produtosHeader}
+        <ProdutosHeader key="catalog-desktop" {...produtosHeaderProps} />
       </div>
 
       <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
@@ -1167,7 +1171,7 @@ function ProdutosPageContent() {
 
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
               <div className="desktop-layout:hidden flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full">
-                <CatalogoMobileScrollShell catalogChrome={produtosHeader}>
+                <CatalogoMobileScrollShell catalogChrome={<ProdutosHeader key="catalog-mobile" {...produtosHeaderProps} />}>
                   <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} />
                 </CatalogoMobileScrollShell>
               </div>
@@ -1442,6 +1446,22 @@ function ProdutosPageContent() {
         isOpen={isMassImageUploaderOpen}
         onClose={() => setIsMassImageUploaderOpen(false)}
         onComplete={() => { loadData(); }}
+      />
+
+      <MassTagGenerator
+        products={filteredProdutos}
+        onComplete={loadData}
+        open={isMassTagOpen}
+        onOpenChange={setIsMassTagOpen}
+        hideTrigger
+      />
+
+      <MassMarkupDialog
+        products={filteredProdutos}
+        onComplete={loadData}
+        open={isMassMarkupOpen}
+        onOpenChange={setIsMassMarkupOpen}
+        hideTrigger
       />
 
       <ExcluirProdutoDialog

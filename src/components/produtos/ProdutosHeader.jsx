@@ -1,18 +1,15 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2 } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
 import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilter';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
-import MassTagGenerator from '@/components/produtos/MassTagGenerator';
-import MassMarkupDialog from '@/components/produtos/MassMarkupDialog';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import { cn } from '@/components/utils';
 
@@ -96,10 +93,10 @@ export default function ProdutosHeader({
   setIsColumnSelectorOpen,
   onGerarRelatorioEstoque,
   gerandoRelatorioEstoque = false,
+  onOpenMassTag,
+  onOpenMassMarkup,
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
-  const [isMassTagOpen, setIsMassTagOpen] = useState(false);
-  const [isMassMarkupOpen, setIsMassMarkupOpen] = useState(false);
 
   const clearFilters = () => {
     setFilters({ ...DEFAULT_PRODUTO_FILTERS });
@@ -154,7 +151,7 @@ export default function ProdutosHeader({
                     <DropdownMenuItem
                       onSelect={(event) => {
                         event.preventDefault();
-                        setIsMassMarkupOpen(true);
+                        onOpenMassMarkup?.();
                       }}
                       className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
                     >
@@ -185,7 +182,7 @@ export default function ProdutosHeader({
                     <DropdownMenuItem
                       onSelect={(event) => {
                         event.preventDefault();
-                        setIsMassMarkupOpen(true);
+                        onOpenMassMarkup?.();
                       }}
                       className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
                     >
@@ -196,7 +193,7 @@ export default function ProdutosHeader({
                     <DropdownMenuItem
                       onSelect={(event) => {
                         event.preventDefault();
-                        setIsMassTagOpen(true);
+                        onOpenMassTag?.();
                       }}
                       className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
                     >
@@ -219,20 +216,6 @@ export default function ProdutosHeader({
                 <PlusCircle className="h-4 w-4 text-foreground/90" />
               </Button>
             </div>
-            <MassTagGenerator
-              products={filteredProdutos}
-              onComplete={loadData}
-              open={isMassTagOpen}
-              onOpenChange={setIsMassTagOpen}
-              hideTrigger
-            />
-            <MassMarkupDialog
-              products={filteredProdutos}
-              onComplete={loadData}
-              open={isMassMarkupOpen}
-              onOpenChange={setIsMassMarkupOpen}
-              hideTrigger
-            />
           </div>
         </div>
 
@@ -260,7 +243,28 @@ export default function ProdutosHeader({
                   variant="ghost"
                   size="icon"
                   className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
-                  onClick={() => setIsMassMarkupOpen(true)}
+                  onClick={() => onOpenMassTag?.()}
+                  title="Tagificação em massa com IA"
+                  aria-label="Tagificação em massa com IA"
+                >
+                  <Tag className="w-4 h-4 p38-text-accent" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
+                  onClick={() => onOpenMassTag?.()}
+                  title="Tagificação em massa com IA"
+                >
+                  <Tag className="w-3.5 h-3.5 p38-text-accent" />
+                  Tags IA
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
+                  onClick={() => onOpenMassMarkup?.()}
                   title="Aplicar markup aos produtos do filtro atual"
                   aria-label="Aplicar markup aos produtos do filtro atual"
                 >
@@ -270,7 +274,7 @@ export default function ProdutosHeader({
                   variant="outline"
                   size="sm"
                   className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
-                  onClick={() => setIsMassMarkupOpen(true)}
+                  onClick={() => onOpenMassMarkup?.()}
                   title="Aplicar markup aos produtos do filtro atual"
                 >
                   <Percent className="w-3.5 h-3.5 p38-text-accent" />
