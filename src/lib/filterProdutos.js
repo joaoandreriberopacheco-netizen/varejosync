@@ -18,6 +18,15 @@ export const CATALOG_SOMENTE_POSITIVOS_QUANTIDADE = {
   quantidadeValorAte: '',
 };
 
+export const ABCD_FILTER_VALUES = ['A', 'B', 'C', 'D'];
+
+export const ABCD_FILTER_LABELS = {
+  A: 'Classe A',
+  B: 'Classe B',
+  C: 'Classe C',
+  D: 'Classe D',
+};
+
 export const DEFAULT_PRODUTO_FILTERS = {
   searchTerm: '',
   /** false = contém (substring); true = começa com (prefixo), ambos sem distinção de maiúsculas */
@@ -25,6 +34,7 @@ export const DEFAULT_PRODUTO_FILTERS = {
   categoria: 'all',
   fornecedorId: 'all',
   statusEstoque: 'all',
+  abcd: 'all',
   tag: '',
   cadastroIncompleto: 'all',
   ativoStatus: 'ativos',
@@ -94,6 +104,9 @@ export function filterProdutos(produtos, filters) {
         p.tags.some((t) => t && t.toLowerCase().includes(String(filters.tag).toLowerCase())));
     const fornecedorMatch =
       filters.fornecedorId === 'all' || p.fornecedor_padrao_id === filters.fornecedorId;
+    const abcdMatch =
+      filters.abcd === 'all' ||
+      String(p.abcd || '').toUpperCase() === String(filters.abcd).toUpperCase();
     const ativoMatch =
       !filters.ativoStatus ||
       filters.ativoStatus === 'all' ||
@@ -149,6 +162,7 @@ export function filterProdutos(produtos, filters) {
       categoriaMatch &&
       tagMatch &&
       fornecedorMatch &&
+      abcdMatch &&
       ativoMatch &&
       quantidadeMatch() &&
       metricaMatch() &&
@@ -163,6 +177,7 @@ export function countActiveProdutoFilters(filters) {
     filters.searchTerm?.trim(),
     filters.categoria !== 'all' && filters.categoria,
     filters.fornecedorId !== 'all' && filters.fornecedorId,
+    filters.abcd !== 'all' && filters.abcd,
     filters.statusEstoque !== 'all' && filters.statusEstoque,
     filters.tag,
     filters.cadastroIncompleto !== 'all' && filters.cadastroIncompleto,
@@ -195,6 +210,9 @@ export function describeProdutoFilters(filters, { categorias = [], fornecedores 
   if (filters.statusEstoque && filters.statusEstoque !== 'all') {
     const labels = { ok: 'OK', baixo: 'Baixo', critico: 'Crítico', inativo: 'Inativo' };
     parts.push(`status: ${labels[filters.statusEstoque] || filters.statusEstoque}`);
+  }
+  if (filters.abcd && filters.abcd !== 'all') {
+    parts.push(`curva ABCD: ${ABCD_FILTER_LABELS[filters.abcd] || filters.abcd}`);
   }
   if ((filters.tag || '').trim()) parts.push(`tag contém "${filters.tag.trim()}"`);
   if (filters.cadastroIncompleto === 'incompleto') parts.push('cadastro incompleto');

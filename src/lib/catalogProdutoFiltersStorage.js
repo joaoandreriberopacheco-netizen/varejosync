@@ -5,7 +5,7 @@ import {
 
 /** Filtros do catálogo partilhados entre Produtos e Relatório de estoque (sessionStorage). */
 export const CATALOG_PRODUTO_FILTERS_STORAGE_KEY = 'varejosync.catalogoProdutoFilters';
-const CATALOG_PRODUTO_FILTERS_STORAGE_VERSION = 4;
+const CATALOG_PRODUTO_FILTERS_STORAGE_VERSION = 5;
 
 export function normalizeCatalogProdutoFilters(raw) {
   const base = { ...DEFAULT_PRODUTO_FILTERS };
@@ -18,6 +18,7 @@ export function normalizeCatalogProdutoFilters(raw) {
     categoria: raw.categoria || 'all',
     fornecedorId: raw.fornecedorId || 'all',
     statusEstoque: raw.statusEstoque || 'all',
+    abcd: isCurrentVersion ? (raw.abcd || DEFAULT_PRODUTO_FILTERS.abcd) : DEFAULT_PRODUTO_FILTERS.abcd,
     tag: String(raw.tag ?? ''),
     cadastroIncompleto: raw.cadastroIncompleto || 'all',
     ativoStatus: isCurrentVersion ? (raw.ativoStatus || DEFAULT_PRODUTO_FILTERS.ativoStatus) : DEFAULT_PRODUTO_FILTERS.ativoStatus,
