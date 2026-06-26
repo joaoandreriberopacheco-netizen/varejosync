@@ -23,6 +23,7 @@ import { dataHoje, formatarSoData, toLocalDateKey } from '@/components/utils/dat
 import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'lucide-react';
 import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import CorteDiarioDialog from './corte-diario/CorteDiarioDialog';
+import FolhaPrevisaoPage from '@/pages/FolhaPrevisao';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
@@ -112,7 +113,7 @@ export default function ExecucaoOrcamentaria() {
     contasSel: [],
   });
   const [corteDiarioInitial, setCorteDiarioInitial] = useState(null);
-  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'agefin'
+  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'agefin' | 'folha'
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
   const [mostrarProgramadas, setMostrarProgramadas] = useState(
     () => lerPreferenciasFluxoUnificado().mostrarProgramadas,
@@ -138,8 +139,9 @@ export default function ExecucaoOrcamentaria() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('aba') === 'agefin') {
-      setAba('agefin');
+    const abaParam = params.get('aba');
+    if (abaParam === 'agefin' || abaParam === 'folha') {
+      setAba(abaParam);
       params.delete('aba');
       const next = params.toString();
       window.history.replaceState({}, '', next ? `${window.location.pathname}?${next}` : window.location.pathname);
@@ -605,6 +607,7 @@ export default function ExecucaoOrcamentaria() {
 
   const caixasAtiva = aba === 'caixas';
   const agefinAtiva = aba === 'agefin';
+  const folhaAtiva = aba === 'folha';
   const financeiroShared = useMemo(
     () => ({
       lancs,
@@ -620,6 +623,7 @@ export default function ExecucaoOrcamentaria() {
   const abasPrincipais = [
     { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
     { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Caixas' },
+    { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
     { value: 'agefin', label: 'Atualizar boletos', shortLabel: 'Boletos' },
   ];
 
@@ -925,6 +929,8 @@ export default function ExecucaoOrcamentaria() {
       )}
 
       {caixasAtiva && <GestaoContasPane />}
+
+      {folhaAtiva && <FolhaPrevisaoPage />}
 
       {agefinAtiva && (
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
