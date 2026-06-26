@@ -31,6 +31,11 @@ import {
   linhaPrecoNoEixoFatorUm,
 } from '@/lib/productUnits';
 import { toLocalDateKey, formatarSoData, dataHoje } from '@/components/utils/dateUtils';
+import {
+  FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
+  FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
+  passaFiltroVisibilidadePedidosCompra,
+} from '@/lib/filtroVisibilidadePedidosCompra';
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
 const etaMatchesFilter = (embarque, modo, dataRef, inicial, final) => {
@@ -365,7 +370,9 @@ export default function PedidosCompraPage() {
   const [embarques, setEmbarques] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [search, setSearch] = useState('');
-  const [statusSel, setStatusSel] = useState(['__nao_concluido__']);
+  const [statusSel, setStatusSel] = useState([]);
+  const [filtroUltimos30Dias, setFiltroUltimos30Dias] = useState(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
+  const [filtroSomenteNaoConcluidos, setFiltroSomenteNaoConcluidos] = useState(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
   const [fornecedorSel, setFornecedorSel] = useState([]);
   const [tagsSel, setTagsSel] = useState([]);
   const [dataInicial, setDataInicial] = useState('');
@@ -674,7 +681,13 @@ export default function PedidosCompraPage() {
 
       if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower) || embarque?.transportadora_nome?.toLowerCase().includes(searchLower))) return false;
 
-      if (statusSel.includes('__nao_concluido__') && p._display_status === 'Concluído') return false;
+      const ocultarConcluidos = filtroSomenteNaoConcluidos || statusSel.includes('__nao_concluido__');
+      if (!passaFiltroVisibilidadePedidosCompra(p, {
+        somenteNaoConcluidos: ocultarConcluidos,
+        ultimos30Dias: filtroUltimos30Dias,
+        getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
+        isConcluido: (item) => item._display_status === 'Concluído',
+      })) return false;
 
       if (statusExplicitos.length > 0) {
         const statusPaiExpandido = statusPaiSel.flatMap(normalizeStatusFiltro);
@@ -695,7 +708,7 @@ export default function PedidosCompraPage() {
       if (!etaMatchesFilter(embarque, etaFiltroModo, etaData, etaInicial, etaFinal)) return false;
       return true;
     });
-  }, [cardsFonte, search, statusSel, fornecedorSel, tagsSel, dataInicial, dataFinal, etaFiltroModo, etaData, etaInicial, etaFinal]);
+  }, [cardsFonte, search, statusSel, filtroUltimos30Dias, filtroSomenteNaoConcluidos, fornecedorSel, tagsSel, dataInicial, dataFinal, etaFiltroModo, etaData, etaInicial, etaFinal]);
 
   const calcularValorPendentePedido = (pedido) => {
     const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
@@ -828,10 +841,13 @@ export default function PedidosCompraPage() {
     (etaFiltroModo === 'entre' && (etaInicial || etaFinal)) ||
     (etaFiltroModo === 'personalizado' && (etaInicial || etaFinal))
   );
-  const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter || statusSel.some(status => status !== '__nao_concluido__');
+  const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter || statusSel.length > 0
+    || filtroUltimos30Dias !== FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT
+    || filtroSomenteNaoConcluidos !== FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT;
 
   const pedidosConsulta = useMemo(() => {
     const statusExplicitos = statusSel.filter((status) => status !== '__nao_concluido__');
+    const ocultarConcluidos = filtroSomenteNaoConcluidos || statusSel.includes('__nao_concluido__');
 
     return pedidos.filter((p) => {
       const searchLower = search.toLowerCase();
@@ -841,7 +857,12 @@ export default function PedidosCompraPage() {
         return false;
       }
 
-      if (statusSel.includes('__nao_concluido__') && p.status === 'Concluído') return false;
+      if (!passaFiltroVisibilidadePedidosCompra(p, {
+        somenteNaoConcluidos: ocultarConcluidos,
+        ultimos30Dias: filtroUltimos30Dias,
+        getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
+        isConcluido: (item) => item.status === 'Concluído',
+      })) return false;
 
       if (statusExplicitos.length > 0) {
         const statusExpandido = statusExplicitos.flatMap(normalizeStatusFiltro);
@@ -855,7 +876,7 @@ export default function PedidosCompraPage() {
 
       return true;
     });
-  }, [pedidos, search, statusSel, fornecedorSel, tagsSel, dataInicial, dataFinal]);
+  }, [pedidos, search, statusSel, filtroUltimos30Dias, filtroSomenteNaoConcluidos, fornecedorSel, tagsSel, dataInicial, dataFinal]);
 
   return (
     <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>
@@ -894,6 +915,8 @@ export default function PedidosCompraPage() {
       {/* Filtros */}
       <FiltrosCompras
         search={search} onSearch={setSearch}
+        filtroUltimos30Dias={filtroUltimos30Dias} onFiltroUltimos30Dias={setFiltroUltimos30Dias}
+        filtroSomenteNaoConcluidos={filtroSomenteNaoConcluidos} onFiltroSomenteNaoConcluidos={setFiltroSomenteNaoConcluidos}
         statusSel={statusSel} onStatusSel={setStatusSel}
         fornecedores={fornecedores} fornecedorSel={fornecedorSel} onFornecedorSel={setFornecedorSel}
         todasTags={todasTags} tagsSel={tagsSel} onTagsSel={setTagsSel}
@@ -906,7 +929,9 @@ export default function PedidosCompraPage() {
         hasActiveFilters={hasActiveFilters}
         onLimparFiltros={() => {
           setSearch('');
-          setStatusSel(['__nao_concluido__']);
+          setStatusSel([]);
+          setFiltroUltimos30Dias(FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT);
+          setFiltroSomenteNaoConcluidos(FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT);
           setFornecedorSel([]);
           setTagsSel([]);
           setDataInicial('');

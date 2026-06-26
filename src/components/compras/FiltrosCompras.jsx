@@ -18,6 +18,10 @@ import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/lib/utils';
 import { formatarSoData } from '@/components/utils/dateUtils';
+import {
+  FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
+  FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
+} from '@/lib/filtroVisibilidadePedidosCompra';
 
 const ETA_FILTRO_MODOS = [
   { value: 'antes', label: 'Antes de' },
@@ -27,7 +31,7 @@ const ETA_FILTRO_MODOS = [
 ];
 
 const STATUS_OPTIONS = [
-  { codigo: '__nao_concluido__', label: 'Ocultar concluídos', cor: 'bg-primary text-white dark:bg-muted dark:text-foreground' },
+  { codigo: '__nao_concluido__', label: 'Somente não concluídos', cor: 'bg-primary text-white dark:bg-muted dark:text-foreground' },
   { codigo: 'Rascunho', label: 'Rascunho', cor: 'bg-muted text-foreground/90' },
   { codigo: 'Aguardando Liberação', label: 'Aguardando Liberação', cor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200' },
   { codigo: 'Aguardando Aprovação Financeira', label: 'Aguardando Liberação', cor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200' },
@@ -48,6 +52,31 @@ const CHIP_BASE = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounde
 const CHIP_IDLE = 'bg-muted/80 dark:bg-muted text-muted-foreground hover:bg-muted';
 const CHIP_ACTIVE = 'bg-teal-600 dark:bg-teal-500 text-white font-medium shadow-sm';
 const SECTION_CARD = 'rounded-2xl border border-border/40 bg-muted/20 dark:bg-muted/10 p-3.5 space-y-3';
+
+function QuickFilterToggle({ label, checked, onCheckedChange }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onCheckedChange(!checked)}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] leading-none transition-colors whitespace-nowrap',
+        checked
+          ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200 font-medium'
+          : 'bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground/80',
+      )}
+      aria-pressed={checked}
+    >
+      <span
+        className={cn(
+          'h-1.5 w-1.5 rounded-full shrink-0',
+          checked ? 'bg-teal-600 dark:bg-teal-400' : 'bg-muted-foreground/35',
+        )}
+        aria-hidden
+      />
+      {label}
+    </button>
+  );
+}
 
 function FilterSection({ title, icon: Icon, children, className }) {
   return (
@@ -108,6 +137,7 @@ function FiltrosComprasPainel({
   onEtaInicial,
   etaFinal,
   onEtaFinal,
+  onFiltroSomenteNaoConcluidos,
   searchFornecedor,
   onSearchFornecedor,
   searchTag,
@@ -139,7 +169,11 @@ function FiltrosComprasPainel({
       return;
     }
     if (codigo === '__nao_concluido__') {
-      onStatusSel(statusSel.filter((s) => s !== 'Concluído').concat(codigo));
+      const ativar = !statusSel.includes(codigo);
+      onFiltroSomenteNaoConcluidos?.(ativar);
+      onStatusSel(ativar
+        ? statusSel.filter((s) => s !== 'Concluído').concat(codigo)
+        : statusSel.filter((s) => s !== codigo));
       return;
     }
     onStatusSel([...statusSel, codigo]);
@@ -369,6 +403,10 @@ function FiltrosComprasPainel({
 export default function FiltrosCompras({
   search,
   onSearch,
+  filtroUltimos30Dias = FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
+  onFiltroUltimos30Dias,
+  filtroSomenteNaoConcluidos = FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
+  onFiltroSomenteNaoConcluidos,
   statusSel,
   onStatusSel,
   fornecedores,
@@ -543,6 +581,7 @@ export default function FiltrosCompras({
     onEtaInicial,
     etaFinal,
     onEtaFinal,
+    onFiltroSomenteNaoConcluidos,
     searchFornecedor,
     onSearchFornecedor: setSearchFornecedor,
     searchTag,
@@ -561,6 +600,28 @@ export default function FiltrosCompras({
     setSearchFornecedor('');
     setSearchTag('');
   };
+
+  const quickToggles = (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <QuickFilterToggle
+        label="Últimos 30 dias"
+        checked={filtroUltimos30Dias}
+        onCheckedChange={(next) => onFiltroUltimos30Dias?.(next)}
+      />
+      <QuickFilterToggle
+        label="Não concluídos"
+        checked={filtroSomenteNaoConcluidos}
+        onCheckedChange={(next) => {
+          onFiltroSomenteNaoConcluidos?.(next);
+          if (next) {
+            onStatusSel(statusSel.filter((s) => s !== 'Concluído').concat('__nao_concluido__'));
+          } else {
+            onStatusSel(statusSel.filter((s) => s !== '__nao_concluido__'));
+          }
+        }}
+      />
+    </div>
+  );
 
   const filterToggleButton = (
     <button
@@ -614,6 +675,8 @@ export default function FiltrosCompras({
           {searchBar}
           {filterToggleButton}
         </div>
+
+        {quickToggles}
 
         {activeChips.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
@@ -685,6 +748,8 @@ export default function FiltrosCompras({
           </button>
         ) : null}
       </div>
+
+      {quickToggles}
 
       {activeChips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
