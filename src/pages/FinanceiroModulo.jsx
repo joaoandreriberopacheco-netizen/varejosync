@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Wallet, CreditCard, AlertCircle, FileText, Target } from 'lucide-react';
+import { Wallet, CreditCard, AlertCircle, FileText, Target, Users } from 'lucide-react';
+import FolhaPrevisaoPage from './FolhaPrevisao';
 import FormasPagamentoManager from '../components/config/FormasPagamentoManager';
 import ExecucaoOrcamentaria from '../components/financeiro/ExecucaoOrcamentaria';
 import {
@@ -50,6 +51,13 @@ export default function FinanceiroModuloPage() {
             <Target className="w-4 h-4" />
             <span className="hidden md:inline text-sm font-medium">Execução Orçamentária</span>
           </TabsTrigger>
+          <TabsTrigger
+            value="folha"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 min-h-[44px] data-[state=active]:bg-card data-[state=active]:shadow-sm transition-all"
+          >
+            <Users className="w-4 h-4" />
+            <span className="hidden md:inline text-sm font-medium">Folha (previsão)</span>
+          </TabsTrigger>
         </TabsList>
 
         <div className="mt-2 w-full min-w-0 overflow-x-hidden">
@@ -87,6 +95,10 @@ export default function FinanceiroModuloPage() {
 
           <TabsContent value="orcamento" className="mt-0">
             <ExecucaoOrcamentaria />
+          </TabsContent>
+
+          <TabsContent value="folha" className="mt-0">
+            <FolhaPrevisaoPage />
           </TabsContent>
         </div>
       </Tabs>
