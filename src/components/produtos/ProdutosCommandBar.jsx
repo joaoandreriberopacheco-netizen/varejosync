@@ -2,12 +2,15 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { TrendingUp } from 'lucide-react';
 import { CATALOG_SORT_OPTIONS } from '@/lib/catalogProdutoPerformance';
+import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
 
 export default function ProdutosCommandBar({
   sortOrder,
   setSortOrder,
   viewMode,
   setViewMode,
+  groupTreeByCategory = false,
+  onGroupTreeByCategoryChange,
 }) {
   const currentSort = CATALOG_SORT_OPTIONS.find((opt) => opt.id === sortOrder) || CATALOG_SORT_OPTIONS[0];
 
@@ -37,6 +40,13 @@ export default function ProdutosCommandBar({
         </DropdownMenu>
       </div>
       <div className="hidden desktop-layout:flex items-center gap-2 flex-wrap">
+        {viewMode === 'dinamica' && (
+          <ProdutosTreeByCategoryToggle
+            checked={groupTreeByCategory}
+            onChange={onGroupTreeByCategoryChange}
+            className="h-7 px-2"
+          />
+        )}
         <div className="flex items-center bg-muted rounded p-0.5 gap-0.5">
           <button onClick={() => setViewMode('dinamica')} className={`text-[10px] px-2 py-1 rounded transition-colors ${viewMode === 'dinamica' ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium' : 'text-muted-foreground'}`}>Tree Grid</button>
           <button onClick={() => setViewMode('plana')} className={`text-[10px] px-2 py-1 rounded transition-colors ${viewMode === 'plana' ? 'bg-white dark:bg-muted text-foreground/90 shadow-sm font-medium' : 'text-muted-foreground'}`}>Plana</button>

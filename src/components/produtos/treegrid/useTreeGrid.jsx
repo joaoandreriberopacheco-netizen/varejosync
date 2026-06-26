@@ -190,6 +190,35 @@ export function aggregateSkus(skus) {
   };
 }
 
+// ── Árvore plana por categoria de cadastro (categoria_nome) ─────────────────
+export function buildCategoryTree(produtos) {
+  const root = {};
+
+  for (const p of produtos) {
+    const custo = calcCusto(p);
+    p.inventario_valorizado = custo * (p.estoque_atual || 0);
+    const label = (p.categoria_nome || 'Sem categoria').trim() || 'Sem categoria';
+
+    if (!root[label]) {
+      root[label] = { label, level: 1, children: {}, skus: [] };
+    }
+    root[label].skus.push(p);
+  }
+
+  function precompute(nodeMap) {
+    for (const node of Object.values(nodeMap)) {
+      if (node.children && Object.keys(node.children).length > 0) {
+        precompute(node.children);
+      }
+      const allSkus = collectSkus(node);
+      node._agg = aggregateSkus(allSkus);
+    }
+  }
+  precompute(root);
+
+  return root;
+}
+
 // ── Constrói a árvore: h1-h4 são agrupadores; h5 é dado do SKU, nunca nó ─────
 // As agregações são calculadas UMA VEZ aqui, e cacheadas no nó.
 // Isso evita recalcular aggregateSkus() em cada chamada de flattenTree.
@@ -472,8 +501,36 @@ function catalogTreeSignature(produtos) {
     .join('\n');
 }
 
+function categoryTreeSignature(produtos) {
+  if (!produtos?.length) return '';
+  return produtos
+    .map((p) =>
+      [
+        p?.id,
+        (p?.categoria_nome || '').trim(),
+        p?.estoque_atual ?? '',
+        p?.preco_custo_calculado ?? '',
+        p?.preco_venda_padrao ?? '',
+        p?.ativo ? 1 : 0,
+      ].join('|')
+    )
+    .sort()
+    .join('\n');
+}
+
 // ── Hook principal ────────────────────────────────────────────────────────────
 export function useTreeGrid(produtos) {
   const sig = useMemo(() => catalogTreeSignature(produtos), [produtos]);
   return useMemo(() => buildTree(produtos), [sig, produtos]);
+}
+
+export function useCatalogTreeGrid(produtos, { groupByCategory = false } = {}) {
+  const sig = useMemo(
+    () => (groupByCategory ? categoryTreeSignature(produtos) : catalogTreeSignature(produtos)),
+    [produtos, groupByCategory]
+  );
+  return useMemo(
+    () => (groupByCategory ? buildCategoryTree(produtos) : buildTree(produtos)),
+    [sig, produtos, groupByCategory]
+  );
 }

@@ -11,6 +11,7 @@ import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSoment
 import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilter';
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
+import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
 import { cn } from '@/components/utils';
 
 const STOCK_FILTER_CHIPS = [
@@ -95,6 +96,8 @@ export default function ProdutosHeader({
   gerandoRelatorioEstoque = false,
   onOpenMassTag,
   onOpenMassMarkup,
+  groupTreeByCategory = false,
+  onGroupTreeByCategoryChange,
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
 
@@ -236,6 +239,11 @@ export default function ProdutosHeader({
               abcd={filters.abcd}
               onChange={(value) => handleFilterChange('abcd', value)}
             />
+            <ProdutosTreeByCategoryToggle
+              checked={groupTreeByCategory}
+              onChange={onGroupTreeByCategoryChange}
+              className="desktop-layout:hidden"
+            />
             {filteredProdutos.length > 0 && (
               <>
                 <Button
@@ -310,9 +318,21 @@ export default function ProdutosHeader({
 
         {isFilterOpen && (
           <div className="rounded-2xl border border-border/40 bg-muted/25 p-2.5 space-y-3 desktop-layout:rounded-none desktop-layout:border-0 desktop-layout:bg-transparent desktop-layout:p-0 desktop-layout:grid desktop-layout:grid-cols-6 desktop-layout:gap-2 desktop-layout:space-y-0 desktop-layout:pb-1">
-            <div className="hidden desktop-layout:flex items-center gap-2 bg-muted rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2">
+            <div className={cn(
+              'hidden desktop-layout:flex items-center gap-2 bg-muted rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2',
+              groupTreeByCategory && 'opacity-50 pointer-events-none',
+            )}>
               <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
               <LevelControl level={treeLevel} onChange={setTreeLevel} />
+            </div>
+
+            <div className="hidden desktop-layout:flex items-center gap-2 bg-muted rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2">
+              <span className="text-xs text-muted-foreground flex-shrink-0">Agrupamento</span>
+              <ProdutosTreeByCategoryToggle
+                checked={groupTreeByCategory}
+                onChange={onGroupTreeByCategoryChange}
+                className="h-9 bg-transparent px-0"
+              />
             </div>
 
             <div className="space-y-1.5 desktop-layout:hidden">

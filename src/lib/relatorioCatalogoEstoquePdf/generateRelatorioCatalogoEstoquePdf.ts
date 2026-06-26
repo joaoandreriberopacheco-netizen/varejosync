@@ -93,14 +93,16 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     layout_mode: layoutMode = 'tree',
     tree_level: treeLevel = 1,
     sort_order: sortOrder = 'az',
+    group_by_category: groupByCategory = false,
     generated_at: generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
   } = payload as {
     produtos?: unknown[];
     filters_summary?: string;
-    totals?: { totalCompra?: number; totalCusto?: number; totalVenda?: number };
+    totals?: { totalCompra?: number; totalCusto?: number; totalVenda?: number; count?: number };
     layout_mode?: string;
     tree_level?: number;
     sort_order?: string;
+    group_by_category?: boolean;
     generated_at?: string;
   };
 
@@ -109,6 +111,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     layoutMode: layoutMode as string,
     treeLevel: Number(treeLevel) || 1,
     sortOrder: sortOrder as string,
+    groupByCategory: Boolean(groupByCategory),
   });
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -294,6 +297,65 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     return drawY + rowStep;
   };
 
+  const subtotalVals = (catTotals: { totalCompra?: number; totalCusto?: number; totalVenda?: number; count?: number }) => {
+    const totalCompra = roundToTwoDecimals(Number(catTotals?.totalCompra) || 0);
+    const totalCusto = roundToTwoDecimals(Number(catTotals?.totalCusto) || 0);
+    const totalVenda = roundToTwoDecimals(Number(catTotals?.totalVenda) || 0);
+    const count = Number(catTotals?.count) || 0;
+    return {
+      quantTexto: count > 0 ? `${count} SKU(s)` : '—',
+      vCompra: 0,
+      custosExtras: 0,
+      custoCalc: 0,
+      custoTotal: totalCusto,
+      markup: 0,
+      preco: 0,
+      vendaTotal: totalVenda,
+      inventarioCompra: totalCompra,
+    };
+  };
+
+  const drawCategoryGroupRow = (y0: number, label: string, count: number) => {
+    ensureTableSpace(ROW_STEP + 1);
+    const drawY = y0;
+    const baseline = drawY + ROW_H * BASELINE_RATIO;
+    doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+    doc.setFontSize(FONT.row);
+    doc.setTextColor(...ENXUTO.black);
+    doc.text(safe(`${label} (${count} SKU${count === 1 ? '' : 's'})`), X.desc, baseline);
+    drawRowSeparator(drawY + ROW_STEP - ROW_GAP * 0.35);
+    return drawY + ROW_STEP;
+  };
+
+  const drawCategorySubtotalRow = (
+    y0: number,
+    label: string,
+    catTotals: { totalCompra?: number; totalCusto?: number; totalVenda?: number; count?: number },
+  ) => {
+    ensureTableSpace(ROW_STEP + 1);
+    const drawY = y0;
+    const baseline = drawY + ROW_H * BASELINE_RATIO;
+    const vals = subtotalVals(catTotals);
+
+    doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
+    doc.setFontSize(FONT.row - 0.4);
+    doc.setTextColor(...ENXUTO.muted);
+    doc.text(safe(`Subtotal — ${label}`), X.desc, baseline);
+
+    doc.setTextColor(...ENXUTO.black);
+    doc.text(vals.quantTexto, X.quant, baseline, { align: 'right' });
+    doc.text(vals.inventarioCompra > 0 ? moedaSemSimbolo(vals.inventarioCompra) : '—', X.vCompra, baseline, { align: 'right' });
+    doc.text('—', X.custos, baseline, { align: 'right' });
+    doc.text('—', X.soma, baseline, { align: 'right' });
+    doc.text(vals.custoTotal > 0 ? moedaSemSimbolo(vals.custoTotal) : '—', X.custoTot, baseline, { align: 'right' });
+    doc.text('—', X.markup, baseline, { align: 'right' });
+    doc.text('—', X.preco, baseline, { align: 'right' });
+    doc.text(vals.vendaTotal > 0 ? moedaSemSimbolo(vals.vendaTotal) : '—', X.vendTot, baseline, { align: 'right' });
+
+    drawRowSeparator(drawY + ROW_STEP - ROW_GAP * 0.35);
+    return drawY + ROW_STEP + 1.2;
+  };
+
   doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
   doc.setFontSize(FONT.title);
   doc.setTextColor(...ENXUTO.black);
@@ -305,6 +367,10 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.setTextColor(...ENXUTO.muted);
   doc.text('A4   SKUs A-Z   custo e venda por quantidade   DIN 1451', M, y);
   y += 4.5;
+  if (documento.groupByCategory) {
+    doc.text('Agrupado por categoria de cadastro (com subtotais)', M, y);
+    y += 4.2;
+  }
 
   doc.setFontSize(8.8);
   doc.text(safe(`${(produtos as unknown[])?.length ?? 0} SKU(s)`), M, y);
@@ -338,6 +404,14 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     beginTablePage();
 
     for (const row of documento.rows) {
+      if (row.type === 'group') {
+        y = drawCategoryGroupRow(y, String(row.label || 'Sem categoria'), Number(row.count) || 0);
+        continue;
+      }
+      if (row.type === 'category_subtotal') {
+        y = drawCategorySubtotalRow(y, String(row.label || 'Sem categoria'), row.totals || {});
+        continue;
+      }
       if (row.type !== 'sku') continue;
       const p = row.produto;
       const nome = p?.codigo_interno
@@ -369,5 +443,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_colunas_custo_venda_v5' };
+  return { data: pdfBytes, version: 'enxuto_colunas_custo_venda_v6_categoria' };
 }

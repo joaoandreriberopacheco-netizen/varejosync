@@ -28,6 +28,7 @@ import ProdutoFAB from '../components/produtos/ProdutoFAB';
 import ExcluirProdutoDialog from '../components/produtos/ExcluirProdutoDialog';
 import ProdutosHeader from '../components/produtos/ProdutosHeader';
 import ProdutosCommandBar from '../components/produtos/ProdutosCommandBar';
+import ProdutosTreeByCategoryToggle from '../components/produtos/ProdutosTreeByCategoryToggle';
 import ProdutosPlanaTable from '../components/produtos/ProdutosPlanaTable';
 import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
 import {
@@ -49,6 +50,16 @@ import {
   useProdutosComIepQuery,
   useFornecedoresQuery,
 } from '@/hooks/useP38Entities';
+
+const CATALOG_GROUP_BY_CATEGORY_KEY = 'catalogo.groupTreeByCategory';
+
+function readGroupTreeByCategoryPreference() {
+  try {
+    return localStorage.getItem(CATALOG_GROUP_BY_CATEGORY_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 
 /** Base44 por vezes devolve GET/list com campos de vitrine vazios; não podem apagar valores já bons. */
 function isEmptyishVitrine(v) {
@@ -121,6 +132,7 @@ function ProdutosPageContent() {
   const [filters, setFilters] = useState(() => getCatalogProdutoEntryFilters());
   const [sortOrder, setSortOrder] = useState('az');
   const [viewMode, setViewMode] = useState('dinamica'); // 'dinamica' | 'plana'
+  const [groupTreeByCategory, setGroupTreeByCategory] = useState(readGroupTreeByCategoryPreference);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduto, setSelectedProduto] = useState(null);
@@ -1072,6 +1084,15 @@ function ProdutosPageContent() {
   const filteredStats = useMemo(() => calculateProdutoStats(filteredProdutos), [filteredProdutos]);
   const headerStats = filteredStats;
 
+  const handleGroupTreeByCategoryChange = useCallback((value) => {
+    setGroupTreeByCategory(value);
+    try {
+      localStorage.setItem(CATALOG_GROUP_BY_CATEGORY_KEY, value ? '1' : '0');
+    } catch {
+      // ignore quota / private mode
+    }
+  }, []);
+
   const handleGerarRelatorioEstoque = useCallback(async () => {
     setGerandoRelatorioEstoque(true);
     toast({ title: 'Gerando relatório de estoque...' });
@@ -1085,6 +1106,7 @@ function ProdutosPageContent() {
         layout_mode: viewMode === 'plana' ? 'plana' : 'tree',
         tree_level: treeLevel,
         sort_order: sortOrder,
+        group_by_category: groupTreeByCategory,
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
@@ -1107,7 +1129,7 @@ function ProdutosPageContent() {
     } finally {
       setGerandoRelatorioEstoque(false);
     }
-  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, toast]);
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, toast]);
 
   useEffect(() => {
     if (relatorioEstoqueAutoRef.current) return;
@@ -1149,6 +1171,8 @@ function ProdutosPageContent() {
     gerandoRelatorioEstoque,
     onOpenMassTag: () => setIsMassTagOpen(true),
     onOpenMassMarkup: () => setIsMassMarkupOpen(true),
+    groupTreeByCategory,
+    onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
   };
 
   return (
@@ -1166,19 +1190,21 @@ function ProdutosPageContent() {
                 setSortOrder={setSortOrder}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
+                groupTreeByCategory={groupTreeByCategory}
+                onGroupTreeByCategoryChange={handleGroupTreeByCategoryChange}
               />
             </div>
 
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
               <div className="desktop-layout:hidden flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full">
                 <CatalogoMobileScrollShell catalogChrome={<ProdutosHeader key="catalog-mobile" {...produtosHeaderProps} />}>
-                  <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} />
+                  <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} groupByCategory={groupTreeByCategory} />
                 </CatalogoMobileScrollShell>
               </div>
 
               {isDesktop && viewMode === 'dinamica' && (
                 <div className="flex flex-col w-full h-full min-h-0">
-                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} />
+                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} />
                 </div>
               )}
 

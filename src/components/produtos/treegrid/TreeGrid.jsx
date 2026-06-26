@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffe
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus } from './useTreeGrid';
+import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus } from './useTreeGrid';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { cn } from '@/components/utils';
@@ -443,13 +443,13 @@ export function LevelControl({ level, onChange }) {
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
 // expandedKeys é gerenciado internamente — toggle manual do usuário funciona
 // independente do nível selecionado.
-export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az' }) {
+export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const scrollContainerRef = useRef(null);
   const treeRef = useRef(null);
   const pendingScrollRestoreRef = useRef(null);
 
-  const tree = useTreeGrid(produtos);
+  const tree = useCatalogTreeGrid(produtos, { groupByCategory });
   treeRef.current = tree;
 
   // Reaplica o nível selecionado quando filtros/dados reconstruírem a árvore.
@@ -458,12 +458,24 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     if (scrollEl) {
       pendingScrollRestoreRef.current = scrollEl.scrollTop;
     }
+    if (groupByCategory) {
+      setExpandedKeys(buildExpandedForLevel(treeRef.current, TREE_GRID_EXPAND_ALL_LEVEL));
+      return;
+    }
     setExpandedKeys(
       masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
     );
-  }, [masterLevel, tree]);
+  }, [masterLevel, tree, groupByCategory]);
 
-  const rows = useMemo(() => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder)), [tree, expandedKeys, sortOrder]);
+  const flattenOptions = useMemo(
+    () => ({ showLeafGroupHeaders: groupByCategory }),
+    [groupByCategory]
+  );
+
+  const rows = useMemo(
+    () => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder, flattenOptions)),
+    [tree, expandedKeys, sortOrder, flattenOptions]
+  );
 
   useLayoutEffect(() => {
     const scrollEl = scrollContainerRef.current;

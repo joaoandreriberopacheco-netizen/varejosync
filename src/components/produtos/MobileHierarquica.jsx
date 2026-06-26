@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders } from './treegrid/useTreeGrid';
+import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders } from './treegrid/useTreeGrid';
 import {
   buildPurchaseUnitOptions,
   buildSaleUnitOptions,
@@ -645,27 +645,33 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit }) {
+export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
   const [page, setPage] = useState(0);
 
-  const tree = useTreeGrid(produtos);
+  const tree = useCatalogTreeGrid(produtos, { groupByCategory });
   const produtosSig = useMemo(
-    () => produtos.map((p) => p?.id).filter(Boolean).join('\0'),
-    [produtos]
+    () => produtos.map((p) => `${p?.id}|${groupByCategory ? (p?.categoria_nome || '') : ''}`).filter(Boolean).join('\0'),
+    [produtos, groupByCategory]
   );
 
   // Reinicia expansão só quando o conjunto de produtos filtrados muda — não a cada rebuild da árvore.
   useEffect(() => {
-    setExpandedKeys(buildExpandedForLevel(tree, 1));
+    setExpandedKeys(
+      groupByCategory
+        ? buildExpandedForLevel(tree, 99)
+        : buildExpandedForLevel(tree, 1)
+    );
     setPage(0);
-  }, [produtosSig]);
+  }, [produtosSig, groupByCategory, tree]);
 
   const rows = useMemo(() => {
-    const all = mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys));
+    const all = mergeAdjacentDuplicateGroupHeaders(
+      flattenTree(tree, expandedKeys, '', 0, 'az', { showLeafGroupHeaders: groupByCategory })
+    );
     return all.filter(r => !(r.type === 'group' && r.count === 0));
-  }, [tree, expandedKeys]);
+  }, [tree, expandedKeys, groupByCategory]);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
