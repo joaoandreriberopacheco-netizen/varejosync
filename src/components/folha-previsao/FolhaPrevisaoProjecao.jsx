@@ -1,48 +1,63 @@
 import React, { useMemo } from 'react';
 import {
+  P38MobileLine,
+  P38StatusLabel,
+  p38AccentKeyFromTone,
+} from '@/components/ui/p38-mobile-line';
+import { FinanceiroGrupo } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
+import { FinanceiroKpiItem, FinanceiroKpiStrip } from '@/components/financeiro/fluxo/FinanceiroKpiInline';
+import { P38_KPI_SHELL } from '@/components/financeiro/fluxo/financeiroP38';
+import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import { cn } from '@/lib/utils';
+import {
   formatCompetenciaLabel,
-  formatCurrency,
   calcularProjecaoCaixa,
 } from '@/lib/folhaPrevisaoCalculos';
 
-function MesRow({ linha, destaque }) {
+const LINE_TITLE_CLASS =
+  '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
+
+function ProjecaoMesRow({ linha, destaque, striped }) {
+  const encargos = Math.max(0, (linha.custoTotal || 0) - (linha.liquido || 0));
   const temExtra = linha.decimo > 0 || linha.ferias > 0 || linha.retiradasSocio > 0;
+
+  const meta = (
+    <>
+      <span>{linha.ativos} colaborador(es)</span>
+      {destaque && <P38StatusLabel tone="warning">Mês atual</P38StatusLabel>}
+      {linha.decimo > 0 && <span>13º {formatFinanceiroValor(linha.decimo)}</span>}
+      {linha.ferias > 0 && <span>Férias {formatFinanceiroValor(linha.ferias)}</span>}
+      {linha.retiradasSocio > 0 && <span>Sócios {formatFinanceiroValor(linha.retiradasSocio)}</span>}
+      {!temExtra && linha.ativos === 0 && <P38StatusLabel tone="muted">Sem colaboradores ativos</P38StatusLabel>}
+    </>
+  );
+
   return (
-    <div
-      className={`rounded-xl px-3 py-2.5 ring-1 ${
-        destaque ? 'bg-primary/5 ring-primary/30' : 'bg-card ring-border/40'
-      }`}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <div className="font-medium text-sm">{formatCompetenciaLabel(linha.competencia)}</div>
-          <div className="text-[10px] text-muted-foreground">{linha.ativos} colaborador(es)</div>
-        </div>
-        <div className="text-right">
-          <div className="text-sm font-semibold tabular-nums">{formatCurrency(linha.custoTotal)}</div>
-          <div className="text-[10px] text-muted-foreground">custo total</div>
-        </div>
-      </div>
-      {temExtra && (
-        <div className="mt-2 flex flex-wrap gap-2 text-[10px]">
-          {linha.decimo > 0 && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-              13º {formatCurrency(linha.decimo)}
-            </span>
-          )}
-          {linha.ferias > 0 && (
-            <span className="rounded-full bg-sky-100 px-2 py-0.5 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
-              Férias {formatCurrency(linha.ferias)}
-            </span>
-          )}
-          {linha.retiradasSocio > 0 && (
-            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">
-              Sócios {formatCurrency(linha.retiradasSocio)}
-            </span>
-          )}
-        </div>
-      )}
-    </div>
+    <P38MobileLine
+      thinAccent
+      striped={striped}
+      accent={p38AccentKeyFromTone(destaque ? 'warning' : linha.ativos > 0 ? 'danger' : 'muted')}
+      className={cn(LINE_TITLE_CLASS, 'max-md:!py-3.5 max-md:min-h-[58px]', linha.ativos === 0 && 'opacity-60')}
+      title={formatCompetenciaLabel(linha.competencia)}
+      subtitle={encargos > 0 ? `Líquido ${formatFinanceiroValor(linha.liquido)} · Encargos ${formatFinanceiroValor(encargos)}` : `Líquido ${formatFinanceiroValor(linha.liquido)}`}
+      meta={meta}
+      value={
+        linha.ativos > 0 ? (
+          <>
+            <span className="text-foreground/85">−</span>
+            {formatFinanceiroValor(linha.custoTotal)}
+          </>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )
+      }
+      valueSub={
+        linha.liquido > 0 && linha.liquido !== linha.custoTotal ? (
+          <span className="text-muted-foreground">a pagar {formatFinanceiroValor(linha.liquido)}</span>
+        ) : null
+      }
+    />
   );
 }
 
@@ -52,26 +67,97 @@ export default function FolhaPrevisaoProjecao({ modelos, competenciaInicio }) {
     [modelos, competenciaInicio],
   );
 
-  const totalAno = linhas.reduce((acc, l) => acc + l.custoTotal, 0);
+  const totais = useMemo(
+    () =>
+      linhas.reduce(
+        (acc, l) => {
+          acc.liquido += l.liquido || 0;
+          acc.custoTotal += l.custoTotal || 0;
+          acc.decimo += l.decimo || 0;
+          acc.ferias += l.ferias || 0;
+          acc.retiradasSocio += l.retiradasSocio || 0;
+          return acc;
+        },
+        { liquido: 0, custoTotal: 0, decimo: 0, ferias: 0, retiradasSocio: 0 },
+      ),
+    [linhas],
+  );
+
+  const encargosTotal = Math.max(0, totais.custoTotal - totais.liquido);
+  const mediaMensal = totais.custoTotal / Math.max(linhas.length, 1);
   const competenciaAtual = competenciaInicio;
 
+  const chips = [];
+  if (totais.decimo > 0) {
+    chips.push(
+      <FinanceiroSummaryChip key="decimo">13º {formatFinanceiroValor(totais.decimo)}</FinanceiroSummaryChip>,
+    );
+  }
+  if (totais.ferias > 0) {
+    chips.push(
+      <FinanceiroSummaryChip key="ferias">Férias {formatFinanceiroValor(totais.ferias)}</FinanceiroSummaryChip>,
+    );
+  }
+  if (totais.retiradasSocio > 0) {
+    chips.push(
+      <FinanceiroSummaryChip key="socios">Sócios {formatFinanceiroValor(totais.retiradasSocio)}</FinanceiroSummaryChip>,
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Projeção de caixa para os próximos 12 meses — inclui salários fixos, 13º (nov/dez), férias programadas e
-        encargos. Colaboradores desligados saem automaticamente dos meses seguintes.
+        Projeção de caixa para os próximos 12 meses — salários, 13º, férias e encargos. Desligados saem dos meses seguintes.
       </p>
 
-      <div className="rounded-xl bg-muted/40 px-4 py-3 flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">Custo total projetado (12 meses)</span>
-        <span className="text-lg font-semibold tabular-nums">{formatCurrency(totalAno)}</span>
+      <div className={cn(P38_KPI_SHELL, 'space-y-2')}>
+        <FinanceiroKpiStrip layout="inline">
+          <FinanceiroKpiItem
+            label="Total 12 meses"
+            value={formatFinanceiroValor(totais.custoTotal)}
+            valueClass="text-foreground"
+          />
+          <FinanceiroKpiItem
+            label="Média mensal"
+            value={formatFinanceiroValor(mediaMensal)}
+            valueClass="text-foreground"
+          />
+          <FinanceiroKpiItem
+            label="Líquido no período"
+            value={formatFinanceiroValor(totais.liquido)}
+            valueClass="text-[#4A5D23] dark:text-[#a4ce33]"
+          />
+          {encargosTotal > 0 && (
+            <FinanceiroKpiItem
+              label="Encargos"
+              value={formatFinanceiroValor(encargosTotal)}
+              valueClass="text-red-600 dark:text-red-400"
+            />
+          )}
+        </FinanceiroKpiStrip>
+        <FinanceiroListaMeta
+          total={linhas.length}
+          totalLabel="meses projetados"
+          summaryChips={chips.length ? chips : null}
+        />
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {linhas.map((linha) => (
-          <MesRow key={linha.competencia} linha={linha} destaque={linha.competencia === competenciaAtual} />
+      <FinanceiroGrupo
+        label="Próximos 12 meses"
+        receitas={totais.liquido}
+        despesas={encargosTotal}
+        liquido={totais.custoTotal}
+        card={false}
+      >
+        {linhas.map((linha, i) => (
+          <ProjecaoMesRow
+            key={linha.competencia}
+            linha={linha}
+            destaque={linha.competencia === competenciaAtual}
+            striped={i % 2 === 1}
+          />
         ))}
-      </div>
+      </FinanceiroGrupo>
     </div>
   );
 }
