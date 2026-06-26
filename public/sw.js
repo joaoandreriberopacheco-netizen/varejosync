@@ -1,4 +1,4 @@
-const CACHE_NAME = 'p38-erp-v15';
+const CACHE_NAME = 'p38-erp-v16';
 const SHARED_CACHE = 'VarejoSync-shared-files';
 /** Ícone P38 (raio) — alinhado ao manifest; pré-cache para instalação PWA / notificações. */
 const APP_ICON_PATH = '/brand/p38-app-icon.png';

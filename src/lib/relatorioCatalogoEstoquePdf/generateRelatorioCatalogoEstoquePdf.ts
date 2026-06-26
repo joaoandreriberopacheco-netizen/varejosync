@@ -362,7 +362,7 @@ const SKU_DESC_INDENT = 5.5;
   doc.text('A4   SKUs A-Z   custo e venda por quantidade   DIN 1451', M, y);
   y += 4.5;
   if (documento.groupByCategory) {
-    doc.text('Agrupado por categoria de cadastro (totais por área na primeira linha)', M, y);
+    doc.text('Agrupado por categoria · totais na linha da área · layout v7', M, y);
     y += 4.2;
   }
 

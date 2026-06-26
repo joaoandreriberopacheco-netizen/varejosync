@@ -1101,6 +1101,11 @@ function ProdutosPageContent() {
     try {
       const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
       const totals = sumCatalogStockTotals(filteredProdutos);
+      const hasCategorizedProducts = filteredProdutos.some(
+        (p) => String(p?.categoria_nome || '').trim()
+      );
+      const groupPdfByCategory = groupTreeByCategory || hasCategorizedProducts;
+
       const resposta = await gerarRelatorioCatalogoEstoque({
         produtos: filteredProdutos,
         filters_summary: filtersSummary,
@@ -1108,7 +1113,7 @@ function ProdutosPageContent() {
         layout_mode: viewMode === 'plana' ? 'plana' : 'tree',
         tree_level: treeLevel,
         sort_order: sortOrder,
-        group_by_category: groupTreeByCategory,
+        group_by_category: groupPdfByCategory,
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
