@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, LayoutGrid } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
@@ -95,6 +95,7 @@ export default function ProdutosHeader({
   onGerarRelatorioEstoque,
   gerandoRelatorioEstoque = false,
   onOpenMassTag,
+  onOpenMassCategory,
   onOpenMassMarkup,
   groupTreeByCategory = false,
   onGroupTreeByCategoryChange,
@@ -139,6 +140,16 @@ export default function ProdutosHeader({
                 <BarChart3 className="w-4 h-4 p38-text-accent" />
               )}
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 flex-shrink-0"
+              title="Classificar categorias com IA"
+              onClick={() => onOpenMassCategory?.()}
+              disabled={filteredProdutos.length === 0}
+            >
+              <LayoutGrid className="w-4 h-4 p38-text-accent" />
+            </Button>
             <div className="flex items-center gap-0.5 flex-shrink-0">
               <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleExportarCatalogo} title="Exportar">
                 <Download className="w-4 h-4 text-muted-foreground" />
@@ -181,6 +192,17 @@ export default function ProdutosHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
+                  {filteredProdutos.length > 0 && (
+                    <DropdownMenuItem
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        onOpenMassCategory?.();
+                      }}
+                      className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                    >
+                      <LayoutGrid className="w-4 h-4 mr-2 p38-text-accent" />Classificar Categorias
+                    </DropdownMenuItem>
+                  )}
                   {filteredProdutos.length > 0 && (
                     <DropdownMenuItem
                       onSelect={(event) => {
@@ -246,6 +268,27 @@ export default function ProdutosHeader({
             />
             {filteredProdutos.length > 0 && (
               <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 flex-shrink-0 rounded-xl bg-muted desktop-layout:hidden"
+                  onClick={() => onOpenMassCategory?.()}
+                  title="Classificar categorias com IA"
+                  aria-label="Classificar categorias com IA"
+                >
+                  <LayoutGrid className="w-4 h-4 p38-text-accent" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden desktop-layout:inline-flex h-10 flex-shrink-0 gap-1.5 rounded-xl text-xs font-medium border-[#4a5240]/30 dark:border-[#a4ce33]/30"
+                  onClick={() => onOpenMassCategory?.()}
+                  title="Classificar categorias com IA"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5 p38-text-accent" />
+                  Categorias IA
+                </Button>
                 <Button
                   type="button"
                   variant="ghost"
