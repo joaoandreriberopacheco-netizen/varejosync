@@ -26,6 +26,12 @@ import { brandSurface } from '@/lib/brandSurfaces';
 import { navegarParaNovoPedidoImport } from '@/lib/torrePedidoImportBridge';
 import { navegarParaNovoLancamentoTorre } from '@/lib/torreLancamentoBridge';
 import { extrairDadosComprovante } from '@/lib/extrairDadosComprovante';
+import {
+  TORRE_WIDGET_ACTIONS,
+  TORRE_WIDGET_RETURN_PATH,
+  resolverWidgetPath,
+  widgetPathParent,
+} from '@/lib/torreWidgetTree';
 import TorreWidgetDestinos from '@/components/anexos/TorreWidgetDestinos';
 
 export default function AnexoCompartilhado() {
@@ -47,8 +53,8 @@ export default function AnexoCompartilhado() {
   /** Lançamento do mês escolhido no atualizador de boletos (partilha → atualizar PDF) */
   const [contaMesBoletoAlvo, setContaMesBoletoAlvo] = useState(null);
   const colagemAutomaticaClipboardTentada = useRef(false);
-  /** Widget de destinos: raiz | pedidos | financeiro */
-  const [widgetMenu, setWidgetMenu] = useState('raiz');
+  /** Caminho no widget de destinos (pais → filhos → netos) */
+  const [widgetPath, setWidgetPath] = useState([]);
   const [dadosComprovante, setDadosComprovante] = useState(null);
   const [lendoComprovante, setLendoComprovante] = useState(false);
   const extracaoComprovanteSeq = useRef(0);
@@ -95,8 +101,45 @@ export default function AnexoCompartilhado() {
   }, [arquivo?.file, arquivo?.texto, arquivo?.nome]);
 
   useEffect(() => {
-    if (etapa !== 'opcoes') setWidgetMenu('raiz');
+    if (etapa !== 'opcoes') setWidgetPath([]);
   }, [etapa]);
+
+  const handleWidgetAction = (action) => {
+    switch (action) {
+      case TORRE_WIDGET_ACTIONS.PEDIDO_NOVO:
+        void navegarParaNovoPedidoImport(arquivo, tipoDocumento);
+        break;
+      case TORRE_WIDGET_ACTIONS.PEDIDO_EXISTENTE:
+        setEtapa('vincular_pedido');
+        break;
+      case TORRE_WIDGET_ACTIONS.FINANCEIRO_NOVO:
+        void navegarParaNovoLancamentoTorre(arquivo, {
+          valor: dadosComprovante?.valor,
+          descricao: dadosComprovante?.descricao,
+          tipoDocumento,
+        });
+        break;
+      case TORRE_WIDGET_ACTIONS.FINANCEIRO_EXISTENTE:
+        setEtapa('vincular');
+        break;
+      case TORRE_WIDGET_ACTIONS.FINANCEIRO_IMPORTAR_BOLETO:
+        if (arquivo?.file) setEtapa('importar_pdf_conta');
+        break;
+      case TORRE_WIDGET_ACTIONS.FINANCEIRO_ATUALIZAR_BOLETO:
+        if (arquivo?.file) setEtapa('atualizar_boleto');
+        break;
+      case TORRE_WIDGET_ACTIONS.LOGISTICA_EVENTO:
+        setEtapa('vincular_evento');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const voltarWidgetOverlay = (etapaOverlay) => {
+    setWidgetPath(TORRE_WIDGET_RETURN_PATH[etapaOverlay] || []);
+    setEtapa('opcoes');
+  };
 
   // NOVO: Função super segura para converter o ficheiro para o servidor
   const converterParaBase64 = (blob) => {
@@ -393,26 +436,33 @@ export default function AnexoCompartilhado() {
       setFeedbackClipboard('A tentar colar automaticamente… Se não aparecer arquivo, use o botão Colar.');
     }
     const destinoNorm = String(destino || '').trim().toLowerCase();
-    if (destinoNorm === 'financeiro') {
+    const pathDestino = resolverWidgetPath(destinoNorm);
+
+    if (destinoNorm === 'lancamento') {
       destinoDeepLinkHandled.current = true;
-      setWidgetMenu('financeiro');
-      setEtapa('opcoes');
-    } else if (destinoNorm === 'pedidos' || destinoNorm === 'pedido') {
+      setEtapa('vincular');
+    } else if (pathDestino.length > 0) {
       destinoDeepLinkHandled.current = true;
-      setWidgetMenu('pedidos');
+      setWidgetPath(pathDestino);
       setEtapa('opcoes');
     } else if (etapaAlvo === 'opcoes_financeiro') {
       destinoDeepLinkHandled.current = true;
-      setWidgetMenu('financeiro');
+      setWidgetPath(['financeiro']);
       setEtapa('opcoes');
     } else if (etapaAlvo === 'opcoes_pedidos') {
       destinoDeepLinkHandled.current = true;
-      setWidgetMenu('pedidos');
+      setWidgetPath(['pedidos']);
       setEtapa('opcoes');
     } else if (etapaAlvo) {
       destinoDeepLinkHandled.current = true;
       if (etapaAlvo === 'vincular_pedido' || etapaAlvo === 'importar_pedido_novo') {
-        setWidgetMenu('pedidos');
+        setWidgetPath(['pedidos']);
+      } else if (etapaAlvo === 'vincular') {
+        setWidgetPath(['financeiro', 'financeiro_comprovante']);
+      } else if (etapaAlvo === 'vincular_evento') {
+        setWidgetPath(['logistica']);
+      } else if (etapaAlvo === 'importar_pdf_conta' || etapaAlvo === 'atualizar_boleto') {
+        setWidgetPath(['financeiro', 'financeiro_boleto']);
       }
       setEtapa(etapaAlvo);
     }
@@ -638,10 +688,7 @@ export default function AnexoCompartilhado() {
               {etapa === 'vincular' ? (
                 <BuscarLancamentoSheet
                   onSelecionar={handleVincular}
-                  onVoltar={() => {
-                    setWidgetMenu('financeiro');
-                    setEtapa('opcoes');
-                  }}
+                  onVoltar={() => voltarWidgetOverlay('vincular')}
                   uploadando={uploadando}
                   queryInicial={queryBuscaLancamento}
                   valorSugerido={dadosComprovante?.valor ?? null}
@@ -649,16 +696,13 @@ export default function AnexoCompartilhado() {
               ) : etapa === 'vincular_pedido' ? (
                 <BuscarPedidoCompraParaAnexo
                   onSelecionar={handleVincularPedido}
-                  onVoltar={() => {
-                    setWidgetMenu('pedidos');
-                    setEtapa('opcoes');
-                  }}
+                  onVoltar={() => voltarWidgetOverlay('vincular_pedido')}
                   uploadando={uploadando}
                 />
               ) : (
                 <BuscarEventoLogisticoParaAnexo
                   onSelecionar={handleVincularEvento}
-                  onVoltar={() => setEtapa('opcoes')}
+                  onVoltar={() => voltarWidgetOverlay('vincular_evento')}
                   uploadando={uploadando}
                 />
               )}
@@ -677,7 +721,7 @@ export default function AnexoCompartilhado() {
             <div className="flex shrink-0 items-center gap-3 border-b border-border/40 px-4 py-3 dark:border-border/40">
               <button
                 type="button"
-                onClick={() => setEtapa('opcoes')}
+                onClick={() => voltarWidgetOverlay('importar_pdf_conta')}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -713,7 +757,7 @@ export default function AnexoCompartilhado() {
             }}
           >
             <BoletoRecorrentePicker
-              onVoltar={() => setEtapa('opcoes')}
+              onVoltar={() => voltarWidgetOverlay('atualizar_boleto')}
               onSelectCard={({ contaMes }) => {
                 setContaMesBoletoAlvo(contaMes);
                 setEtapa('atualizar_boleto_import');
@@ -897,8 +941,8 @@ export default function AnexoCompartilhado() {
             <button
               type="button"
               onClick={() => {
-                if (etapa === 'opcoes' && widgetMenu !== 'raiz') {
-                  setWidgetMenu('raiz');
+                if (etapa === 'opcoes' && widgetPath.length > 0) {
+                  setWidgetPath(widgetPathParent(widgetPath));
                   return;
                 }
                 if (etapa === 'opcoes') setEtapa('torre_controle');
@@ -924,24 +968,12 @@ export default function AnexoCompartilhado() {
             <ArquivoPreview arquivo={arquivo} />
           </div>
           <TorreWidgetDestinos
-            widgetMenu={widgetMenu}
-            onWidgetMenuChange={setWidgetMenu}
+            widgetPath={widgetPath}
+            onWidgetPathChange={setWidgetPath}
             dadosComprovante={dadosComprovante}
             lendoComprovante={lendoComprovante}
             temArquivo={Boolean(arquivo?.file)}
-            onPedidoNovo={() => void navegarParaNovoPedidoImport(arquivo, tipoDocumento)}
-            onPedidoExistente={() => setEtapa('vincular_pedido')}
-            onFinanceiroNovo={() =>
-              void navegarParaNovoLancamentoTorre(arquivo, {
-                valor: dadosComprovante?.valor,
-                descricao: dadosComprovante?.descricao,
-                tipoDocumento,
-              })
-            }
-            onFinanceiroExistente={() => setEtapa('vincular')}
-            onMaisFrete={() => setEtapa('vincular_evento')}
-            onMaisBoleto={() => arquivo?.file && setEtapa('atualizar_boleto')}
-            onMaisAgefin={() => arquivo?.file && setEtapa('importar_pdf_conta')}
+            onAction={handleWidgetAction}
           />
 
           {!arquivo?.file && (

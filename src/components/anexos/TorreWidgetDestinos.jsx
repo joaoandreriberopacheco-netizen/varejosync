@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ArrowLeft,
   ChevronRight,
@@ -10,46 +10,62 @@ import {
   Anchor,
   RefreshCw,
   FileText,
+  Receipt,
+  RadioTower,
 } from 'lucide-react';
 import { brandSurface } from '@/lib/brandSurfaces';
 import { formatarValorBRL } from '@/lib/extrairDadosComprovante';
+import {
+  obterFilhosWidget,
+  obterNoAtualWidget,
+  titulosBreadcrumb,
+  widgetPathParent,
+} from '@/lib/torreWidgetTree';
 
-function WidgetCard({ icon: Icon, titulo, descricao, onClick, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
-      className={`flex w-full items-center gap-3 rounded-2xl p-4 text-left shadow-sm transition-colors md:rounded-3xl md:p-5 ${
-        brandSurface.card
-      } ${disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-muted/40 dark:hover:bg-muted/30'}`}
-    >
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center md:h-12 md:w-12 ${brandSurface.iconCapsule}`}>
-        <Icon className="h-5 w-5 text-foreground/90 dark:text-foreground" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-foreground">{titulo}</p>
-        <p className={`mt-0.5 text-xs ${brandSurface.textLabel}`}>{descricao}</p>
-      </div>
-      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-    </button>
-  );
+const ICON_MAP = {
+  'shopping-cart': ShoppingCart,
+  wallet: Wallet,
+  plus: Plus,
+  link: Link2,
+  'file-up': FileUp,
+  anchor: Anchor,
+  'refresh-cw': RefreshCw,
+  'file-text': FileText,
+  receipt: Receipt,
+  'radio-tower': RadioTower,
+};
+
+function resolveIcon(name) {
+  return ICON_MAP[name] || FileText;
 }
 
-function SubOpcao({ icon: Icon, titulo, descricao, onClick, disabled }) {
+function WidgetCard({ icon: Icon, titulo, descricao, onClick, disabled, nivel = 'pai' }) {
+  const isPai = nivel === 'pai';
   return (
     <button
       type="button"
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      className={`flex w-full items-center gap-3 rounded-2xl border border-border/50 px-4 py-3.5 text-left transition-colors dark:border-border/40 ${
-        disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-muted/30'
+      className={`flex w-full items-center gap-3 text-left transition-colors ${
+        isPai
+          ? `rounded-2xl p-4 shadow-sm md:rounded-3xl md:p-5 ${brandSurface.card} ${
+              disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-muted/40 dark:hover:bg-muted/30'
+            }`
+          : `rounded-2xl border border-border/50 px-4 py-3.5 dark:border-border/40 ${
+              disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-muted/30'
+            }`
       }`}
     >
-      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+      {isPai ? (
+        <div className={`flex h-11 w-11 shrink-0 items-center justify-center md:h-12 md:w-12 ${brandSurface.iconCapsule}`}>
+          <Icon className="h-5 w-5 text-foreground/90 dark:text-foreground" />
+        </div>
+      ) : (
+        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+      )}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-foreground">{titulo}</p>
-        <p className={`text-xs ${brandSurface.textLabel}`}>{descricao}</p>
+        <p className={`${isPai ? 'text-sm font-semibold' : 'text-sm font-medium'} text-foreground`}>{titulo}</p>
+        {descricao && <p className={`mt-0.5 text-xs ${brandSurface.textLabel}`}>{descricao}</p>}
       </div>
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
     </button>
@@ -57,21 +73,49 @@ function SubOpcao({ icon: Icon, titulo, descricao, onClick, disabled }) {
 }
 
 export default function TorreWidgetDestinos({
-  widgetMenu,
-  onWidgetMenuChange,
+  widgetPath,
+  onWidgetPathChange,
   dadosComprovante,
   lendoComprovante,
   temArquivo,
-  onPedidoNovo,
-  onPedidoExistente,
-  onFinanceiroNovo,
-  onFinanceiroExistente,
-  onMaisFrete,
-  onMaisBoleto,
-  onMaisAgefin,
+  onAction,
 }) {
-  const valorLabel =
-    dadosComprovante?.valor != null ? formatarValorBRL(dadosComprovante.valor) : null;
+  const valorLabel = dadosComprovante?.valor != null ? formatarValorBRL(dadosComprovante.valor) : null;
+
+  const noAtual = useMemo(() => {
+    if (!widgetPath?.length) return obterNoAtualWidget([]);
+    return obterNoAtualWidget(widgetPath);
+  }, [widgetPath]);
+
+  const filhos = useMemo(() => {
+    const parentId = widgetPath?.length ? widgetPath[widgetPath.length - 1] : 'raiz';
+    return obterFilhosWidget(parentId);
+  }, [widgetPath]);
+
+  const breadcrumb = useMemo(() => titulosBreadcrumb(widgetPath), [widgetPath]);
+
+  const enriquecerDescricao = (no) => {
+    if (!no) return no?.descricao || '';
+    if (no.id === 'financeiro_novo' && valorLabel) {
+      return `Abrir formulário com ${valorLabel}`;
+    }
+    if (no.id === 'financeiro_existente' && valorLabel) {
+      return `Buscar conta com valor ${valorLabel}`;
+    }
+    return no.descricao || '';
+  };
+
+  const handleItemClick = (no) => {
+    if (no.action) {
+      onAction?.(no.action, no);
+      return;
+    }
+    if (no.children?.length) {
+      onWidgetPathChange([...(widgetPath || []), no.id]);
+    }
+  };
+
+  const nivelUi = widgetPath?.length === 0 ? 'pai' : widgetPath.length === 1 ? 'filho' : 'neto';
 
   return (
     <div className="flex flex-col gap-3 px-4 md:px-5">
@@ -98,101 +142,52 @@ export default function TorreWidgetDestinos({
         </div>
       )}
 
-      {widgetMenu !== 'raiz' && (
-        <button
-          type="button"
-          onClick={() => onWidgetMenuChange('raiz')}
-          className="flex items-center gap-2 self-start rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Voltar
-        </button>
-      )}
-
-      {widgetMenu === 'raiz' && (
-        <>
-          <p className="px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Para onde vai este arquivo?
-          </p>
-          <WidgetCard
-            icon={ShoppingCart}
-            titulo="Pedidos de compra"
-            descricao="Novo pedido com PDF ou anexar a pedido existente"
-            onClick={() => onWidgetMenuChange('pedidos')}
-          />
-          <WidgetCard
-            icon={Wallet}
-            titulo="Financeiro"
-            descricao="Novo lançamento ou vincular a conta existente"
-            onClick={() => onWidgetMenuChange('financeiro')}
-          />
-        </>
-      )}
-
-      {widgetMenu === 'pedidos' && (
+      {widgetPath?.length > 0 && (
         <div className="flex flex-col gap-2">
-          <p className="px-0.5 text-sm font-semibold text-foreground">Pedidos de compra</p>
-          <SubOpcao
-            icon={FileUp}
-            titulo="Novo pedido"
-            descricao="Criar pedido e importar itens do PDF"
-            disabled={!temArquivo}
-            onClick={onPedidoNovo}
-          />
-          <SubOpcao
-            icon={Link2}
-            titulo="Pedido existente"
-            descricao="Anexar comprovante a um pedido já criado"
-            onClick={onPedidoExistente}
-          />
+          <button
+            type="button"
+            onClick={() => onWidgetPathChange(widgetPathParent(widgetPath))}
+            className="flex items-center gap-2 self-start rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Voltar
+          </button>
+          {breadcrumb.length > 0 && (
+            <p className="px-0.5 text-xs text-muted-foreground">
+              {breadcrumb.join(' › ')}
+            </p>
+          )}
         </div>
       )}
 
-      {widgetMenu === 'financeiro' && (
-        <div className="flex flex-col gap-2">
-          <p className="px-0.5 text-sm font-semibold text-foreground">Financeiro</p>
-          <SubOpcao
-            icon={Plus}
-            titulo="Novo lançamento"
-            descricao={valorLabel ? `Abrir formulário com ${valorLabel}` : 'Registrar despesa e anexar comprovante'}
-            onClick={onFinanceiroNovo}
-          />
-          <SubOpcao
-            icon={Link2}
-            titulo="Lançamento existente"
-            descricao={valorLabel ? `Buscar conta com valor ${valorLabel}` : 'Buscar conta a pagar ou despesa'}
-            onClick={onFinanceiroExistente}
-          />
-        </div>
+      {widgetPath?.length === 0 && (
+        <p className="px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Para onde vai este arquivo?
+        </p>
       )}
 
-      {widgetMenu === 'raiz' && (
-        <details className="mt-1 rounded-2xl border border-dashed border-border/60 px-4 py-3 dark:border-border/40">
-          <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Mais opções</summary>
-          <div className="mt-3 flex flex-col gap-2">
-            <SubOpcao
-              icon={Anchor}
-              titulo="Viagem / frete fluvial"
-              descricao="Anexar a evento logístico"
-              onClick={onMaisFrete}
-            />
-            <SubOpcao
-              icon={RefreshCw}
-              titulo="Atualizar boleto recorrente"
-              descricao="Substituir PDF do mês"
-              disabled={!temArquivo}
-              onClick={onMaisBoleto}
-            />
-            <SubOpcao
-              icon={FileText}
-              titulo="Importar conta a pagar (boleto)"
-              descricao="Ler PDF e criar conta no AGEFIN"
-              disabled={!temArquivo}
-              onClick={onMaisAgefin}
-            />
-          </div>
-        </details>
+      {widgetPath?.length > 0 && noAtual && !noAtual.action && (
+        <p className="px-0.5 text-sm font-semibold text-foreground">{noAtual.titulo}</p>
       )}
+
+      <div className="flex flex-col gap-2">
+        {filhos.map((no) => {
+          const Icon = resolveIcon(no.icon);
+          const disabled = Boolean(no.requiresFile && !temArquivo);
+          const isPaiNivel = widgetPath?.length === 0;
+          return (
+            <WidgetCard
+              key={no.id}
+              icon={Icon}
+              titulo={no.titulo}
+              descricao={enriquecerDescricao(no)}
+              disabled={disabled}
+              nivel={isPaiNivel ? 'pai' : nivelUi === 'neto' ? 'neto' : 'filho'}
+              onClick={() => handleItemClick(no)}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
