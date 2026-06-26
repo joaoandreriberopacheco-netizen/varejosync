@@ -421,7 +421,10 @@ export const ENTITY_TO_TABLE = {
   EventoLogisticoSandbox: { table: 'evento_logistico_sandbox', mode: 'jsonb' },
   PerfilDeAcesso: { table: 'perfil_de_acesso', mode: 'jsonb', columns: ['nome'] },
   PoliticasDesconto: { table: 'politicas_desconto', mode: 'jsonb' },
-  StatusPedidoCompra: { table: 'status_pedido_compra', mode: 'jsonb' }
+  StatusPedidoCompra: { table: 'status_pedido_compra', mode: 'jsonb' },
+
+  FolhaPrevisaoModelo: { table: 'folha_previsao_modelo', mode: 'jsonb' },
+  FolhaPrevisaoCompetencia: { table: 'folha_previsao_competencia', mode: 'jsonb' },
 };
 
 /**

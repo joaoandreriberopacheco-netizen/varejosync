@@ -1,0 +1,52 @@
+{
+  "name": "FolhaPrevisaoModelo",
+  "type": "object",
+  "description": "Modelo (template) de previsão de pagamento por colaborador — duplicar e ajustar nome/dados",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do modelo (ex: Vendedor padrão, Estoquista)"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Observações sobre o modelo"
+    },
+    "colaborador_id": {
+      "type": "string",
+      "description": "Colaborador vinculado (opcional se for modelo genérico)"
+    },
+    "colaborador_nome": {
+      "type": "string",
+      "description": "Nome do colaborador (cache)"
+    },
+    "dia_vencimento": {
+      "type": "number",
+      "description": "Dia do mês para pagamento (1-31)",
+      "default": 5
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    },
+    "rubricas": {
+      "type": "array",
+      "description": "Rubricas fixas do modelo (salário, INSS, FGTS, etc.)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "tipo": {
+            "type": "string",
+            "enum": ["provento", "desconto", "encargo_empresa"]
+          },
+          "nome": { "type": "string" },
+          "valor_base": { "type": "number" },
+          "categoria_financeira_id": { "type": "string" },
+          "categoria_nome": { "type": "string" },
+          "ordem": { "type": "number" }
+        }
+      }
+    }
+  },
+  "required": ["nome", "dia_vencimento"]
+}
