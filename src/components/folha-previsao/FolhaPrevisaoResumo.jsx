@@ -5,9 +5,16 @@ import { P38_KPI_SHELL } from '@/components/financeiro/fluxo/financeiroP38';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import { cn } from '@/lib/utils';
 
-export default function FolhaPrevisaoResumo({ totais, count, competenciaLabel }) {
+export default function FolhaPrevisaoResumo({ totais, count, competenciaLabel, countPlanejamento = 0 }) {
   const chips = [];
 
+  if (countPlanejamento > 0) {
+    chips.push(
+      <FinanceiroSummaryChip key="plan" className="text-cyan-800 dark:text-cyan-300">
+        {countPlanejamento} em planejamento
+      </FinanceiroSummaryChip>,
+    );
+  }
   if (totais?.totalValesPendentes > 0) {
     chips.push(
       <FinanceiroSummaryChip key="vales" className="text-amber-800 dark:text-amber-300">

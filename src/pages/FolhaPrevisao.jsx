@@ -37,6 +37,9 @@ import {
   agruparCompetenciasPorTipo,
   formatCicloFolhaCompetencia,
   FOLHA_DIA_VENCIMENTO,
+  montarCompetenciasVisao,
+  isCompetenciaFutura,
+  isCompetenciaPlanejamento,
 } from '@/lib/folhaPrevisaoCalculos';
 import {
   abrirCompetenciasDoMes,
@@ -114,10 +117,19 @@ export default function FolhaPrevisaoPage() {
   });
 
   const modelosMap = useMemo(() => mapaModelosPorColaborador(modelos), [modelos]);
-  const competenciasFiltradas = useMemo(
-    () => filtrarCompetenciasPorTipo(competencias, modelosMap, filtroVinculo === 'todos' ? null : filtroVinculo),
-    [competencias, modelosMap, filtroVinculo],
+  const competenciasVisao = useMemo(
+    () => montarCompetenciasVisao(competenciaMes, modelos, competencias),
+    [competenciaMes, modelos, competencias],
   );
+  const competenciasFiltradas = useMemo(
+    () => filtrarCompetenciasPorTipo(competenciasVisao, modelosMap, filtroVinculo === 'todos' ? null : filtroVinculo),
+    [competenciasVisao, modelosMap, filtroVinculo],
+  );
+  const qtdPlanejamento = useMemo(
+    () => competenciasFiltradas.filter((c) => isCompetenciaPlanejamento(c)).length,
+    [competenciasFiltradas],
+  );
+  const mesFuturo = isCompetenciaFutura(competenciaMes);
   const grupos = useMemo(
     () => agruparCompetenciasPorTipo(competenciasFiltradas, modelosMap),
     [competenciasFiltradas, modelosMap],
@@ -138,10 +150,16 @@ export default function FolhaPrevisaoPage() {
   }, [queryClient]);
 
   const handleAbrirMes = async () => {
+    const colaboradorAlvo = isCompetenciaPlanejamento(selectedComp) ? selectedComp.colaborador_id : null;
     setSaving(true);
     try {
       const { criados, pulados } = await abrirCompetenciasDoMes(competenciaMes);
       invalidate();
+      if (colaboradorAlvo) {
+        const lista = await listarCompetencias(competenciaMes);
+        const real = (lista || []).find((c) => c.colaborador_id === colaboradorAlvo);
+        if (real) setSelectedComp(real);
+      }
       const msg = criados.length
         ? `${criados.length} previsão(ões) aberta(s).`
         : 'Nenhum colaborador com modelo vinculado.';
@@ -219,6 +237,14 @@ export default function FolhaPrevisaoPage() {
 
   const handleAddMovimento = async (mov) => {
     if (!selectedComp) return;
+    if (isCompetenciaPlanejamento(selectedComp)) {
+      toast({
+        title: 'Mês em planejamento',
+        description: 'Abra o mês para registrar movimentos.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setSaving(true);
     try {
       const updated = await adicionarMovimento(selectedComp.id, mov);
@@ -269,7 +295,7 @@ export default function FolhaPrevisaoPage() {
       <div className="pb-3 border-b border-border/40">
         <h1 className="text-xl font-medium text-foreground mb-0.5">Folha</h1>
         <p className="text-xs text-muted-foreground">
-          Previsão de custos com pessoas. A folha fecha no último dia de cada mês e o pagamento vence no dia {FOLHA_DIA_VENCIMENTO} do mês seguinte.
+          Previsão de custos com pessoas. A folha fecha no último dia de cada mês e o pagamento vence no dia {FOLHA_DIA_VENCIMENTO} do mês seguinte. Meses futuros aparecem em modo planejamento, mesmo antes de abrir.
         </p>
       </div>
 
@@ -311,15 +337,23 @@ export default function FolhaPrevisaoPage() {
           <FolhaPrevisaoResumo
             totais={totaisGrupo}
             count={totaisGrupo.count}
+            countPlanejamento={qtdPlanejamento}
             competenciaLabel={`${formatCompetenciaLabel(competenciaMes)} · ${formatCicloFolhaCompetencia(competenciaMes)}`}
           />
+
+          {(mesFuturo || qtdPlanejamento > 0) && (
+            <p className="text-xs text-cyan-900 dark:text-cyan-200 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-3 py-2.5">
+              Modo planejamento: você já vê a previsão com base nos modelos cadastrados.
+              {mesFuturo ? ' Este mês ainda não precisa estar aberto para consultar os valores.' : ' Abra o mês quando quiser registrar vales e movimentos.'}
+            </p>
+          )}
 
           <FiltroVinculoChips value={filtroVinculo} onChange={setFiltroVinculo} />
 
           <FinanceiroListaEstado
-            loading={loadingComp}
-            vazio={!loadingComp && competenciasFiltradas.length === 0}
-            vazioMensagem={`Nenhuma previsão para ${formatCompetenciaLabel(competenciaMes)}${filtroVinculo !== 'todos' ? ` (${TIPO_VINCULO_LABELS[filtroVinculo]})` : ''}.`}
+            loading={loadingComp || loadingModelos}
+            vazio={!loadingComp && !loadingModelos && competenciasFiltradas.length === 0}
+            vazioMensagem={`Nenhum colaborador com modelo ativo para ${formatCompetenciaLabel(competenciaMes)}${filtroVinculo !== 'todos' ? ` (${TIPO_VINCULO_LABELS[filtroVinculo]})` : ''}. Cadastre modelos vinculados.`}
             vazioIcon={Users}
           >
             <FolhaPrevisaoLista
@@ -331,9 +365,9 @@ export default function FolhaPrevisaoPage() {
             />
           </FinanceiroListaEstado>
 
-          {!loadingComp && competenciasFiltradas.length === 0 && (
-            <div className="flex justify-center -mt-6 pb-4">
-              <Button onClick={handleAbrirMes} disabled={saving}>Abrir mês para colaboradores</Button>
+          {!loadingComp && !loadingModelos && competenciasFiltradas.length === 0 && (
+            <div className="flex justify-center -mt-6 pb-4 gap-2">
+              <Button variant="outline" onClick={() => setModeloDialog({})}>Cadastrar modelo</Button>
             </div>
           )}
         </TabsContent>
@@ -391,6 +425,8 @@ export default function FolhaPrevisaoPage() {
         onRemoveMovimento={handleRemoveMovimento}
         onSyncFinanceiro={handleSyncFinanceiro}
         syncing={syncing}
+        onAbrirMes={handleAbrirMes}
+        abrindoMes={saving}
       />
 
       <FolhaPrevisaoModeloDialog

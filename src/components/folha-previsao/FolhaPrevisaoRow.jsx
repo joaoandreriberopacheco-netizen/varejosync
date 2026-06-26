@@ -11,6 +11,7 @@ import {
   TIPO_VINCULO,
   TIPO_VINCULO_LABELS,
   formatCicloFolhaCompetencia,
+  isCompetenciaPlanejamento,
   statusCompetenciaEfetivo,
 } from '@/lib/folhaPrevisaoCalculos';
 
@@ -18,6 +19,7 @@ const LINE_TITLE_CLASS =
   '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
 
 function rowAccent(competencia, modelo) {
+  if (isCompetenciaPlanejamento(competencia)) return 'info';
   if (competencia.situacao_mes === 'ultimo_mes') return 'warning';
   if (modelo?.situacao === SITUACAO_FOLHA.DESLIGADO) return 'muted';
   return 'danger';
@@ -30,13 +32,18 @@ export default function FolhaPrevisaoRow({ competencia, modelo, onClick, striped
   const ultimoMes = competencia.situacao_mes === 'ultimo_mes';
   const statusEfetivo = statusCompetenciaEfetivo(competencia);
   const fechada = statusEfetivo === 'fechado';
+  const planejamento = isCompetenciaPlanejamento(competencia);
 
   const meta = (
     <>
       <span>{TIPO_VINCULO_LABELS[ehSocio ? TIPO_VINCULO.SOCIO : TIPO_VINCULO.FUNCIONARIO]}</span>
-      <P38StatusLabel tone={fechada ? 'success' : 'warning'}>
-        {fechada ? 'Fechada' : 'Em aberto'}
-      </P38StatusLabel>
+      {planejamento ? (
+        <P38StatusLabel tone="info">Planejamento</P38StatusLabel>
+      ) : (
+        <P38StatusLabel tone={fechada ? 'success' : 'warning'}>
+          {fechada ? 'Fechada' : 'Em aberto'}
+        </P38StatusLabel>
+      )}
       {ultimoMes && <P38StatusLabel tone="warning">Último mês</P38StatusLabel>}
       {desligado && !ultimoMes && <P38StatusLabel tone="muted">Desligou</P38StatusLabel>}
       {totais.totalValesPendentes > 0 && (
@@ -58,7 +65,7 @@ export default function FolhaPrevisaoRow({ competencia, modelo, onClick, striped
       striped={striped}
       accent={p38AccentKeyFromTone(rowAccent(competencia, modelo))}
       onClick={() => onClick?.(competencia)}
-      className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] [&>div:last-child]:max-w-[46%] sm:[&>div:last-child]:max-w-[42%] ${desligado ? 'opacity-75' : ''}`}
+      className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] [&>div:last-child]:max-w-[46%] sm:[&>div:last-child]:max-w-[42%] ${desligado ? 'opacity-75' : ''} ${planejamento ? 'opacity-95' : ''}`}
       title={competencia.colaborador_nome}
       subtitle={`${competencia.modelo_nome || 'Sem modelo'} · ${formatCicloFolhaCompetencia(competencia.competencia)}`}
       meta={meta}

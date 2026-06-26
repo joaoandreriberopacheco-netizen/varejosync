@@ -155,13 +155,65 @@ export function competenciaDeveEstarFechada(competencia, hojeIso = dataHojeIso()
 
 export function statusCompetenciaEfetivo(comp, hojeIso = dataHojeIso()) {
   if (!comp) return 'rascunho';
+  if (comp._modoPlanejamento) return 'planejamento';
   if (comp.status === 'fechado') return 'fechado';
   if (competenciaDeveEstarFechada(comp.competencia, hojeIso)) return 'fechado';
   return 'rascunho';
 }
 
 export function competenciaEstaFechada(comp, hojeIso = dataHojeIso()) {
+  if (comp?._modoPlanejamento) return false;
   return statusCompetenciaEfetivo(comp, hojeIso) === 'fechado';
+}
+
+export function isCompetenciaPlanejamento(comp) {
+  return Boolean(comp?._modoPlanejamento);
+}
+
+export function isCompetenciaFutura(competencia, ref = getCompetenciaAtual()) {
+  return String(competencia).slice(0, 7) > ref;
+}
+
+/** Previsão virtual a partir do modelo (mês ainda não aberto no sistema). */
+export function criarCompetenciaPlanejada(modelo, competencia) {
+  return {
+    id: `planej-${modelo.colaborador_id}-${competencia}`,
+    colaborador_id: modelo.colaborador_id,
+    colaborador_nome: modelo.colaborador_nome || modelo.nome,
+    tipo_vinculo: modelo.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO,
+    modelo_id: modelo.id,
+    modelo_nome: modelo.nome,
+    competencia,
+    dia_vencimento: FOLHA_DIA_VENCIMENTO,
+    status: 'rascunho',
+    situacao_mes: isMesDesligamento(modelo, competencia) ? 'ultimo_mes' : 'normal',
+    rubricas: clonarRubricas(modelo.rubricas?.length ? modelo.rubricas : criarRubricasPadrao(modelo.tipo_vinculo)),
+    movimentos: [],
+    _modoPlanejamento: true,
+  };
+}
+
+/**
+ * Mescla competências abertas no banco com linhas de planejamento (modelos ativos sem registro do mês).
+ */
+export function montarCompetenciasVisao(competenciaMes, modelos, competenciasPersistidas = []) {
+  const byColaborador = {};
+  for (const c of competenciasPersistidas || []) {
+    if (c.colaborador_id) {
+      byColaborador[c.colaborador_id] = { ...c, _modoPlanejamento: false };
+    }
+  }
+
+  for (const modelo of modelos || []) {
+    if (!modelo.colaborador_id || modelo.ativo === false) continue;
+    if (!modeloEstaAtivoNaCompetencia(modelo, competenciaMes)) continue;
+    if (byColaborador[modelo.colaborador_id]) continue;
+    byColaborador[modelo.colaborador_id] = criarCompetenciaPlanejada(modelo, competenciaMes);
+  }
+
+  return Object.values(byColaborador).sort((a, b) =>
+    (a.colaborador_nome || '').localeCompare(b.colaborador_nome || '', 'pt-BR'),
+  );
 }
 
 export function formatCicloFolhaCompetencia(competencia) {

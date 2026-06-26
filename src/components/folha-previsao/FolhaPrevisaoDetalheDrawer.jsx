@@ -15,6 +15,7 @@ import {
   statusPagamentoMovimento,
   statusCompetenciaEfetivo,
   competenciaEstaFechada,
+  isCompetenciaPlanejamento,
 } from '@/lib/folhaPrevisaoCalculos';
 import { format } from 'date-fns';
 
@@ -51,6 +52,8 @@ export default function FolhaPrevisaoDetalheDrawer({
   onRemoveMovimento,
   onSyncFinanceiro,
   syncing,
+  onAbrirMes,
+  abrindoMes,
 }) {
   if (!competencia) return null;
 
@@ -58,7 +61,8 @@ export default function FolhaPrevisaoDetalheDrawer({
   const rubricas = [...(competencia.rubricas || [])].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
   const movimentos = competencia.movimentos || [];
   const provisoes = totais.provisoes || [];
-  const fechada = competenciaEstaFechada(competencia);
+  const planejamento = isCompetenciaPlanejamento(competencia);
+  const fechada = !planejamento && competenciaEstaFechada(competencia);
   const statusEfetivo = statusCompetenciaEfetivo(competencia);
 
   return (
@@ -68,8 +72,9 @@ export default function FolhaPrevisaoDetalheDrawer({
           <DrawerTitle className="flex flex-wrap items-center gap-2">
             <span>{competencia.colaborador_nome}</span>
             <Badge variant="outline">{competencia.competencia}</Badge>
+            {statusEfetivo === 'planejamento' && <Badge variant="secondary">Planejamento</Badge>}
             {statusEfetivo === 'fechado' && <Badge>Fechada</Badge>}
-            {statusEfetivo !== 'fechado' && <Badge variant="outline">Em aberto</Badge>}
+            {statusEfetivo === 'rascunho' && <Badge variant="outline">Em aberto</Badge>}
             {competencia.situacao_mes === 'ultimo_mes' && (
               <Badge variant="destructive">Último mês</Badge>
             )}
@@ -81,6 +86,11 @@ export default function FolhaPrevisaoDetalheDrawer({
             Modelo: {competencia.modelo_nome || '—'} · {formatCicloFolhaCompetencia(competencia.competencia)}
             {modelo?.data_desligamento && ` · Saiu em ${formatDataBr(modelo.data_desligamento)}`}
           </p>
+          {planejamento && (
+            <p className="text-xs text-cyan-800 dark:text-cyan-300 mt-1 rounded-lg bg-cyan-500/10 px-3 py-2">
+              Modo planejamento — valores estimados a partir do modelo. Abra o mês para registrar vales, movimentos e enviar ao financeiro.
+            </p>
+          )}
           {fechada && (
             <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
               Folha fechada — movimentos não podem mais ser alterados neste mês.
@@ -143,19 +153,27 @@ export default function FolhaPrevisaoDetalheDrawer({
           </Section>
 
           <Section title="Movimentos do mês">
-            <div className="mb-2 flex gap-2">
-              <Button size="sm" variant="outline" className="gap-1 h-8" onClick={onAddMovimento} disabled={fechada}>
+            <div className="mb-2 flex flex-wrap gap-2">
+              {planejamento && onAbrirMes && (
+                <Button size="sm" className="gap-1 h-8" onClick={onAbrirMes} disabled={abrindoMes}>
+                  <Plus className="h-3.5 w-3.5" />
+                  {abrindoMes ? 'Abrindo…' : 'Abrir mês'}
+                </Button>
+              )}
+              <Button size="sm" variant="outline" className="gap-1 h-8" onClick={onAddMovimento} disabled={fechada || planejamento}>
                 <Plus className="h-3.5 w-3.5" /> Registrar
               </Button>
               {onSyncFinanceiro && (
-                <Button size="sm" variant="secondary" className="gap-1 h-8" onClick={onSyncFinanceiro} disabled={syncing || fechada}>
+                <Button size="sm" variant="secondary" className="gap-1 h-8" onClick={onSyncFinanceiro} disabled={syncing || fechada || planejamento}>
                   <Link2 className="h-3.5 w-3.5" />
                   {syncing ? 'Sincronizando…' : 'Enviar ao financeiro'}
                 </Button>
               )}
             </div>
             {movimentos.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum movimento registrado.</p>
+              <p className="text-sm text-muted-foreground">
+                {planejamento ? 'Nenhum movimento — mês ainda não aberto.' : 'Nenhum movimento registrado.'}
+              </p>
             ) : (
               <div className="rounded-lg ring-1 ring-border/40 divide-y divide-border/30">
                 {movimentos.map((m) => {
@@ -187,7 +205,7 @@ export default function FolhaPrevisaoDetalheDrawer({
                         size="icon"
                         className="h-7 w-7"
                         onClick={() => onRemoveMovimento?.(m.id)}
-                        disabled={fechada}
+                        disabled={fechada || planejamento}
                       >
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
