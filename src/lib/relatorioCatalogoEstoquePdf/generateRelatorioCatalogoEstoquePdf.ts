@@ -148,10 +148,13 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     vendTot: vendRight,
   };
 
-  const ROW_H = 6.1;
-  const ROW_GAP = 1.15;
-  const ROW_STEP = ROW_H + ROW_GAP;
-  const BASELINE_RATIO = 0.72;
+const ROW_H = 6.1;
+const ROW_GAP = 1.15;
+const ROW_STEP = ROW_H + ROW_GAP;
+const BASELINE_RATIO = 0.72;
+const CATEGORY_AREA_GAP = 4.2;
+const CATEGORY_DESC_INDENT = 1.8;
+const SKU_DESC_INDENT = 5.5;
 
   let y = 16;
   let dividerStartY = 0;
@@ -229,7 +232,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     }
   };
 
-  const descMaxW = () => Math.max(20, descEnd - descStart - 1);
+  const descMaxW = (descX = X.desc) => Math.max(20, descEnd - descX - 1);
 
   /** Baselines alinhados; com descrição multilinha, valores centrados na célula. */
   const rowBaselines = (drawY: number, lineCount: number, extraH: number) => {
@@ -273,8 +276,13 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     });
   };
 
-  const drawSkuRow = (y0: number, descricao: string, vals: ReturnType<typeof linhaComercialPdf>) => {
-    const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW());
+  const drawSkuRow = (
+    y0: number,
+    descricao: string,
+    vals: ReturnType<typeof linhaComercialPdf>,
+    descX = X.desc,
+  ) => {
+    const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW(descX));
     const lineCount = descLines.length;
     const extraH = (lineCount - 1) * DESC_LINE_LEAD;
     const rowStep = ROW_STEP + extraH;
@@ -289,7 +297,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
     doc.setTextColor(...ENXUTO.black);
     for (let i = 0; i < lineCount; i += 1) {
-      doc.text(descLines[i], X.desc, descFirstBaseline + i * DESC_LINE_LEAD);
+      doc.text(descLines[i], descX, descFirstBaseline + i * DESC_LINE_LEAD);
     }
 
     drawRowSeparator(drawY + rowStep - ROW_GAP * 0.35);
@@ -315,45 +323,31 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     };
   };
 
-  const drawCategoryGroupRow = (y0: number, label: string, count: number) => {
-    ensureTableSpace(ROW_STEP + 1);
-    const drawY = y0;
-    const baseline = drawY + ROW_H * BASELINE_RATIO;
-    doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-    doc.setFontSize(FONT.row);
-    doc.setTextColor(...ENXUTO.black);
-    doc.text(safe(`${label} (${count} SKU${count === 1 ? '' : 's'})`), X.desc, baseline);
-    drawRowSeparator(drawY + ROW_STEP - ROW_GAP * 0.35);
-    return drawY + ROW_STEP;
-  };
-
-  const drawCategorySubtotalRow = (
+  const drawCategoryGroupRow = (
     y0: number,
     label: string,
     catTotals: { totalCompra?: number; totalCusto?: number; totalVenda?: number; count?: number },
+    { addTopGap = false } = {},
   ) => {
+    let drawY = y0;
+    if (addTopGap) {
+      drawY += CATEGORY_AREA_GAP;
+    }
+
     ensureTableSpace(ROW_STEP + 1);
-    const drawY = y0;
     const baseline = drawY + ROW_H * BASELINE_RATIO;
     const vals = subtotalVals(catTotals);
+    const categoryDescX = X.desc + CATEGORY_DESC_INDENT;
+
+    drawValueColumns(baseline, vals);
 
     doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
-    doc.setFontSize(FONT.row - 0.4);
-    doc.setTextColor(...ENXUTO.muted);
-    doc.text(safe(`Subtotal — ${label}`), X.desc, baseline);
-
+    doc.setFontSize(FONT.row);
     doc.setTextColor(...ENXUTO.black);
-    doc.text(vals.quantTexto, X.quant, baseline, { align: 'right' });
-    doc.text(vals.inventarioCompra > 0 ? moedaSemSimbolo(vals.inventarioCompra) : '—', X.vCompra, baseline, { align: 'right' });
-    doc.text('—', X.custos, baseline, { align: 'right' });
-    doc.text('—', X.soma, baseline, { align: 'right' });
-    doc.text(vals.custoTotal > 0 ? moedaSemSimbolo(vals.custoTotal) : '—', X.custoTot, baseline, { align: 'right' });
-    doc.text('—', X.markup, baseline, { align: 'right' });
-    doc.text('—', X.preco, baseline, { align: 'right' });
-    doc.text(vals.vendaTotal > 0 ? moedaSemSimbolo(vals.vendaTotal) : '—', X.vendTot, baseline, { align: 'right' });
+    doc.text(safe(label), categoryDescX, baseline);
 
     drawRowSeparator(drawY + ROW_STEP - ROW_GAP * 0.35);
-    return drawY + ROW_STEP + 1.2;
+    return drawY + ROW_STEP;
   };
 
   doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
@@ -368,7 +362,7 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text('A4   SKUs A-Z   custo e venda por quantidade   DIN 1451', M, y);
   y += 4.5;
   if (documento.groupByCategory) {
-    doc.text('Agrupado por categoria de cadastro (com subtotais)', M, y);
+    doc.text('Agrupado por categoria de cadastro (totais por área na primeira linha)', M, y);
     y += 4.2;
   }
 
@@ -403,22 +397,28 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
     dividerStartY = y;
     beginTablePage();
 
+    let categoryIndex = 0;
+
     for (const row of documento.rows) {
       if (row.type === 'group') {
-        y = drawCategoryGroupRow(y, String(row.label || 'Sem categoria'), Number(row.count) || 0);
+        y = drawCategoryGroupRow(
+          y,
+          String(row.label || 'Sem categoria'),
+          row.totals || {},
+          { addTopGap: categoryIndex > 0 },
+        );
+        categoryIndex += 1;
         continue;
       }
-      if (row.type === 'category_subtotal') {
-        y = drawCategorySubtotalRow(y, String(row.label || 'Sem categoria'), row.totals || {});
-        continue;
-      }
+      if (row.type === 'category_subtotal') continue;
       if (row.type !== 'sku') continue;
       const p = row.produto;
       const nome = p?.codigo_interno
         ? `${p.nome || '—'}  ${p.codigo_interno}`
         : (p.nome || '—');
       const vals = linhaComercialPdf(p);
-      y = drawSkuRow(y, nome, vals);
+      const skuDescX = documento.groupByCategory ? X.desc + SKU_DESC_INDENT : X.desc;
+      y = drawSkuRow(y, nome, vals, skuDescX);
     }
 
     drawVerticalDivider(
@@ -443,5 +443,5 @@ export async function generateRelatorioCatalogoEstoquePdf(payload: Record<string
   doc.text(`Compra: ${moeda(tCompra)}   Custo: ${moeda(tCusto)}   Venda: ${moeda(tVenda)}`, M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_colunas_custo_venda_v6_categoria' };
+  return { data: pdfBytes, version: 'enxuto_colunas_custo_venda_v7_categoria_header' };
 }

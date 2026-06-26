@@ -34,13 +34,6 @@ function prepareCategoryGroupedRows(produtos, sortOrder = 'az') {
     for (const produto of skus) {
       rows.push({ type: 'sku', produto, key: produto.id });
     }
-
-    rows.push({
-      type: 'category_subtotal',
-      label: key,
-      totals,
-      key: `subtotal:${key}`,
-    });
   }
 
   return rows;
