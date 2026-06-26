@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -38,6 +38,7 @@ export default function MassCategoryClassifier({
   const [classifyMode, setClassifyMode] = useState(CLASSIFY_MODES.ONLY_WITHOUT_CATEGORY);
   const [categoryMap, setCategoryMap] = useState(null);
   const [categoriesReady, setCategoriesReady] = useState(false);
+  const prepareRunRef = useRef(0);
   const { toast } = useToast();
 
   const isControlled = typeof open === 'boolean';
@@ -61,54 +62,50 @@ export default function MassCategoryClassifier({
     : productsWithoutCategory;
 
   useEffect(() => {
-    if (!isDialogOpen || categoriesReady || isPreparing) return;
+    if (!isDialogOpen) {
+      prepareRunRef.current += 1;
+      setLogs([]);
+      setProgress(0);
+      setProcessedCount(0);
+      setCategoriesReady(false);
+      setCategoryMap(null);
+      setIsPreparing(false);
+      if (!isProcessing) {
+        setClassifyMode(CLASSIFY_MODES.ONLY_WITHOUT_CATEGORY);
+      }
+      return;
+    }
 
-    let cancelled = false;
+    if (categoriesReady || isProcessing) return;
 
-    const prepareCategories = async () => {
-      setIsPreparing(true);
-      try {
-        const result = await ensureCanonicalCategories(base44);
-        if (cancelled) return;
+    const runId = prepareRunRef.current + 1;
+    prepareRunRef.current = runId;
+    setIsPreparing(true);
 
+    ensureCanonicalCategories(base44)
+      .then((result) => {
+        if (prepareRunRef.current !== runId) return;
         setCategoryMap(result.map);
         setCategoriesReady(true);
-
         if (result.created.length > 0) {
           setLogs([
             `✓ ${result.created.length} categoria(s) A–J criada(s) automaticamente no cadastro.`,
           ]);
         }
-      } catch (error) {
-        if (!cancelled) {
-          toast({
-            title: 'Erro ao preparar categorias',
-            description: error.message,
-            variant: 'destructive',
-          });
-        }
-      } finally {
-        if (!cancelled) setIsPreparing(false);
-      }
-    };
-
-    prepareCategories();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isDialogOpen, categoriesReady, isPreparing, toast]);
-
-  useEffect(() => {
-    if (!isDialogOpen) {
-      setLogs([]);
-      setProgress(0);
-      setProcessedCount(0);
-      if (!isProcessing) {
-        setClassifyMode(CLASSIFY_MODES.ONLY_WITHOUT_CATEGORY);
-      }
-    }
-  }, [isDialogOpen, isProcessing]);
+      })
+      .catch((error) => {
+        if (prepareRunRef.current !== runId) return;
+        toast({
+          title: 'Erro ao preparar categorias',
+          description: error.message,
+          variant: 'destructive',
+        });
+      })
+      .finally(() => {
+        if (prepareRunRef.current !== runId) return;
+        setIsPreparing(false);
+      });
+  }, [isDialogOpen, categoriesReady, isProcessing, toast]);
 
   const appendLog = (message) => {
     setLogs((prev) => [message, ...prev]);
@@ -332,8 +329,13 @@ export default function MassCategoryClassifier({
                 {isPreparing && (
                   <p className="text-xs text-muted-foreground">Verificando cadastro de categorias...</p>
                 )}
-                {categoriesReady && !isPreparing && (
+                {!isPreparing && categoriesReady && (
                   <p className="text-xs text-emerald-700 dark:text-emerald-300">Categorias A–J prontas no cadastro.</p>
+                )}
+                {!isPreparing && !categoriesReady && (
+                  <p className="text-xs text-muted-foreground">
+                    As categorias serão verificadas ao iniciar, se necessário.
+                  </p>
                 )}
               </div>
             )}
@@ -421,7 +423,7 @@ export default function MassCategoryClassifier({
                 <Button variant="outline" onClick={() => setDialogOpen?.(false)}>Fechar</Button>
                 <Button
                   onClick={handleStart}
-                  disabled={!productsToProcess.length || isPreparing}
+                  disabled={!productsToProcess.length}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                   <LayoutGrid className="w-4 h-4 mr-2" />
