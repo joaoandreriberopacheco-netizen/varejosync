@@ -333,6 +333,12 @@ export const ALL_MENU_ITEMS = [
         page: 'Agefin',
         icon: AlertCircle,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
+      },
+      {
+        name: 'Previsão de Folha',
+        page: 'FolhaPrevisao',
+        icon: Users,
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
       }
     ]
   },
