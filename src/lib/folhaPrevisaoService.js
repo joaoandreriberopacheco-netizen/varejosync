@@ -52,6 +52,9 @@ export async function duplicarModelo(modelo, overrides = {}) {
       decimo_mes_parcela_2: modelo?.decimo_mes_parcela_2,
       decimo_percentual_parcela: modelo?.decimo_percentual_parcela,
       ferias_programadas: clonarFerias(modelo?.ferias_programadas),
+      tipo_vinculo: modelo?.tipo_vinculo,
+      retirada_frequencia: modelo?.retirada_frequencia,
+      retirada_valor_fixo: modelo?.retirada_valor_fixo,
       rubricas,
       situacao: SITUACAO_FOLHA.ATIVO,
       data_desligamento: '',
@@ -122,6 +125,7 @@ export async function garantirCompetencia({ colaborador, modelo, competencia }) 
   return base44.entities.FolhaPrevisaoCompetencia.create({
     colaborador_id: colaborador.id,
     colaborador_nome: colaborador.nome,
+    tipo_vinculo: modelo?.tipo_vinculo || 'funcionario',
     modelo_id: modelo?.id || '',
     modelo_nome: modelo?.nome || '',
     competencia,
@@ -191,6 +195,7 @@ export async function sincronizarLancamentoFinanceiro(competencia, opcoes = {}) 
   const extras = [];
   if (totais.totalDecimo > 0) extras.push(`13º ${totais.totalDecimo.toFixed(2)}`);
   if (totais.totalFerias > 0) extras.push(`férias ${totais.totalFerias.toFixed(2)}`);
+  if (totais.totalRetiradaSocio > 0) extras.push(`retirada sócio ${totais.totalRetiradaSocio.toFixed(2)}`);
 
   const existentes = await base44.entities.LancamentoFinanceiro.filter({
     grupo_lancamento_id: grupoId,
@@ -209,8 +214,12 @@ export async function sincronizarLancamentoFinanceiro(competencia, opcoes = {}) 
     status: 'Em Aberto',
     conta_financeira_id: contaFinanceiraId,
     categoria_id: categoriaId || '',
-    categoria: categoriaNome || 'Salários',
-    tags: ['conta_pagar', 'folha_previsao'],
+    categoria: categoriaNome || (modelo?.tipo_vinculo === 'socio' ? 'Retirada sócio' : 'Salários'),
+    tags: [
+      'conta_pagar',
+      'folha_previsao',
+      modelo?.tipo_vinculo === 'socio' ? 'folha_socio' : 'folha_funcionario',
+    ],
     grupo_lancamento_id: grupoId,
     referencia_tipo: 'Manual',
     referencia_id: competencia.id,

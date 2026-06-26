@@ -19,6 +19,21 @@
       "type": "string",
       "description": "Nome do colaborador (cache)"
     },
+    "tipo_vinculo": {
+      "type": "string",
+      "enum": ["funcionario", "socio"],
+      "default": "funcionario",
+      "description": "Funcionário CLT/contratado ou sócio que trabalha na operação"
+    },
+    "retirada_frequencia": {
+      "type": "string",
+      "enum": ["semanal", "mensal"],
+      "description": "Frequência da retirada fixa (sócios)"
+    },
+    "retirada_valor_fixo": {
+      "type": "number",
+      "description": "Valor fixo por retirada (sócios)"
+    },
     "dia_vencimento": {
       "type": "number",
       "description": "Dia do mês para pagamento (1-31)",

@@ -16,6 +16,9 @@ import {
   RUBRICA_LABELS,
   DECIMO_PADRAO,
   SITUACAO_FOLHA,
+  TIPO_VINCULO,
+  TIPO_VINCULO_LABELS,
+  RETIRADA_FREQUENCIA_LABELS,
   criarModeloComDefaults,
   criarRubricasPadrao,
   formatDataBr,
@@ -118,7 +121,7 @@ export default function FolhaPrevisaoModeloDialog({
       setForm({
         ...criarModeloComDefaults(),
         ...modelo,
-        rubricas: modelo.rubricas?.length ? modelo.rubricas : criarRubricasPadrao(),
+        rubricas: modelo.rubricas?.length ? modelo.rubricas : criarRubricasPadrao(modelo.tipo_vinculo),
         ferias_programadas: modelo.ferias_programadas || [],
       });
     } else {
@@ -128,6 +131,18 @@ export default function FolhaPrevisaoModeloDialog({
 
   const colaboradorSel = colaboradores.find((c) => c.id === form.colaborador_id);
   const desligado = form.situacao === SITUACAO_FOLHA.DESLIGADO;
+  const ehSocio = form.tipo_vinculo === TIPO_VINCULO.SOCIO;
+
+  const handleTipoVinculo = (tipo) => {
+    setForm((prev) =>
+      criarModeloComDefaults({
+        ...prev,
+        tipo_vinculo: tipo,
+        rubricas: criarRubricasPadrao(tipo),
+        decimo_terceiro_ativo: tipo === TIPO_VINCULO.SOCIO ? false : true,
+      }),
+    );
+  };
 
   const handleSave = () => {
     onSave({
@@ -188,6 +203,19 @@ export default function FolhaPrevisaoModeloDialog({
           )}
 
           <div>
+            <Label>Tipo</Label>
+            <Select value={form.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO} onValueChange={handleTipoVinculo}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(TIPO_VINCULO_LABELS).map(([k, label]) => (
+                  <SelectItem key={k} value={k}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label>Nome do modelo</Label>
             <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
           </div>
@@ -219,6 +247,41 @@ export default function FolhaPrevisaoModeloDialog({
             />
           </div>
 
+          {ehSocio && (
+            <div className="rounded-lg ring-1 ring-border/40 p-3 space-y-3">
+              <Label className="font-medium">Retirada fixa do sócio</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs">Frequência</Label>
+                  <Select
+                    value={form.retirada_frequencia || 'mensal'}
+                    onValueChange={(v) => setForm({ ...form, retirada_frequencia: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(RETIRADA_FREQUENCIA_LABELS).map(([k, label]) => (
+                        <SelectItem key={k} value={k}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Valor por retirada (R$)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={form.retirada_valor_fixo ?? 0}
+                    onChange={(e) => setForm({ ...form, retirada_valor_fixo: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Semanal: multiplica pelo número de semanas do mês. Mensal: uma vez no mês. Vai para a projeção e pode ser enviada ao fluxo de caixa.
+              </p>
+            </div>
+          )}
+
+          {!ehSocio && (
           <div className="rounded-lg ring-1 ring-border/40 p-3 space-y-3">
             <div className="flex items-center gap-2">
               <Checkbox
@@ -266,7 +329,9 @@ export default function FolhaPrevisaoModeloDialog({
               Padrão: 50% em novembro + 50% em dezembro, sobre o salário base.
             </p>
           </div>
+          )}
 
+          {!ehSocio && (
           <div>
             <div className="mb-2 flex items-center justify-between">
               <Label>Férias programadas</Label>
@@ -294,6 +359,7 @@ export default function FolhaPrevisaoModeloDialog({
               )}
             </div>
           </div>
+          )}
 
           <div>
             <div className="mb-2 flex items-center justify-between">

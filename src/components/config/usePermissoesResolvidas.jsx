@@ -305,6 +305,12 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
+        name: 'Folha',
+        page: 'FolhaPrevisao',
+        icon: Users,
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
+      },
+      {
         name: 'Contas',
         page: 'ContasFinanceiras',
         icon: Wallet,
@@ -332,12 +338,6 @@ export const ALL_MENU_ITEMS = [
         name: 'Contas a Pagar',
         page: 'Agefin',
         icon: AlertCircle,
-        permissaoCheck: (p) => p?.financeiro?.acesso === true
-      },
-      {
-        name: 'Previsão de Folha',
-        page: 'FolhaPrevisao',
-        icon: Users,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       }
     ]

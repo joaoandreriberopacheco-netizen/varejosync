@@ -6,7 +6,7 @@ import {
 } from '@/lib/folhaPrevisaoCalculos';
 
 function MesRow({ linha, destaque }) {
-  const temExtra = linha.decimo > 0 || linha.ferias > 0;
+  const temExtra = linha.decimo > 0 || linha.ferias > 0 || linha.retiradasSocio > 0;
   return (
     <div
       className={`rounded-xl px-3 py-2.5 ring-1 ${
@@ -33,6 +33,11 @@ function MesRow({ linha, destaque }) {
           {linha.ferias > 0 && (
             <span className="rounded-full bg-sky-100 px-2 py-0.5 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
               Férias {formatCurrency(linha.ferias)}
+            </span>
+          )}
+          {linha.retiradasSocio > 0 && (
+            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">
+              Sócios {formatCurrency(linha.retiradasSocio)}
             </span>
           )}
         </div>

@@ -11,6 +11,11 @@
       "type": "string",
       "description": "Nome do colaborador (cache)"
     },
+    "tipo_vinculo": {
+      "type": "string",
+      "enum": ["funcionario", "socio"],
+      "default": "funcionario"
+    },
     "modelo_id": {
       "type": "string",
       "description": "Modelo de origem"
