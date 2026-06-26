@@ -9,6 +9,7 @@ import {
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import { sincronizarSaldosAposAlteracao } from '@/lib/sincronizarSaldoContasFinanceiras';
 import { normalizeDataText } from '@/lib/normalizeDataText';
+import { lancamentoEhValeFolha, sincronizarValeFolhaComLancamento } from '@/lib/folhaValeFluxo';
 
 function loteRecorrenciaAmbiguo(lancamento, grupo) {
   const refAtual = lancamento.referencia_id || '';
@@ -162,6 +163,19 @@ export async function salvarEdicaoLancamentoFinanceiro({
         conta_financeira_nome: conta?.nome,
         ...(l.id === lancamento.id ? metaPayload : {}),
       });
+      if (lancamentoEhValeFolha(l)) {
+        try {
+          await sincronizarValeFolhaComLancamento({
+            ...l,
+            status: 'Pago',
+            data_pagamento: dataPagamento || dataHoje(),
+            conta_financeira_id: contaId,
+            conta_financeira_nome: conta?.nome,
+          });
+        } catch {
+          /* não bloqueia pagamento */
+        }
+      }
     }
     await sincronizarSaldosAposAlteracao(base44, [contaId, ...alvos.map((l) => l.conta_financeira_id)]);
     const updated = alvos.find((l) => l.id === lancamento.id) || lancamento;
@@ -204,6 +218,13 @@ export async function salvarEdicaoLancamentoFinanceiro({
   }
   if (pagamentoDirty || houveAlteracaoValor) {
     await sincronizarSaldosAposAlteracao(base44, [contaId, lancamento.conta_financeira_id]);
+  }
+  if (lancamentoEhValeFolha(updated || lancamento)) {
+    try {
+      await sincronizarValeFolhaComLancamento(updated || { ...lancamento, ...baseUpdate });
+    } catch {
+      /* não bloqueia edição do lançamento */
+    }
   }
   return { updated, changed: true };
 }

@@ -31,6 +31,10 @@ import {
   mapaModelosPorColaborador,
   shiftCompetencia,
   SITUACAO_FOLHA,
+  TIPO_VINCULO,
+  TIPO_VINCULO_LABELS,
+  filtrarCompetenciasPorTipo,
+  agruparCompetenciasPorTipo,
 } from '@/lib/folhaPrevisaoCalculos';
 import {
   abrirCompetenciasDoMes,
@@ -49,6 +53,7 @@ function FuncionarioCard({ competencia, modelo, onOpen }) {
   const totais = calcularTotaisCompetencia(competencia, modelo);
   const desligado = modelo?.situacao === SITUACAO_FOLHA.DESLIGADO;
   const ultimoMes = competencia.situacao_mes === 'ultimo_mes';
+  const ehSocio = (modelo?.tipo_vinculo || competencia.tipo_vinculo) === TIPO_VINCULO.SOCIO;
 
   return (
     <button
@@ -64,6 +69,9 @@ function FuncionarioCard({ competencia, modelo, onOpen }) {
           <div className="text-xs text-muted-foreground">{competencia.modelo_nome || 'Sem modelo'}</div>
         </div>
         <div className="flex flex-col items-end gap-1">
+          <Badge variant={ehSocio ? 'secondary' : 'outline'} className="text-[10px]">
+            {TIPO_VINCULO_LABELS[ehSocio ? TIPO_VINCULO.SOCIO : TIPO_VINCULO.FUNCIONARIO]}
+          </Badge>
           {ultimoMes && <Badge variant="destructive" className="text-[10px]">Último mês</Badge>}
           {desligado && !ultimoMes && (
             <Badge variant="secondary" className="text-[10px]">Desligou</Badge>
@@ -91,8 +99,13 @@ function FuncionarioCard({ competencia, modelo, onOpen }) {
           <div className="font-semibold tabular-nums">{formatCurrency(totais.custoTotalEmpresa)}</div>
         </div>
       </div>
-      {(totais.totalDecimo > 0 || totais.totalFerias > 0) && (
+      {(totais.totalDecimo > 0 || totais.totalFerias > 0 || totais.totalRetiradaSocio > 0 || totais.totalValesPendentes > 0) && (
         <div className="mt-2 flex flex-wrap gap-1">
+          {totais.totalValesPendentes > 0 && (
+            <span className="text-[10px] rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+              Vale em aberto {formatCurrency(totais.totalValesPendentes)}
+            </span>
+          )}
           {totais.totalDecimo > 0 && (
             <span className="text-[10px] rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
               13º {formatCurrency(totais.totalDecimo)}
@@ -101,6 +114,11 @@ function FuncionarioCard({ competencia, modelo, onOpen }) {
           {totais.totalFerias > 0 && (
             <span className="text-[10px] rounded-full bg-sky-100 px-2 py-0.5 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
               Férias {formatCurrency(totais.totalFerias)}
+            </span>
+          )}
+          {totais.totalRetiradaSocio > 0 && (
+            <span className="text-[10px] rounded-full bg-violet-100 px-2 py-0.5 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">
+              Retirada {formatCurrency(totais.totalRetiradaSocio)}
             </span>
           )}
         </div>
@@ -112,6 +130,7 @@ function FuncionarioCard({ competencia, modelo, onOpen }) {
 function ModeloCard({ modelo, onEdit, onDuplicate, onDesligar }) {
   const rubricas = modelo.rubricas || [];
   const desligado = modelo.situacao === SITUACAO_FOLHA.DESLIGADO;
+  const ehSocio = modelo.tipo_vinculo === TIPO_VINCULO.SOCIO;
 
   return (
     <div className={`rounded-xl bg-card p-3 shadow-sm ring-1 ${desligado ? 'ring-red-300/40' : 'ring-border/40'}`}>
@@ -132,12 +151,17 @@ function ModeloCard({ modelo, onEdit, onDuplicate, onDesligar }) {
           <Badge variant="destructive">Desligou</Badge>
         ) : !modelo.ativo ? (
           <Badge variant="secondary">Inativo</Badge>
-        ) : null}
+        ) : (
+          <Badge variant="outline">{TIPO_VINCULO_LABELS[ehSocio ? TIPO_VINCULO.SOCIO : TIPO_VINCULO.FUNCIONARIO]}</Badge>
+        )}
       </div>
       <div className="mt-2 text-xs text-muted-foreground">
         {rubricas.length} rubricas
-        {modelo.decimo_terceiro_ativo !== false && ' · 13º ativo'}
-        {(modelo.ferias_programadas?.length || 0) > 0 && ` · ${modelo.ferias_programadas.length} férias`}
+        {ehSocio && modelo.retirada_valor_fixo > 0 && (
+          <> · Retirada {modelo.retirada_frequencia === 'semanal' ? 'semanal' : 'mensal'} {formatCurrency(modelo.retirada_valor_fixo)}</>
+        )}
+        {!ehSocio && modelo.decimo_terceiro_ativo !== false && ' · 13º ativo'}
+        {!ehSocio && (modelo.ferias_programadas?.length || 0) > 0 && ` · ${modelo.ferias_programadas.length} férias`}
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button size="sm" variant="outline" className="h-8" onClick={() => onEdit(modelo)}>Editar</Button>
@@ -164,6 +188,7 @@ export default function FolhaPrevisaoPage() {
   const [movimentoOpen, setMovimentoOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [filtroVinculo, setFiltroVinculo] = useState('todos');
 
   const { data: competencias = [], isLoading: loadingComp } = useQuery({
     queryKey: ['folha-previsao', 'competencias', competenciaMes],
@@ -186,7 +211,15 @@ export default function FolhaPrevisaoPage() {
   });
 
   const modelosMap = useMemo(() => mapaModelosPorColaborador(modelos), [modelos]);
-  const totaisGrupo = useMemo(() => calcularTotaisGrupo(competencias, modelosMap), [competencias, modelosMap]);
+  const competenciasFiltradas = useMemo(
+    () => filtrarCompetenciasPorTipo(competencias, modelosMap, filtroVinculo === 'todos' ? null : filtroVinculo),
+    [competencias, modelosMap, filtroVinculo],
+  );
+  const grupos = useMemo(
+    () => agruparCompetenciasPorTipo(competenciasFiltradas, modelosMap),
+    [competenciasFiltradas, modelosMap],
+  );
+  const totaisGrupo = useMemo(() => calcularTotaisGrupo(competenciasFiltradas, modelosMap), [competenciasFiltradas, modelosMap]);
   const contaPadrao = contas.find((c) => c.ativo !== false) || contas[0];
   const selectedModelo = selectedComp ? modelosMap[selectedComp.colaborador_id] : null;
 
@@ -324,9 +357,9 @@ export default function FolhaPrevisaoPage() {
   return (
     <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="pb-3 border-b border-border/40">
-        <h1 className="text-xl font-medium text-foreground mb-0.5">Previsão de Folha</h1>
+        <h1 className="text-xl font-medium text-foreground mb-0.5">Folha</h1>
         <p className="text-xs text-muted-foreground">
-          Controle financeiro da folha — salários, 13º, férias, desligamentos e projeção de caixa
+          Previsão de custos com pessoas — funcionários e sócios. Lançamentos enviados ao financeiro aparecem no Fluxo de Caixa.
         </p>
       </div>
 
@@ -365,25 +398,62 @@ export default function FolhaPrevisaoPage() {
 
           <FolhaPrevisaoResumo totais={totaisGrupo} count={totaisGrupo.count} />
 
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'todos', label: 'Todos' },
+              { id: TIPO_VINCULO.FUNCIONARIO, label: 'Funcionários' },
+              { id: TIPO_VINCULO.SOCIO, label: 'Sócios' },
+            ].map((opt) => (
+              <Button
+                key={opt.id}
+                size="sm"
+                variant={filtroVinculo === opt.id ? 'default' : 'outline'}
+                className="h-8 rounded-full"
+                onClick={() => setFiltroVinculo(opt.id)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+
           {loadingComp ? (
             <p className="text-sm text-muted-foreground py-8 text-center">Carregando…</p>
-          ) : competencias.length === 0 ? (
+          ) : competenciasFiltradas.length === 0 ? (
             <div className="text-center py-16 bg-card rounded-xl ring-1 ring-border/40">
               <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
               <p className="text-sm text-muted-foreground mb-4">
-                Nenhuma previsão para {formatCompetenciaLabel(competenciaMes)}.
+                Nenhuma previsão para {formatCompetenciaLabel(competenciaMes)}
+                {filtroVinculo !== 'todos' ? ` (${TIPO_VINCULO_LABELS[filtroVinculo]})` : ''}.
               </p>
               <Button onClick={handleAbrirMes} disabled={saving}>Abrir mês</Button>
             </div>
+          ) : filtroVinculo === 'todos' ? (
+            <div className="space-y-6">
+              {grupos.funcionarios.length > 0 && (
+                <section>
+                  <h3 className="mb-3 text-sm font-medium text-foreground">Funcionários</h3>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {grupos.funcionarios.map((c) => (
+                      <FuncionarioCard key={c.id} competencia={c} modelo={modelosMap[c.colaborador_id]} onOpen={setSelectedComp} />
+                    ))}
+                  </div>
+                </section>
+              )}
+              {grupos.socios.length > 0 && (
+                <section>
+                  <h3 className="mb-3 text-sm font-medium text-foreground">Sócios</h3>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {grupos.socios.map((c) => (
+                      <FuncionarioCard key={c.id} competencia={c} modelo={modelosMap[c.colaborador_id]} onOpen={setSelectedComp} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {competencias.map((c) => (
-                <FuncionarioCard
-                  key={c.id}
-                  competencia={c}
-                  modelo={modelosMap[c.colaborador_id]}
-                  onOpen={setSelectedComp}
-                />
+              {competenciasFiltradas.map((c) => (
+                <FuncionarioCard key={c.id} competencia={c} modelo={modelosMap[c.colaborador_id]} onOpen={setSelectedComp} />
               ))}
             </div>
           )}
@@ -400,9 +470,25 @@ export default function FolhaPrevisaoPage() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Um modelo por colaborador (vincule o nome). Configure 13º, férias e rubricas fixas. Duplique para criar
-            variações. Quando alguém sair, use Desligar — some dos meses futuros automaticamente.
+            Um modelo por pessoa (funcionário ou sócio). Funcionários: salário, 13º, férias. Sócios: retirada fixa semanal ou mensal.
           </p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'todos', label: 'Todos' },
+              { id: TIPO_VINCULO.FUNCIONARIO, label: 'Funcionários' },
+              { id: TIPO_VINCULO.SOCIO, label: 'Sócios' },
+            ].map((opt) => (
+              <Button
+                key={opt.id}
+                size="sm"
+                variant={filtroVinculo === opt.id ? 'default' : 'outline'}
+                className="h-8 rounded-full"
+                onClick={() => setFiltroVinculo(opt.id)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
           {loadingModelos ? (
             <p className="text-sm text-muted-foreground py-8 text-center">Carregando…</p>
           ) : modelos.length === 0 ? (
@@ -412,7 +498,9 @@ export default function FolhaPrevisaoPage() {
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {modelos.map((m) => (
+              {modelos
+                .filter((m) => filtroVinculo === 'todos' || (m.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === filtroVinculo)
+                .map((m) => (
                 <ModeloCard
                   key={m.id}
                   modelo={m}

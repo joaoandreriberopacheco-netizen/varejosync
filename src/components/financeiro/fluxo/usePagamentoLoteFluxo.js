@@ -4,6 +4,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { CONCILIACAO_LOTE_TAMANHO, processarEmLotes } from '@/lib/conciliacaoEmLote';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
+import { lancamentoEhValeFolha, sincronizarValeFolhaComLancamento } from '@/lib/folhaValeFluxo';
 import { sincronizarSaldosContasFinanceiras } from '@/lib/sincronizarSaldoContasFinanceiras';
 
 function expandirSelecionados(programadas, selectedIds) {
@@ -81,6 +82,19 @@ export default function usePagamentoLoteFluxo({ programadas, contas, movimentos,
             conta_financeira_id: conta.id,
             conta_financeira_nome: conta.nome,
           });
+          if (lancamentoEhValeFolha(lancamento)) {
+            try {
+              await sincronizarValeFolhaComLancamento({
+                ...lancamento,
+                status: 'Pago',
+                data_pagamento: dataPagamentoLote,
+                conta_financeira_id: conta.id,
+                conta_financeira_nome: conta.nome,
+              });
+            } catch {
+              /* não bloqueia pagamento em lote */
+            }
+          }
         },
         (atual, total) => setProgressoLote({ atual, total }),
       );

@@ -12,6 +12,7 @@ import SeletorContaMobile from './SeletorContaMobile';
 import { SeletorCategoria } from './DialogCategoria';
 import TagsInput from './TagsInput';
 import LancamentoMaisOpcoes from './LancamentoMaisOpcoes';
+import LancamentoValeFolha from './LancamentoValeFolha';
 import LancamentoPickerDialog from './LancamentoPickerDialog';
 
 const TIPOS = [
@@ -82,6 +83,13 @@ export default function LancamentoFormUnico({
   onDataFim,
   isCustoMercadoria,
   onCustoMercadoriaChange,
+  isValeFolha,
+  onValeFolhaToggle,
+  valeFolhaModeloId,
+  onValeFolhaPessoaChange,
+  pessoasFolha,
+  loadingPessoasFolha,
+  bloquearValeFolha,
   pedidoCompraId,
   onPedidoCompraIdChange,
   pedidosCompra,
@@ -271,7 +279,17 @@ export default function LancamentoFormUnico({
         )}
 
         {!isTransfer && (
-          <LancamentoMaisOpcoes
+          <>
+            <LancamentoValeFolha
+              ativo={isValeFolha}
+              onAtivoChange={onValeFolhaToggle}
+              pessoaId={valeFolhaModeloId}
+              onPessoaChange={onValeFolhaPessoaChange}
+              pessoas={pessoasFolha}
+              carregando={loadingPessoasFolha}
+              desabilitado={bloquearValeFolha}
+            />
+            <LancamentoMaisOpcoes
             tipo={tipo}
             tags={[]}
             onTagsChange={() => {}}
@@ -294,6 +312,7 @@ export default function LancamentoFormUnico({
             previewOrdemLancamento={previewOrdemLancamento}
             hideTags
           />
+          </>
         )}
       </div>
 

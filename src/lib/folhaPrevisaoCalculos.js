@@ -24,6 +24,19 @@ export const MOVIMENTO_LABELS = {
   ferias: 'Férias',
 };
 
+/** Situação do pagamento do movimento (vale ligado ao fluxo de caixa) */
+export const MOVIMENTO_STATUS_PAGAMENTO = {
+  PENDENTE: 'pendente',
+  PAGO: 'pago',
+  CANCELADO: 'cancelado',
+};
+
+export const MOVIMENTO_STATUS_PAGAMENTO_LABELS = {
+  pendente: 'Em aberto',
+  pago: 'Pago',
+  cancelado: 'Cancelado',
+};
+
 export const RUBRICA_LABELS = {
   provento: 'Provento',
   desconto: 'Desconto',
@@ -40,13 +53,38 @@ export const SITUACAO_FOLHA_LABELS = {
   desligado: 'Desligou',
 };
 
-/** Rubricas padrão para novo modelo (duplicar e ajustar) */
+export const TIPO_VINCULO = {
+  FUNCIONARIO: 'funcionario',
+  SOCIO: 'socio',
+};
+
+export const TIPO_VINCULO_LABELS = {
+  funcionario: 'Funcionário',
+  socio: 'Sócio',
+};
+
+export const RETIRADA_FREQUENCIA = {
+  SEMANAL: 'semanal',
+  MENSAL: 'mensal',
+};
+
+export const RETIRADA_FREQUENCIA_LABELS = {
+  semanal: 'Semanal',
+  mensal: 'Mensal',
+};
+
+/** Rubricas padrão para funcionário */
 export const RUBRICAS_MODELO_PADRAO = [
   { tipo: 'provento', nome: 'Salário base', valor_base: 0, ordem: 1 },
   { tipo: 'provento', nome: 'Comissões', valor_base: 0, ordem: 2 },
   { tipo: 'desconto', nome: 'INSS', valor_base: 0, ordem: 3 },
   { tipo: 'encargo_empresa', nome: 'FGTS', valor_base: 0, ordem: 4 },
   { tipo: 'encargo_empresa', nome: 'INSS patronal', valor_base: 0, ordem: 5 },
+];
+
+/** Rubricas padrão para sócio (retirada configurada à parte) */
+export const RUBRICAS_MODELO_PADRAO_SOCIO = [
+  { tipo: 'provento', nome: 'Pró-labore', valor_base: 0, ordem: 1 },
 ];
 
 export const DECIMO_PADRAO = {
@@ -94,6 +132,28 @@ export function competenciaParaMes(competencia) {
   return parseInt(String(competencia).slice(5, 7), 10);
 }
 
+/** Semanas no mês (para retirada semanal de sócio) */
+export function semanasNoMes(competencia) {
+  const [y, m] = String(competencia).slice(0, 7).split('-').map(Number);
+  if (!y || !m) return 4;
+  const dias = new Date(y, m, 0).getDate();
+  return Math.max(4, Math.min(5, Math.ceil(dias / 7)));
+}
+
+export function isSocio(modeloOrComp) {
+  return (modeloOrComp?.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === TIPO_VINCULO.SOCIO;
+}
+
+export function valorRetiradaSocioNoMes(modelo, competenciaStr) {
+  const valor = Number(modelo?.retirada_valor_fixo) || 0;
+  if (valor <= 0 || !isSocio(modelo)) return 0;
+  const freq = modelo.retirada_frequencia || RETIRADA_FREQUENCIA.MENSAL;
+  if (freq === RETIRADA_FREQUENCIA.SEMANAL) {
+    return valor * semanasNoMes(competenciaStr);
+  }
+  return valor;
+}
+
 export function formatCurrency(value) {
   return `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -130,9 +190,21 @@ function sumRubricas(rubricas, tipo) {
     .reduce((acc, r) => acc + (Number(r.valor_base) || 0), 0);
 }
 
-function sumMovimentos(movimentos, tipos) {
+export function statusPagamentoMovimento(movimento) {
+  return movimento?.status_pagamento || MOVIMENTO_STATUS_PAGAMENTO.PAGO;
+}
+
+export function movimentoAtivoNoCalculo(movimento) {
+  return statusPagamentoMovimento(movimento) !== MOVIMENTO_STATUS_PAGAMENTO.CANCELADO;
+}
+
+function sumMovimentos(movimentos, tipos, { apenasStatus } = {}) {
   return (movimentos || [])
-    .filter((m) => tipos.includes(m.tipo))
+    .filter((m) => tipos.includes(m.tipo) && movimentoAtivoNoCalculo(m))
+    .filter((m) => {
+      if (!apenasStatus?.length) return true;
+      return apenasStatus.includes(statusPagamentoMovimento(m));
+    })
     .reduce((acc, m) => acc + Math.abs(Number(m.valor) || 0), 0);
 }
 
@@ -149,8 +221,9 @@ export function calcularProvisoesEventos(competencia, modelo) {
   const rubricas = competencia?.rubricas || modelo?.rubricas || [];
   const salarioBase = obterSalarioBase(rubricas);
   const mesNum = competenciaParaMes(competenciaStr);
+  const socio = isSocio(modelo);
 
-  if (modelo.decimo_terceiro_ativo !== false && salarioBase > 0) {
+  if (!socio && modelo.decimo_terceiro_ativo !== false && salarioBase > 0) {
     const p1 = modelo.decimo_mes_parcela_1 ?? DECIMO_PADRAO.decimo_mes_parcela_1;
     const p2 = modelo.decimo_mes_parcela_2 ?? DECIMO_PADRAO.decimo_mes_parcela_2;
     const pct = (modelo.decimo_percentual_parcela ?? DECIMO_PADRAO.decimo_percentual_parcela) / 100;
@@ -186,6 +259,22 @@ export function calcularProvisoesEventos(competencia, modelo) {
         categoria: 'ferias',
       });
     }
+  }
+
+  const retiradaSocio = valorRetiradaSocioNoMes(modelo, competenciaStr);
+  if (retiradaSocio > 0) {
+    const freq = modelo.retirada_frequencia || RETIRADA_FREQUENCIA.MENSAL;
+    const detalhe =
+      freq === RETIRADA_FREQUENCIA.SEMANAL
+        ? ` (${semanasNoMes(competenciaStr)}× ${formatCurrency(modelo.retirada_valor_fixo)})`
+        : '';
+    provisoes.push({
+      id: `retirada-socio-${competenciaStr}`,
+      tipo: 'provento',
+      nome: `Retirada sócio${detalhe}`,
+      valor: retiradaSocio,
+      categoria: 'retirada_socio',
+    });
   }
 
   if (isMesDesligamento(modelo, competenciaStr)) {
@@ -237,6 +326,12 @@ export function calcularTotaisCompetencia(competencia, modelo = null) {
   const custoTotalEmpresa = liquido + encargosEmpresa;
 
   const totalVales = sumMovimentos(movimentos, [MOVIMENTO_TIPOS.VALE]);
+  const totalValesPendentes = sumMovimentos(movimentos, [MOVIMENTO_TIPOS.VALE], {
+    apenasStatus: [MOVIMENTO_STATUS_PAGAMENTO.PENDENTE],
+  });
+  const totalValesPagos = sumMovimentos(movimentos, [MOVIMENTO_TIPOS.VALE], {
+    apenasStatus: [MOVIMENTO_STATUS_PAGAMENTO.PAGO],
+  });
   const totalHorasExtra = sumMovimentos(movimentos, [MOVIMENTO_TIPOS.HORA_EXTRA]);
   const totalComissoes = sumMovimentos(movimentos, [MOVIMENTO_TIPOS.COMISSAO_VENDA]);
   const totalDecimo = provisoes
@@ -244,6 +339,9 @@ export function calcularTotaisCompetencia(competencia, modelo = null) {
     .reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
   const totalFerias = provisoes
     .filter((p) => p.categoria === 'ferias')
+    .reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
+  const totalRetiradaSocio = provisoes
+    .filter((p) => p.categoria === 'retirada_socio')
     .reduce((acc, p) => acc + (Number(p.valor) || 0), 0);
 
   return {
@@ -258,11 +356,15 @@ export function calcularTotaisCompetencia(competencia, modelo = null) {
     liquido,
     custoTotalEmpresa,
     totalVales,
+    totalValesPendentes,
+    totalValesPagos,
     totalHorasExtra,
     totalComissoes,
     totalDecimo,
     totalFerias,
+    totalRetiradaSocio,
     provisoes,
+    tipoVinculo: modelo?.tipo_vinculo || competencia?.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO,
     desligado: modelo?.situacao === SITUACAO_FOLHA.DESLIGADO,
     mesDesligamento: isMesDesligamento(modelo, competencia?.competencia),
   };
@@ -283,6 +385,7 @@ export function calcularTotaisGrupo(competencias, modelosPorColaborador = {}) {
       acc.totalVales += t.totalVales;
       acc.totalDecimo += t.totalDecimo;
       acc.totalFerias += t.totalFerias;
+      acc.totalRetiradaSocio += t.totalRetiradaSocio;
       if (t.desligado) acc.desligados += 1;
       acc.count += 1;
       return acc;
@@ -296,6 +399,7 @@ export function calcularTotaisGrupo(competencias, modelosPorColaborador = {}) {
       totalVales: 0,
       totalDecimo: 0,
       totalFerias: 0,
+      totalRetiradaSocio: 0,
       desligados: 0,
       count: 0,
     },
@@ -314,6 +418,7 @@ export function calcularProjecaoCaixa(modelos, meses = 12, competenciaInicio = n
     let custoTotal = 0;
     let decimo = 0;
     let ferias = 0;
+    let retiradasSocio = 0;
     let ativos = 0;
 
     for (const modelo of modelosVinculados) {
@@ -329,9 +434,10 @@ export function calcularProjecaoCaixa(modelos, meses = 12, competenciaInicio = n
       custoTotal += t.custoTotalEmpresa;
       decimo += t.totalDecimo;
       ferias += t.totalFerias;
+      retiradasSocio += t.totalRetiradaSocio;
     }
 
-    linhas.push({ competencia, liquido, custoTotal, decimo, ferias, ativos });
+    linhas.push({ competencia, liquido, custoTotal, decimo, ferias, retiradasSocio, ativos });
   }
   return linhas;
 }
@@ -351,21 +457,48 @@ export function clonarRubricas(rubricas) {
   }));
 }
 
-export function criarRubricasPadrao() {
-  return RUBRICAS_MODELO_PADRAO.map((r) => ({
+export function criarRubricasPadrao(tipoVinculo = TIPO_VINCULO.FUNCIONARIO) {
+  const base = tipoVinculo === TIPO_VINCULO.SOCIO ? RUBRICAS_MODELO_PADRAO_SOCIO : RUBRICAS_MODELO_PADRAO;
+  return base.map((r) => ({
     ...r,
     id: gerarIdInterno('rub'),
   }));
 }
 
 export function criarModeloComDefaults(extra = {}) {
+  const tipo = extra.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO;
+  const socio = tipo === TIPO_VINCULO.SOCIO;
   return {
     dia_vencimento: 5,
     ativo: true,
     situacao: SITUACAO_FOLHA.ATIVO,
+    tipo_vinculo: tipo,
+    retirada_frequencia: RETIRADA_FREQUENCIA.MENSAL,
+    retirada_valor_fixo: 0,
     ...DECIMO_PADRAO,
+    decimo_terceiro_ativo: socio ? false : true,
     ferias_programadas: [],
-    rubricas: criarRubricasPadrao(),
+    rubricas: criarRubricasPadrao(tipo),
     ...extra,
   };
+}
+
+/** Filtra competências por tipo de vínculo (funcionário / sócio) */
+export function filtrarCompetenciasPorTipo(competencias, modelosMap, filtro) {
+  if (!filtro || filtro === 'todos') return competencias || [];
+  return (competencias || []).filter((c) => {
+    const tipo = modelosMap[c.colaborador_id]?.tipo_vinculo || c.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO;
+    return tipo === filtro;
+  });
+}
+
+export function agruparCompetenciasPorTipo(competencias, modelosMap) {
+  const funcionarios = [];
+  const socios = [];
+  for (const c of competencias || []) {
+    const tipo = modelosMap[c.colaborador_id]?.tipo_vinculo || c.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO;
+    if (tipo === TIPO_VINCULO.SOCIO) socios.push(c);
+    else funcionarios.push(c);
+  }
+  return { funcionarios, socios };
 }

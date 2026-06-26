@@ -305,6 +305,12 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
+        name: 'Folha',
+        page: 'FolhaPrevisao',
+        icon: Users,
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
+      },
+      {
         name: 'Contas',
         page: 'ContasFinanceiras',
         icon: Wallet,

@@ -8,7 +8,10 @@ import {
   formatCurrency,
   formatDataBr,
   MOVIMENTO_LABELS,
+  MOVIMENTO_STATUS_PAGAMENTO,
+  MOVIMENTO_STATUS_PAGAMENTO_LABELS,
   RUBRICA_LABELS,
+  statusPagamentoMovimento,
 } from '@/lib/folhaPrevisaoCalculos';
 import { format } from 'date-fns';
 
@@ -91,6 +94,11 @@ export default function FolhaPrevisaoDetalheDrawer({
           {totais.totalVales > 0 && (
             <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
               Já retirou {formatCurrency(totais.totalVales)} em vales este mês.
+              {totais.totalValesPendentes > 0 && (
+                <span className="block mt-0.5">
+                  {formatCurrency(totais.totalValesPendentes)} ainda em aberto no fluxo de caixa.
+                </span>
+              )}
             </p>
           )}
 
@@ -139,17 +147,30 @@ export default function FolhaPrevisaoDetalheDrawer({
               <p className="text-sm text-muted-foreground">Nenhum movimento registrado.</p>
             ) : (
               <div className="rounded-lg ring-1 ring-border/40 divide-y divide-border/30">
-                {movimentos.map((m) => (
+                {movimentos.map((m) => {
+                  const statusPag = statusPagamentoMovimento(m);
+                  const ehPendente = statusPag === MOVIMENTO_STATUS_PAGAMENTO.PENDENTE;
+                  return (
                   <div key={m.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
                     <div className="min-w-0">
-                      <div className="truncate">{m.descricao || MOVIMENTO_LABELS[m.tipo]}</div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="truncate">{m.descricao || MOVIMENTO_LABELS[m.tipo]}</span>
+                        {ehPendente && (
+                          <Badge variant="outline" className="text-[10px] shrink-0 border-amber-400/60 text-amber-700 dark:text-amber-400">
+                            {MOVIMENTO_STATUS_PAGAMENTO_LABELS.pendente}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="text-[10px] text-muted-foreground">
                         {MOVIMENTO_LABELS[m.tipo]}
                         {m.data && ` · ${format(new Date(`${m.data.slice(0, 10)}T12:00:00`), 'dd/MM')}`}
+                        {m.referencia_tipo === 'LancamentoFinanceiro' && m.referencia_id && ' · Fluxo de caixa'}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="tabular-nums font-medium">{formatCurrency(m.valor)}</span>
+                      <span className={`tabular-nums font-medium ${ehPendente ? 'text-amber-700 dark:text-amber-400' : ''}`}>
+                        {formatCurrency(m.valor)}
+                      </span>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -160,7 +181,8 @@ export default function FolhaPrevisaoDetalheDrawer({
                       </Button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Section>

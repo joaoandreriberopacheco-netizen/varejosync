@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, DollarSign } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { caixaClasses } from '@/lib/caixaP38Theme';
+import LancamentoValeFolha from '@/components/financeiro/fluxo/LancamentoValeFolha';
 
 export default function DespesaDialog({
   open, onOpenChange,
@@ -16,6 +17,12 @@ export default function DespesaDialog({
   onSalvar,
   salvando,
   formatarValorExibicao,
+  isValeFolha,
+  onValeFolhaToggle,
+  valeFolhaModeloId,
+  onValeFolhaPessoaChange,
+  pessoasFolha,
+  loadingPessoasFolha,
 }) {
   const { toast } = useToast();
   const tone = caixaClasses('danger');
@@ -26,11 +33,20 @@ export default function DespesaDialog({
     setValorDespesaNum(formatarValorExibicao(parseInt(nums) / 100));
   };
 
+  const validarValeAntesSalvar = () => {
+    if (isValeFolha && !valeFolhaModeloId) {
+      toast({ title: 'Selecione quem vai receber o vale', variant: 'destructive' });
+      return false;
+    }
+    return true;
+  };
+
   const handleValorKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       const v = parseFloat((valorDespesaNum || '0').replace(/\./g, '').replace(',', '.')) || 0;
       if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
+      if (!validarValeAntesSalvar()) return;
       if (!salvando) onSalvar(valorDespesaNum);
     }
     if (e.key === 'Backspace') {
@@ -108,10 +124,22 @@ export default function DespesaDialog({
                     </SelectContent>
                   </Select>
                 </div>
+                <LancamentoValeFolha
+                  ativo={isValeFolha}
+                  onAtivoChange={onValeFolhaToggle}
+                  pessoaId={valeFolhaModeloId}
+                  onPessoaChange={onValeFolhaPessoaChange}
+                  pessoas={pessoasFolha}
+                  carregando={loadingPessoasFolha}
+                />
               </div>
               <button
                 onClick={() => {
                   if (!descricaoDespesa.trim()) { toast({ title: "Informe a descrição.", variant: "destructive" }); return; }
+                  if (isValeFolha && !valeFolhaModeloId) {
+                    toast({ title: 'Selecione quem vai receber o vale', variant: 'destructive' });
+                    return;
+                  }
                   setDespesaStep('valor');
                   setTimeout(() => valorRef.current?.focus(), 100);
                 }}
@@ -145,6 +173,7 @@ export default function DespesaDialog({
                 onClick={() => {
                   const v = parseFloat((valorDespesaNum || '0').replace(/\./g, '').replace(',', '.')) || 0;
                   if (v <= 0) { toast({ title: "Informe um valor maior que zero.", variant: "destructive" }); return; }
+                  if (!validarValeAntesSalvar()) return;
                   if (!salvando) onSalvar(valorDespesaNum);
                 }}
                 disabled={salvando}
