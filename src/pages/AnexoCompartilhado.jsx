@@ -3,18 +3,12 @@ import { createPortal } from 'react-dom';
 import {
   FileText,
   File,
-  Link2,
-  Plus,
   Loader2,
   CheckCircle2,
   ArrowLeft,
-  ShoppingCart,
-  Anchor,
   ChevronRight,
-  RefreshCw,
   RadioTower,
   HelpCircle,
-  FileUp,
   Clipboard,
   FolderOpen,
 } from 'lucide-react';
@@ -30,6 +24,9 @@ import AgefinImportador from '@/components/agefin/AgefinImportador';
 import BoletoRecorrentePicker from '@/components/financeiro/BoletoRecorrentePicker';
 import { brandSurface } from '@/lib/brandSurfaces';
 import { navegarParaNovoPedidoImport } from '@/lib/torrePedidoImportBridge';
+import { navegarParaNovoLancamentoTorre } from '@/lib/torreLancamentoBridge';
+import { extrairDadosComprovante } from '@/lib/extrairDadosComprovante';
+import TorreWidgetDestinos from '@/components/anexos/TorreWidgetDestinos';
 
 export default function AnexoCompartilhado() {
   const [arquivo, setArquivo] = useState(null);
@@ -50,11 +47,56 @@ export default function AnexoCompartilhado() {
   /** Lançamento do mês escolhido no atualizador de boletos (partilha → atualizar PDF) */
   const [contaMesBoletoAlvo, setContaMesBoletoAlvo] = useState(null);
   const colagemAutomaticaClipboardTentada = useRef(false);
+  /** Widget de destinos: raiz | pedidos | financeiro */
+  const [widgetMenu, setWidgetMenu] = useState('raiz');
+  const [dadosComprovante, setDadosComprovante] = useState(null);
+  const [lendoComprovante, setLendoComprovante] = useState(false);
+  const extracaoComprovanteSeq = useRef(0);
 
   const tiposDocumentoDisponiveis = useMemo(
     () => Array.from(new Set([...TIPOS_DOCUMENTO_ANEXO, ...tiposDocumentoCustom])),
     [tiposDocumentoCustom]
   );
+
+  const queryBuscaLancamento = useMemo(() => {
+    if (dadosComprovante?.valor != null) {
+      return Number(dadosComprovante.valor).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+    if (dadosComprovante?.descricao) return dadosComprovante.descricao;
+    return '';
+  }, [dadosComprovante]);
+
+  useEffect(() => {
+    if (!arquivo) {
+      setDadosComprovante(null);
+      setLendoComprovante(false);
+      return;
+    }
+
+    const seq = ++extracaoComprovanteSeq.current;
+    setLendoComprovante(true);
+
+    void (async () => {
+      try {
+        const dados = await extrairDadosComprovante(arquivo);
+        if (extracaoComprovanteSeq.current !== seq) return;
+        setDadosComprovante(dados);
+      } catch (e) {
+        if (extracaoComprovanteSeq.current !== seq) return;
+        console.warn('[Torre] extração do comprovante:', e);
+        setDadosComprovante(null);
+      } finally {
+        if (extracaoComprovanteSeq.current === seq) setLendoComprovante(false);
+      }
+    })();
+  }, [arquivo?.file, arquivo?.texto, arquivo?.nome]);
+
+  useEffect(() => {
+    if (etapa !== 'opcoes') setWidgetMenu('raiz');
+  }, [etapa]);
 
   // NOVO: Função super segura para converter o ficheiro para o servidor
   const converterParaBase64 = (blob) => {
@@ -350,8 +392,28 @@ export default function AnexoCompartilhado() {
       setModoAtalhoClipboard(true);
       setFeedbackClipboard('A tentar colar automaticamente… Se não aparecer arquivo, use o botão Colar.');
     }
-    if (etapaAlvo) {
+    const destinoNorm = String(destino || '').trim().toLowerCase();
+    if (destinoNorm === 'financeiro') {
       destinoDeepLinkHandled.current = true;
+      setWidgetMenu('financeiro');
+      setEtapa('opcoes');
+    } else if (destinoNorm === 'pedidos' || destinoNorm === 'pedido') {
+      destinoDeepLinkHandled.current = true;
+      setWidgetMenu('pedidos');
+      setEtapa('opcoes');
+    } else if (etapaAlvo === 'opcoes_financeiro') {
+      destinoDeepLinkHandled.current = true;
+      setWidgetMenu('financeiro');
+      setEtapa('opcoes');
+    } else if (etapaAlvo === 'opcoes_pedidos') {
+      destinoDeepLinkHandled.current = true;
+      setWidgetMenu('pedidos');
+      setEtapa('opcoes');
+    } else if (etapaAlvo) {
+      destinoDeepLinkHandled.current = true;
+      if (etapaAlvo === 'vincular_pedido' || etapaAlvo === 'importar_pedido_novo') {
+        setWidgetMenu('pedidos');
+      }
       setEtapa(etapaAlvo);
     }
   }, [carregando]);
@@ -576,13 +638,21 @@ export default function AnexoCompartilhado() {
               {etapa === 'vincular' ? (
                 <BuscarLancamentoSheet
                   onSelecionar={handleVincular}
-                  onVoltar={() => setEtapa('opcoes')}
+                  onVoltar={() => {
+                    setWidgetMenu('financeiro');
+                    setEtapa('opcoes');
+                  }}
                   uploadando={uploadando}
+                  queryInicial={queryBuscaLancamento}
+                  valorSugerido={dadosComprovante?.valor ?? null}
                 />
               ) : etapa === 'vincular_pedido' ? (
                 <BuscarPedidoCompraParaAnexo
                   onSelecionar={handleVincularPedido}
-                  onVoltar={() => setEtapa('opcoes')}
+                  onVoltar={() => {
+                    setWidgetMenu('pedidos');
+                    setEtapa('opcoes');
+                  }}
                   uploadando={uploadando}
                 />
               ) : (
@@ -795,6 +865,21 @@ export default function AnexoCompartilhado() {
 
           <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-3 md:px-5">
             <ArquivoPreview arquivo={arquivo} />
+            {(lendoComprovante || dadosComprovante?.valor != null) && (
+              <div className={`rounded-2xl px-4 py-3 text-sm ${brandSurface.card}`}>
+                {lendoComprovante ? (
+                  <p className={brandSurface.textMuted}>A ler valor do comprovante…</p>
+                ) : (
+                  <p className="font-medium text-foreground">
+                    Valor detectado:{' '}
+                    {Number(dadosComprovante.valor).toLocaleString('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL',
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
             <button
               type="button"
               onClick={() => setEtapa('opcoes')}
@@ -812,6 +897,10 @@ export default function AnexoCompartilhado() {
             <button
               type="button"
               onClick={() => {
+                if (etapa === 'opcoes' && widgetMenu !== 'raiz') {
+                  setWidgetMenu('raiz');
+                  return;
+                }
                 if (etapa === 'opcoes') setEtapa('torre_controle');
                 else window.history.back();
               }}
@@ -830,65 +919,36 @@ export default function AnexoCompartilhado() {
       )}
 
       {etapa === 'opcoes' && (
-        <div className="grid grid-cols-1 gap-2.5 px-4 md:grid-cols-2 md:gap-3 md:px-5">
-          <div className="md:col-span-2">
+        <div className="flex flex-col gap-3 pb-4">
+          <div className="px-4 md:px-5">
             <ArquivoPreview arquivo={arquivo} />
           </div>
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground dark:text-muted-foreground md:col-span-2 px-0.5">
-            Destino no P38
-          </p>
-          <OpcaoCard icon={Link2} titulo="Lançamento financeiro" descricao="Conta a pagar / despesa existente" onClick={() => setEtapa('vincular')} />
-          <OpcaoCard icon={ShoppingCart} titulo="Pedido de compra" descricao="Anexar ao processo de compras" onClick={() => setEtapa('vincular_pedido')} />
-          <OpcaoCard
-            icon={FileUp}
-            titulo="Novo pedido (importar itens)"
-            descricao="Criar pedido novo e abrir direto o importador de itens"
-            disabled={!arquivo?.file}
-            onClick={() => void navegarParaNovoPedidoImport(arquivo, tipoDocumento)}
+          <TorreWidgetDestinos
+            widgetMenu={widgetMenu}
+            onWidgetMenuChange={setWidgetMenu}
+            dadosComprovante={dadosComprovante}
+            lendoComprovante={lendoComprovante}
+            temArquivo={Boolean(arquivo?.file)}
+            onPedidoNovo={() => void navegarParaNovoPedidoImport(arquivo, tipoDocumento)}
+            onPedidoExistente={() => setEtapa('vincular_pedido')}
+            onFinanceiroNovo={() =>
+              void navegarParaNovoLancamentoTorre(arquivo, {
+                valor: dadosComprovante?.valor,
+                descricao: dadosComprovante?.descricao,
+                tipoDocumento,
+              })
+            }
+            onFinanceiroExistente={() => setEtapa('vincular')}
+            onMaisFrete={() => setEtapa('vincular_evento')}
+            onMaisBoleto={() => arquivo?.file && setEtapa('atualizar_boleto')}
+            onMaisAgefin={() => arquivo?.file && setEtapa('importar_pdf_conta')}
           />
-          <OpcaoCard icon={Anchor} titulo="Viagem / frete fluvial" descricao="Evento logístico (itinerário)" onClick={() => setEtapa('vincular_evento')} />
-          <OpcaoCard
-            icon={Plus}
-            titulo="Criar novo lançamento"
-            descricao="Ler PDF com OCR (AGEFIN) e registrar a conta — mesmo fluxo do importar em Contas a pagar"
-            disabled={!arquivo?.file}
-            onClick={() => arquivo?.file && setEtapa('importar_pdf_conta')}
-          />
-          <OpcaoCard
-            icon={RefreshCw}
-            titulo="Atualizar boleto (recorrente)"
-            descricao="Escolher o mês e o card, depois aplicar este PDF"
-            disabled={!arquivo?.file}
-            onClick={() => arquivo?.file && setEtapa('atualizar_boleto')}
-          />
-          
-          {!arquivo?.file && (
-            <div className="mt-4 flex flex-col gap-2 md:col-span-2">
-              <p className="rounded-2xl bg-amber-50 px-4 py-3 text-center text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
-                Arquivo não detectado. Veja os dados de diagnóstico abaixo:
-              </p>
-              
-              <div className="p-4 bg-primary text-green-400 text-[10px] font-mono break-all rounded-xl text-left overflow-x-auto shadow-inner">
-                <strong>🔍 MODO DEBUG:</strong><br/>
-                URL Atual: {window.location.pathname}<br/>
-                Parâmetros: {window.location.search || "Nenhum parâmetro"}<br/>
-                Navegador: {navigator.userAgent.includes('Android') ? 'Android' : 'Outro'}
-              </div>
 
-              <button 
-                onClick={() => {
-                  if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                      for(let registration of registrations) { registration.unregister(); }
-                      alert('Service Worker apagado! O app vai recarregar para baixar a nova versão.');
-                      window.location.href = window.location.pathname;
-                    });
-                  }
-                }}
-                className="w-full bg-red-500 text-white p-3 rounded-xl text-xs font-bold mt-2 shadow-sm"
-              >
-                🔄 Forçar Atualização do App
-              </button>
+          {!arquivo?.file && (
+            <div className="mt-2 flex flex-col gap-2 px-4 md:px-5">
+              <p className="rounded-2xl bg-amber-50 px-4 py-3 text-center text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+                Algumas opções precisam de arquivo (PDF ou imagem). Use selecionar arquivo ou colar.
+              </p>
             </div>
           )}
         </div>
@@ -917,35 +977,5 @@ function ArquivoPreview({ arquivo }) {
         {arquivo.file?.size && <p className={`text-xs ${brandSurface.textLabel}`}>{(arquivo.file.size / 1024).toFixed(1)} KB</p>}
       </div>
     </div>
-  );
-}
-
-function OpcaoCard({ icon: Icon, titulo, descricao, onClick, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={
-        disabled
-          ? undefined
-          : (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onClick?.();
-            }
-      }
-      disabled={disabled}
-      className={`flex w-full items-center gap-3 rounded-2xl p-4 text-left shadow-sm transition-colors md:flex-row md:gap-4 md:rounded-3xl md:p-5 ${
-        brandSurface.card
-      } ${disabled ? 'cursor-not-allowed opacity-45' : 'hover:bg-muted/40/80 dark:hover:bg-muted/30'}`}
-    >
-      <div className={`h-11 w-11 shrink-0 md:h-12 md:w-12 ${brandSurface.iconCapsule}`}>
-        <Icon className="h-5 w-5 text-foreground/90 dark:text-foreground" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-foreground dark:text-foreground">{titulo}</p>
-        <p className={`mt-0.5 text-xs ${brandSurface.textLabel}`}>{descricao}</p>
-      </div>
-      <ArrowLeft className="h-4 w-4 shrink-0 rotate-180 text-muted-foreground dark:text-muted-foreground" />
-    </button>
   );
 }

@@ -4,6 +4,8 @@
  * Sub-alvos no app (escolha do utilizador após receber o ficheiro):
  * - lancamento — LançamentoFinanceiro
  * - pedido_compra | pedido — PedidoCompra
+ * - pedidos — submenu de pedidos na Torre (widget)
+ * - financeiro — submenu financeiro na Torre (widget)
  * - frete | evento | itinerario — EventosLogisticos (viagem fluvial)
  * - importar_pedido | novo_pedido | importar_itens — novo pedido + importador PDF
  *
@@ -18,6 +20,8 @@ export const SHARE_SUBTARGET_KEYS = {
   lancamento: 'vincular',
   pedido: 'vincular_pedido',
   pedido_compra: 'vincular_pedido',
+  pedidos: 'opcoes_pedidos',
+  financeiro: 'opcoes_financeiro',
   frete: 'vincular_evento',
   evento: 'vincular_evento',
   itinerario: 'vincular_evento',

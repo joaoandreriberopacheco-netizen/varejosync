@@ -44,6 +44,8 @@ import PagamentoLoteDialog from './PagamentoLoteDialog';
 import FluxoToggleProgramadas from './fluxo/FluxoToggleProgramadas';
 import usePagamentoLoteFluxo from './fluxo/usePagamentoLoteFluxo';
 import { CONCILIACAO_LOTE_TAMANHO } from '@/lib/conciliacaoEmLote';
+import { consumirArquivoLancamentoTorreDoBridge } from '@/lib/torreLancamentoBridge';
+import { uploadAnexoParaLancamentoFinanceiro } from '@/lib/uploadAnexoReferencia';
 import {
   calcularKpisProgramadas,
   calcularSaldoPrevisto,
@@ -880,9 +882,24 @@ export default function ExecucaoOrcamentaria() {
               setUrlReferenciaId('');
               setUrlReferenciaTipo('');
             }}
-            onSaved={async () => {
+            onSaved={async (lancamentoSalvo) => {
               setEditando(null);
               await load();
+              const fromTorre = consumirArquivoLancamentoTorreDoBridge();
+              const lancamentoId = lancamentoSalvo?.id;
+              if (fromTorre?.file && lancamentoId) {
+                try {
+                  await uploadAnexoParaLancamentoFinanceiro(base44, {
+                    file: fromTorre.file,
+                    lancamentoId,
+                    descricao: lancamentoSalvo?.descricao || '',
+                    tipoDocumento: fromTorre.tipoDocumento || 'Comprovante',
+                    origem: 'torre_novo_lancamento',
+                  });
+                } catch (e) {
+                  console.warn('[Torre→Lançamento] falha ao anexar comprovante:', e);
+                }
+              }
             }}
           />
 
