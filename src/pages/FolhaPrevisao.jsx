@@ -3,11 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   ChevronLeft,
   ChevronRight,
-  Copy,
   Plus,
   Users,
   LayoutTemplate,
@@ -15,22 +13,24 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
+import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
+import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import FolhaPrevisaoResumo from '@/components/folha-previsao/FolhaPrevisaoResumo';
+import FolhaPrevisaoLista from '@/components/folha-previsao/FolhaPrevisaoLista';
+import FolhaPrevisaoModeloRow from '@/components/folha-previsao/FolhaPrevisaoModeloRow';
 import FolhaPrevisaoModeloDialog from '@/components/folha-previsao/FolhaPrevisaoModeloDialog';
 import FolhaPrevisaoMovimentoDialog from '@/components/folha-previsao/FolhaPrevisaoMovimentoDialog';
 import FolhaPrevisaoDetalheDrawer from '@/components/folha-previsao/FolhaPrevisaoDetalheDrawer';
 import FolhaPrevisaoDesligamentoDialog from '@/components/folha-previsao/FolhaPrevisaoDesligamentoDialog';
 import FolhaPrevisaoProjecao from '@/components/folha-previsao/FolhaPrevisaoProjecao';
 import {
-  calcularTotaisCompetencia,
   calcularTotaisGrupo,
   formatCompetenciaLabel,
-  formatCurrency,
-  formatDataBr,
   getCompetenciaAtual,
   mapaModelosPorColaborador,
   shiftCompetencia,
-  SITUACAO_FOLHA,
   TIPO_VINCULO,
   TIPO_VINCULO_LABELS,
   filtrarCompetenciasPorTipo,
@@ -49,131 +49,28 @@ import {
   sincronizarLancamentoFinanceiro,
 } from '@/lib/folhaPrevisaoService';
 
-function FuncionarioCard({ competencia, modelo, onOpen }) {
-  const totais = calcularTotaisCompetencia(competencia, modelo);
-  const desligado = modelo?.situacao === SITUACAO_FOLHA.DESLIGADO;
-  const ultimoMes = competencia.situacao_mes === 'ultimo_mes';
-  const ehSocio = (modelo?.tipo_vinculo || competencia.tipo_vinculo) === TIPO_VINCULO.SOCIO;
+const FILTRO_VINCULO_OPTS = [
+  { id: 'todos', label: 'Todos' },
+  { id: TIPO_VINCULO.FUNCIONARIO, label: 'Funcionários' },
+  { id: TIPO_VINCULO.SOCIO, label: 'Sócios' },
+];
 
+function FiltroVinculoChips({ value, onChange }) {
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(competencia)}
-      className={`w-full rounded-xl bg-card p-3 text-left shadow-sm ring-1 transition hover:ring-primary/30 ${
-        ultimoMes ? 'ring-amber-400/50' : desligado ? 'ring-red-300/40 opacity-90' : 'ring-border/40'
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="font-medium text-foreground">{competencia.colaborador_nome}</div>
-          <div className="text-xs text-muted-foreground">{competencia.modelo_nome || 'Sem modelo'}</div>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <Badge variant={ehSocio ? 'secondary' : 'outline'} className="text-[10px]">
-            {TIPO_VINCULO_LABELS[ehSocio ? TIPO_VINCULO.SOCIO : TIPO_VINCULO.FUNCIONARIO]}
-          </Badge>
-          {ultimoMes && <Badge variant="destructive" className="text-[10px]">Último mês</Badge>}
-          {desligado && !ultimoMes && (
-            <Badge variant="secondary" className="text-[10px]">Desligou</Badge>
+    <div className="flex flex-wrap gap-1.5">
+      {FILTRO_VINCULO_OPTS.map((opt) => (
+        <button
+          key={opt.id}
+          type="button"
+          onClick={() => onChange(opt.id)}
+          className={cn(
+            'rounded-full px-3 py-1.5 text-xs font-medium transition-colors min-h-[32px]',
+            value === opt.id ? P38_CHIP_ACTIVE : P38_CHIP_INACTIVE,
           )}
-          {!desligado && (
-            <Badge variant={competencia.status === 'fechado' ? 'secondary' : 'outline'} className="text-[10px]">
-              {competencia.status === 'fechado' ? 'Fechado' : 'Rascunho'}
-            </Badge>
-          )}
-        </div>
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-        <div>
-          <div className="text-muted-foreground">Líquido</div>
-          <div className="font-semibold tabular-nums">{formatCurrency(totais.liquido)}</div>
-        </div>
-        <div>
-          <div className="text-muted-foreground">Vales</div>
-          <div className="font-semibold tabular-nums text-amber-700 dark:text-amber-400">
-            {formatCurrency(totais.totalVales)}
-          </div>
-        </div>
-        <div>
-          <div className="text-muted-foreground">Custo total</div>
-          <div className="font-semibold tabular-nums">{formatCurrency(totais.custoTotalEmpresa)}</div>
-        </div>
-      </div>
-      {(totais.totalDecimo > 0 || totais.totalFerias > 0 || totais.totalRetiradaSocio > 0 || totais.totalValesPendentes > 0) && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {totais.totalValesPendentes > 0 && (
-            <span className="text-[10px] rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-              Vale em aberto {formatCurrency(totais.totalValesPendentes)}
-            </span>
-          )}
-          {totais.totalDecimo > 0 && (
-            <span className="text-[10px] rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-              13º {formatCurrency(totais.totalDecimo)}
-            </span>
-          )}
-          {totais.totalFerias > 0 && (
-            <span className="text-[10px] rounded-full bg-sky-100 px-2 py-0.5 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
-              Férias {formatCurrency(totais.totalFerias)}
-            </span>
-          )}
-          {totais.totalRetiradaSocio > 0 && (
-            <span className="text-[10px] rounded-full bg-violet-100 px-2 py-0.5 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300">
-              Retirada {formatCurrency(totais.totalRetiradaSocio)}
-            </span>
-          )}
-        </div>
-      )}
-    </button>
-  );
-}
-
-function ModeloCard({ modelo, onEdit, onDuplicate, onDesligar }) {
-  const rubricas = modelo.rubricas || [];
-  const desligado = modelo.situacao === SITUACAO_FOLHA.DESLIGADO;
-  const ehSocio = modelo.tipo_vinculo === TIPO_VINCULO.SOCIO;
-
-  return (
-    <div className={`rounded-xl bg-card p-3 shadow-sm ring-1 ${desligado ? 'ring-red-300/40' : 'ring-border/40'}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="font-medium">{modelo.nome}</div>
-          <div className="text-xs text-muted-foreground">
-            {modelo.colaborador_nome ? `Vinculado: ${modelo.colaborador_nome}` : 'Modelo genérico'}
-            {' · '}Dia {modelo.dia_vencimento}
-          </div>
-          {desligado && modelo.data_desligamento && (
-            <div className="text-xs text-red-700 dark:text-red-400 mt-1">
-              Desligou em {formatDataBr(modelo.data_desligamento)}
-            </div>
-          )}
-        </div>
-        {desligado ? (
-          <Badge variant="destructive">Desligou</Badge>
-        ) : !modelo.ativo ? (
-          <Badge variant="secondary">Inativo</Badge>
-        ) : (
-          <Badge variant="outline">{TIPO_VINCULO_LABELS[ehSocio ? TIPO_VINCULO.SOCIO : TIPO_VINCULO.FUNCIONARIO]}</Badge>
-        )}
-      </div>
-      <div className="mt-2 text-xs text-muted-foreground">
-        {rubricas.length} rubricas
-        {ehSocio && modelo.retirada_valor_fixo > 0 && (
-          <> · Retirada {modelo.retirada_frequencia === 'semanal' ? 'semanal' : 'mensal'} {formatCurrency(modelo.retirada_valor_fixo)}</>
-        )}
-        {!ehSocio && modelo.decimo_terceiro_ativo !== false && ' · 13º ativo'}
-        {!ehSocio && (modelo.ferias_programadas?.length || 0) > 0 && ` · ${modelo.ferias_programadas.length} férias`}
-      </div>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" className="h-8" onClick={() => onEdit(modelo)}>Editar</Button>
-        <Button size="sm" variant="secondary" className="h-8 gap-1" onClick={() => onDuplicate(modelo)}>
-          <Copy className="h-3.5 w-3.5" /> Duplicar
-        </Button>
-        {modelo.colaborador_id && !desligado && onDesligar && (
-          <Button size="sm" variant="ghost" className="h-8 text-red-700 dark:text-red-400" onClick={() => onDesligar(modelo)}>
-            Desligar
-          </Button>
-        )}
-      </div>
+        >
+          {opt.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -222,6 +119,13 @@ export default function FolhaPrevisaoPage() {
   const totaisGrupo = useMemo(() => calcularTotaisGrupo(competenciasFiltradas, modelosMap), [competenciasFiltradas, modelosMap]);
   const contaPadrao = contas.find((c) => c.ativo !== false) || contas[0];
   const selectedModelo = selectedComp ? modelosMap[selectedComp.colaborador_id] : null;
+
+  const modelosFiltrados = useMemo(
+    () => modelos.filter(
+      (m) => filtroVinculo === 'todos' || (m.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === filtroVinculo,
+    ),
+    [modelos, filtroVinculo],
+  );
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['folha-previsao'] });
@@ -364,97 +268,66 @@ export default function FolhaPrevisaoPage() {
       </div>
 
       <Tabs defaultValue="previsao" className="w-full mt-4">
-        <TabsList className="w-full bg-muted/50 rounded-2xl p-1.5 h-auto flex-wrap">
-          <TabsTrigger value="previsao" className="flex-1 gap-2 rounded-xl py-2.5 min-h-[44px] min-w-[120px]">
+        <TabsList className={cn('w-full h-auto flex-wrap p-1.5 rounded-xl', P38_FIELD_SURFACE)}>
+          <TabsTrigger value="previsao" className="flex-1 gap-2 rounded-lg py-2.5 min-h-[44px] min-w-[120px]">
             <CalendarClock className="w-4 h-4" />
             <span className="hidden md:inline text-sm">Previsão do mês</span>
           </TabsTrigger>
-          <TabsTrigger value="projecao" className="flex-1 gap-2 rounded-xl py-2.5 min-h-[44px] min-w-[120px]">
+          <TabsTrigger value="projecao" className="flex-1 gap-2 rounded-lg py-2.5 min-h-[44px] min-w-[120px]">
             <TrendingUp className="w-4 h-4" />
             <span className="hidden md:inline text-sm">Projeção 12 meses</span>
           </TabsTrigger>
-          <TabsTrigger value="modelos" className="flex-1 gap-2 rounded-xl py-2.5 min-h-[44px] min-w-[120px]">
+          <TabsTrigger value="modelos" className="flex-1 gap-2 rounded-lg py-2.5 min-h-[44px] min-w-[120px]">
             <LayoutTemplate className="w-4 h-4" />
             <span className="hidden md:inline text-sm">Modelos</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="previsao" className="mt-4 space-y-4">
+        <TabsContent value="previsao" className="mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-1">
+            <div className={cn('flex items-center gap-1 rounded-xl px-1', P38_FIELD_SURFACE)}>
               <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, -1))}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="min-w-[100px] text-center font-medium">{formatCompetenciaLabel(competenciaMes)}</span>
+              <span className="min-w-[100px] text-center text-sm font-semibold uppercase tracking-wide">
+                {formatCompetenciaLabel(competenciaMes)}
+              </span>
               <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, 1))}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
             <Button className="gap-2" onClick={handleAbrirMes} disabled={saving}>
               <Users className="h-4 w-4" />
-              Abrir mês para colaboradores
+              Abrir mês
             </Button>
           </div>
 
-          <FolhaPrevisaoResumo totais={totaisGrupo} count={totaisGrupo.count} />
+          <FolhaPrevisaoResumo
+            totais={totaisGrupo}
+            count={totaisGrupo.count}
+            competenciaLabel={formatCompetenciaLabel(competenciaMes)}
+          />
 
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: 'todos', label: 'Todos' },
-              { id: TIPO_VINCULO.FUNCIONARIO, label: 'Funcionários' },
-              { id: TIPO_VINCULO.SOCIO, label: 'Sócios' },
-            ].map((opt) => (
-              <Button
-                key={opt.id}
-                size="sm"
-                variant={filtroVinculo === opt.id ? 'default' : 'outline'}
-                className="h-8 rounded-full"
-                onClick={() => setFiltroVinculo(opt.id)}
-              >
-                {opt.label}
-              </Button>
-            ))}
-          </div>
+          <FiltroVinculoChips value={filtroVinculo} onChange={setFiltroVinculo} />
 
-          {loadingComp ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Carregando…</p>
-          ) : competenciasFiltradas.length === 0 ? (
-            <div className="text-center py-16 bg-card rounded-xl ring-1 ring-border/40">
-              <Users className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground mb-4">
-                Nenhuma previsão para {formatCompetenciaLabel(competenciaMes)}
-                {filtroVinculo !== 'todos' ? ` (${TIPO_VINCULO_LABELS[filtroVinculo]})` : ''}.
-              </p>
-              <Button onClick={handleAbrirMes} disabled={saving}>Abrir mês</Button>
-            </div>
-          ) : filtroVinculo === 'todos' ? (
-            <div className="space-y-6">
-              {grupos.funcionarios.length > 0 && (
-                <section>
-                  <h3 className="mb-3 text-sm font-medium text-foreground">Funcionários</h3>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {grupos.funcionarios.map((c) => (
-                      <FuncionarioCard key={c.id} competencia={c} modelo={modelosMap[c.colaborador_id]} onOpen={setSelectedComp} />
-                    ))}
-                  </div>
-                </section>
-              )}
-              {grupos.socios.length > 0 && (
-                <section>
-                  <h3 className="mb-3 text-sm font-medium text-foreground">Sócios</h3>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {grupos.socios.map((c) => (
-                      <FuncionarioCard key={c.id} competencia={c} modelo={modelosMap[c.colaborador_id]} onOpen={setSelectedComp} />
-                    ))}
-                  </div>
-                </section>
-              )}
-            </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {competenciasFiltradas.map((c) => (
-                <FuncionarioCard key={c.id} competencia={c} modelo={modelosMap[c.colaborador_id]} onOpen={setSelectedComp} />
-              ))}
+          <FinanceiroListaEstado
+            loading={loadingComp}
+            vazio={!loadingComp && competenciasFiltradas.length === 0}
+            vazioMensagem={`Nenhuma previsão para ${formatCompetenciaLabel(competenciaMes)}${filtroVinculo !== 'todos' ? ` (${TIPO_VINCULO_LABELS[filtroVinculo]})` : ''}.`}
+            vazioIcon={Users}
+          >
+            <FolhaPrevisaoLista
+              competencias={competenciasFiltradas}
+              grupos={grupos}
+              modelosMap={modelosMap}
+              filtroVinculo={filtroVinculo}
+              onOpen={setSelectedComp}
+            />
+          </FinanceiroListaEstado>
+
+          {!loadingComp && competenciasFiltradas.length === 0 && (
+            <div className="flex justify-center -mt-6 pb-4">
+              <Button onClick={handleAbrirMes} disabled={saving}>Abrir mês para colaboradores</Button>
             </div>
           )}
         </TabsContent>
@@ -463,52 +336,41 @@ export default function FolhaPrevisaoPage() {
           <FolhaPrevisaoProjecao modelos={modelos} competenciaInicio={competenciaMes} />
         </TabsContent>
 
-        <TabsContent value="modelos" className="mt-4 space-y-4">
-          <div className="flex justify-end">
-            <Button className="gap-2" onClick={() => setModeloDialog({})}>
+        <TabsContent value="modelos" className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground max-w-xl">
+              Um modelo por pessoa. Funcionários: salário, 13º, férias. Sócios: retirada fixa.
+            </p>
+            <Button className="gap-2 shrink-0" onClick={() => setModeloDialog({})}>
               <Plus className="h-4 w-4" /> Novo modelo
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Um modelo por pessoa (funcionário ou sócio). Funcionários: salário, 13º, férias. Sócios: retirada fixa semanal ou mensal.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { id: 'todos', label: 'Todos' },
-              { id: TIPO_VINCULO.FUNCIONARIO, label: 'Funcionários' },
-              { id: TIPO_VINCULO.SOCIO, label: 'Sócios' },
-            ].map((opt) => (
-              <Button
-                key={opt.id}
-                size="sm"
-                variant={filtroVinculo === opt.id ? 'default' : 'outline'}
-                className="h-8 rounded-full"
-                onClick={() => setFiltroVinculo(opt.id)}
-              >
-                {opt.label}
-              </Button>
-            ))}
-          </div>
-          {loadingModelos ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Carregando…</p>
-          ) : modelos.length === 0 ? (
-            <div className="text-center py-12 bg-card rounded-xl ring-1 ring-border/40">
-              <LayoutTemplate className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-              <Button onClick={() => setModeloDialog({})}>Criar primeiro modelo</Button>
-            </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {modelos
-                .filter((m) => filtroVinculo === 'todos' || (m.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === filtroVinculo)
-                .map((m) => (
-                <ModeloCard
+
+          <FiltroVinculoChips value={filtroVinculo} onChange={setFiltroVinculo} />
+
+          <FinanceiroListaEstado
+            loading={loadingModelos}
+            vazio={!loadingModelos && modelosFiltrados.length === 0}
+            vazioMensagem="Nenhum modelo cadastrado."
+            vazioIcon={LayoutTemplate}
+          >
+            <P38MobileLineList className="block md:!block rounded-lg">
+              {modelosFiltrados.map((m, i) => (
+                <FolhaPrevisaoModeloRow
                   key={m.id}
                   modelo={m}
                   onEdit={setModeloDialog}
                   onDuplicate={handleDuplicateModelo}
                   onDesligar={setDesligamentoModelo}
+                  striped={i % 2 === 1}
                 />
               ))}
+            </P38MobileLineList>
+          </FinanceiroListaEstado>
+
+          {!loadingModelos && modelosFiltrados.length === 0 && (
+            <div className="flex justify-center -mt-6 pb-4">
+              <Button onClick={() => setModeloDialog({})}>Criar primeiro modelo</Button>
             </div>
           )}
         </TabsContent>

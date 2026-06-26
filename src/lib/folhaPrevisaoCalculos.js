@@ -383,6 +383,7 @@ export function calcularTotaisGrupo(competencias, modelosPorColaborador = {}) {
       acc.encargosEmpresa += t.encargosEmpresa;
       acc.custoTotalEmpresa += t.custoTotalEmpresa;
       acc.totalVales += t.totalVales;
+      acc.totalValesPendentes += t.totalValesPendentes;
       acc.totalDecimo += t.totalDecimo;
       acc.totalFerias += t.totalFerias;
       acc.totalRetiradaSocio += t.totalRetiradaSocio;
@@ -397,6 +398,7 @@ export function calcularTotaisGrupo(competencias, modelosPorColaborador = {}) {
       encargosEmpresa: 0,
       custoTotalEmpresa: 0,
       totalVales: 0,
+      totalValesPendentes: 0,
       totalDecimo: 0,
       totalFerias: 0,
       totalRetiradaSocio: 0,

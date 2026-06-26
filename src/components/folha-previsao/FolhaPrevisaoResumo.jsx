@@ -1,40 +1,57 @@
 import React from 'react';
-import { formatCurrency } from '@/lib/folhaPrevisaoCalculos';
+import FinanceiroResumoBar from '@/components/financeiro/fluxo/FinanceiroResumoBar';
+import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
+import { P38_KPI_SHELL } from '@/components/financeiro/fluxo/financeiroP38';
+import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import { cn } from '@/lib/utils';
 
-function KpiCell({ label, value, tone = 'default' }) {
-  const tones = {
-    default: 'text-foreground',
-    positive: 'text-emerald-700 dark:text-emerald-400',
-    negative: 'text-red-700 dark:text-red-400',
-    muted: 'text-muted-foreground',
-    amber: 'text-amber-700 dark:text-amber-400',
-  };
-  return (
-    <div className="rounded-xl bg-card px-3 py-2.5 shadow-sm ring-1 ring-border/40">
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className={`mt-0.5 text-sm font-semibold tabular-nums ${tones[tone] || tones.default}`}>{value}</div>
-    </div>
-  );
-}
+export default function FolhaPrevisaoResumo({ totais, count, competenciaLabel }) {
+  const chips = [];
 
-export default function FolhaPrevisaoResumo({ totais, count }) {
+  if (totais?.totalValesPendentes > 0) {
+    chips.push(
+      <FinanceiroSummaryChip key="vales" className="text-amber-800 dark:text-amber-300">
+        Vale em aberto {formatFinanceiroValor(totais.totalValesPendentes)}
+      </FinanceiroSummaryChip>,
+    );
+  }
+  if (totais?.totalDecimo > 0) {
+    chips.push(
+      <FinanceiroSummaryChip key="decimo">
+        13º {formatFinanceiroValor(totais.totalDecimo)}
+      </FinanceiroSummaryChip>,
+    );
+  }
+  if (totais?.totalFerias > 0) {
+    chips.push(
+      <FinanceiroSummaryChip key="ferias">
+        Férias {formatFinanceiroValor(totais.totalFerias)}
+      </FinanceiroSummaryChip>,
+    );
+  }
+  if (totais?.desligados > 0) {
+    chips.push(
+      <FinanceiroSummaryChip key="desligados">
+        {totais.desligados} desligado(s)
+      </FinanceiroSummaryChip>,
+    );
+  }
+
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-8">
-      <KpiCell label="Colaboradores" value={String(count || 0)} tone="muted" />
-      {totais?.desligados > 0 && (
-        <KpiCell label="Desligados" value={String(totais.desligados)} tone="negative" />
-      )}
-      <KpiCell label="Proventos" value={formatCurrency(totais?.proventos)} tone="positive" />
-      <KpiCell label="Descontos" value={formatCurrency(totais?.descontos)} tone="negative" />
-      <KpiCell label="Líquido a pagar" value={formatCurrency(totais?.liquido)} />
-      {(totais?.totalDecimo > 0 || totais?.totalFerias > 0) && (
-        <>
-          <KpiCell label="13º no mês" value={formatCurrency(totais?.totalDecimo)} tone="amber" />
-          <KpiCell label="Férias no mês" value={formatCurrency(totais?.totalFerias)} tone="amber" />
-        </>
-      )}
-      <KpiCell label="Encargos empresa" value={formatCurrency(totais?.encargosEmpresa)} tone="muted" />
-      <KpiCell label="Custo total" value={formatCurrency(totais?.custoTotalEmpresa)} />
+    <div className={cn(P38_KPI_SHELL, 'space-y-2')}>
+      <FinanceiroResumoBar
+        receitas={totais?.proventos || 0}
+        despesas={totais?.descontos || 0}
+        variacao={totais?.liquido || 0}
+        saldo={totais?.custoTotalEmpresa || 0}
+        saldoComSinal
+        periodoLabel={competenciaLabel}
+      />
+      <FinanceiroListaMeta
+        total={count || 0}
+        totalLabel="pessoas na folha"
+        summaryChips={chips.length ? chips : null}
+      />
     </div>
   );
 }
