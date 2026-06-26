@@ -53,6 +53,12 @@ import { processarVendaCaixa } from '@/functions/processarVendaCaixa';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import ConfirmarImpressaoDialog from '@/components/vendas/ConfirmarImpressaoDialog';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
+import {
+  descricaoPadraoVale,
+  listarPessoasFolhaParaVale,
+  montarTagsValeFolha,
+  registrarValeNoFolhaAposLancamento,
+} from '@/lib/folhaValeFluxo';
 import { getPrazoLiquidacaoMaquininha } from '@/lib/pagamentoPedidoVendaFinanceiro';
 import {
   caixaTurnoQueryKey,
@@ -300,6 +306,10 @@ export default function PDVCaixa({
   const [valorDespesa, setValorDespesa] = useState('');
   const [descricaoDespesa, setDescricaoDespesa] = useState('');
   const [categoriaDespesa, setCategoriaDespesa] = useState('Outros');
+  const [isValeFolhaDespesa, setIsValeFolhaDespesa] = useState(false);
+  const [valeFolhaModeloIdDespesa, setValeFolhaModeloIdDespesa] = useState('');
+  const [pessoasFolhaDespesa, setPessoasFolhaDespesa] = useState([]);
+  const [loadingPessoasFolhaDespesa, setLoadingPessoasFolhaDespesa] = useState(false);
   const [turnoAtivo, setTurnoAtivo] = useState(null);
   const [caixaSelecionado, setCaixaSelecionado] = useState(null);
   const [modoVisualizacao, setModoVisualizacao] = useState(false);
@@ -923,21 +933,66 @@ export default function PDVCaixa({
     setShowMovimentoDialog(true);
   };
 
+  useEffect(() => {
+    if (!showDespesaDialog) {
+      setIsValeFolhaDespesa(false);
+      setValeFolhaModeloIdDespesa('');
+      return;
+    }
+    setLoadingPessoasFolhaDespesa(true);
+    listarPessoasFolhaParaVale()
+      .then(setPessoasFolhaDespesa)
+      .catch(() => setPessoasFolhaDespesa([]))
+      .finally(() => setLoadingPessoasFolhaDespesa(false));
+  }, [showDespesaDialog]);
+
+  const handleValeFolhaDespesaToggle = (ativo) => {
+    setIsValeFolhaDespesa(ativo);
+    if (ativo) {
+      if (!valeFolhaModeloIdDespesa && pessoasFolhaDespesa.length === 1) {
+        setValeFolhaModeloIdDespesa(pessoasFolhaDespesa[0].id);
+        setDescricaoDespesa(descricaoPadraoVale(pessoasFolhaDespesa[0].nome));
+      }
+    } else {
+      setValeFolhaModeloIdDespesa('');
+    }
+  };
+
+  const handleValeFolhaDespesaPessoa = (modeloId) => {
+    setValeFolhaModeloIdDespesa(modeloId);
+    const pessoa = pessoasFolhaDespesa.find((p) => p.id === modeloId);
+    if (pessoa) setDescricaoDespesa(descricaoPadraoVale(pessoa.nome));
+  };
+
   const handleSalvarDespesaNum = async (valorStr) => {
     const valorFloat = parseFloat((valorStr || '0').replace(/\./g, '').replace(',', '.')) || 0;
     if (valorFloat <= 0 || !descricaoDespesa.trim() || salvandoDespesa) return;
+    if (isValeFolhaDespesa && !valeFolhaModeloIdDespesa) {
+      toast({ title: 'Selecione quem vai receber o vale', variant: 'destructive' });
+      return;
+    }
     setSalvandoDespesa(true);
     try {
+      const dataHoje = format(new Date(), 'yyyy-MM-dd');
+      const pessoaVale = isValeFolhaDespesa
+        ? pessoasFolhaDespesa.find((p) => p.id === valeFolhaModeloIdDespesa)
+        : null;
+      const descricaoFinal = isValeFolhaDespesa && pessoaVale
+        ? (descricaoDespesa.trim() || descricaoPadraoVale(pessoaVale.nome))
+        : descricaoDespesa;
+      const tags = isValeFolhaDespesa && pessoaVale ? montarTagsValeFolha([], pessoaVale) : [];
+
       const lancamento = await base44.entities.LancamentoFinanceiro.create({
         tipo: 'Despesa',
-        descricao: descricaoDespesa,
+        descricao: descricaoFinal,
         valor: valorFloat,
         conta_financeira_id: contaCaixaPDV?.id,
         conta_financeira_nome: contaCaixaPDV?.nome,
-        data_vencimento: format(new Date(), 'yyyy-MM-dd'),
-        data_pagamento: format(new Date(), 'yyyy-MM-dd'),
+        data_vencimento: dataHoje,
+        data_pagamento: dataHoje,
         status: 'Pago',
         categoria: categoriaDespesa,
+        tags,
         turno_caixa_id: turnoAtivo?.id,
         observacoes: `Despesa registrada via PDV Caixa por ${currentUser?.full_name}`
       });
@@ -946,7 +1001,26 @@ export default function PDVCaixa({
           despesas_ids: [...(turnoAtivo.despesas_ids || []), lancamento.id]
         });
       }
-      setDespesaCriada({ ...lancamento, descricao: descricaoDespesa, valor: valorFloat, categoria: categoriaDespesa });
+
+      if (isValeFolhaDespesa && valeFolhaModeloIdDespesa && lancamento?.id) {
+        try {
+          await registrarValeNoFolhaAposLancamento({
+            modeloId: valeFolhaModeloIdDespesa,
+            valor: valorFloat,
+            data: dataHoje,
+            lancamentoId: lancamento.id,
+            descricao: descricaoFinal,
+          });
+        } catch (err) {
+          toast({
+            title: 'Despesa salva, mas vale não entrou na folha',
+            description: err?.message || 'Abra a Folha e registre o vale manualmente.',
+            variant: 'destructive',
+          });
+        }
+      }
+
+      setDespesaCriada({ ...lancamento, descricao: descricaoFinal, valor: valorFloat, categoria: categoriaDespesa });
       setShowDespesaDialog(false);
       setShowComprovanteDespesa(true);
       setDespesaStep('obs');
@@ -954,6 +1028,8 @@ export default function PDVCaixa({
       setValorDespesa('');
       setDescricaoDespesa('');
       setCategoriaDespesa('Outros');
+      setIsValeFolhaDespesa(false);
+      setValeFolhaModeloIdDespesa('');
       loadData();
     } catch (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -1973,7 +2049,7 @@ export default function PDVCaixa({
         <ListaMovimentosDialog open={showSangriasDialog} onOpenChange={setShowSangriasDialog} tipo="sangrias" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={loadData} />
         <ListaMovimentosDialog open={showDespesasDialog} onOpenChange={setShowDespesasDialog} tipo="despesas" movimentos={movimentos} despesasLista={caixaData.despesasLista} totalReforcos={caixaData.reforcos} totalSangrias={caixaData.sangrias} totalDespesas={caixaData.despesas} formatValor={formatValor} onRefresh={loadData} />
         <ComprovanteDespesaDialog open={showComprovanteDespesa} onOpenChange={setShowComprovanteDespesa} despesaCriada={despesaCriada} currentUser={currentUser} formatValor={formatValor} />
-        <DespesaDialog open={showDespesaDialog} onOpenChange={setShowDespesaDialog} despesaStep={despesaStep} setDespesaStep={setDespesaStep} descricaoDespesa={descricaoDespesa} setDescricaoDespesa={setDescricaoDespesa} categoriaDespesa={categoriaDespesa} setCategoriaDespesa={setCategoriaDespesa} valorDespesaNum={valorDespesaNum} setValorDespesaNum={setValorDespesaNum} contaCaixaPDV={contaCaixaPDV} onSalvar={handleSalvarDespesaNum} salvando={salvandoDespesa} formatarValorExibicao={formatarValorExibicao} />
+        <DespesaDialog open={showDespesaDialog} onOpenChange={setShowDespesaDialog} despesaStep={despesaStep} setDespesaStep={setDespesaStep} descricaoDespesa={descricaoDespesa} setDescricaoDespesa={setDescricaoDespesa} categoriaDespesa={categoriaDespesa} setCategoriaDespesa={setCategoriaDespesa} valorDespesaNum={valorDespesaNum} setValorDespesaNum={setValorDespesaNum} contaCaixaPDV={contaCaixaPDV} onSalvar={handleSalvarDespesaNum} salvando={salvandoDespesa} formatarValorExibicao={formatarValorExibicao} isValeFolha={isValeFolhaDespesa} onValeFolhaToggle={handleValeFolhaDespesaToggle} valeFolhaModeloId={valeFolhaModeloIdDespesa} onValeFolhaPessoaChange={handleValeFolhaDespesaPessoa} pessoasFolha={pessoasFolhaDespesa} loadingPessoasFolha={loadingPessoasFolhaDespesa} />
         <RetornoEdicaoDialog open={showRetornoDialog} onOpenChange={setShowRetornoDialog} motivo={motivoRetorno} onMotivoChange={setMotivoRetorno} onConfirmar={handleRetornarParaEdicao} />
         <PromissoriaDialog
           open={showPromissoria}
