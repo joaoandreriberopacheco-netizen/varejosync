@@ -140,8 +140,28 @@ function FilterChipRow({ label, icon: Icon, options, value, onChange }) {
   );
 }
 
-export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadando }) {
-  const [query, setQuery] = useState('');
+function priorizarPorValorSugerido(lista, valorSugerido) {
+  const alvo = Number(valorSugerido);
+  if (!Number.isFinite(alvo) || alvo <= 0) return lista;
+  return [...lista].sort((a, b) => {
+    const diffA = Math.abs((Number(a.valor) || 0) - alvo);
+    const diffB = Math.abs((Number(b.valor) || 0) - alvo);
+    const exatoA = diffA < 0.009 ? 0 : 1;
+    const exatoB = diffB < 0.009 ? 0 : 1;
+    if (exatoA !== exatoB) return exatoA - exatoB;
+    if (diffA !== diffB) return diffA - diffB;
+    return 0;
+  });
+}
+
+export default function BuscarLancamentoSheet({
+  onSelecionar,
+  onVoltar,
+  uploadando,
+  queryInicial = '',
+  valorSugerido = null,
+}) {
+  const [query, setQuery] = useState(() => String(queryInicial || '').trim());
   const [cache, setCache] = useState([]);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
@@ -179,9 +199,20 @@ export default function BuscarLancamentoSheet({ onSelecionar, onVoltar, uploadan
   const hasActiveFilters =
     filterTipo !== 'todos' || filterStatus !== 'todos' || filterPrazo !== 'todos';
 
+  useEffect(() => {
+    const q = String(queryInicial || '').trim();
+    if (q) setQuery(q);
+  }, [queryInicial]);
+
   const lancamentos = useMemo(() => {
-    return cache.filter((l) => filtrosAuxiliares(l, { filterTipo, filterStatus, filterPrazo })).filter((l) => lancamentoMatchesSearch(l, query));
-  }, [cache, query, filterTipo, filterStatus, filterPrazo]);
+    const filtrados = cache
+      .filter((l) => filtrosAuxiliares(l, { filterTipo, filterStatus, filterPrazo }))
+      .filter((l) => lancamentoMatchesSearch(l, query));
+    if (!query.trim() && valorSugerido != null) {
+      return priorizarPorValorSugerido(filtrados, valorSugerido);
+    }
+    return filtrados;
+  }, [cache, query, filterTipo, filterStatus, filterPrazo, valorSugerido]);
 
   const limparFiltros = () => {
     setFilterTipo('todos');
