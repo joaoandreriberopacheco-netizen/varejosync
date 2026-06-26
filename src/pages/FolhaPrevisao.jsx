@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Plus,
   Users,
-  LayoutTemplate,
   CalendarClock,
   TrendingUp,
 } from 'lucide-react';
@@ -20,7 +19,7 @@ import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import FolhaPrevisaoResumo from '@/components/folha-previsao/FolhaPrevisaoResumo';
 import FolhaPrevisaoLista from '@/components/folha-previsao/FolhaPrevisaoLista';
 import FolhaPrevisaoModeloRow from '@/components/folha-previsao/FolhaPrevisaoModeloRow';
-import FolhaPrevisaoModeloDialog from '@/components/folha-previsao/FolhaPrevisaoModeloDialog';
+import FolhaPessoaDialog from '@/components/folha-previsao/FolhaPessoaDialog';
 import FolhaPrevisaoMovimentoDialog from '@/components/folha-previsao/FolhaPrevisaoMovimentoDialog';
 import FolhaPrevisaoDetalheDrawer from '@/components/folha-previsao/FolhaPrevisaoDetalheDrawer';
 import FolhaPrevisaoDesligamentoDialog from '@/components/folha-previsao/FolhaPrevisaoDesligamentoDialog';
@@ -44,13 +43,14 @@ import {
 import {
   abrirCompetenciasDoMes,
   adicionarMovimento,
-  duplicarModelo,
+  criarColaboradorParaFolha,
   listarColaboradoresAtivos,
   listarCompetencias,
   listarModelos,
   reativarNaFolha,
   registrarDesligamento,
   removerMovimento,
+  salvarCadastroPessoaFolha,
   sincronizarLancamentoFinanceiro,
   sincronizarFechamentoCompetencias,
 } from '@/lib/folhaPrevisaoService';
@@ -86,7 +86,7 @@ export default function FolhaPrevisaoPage() {
   const queryClient = useQueryClient();
   const [competenciaMes, setCompetenciaMes] = useState(getCompetenciaAtual());
   const [selectedComp, setSelectedComp] = useState(null);
-  const [modeloDialog, setModeloDialog] = useState(null);
+  const [pessoaDialog, setPessoaDialog] = useState(null);
   const [desligamentoModelo, setDesligamentoModelo] = useState(null);
   const [movimentoOpen, setMovimentoOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -138,11 +138,31 @@ export default function FolhaPrevisaoPage() {
   const contaPadrao = contas.find((c) => c.ativo !== false) || contas[0];
   const selectedModelo = selectedComp ? modelosMap[selectedComp.colaborador_id] : null;
 
-  const modelosFiltrados = useMemo(
-    () => modelos.filter(
+  const colaboradoresMap = useMemo(
+    () => Object.fromEntries((colaboradores || []).map((c) => [c.id, c])),
+    [colaboradores],
+  );
+
+  const idsNaFolha = useMemo(
+    () => new Set(modelos.filter((m) => m.colaborador_id).map((m) => m.colaborador_id)),
+    [modelos],
+  );
+
+  const colaboradoresDisponiveis = useMemo(
+    () => colaboradores.filter((c) => !idsNaFolha.has(c.id)),
+    [colaboradores, idsNaFolha],
+  );
+
+  const pessoasCadastradas = useMemo(
+    () => modelos.filter((m) => m.colaborador_id),
+    [modelos],
+  );
+
+  const pessoasFiltradas = useMemo(
+    () => pessoasCadastradas.filter(
       (m) => filtroVinculo === 'todos' || (m.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === filtroVinculo,
     ),
-    [modelos, filtroVinculo],
+    [pessoasCadastradas, filtroVinculo],
   );
 
   const invalidate = useCallback(() => {
@@ -162,7 +182,7 @@ export default function FolhaPrevisaoPage() {
       }
       const msg = criados.length
         ? `${criados.length} previsão(ões) aberta(s).`
-        : 'Nenhum colaborador com modelo vinculado.';
+        : 'Nenhuma pessoa cadastrada na folha.';
       const extra = pulados.length ? ` ${pulados.length} ignorado(s) (já desligados).` : '';
       toast({ title: 'Mês aberto', description: msg + extra });
     } catch (e) {
@@ -172,17 +192,26 @@ export default function FolhaPrevisaoPage() {
     }
   };
 
-  const handleSaveModelo = async (payload) => {
+  const handleSavePessoa = async (payload) => {
     setSaving(true);
     try {
-      if (modeloDialog?.id) {
-        await base44.entities.FolhaPrevisaoModelo.update(modeloDialog.id, { ...payload, dia_vencimento: FOLHA_DIA_VENCIMENTO });
-      } else {
-        await base44.entities.FolhaPrevisaoModelo.create({ ...payload, dia_vencimento: FOLHA_DIA_VENCIMENTO });
+      const { _modoPessoa, _novoColaborador, ...rest } = payload;
+      let colaboradorId = rest.colaborador_id;
+      let colaboradorNome = rest.colaborador_nome;
+
+      if (_novoColaborador) {
+        const col = await criarColaboradorParaFolha(_novoColaborador);
+        colaboradorId = col.id;
+        colaboradorNome = col.nome;
       }
+
+      await salvarCadastroPessoaFolha(
+        { ...rest, colaborador_id: colaboradorId, colaborador_nome: colaboradorNome },
+        pessoaDialog?.id || null,
+      );
       invalidate();
-      setModeloDialog(null);
-      toast({ title: 'Modelo salvo' });
+      setPessoaDialog(null);
+      toast({ title: 'Pessoa salva', description: 'Ela já entra na programação e na projeção.' });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
@@ -190,12 +219,14 @@ export default function FolhaPrevisaoPage() {
     }
   };
 
-  const handleDuplicateModelo = async (modelo) => {
+  const handleDeletePessoa = async (cadastro) => {
+    const nome = cadastro.colaborador_nome || cadastro.nome || 'esta pessoa';
+    if (!window.confirm(`Remover ${nome} da folha? A programação deixa de incluí-la.`)) return;
     setSaving(true);
     try {
-      await duplicarModelo(modelo);
+      await base44.entities.FolhaPrevisaoModelo.delete(cadastro.id);
       invalidate();
-      toast({ title: 'Modelo duplicado', description: 'Ajuste o nome e os dados do novo modelo.' });
+      toast({ title: 'Removido da folha' });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
@@ -210,7 +241,7 @@ export default function FolhaPrevisaoPage() {
       await registrarDesligamento(desligamentoModelo.id, dados);
       invalidate();
       setDesligamentoModelo(null);
-      setModeloDialog(null);
+      setPessoaDialog(null);
       toast({
         title: 'Desligamento registrado',
         description: `${desligamentoModelo.colaborador_nome || desligamentoModelo.nome} não entrará nos meses seguintes.`,
@@ -309,9 +340,9 @@ export default function FolhaPrevisaoPage() {
             <TrendingUp className="w-4 h-4" />
             <span className="hidden md:inline text-sm">Projeção 12 meses</span>
           </TabsTrigger>
-          <TabsTrigger value="modelos" className="flex-1 gap-2 rounded-lg py-2.5 min-h-[44px] min-w-[120px]">
-            <LayoutTemplate className="w-4 h-4" />
-            <span className="hidden md:inline text-sm">Modelos</span>
+          <TabsTrigger value="pessoas" className="flex-1 gap-2 rounded-lg py-2.5 min-h-[44px] min-w-[120px]">
+            <Users className="w-4 h-4" />
+            <span className="hidden md:inline text-sm">Pessoas</span>
           </TabsTrigger>
         </TabsList>
 
@@ -343,7 +374,7 @@ export default function FolhaPrevisaoPage() {
 
           {(mesFuturo || qtdPlanejamento > 0) && (
             <p className="text-xs text-cyan-900 dark:text-cyan-200 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-3 py-2.5">
-              Modo planejamento: você já vê a previsão com base nos modelos cadastrados.
+              Modo planejamento: você já vê a previsão com base nas pessoas cadastradas.
               {mesFuturo ? ' Este mês ainda não precisa estar aberto para consultar os valores.' : ' Abra o mês quando quiser registrar vales e movimentos.'}
             </p>
           )}
@@ -353,7 +384,7 @@ export default function FolhaPrevisaoPage() {
           <FinanceiroListaEstado
             loading={loadingComp || loadingModelos}
             vazio={!loadingComp && !loadingModelos && competenciasFiltradas.length === 0}
-            vazioMensagem={`Nenhum colaborador com modelo ativo para ${formatCompetenciaLabel(competenciaMes)}${filtroVinculo !== 'todos' ? ` (${TIPO_VINCULO_LABELS[filtroVinculo]})` : ''}. Cadastre modelos vinculados.`}
+            vazioMensagem={`Nenhuma pessoa cadastrada para ${formatCompetenciaLabel(competenciaMes)}${filtroVinculo !== 'todos' ? ` (${TIPO_VINCULO_LABELS[filtroVinculo]})` : ''}. Cadastre na aba Pessoas.`}
             vazioIcon={Users}
           >
             <FolhaPrevisaoLista
@@ -367,7 +398,7 @@ export default function FolhaPrevisaoPage() {
 
           {!loadingComp && !loadingModelos && competenciasFiltradas.length === 0 && (
             <div className="flex justify-center -mt-6 pb-4 gap-2">
-              <Button variant="outline" onClick={() => setModeloDialog({})}>Cadastrar modelo</Button>
+              <Button variant="outline" onClick={() => setPessoaDialog({})}>Cadastrar pessoa</Button>
             </div>
           )}
         </TabsContent>
@@ -376,13 +407,13 @@ export default function FolhaPrevisaoPage() {
           <FolhaPrevisaoProjecao modelos={modelos} competenciaInicio={competenciaMes} />
         </TabsContent>
 
-        <TabsContent value="modelos" className="mt-4 space-y-3">
+        <TabsContent value="pessoas" className="mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground max-w-xl">
-              Um modelo por pessoa. Funcionários: salário, 13º, férias. Sócios: retirada fixa.
+              Cadastre cada pessoa uma vez: escolha se é funcionário ou sócio e informe salário ou retirada. Ela entra automaticamente na programação.
             </p>
-            <Button className="gap-2 shrink-0" onClick={() => setModeloDialog({})}>
-              <Plus className="h-4 w-4" /> Novo modelo
+            <Button className="gap-2 shrink-0" onClick={() => setPessoaDialog({})}>
+              <Plus className="h-4 w-4" /> Cadastrar pessoa
             </Button>
           </div>
 
@@ -390,27 +421,26 @@ export default function FolhaPrevisaoPage() {
 
           <FinanceiroListaEstado
             loading={loadingModelos}
-            vazio={!loadingModelos && modelosFiltrados.length === 0}
-            vazioMensagem="Nenhum modelo cadastrado."
-            vazioIcon={LayoutTemplate}
+            vazio={!loadingModelos && pessoasFiltradas.length === 0}
+            vazioMensagem="Nenhuma pessoa cadastrada na folha."
+            vazioIcon={Users}
           >
             <P38MobileLineList className="block md:!block rounded-lg">
-              {modelosFiltrados.map((m, i) => (
+              {pessoasFiltradas.map((m) => (
                 <FolhaPrevisaoModeloRow
                   key={m.id}
                   modelo={m}
-                  onEdit={setModeloDialog}
-                  onDuplicate={handleDuplicateModelo}
-                  onDesligar={setDesligamentoModelo}
-                  striped={i % 2 === 1}
+                  colaborador={colaboradoresMap[m.colaborador_id]}
+                  onEdit={setPessoaDialog}
+                  onDelete={handleDeletePessoa}
                 />
               ))}
             </P38MobileLineList>
           </FinanceiroListaEstado>
 
-          {!loadingModelos && modelosFiltrados.length === 0 && (
+          {!loadingModelos && pessoasFiltradas.length === 0 && (
             <div className="flex justify-center -mt-6 pb-4">
-              <Button onClick={() => setModeloDialog({})}>Criar primeiro modelo</Button>
+              <Button onClick={() => setPessoaDialog({})}>Cadastrar primeira pessoa</Button>
             </div>
           )}
         </TabsContent>
@@ -429,12 +459,12 @@ export default function FolhaPrevisaoPage() {
         abrindoMes={saving}
       />
 
-      <FolhaPrevisaoModeloDialog
-        open={modeloDialog !== null}
-        onClose={() => setModeloDialog(null)}
-        modelo={modeloDialog?.id ? modeloDialog : null}
-        colaboradores={colaboradores}
-        onSave={handleSaveModelo}
+      <FolhaPessoaDialog
+        open={pessoaDialog !== null}
+        onClose={() => setPessoaDialog(null)}
+        cadastro={pessoaDialog?.id ? pessoaDialog : null}
+        colaboradoresDisponiveis={colaboradoresDisponiveis}
+        onSave={handleSavePessoa}
         onDesligar={setDesligamentoModelo}
         onReativar={handleReativar}
         saving={saving}

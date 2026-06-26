@@ -553,6 +553,41 @@ export function mapaModelosPorColaborador(modelos) {
   return map;
 }
 
+/** Valor principal de provento (salário ou pró-labore) para exibição. */
+export function extrairSalarioBase(modelo) {
+  const rubricas = modelo?.rubricas || [];
+  const alvo = rubricas.find(
+    (r) =>
+      r.tipo === RUBRICA_TIPOS.PROVENTO &&
+      /salário|salario|pró-labore|pro-labore|provento/i.test(String(r.nome || '')),
+  );
+  if (alvo) return Number(alvo.valor_base) || 0;
+  const primeiro = rubricas.find((r) => r.tipo === RUBRICA_TIPOS.PROVENTO);
+  return Number(primeiro?.valor_base) || 0;
+}
+
+export function aplicarSalarioBaseNasRubricas(rubricas, valor, tipoVinculo = TIPO_VINCULO.FUNCIONARIO) {
+  const nomeAlvo = tipoVinculo === TIPO_VINCULO.SOCIO ? 'Pró-labore' : 'Salário base';
+  const lista = [...(rubricas?.length ? rubricas : criarRubricasPadrao(tipoVinculo))];
+  const idx = lista.findIndex(
+    (r) =>
+      r.tipo === RUBRICA_TIPOS.PROVENTO &&
+      (r.nome === nomeAlvo || /salário|salario|pró-labore|pro-labore/i.test(String(r.nome || ''))),
+  );
+  if (idx >= 0) {
+    lista[idx] = { ...lista[idx], nome: nomeAlvo, valor_base: Number(valor) || 0 };
+  } else {
+    lista.unshift({
+      id: gerarIdInterno('rub'),
+      tipo: RUBRICA_TIPOS.PROVENTO,
+      nome: nomeAlvo,
+      valor_base: Number(valor) || 0,
+      ordem: 1,
+    });
+  }
+  return lista;
+}
+
 export function clonarRubricas(rubricas) {
   return (rubricas || []).map((r) => ({
     ...r,

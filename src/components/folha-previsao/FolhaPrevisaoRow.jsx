@@ -67,7 +67,7 @@ export default function FolhaPrevisaoRow({ competencia, modelo, onClick, striped
       onClick={() => onClick?.(competencia)}
       className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] [&>div:last-child]:max-w-[46%] sm:[&>div:last-child]:max-w-[42%] ${desligado ? 'opacity-75' : ''} ${planejamento ? 'opacity-95' : ''}`}
       title={competencia.colaborador_nome}
-      subtitle={`${competencia.modelo_nome || 'Sem modelo'} · ${formatCicloFolhaCompetencia(competencia.competencia)}`}
+      subtitle={`${formatCicloFolhaCompetencia(competencia.competencia)}`}
       meta={meta}
       value={
         <>
