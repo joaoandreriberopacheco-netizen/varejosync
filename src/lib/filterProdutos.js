@@ -1,6 +1,10 @@
 import { isCadastroIncompleto } from '@/components/produtos/ProdutosHelpers';
 import { parseSearchTerms } from '@/lib/searchTokens';
 import {
+  produtoMatchesCategoryAreaTokens,
+  splitCatalogSearchTokens,
+} from '@/lib/catalogSearchArea';
+import {
   DEFAULT_CATALOG_METRIC_FILTER,
   describeNumericComparison,
   getProdutoNumericMetricValue,
@@ -67,10 +71,16 @@ export function isSomentePositivosFilter(filters) {
   return valor === 0;
 }
 
-/** Busca por nome/descrição/códigos; espaço ou ";" exigem múltiplos termos. */
+/** Busca por nome/descrição/códigos; espaço ou ";" exigem múltiplos termos.
+ *  Termos com prefixo XX filtram pela categoria de cadastro (ex.: cuba XXmolhadas, XXj-). */
 export function produtoMatchesSearchTerm(produto, rawTerm, options = {}) {
   const terms = getSearchTokens(rawTerm);
   if (terms.length === 0) return true;
+
+  const { textTerms, areaNeedles } = splitCatalogSearchTokens(terms);
+  if (!produtoMatchesCategoryAreaTokens(produto, areaNeedles)) return false;
+  if (textTerms.length === 0) return true;
+
   const startsWith = options.startsWith ?? options.searchStartsWith ?? false;
   const haystack = [
     produto?.nome,
@@ -83,7 +93,7 @@ export function produtoMatchesSearchTerm(produto, rawTerm, options = {}) {
   ]
     .filter(Boolean)
     .map((s) => String(s).toLowerCase());
-  return terms.every((term) =>
+  return textTerms.every((term) =>
     haystack.some((s) => (startsWith ? s.startsWith(term) : s.includes(term)))
   );
 }
@@ -195,12 +205,24 @@ export function describeProdutoFilters(filters, { categorias = [], fornecedores 
   const term = (filters.searchTerm || '').trim();
   if (term) {
     const modo = filters.searchStartsWith ? 'começa com' : 'contém';
-    const termos = getSearchTokens(term);
-    parts.push(
-      termos.length > 1
-        ? `nome/descrição ${modo} todos: ${termos.map((t) => `"${t}"`).join(' + ')}`
-        : `nome/descrição ${modo} "${term}"`
-    );
+    const tokens = getSearchTokens(term);
+    const { textTerms, areaNeedles } = splitCatalogSearchTokens(tokens);
+
+    if (areaNeedles.length > 0) {
+      parts.push(
+        areaNeedles.length > 1
+          ? `área/categoria (XX): ${areaNeedles.map((needle) => `"${needle}"`).join(' + ')}`
+          : `área/categoria (XX): "${areaNeedles[0]}"`
+      );
+    }
+
+    if (textTerms.length > 0) {
+      parts.push(
+        textTerms.length > 1
+          ? `nome/descrição ${modo} todos: ${textTerms.map((t) => `"${t}"`).join(' + ')}`
+          : `nome/descrição ${modo} "${textTerms.join(' ')}"`
+      );
+    }
   }
   if (filters.categoria && filters.categoria !== 'all') parts.push(`categoria: ${filters.categoria}`);
   if (filters.fornecedorId && filters.fornecedorId !== 'all') {

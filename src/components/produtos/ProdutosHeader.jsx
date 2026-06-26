@@ -227,7 +227,7 @@ export default function ProdutosHeader({
           <div className="relative w-full min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none desktop-layout:left-3" />
             <Input
-              placeholder="Nome ou descrição (espaço ou ; para combinar termos)..."
+              placeholder="Nome ou descrição (espaço ou ; para combinar). XXmolhadas ou XXj- filtra por categoria..."
               className="border-none bg-muted h-10 desktop-layout:h-11 text-sm pl-9 desktop-layout:pl-10 text-foreground/90 shadow-none focus-visible:ring-0 w-full min-w-0 rounded-xl"
               value={filters.searchTerm}
               onChange={e => handleFilterChange('searchTerm', e.target.value)}
