@@ -4,7 +4,7 @@ import App from '@/App.jsx'
 import '@/index.css'
 import { installMobileFocusPolicy } from '@/lib/focusPolicy'
 import { uppercaseInputValue } from '@/lib/uppercaseInputHandlers'
-import { reloadOnceOnChunkError } from '@/lib/lazyPage'
+import { installChunkErrorHandlers, reloadOnceOnChunkError } from '@/lib/lazyPage'
 
 // Tema antes da primeira pintura (splash, login, etc.)
 try {
@@ -31,6 +31,22 @@ document.addEventListener('focusin', (e) => {
 document.addEventListener('blur', (e) => uppercaseInputValue(e.target), true);
 
 installMobileFocusPolicy();
+installChunkErrorHandlers();
+
+/** Remove SW antigo no preview/dev (cache de /src/*.jsx quebrava HMR). */
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  const host = window.location.hostname;
+  const isPreviewOrDev =
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host.includes('base44.app') ||
+    window.location.port === '5173';
+  if (isPreviewOrDev) {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((reg) => reg.unregister());
+    }).catch(() => {});
+  }
+}
 
 if (typeof window !== 'undefined') {
   window.addEventListener('vite:preloadError', (event) => {

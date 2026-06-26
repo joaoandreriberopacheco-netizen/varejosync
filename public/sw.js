@@ -110,6 +110,18 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith(self.location.origin)) return;
 
+  // Vite dev / HMR — nunca interceptar (evita módulos .jsx em cache desatualizado).
+  const path = url.pathname || '';
+  if (
+    path.startsWith('/src/') ||
+    path.startsWith('/@') ||
+    path.includes('/node_modules/') ||
+    path.endsWith('.jsx') ||
+    path.endsWith('.tsx')
+  ) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {

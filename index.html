@@ -21,17 +21,28 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
+      // PWA offline/share — só em produção real. No preview Base44 e no Vite dev o SW
+      // cacheia /src/*.jsx e quebra imports dinâmicos após HMR.
+      (function () {
+        var host = location.hostname;
+        var isPreviewOrDev =
+          host === 'localhost' ||
+          host === '127.0.0.1' ||
+          host.indexOf('base44.app') !== -1 ||
+          location.port === '5173';
+        if (!('serviceWorker' in navigator) || isPreviewOrDev) return;
+        window.addEventListener('load', function () {
           navigator.serviceWorker
             .register('/sw.js', { scope: '/', updateViaCache: 'none' })
-            .then((registration) => {
+            .then(function (registration) {
               registration.update();
               console.log('ServiceWorker registered:', registration.scope);
             })
-            .catch((e) => console.warn('ServiceWorker registration failed:', e));
+            .catch(function (e) {
+              console.warn('ServiceWorker registration failed:', e);
+            });
         });
-      }
+      })();
     </script>
   </body>
 </html>
