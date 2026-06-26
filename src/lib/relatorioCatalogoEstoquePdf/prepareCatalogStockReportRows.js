@@ -1,4 +1,4 @@
-import { buildCategoryTree } from '@/components/produtos/treegrid/useTreeGrid';
+import { buildCategoryTree, collectSkus } from '@/components/produtos/treegrid/useTreeGrid';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import { compareTreeLabels } from '@/lib/treeSort';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
@@ -19,7 +19,7 @@ function prepareCategoryGroupedRows(produtos, sortOrder = 'az') {
 
   for (const key of categoryKeys) {
     const node = tree[key];
-    const skus = [...(node?.skus || [])].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
+    const skus = [...collectSkus(node)].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
     if (!skus.length) continue;
 
     const totals = sumCatalogStockTotals(skus);

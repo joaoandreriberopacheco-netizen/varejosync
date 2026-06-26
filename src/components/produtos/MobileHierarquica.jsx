@@ -645,33 +645,34 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false }) {
+export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2 }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
   const [page, setPage] = useState(0);
 
   const tree = useCatalogTreeGrid(produtos, { groupByCategory });
   const produtosSig = useMemo(
-    () => produtos.map((p) => `${p?.id}|${groupByCategory ? (p?.categoria_nome || '') : ''}`).filter(Boolean).join('\0'),
+    () => produtos.map((p) => [
+      p?.id,
+      groupByCategory ? (p?.categoria_nome || '') : '',
+      (p?.campo_hierarquico_1 || '').trim(),
+      (p?.campo_hierarquico_2 || '').trim(),
+    ].join('|')).filter(Boolean).join('\0'),
     [produtos, groupByCategory]
   );
 
   // Reinicia expansão só quando o conjunto de produtos filtrados muda — não a cada rebuild da árvore.
   useEffect(() => {
     setExpandedKeys(
-      groupByCategory
-        ? buildExpandedForLevel(tree, 99)
-        : buildExpandedForLevel(tree, 1)
+      masterLevel === 1 ? new Set() : buildExpandedForLevel(tree, masterLevel - 1)
     );
     setPage(0);
-  }, [produtosSig, groupByCategory, tree]);
+  }, [produtosSig, groupByCategory, masterLevel, tree]);
 
   const rows = useMemo(() => {
-    const all = mergeAdjacentDuplicateGroupHeaders(
-      flattenTree(tree, expandedKeys, '', 0, 'az', { showLeafGroupHeaders: groupByCategory })
-    );
+    const all = mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys));
     return all.filter(r => !(r.type === 'group' && r.count === 0));
-  }, [tree, expandedKeys, groupByCategory]);
+  }, [tree, expandedKeys]);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);

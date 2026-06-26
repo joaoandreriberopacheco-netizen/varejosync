@@ -361,10 +361,7 @@ export default function ProdutosHeader({
 
         {isFilterOpen && (
           <div className="rounded-2xl border border-border/40 bg-muted/25 p-2.5 space-y-3 desktop-layout:rounded-none desktop-layout:border-0 desktop-layout:bg-transparent desktop-layout:p-0 desktop-layout:grid desktop-layout:grid-cols-6 desktop-layout:gap-2 desktop-layout:space-y-0 desktop-layout:pb-1">
-            <div className={cn(
-              'hidden desktop-layout:flex items-center gap-2 bg-muted rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2',
-              groupTreeByCategory && 'opacity-50 pointer-events-none',
-            )}>
+            <div className="hidden desktop-layout:flex items-center gap-2 bg-muted rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2">
               <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
               <LevelControl level={treeLevel} onChange={setTreeLevel} />
             </div>

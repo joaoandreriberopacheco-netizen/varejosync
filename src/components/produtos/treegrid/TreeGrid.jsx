@@ -458,23 +458,14 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     if (scrollEl) {
       pendingScrollRestoreRef.current = scrollEl.scrollTop;
     }
-    if (groupByCategory) {
-      setExpandedKeys(buildExpandedForLevel(treeRef.current, TREE_GRID_EXPAND_ALL_LEVEL));
-      return;
-    }
     setExpandedKeys(
       masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
     );
   }, [masterLevel, tree, groupByCategory]);
 
-  const flattenOptions = useMemo(
-    () => ({ showLeafGroupHeaders: groupByCategory }),
-    [groupByCategory]
-  );
-
   const rows = useMemo(
-    () => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder, flattenOptions)),
-    [tree, expandedKeys, sortOrder, flattenOptions]
+    () => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder)),
+    [tree, expandedKeys, sortOrder]
   );
 
   useLayoutEffect(() => {

@@ -190,19 +190,34 @@ export function aggregateSkus(skus) {
   };
 }
 
-// ── Árvore plana por categoria de cadastro (categoria_nome) ─────────────────
+// ── Árvore por categoria de cadastro, com hierarquia h1–h4 dentro de cada grupo ─
 export function buildCategoryTree(produtos) {
   const root = {};
+  const byCategory = new Map();
 
   for (const p of produtos) {
     const custo = calcCusto(p);
     p.inventario_valorizado = custo * (p.estoque_atual || 0);
     const label = (p.categoria_nome || 'Sem categoria').trim() || 'Sem categoria';
+    if (!byCategory.has(label)) byCategory.set(label, []);
+    byCategory.get(label).push(p);
+  }
 
-    if (!root[label]) {
-      root[label] = { label, level: 1, children: {}, skus: [] };
+  for (const [catLabel, catProducts] of byCategory) {
+    const inner = buildTree(catProducts);
+    const children = {};
+
+    for (const [key, node] of Object.entries(inner)) {
+      if (key === '_rootSkus') continue;
+      children[key] = node;
     }
-    root[label].skus.push(p);
+
+    root[catLabel] = {
+      label: catLabel,
+      level: 1,
+      children,
+      skus: inner._rootSkus || [],
+    };
   }
 
   function precompute(nodeMap) {
@@ -508,6 +523,10 @@ function categoryTreeSignature(produtos) {
       [
         p?.id,
         (p?.categoria_nome || '').trim(),
+        (p?.campo_hierarquico_1 || '').trim(),
+        (p?.campo_hierarquico_2 || '').trim(),
+        (p?.campo_hierarquico_3 || '').trim(),
+        (p?.campo_hierarquico_4 || '').trim(),
         p?.estoque_atual ?? '',
         p?.preco_custo_calculado ?? '',
         p?.preco_venda_padrao ?? '',
