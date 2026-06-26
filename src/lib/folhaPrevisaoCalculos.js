@@ -24,6 +24,19 @@ export const MOVIMENTO_LABELS = {
   ferias: 'Férias',
 };
 
+/** Situação do pagamento do movimento (vale ligado ao fluxo de caixa) */
+export const MOVIMENTO_STATUS_PAGAMENTO = {
+  PENDENTE: 'pendente',
+  PAGO: 'pago',
+  CANCELADO: 'cancelado',
+};
+
+export const MOVIMENTO_STATUS_PAGAMENTO_LABELS = {
+  pendente: 'Em aberto',
+  pago: 'Pago',
+  cancelado: 'Cancelado',
+};
+
 export const RUBRICA_LABELS = {
   provento: 'Provento',
   desconto: 'Desconto',
@@ -177,9 +190,21 @@ function sumRubricas(rubricas, tipo) {
     .reduce((acc, r) => acc + (Number(r.valor_base) || 0), 0);
 }
 
-function sumMovimentos(movimentos, tipos) {
+export function statusPagamentoMovimento(movimento) {
+  return movimento?.status_pagamento || MOVIMENTO_STATUS_PAGAMENTO.PAGO;
+}
+
+export function movimentoAtivoNoCalculo(movimento) {
+  return statusPagamentoMovimento(movimento) !== MOVIMENTO_STATUS_PAGAMENTO.CANCELADO;
+}
+
+function sumMovimentos(movimentos, tipos, { apenasStatus } = {}) {
   return (movimentos || [])
-    .filter((m) => tipos.includes(m.tipo))
+    .filter((m) => tipos.includes(m.tipo) && movimentoAtivoNoCalculo(m))
+    .filter((m) => {
+      if (!apenasStatus?.length) return true;
+      return apenasStatus.includes(statusPagamentoMovimento(m));
+    })
     .reduce((acc, m) => acc + Math.abs(Number(m.valor) || 0), 0);
 }
 
@@ -301,6 +326,12 @@ export function calcularTotaisCompetencia(competencia, modelo = null) {
   const custoTotalEmpresa = liquido + encargosEmpresa;
 
   const totalVales = sumMovimentos(movimentos, [MOVIMENTO_TIPOS.VALE]);
+  const totalValesPendentes = sumMovimentos(movimentos, [MOVIMENTO_TIPOS.VALE], {
+    apenasStatus: [MOVIMENTO_STATUS_PAGAMENTO.PENDENTE],
+  });
+  const totalValesPagos = sumMovimentos(movimentos, [MOVIMENTO_TIPOS.VALE], {
+    apenasStatus: [MOVIMENTO_STATUS_PAGAMENTO.PAGO],
+  });
   const totalHorasExtra = sumMovimentos(movimentos, [MOVIMENTO_TIPOS.HORA_EXTRA]);
   const totalComissoes = sumMovimentos(movimentos, [MOVIMENTO_TIPOS.COMISSAO_VENDA]);
   const totalDecimo = provisoes
@@ -325,6 +356,8 @@ export function calcularTotaisCompetencia(competencia, modelo = null) {
     liquido,
     custoTotalEmpresa,
     totalVales,
+    totalValesPendentes,
+    totalValesPagos,
     totalHorasExtra,
     totalComissoes,
     totalDecimo,

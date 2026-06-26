@@ -99,8 +99,13 @@ function FuncionarioCard({ competencia, modelo, onOpen }) {
           <div className="font-semibold tabular-nums">{formatCurrency(totais.custoTotalEmpresa)}</div>
         </div>
       </div>
-      {(totais.totalDecimo > 0 || totais.totalFerias > 0 || totais.totalRetiradaSocio > 0) && (
+      {(totais.totalDecimo > 0 || totais.totalFerias > 0 || totais.totalRetiradaSocio > 0 || totais.totalValesPendentes > 0) && (
         <div className="mt-2 flex flex-wrap gap-1">
+          {totais.totalValesPendentes > 0 && (
+            <span className="text-[10px] rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+              Vale em aberto {formatCurrency(totais.totalValesPendentes)}
+            </span>
+          )}
           {totais.totalDecimo > 0 && (
             <span className="text-[10px] rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
               13º {formatCurrency(totais.totalDecimo)}

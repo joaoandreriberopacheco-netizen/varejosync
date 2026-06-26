@@ -1010,6 +1010,7 @@ export default function PDVCaixa({
             data: dataHoje,
             lancamentoId: lancamento.id,
             descricao: descricaoFinal,
+            lancamentoPago: true,
           });
         } catch (err) {
           toast({

@@ -1,5 +1,5 @@
 import { base44 } from '@/api/base44Client';
-import { MOVIMENTO_TIPOS, SITUACAO_FOLHA } from '@/lib/folhaPrevisaoCalculos';
+import { MOVIMENTO_STATUS_PAGAMENTO, MOVIMENTO_TIPOS, SITUACAO_FOLHA } from '@/lib/folhaPrevisaoCalculos';
 import {
   adicionarMovimento,
   garantirCompetencia,
@@ -25,6 +25,19 @@ export async function listarPessoasFolhaParaVale() {
     .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
 }
 
+export function lancamentoEhValeFolha(lancamento) {
+  return Array.isArray(lancamento?.tags) && lancamento.tags.includes('vale_folha');
+}
+
+export function resolverStatusPagamentoVale(lancamento) {
+  if (!lancamento) return MOVIMENTO_STATUS_PAGAMENTO.PENDENTE;
+  if (lancamento.status === 'Cancelado') return MOVIMENTO_STATUS_PAGAMENTO.CANCELADO;
+  if (lancamento.status === 'Pago' || lancamento.data_pagamento) {
+    return MOVIMENTO_STATUS_PAGAMENTO.PAGO;
+  }
+  return MOVIMENTO_STATUS_PAGAMENTO.PENDENTE;
+}
+
 /**
  * Registra o vale na competência da folha após criar o lançamento no fluxo.
  * Falha silenciosa não — propaga erro para o dialog avisar.
@@ -35,6 +48,7 @@ export async function registrarValeNoFolhaAposLancamento({
   data,
   lancamentoId,
   descricao,
+  lancamentoPago = true,
 }) {
   const modelo = await base44.entities.FolhaPrevisaoModelo.get(modeloId);
   if (!modelo?.colaborador_id) {
@@ -64,9 +78,49 @@ export async function registrarValeNoFolhaAposLancamento({
     descricao: descricao || `Vale — ${colaborador.nome}`,
     referencia_id: lancamentoId || '',
     referencia_tipo: 'LancamentoFinanceiro',
+    status_pagamento: lancamentoPago
+      ? MOVIMENTO_STATUS_PAGAMENTO.PAGO
+      : MOVIMENTO_STATUS_PAGAMENTO.PENDENTE,
   });
 
   return comp;
+}
+
+/**
+ * Atualiza o status do vale na folha quando o lançamento financeiro muda
+ * (ex.: marcar como pago no fluxo de caixa).
+ */
+export async function sincronizarValeFolhaComLancamento(lancamento) {
+  if (!lancamentoEhValeFolha(lancamento) || !lancamento.id) return null;
+
+  const competencia = (
+    lancamento.data_vencimento ||
+    lancamento.data_pagamento ||
+    ''
+  ).slice(0, 7);
+  if (!/^\d{4}-\d{2}$/.test(competencia)) return null;
+
+  const novoStatus = resolverStatusPagamentoVale(lancamento);
+  const comps = await base44.entities.FolhaPrevisaoCompetencia.filter({ competencia });
+
+  for (const comp of comps || []) {
+    const movimentos = comp.movimentos || [];
+    const idx = movimentos.findIndex(
+      (m) =>
+        m.referencia_id === lancamento.id &&
+        m.referencia_tipo === 'LancamentoFinanceiro' &&
+        m.tipo === MOVIMENTO_TIPOS.VALE,
+    );
+    if (idx === -1) continue;
+
+    if (movimentos[idx].status_pagamento === novoStatus) return comp;
+
+    const atualizados = [...movimentos];
+    atualizados[idx] = { ...atualizados[idx], status_pagamento: novoStatus };
+    return base44.entities.FolhaPrevisaoCompetencia.update(comp.id, { movimentos: atualizados });
+  }
+
+  return null;
 }
 
 export function montarTagsValeFolha(tagsBase, pessoa) {

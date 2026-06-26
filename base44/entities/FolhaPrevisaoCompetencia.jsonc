@@ -84,7 +84,12 @@
           "descricao": { "type": "string" },
           "valor": { "type": "number" },
           "referencia_id": { "type": "string" },
-          "referencia_tipo": { "type": "string" }
+          "referencia_tipo": { "type": "string" },
+          "status_pagamento": {
+            "type": "string",
+            "enum": ["pendente", "pago", "cancelado"],
+            "description": "Situação do pagamento no fluxo (vale ligado a LancamentoFinanceiro)"
+          }
         }
       }
     }

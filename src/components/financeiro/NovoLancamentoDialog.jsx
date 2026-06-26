@@ -567,6 +567,7 @@ export default function NovoLancamentoDialog({
             data: dataVenc,
             lancamentoId: novoLancamento.id,
             descricao: descricaoNorm,
+            lancamentoPago: realizado,
           });
         } catch (err) {
           toast({
@@ -579,7 +580,9 @@ export default function NovoLancamentoDialog({
     }
 
     toast({
-      title: isValeFolha ? 'Vale registrado no fluxo e na folha' : 'Lançamento salvo!',
+      title: isValeFolha
+        ? (realizado ? 'Vale registrado no fluxo e na folha' : 'Vale em aberto — já aparece na folha como pendente')
+        : 'Lançamento salvo!',
     });
     if (tipo !== 'Transferência') {
       gravarPreferenciasLancamento(tipo, {
