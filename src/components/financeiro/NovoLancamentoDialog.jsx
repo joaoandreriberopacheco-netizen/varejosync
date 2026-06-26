@@ -17,6 +17,12 @@ import { resolverDataLancamentoInput } from '@/lib/lancamentoOrdemMeta';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
 import RecorrenciaEscopoDialog from './RecorrenciaEscopoDialog';
 import {
+  descricaoPadraoVale,
+  listarPessoasFolhaParaVale,
+  montarTagsValeFolha,
+  registrarValeNoFolhaAposLancamento,
+} from '@/lib/folhaValeFluxo';
+import {
   precisaEscopoRecorrenciaCadastro,
   precisaEscopoRecorrenciaPagamento,
   salvarEdicaoLancamentoFinanceiro,
@@ -83,6 +89,10 @@ export default function NovoLancamentoDialog({
   const [showEscopoPagamento, setShowEscopoPagamento] = useState(false);
   const [showEscopoCadastro, setShowEscopoCadastro] = useState(false);
   const [pendingEscopoPagamento, setPendingEscopoPagamento] = useState('apenas_esta');
+  const [isValeFolha, setIsValeFolha] = useState(false);
+  const [valeFolhaModeloId, setValeFolhaModeloId] = useState('');
+  const [pessoasFolha, setPessoasFolha] = useState([]);
+  const [loadingPessoasFolha, setLoadingPessoasFolha] = useState(false);
   const { toast } = useToast();
   const { categorias, reload: reloadCats } = useCategorias();
 
@@ -114,6 +124,8 @@ export default function NovoLancamentoDialog({
     setShowEscopoPagamento(false);
     setShowEscopoCadastro(false);
     setPendingEscopoPagamento('apenas_esta');
+    setIsValeFolha(false);
+    setValeFolhaModeloId('');
   };
 
   const popularDeLancamento = (l) => {
@@ -169,6 +181,35 @@ export default function NovoLancamentoDialog({
       setCategoriaId(prefs.categoriaId || '');
     }
   }, [open, tipo, contas, categorias, contaDefaultId, origemContaPagar]);
+
+  useEffect(() => {
+    if (!open || modoEdicao) return;
+    setLoadingPessoasFolha(true);
+    listarPessoasFolhaParaVale()
+      .then(setPessoasFolha)
+      .catch(() => setPessoasFolha([]))
+      .finally(() => setLoadingPessoasFolha(false));
+  }, [open, modoEdicao]);
+
+  const handleValeFolhaToggle = (ativo) => {
+    setIsValeFolha(ativo);
+    if (ativo) {
+      setTipo('Despesa');
+      setIsRecorrente(false);
+      if (!valeFolhaModeloId && pessoasFolha.length === 1) {
+        setValeFolhaModeloId(pessoasFolha[0].id);
+        setDescricao(descricaoPadraoVale(pessoasFolha[0].nome));
+      }
+    } else {
+      setValeFolhaModeloId('');
+    }
+  };
+
+  const handleValeFolhaPessoa = (modeloId) => {
+    setValeFolhaModeloId(modeloId);
+    const pessoa = pessoasFolha.find((p) => p.id === modeloId);
+    if (pessoa) setDescricao(descricaoPadraoVale(pessoa.nome));
+  };
 
   const previewOrdemLancamento = useMemo(() => {
     if (!dataLancamento) return null;
@@ -358,6 +399,16 @@ export default function NovoLancamentoDialog({
       toast({ title: 'Selecione a conta para registrar o pagamento', variant: 'destructive' });
       return;
     }
+    if (isValeFolha) {
+      if (!valeFolhaModeloId) {
+        toast({ title: 'Selecione quem vai receber o vale', variant: 'destructive' });
+        return;
+      }
+      if (isRecorrente) {
+        toast({ title: 'Vale não pode ser lançamento recorrente', variant: 'destructive' });
+        return;
+      }
+    }
 
     const descricaoNorm = normalizeDataText(descricao.trim());
     const categoriaNorm = normalizeDataText(categoria);
@@ -370,6 +421,8 @@ export default function NovoLancamentoDialog({
     let lancamentoParaCallback = null;
     const conta = contas.find((c) => c.id === contaId);
     const pedidoCompra = pedidoCompraId ? pedidosCompra.find((p) => p.id === pedidoCompraId) : null;
+    const pessoaVale = isValeFolha ? pessoasFolha.find((p) => p.id === valeFolhaModeloId) : null;
+    const tagsSalvar = isValeFolha && pessoaVale ? montarTagsValeFolha(tags, pessoaVale) : tags;
 
     if (tipo === 'Transferência') {
       if (!contaDestinoId) {
@@ -426,7 +479,7 @@ export default function NovoLancamentoDialog({
             status_conciliacao: i === 0 && realizado ? 'Pendente' : 'N/A',
             categoria: categoriaNorm,
             categoria_id: categoriaId,
-            tags,
+            tags: tagsSalvar,
             conta_financeira_id: contaId,
             conta_financeira_nome: conta?.nome,
             referencia_tipo: 'Manual',
@@ -457,7 +510,7 @@ export default function NovoLancamentoDialog({
             status_conciliacao: i === 0 && realizado ? 'Pendente' : 'N/A',
             categoria: categoriaNorm,
             categoria_id: categoriaId,
-            tags,
+            tags: tagsSalvar,
             conta_financeira_id: contaId,
             conta_financeira_nome: conta?.nome,
             referencia_tipo: 'Manual',
@@ -492,7 +545,7 @@ export default function NovoLancamentoDialog({
         status_conciliacao: realizado ? 'Pendente' : 'N/A',
         categoria: categoriaNorm,
         categoria_id: categoriaId,
-        tags,
+        tags: tagsSalvar,
         conta_financeira_id: contaId,
         conta_financeira_nome: conta?.nome,
         referencia_tipo: referenciaTipo || 'Manual',
@@ -505,9 +558,29 @@ export default function NovoLancamentoDialog({
         await sincronizarSaldosAposAlteracao(base44, [conta.id]);
       }
       lancamentoParaCallback = novoLancamento;
+
+      if (isValeFolha && valeFolhaModeloId && novoLancamento?.id) {
+        try {
+          await registrarValeNoFolhaAposLancamento({
+            modeloId: valeFolhaModeloId,
+            valor: valorNumerico,
+            data: dataVenc,
+            lancamentoId: novoLancamento.id,
+            descricao: descricaoNorm,
+          });
+        } catch (err) {
+          toast({
+            title: 'Lançamento salvo, mas vale não entrou na folha',
+            description: err?.message || 'Abra a Folha e registre o vale manualmente.',
+            variant: 'destructive',
+          });
+        }
+      }
     }
 
-    toast({ title: 'Lançamento salvo!' });
+    toast({
+      title: isValeFolha ? 'Vale registrado no fluxo e na folha' : 'Lançamento salvo!',
+    });
     if (tipo !== 'Transferência') {
       gravarPreferenciasLancamento(tipo, {
         contaId,
@@ -569,7 +642,10 @@ export default function NovoLancamentoDialog({
         tags={tags}
         onTagsChange={setTags}
         isRecorrente={isRecorrente}
-        onRecorrenteToggle={setIsRecorrente}
+        onRecorrenteToggle={(v) => {
+          setIsRecorrente(v);
+          if (v) setIsValeFolha(false);
+        }}
         frequencia={frequencia}
         onFrequencia={setFrequencia}
         parcelas={parcelas}
@@ -578,6 +654,13 @@ export default function NovoLancamentoDialog({
         onDataFim={setDataFim}
         isCustoMercadoria={isCustoMercadoria}
         onCustoMercadoriaChange={setIsCustoMercadoria}
+        isValeFolha={isValeFolha}
+        onValeFolhaToggle={handleValeFolhaToggle}
+        valeFolhaModeloId={valeFolhaModeloId}
+        onValeFolhaPessoaChange={handleValeFolhaPessoa}
+        pessoasFolha={pessoasFolha}
+        loadingPessoasFolha={loadingPessoasFolha}
+        bloquearValeFolha={modoEdicao || tipo === 'Transferência'}
         pedidoCompraId={pedidoCompraId}
         onPedidoCompraIdChange={setPedidoCompraId}
         pedidosCompra={pedidosCompra}
