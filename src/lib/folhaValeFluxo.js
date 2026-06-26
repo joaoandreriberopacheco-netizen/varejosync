@@ -1,5 +1,5 @@
 import { base44 } from '@/api/base44Client';
-import { MOVIMENTO_STATUS_PAGAMENTO, MOVIMENTO_TIPOS, SITUACAO_FOLHA } from '@/lib/folhaPrevisaoCalculos';
+import { MOVIMENTO_STATUS_PAGAMENTO, MOVIMENTO_TIPOS, SITUACAO_FOLHA, competenciaEstaFechada, formatCompetenciaLabel } from '@/lib/folhaPrevisaoCalculos';
 import {
   adicionarMovimento,
   garantirCompetencia,
@@ -69,6 +69,11 @@ export async function registrarValeNoFolhaAposLancamento({
   const comp = await garantirCompetencia({ colaborador, modelo, competencia });
   if (!comp) {
     throw new Error('Esta pessoa não está ativa na folha deste mês.');
+  }
+  if (competenciaEstaFechada(comp)) {
+    throw new Error(
+      `A folha de ${formatCompetenciaLabel(competencia)} já fechou. Vales só entram até o último dia do mês.`,
+    );
   }
 
   await adicionarMovimento(comp.id, {

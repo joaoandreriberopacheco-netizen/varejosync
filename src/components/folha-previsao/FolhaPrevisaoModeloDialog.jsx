@@ -22,6 +22,7 @@ import {
   criarModeloComDefaults,
   criarRubricasPadrao,
   formatDataBr,
+  FOLHA_DIA_VENCIMENTO,
   gerarIdInterno,
 } from '@/lib/folhaPrevisaoCalculos';
 
@@ -237,14 +238,10 @@ export default function FolhaPrevisaoModeloDialog({
             </Select>
           </div>
           <div>
-            <Label>Dia de pagamento</Label>
-            <Input
-              type="number"
-              min={1}
-              max={31}
-              value={form.dia_vencimento}
-              onChange={(e) => setForm({ ...form, dia_vencimento: parseInt(e.target.value, 10) || 5 })}
-            />
+            <Label>Pagamento</Label>
+            <p className="text-sm text-muted-foreground mt-1.5 rounded-lg bg-muted/40 px-3 py-2">
+              Pagamento no dia {FOLHA_DIA_VENCIMENTO} do mês seguinte à competência. Fechamento automático no último dia de cada mês.
+            </p>
           </div>
 
           {ehSocio && (

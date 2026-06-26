@@ -35,6 +35,8 @@ import {
   TIPO_VINCULO_LABELS,
   filtrarCompetenciasPorTipo,
   agruparCompetenciasPorTipo,
+  formatCicloFolhaCompetencia,
+  FOLHA_DIA_VENCIMENTO,
 } from '@/lib/folhaPrevisaoCalculos';
 import {
   abrirCompetenciasDoMes,
@@ -47,6 +49,7 @@ import {
   registrarDesligamento,
   removerMovimento,
   sincronizarLancamentoFinanceiro,
+  sincronizarFechamentoCompetencias,
 } from '@/lib/folhaPrevisaoService';
 
 const FILTRO_VINCULO_OPTS = [
@@ -89,7 +92,10 @@ export default function FolhaPrevisaoPage() {
 
   const { data: competencias = [], isLoading: loadingComp } = useQuery({
     queryKey: ['folha-previsao', 'competencias', competenciaMes],
-    queryFn: () => listarCompetencias(competenciaMes),
+    queryFn: async () => {
+      await sincronizarFechamentoCompetencias(competenciaMes);
+      return listarCompetencias(competenciaMes);
+    },
   });
 
   const { data: modelos = [], isLoading: loadingModelos } = useQuery({
@@ -152,9 +158,9 @@ export default function FolhaPrevisaoPage() {
     setSaving(true);
     try {
       if (modeloDialog?.id) {
-        await base44.entities.FolhaPrevisaoModelo.update(modeloDialog.id, payload);
+        await base44.entities.FolhaPrevisaoModelo.update(modeloDialog.id, { ...payload, dia_vencimento: FOLHA_DIA_VENCIMENTO });
       } else {
-        await base44.entities.FolhaPrevisaoModelo.create(payload);
+        await base44.entities.FolhaPrevisaoModelo.create({ ...payload, dia_vencimento: FOLHA_DIA_VENCIMENTO });
       }
       invalidate();
       setModeloDialog(null);
@@ -263,7 +269,7 @@ export default function FolhaPrevisaoPage() {
       <div className="pb-3 border-b border-border/40">
         <h1 className="text-xl font-medium text-foreground mb-0.5">Folha</h1>
         <p className="text-xs text-muted-foreground">
-          Previsão de custos com pessoas — funcionários e sócios. Lançamentos enviados ao financeiro aparecem no Fluxo de Caixa.
+          Previsão de custos com pessoas. A folha fecha no último dia de cada mês e o pagamento vence no dia {FOLHA_DIA_VENCIMENTO} do mês seguinte.
         </p>
       </div>
 
@@ -305,7 +311,7 @@ export default function FolhaPrevisaoPage() {
           <FolhaPrevisaoResumo
             totais={totaisGrupo}
             count={totaisGrupo.count}
-            competenciaLabel={formatCompetenciaLabel(competenciaMes)}
+            competenciaLabel={`${formatCompetenciaLabel(competenciaMes)} · ${formatCicloFolhaCompetencia(competenciaMes)}`}
           />
 
           <FiltroVinculoChips value={filtroVinculo} onChange={setFiltroVinculo} />

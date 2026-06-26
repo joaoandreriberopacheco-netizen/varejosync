@@ -30,12 +30,13 @@
     },
     "dia_vencimento": {
       "type": "number",
-      "description": "Dia do mês para pagamento"
+      "description": "Dia fixo de pagamento (5) — vencimento no mês seguinte à competência"
     },
     "status": {
       "type": "string",
       "enum": ["rascunho", "fechado"],
-      "default": "rascunho"
+      "default": "rascunho",
+      "description": "Fecha automaticamente após o último dia da competência"
     },
     "situacao_mes": {
       "type": "string",

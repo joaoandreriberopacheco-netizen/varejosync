@@ -36,7 +36,7 @@
     },
     "dia_vencimento": {
       "type": "number",
-      "description": "Dia do mês para pagamento (1-31)",
+      "description": "Dia fixo de pagamento (5) — vencimento no mês seguinte à competência",
       "default": 5
     },
     "ativo": {

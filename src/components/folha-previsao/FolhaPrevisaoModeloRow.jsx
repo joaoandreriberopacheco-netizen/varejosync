@@ -96,8 +96,8 @@ export default function FolhaPrevisaoModeloRow({
       title={modelo.nome}
       subtitle={
         modelo.colaborador_nome
-          ? `Vinculado: ${modelo.colaborador_nome} · Dia ${modelo.dia_vencimento}`
-          : `Modelo genérico · Dia ${modelo.dia_vencimento}`
+          ? `Vinculado: ${modelo.colaborador_nome} · Paga dia 5 do mês seguinte`
+          : 'Modelo genérico · Paga dia 5 do mês seguinte'
       }
       meta={meta}
       trailing={trailing}

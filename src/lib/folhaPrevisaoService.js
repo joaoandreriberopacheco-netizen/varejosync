@@ -4,6 +4,10 @@ import {
   clonarRubricas,
   criarModeloComDefaults,
   criarRubricasPadrao,
+  competenciaDeveEstarFechada,
+  competenciaEstaFechada,
+  dataVencimentoPagamentoFolha,
+  FOLHA_DIA_VENCIMENTO,
   gerarGrupoLancamentoId,
   gerarIdInterno,
   isMesDesligamento,
@@ -46,7 +50,7 @@ export async function duplicarModelo(modelo, overrides = {}) {
       descricao: modelo?.descricao || '',
       colaborador_id: overrides.colaborador_id ?? modelo?.colaborador_id ?? '',
       colaborador_nome: overrides.colaborador_nome ?? modelo?.colaborador_nome ?? '',
-      dia_vencimento: overrides.dia_vencimento ?? modelo?.dia_vencimento ?? 5,
+      dia_vencimento: FOLHA_DIA_VENCIMENTO,
       decimo_terceiro_ativo: modelo?.decimo_terceiro_ativo,
       decimo_mes_parcela_1: modelo?.decimo_mes_parcela_1,
       decimo_mes_parcela_2: modelo?.decimo_mes_parcela_2,
@@ -129,7 +133,7 @@ export async function garantirCompetencia({ colaborador, modelo, competencia }) 
     modelo_id: modelo?.id || '',
     modelo_nome: modelo?.nome || '',
     competencia,
-    dia_vencimento: modelo?.dia_vencimento ?? 5,
+    dia_vencimento: FOLHA_DIA_VENCIMENTO,
     status: 'rascunho',
     situacao_mes: situacaoMes,
     grupo_lancamento_id: gerarGrupoLancamentoId(),
@@ -164,14 +168,36 @@ export async function abrirCompetenciasDoMes(competencia) {
 
 export async function adicionarMovimento(competenciaId, movimento) {
   const comp = await base44.entities.FolhaPrevisaoCompetencia.get(competenciaId);
+  if (competenciaEstaFechada(comp)) {
+    throw new Error('A folha deste mês já fechou (último dia do mês). Movimentos não podem ser alterados.');
+  }
   const movimentos = [...(comp.movimentos || []), { ...movimento, id: movimento.id || gerarIdInterno('mov') }];
   return base44.entities.FolhaPrevisaoCompetencia.update(competenciaId, { movimentos });
 }
 
 export async function removerMovimento(competenciaId, movimentoId) {
   const comp = await base44.entities.FolhaPrevisaoCompetencia.get(competenciaId);
+  if (competenciaEstaFechada(comp)) {
+    throw new Error('A folha deste mês já fechou (último dia do mês). Movimentos não podem ser alterados.');
+  }
   const movimentos = (comp.movimentos || []).filter((m) => m.id !== movimentoId);
   return base44.entities.FolhaPrevisaoCompetencia.update(competenciaId, { movimentos });
+}
+
+/** Fecha competências cujo mês já passou do último dia (regra automática). */
+export async function sincronizarFechamentoCompetencias(competencia) {
+  const comps = competencia
+    ? await base44.entities.FolhaPrevisaoCompetencia.filter({ competencia })
+    : await base44.entities.FolhaPrevisaoCompetencia.list('-created_date', 500);
+
+  let fechadas = 0;
+  for (const c of comps || []) {
+    if (c.status === 'fechado') continue;
+    if (!competenciaDeveEstarFechada(c.competencia)) continue;
+    await base44.entities.FolhaPrevisaoCompetencia.update(c.id, { status: 'fechado' });
+    fechadas += 1;
+  }
+  return fechadas;
 }
 
 /**
@@ -188,9 +214,8 @@ export async function sincronizarLancamentoFinanceiro(competencia, opcoes = {}) 
 
   const grupoId = competencia.grupo_lancamento_id || gerarGrupoLancamentoId();
   const descricao = `Folha ${competencia.colaborador_nome} — ${competencia.competencia}`;
-  const [y, m] = competencia.competencia.split('-');
-  const dia = Math.min(competencia.dia_vencimento || 5, 28);
-  const dataVencimento = `${y}-${m}-${String(dia).padStart(2, '0')}`;
+  const dataVencimento = dataVencimentoPagamentoFolha(competencia.competencia);
+  if (!dataVencimento) return null;
 
   const extras = [];
   if (totais.totalDecimo > 0) extras.push(`13º ${totais.totalDecimo.toFixed(2)}`);

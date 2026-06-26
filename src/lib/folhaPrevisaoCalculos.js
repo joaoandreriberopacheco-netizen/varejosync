@@ -122,6 +122,55 @@ export function getCompetenciaAtual() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
+/** Pagamento fixo: dia 5 do mês seguinte à competência */
+export const FOLHA_DIA_VENCIMENTO = 5;
+
+export function dataHojeIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Último dia civil da competência (YYYY-MM) */
+export function ultimoDiaCompetencia(competencia) {
+  const [y, m] = String(competencia).slice(0, 7).split('-').map(Number);
+  if (!y || !m) return null;
+  const ultimo = new Date(y, m, 0).getDate();
+  return `${y}-${String(m).padStart(2, '0')}-${String(ultimo).padStart(2, '0')}`;
+}
+
+/** Vencimento no fluxo: dia 5 do mês após a competência */
+export function dataVencimentoPagamentoFolha(competencia) {
+  const [y, m] = String(competencia).slice(0, 7).split('-').map(Number);
+  if (!y || !m) return null;
+  const ny = m === 12 ? y + 1 : y;
+  const nm = m === 12 ? 1 : m + 1;
+  return `${ny}-${String(nm).padStart(2, '0')}-${String(FOLHA_DIA_VENCIMENTO).padStart(2, '0')}`;
+}
+
+/** Após o último dia do mês a folha fecha automaticamente */
+export function competenciaDeveEstarFechada(competencia, hojeIso = dataHojeIso()) {
+  const fim = ultimoDiaCompetencia(competencia);
+  return fim ? hojeIso > fim : false;
+}
+
+export function statusCompetenciaEfetivo(comp, hojeIso = dataHojeIso()) {
+  if (!comp) return 'rascunho';
+  if (comp.status === 'fechado') return 'fechado';
+  if (competenciaDeveEstarFechada(comp.competencia, hojeIso)) return 'fechado';
+  return 'rascunho';
+}
+
+export function competenciaEstaFechada(comp, hojeIso = dataHojeIso()) {
+  return statusCompetenciaEfetivo(comp, hojeIso) === 'fechado';
+}
+
+export function formatCicloFolhaCompetencia(competencia) {
+  const fim = ultimoDiaCompetencia(competencia);
+  const venc = dataVencimentoPagamentoFolha(competencia);
+  if (!fim || !venc) return '';
+  return `Fecha ${formatDataBr(fim)} · Paga ${formatDataBr(venc)}`;
+}
+
 export function shiftCompetencia(competencia, delta) {
   const [y, m] = competencia.split('-').map(Number);
   const d = new Date(y, m - 1 + delta, 1);
@@ -471,7 +520,7 @@ export function criarModeloComDefaults(extra = {}) {
   const tipo = extra.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO;
   const socio = tipo === TIPO_VINCULO.SOCIO;
   return {
-    dia_vencimento: 5,
+    dia_vencimento: FOLHA_DIA_VENCIMENTO,
     ativo: true,
     situacao: SITUACAO_FOLHA.ATIVO,
     tipo_vinculo: tipo,

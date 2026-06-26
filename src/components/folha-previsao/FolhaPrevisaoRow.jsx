@@ -10,6 +10,8 @@ import {
   SITUACAO_FOLHA,
   TIPO_VINCULO,
   TIPO_VINCULO_LABELS,
+  formatCicloFolhaCompetencia,
+  statusCompetenciaEfetivo,
 } from '@/lib/folhaPrevisaoCalculos';
 
 const LINE_TITLE_CLASS =
@@ -26,15 +28,15 @@ export default function FolhaPrevisaoRow({ competencia, modelo, onClick, striped
   const ehSocio = (modelo?.tipo_vinculo || competencia.tipo_vinculo) === TIPO_VINCULO.SOCIO;
   const desligado = modelo?.situacao === SITUACAO_FOLHA.DESLIGADO;
   const ultimoMes = competencia.situacao_mes === 'ultimo_mes';
+  const statusEfetivo = statusCompetenciaEfetivo(competencia);
+  const fechada = statusEfetivo === 'fechado';
 
   const meta = (
     <>
       <span>{TIPO_VINCULO_LABELS[ehSocio ? TIPO_VINCULO.SOCIO : TIPO_VINCULO.FUNCIONARIO]}</span>
-      {!desligado && (
-        <P38StatusLabel tone={competencia.status === 'fechado' ? 'success' : 'warning'}>
-          {competencia.status === 'fechado' ? 'Fechado' : 'Rascunho'}
-        </P38StatusLabel>
-      )}
+      <P38StatusLabel tone={fechada ? 'success' : 'warning'}>
+        {fechada ? 'Fechada' : 'Em aberto'}
+      </P38StatusLabel>
       {ultimoMes && <P38StatusLabel tone="warning">Último mês</P38StatusLabel>}
       {desligado && !ultimoMes && <P38StatusLabel tone="muted">Desligou</P38StatusLabel>}
       {totais.totalValesPendentes > 0 && (
@@ -58,7 +60,7 @@ export default function FolhaPrevisaoRow({ competencia, modelo, onClick, striped
       onClick={() => onClick?.(competencia)}
       className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] [&>div:last-child]:max-w-[46%] sm:[&>div:last-child]:max-w-[42%] ${desligado ? 'opacity-75' : ''}`}
       title={competencia.colaborador_nome}
-      subtitle={`${competencia.modelo_nome || 'Sem modelo'} · Venc. dia ${competencia.dia_vencimento || '—'}`}
+      subtitle={`${competencia.modelo_nome || 'Sem modelo'} · ${formatCicloFolhaCompetencia(competencia.competencia)}`}
       meta={meta}
       value={
         <>
