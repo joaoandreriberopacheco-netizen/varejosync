@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef, createContext, useContext } from 'react';
 import { ChevronRight, DollarSign, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import {
   getCatalogoComercialView,
   resolveCustoTotalUnitBaseProduto,
 } from '@/lib/productUnits';
-import { P38Paginator } from '@/components/ui/p38-paginator';
+import { useVirtualRows } from '@/hooks/useVirtualRows';
 import {
   p38Table,
   MARGIN_ACCENT_VALUE,
@@ -45,7 +45,15 @@ const CATALOGO_MOBILE_DESC_MIN_H = 'min-h-[3.75rem]';
 const CATALOGO_MOBILE_DESC_GAP = 'mb-2.5';
 const CATALOGO_MOBILE_NOME_TYPO =
   'text-[12px] font-light leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
-const PAGE_SIZE = 50;
+const CATALOGO_MOBILE_ROW_H_GROUP = 56;
+const CATALOGO_MOBILE_ROW_H_SKU = 196;
+const CATALOGO_VIRTUALIZE_MIN_ROWS = 30;
+
+const CatalogoMobileScrollContext = createContext(null);
+
+export function useCatalogoMobileScrollRef() {
+  return useContext(CatalogoMobileScrollContext);
+}
 
 /** Mesma diagramação do relatório de margem mobile (2×3 valores). */
 const CATALOGO_MOBILE_VALUE_ROWS = [
@@ -622,33 +630,36 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
     : null;
 
   return (
-    <div
-      ref={scrollRef}
-      className="flex flex-col flex-1 min-h-0 h-full w-full overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
-      style={{ WebkitOverflowScrolling: 'touch' }}
-    >
-      {catalogChrome}
-      <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
-      <CatalogoMobileColumnHeader
-        className="border-x border-border/40 dark:border-white/10"
-        invisible={pinned}
-      />
-      {pinned ? (
+    <CatalogoMobileScrollContext.Provider value={scrollRef}>
+      <div
+        ref={scrollRef}
+        className="flex flex-col flex-1 min-h-0 h-full w-full overflow-y-auto overscroll-y-contain touch-pan-y pb-[var(--p38-scroll-pad-below-nav)]"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
+        {catalogChrome}
+        <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
         <CatalogoMobileColumnHeader
           className="border-x border-border/40 dark:border-white/10"
-          pinStyle={pinStyle}
+          invisible={pinned}
         />
-      ) : null}
-      {children}
-    </div>
+        {pinned ? (
+          <CatalogoMobileColumnHeader
+            className="border-x border-border/40 dark:border-white/10"
+            pinStyle={pinStyle}
+          />
+        ) : null}
+        {children}
+      </div>
+    </CatalogoMobileScrollContext.Provider>
   );
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
 export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2 }) {
+  const scrollRef = useCatalogoMobileScrollRef();
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
-  const [page, setPage] = useState(0);
+  const pendingScrollRestoreRef = useRef(null);
 
   const tree = useCatalogTreeGrid(produtos, { groupByCategory });
   const produtosSig = useMemo(
@@ -666,20 +677,50 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     setExpandedKeys(
       masterLevel === 1 ? new Set() : buildExpandedForLevel(tree, masterLevel - 1)
     );
-    setPage(0);
-  }, [produtosSig, groupByCategory, masterLevel, tree]);
+    const scrollEl = scrollRef?.current;
+    if (scrollEl) scrollEl.scrollTop = 0;
+  }, [produtosSig, groupByCategory, masterLevel, tree, scrollRef]);
 
   const rows = useMemo(() => {
     const all = mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys));
     return all.filter(r => !(r.type === 'group' && r.count === 0));
   }, [tree, expandedKeys]);
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages - 1);
-  const pagedRows = useMemo(
-    () => rows.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE),
-    [rows, safePage]
+  const shouldVirtualizeRows = rows.length >= CATALOGO_VIRTUALIZE_MIN_ROWS;
+
+  const estimateRowSize = useCallback(
+    (index) => (rows[index]?.type === 'group' ? CATALOGO_MOBILE_ROW_H_GROUP : CATALOGO_MOBILE_ROW_H_SKU),
+    [rows]
   );
+
+  const virtualRows = useVirtualRows({
+    itemCount: rows.length,
+    estimateSize: estimateRowSize,
+    overscan: 6,
+    scrollElementRef: scrollRef,
+  });
+
+  const visibleRows = useMemo(
+    () => shouldVirtualizeRows ? rows.slice(virtualRows.startIndex, virtualRows.endIndex) : rows,
+    [rows, shouldVirtualizeRows, virtualRows.endIndex, virtualRows.startIndex]
+  );
+
+  const paddingTop = shouldVirtualizeRows ? virtualRows.paddingTop : 0;
+  const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
+
+  useLayoutEffect(() => {
+    const scrollEl = scrollRef?.current;
+    if (scrollEl) pendingScrollRestoreRef.current = scrollEl.scrollTop;
+  }, [expandedKeys, rows.length, scrollRef]);
+
+  useLayoutEffect(() => {
+    const scrollEl = scrollRef?.current;
+    const top = pendingScrollRestoreRef.current;
+    if (scrollEl != null && top != null) {
+      scrollEl.scrollTop = top;
+      pendingScrollRestoreRef.current = null;
+    }
+  }, [expandedKeys, rows.length, scrollRef]);
 
   const handleToggle = useCallback((key) => {
     setExpandedKeys(prev => {
@@ -706,7 +747,8 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
       <div className="relative border-x border-t-0 border-border/40 dark:border-white/10">
         <CatalogoMobileSacredAxis />
         <div className="relative border-b border-border/40 dark:border-white/10 bg-background">
-          {pagedRows.map(row => (
+          {paddingTop > 0 && <div aria-hidden="true" style={{ height: paddingTop }} />}
+          {visibleRows.map(row => (
             <div key={row.key}>
               {row.type === 'group' ? (
                 <GroupHeader
@@ -723,16 +765,8 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
               )}
             </div>
           ))}
+          {paddingBottom > 0 && <div aria-hidden="true" style={{ height: paddingBottom }} />}
         </div>
-        <P38Paginator
-          page={safePage}
-          totalPages={totalPages}
-          pageSize={PAGE_SIZE}
-          totalItems={rows.length}
-          onPageChange={setPage}
-          itemLabel="linhas"
-          className="border-t border-border/40 dark:border-white/10"
-        />
       </div>
       <PricingDialog
         produto={pricingProduto}
