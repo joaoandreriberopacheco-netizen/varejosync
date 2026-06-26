@@ -16,9 +16,12 @@ import {
 import ImportadorNotaFiscal from '@/components/compras/ImportadorNotaFiscal';
 import FiltrosCompras from '@/components/compras/FiltrosCompras';
 import ListaPedidosCompra from '@/components/compras/ListaPedidosCompra';
+import ConsultaComprasPedidos from '@/components/compras/ConsultaComprasPedidos';
 import ActionMenuComprasV2 from '@/components/compras/ActionMenuComprasV2';
 import EnvioFinanceiroLoteDialog from '@/components/compras/EnvioFinanceiroLoteDialog';
 import PedidosCompraOrganizer from '@/components/compras/PedidosCompraOrganizer';
+import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
+import { Package, Receipt } from 'lucide-react';
 import {
   buildPurchaseUnitOptions,
   normalizeUnitCode,
@@ -381,6 +384,7 @@ export default function PedidosCompraPage() {
   const [dataPrimeiroVencimentoLote, setDataPrimeiroVencimentoLote] = useState('');
   const [groupBy, setGroupBy] = useState('eta_transportadora');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [activeView, setActiveView] = useState('embarques');
 
   useEffect(() => {
     loadData();
@@ -826,22 +830,66 @@ export default function PedidosCompraPage() {
   );
   const hasActiveFilters = search || fornecedorSel.length > 0 || tagsSel.length > 0 || dataInicial || dataFinal || hasEtaFilter || statusSel.some(status => status !== '__nao_concluido__');
 
+  const pedidosConsulta = useMemo(() => {
+    const statusExplicitos = statusSel.filter((status) => status !== '__nao_concluido__');
+
+    return pedidos.filter((p) => {
+      const searchLower = search.toLowerCase();
+      const dataPedido = p.data_emissao || (p.created_date ? toLocalDate(p.created_date) : '');
+
+      if (search && !(p.numero?.toLowerCase().includes(searchLower) || p.fornecedor_nome?.toLowerCase().includes(searchLower))) {
+        return false;
+      }
+
+      if (statusSel.includes('__nao_concluido__') && p.status === 'Concluído') return false;
+
+      if (statusExplicitos.length > 0) {
+        const statusExpandido = statusExplicitos.flatMap(normalizeStatusFiltro);
+        if (!statusExpandido.includes(p.status)) return false;
+      }
+
+      if (fornecedorSel.length > 0 && !fornecedorSel.includes(p.fornecedor_id)) return false;
+      if (tagsSel.length > 0 && !tagsSel.some((t) => (p.tags || []).includes(t))) return false;
+      if (dataInicial && (!dataPedido || dataPedido < dataInicial)) return false;
+      if (dataFinal && (!dataPedido || dataPedido > dataFinal)) return false;
+
+      return true;
+    });
+  }, [pedidos, search, statusSel, fornecedorSel, tagsSel, dataInicial, dataFinal]);
+
   return (
     <div className={cn('w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background', isPhone && 'pb-[var(--p38-scroll-pad-below-nav)]')}>
       {/* Header */}
       <div className="pb-3 mb-1 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="space-y-1.5 min-w-0">
-          <p className="text-xl font-medium text-foreground font-din-1451">Embarques</p>
-          <p className="text-sm leading-normal text-foreground/85 font-din-1451">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-          <p className="text-sm leading-normal text-emerald-600 dark:text-emerald-400">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-xl font-medium text-foreground font-din-1451">
+            {activeView === 'consulta' ? 'Consulta de compras' : 'Embarques'}
+          </p>
+          {activeView === 'consulta' ? (
+            <p className="text-sm leading-normal text-foreground/85 font-din-1451">
+              {pedidosConsulta.length} pedido{pedidosConsulta.length === 1 ? '' : 's'} no período
+            </p>
+          ) : (
+            <>
+              <p className="text-sm leading-normal text-foreground/85 font-din-1451">{pedidosVisiveisPendentes.length} embarques visíveis · R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-sm leading-normal text-emerald-600 dark:text-emerald-400">Aprovados financeiramente e ainda não recebidos no filtro: R$ {valorPagoNaoEntregue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            </>
+          )}
         </div>
-        <PedidosCompraOrganizer
-          groupBy={groupBy}
-          sortOrder={sortOrder}
-          onGroupByChange={setGroupBy}
-          onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
-        />
+        {activeView === 'embarques' ? (
+          <PedidosCompraOrganizer
+            groupBy={groupBy}
+            sortOrder={sortOrder}
+            onGroupByChange={setGroupBy}
+            onSortOrderToggle={() => setSortOrder((prev) => prev === 'asc' ? 'desc' : 'asc')}
+          />
+        ) : null}
       </div>
+
+      <GlacialTabsList className="w-full" scrollable>
+        <GlacialTabsTrigger value="embarques" activeValue={activeView} onSelect={setActiveView} label="Embarques" icon={Package} />
+        <GlacialTabsTrigger value="consulta" activeValue={activeView} onSelect={setActiveView} label="Consulta" icon={Receipt} />
+      </GlacialTabsList>
 
       {/* Filtros */}
       <FiltrosCompras
@@ -870,16 +918,28 @@ export default function PedidosCompraPage() {
         }}
       />
 
-      {/* Lista */}
-      <ListaPedidosCompra
-        grupos={grupos}
-        loading={loading}
-        onEdit={handleOpenPedido}
-        onDelete={loadData}
-        selecionadosIds={selecionadosIds}
-        onToggleSelecao={handleToggleSelecao}
-        modoSelecao={modoSelecao}
-      />
+      {activeView === 'embarques' ? (
+        <ListaPedidosCompra
+          grupos={grupos}
+          loading={loading}
+          onEdit={handleOpenPedido}
+          onDelete={loadData}
+          selecionadosIds={selecionadosIds}
+          onToggleSelecao={handleToggleSelecao}
+          modoSelecao={modoSelecao}
+        />
+      ) : loading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-border/40" />
+        </div>
+      ) : (
+        <ConsultaComprasPedidos
+          pedidosFiltrados={pedidosConsulta}
+          onVerPedido={handleOpenPedido}
+          contextLabel="Resumo do período"
+          emptyMessage="Nenhum pedido de compra no período selecionado"
+        />
+      )}
 
 
 
