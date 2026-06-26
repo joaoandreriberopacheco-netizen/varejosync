@@ -1,7 +1,18 @@
 import React, { useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 
-export default function CurrencyInput({ value, onChange, onEnter, placeholder, className, dataIndex, isPercentage = false }) {
+export default function CurrencyInput({
+  value,
+  onChange,
+  onEnter,
+  placeholder,
+  className,
+  dataIndex,
+  navIndex,
+  isLast = false,
+  enterKeyHint: enterKeyHintProp,
+  isPercentage = false,
+}) {
   const inputRef = useRef(null);
   const [isEditing, setIsEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState('');
@@ -69,31 +80,36 @@ export default function CurrencyInput({ value, onChange, onEnter, placeholder, c
     setEditValue('');
   };
 
+  const resolvedNavIndex = navIndex ?? (Number.isFinite(Number(dataIndex)) ? Number(dataIndex) : null);
+  const enterKeyHint = enterKeyHintProp ?? (isLast ? 'done' : 'next');
+
+  const focusNavIndex = (targetIndex) => {
+    if (!Number.isFinite(targetIndex)) return false;
+    const nextInput = document.querySelector(`[data-pricing-nav-index="${targetIndex}"]`);
+    if (!nextInput) return false;
+    nextInput.focus();
+    return true;
+  };
+
+  const focusNext = () => {
+    if (onEnter) {
+      onEnter();
+      return;
+    }
+    if (resolvedNavIndex == null) return;
+    focusNavIndex(resolvedNavIndex + 1);
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault();
-      if (onEnter) {
-        onEnter();
-      } else {
-        // Navigate to next input
-        const nextIndex = parseInt(dataIndex) + 1;
-        const nextInput = document.querySelector(`[data-custo-index="${nextIndex}"]`);
-        if (nextInput) {
-          nextInput.focus();
-        }
-      }
+      focusNext();
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      const nextIndex = parseInt(dataIndex) + 1;
-      const nextInput = document.querySelector(`[data-custo-index="${nextIndex}"]`);
-      if (nextInput) nextInput.focus();
+      if (resolvedNavIndex != null) focusNavIndex(resolvedNavIndex + 1);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      const prevIndex = parseInt(dataIndex) - 1;
-      if (prevIndex >= 0) {
-        const prevInput = document.querySelector(`[data-custo-index="${prevIndex}"]`);
-        if (prevInput) prevInput.focus();
-      }
+      if (resolvedNavIndex != null) focusNavIndex(resolvedNavIndex - 1);
     }
   };
 
@@ -102,6 +118,7 @@ export default function CurrencyInput({ value, onChange, onEnter, placeholder, c
       ref={inputRef}
       type="text"
       inputMode="decimal"
+      enterKeyHint={enterKeyHint}
       value={isEditing ? editValue : formatCurrency(value)}
       onChange={handleChange}
       onFocus={handleFocus}
@@ -110,7 +127,8 @@ export default function CurrencyInput({ value, onChange, onEnter, placeholder, c
       onBlur={handleBlur}
       placeholder={placeholder}
       className={className}
-      data-custo-index={dataIndex}
+      data-pricing-nav-index={resolvedNavIndex ?? undefined}
+      data-custo-index={resolvedNavIndex ?? dataIndex}
     />
   );
 }

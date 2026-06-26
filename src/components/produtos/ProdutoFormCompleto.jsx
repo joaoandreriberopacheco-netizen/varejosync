@@ -1609,23 +1609,22 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                     const baseVal = parseFloat(formData[field]) || 0;
                     const displayVal = baseVal * sc;
                     return (
-                      <div key={field} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-border/40 last:border-0">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className="text-muted-foreground">{icon}</span>
-                          <span className="whitespace-nowrap">{label}</span>
+                      <div key={field} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/40 last:border-0">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+                          <span className="text-muted-foreground shrink-0">{icon}</span>
+                          <span className="truncate">{label}</span>
                         </div>
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                           <CurrencyInput
                             value={displayVal}
                             onChange={(val) => handleChange(field, sc !== 1 ? val / sc : val)}
-                            dataIndex={field}
                             navIndex={custoIdx}
                             placeholder="0"
                             className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-border/40 font-glacial"
                           />
-                          <span className="text-xs text-muted-foreground w-8">(R$)</span>
+                          <span className="text-xs text-muted-foreground w-8 shrink-0">(R$)</span>
                         </div>
-                        <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap">
+                        <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap w-[5.75rem] shrink-0">
                           {isNegativo ? '-' : ''}R$ {formatarNumero(displayVal)}
                         </span>
                       </div>
@@ -1648,67 +1647,69 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 </div>
 
                 <div className="space-y-1">
-                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-border/40">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="text-muted-foreground"><DollarSign className="w-3.5 h-3.5" /></span>
-                      <span className="whitespace-nowrap">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/40">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+                      <span className="text-muted-foreground shrink-0"><DollarSign className="w-3.5 h-3.5" /></span>
+                      <span className="truncate">
                         Preço de venda{precoCatalogo.sigla ? ` (${precoCatalogo.sigla})` : ''}
                       </span>
                     </div>
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <CurrencyInput
                         value={precoCatalogo.valor}
                         onChange={aplicarPrecoVendaCatalogo}
-                        dataIndex="preco_venda"
+                        navIndex={6}
+                        isLast={false}
                         placeholder="0"
                         className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-28 text-right text-foreground focus:border-border/40 font-glacial"
                       />
-                      <span className="text-xs text-muted-foreground w-8">(R$)</span>
+                      <span className="text-xs text-muted-foreground w-8 shrink-0">(R$)</span>
                     </div>
-                    <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap invisible">
+                    <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap w-[5.75rem] shrink-0 invisible">
                       R$ 0,00
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5 border-b border-border/40">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="text-muted-foreground"><TrendingUp className="w-3.5 h-3.5" /></span>
-                      <span className="whitespace-nowrap">Markup</span>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5 border-b border-border/40">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+                      <span className="text-muted-foreground shrink-0"><TrendingUp className="w-3.5 h-3.5" /></span>
+                      <span className="truncate">Markup</span>
                     </div>
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <CurrencyInput
                         value={formData.preco_venda_percentual}
                         onChange={val => {
                           handleChange('preco_venda_percentual', val);
                           handleChange('preco_venda_tipo', 'percentual');
                         }}
-                        dataIndex="markup"
+                        navIndex={7}
+                        isLast
                         placeholder="0"
                         isPercentage={true}
                         className="bg-transparent border-0 border-b border-border/40 dark:border-border/40 rounded-none px-0 h-8 text-sm w-20 text-right text-foreground focus:border-border/40 font-glacial"
                       />
-                      <span className="text-xs text-muted-foreground w-8">%</span>
+                      <span className="text-xs text-muted-foreground w-8 shrink-0">%</span>
                     </div>
-                    <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap invisible">
+                    <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap w-[5.75rem] shrink-0 invisible">
                       R$ 0,00
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2.5">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="text-muted-foreground"><Target className="w-3.5 h-3.5" /></span>
-                      <span className="whitespace-nowrap">Margem de Contribuição</span>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-3 py-2.5">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+                      <span className="text-muted-foreground shrink-0"><Target className="w-3.5 h-3.5" /></span>
+                      <span className="truncate">Margem de Contribuição</span>
                     </div>
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Input
                         type="text"
                         value={formatarNumero(margemContribuicao)}
                         disabled
                         className="bg-muted/50 border-0 border-b border-border/40 rounded-none px-0 h-8 text-sm w-20 text-right text-muted-foreground tabular-nums font-glacial"
                       />
-                      <span className="text-xs text-muted-foreground w-8">%</span>
+                      <span className="text-xs text-muted-foreground w-8 shrink-0">%</span>
                     </div>
-                    <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap invisible">
+                    <span className="text-sm font-medium text-foreground text-right tabular-nums font-glacial whitespace-nowrap w-[5.75rem] shrink-0 invisible">
                       R$ 0,00
                     </span>
                   </div>
