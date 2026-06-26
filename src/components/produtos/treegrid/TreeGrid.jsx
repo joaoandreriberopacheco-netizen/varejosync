@@ -80,7 +80,6 @@ export const TREE_GRID_EXPAND_ALL_LEVEL = 99;
 
 const HIER_STEP = 20;    // recuo por nível hierárquico (filhos vs pais/solteiros)
 const CELL_PAD = 4;
-const W_EDIT = 60;       // coluna de edição sticky à esquerda (edit + delete)
 
 const catalogHierDepth = (level) => Math.max(0, (level ?? 1) - 1);
 
@@ -103,7 +102,7 @@ function CatalogTierDot() {
 }
 
 /**
- * Coluna Produto com trilho fixo: chevron | dot | ícone (32px reservado).
+ * Coluna Produto: trilho compacto (chevron | dot | ícone só quando usados).
  * Texto de pais (1º nível) e solteiros alinha no mesmo eixo; filhos recuam HIER_STEP.
  */
 function CatalogProdutoCell({
@@ -115,41 +114,64 @@ function CatalogProdutoCell({
   produto = null,
   children,
 }) {
+  const hasRail = showChevron || showTierDot || showIcon;
+
   return (
     <div
       className="flex items-center min-w-0 w-full"
       style={{ paddingLeft: CELL_PAD + hierDepth * HIER_STEP }}
     >
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="w-3.5 h-3.5 inline-flex items-center justify-center flex-shrink-0">
-          {showChevron ? (
-            <ChevronRight
-              className={cn(
-                'w-3.5 h-3.5 text-muted-foreground transition-transform duration-150',
-                isExpanded && 'rotate-90',
+      {hasRail && (
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {showChevron && (
+            <span className="w-3.5 h-3.5 inline-flex items-center justify-center flex-shrink-0">
+              <ChevronRight
+                className={cn(
+                  'w-3.5 h-3.5 text-muted-foreground transition-transform duration-150',
+                  isExpanded && 'rotate-90',
+                )}
+              />
+            </span>
+          )}
+          {showTierDot && (
+            <span className="w-1.5 inline-flex items-center justify-center flex-shrink-0">
+              <CatalogTierDot />
+            </span>
+          )}
+          {showIcon && (
+            <span
+              className="rounded bg-muted overflow-hidden inline-flex items-center justify-center flex-shrink-0"
+              style={{ width: 32, height: 32 }}
+            >
+              {produto?.imagem_url ? (
+                <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Package className="w-3.5 h-3.5 text-muted-foreground" />
               )}
-            />
-          ) : null}
-        </span>
-        <span className="w-1.5 inline-flex items-center justify-center flex-shrink-0">
-          {showTierDot ? <CatalogTierDot /> : null}
-        </span>
-        <span
-          className="rounded bg-muted overflow-hidden inline-flex items-center justify-center flex-shrink-0"
-          style={{ width: 32, height: 32 }}
-        >
-          {showIcon ? (
-            produto?.imagem_url ? (
-              <img src={produto.imagem_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <Package className="w-3.5 h-3.5 text-muted-foreground" />
-            )
-          ) : null}
-        </span>
-      </div>
-      <div className="flex items-center gap-1.5 min-w-0 flex-1 ml-1.5">
+            </span>
+          )}
+        </div>
+      )}
+      <div className={cn('flex items-center gap-1.5 min-w-0 flex-1', hasRail && 'ml-1.5')}>
         {children}
       </div>
+    </div>
+  );
+}
+
+function CatalogRowActions({ onEdit, onDelete, produto }) {
+  return (
+    <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+      <Button variant="ghost" size="icon"
+        className="h-6 w-6"
+        onClick={(e) => { e.stopPropagation(); onEdit(produto); }}>
+        <Edit className="w-3 h-3 text-muted-foreground" />
+      </Button>
+      <Button variant="ghost" size="icon"
+        className="h-6 w-6"
+        onClick={(e) => { e.stopPropagation(); onDelete(produto); }}>
+        <Trash2 className="w-3 h-3 text-muted-foreground hover:text-red-500" />
+      </Button>
     </div>
   );
 }
@@ -309,23 +331,18 @@ function groupCellValue(colId, row) {
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
 const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, readOnly }) {
-  const editOffset = readOnly ? 0 : W_EDIT;
   const isLeaf = row.isLeafGroup;
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
 
   return (
     <tr
-      className={cn(p38Table.row, !isLeaf && p38Table.rowInteractive, 'select-none')}
+      className={cn(p38Table.row, !isLeaf && p38Table.rowInteractive, 'select-none group')}
       onClick={isLeaf ? undefined : () => onToggle(row.key)}
     >
-      {!readOnly && (
-        <td className={cn(p38Table.stickyCellLeft)}
-          style={{ width: W_EDIT, minWidth: W_EDIT }} />
-      )}
       <td
-        className={cn(p38Table.stickyCell, 'py-2')}
-        style={{ left: editOffset, paddingRight: 8, minWidth: 220 }}
+        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, 'py-2')}
+        style={{ left: 0, paddingRight: 8, minWidth: 220 }}
       >
         <CatalogProdutoCell
           hierDepth={hierDepth}
@@ -355,51 +372,40 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
 const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, readOnly }) {
   const p = row.produto;
-  const editOffset = readOnly ? 0 : W_EDIT;
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
 
   return (
     <tr className={cn(p38Table.row, 'group')}>
-      {!readOnly && (
-        <td className={cn(p38Table.stickyCellLeft, "py-1.5 text-center")}
-          style={{ width: W_EDIT, minWidth: W_EDIT }}>
-          <div className="flex items-center gap-0.5 justify-center">
-            <Button variant="ghost" size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
-              <Edit className="w-3 h-3 text-muted-foreground" />
-            </Button>
-            <Button variant="ghost" size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => { e.stopPropagation(); onDelete(p); }}>
-              <Trash2 className="w-3 h-3 text-muted-foreground hover:text-red-500" />
-            </Button>
-          </div>
-        </td>
-      )}
       <td
-        className={cn(p38Table.stickyCell, "py-1.5")}
-        style={{ left: editOffset, paddingRight: 8, minWidth: 220 }}
+        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, 'py-1.5')}
+        style={{ left: 0, paddingRight: 8, minWidth: 220 }}
       >
-        <CatalogProdutoCell
-          hierDepth={hierDepth}
-          showTierDot={isPrimeiroNivel}
-          showIcon
-          produto={p}
-        >
-          <span className={isPrimeiroNivel ? CATALOG_ROW_LABEL_CLASS : CATALOG_CHILD_LABEL_CLASS}>
-            {p.nome}
-          </span>
-          {p.codigo_interno && (
-            <span className={cn(
-              'text-[10px] flex-shrink-0 font-mono',
-              isPrimeiroNivel ? 'text-foreground/70 dark:text-foreground/80' : 'text-muted-foreground',
-            )}>
-              {p.codigo_interno}
-            </span>
+        <div className="flex items-center min-w-0 gap-1">
+          <div className="min-w-0 flex-1">
+            <CatalogProdutoCell
+              hierDepth={hierDepth}
+              showTierDot={isPrimeiroNivel}
+              showIcon
+              produto={p}
+            >
+              <span className={isPrimeiroNivel ? CATALOG_ROW_LABEL_CLASS : CATALOG_CHILD_LABEL_CLASS}>
+                {p.nome}
+              </span>
+              {p.codigo_interno && (
+                <span className={cn(
+                  'text-[10px] flex-shrink-0 font-mono',
+                  isPrimeiroNivel ? 'text-foreground/70 dark:text-foreground/80' : 'text-muted-foreground',
+                )}>
+                  {p.codigo_interno}
+                </span>
+              )}
+            </CatalogProdutoCell>
+          </div>
+          {!readOnly && (
+            <CatalogRowActions onEdit={onEdit} onDelete={onDelete} produto={p} />
           )}
-        </CatalogProdutoCell>
+        </div>
       </td>
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-1.5 px-2 whitespace-nowrap"
@@ -511,8 +517,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   const paddingTop = shouldVirtualizeRows ? virtualRows.paddingTop : 0;
   const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
 
-  const nameColLeft = readOnly ? 0 : W_EDIT;
-  const headerColSpan = activeCols.length + (readOnly ? 1 : 2);
+  const headerColSpan = activeCols.length + 1;
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -522,13 +527,9 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
           {/* thead sticky no topo durante scroll vertical */}
           <thead className={p38Table.header}>
             <tr className="border-b border-border/40 dark:border-white/10">
-              {!readOnly && (
-                <th className={cn(p38Table.stickyHeadLeft)}
-                  style={{ width: W_EDIT, minWidth: W_EDIT }} />
-              )}
               <th
-                className={cn(p38Table.stickyHeadLeft, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
-                style={{ left: nameColLeft, paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
+                className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
+                style={{ left: 0, paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
               >
                 Produto
               </th>

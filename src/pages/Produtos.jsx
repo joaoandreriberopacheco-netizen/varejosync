@@ -1190,7 +1190,7 @@ function ProdutosPageContent() {
       </div>
 
       <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
-        <div className="h-full w-full min-w-0 max-w-full px-0 md:px-4 pb-0 md:pb-4">
+        <div className="h-full w-full min-w-0 max-w-full px-0 pb-0">
           <div className="h-full flex flex-col min-h-0 min-w-0 max-w-full">
             <div className="hidden desktop-layout:block">
               <ProdutosCommandBar

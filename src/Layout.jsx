@@ -34,7 +34,7 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'TabelaPrecosConsulta',
 ]);
 /** Páginas pesadas onde expandir o menu não deve reflowar todo o conteúdo. */
-const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao']);
+const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao', 'Produtos']);
 
 const LayoutOutlet = React.memo(function LayoutOutlet({ children }) {
   return children;
