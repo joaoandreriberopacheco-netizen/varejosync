@@ -2,9 +2,13 @@ import { base44 } from '@/api/base44Client';
 import {
   calcularTotaisCompetencia,
   clonarRubricas,
+  criarModeloComDefaults,
   criarRubricasPadrao,
   gerarGrupoLancamentoId,
   gerarIdInterno,
+  isMesDesligamento,
+  modeloEstaAtivoNaCompetencia,
+  SITUACAO_FOLHA,
 } from '@/lib/folhaPrevisaoCalculos';
 
 export async function listarModelos() {
@@ -23,32 +27,89 @@ export async function listarColaboradoresAtivos() {
   return (todos || []).filter((c) => c.ativo !== false);
 }
 
+export function resolverModeloColaborador(modelos, colaboradorId) {
+  const ativos = (modelos || []).filter((m) => m.ativo !== false);
+  return (
+    ativos.find((m) => m.colaborador_id === colaboradorId) ||
+    ativos.find((m) => !m.colaborador_id) ||
+    ativos[0] ||
+    null
+  );
+}
+
 /** Duplica um modelo existente (padrão "irmão") */
 export async function duplicarModelo(modelo, overrides = {}) {
   const rubricas = clonarRubricas(modelo?.rubricas?.length ? modelo.rubricas : criarRubricasPadrao());
-  return base44.entities.FolhaPrevisaoModelo.create({
-    nome: overrides.nome || `${modelo?.nome || 'Modelo'} (cópia)`,
-    descricao: modelo?.descricao || '',
-    colaborador_id: overrides.colaborador_id ?? modelo?.colaborador_id ?? '',
-    colaborador_nome: overrides.colaborador_nome ?? modelo?.colaborador_nome ?? '',
-    dia_vencimento: overrides.dia_vencimento ?? modelo?.dia_vencimento ?? 5,
-    ativo: true,
-    rubricas,
-    ...overrides,
-  });
+  return base44.entities.FolhaPrevisaoModelo.create(
+    criarModeloComDefaults({
+      nome: overrides.nome || `${modelo?.nome || 'Modelo'} (cópia)`,
+      descricao: modelo?.descricao || '',
+      colaborador_id: overrides.colaborador_id ?? modelo?.colaborador_id ?? '',
+      colaborador_nome: overrides.colaborador_nome ?? modelo?.colaborador_nome ?? '',
+      dia_vencimento: overrides.dia_vencimento ?? modelo?.dia_vencimento ?? 5,
+      decimo_terceiro_ativo: modelo?.decimo_terceiro_ativo,
+      decimo_mes_parcela_1: modelo?.decimo_mes_parcela_1,
+      decimo_mes_parcela_2: modelo?.decimo_mes_parcela_2,
+      decimo_percentual_parcela: modelo?.decimo_percentual_parcela,
+      ferias_programadas: clonarFerias(modelo?.ferias_programadas),
+      rubricas,
+      situacao: SITUACAO_FOLHA.ATIVO,
+      data_desligamento: '',
+      valor_rescisao_previsto: 0,
+      ...overrides,
+    }),
+  );
+}
+
+function clonarFerias(ferias) {
+  return (ferias || []).map((f) => ({ ...f, id: gerarIdInterno('fer') }));
 }
 
 export async function criarModeloPadrao(nome = 'Modelo padrão') {
-  return base44.entities.FolhaPrevisaoModelo.create({
-    nome,
-    dia_vencimento: 5,
-    ativo: true,
-    rubricas: criarRubricasPadrao(),
+  return base44.entities.FolhaPrevisaoModelo.create(criarModeloComDefaults({ nome }));
+}
+
+/** Registra desligamento — para de gerar meses futuros */
+export async function registrarDesligamento(modeloId, { data_desligamento, valor_rescisao_previsto = 0, observacoes }) {
+  const modelo = await base44.entities.FolhaPrevisaoModelo.update(modeloId, {
+    situacao: SITUACAO_FOLHA.DESLIGADO,
+    data_desligamento,
+    valor_rescisao_previsto: Number(valor_rescisao_previsto) || 0,
+    observacoes_desligamento: observacoes || '',
+  });
+
+  const mesDeslig = String(data_desligamento).slice(0, 7);
+  const existentes = await base44.entities.FolhaPrevisaoCompetencia.filter({
+    colaborador_id: modelo.colaborador_id,
+    competencia: mesDeslig,
+  });
+
+  if (existentes?.length) {
+    await base44.entities.FolhaPrevisaoCompetencia.update(existentes[0].id, {
+      situacao_mes: 'ultimo_mes',
+      observacoes: observacoes || existentes[0].observacoes,
+    });
+  }
+
+  return modelo;
+}
+
+/** Reativa colaborador na previsão de folha */
+export async function reativarNaFolha(modeloId) {
+  return base44.entities.FolhaPrevisaoModelo.update(modeloId, {
+    situacao: SITUACAO_FOLHA.ATIVO,
+    data_desligamento: '',
+    valor_rescisao_previsto: 0,
+    observacoes_desligamento: '',
   });
 }
 
 /** Garante competência do mês para um colaborador a partir de um modelo */
 export async function garantirCompetencia({ colaborador, modelo, competencia }) {
+  if (modelo && !modeloEstaAtivoNaCompetencia(modelo, competencia)) {
+    return null;
+  }
+
   const existentes = await base44.entities.FolhaPrevisaoCompetencia.filter({
     colaborador_id: colaborador.id,
     competencia,
@@ -56,6 +117,7 @@ export async function garantirCompetencia({ colaborador, modelo, competencia }) 
   if (existentes?.length) return existentes[0];
 
   const rubricas = clonarRubricas(modelo?.rubricas?.length ? modelo.rubricas : criarRubricasPadrao());
+  const situacaoMes = isMesDesligamento(modelo, competencia) ? 'ultimo_mes' : 'normal';
 
   return base44.entities.FolhaPrevisaoCompetencia.create({
     colaborador_id: colaborador.id,
@@ -65,28 +127,35 @@ export async function garantirCompetencia({ colaborador, modelo, competencia }) 
     competencia,
     dia_vencimento: modelo?.dia_vencimento ?? 5,
     status: 'rascunho',
+    situacao_mes: situacaoMes,
     grupo_lancamento_id: gerarGrupoLancamentoId(),
     rubricas,
     movimentos: [],
   });
 }
 
-/** Abre competências para todos os colaboradores ativos com modelo vinculado */
+/** Abre competências para colaboradores com modelo vinculado (respeita desligamento) */
 export async function abrirCompetenciasDoMes(competencia) {
   const [modelos, colaboradores] = await Promise.all([listarModelos(), listarColaboradoresAtivos()]);
-  const modelosAtivos = (modelos || []).filter((m) => m.ativo !== false);
+  const modelosVinculados = (modelos || []).filter((m) => m.colaborador_id && m.ativo !== false);
 
   const criados = [];
-  for (const col of colaboradores) {
-    const modelo =
-      modelosAtivos.find((m) => m.colaborador_id === col.id) ||
-      modelosAtivos.find((m) => !m.colaborador_id) ||
-      modelosAtivos[0];
-    if (!modelo) continue;
+  const pulados = [];
+
+  for (const modelo of modelosVinculados) {
+    if (!modeloEstaAtivoNaCompetencia(modelo, competencia)) {
+      pulados.push(modelo.colaborador_nome);
+      continue;
+    }
+    const col = colaboradores.find((c) => c.id === modelo.colaborador_id) || {
+      id: modelo.colaborador_id,
+      nome: modelo.colaborador_nome,
+    };
     const comp = await garantirCompetencia({ colaborador: col, modelo, competencia });
-    criados.push(comp);
+    if (comp) criados.push(comp);
   }
-  return criados;
+
+  return { criados, pulados };
 }
 
 export async function adicionarMovimento(competenciaId, movimento) {
@@ -103,13 +172,13 @@ export async function removerMovimento(competenciaId, movimentoId) {
 
 /**
  * Sincroniza previsão com LancamentoFinanceiro (opcional).
- * Cria/atualiza um lançamento principal "Em Aberto" com tag folha_previsao.
+ * Inclui 13º, férias e rescisão no valor enviado.
  */
 export async function sincronizarLancamentoFinanceiro(competencia, opcoes = {}) {
-  const { contaFinanceiraId, categoriaId, categoriaNome } = opcoes;
+  const { contaFinanceiraId, categoriaId, categoriaNome, modelo } = opcoes;
   if (!contaFinanceiraId) return null;
 
-  const totais = calcularTotaisCompetencia(competencia);
+  const totais = calcularTotaisCompetencia(competencia, modelo);
   const valor = totais.liquido;
   if (valor <= 0) return null;
 
@@ -119,10 +188,17 @@ export async function sincronizarLancamentoFinanceiro(competencia, opcoes = {}) 
   const dia = Math.min(competencia.dia_vencimento || 5, 28);
   const dataVencimento = `${y}-${m}-${String(dia).padStart(2, '0')}`;
 
+  const extras = [];
+  if (totais.totalDecimo > 0) extras.push(`13º ${totais.totalDecimo.toFixed(2)}`);
+  if (totais.totalFerias > 0) extras.push(`férias ${totais.totalFerias.toFixed(2)}`);
+
   const existentes = await base44.entities.LancamentoFinanceiro.filter({
     grupo_lancamento_id: grupoId,
-    tags: { $contains: 'folha_previsao' },
   });
+
+  const lfExistente = (existentes || []).find(
+    (l) => Array.isArray(l.tags) && l.tags.includes('folha_previsao'),
+  );
 
   const payload = {
     tipo: 'Despesa',
@@ -138,11 +214,11 @@ export async function sincronizarLancamentoFinanceiro(competencia, opcoes = {}) 
     grupo_lancamento_id: grupoId,
     referencia_tipo: 'Manual',
     referencia_id: competencia.id,
-    observacoes: `Previsão folha — líquido ${totais.liquido.toFixed(2)} | encargos empresa ${totais.encargosEmpresa.toFixed(2)}`,
+    observacoes: `Previsão folha — líquido ${totais.liquido.toFixed(2)} | encargos ${totais.encargosEmpresa.toFixed(2)}${extras.length ? ` | ${extras.join(', ')}` : ''}`,
   };
 
-  if (existentes?.length) {
-    return base44.entities.LancamentoFinanceiro.update(existentes[0].id, payload);
+  if (lfExistente) {
+    return base44.entities.LancamentoFinanceiro.update(lfExistente.id, payload);
   }
 
   const criado = await base44.entities.LancamentoFinanceiro.create(payload);

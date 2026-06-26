@@ -12,19 +12,25 @@ import {
   Users,
   LayoutTemplate,
   CalendarClock,
+  TrendingUp,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import FolhaPrevisaoResumo from '@/components/folha-previsao/FolhaPrevisaoResumo';
 import FolhaPrevisaoModeloDialog from '@/components/folha-previsao/FolhaPrevisaoModeloDialog';
 import FolhaPrevisaoMovimentoDialog from '@/components/folha-previsao/FolhaPrevisaoMovimentoDialog';
 import FolhaPrevisaoDetalheDrawer from '@/components/folha-previsao/FolhaPrevisaoDetalheDrawer';
+import FolhaPrevisaoDesligamentoDialog from '@/components/folha-previsao/FolhaPrevisaoDesligamentoDialog';
+import FolhaPrevisaoProjecao from '@/components/folha-previsao/FolhaPrevisaoProjecao';
 import {
   calcularTotaisCompetencia,
   calcularTotaisGrupo,
   formatCompetenciaLabel,
   formatCurrency,
+  formatDataBr,
   getCompetenciaAtual,
+  mapaModelosPorColaborador,
   shiftCompetencia,
+  SITUACAO_FOLHA,
 } from '@/lib/folhaPrevisaoCalculos';
 import {
   abrirCompetenciasDoMes,
@@ -33,26 +39,41 @@ import {
   listarColaboradoresAtivos,
   listarCompetencias,
   listarModelos,
+  reativarNaFolha,
+  registrarDesligamento,
   removerMovimento,
   sincronizarLancamentoFinanceiro,
 } from '@/lib/folhaPrevisaoService';
 
-function FuncionarioCard({ competencia, onOpen }) {
-  const totais = calcularTotaisCompetencia(competencia);
+function FuncionarioCard({ competencia, modelo, onOpen }) {
+  const totais = calcularTotaisCompetencia(competencia, modelo);
+  const desligado = modelo?.situacao === SITUACAO_FOLHA.DESLIGADO;
+  const ultimoMes = competencia.situacao_mes === 'ultimo_mes';
+
   return (
     <button
       type="button"
       onClick={() => onOpen(competencia)}
-      className="w-full rounded-xl bg-card p-3 text-left shadow-sm ring-1 ring-border/40 transition hover:ring-primary/30"
+      className={`w-full rounded-xl bg-card p-3 text-left shadow-sm ring-1 transition hover:ring-primary/30 ${
+        ultimoMes ? 'ring-amber-400/50' : desligado ? 'ring-red-300/40 opacity-90' : 'ring-border/40'
+      }`}
     >
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="font-medium text-foreground">{competencia.colaborador_nome}</div>
           <div className="text-xs text-muted-foreground">{competencia.modelo_nome || 'Sem modelo'}</div>
         </div>
-        <Badge variant={competencia.status === 'fechado' ? 'secondary' : 'outline'}>
-          {competencia.status === 'fechado' ? 'Fechado' : 'Rascunho'}
-        </Badge>
+        <div className="flex flex-col items-end gap-1">
+          {ultimoMes && <Badge variant="destructive" className="text-[10px]">Último mês</Badge>}
+          {desligado && !ultimoMes && (
+            <Badge variant="secondary" className="text-[10px]">Desligou</Badge>
+          )}
+          {!desligado && (
+            <Badge variant={competencia.status === 'fechado' ? 'secondary' : 'outline'} className="text-[10px]">
+              {competencia.status === 'fechado' ? 'Fechado' : 'Rascunho'}
+            </Badge>
+          )}
+        </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
         <div>
@@ -70,14 +91,30 @@ function FuncionarioCard({ competencia, onOpen }) {
           <div className="font-semibold tabular-nums">{formatCurrency(totais.custoTotalEmpresa)}</div>
         </div>
       </div>
+      {(totais.totalDecimo > 0 || totais.totalFerias > 0) && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {totais.totalDecimo > 0 && (
+            <span className="text-[10px] rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+              13º {formatCurrency(totais.totalDecimo)}
+            </span>
+          )}
+          {totais.totalFerias > 0 && (
+            <span className="text-[10px] rounded-full bg-sky-100 px-2 py-0.5 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
+              Férias {formatCurrency(totais.totalFerias)}
+            </span>
+          )}
+        </div>
+      )}
     </button>
   );
 }
 
-function ModeloCard({ modelo, onEdit, onDuplicate }) {
+function ModeloCard({ modelo, onEdit, onDuplicate, onDesligar }) {
   const rubricas = modelo.rubricas || [];
+  const desligado = modelo.situacao === SITUACAO_FOLHA.DESLIGADO;
+
   return (
-    <div className="rounded-xl bg-card p-3 shadow-sm ring-1 ring-border/40">
+    <div className={`rounded-xl bg-card p-3 shadow-sm ring-1 ${desligado ? 'ring-red-300/40' : 'ring-border/40'}`}>
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="font-medium">{modelo.nome}</div>
@@ -85,15 +122,33 @@ function ModeloCard({ modelo, onEdit, onDuplicate }) {
             {modelo.colaborador_nome ? `Vinculado: ${modelo.colaborador_nome}` : 'Modelo genérico'}
             {' · '}Dia {modelo.dia_vencimento}
           </div>
+          {desligado && modelo.data_desligamento && (
+            <div className="text-xs text-red-700 dark:text-red-400 mt-1">
+              Desligou em {formatDataBr(modelo.data_desligamento)}
+            </div>
+          )}
         </div>
-        {!modelo.ativo && <Badge variant="secondary">Inativo</Badge>}
+        {desligado ? (
+          <Badge variant="destructive">Desligou</Badge>
+        ) : !modelo.ativo ? (
+          <Badge variant="secondary">Inativo</Badge>
+        ) : null}
       </div>
-      <div className="mt-2 text-xs text-muted-foreground">{rubricas.length} rubricas fixas</div>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-2 text-xs text-muted-foreground">
+        {rubricas.length} rubricas
+        {modelo.decimo_terceiro_ativo !== false && ' · 13º ativo'}
+        {(modelo.ferias_programadas?.length || 0) > 0 && ` · ${modelo.ferias_programadas.length} férias`}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
         <Button size="sm" variant="outline" className="h-8" onClick={() => onEdit(modelo)}>Editar</Button>
         <Button size="sm" variant="secondary" className="h-8 gap-1" onClick={() => onDuplicate(modelo)}>
           <Copy className="h-3.5 w-3.5" /> Duplicar
         </Button>
+        {modelo.colaborador_id && !desligado && onDesligar && (
+          <Button size="sm" variant="ghost" className="h-8 text-red-700 dark:text-red-400" onClick={() => onDesligar(modelo)}>
+            Desligar
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -105,6 +160,7 @@ export default function FolhaPrevisaoPage() {
   const [competenciaMes, setCompetenciaMes] = useState(getCompetenciaAtual());
   const [selectedComp, setSelectedComp] = useState(null);
   const [modeloDialog, setModeloDialog] = useState(null);
+  const [desligamentoModelo, setDesligamentoModelo] = useState(null);
   const [movimentoOpen, setMovimentoOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -129,8 +185,10 @@ export default function FolhaPrevisaoPage() {
     queryFn: () => base44.entities.ContasFinanceiras.list(),
   });
 
-  const totaisGrupo = useMemo(() => calcularTotaisGrupo(competencias), [competencias]);
+  const modelosMap = useMemo(() => mapaModelosPorColaborador(modelos), [modelos]);
+  const totaisGrupo = useMemo(() => calcularTotaisGrupo(competencias, modelosMap), [competencias, modelosMap]);
   const contaPadrao = contas.find((c) => c.ativo !== false) || contas[0];
+  const selectedModelo = selectedComp ? modelosMap[selectedComp.colaborador_id] : null;
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['folha-previsao'] });
@@ -139,12 +197,13 @@ export default function FolhaPrevisaoPage() {
   const handleAbrirMes = async () => {
     setSaving(true);
     try {
-      const criados = await abrirCompetenciasDoMes(competenciaMes);
+      const { criados, pulados } = await abrirCompetenciasDoMes(competenciaMes);
       invalidate();
-      toast({
-        title: criados.length ? `${criados.length} previsão(ões) aberta(s)` : 'Nenhum colaborador/modelo encontrado',
-        description: criados.length ? 'Competências criadas a partir dos modelos.' : 'Crie um modelo e vincule colaboradores.',
-      });
+      const msg = criados.length
+        ? `${criados.length} previsão(ões) aberta(s).`
+        : 'Nenhum colaborador com modelo vinculado.';
+      const extra = pulados.length ? ` ${pulados.length} ignorado(s) (já desligados).` : '';
+      toast({ title: 'Mês aberto', description: msg + extra });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
@@ -176,6 +235,38 @@ export default function FolhaPrevisaoPage() {
       await duplicarModelo(modelo);
       invalidate();
       toast({ title: 'Modelo duplicado', description: 'Ajuste o nome e os dados do novo modelo.' });
+    } catch (e) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDesligamento = async (dados) => {
+    if (!desligamentoModelo?.id) return;
+    setSaving(true);
+    try {
+      await registrarDesligamento(desligamentoModelo.id, dados);
+      invalidate();
+      setDesligamentoModelo(null);
+      setModeloDialog(null);
+      toast({
+        title: 'Desligamento registrado',
+        description: `${desligamentoModelo.colaborador_nome || desligamentoModelo.nome} não entrará nos meses seguintes.`,
+      });
+    } catch (e) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReativar = async (modelo) => {
+    setSaving(true);
+    try {
+      await reativarNaFolha(modelo.id);
+      invalidate();
+      toast({ title: 'Reativado na folha' });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
@@ -220,6 +311,7 @@ export default function FolhaPrevisaoPage() {
       await sincronizarLancamentoFinanceiro(selectedComp, {
         contaFinanceiraId: contaPadrao.id,
         categoriaNome: 'Salários',
+        modelo: selectedModelo,
       });
       toast({ title: 'Enviado ao financeiro', description: 'Lançamento previsto criado/atualizado.' });
     } catch (e) {
@@ -234,17 +326,21 @@ export default function FolhaPrevisaoPage() {
       <div className="pb-3 border-b border-border/40">
         <h1 className="text-xl font-medium text-foreground mb-0.5">Previsão de Folha</h1>
         <p className="text-xs text-muted-foreground">
-          Previsão de pagamento por colaborador — não executa folha, só projeta e agrupa
+          Controle financeiro da folha — salários, 13º, férias, desligamentos e projeção de caixa
         </p>
       </div>
 
       <Tabs defaultValue="previsao" className="w-full mt-4">
-        <TabsList className="w-full bg-muted/50 rounded-2xl p-1.5 h-auto">
-          <TabsTrigger value="previsao" className="flex-1 gap-2 rounded-xl py-2.5 min-h-[44px]">
+        <TabsList className="w-full bg-muted/50 rounded-2xl p-1.5 h-auto flex-wrap">
+          <TabsTrigger value="previsao" className="flex-1 gap-2 rounded-xl py-2.5 min-h-[44px] min-w-[120px]">
             <CalendarClock className="w-4 h-4" />
             <span className="hidden md:inline text-sm">Previsão do mês</span>
           </TabsTrigger>
-          <TabsTrigger value="modelos" className="flex-1 gap-2 rounded-xl py-2.5 min-h-[44px]">
+          <TabsTrigger value="projecao" className="flex-1 gap-2 rounded-xl py-2.5 min-h-[44px] min-w-[120px]">
+            <TrendingUp className="w-4 h-4" />
+            <span className="hidden md:inline text-sm">Projeção 12 meses</span>
+          </TabsTrigger>
+          <TabsTrigger value="modelos" className="flex-1 gap-2 rounded-xl py-2.5 min-h-[44px] min-w-[120px]">
             <LayoutTemplate className="w-4 h-4" />
             <span className="hidden md:inline text-sm">Modelos</span>
           </TabsTrigger>
@@ -282,10 +378,19 @@ export default function FolhaPrevisaoPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {competencias.map((c) => (
-                <FuncionarioCard key={c.id} competencia={c} onOpen={setSelectedComp} />
+                <FuncionarioCard
+                  key={c.id}
+                  competencia={c}
+                  modelo={modelosMap[c.colaborador_id]}
+                  onOpen={setSelectedComp}
+                />
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="projecao" className="mt-4">
+          <FolhaPrevisaoProjecao modelos={modelos} competenciaInicio={competenciaMes} />
         </TabsContent>
 
         <TabsContent value="modelos" className="mt-4 space-y-4">
@@ -295,7 +400,8 @@ export default function FolhaPrevisaoPage() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Crie um modelo com as rubricas padrão (salário, INSS, FGTS…) e duplique para cada colaborador — só muda nome e valores.
+            Um modelo por colaborador (vincule o nome). Configure 13º, férias e rubricas fixas. Duplique para criar
+            variações. Quando alguém sair, use Desligar — some dos meses futuros automaticamente.
           </p>
           {loadingModelos ? (
             <p className="text-sm text-muted-foreground py-8 text-center">Carregando…</p>
@@ -312,6 +418,7 @@ export default function FolhaPrevisaoPage() {
                   modelo={m}
                   onEdit={setModeloDialog}
                   onDuplicate={handleDuplicateModelo}
+                  onDesligar={setDesligamentoModelo}
                 />
               ))}
             </div>
@@ -323,6 +430,7 @@ export default function FolhaPrevisaoPage() {
         open={Boolean(selectedComp)}
         onClose={() => setSelectedComp(null)}
         competencia={selectedComp}
+        modelo={selectedModelo}
         onAddMovimento={() => setMovimentoOpen(true)}
         onRemoveMovimento={handleRemoveMovimento}
         onSyncFinanceiro={handleSyncFinanceiro}
@@ -335,6 +443,16 @@ export default function FolhaPrevisaoPage() {
         modelo={modeloDialog?.id ? modeloDialog : null}
         colaboradores={colaboradores}
         onSave={handleSaveModelo}
+        onDesligar={setDesligamentoModelo}
+        onReativar={handleReativar}
+        saving={saving}
+      />
+
+      <FolhaPrevisaoDesligamentoDialog
+        open={Boolean(desligamentoModelo)}
+        onClose={() => setDesligamentoModelo(null)}
+        modelo={desligamentoModelo}
+        onConfirm={handleDesligamento}
         saving={saving}
       />
 

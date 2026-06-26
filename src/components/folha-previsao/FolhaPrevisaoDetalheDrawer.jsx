@@ -6,6 +6,7 @@ import { Plus, Trash2, Link2 } from 'lucide-react';
 import {
   calcularTotaisCompetencia,
   formatCurrency,
+  formatDataBr,
   MOVIMENTO_LABELS,
   RUBRICA_LABELS,
 } from '@/lib/folhaPrevisaoCalculos';
@@ -39,6 +40,7 @@ export default function FolhaPrevisaoDetalheDrawer({
   open,
   onClose,
   competencia,
+  modelo,
   onAddMovimento,
   onRemoveMovimento,
   onSyncFinanceiro,
@@ -46,9 +48,10 @@ export default function FolhaPrevisaoDetalheDrawer({
 }) {
   if (!competencia) return null;
 
-  const totais = calcularTotaisCompetencia(competencia);
+  const totais = calcularTotaisCompetencia(competencia, modelo);
   const rubricas = [...(competencia.rubricas || [])].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
   const movimentos = competencia.movimentos || [];
+  const provisoes = totais.provisoes || [];
 
   return (
     <Drawer open={open} onOpenChange={(v) => !v && onClose()}>
@@ -58,15 +61,25 @@ export default function FolhaPrevisaoDetalheDrawer({
             <span>{competencia.colaborador_nome}</span>
             <Badge variant="outline">{competencia.competencia}</Badge>
             {competencia.status === 'fechado' && <Badge>Fechado</Badge>}
+            {competencia.situacao_mes === 'ultimo_mes' && (
+              <Badge variant="destructive">Último mês</Badge>
+            )}
+            {totais.desligado && !totais.mesDesligamento && (
+              <Badge variant="secondary">Desligado</Badge>
+            )}
           </DrawerTitle>
           <p className="text-xs text-muted-foreground">
             Modelo: {competencia.modelo_nome || '—'} · Vencimento dia {competencia.dia_vencimento}
+            {modelo?.data_desligamento && ` · Saiu em ${formatDataBr(modelo.data_desligamento)}`}
           </p>
         </DrawerHeader>
 
         <div className="overflow-y-auto px-4 pb-6">
           <div className="rounded-xl bg-muted/40 p-3 mt-2">
             <LinhaValor label="Proventos" valor={totais.proventos} tone="positive" />
+            {totais.proventosEventos > 0 && (
+              <LinhaValor label="↳ 13º, férias, rescisão" valor={totais.proventosEventos} tone="positive" />
+            )}
             <LinhaValor label="Descontos" valor={totais.descontos} tone="negative" />
             <div className="my-1 border-t border-border/40" />
             <LinhaValor label="Líquido a pagar" valor={totais.liquido} />
@@ -79,6 +92,21 @@ export default function FolhaPrevisaoDetalheDrawer({
             <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
               Já retirou {formatCurrency(totais.totalVales)} em vales este mês.
             </p>
+          )}
+
+          {provisoes.length > 0 && (
+            <Section title="Provisões do mês (automáticas)">
+              <div className="rounded-lg ring-1 ring-border/40 divide-y divide-border/30">
+                {provisoes.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                    <span>{p.nome}</span>
+                    <span className="tabular-nums font-medium text-emerald-700 dark:text-emerald-400">
+                      {formatCurrency(p.valor)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Section>
           )}
 
           <Section title="Rubricas fixas">

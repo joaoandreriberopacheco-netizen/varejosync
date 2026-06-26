@@ -28,6 +28,57 @@
       "type": "boolean",
       "default": true
     },
+    "situacao": {
+      "type": "string",
+      "enum": ["ativo", "desligado"],
+      "default": "ativo",
+      "description": "Situação financeira do colaborador na folha"
+    },
+    "data_desligamento": {
+      "type": "string",
+      "format": "date",
+      "description": "Data em que parou de trabalhar (último mês previsto)"
+    },
+    "valor_rescisao_previsto": {
+      "type": "number",
+      "description": "Valor previsto de rescisão no mês do desligamento"
+    },
+    "decimo_terceiro_ativo": {
+      "type": "boolean",
+      "default": true
+    },
+    "decimo_mes_parcela_1": {
+      "type": "number",
+      "default": 11,
+      "description": "Mês da 1ª parcela do 13º (1-12)"
+    },
+    "decimo_mes_parcela_2": {
+      "type": "number",
+      "default": 12,
+      "description": "Mês da 2ª parcela do 13º (1-12)"
+    },
+    "decimo_percentual_parcela": {
+      "type": "number",
+      "default": 50,
+      "description": "Percentual do salário base por parcela"
+    },
+    "ferias_programadas": {
+      "type": "array",
+      "description": "Férias previstas por competência",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "competencia_prevista": { "type": "string" },
+          "valor_previsto": { "type": "number" },
+          "descricao": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["previsto", "pago", "cancelado"]
+          }
+        }
+      }
+    },
     "rubricas": {
       "type": "array",
       "description": "Rubricas fixas do modelo (salário, INSS, FGTS, etc.)",

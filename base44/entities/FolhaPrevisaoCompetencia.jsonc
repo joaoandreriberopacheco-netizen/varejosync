@@ -32,6 +32,12 @@
       "enum": ["rascunho", "fechado"],
       "default": "rascunho"
     },
+    "situacao_mes": {
+      "type": "string",
+      "enum": ["normal", "desligamento", "ultimo_mes"],
+      "default": "normal",
+      "description": "Destaque quando é mês de saída do colaborador"
+    },
     "grupo_lancamento_id": {
       "type": "string",
       "description": "Agrupamento no financeiro (LancamentoFinanceiro)"
@@ -68,7 +74,7 @@
           "data": { "type": "string" },
           "tipo": {
             "type": "string",
-            "enum": ["vale", "hora_extra", "comissao_venda", "ajuste_provento", "ajuste_desconto"]
+            "enum": ["vale", "hora_extra", "comissao_venda", "ajuste_provento", "ajuste_desconto", "ferias"]
           },
           "descricao": { "type": "string" },
           "valor": { "type": "number" },
