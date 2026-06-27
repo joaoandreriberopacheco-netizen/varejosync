@@ -13,6 +13,7 @@ import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMe
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
 import ProdutosMobileFiltersSheet from '@/components/produtos/ProdutosMobileFiltersSheet';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/components/utils';
 
 const MOBILE_FILTER_SELECT =
@@ -46,6 +47,7 @@ export default function ProdutosHeader({
   groupTreeByCategory = false,
   onGroupTreeByCategoryChange,
 }) {
+  const isMobileLayout = useCompactShell();
   const quantidadeOperador = filters.quantidadeOperador || 'all';
 
   const clearFilters = () => {
@@ -459,16 +461,18 @@ export default function ProdutosHeader({
         )}
       </div>
 
-      <ProdutosMobileFiltersSheet
-        open={isFilterOpen}
-        onOpenChange={setIsFilterOpen}
-        filters={filters}
-        categorias={categorias}
-        fornecedores={fornecedores}
-        activeFilterCount={activeFilterCount}
-        handleFilterChange={handleFilterChange}
-        setFilters={setFilters}
-      />
+      {isMobileLayout ? (
+        <ProdutosMobileFiltersSheet
+          open={isFilterOpen}
+          onOpenChange={setIsFilterOpen}
+          filters={filters}
+          categorias={categorias}
+          fornecedores={fornecedores}
+          activeFilterCount={activeFilterCount}
+          handleFilterChange={handleFilterChange}
+          setFilters={setFilters}
+        />
+      ) : null}
     </div>
   );
 }
