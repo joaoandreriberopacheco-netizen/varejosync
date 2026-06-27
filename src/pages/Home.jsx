@@ -32,7 +32,7 @@ export default function HomePage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
   const [quickActionIds, setQuickActionIds] = useState([]);
-  const [showBalance, setShowBalance] = useState(true);
+  const [showBalance, setShowBalance] = useState(false);
   const [showPersonalizar, setShowPersonalizar] = useState(false);
   const podeVerResumoVendasEarly = useMemo(() => {
     const cached = getCachedUserSession();
@@ -185,18 +185,16 @@ export default function HomePage() {
                 {showBalance ? <Eye className="w-5 h-5 text-muted-foreground" /> : <EyeOff className="w-5 h-5 text-muted-foreground" />}
               </button>
             </div>
-            {showBalance ? (
-              <>
-                <div className="text-3xl font-bold text-foreground mb-1">
-                  R$ {formatValor(kpis.valorVendasHoje)}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {kpis.vendasHoje} {kpis.vendasHoje === 1 ? 'venda realizada' : 'vendas realizadas'}
-                </p>
-              </>
-            ) : (
-              <div className="text-3xl font-bold text-muted-foreground/50 mb-1">••••••</div>
-            )}
+            <div className="text-3xl font-bold text-foreground mb-1">
+              {showBalance ? (
+                <>R$ {formatValor(kpis.valorVendasHoje)}</>
+              ) : (
+                <span className="text-muted-foreground/50">R$ ********</span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {kpis.vendasHoje} {kpis.vendasHoje === 1 ? 'venda realizada' : 'vendas realizadas'}
+            </p>
           </div>
         )}
 
