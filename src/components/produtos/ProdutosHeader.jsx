@@ -231,7 +231,7 @@ export default function ProdutosHeader({
               onChange={e => handleFilterChange('searchTerm', e.target.value)}
             />
           </div>
-          <div className="flex flex-nowrap desktop-layout:flex-wrap items-center gap-1.5 desktop-layout:gap-2 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 desktop-layout:gap-2 min-w-0">
             <ProdutosSomentePositivosToggle filters={filters} setFilters={setFilters} />
             <ProdutosAbcdQuickFilter
               abcd={filters.abcd}

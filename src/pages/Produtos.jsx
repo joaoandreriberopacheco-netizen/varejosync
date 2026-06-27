@@ -1234,7 +1234,7 @@ function ProdutosPageContent() {
 
       {/* Tela completa para o formulário */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 bg-background dark:bg-[#1f1d22]">
+        <div className="fixed inset-0 z-[70] bg-background dark:bg-[#1f1d22]">
           <ProdutoFormCompleto
             produto={selectedProduto}
             produtoSimilarBase={produtoSimilarBase}
@@ -1513,8 +1513,8 @@ function ProdutosPageContent() {
         onSuccess={loadData}
       />
 
-      {/* FAB - Floating Action Button */}
-      <ProdutoFAB onNovoClicked={handleAddNew} />
+      {/* FAB - oculto com formulário aberto (form fica acima do header fixo z-60) */}
+      {!isFormOpen && <ProdutoFAB onNovoClicked={handleAddNew} />}
 
       {/* Dialog de Preview de Custos (Existing) */}
       <Dialog open={isPreviewCustosDialogOpen} onOpenChange={setIsPreviewCustosDialogOpen}>
