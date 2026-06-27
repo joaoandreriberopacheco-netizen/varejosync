@@ -329,12 +329,13 @@ const SKU_DESC_INDENT = 5.5;
     catTotals: { totalCompra?: number; totalCusto?: number; totalVenda?: number; count?: number },
     { addTopGap = false } = {},
   ) => {
-    let drawY = y0;
+    y = y0;
     if (addTopGap) {
-      drawY += CATEGORY_AREA_GAP;
+      y += CATEGORY_AREA_GAP;
     }
 
     ensureTableSpace(ROW_STEP + 1);
+    const drawY = y;
     const baseline = drawY + ROW_H * BASELINE_RATIO;
     const vals = subtotalVals(catTotals);
     const categoryDescX = X.desc + CATEGORY_DESC_INDENT;
@@ -430,7 +431,8 @@ const SKU_DESC_INDENT = 5.5;
     );
   }
 
-  if (y + 10 > pageH - 10) {
+  const FOOTER_BLOCK_H = 10;
+  if (y + FOOTER_BLOCK_H > pageH - M) {
     doc.addPage();
     y = TABLE_TOP_CONTINUATION;
   }
