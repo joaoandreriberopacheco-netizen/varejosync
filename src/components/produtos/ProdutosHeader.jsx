@@ -12,61 +12,8 @@ import ProdutosAbcdQuickFilter from '@/components/produtos/ProdutosAbcdQuickFilt
 import ProdutosNumericMetricFilter from '@/components/produtos/ProdutosNumericMetricFilter';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
+import ProdutosMobileFiltersSheet from '@/components/produtos/ProdutosMobileFiltersSheet';
 import { cn } from '@/components/utils';
-
-const STOCK_FILTER_CHIPS = [
-  { value: 'all', label: 'Todos' },
-  { value: 'ok', label: 'OK' },
-  { value: 'baixo', label: 'Baixo' },
-  { value: 'critico', label: 'Crítico' },
-  { value: 'inativo', label: 'Inativo' },
-];
-
-const ATIVO_FILTER_CHIPS = [
-  { value: 'all', label: 'Todos' },
-  { value: 'ativos', label: 'Ativos' },
-  { value: 'inativos', label: 'Inativos' },
-];
-
-const CADASTRO_FILTER_CHIPS = [
-  { value: 'all', label: 'Todos' },
-  { value: 'completo', label: 'Completos' },
-  { value: 'incompleto', label: 'Incompletos' },
-];
-
-const ABCD_FILTER_CHIPS = [
-  { value: 'all', label: 'Todas' },
-  ...ABCD_FILTER_VALUES.map((value) => ({
-    value,
-    label: value,
-  })),
-];
-
-const FILTER_CHIP_BASE =
-  'h-8 px-2.5 rounded-xl text-xs font-medium transition-colors border border-transparent';
-const FILTER_CHIP_ACTIVE =
-  'bg-[#4a5240] text-white border-[#4a5240] dark:bg-[#a4ce33] dark:text-[#1f1d22] dark:border-[#a4ce33]';
-const FILTER_CHIP_IDLE = 'bg-muted/80 text-muted-foreground hover:bg-muted';
-
-function FilterSectionLabel({ children }) {
-  return (
-    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground px-0.5">
-      {children}
-    </p>
-  );
-}
-
-function FilterChip({ active, onClick, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(FILTER_CHIP_BASE, active ? FILTER_CHIP_ACTIVE : FILTER_CHIP_IDLE)}
-    >
-      {children}
-    </button>
-  );
-}
 
 const MOBILE_FILTER_SELECT =
   'bg-muted/80 border-none h-9 text-xs w-full rounded-xl';
@@ -318,7 +265,7 @@ export default function ProdutosHeader({
                 activeFilterCount > 0 && 'text-[#4a5240] dark:text-[#a4ce33]',
               )}
               onClick={() => setIsFilterOpen(v => !v)}
-              title="Filtros"
+              title="Mais filtros"
             >
               <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
               {activeFilterCount > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-muted dark:bg-muted text-white dark:text-foreground text-[10px] rounded-full flex items-center justify-center font-bold">{activeFilterCount}</span>}
@@ -336,7 +283,7 @@ export default function ProdutosHeader({
         </div>
 
         {isFilterOpen && (
-          <div className="rounded-2xl border border-border/40 bg-muted/25 p-2.5 space-y-3 desktop-layout:rounded-none desktop-layout:border-0 desktop-layout:bg-transparent desktop-layout:p-0 desktop-layout:grid desktop-layout:grid-cols-6 desktop-layout:gap-2 desktop-layout:space-y-0 desktop-layout:pb-1">
+          <div className="hidden desktop-layout:grid desktop-layout:grid-cols-6 desktop-layout:gap-2 desktop-layout:pb-1">
             <div className="hidden desktop-layout:flex items-center gap-2 bg-muted rounded-xl md:rounded-lg px-3 h-10 md:h-9 md:col-span-2">
               <span className="text-xs text-muted-foreground flex-shrink-0">Nível da TreeGrid</span>
               <LevelControl level={treeLevel} onChange={setTreeLevel} />
@@ -349,21 +296,6 @@ export default function ProdutosHeader({
                 onChange={onGroupTreeByCategoryChange}
                 className="h-9 bg-transparent px-0"
               />
-            </div>
-
-            <div className="space-y-1.5 desktop-layout:hidden">
-              <FilterSectionLabel>Estoque</FilterSectionLabel>
-              <div className="flex flex-wrap gap-1.5">
-                {STOCK_FILTER_CHIPS.map(({ value, label }) => (
-                  <FilterChip
-                    key={value}
-                    active={(filters.statusEstoque || 'all') === value}
-                    onClick={() => handleFilterChange('statusEstoque', value)}
-                  >
-                    {label}
-                  </FilterChip>
-                ))}
-              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2 desktop-layout:contents">
@@ -403,21 +335,6 @@ export default function ProdutosHeader({
               </Select>
             </div>
 
-            <div className="space-y-1.5 desktop-layout:hidden">
-              <FilterSectionLabel>Produtos</FilterSectionLabel>
-              <div className="flex flex-wrap gap-1.5">
-                {ATIVO_FILTER_CHIPS.map(({ value, label }) => (
-                  <FilterChip
-                    key={value}
-                    active={(filters.ativoStatus || 'all') === value}
-                    onClick={() => handleFilterChange('ativoStatus', value)}
-                  >
-                    {label}
-                  </FilterChip>
-                ))}
-              </div>
-            </div>
-
             <div className="hidden desktop-layout:block">
               <Select value={filters.ativoStatus || 'all'} onValueChange={v => handleFilterChange('ativoStatus', v)}>
                 <SelectTrigger className="bg-muted border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg">
@@ -431,21 +348,6 @@ export default function ProdutosHeader({
               </Select>
             </div>
 
-            <div className="space-y-1.5 desktop-layout:hidden">
-              <FilterSectionLabel>Cadastro</FilterSectionLabel>
-              <div className="flex flex-wrap gap-1.5">
-                {CADASTRO_FILTER_CHIPS.map(({ value, label }) => (
-                  <FilterChip
-                    key={value}
-                    active={(filters.cadastroIncompleto || 'all') === value}
-                    onClick={() => handleFilterChange('cadastroIncompleto', value)}
-                  >
-                    {label}
-                  </FilterChip>
-                ))}
-              </div>
-            </div>
-
             <div className="hidden desktop-layout:block">
               <Select value={filters.cadastroIncompleto} onValueChange={v => handleFilterChange('cadastroIncompleto', v)}>
                 <SelectTrigger className="bg-muted border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg">
@@ -457,21 +359,6 @@ export default function ProdutosHeader({
                   <SelectItem value="completo" className="text-sm md:text-xs">Completo</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-1.5 desktop-layout:hidden">
-              <FilterSectionLabel>Curva ABCD</FilterSectionLabel>
-              <div className="flex flex-wrap gap-1.5">
-                {ABCD_FILTER_CHIPS.map(({ value, label }) => (
-                  <FilterChip
-                    key={value}
-                    active={(filters.abcd || 'all') === value}
-                    onClick={() => handleFilterChange('abcd', value)}
-                  >
-                    {label}
-                  </FilterChip>
-                ))}
-              </div>
             </div>
 
             <div className="hidden desktop-layout:block">
@@ -497,10 +384,7 @@ export default function ProdutosHeader({
               onChange={e => handleFilterChange('tag', e.target.value)}
             />
 
-            <div className="space-y-1.5 desktop-layout:contents">
-              <div className="desktop-layout:hidden">
-                <FilterSectionLabel>Quantidade</FilterSectionLabel>
-              </div>
+            <div className="desktop-layout:contents">
               <div className="grid grid-cols-2 gap-2 desktop-layout:contents">
                 <div className="col-span-2 desktop-layout:col-auto">
                 <Select
@@ -574,6 +458,17 @@ export default function ProdutosHeader({
           </div>
         )}
       </div>
+
+      <ProdutosMobileFiltersSheet
+        open={isFilterOpen}
+        onOpenChange={setIsFilterOpen}
+        filters={filters}
+        categorias={categorias}
+        fornecedores={fornecedores}
+        activeFilterCount={activeFilterCount}
+        handleFilterChange={handleFilterChange}
+        setFilters={setFilters}
+      />
     </div>
   );
 }
