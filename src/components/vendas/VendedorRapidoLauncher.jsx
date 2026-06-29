@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronUp, Monitor } from 'lucide-react';
 import { shouldShowQuickAccessLaunchers } from '@/config/quickAccessLauncherPolicy';
 import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas';
 import { getCachedUserSession } from '@/lib/userSessionCache';
 import { perfilResolvidoParaUsuario, usuarioLegadoSemMatrizPerfil } from '@/lib/perfilPermissoes';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
+import { buildPDVVendedorQuickUrl } from '@/lib/pdvQuickAccessNavigate';
 import { useIsDesktop } from '@/hooks/use-breakpoint';
 import VendedorRapidoPanel from './VendedorRapidoPanel';
 
@@ -21,6 +22,7 @@ function userCanAccessVendedor(user, perfilDeAcesso) {
 
 export default function VendedorRapidoLauncher() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
   const isCompactViewport = !useIsDesktop();
@@ -30,9 +32,13 @@ export default function VendedorRapidoLauncher() {
   const startPointRef = useRef(null);
 
   const openOrRefresh = useCallback(() => {
+    if (isCompactViewport) {
+      navigate(buildPDVVendedorQuickUrl());
+      return;
+    }
     setSessionKey((key) => key + 1);
     setOpen(true);
-  }, []);
+  }, [isCompactViewport, navigate]);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronUp, Wallet } from 'lucide-react';
 import { shouldShowQuickAccessLaunchers } from '@/config/quickAccessLauncherPolicy';
 import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas';
@@ -8,6 +8,7 @@ import { getCachedUserSession } from '@/lib/userSessionCache';
 import { perfilResolvidoParaUsuario, usuarioLegadoSemMatrizPerfil } from '@/lib/perfilPermissoes';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
 import { prefetchPDVCaixa } from '@/lib/prefetchPDVCaixa';
+import { buildPDVCaixaQuickUrl } from '@/lib/pdvQuickAccessNavigate';
 import CaixaRapidoPanel from './CaixaRapidoPanel';
 import { useIsDesktop } from '@/hooks/use-breakpoint';
 
@@ -22,6 +23,7 @@ function userCanAccessCaixa(user, perfilDeAcesso) {
 
 export default function CaixaRapidoLauncher() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
   const isCompactViewport = !useIsDesktop();
@@ -32,11 +34,15 @@ export default function CaixaRapidoLauncher() {
 
   const openOrRefresh = useCallback(() => {
     prefetchPDVCaixa();
+    if (isCompactViewport) {
+      navigate(buildPDVCaixaQuickUrl());
+      return;
+    }
     setOpen((wasOpen) => {
       if (wasOpen) setSessionKey((key) => key + 1);
       return true;
     });
-  }, []);
+  }, [isCompactViewport, navigate]);
 
   useEffect(() => {
     if (canAccess) prefetchPDVCaixa();
