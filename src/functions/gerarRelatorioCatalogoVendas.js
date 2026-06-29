@@ -1,4 +1,4 @@
-import { generateRelatorioCatalogoVendasPdf } from '@/lib/relatorioCatalogoVendasPdf/generateRelatorioCatalogoVendasPdf.js';
+import { generateRelatorioCatalogoVendasPdf } from '@/lib/relatorioCatalogoVendasPdf/generateRelatorioCatalogoVendasPdf';
 
 /**
  * Gera PDF de vendas do catálogo no browser (jspdf), com filtros e hierarquia da tela.

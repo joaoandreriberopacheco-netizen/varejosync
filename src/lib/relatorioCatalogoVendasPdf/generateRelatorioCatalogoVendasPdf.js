@@ -10,12 +10,12 @@ import {
   flattenTree,
   mergeAdjacentDuplicateGroupHeaders,
   TREE_GRID_EXPAND_ALL_LEVEL,
-} from '@/lib/catalogTreeCore.js';
+} from '@/lib/catalogTreeCore';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import {
   aggregateCatalogSalesVelocity,
   buildCatalogSalesVelocityMap,
-} from '@/lib/catalogSalesVelocity.js';
+} from '@/lib/catalogSalesVelocity';
 import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
 
 function prepareFlatRows(produtos, velocityMap, sortOrder = 'az') {

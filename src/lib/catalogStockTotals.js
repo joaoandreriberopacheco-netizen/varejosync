@@ -1,5 +1,5 @@
 import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
-import { calcCusto } from '@/lib/catalogTreeCore';
+import { calcCusto } from '@/components/produtos/treegrid/useTreeGrid';
 
 /** Quantidade de estoque nos totais (vitrine comercial quando activa, senão unidade base). */
 export function lineEstoqueQuantidade(produto) {

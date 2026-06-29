@@ -1,4 +1,4 @@
-export { generateRelatorioCatalogoEstoquePdf } from './generateRelatorioCatalogoEstoquePdf.js';
+export { generateRelatorioCatalogoEstoquePdf } from './generateRelatorioCatalogoEstoquePdf';
 export {
   prepareCatalogStockReportRows,
   prepareCatalogStockReportDocument,
