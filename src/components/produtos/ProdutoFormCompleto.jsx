@@ -50,6 +50,8 @@ const P38_INPUT = 'bg-secondary/80 dark:bg-[#26262e] border-0 rounded-lg h-10 te
 const P38_INPUT_UNDERLINE = 'bg-transparent border-0 border-b border-border/40 dark:border-white/10 rounded-none px-0 h-9 text-sm text-foreground focus:border-[#4a5240] dark:focus:border-[#a4ce33]';
 const P38_SECTION = 'rounded-lg border border-border/40 dark:border-white/10 bg-card/70 dark:bg-[#2d333b]/90 p-4';
 const P38_SAVE_BTN = 'bg-[#4a5240] hover:bg-[#4a5240]/90 text-white dark:bg-[#a4ce33] dark:hover:bg-[#a4ce33]/90 dark:text-[#1f1d22] h-10 w-10';
+/** Portal do Select fica no body; precisa ficar acima do shell do formulário (z-[70] / z-[80]). */
+const P38_FORM_SELECT_CONTENT = 'z-[90] max-h-96 dark:bg-muted dark:border-border/40';
 
 /** Id estável para linhas legadas sem `id` (evita novo UUID a cada render / reabrir formulário). */
 function hashString(s) {
@@ -1426,11 +1428,15 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Categoria (opcional)</Label>
-              <Select value={formData.categoria_id} onValueChange={v => handleChange('categoria_id', v)}>
+              <Select
+                value={formData.categoria_id || '__none__'}
+                onValueChange={v => handleChange('categoria_id', v === '__none__' ? '' : v)}
+              >
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={P38_FORM_SELECT_CONTENT}>
+                  <SelectItem value="__none__" className="dark:text-foreground dark:hover:bg-primary/90">Sem categoria</SelectItem>
                   {categorias.map(cat => (
                     <SelectItem key={cat.id} value={cat.id} className="dark:text-foreground dark:hover:bg-primary/90">{cat.nome}</SelectItem>
                   ))}
@@ -1440,15 +1446,19 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">Fornecedor padrão (opcional)</Label>
-              <Select value={formData.fornecedor_padrao_id} onValueChange={v => {
-                const forn = fornecedores.find(f => f.id === v);
-                handleChange('fornecedor_padrao_id', v);
-                handleChange('fornecedor_padrao_codigo', forn?.codigo_interno || '');
-              }}>
+              <Select
+                value={formData.fornecedor_padrao_id || '__none__'}
+                onValueChange={v => {
+                  const forn = fornecedores.find(f => f.id === v);
+                  handleChange('fornecedor_padrao_id', v === '__none__' ? '' : v);
+                  handleChange('fornecedor_padrao_codigo', v === '__none__' ? '' : (forn?.codigo_interno || ''));
+                }}
+              >
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue placeholder="Fornecedor" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={P38_FORM_SELECT_CONTENT}>
+                  <SelectItem value="__none__" className="dark:text-foreground dark:hover:bg-primary/90 text-sm">Sem fornecedor</SelectItem>
                   {fornecedores.map(f => (
                     <SelectItem key={f.id} value={f.id} className="dark:text-foreground dark:hover:bg-primary/90 text-sm">
                       {f.nome}
@@ -1869,7 +1879,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   >
                     <SelectValue placeholder="Sigla" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className={P38_FORM_SELECT_CONTENT}>
                     {commercialSelectOptions.map((sigla) => (
                       <SelectItem key={`com-${sigla}`} value={sigla}>
                         {sigla}
@@ -1994,7 +2004,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                 <SelectTrigger className={`${P38_INPUT_UNDERLINE} h-10`}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-muted dark:border-border/40">
+                <SelectContent className={P38_FORM_SELECT_CONTENT}>
                   <SelectItem value="Produto" className="dark:text-foreground dark:hover:bg-primary/90">Produto (0)</SelectItem>
                   <SelectItem value="Serviço" className="dark:text-foreground dark:hover:bg-primary/90">Serviço (1)</SelectItem>
                 </SelectContent>
