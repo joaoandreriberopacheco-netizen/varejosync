@@ -42,6 +42,8 @@ const safe = (text: unknown) => normalizePdfText(text);
 const moedaSemSimbolo = (valor: number) => fmtR(Number(valor) || 0);
 const moedaOuTraco = (valor: number) =>
   Number.isFinite(Number(valor)) && Number(valor) > 0 ? moedaSemSimbolo(valor) : '—';
+const cellText = (value: unknown) =>
+  value == null || value === '' ? '—' : String(value);
 
 function splitDescriptionLines(
   doc: jsPDF,
@@ -70,6 +72,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     tree_level: treeLevel = 1,
     sort_order: sortOrder = 'az',
     group_by_category: groupByCategory = false,
+    expanded_keys: expandedKeysFromCatalog = null,
     generated_at: generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
   } = payload as {
     produtos?: unknown[];
@@ -79,6 +82,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     tree_level?: number;
     sort_order?: string;
     group_by_category?: boolean;
+    expanded_keys?: string[] | null;
     generated_at?: string;
   };
 
@@ -89,6 +93,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     treeLevel: Number(treeLevel) || 1,
     sortOrder: sortOrder as string,
     groupByCategory: Boolean(groupByCategory),
+    expandedKeys: Array.isArray(expandedKeysFromCatalog) ? expandedKeysFromCatalog : null,
   });
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -238,13 +243,15 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     produto: Record<string, unknown> | null,
     velocity: { qtd30?: number; qtd60?: number; mediaDiaria?: number; unidade?: string | null },
     commercial: { vCompra?: number; custoCalc?: number } = {},
-    { isGroup = false } = {},
+    { isGroup = false, stockTexto = null as string | null } = {},
   ) => {
     doc.setFont(pdfFontFamily, isGroup ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
     doc.setFontSize(FONT.row);
     doc.setTextColor(...ENXUTO.black);
 
-    const stock = produto ? stockQuantTexto(produto) : { texto: '—' };
+    const stock = produto
+      ? stockQuantTexto(produto)
+      : { texto: stockTexto || '—' };
     const vals = produto
       ? commercialCostValues(produto)
       : {
@@ -258,12 +265,12 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
       { showUnit: false },
     );
 
-    doc.text(stock.texto, X.quant, baselineY, { align: 'right' });
+    doc.text(cellText(stock.texto), X.quant, baselineY, { align: 'right' });
     doc.text(moedaOuTraco(vals.vCompra), X.vCompra, baselineY, { align: 'right' });
     doc.text(moedaOuTraco(vals.custoCalc), X.custo, baselineY, { align: 'right' });
-    doc.text(v30 || '—', X.v30, baselineY, { align: 'right' });
-    doc.text(v60 || '—', X.v60, baselineY, { align: 'right' });
-    doc.text(media || '—', X.media, baselineY, { align: 'right' });
+    doc.text(cellText(v30), X.v30, baselineY, { align: 'right' });
+    doc.text(cellText(v60), X.v60, baselineY, { align: 'right' });
+    doc.text(cellText(media), X.media, baselineY, { align: 'right' });
   };
 
   const drawDataRow = (
@@ -272,7 +279,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     produto: Record<string, unknown> | null,
     velocity: { qtd30?: number; qtd60?: number; mediaDiaria?: number; unidade?: string | null },
     commercial: { vCompra?: number; custoCalc?: number } = {},
-    { level = 1, isGroup = false } = {},
+    { level = 1, isGroup = false, stockTexto = null as string | null } = {},
   ) => {
     const descX = X.desc + Math.max(0, level - 1) * LEVEL_INDENT;
     const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW(descX));
@@ -285,7 +292,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     const drawY = y;
     const { valuesBaseline, descFirstBaseline } = rowBaselines(drawY, lineCount, extraH);
 
-    drawValueColumns(valuesBaseline, produto, velocity, commercial, { isGroup });
+    drawValueColumns(valuesBaseline, produto, velocity, commercial, { isGroup, stockTexto });
 
     doc.setFont(pdfFontFamily, isGroup ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
     doc.setTextColor(...ENXUTO.black);
@@ -362,7 +369,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
           null,
           row.velocity || {},
           row.commercial || {},
-          { level: row.level || 1, isGroup: true },
+          { level: row.level || 1, isGroup: true, stockTexto: row.stock?.texto || null },
         );
         continue;
       }
@@ -409,5 +416,5 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
   doc.text('Filtros do catálogo · hierarquia conforme nível seleccionado na tela.', M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v5' };
+  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v6' };
 }

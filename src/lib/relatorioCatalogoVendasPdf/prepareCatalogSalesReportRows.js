@@ -1,4 +1,5 @@
 import {
+  aggregateEstoqueDisplay,
   buildCategoryTree,
   buildExpandedForLevel,
   buildTree,
@@ -42,6 +43,7 @@ function enrichTreeRows(rows, velocityMap) {
         ...row,
         velocity: aggregateCatalogSalesVelocity(skus, velocityMap),
         skuCount: skus.length,
+        stock: groupStockTexto(skus),
         commercial: {
           vCompra: roundToTwoDecimals(row.valorCompraMedio || 0),
           custoCalc: roundToTwoDecimals(row.custoMedio || 0),
@@ -52,7 +54,10 @@ function enrichTreeRows(rows, velocityMap) {
   });
 }
 
-function resolveExpandedKeysForCatalogView(tree, treeLevel = 1) {
+function resolveExpandedKeysForCatalogView(tree, treeLevel = 1, expandedKeysFromCatalog = null) {
+  if (expandedKeysFromCatalog?.length) {
+    return new Set(expandedKeysFromCatalog);
+  }
   const level = Number(treeLevel) || 1;
   if (level <= 1) return new Set();
   if (level >= TREE_GRID_EXPAND_ALL_LEVEL) {
@@ -71,6 +76,7 @@ export function prepareCatalogSalesReportDocument({
   treeLevel = 1,
   sortOrder = 'az',
   groupByCategory = false,
+  expandedKeys: expandedKeysFromCatalog = null,
 } = {}) {
   const list = (produtos || []).filter((p) => p && typeof p === 'object');
   const velocityMap = buildCatalogSalesVelocityMap(list, pedidos);
@@ -82,7 +88,7 @@ export function prepareCatalogSalesReportDocument({
     rows = prepareFlatRows(list, velocityMap, sortOrder);
   } else {
     const tree = groupByCategory ? buildCategoryTree(list) : buildTree(list);
-    const expandedKeys = resolveExpandedKeysForCatalogView(tree, treeLevel);
+    const expandedKeys = resolveExpandedKeysForCatalogView(tree, treeLevel, expandedKeysFromCatalog);
     rows = mergeAdjacentDuplicateGroupHeaders(
       flattenTree(tree, expandedKeys, '', 0, sortOrder, { collapseSoloSkuBranches: true }),
     );
@@ -97,6 +103,15 @@ export function prepareCatalogSalesReportDocument({
     velocityMap,
     rows,
   };
+}
+
+export function groupStockTexto(skus = []) {
+  const disp = aggregateEstoqueDisplay(skus);
+  if (disp.mode === 'empty') return { texto: '—' };
+  if (disp.mode === 'mixed') {
+    return { texto: `${formatQty(disp.quantidade)} un. base` };
+  }
+  return { texto: `${formatQty(disp.quantidade)} ${disp.sigla || 'UN'}` };
 }
 
 export function commercialCostValues(produto) {

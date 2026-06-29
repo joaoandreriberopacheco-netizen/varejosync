@@ -448,7 +448,7 @@ export function LevelControl({ level, onChange }) {
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
 // expandedKeys é gerenciado internamente — toggle manual do usuário funciona
 // independente do nível selecionado.
-export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false }) {
+export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false, onExpandedKeysChange }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const scrollContainerRef = useRef(null);
   const treeRef = useRef(null);
@@ -467,6 +467,10 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
       masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
     );
   }, [masterLevel, tree, groupByCategory]);
+
+  useEffect(() => {
+    onExpandedKeysChange?.(expandedKeys);
+  }, [expandedKeys, onExpandedKeysChange]);
 
   const rows = useMemo(
     () => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder)),

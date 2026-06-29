@@ -168,6 +168,7 @@ function ProdutosPageContent() {
   const [gerandoRelatorioVendas, setGerandoRelatorioVendas] = useState(false);
   const relatorioEstoqueAutoRef = useRef(false);
   const relatorioVendasAutoRef = useRef(false);
+  const catalogExpandedKeysRef = useRef(new Set());
 
   const { toast } = useToast();
   const isDesktop = useDesktopContent();
@@ -1142,6 +1143,10 @@ function ProdutosPageContent() {
     }
   }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, toast]);
 
+  const handleCatalogExpandedKeysChange = useCallback((keys) => {
+    catalogExpandedKeysRef.current = keys instanceof Set ? keys : new Set(keys || []);
+  }, []);
+
   const handleGerarRelatorioVendas = useCallback(async () => {
     setGerandoRelatorioVendas(true);
     toast({ title: 'Gerando relatório de vendas...' });
@@ -1161,6 +1166,7 @@ function ProdutosPageContent() {
         tree_level: treeLevel,
         sort_order: sortOrder,
         group_by_category: groupPdfByCategory,
+        expanded_keys: [...catalogExpandedKeysRef.current],
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
@@ -1270,13 +1276,13 @@ function ProdutosPageContent() {
             <div className="flex-1 overflow-hidden w-full min-w-0 min-h-0">
               <div className="desktop-layout:hidden flex flex-col flex-1 min-h-0 h-full w-full min-w-0 max-w-full">
                 <CatalogoMobileScrollShell catalogChrome={<ProdutosHeader key="catalog-mobile" {...produtosHeaderProps} />}>
-                  <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} groupByCategory={groupTreeByCategory} masterLevel={treeLevel} />
+                  <MobileHierarquica produtos={filteredProdutos} onEdit={handleEdit} groupByCategory={groupTreeByCategory} masterLevel={treeLevel} onExpandedKeysChange={handleCatalogExpandedKeysChange} />
                 </CatalogoMobileScrollShell>
               </div>
 
               {isDesktop && viewMode === 'dinamica' && (
                 <div className="flex flex-col w-full h-full min-h-0">
-                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} />
+                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} />
                 </div>
               )}
 

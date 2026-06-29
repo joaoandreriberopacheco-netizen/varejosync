@@ -655,7 +655,7 @@ export function CatalogoMobileScrollShell({ catalogChrome, children }) {
 }
 
 // ── Componente principal ───────────────────────────────────────────────────────
-export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2 }) {
+export default function MobileHierarquica({ produtos, onEdit, groupByCategory = false, masterLevel = 2, onExpandedKeysChange }) {
   const scrollRef = useCatalogoMobileScrollRef();
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const [pricingProduto, setPricingProduto] = useState(null);
@@ -680,6 +680,10 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
     const scrollEl = scrollRef?.current;
     if (scrollEl) scrollEl.scrollTop = 0;
   }, [produtosSig, groupByCategory, masterLevel, tree, scrollRef]);
+
+  useEffect(() => {
+    onExpandedKeysChange?.(expandedKeys);
+  }, [expandedKeys, onExpandedKeysChange]);
 
   const rows = useMemo(() => {
     const all = mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys));
