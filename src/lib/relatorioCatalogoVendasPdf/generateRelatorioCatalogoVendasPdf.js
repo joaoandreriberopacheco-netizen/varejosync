@@ -136,7 +136,7 @@ export function groupStockTexto(skus = [], { hideGroupTotals = false } = {}) {
   if (disp.mode === 'empty') return { texto: '—', heterogeneous: false };
   if (disp.mode === 'mixed') return { texto: '—', heterogeneous: true };
   return {
-    texto: `${formatQty(disp.quantidade)} ${disp.sigla || 'UN'}`,
+    texto: `${formatQty(disp.quantidade)} | ${disp.sigla || 'UN'}`,
     heterogeneous: false,
   };
 }
@@ -153,14 +153,14 @@ export function stockQuantTexto(produto) {
   const apresent = formatEstoqueApresentacao(produto);
   if (apresent) {
     return {
-      texto: `${formatQty(apresent.quantidade)} ${apresent.sigla}`,
+      texto: `${formatQty(apresent.quantidade)} | ${apresent.sigla}`,
       quantidade: apresent.quantidade,
       unidade: apresent.sigla,
     };
   }
   const qtd = Number(produto?.estoque_atual) || 0;
   const un = String(produto?.unidade_principal || 'UN').toUpperCase();
-  return { texto: `${formatQty(qtd)} ${un}`, quantidade: qtd, unidade: un };
+  return { texto: `${formatQty(qtd)} | ${un}`, quantidade: qtd, unidade: un };
 }
 
 export function velocityQuantTexto(velocity, { showUnit = true } = {}) {
@@ -243,12 +243,11 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   const CW = pageW - M * 2;
   const descStart = M + 4;
   const tableRight = M + CW;
-  const QUANT_COL_W = 15;
+  const QUANT_COL_W = 17;
   const VALUE_COL_STEP = 13.5;
   const GUTTER_DESC = 5;
   const GUTTER_SALES = 4;
-  const mediaRight = tableRight;
-  const v60Right = mediaRight - VALUE_COL_STEP;
+  const v60Right = tableRight;
   const v30Right = v60Right - VALUE_COL_STEP;
   const custoRight = v30Right - VALUE_COL_STEP - GUTTER_SALES;
   const vCompraRight = custoRight - VALUE_COL_STEP;
@@ -267,7 +266,6 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     custo: custoRight,
     v30: v30Right,
     v60: v60Right,
-    media: mediaRight
   };
   const ROW_H = 6.1;
   const ROW_GAP = 1.15;
@@ -309,14 +307,12 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     doc.text("CUSTO", X.custo, line1, { align: "right" });
     doc.text("V.30D", X.v30, line1, { align: "right" });
     doc.text("V.60D", X.v60, line1, { align: "right" });
-    doc.text("M.DIA", X.media, line1, { align: "right" });
     doc.setFontSize(FONT.colHdr - 0.4);
     doc.text("+ UN", X.quant, line2, { align: "right" });
     doc.text("compra", X.vCompra, line2, { align: "right" });
     doc.text("calc.", X.custo, line2, { align: "right" });
     doc.text("30 dias", X.v30, line2, { align: "right" });
     doc.text("60 dias", X.v60, line2, { align: "right" });
-    doc.text("m\xE9dia", X.media, line2, { align: "right" });
   };
   const beginTablePage = () => {
     drawColumnHeaders(y);
@@ -354,7 +350,6 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
       doc.text("\u2014", X.custo, baselineY, { align: "right" });
       doc.text("\u2014", X.v30, baselineY, { align: "right" });
       doc.text("\u2014", X.v60, baselineY, { align: "right" });
-      doc.text("\u2014", X.media, baselineY, { align: "right" });
       return;
     }
     const stock = produto ? stockQuantTexto(produto) : { texto: stockTexto || "\u2014" };
@@ -364,16 +359,11 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     };
     const v30 = velocityQuantTexto({ qtd: velocity?.qtd30, unidade: velocity?.unidade }, { showUnit: false });
     const v60 = velocityQuantTexto({ qtd: velocity?.qtd60, unidade: velocity?.unidade }, { showUnit: false });
-    const media = velocityQuantTexto(
-      { qtd: velocity?.mediaDiaria, unidade: velocity?.unidade },
-      { showUnit: false }
-    );
     doc.text(cellText(stock.texto), X.quant, baselineY, { align: "right" });
     doc.text(moedaOuTraco(vals.vCompra), X.vCompra, baselineY, { align: "right" });
     doc.text(moedaOuTraco(vals.custoCalc), X.custo, baselineY, { align: "right" });
     doc.text(cellText(v30), X.v30, baselineY, { align: "right" });
     doc.text(cellText(v60), X.v60, baselineY, { align: "right" });
-    doc.text(cellText(media), X.media, baselineY, { align: "right" });
   };
   const drawDataRow = (y0, descricao, produto, velocity, commercial = {}, { level = 1, isGroup = false, stockTexto = null, hideGroupTotals = false } = {}) => {
     const descX = X.desc + Math.max(0, level - 1) * LEVEL_INDENT;
@@ -480,15 +470,18 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
       { color: ENXUTO.subtleDivider, width: SUBTLE_DIVIDER_W }
     );
   }
-  const FOOTER_BLOCK_H = 10;
+  y += 8;
+  const FOOTER_BLOCK_H = 14;
   if (y + FOOTER_BLOCK_H > pageH - M) {
     doc.addPage();
-    y = TABLE_TOP_CONTINUATION;
+    y = TABLE_TOP_CONTINUATION + 4;
+  } else {
+    y += 4;
   }
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(FONT.footer);
   doc.setTextColor(...ENXUTO.muted);
   doc.text("Filtros do cat\xE1logo \xB7 hierarquia conforme n\xEDvel seleccionado na tela.", M, y);
   const pdfBytes = doc.output("arraybuffer");
-  return { data: pdfBytes, version: "enxuto_vendas_compra_custo_v7" };
+  return { data: pdfBytes, version: "enxuto_vendas_compra_custo_v8" };
 }
