@@ -31,6 +31,48 @@ export async function listarColaboradoresAtivos() {
   return (todos || []).filter((c) => c.ativo !== false);
 }
 
+/** Cria colaborador mínimo para cadastro na folha (quando a pessoa ainda não existe no sistema). */
+export async function criarColaboradorParaFolha({ nome, email }) {
+  const nomeNorm = String(nome || '').trim();
+  if (!nomeNorm) throw new Error('Informe o nome da pessoa.');
+  const emailFinal =
+    String(email || '').trim() ||
+    `folha.${Date.now()}-${Math.random().toString(36).slice(2, 7)}@cadastro.local`;
+  return base44.entities.Colaborador.create({
+    nome: nomeNorm,
+    email: emailFinal,
+    perfil: 'Vendedor',
+    ativo: true,
+  });
+}
+
+/** Uma pessoa = um cadastro na folha; alimenta a programação automaticamente. */
+export async function salvarCadastroPessoaFolha(payload, modeloId = null) {
+  if (!payload?.colaborador_id) {
+    throw new Error('Selecione ou cadastre a pessoa.');
+  }
+  const existentes = await listarModelos();
+  const dup = existentes.find(
+    (m) => m.colaborador_id === payload.colaborador_id && m.id !== modeloId,
+  );
+  if (dup) {
+    throw new Error(`${payload.colaborador_nome || 'Esta pessoa'} já está cadastrada na folha.`);
+  }
+
+  const body = {
+    ...payload,
+    nome: payload.colaborador_nome || payload.nome,
+    colaborador_nome: payload.colaborador_nome || payload.nome,
+    dia_vencimento: FOLHA_DIA_VENCIMENTO,
+    ativo: payload.ativo !== false,
+  };
+
+  if (modeloId) {
+    return base44.entities.FolhaPrevisaoModelo.update(modeloId, body);
+  }
+  return base44.entities.FolhaPrevisaoModelo.create(body);
+}
+
 export function resolverModeloColaborador(modelos, colaboradorId) {
   const ativos = (modelos || []).filter((m) => m.ativo !== false);
   return (

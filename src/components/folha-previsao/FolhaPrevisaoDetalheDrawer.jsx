@@ -83,12 +83,12 @@ export default function FolhaPrevisaoDetalheDrawer({
             )}
           </DrawerTitle>
           <p className="text-xs text-muted-foreground">
-            Modelo: {competencia.modelo_nome || '—'} · {formatCicloFolhaCompetencia(competencia.competencia)}
+            {formatCicloFolhaCompetencia(competencia.competencia)}
             {modelo?.data_desligamento && ` · Saiu em ${formatDataBr(modelo.data_desligamento)}`}
           </p>
           {planejamento && (
             <p className="text-xs text-cyan-800 dark:text-cyan-300 mt-1 rounded-lg bg-cyan-500/10 px-3 py-2">
-              Modo planejamento — valores estimados a partir do modelo. Abra o mês para registrar vales, movimentos e enviar ao financeiro.
+              Modo planejamento — valores estimados a partir do cadastro. Abra o mês para registrar vales, movimentos e enviar ao financeiro.
             </p>
           )}
           {fechada && (

@@ -1,106 +1,70 @@
 import React from 'react';
-import { Copy, Pencil, UserMinus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  P38MobileLine,
-  P38StatusLabel,
-  p38AccentKeyFromTone,
-} from '@/components/ui/p38-mobile-line';
-import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
-import {
-  formatDataBr,
-  SITUACAO_FOLHA,
-  TIPO_VINCULO,
-  TIPO_VINCULO_LABELS,
-} from '@/lib/folhaPrevisaoCalculos';
-
-const LINE_TITLE_CLASS =
-  '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
+import { Pencil, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { formatCurrency, extrairSalarioBase } from '@/lib/folhaPrevisaoCalculos';
 
 export default function FolhaPrevisaoModeloRow({
   modelo,
+  colaborador,
   onEdit,
-  onDuplicate,
-  onDesligar,
-  striped,
+  onDelete,
 }) {
-  const rubricas = modelo.rubricas || [];
-  const desligado = modelo.situacao === SITUACAO_FOLHA.DESLIGADO;
-  const ehSocio = modelo.tipo_vinculo === TIPO_VINCULO.SOCIO;
-  const accent = desligado ? 'muted' : ehSocio ? 'info' : 'danger';
-
-  const meta = (
-    <>
-      <span>{TIPO_VINCULO_LABELS[ehSocio ? TIPO_VINCULO.SOCIO : TIPO_VINCULO.FUNCIONARIO]}</span>
-      <span>{rubricas.length} rubricas</span>
-      {desligado && modelo.data_desligamento && (
-        <P38StatusLabel tone="danger">Saiu {formatDataBr(modelo.data_desligamento)}</P38StatusLabel>
-      )}
-      {!desligado && modelo.ativo === false && <P38StatusLabel tone="muted">Inativo</P38StatusLabel>}
-      {ehSocio && modelo.retirada_valor_fixo > 0 && (
-        <span>
-          Retirada {modelo.retirada_frequencia === 'semanal' ? 'semanal' : 'mensal'}{' '}
-          {formatFinanceiroValor(modelo.retirada_valor_fixo)}
-        </span>
-      )}
-      {!ehSocio && modelo.decimo_terceiro_ativo !== false && <span>13º ativo</span>}
-      {!ehSocio && (modelo.ferias_programadas?.length || 0) > 0 && (
-        <span>{modelo.ferias_programadas.length} férias</span>
-      )}
-    </>
-  );
-
-  const trailing = (
-    <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={() => onEdit?.(modelo)}
-        aria-label="Editar modelo"
-      >
-        <Pencil className="h-3.5 w-3.5" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={() => onDuplicate?.(modelo)}
-        aria-label="Duplicar modelo"
-      >
-        <Copy className="h-3.5 w-3.5" />
-      </Button>
-      {modelo.colaborador_id && !desligado && onDesligar && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-red-700 dark:text-red-400"
-          onClick={() => onDesligar?.(modelo)}
-          aria-label="Desligar colaborador"
-        >
-          <UserMinus className="h-3.5 w-3.5" />
-        </Button>
-      )}
-    </div>
-  );
+  const tipo = modelo.tipo_vinculo || 'funcionario';
+  const salarioBase = extrairSalarioBase(modelo);
+  const retiradaFixa = Number(modelo.retirada_valor_fixo) || 0;
+  const nome = colaborador?.nome || modelo.colaborador_nome || modelo.nome || 'Pessoa';
 
   return (
-    <P38MobileLine
-      thinAccent
-      striped={striped}
-      accent={p38AccentKeyFromTone(accent)}
-      className={`${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] ${desligado ? 'opacity-75' : ''}`}
-      title={modelo.nome}
-      subtitle={
-        modelo.colaborador_nome
-          ? `Vinculado: ${modelo.colaborador_nome} · Paga dia 5 do mês seguinte`
-          : 'Modelo genérico · Paga dia 5 do mês seguinte'
-      }
-      meta={meta}
-      trailing={trailing}
-    />
+    <div
+      className={cn(
+        'flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-b-0',
+        'hover:bg-slate-50/80 transition-colors',
+      )}
+    >
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-medium text-slate-900 truncate">{nome}</span>
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-[10px] shrink-0',
+              tipo === 'socio'
+                ? 'border-violet-200 text-violet-700 bg-violet-50'
+                : 'border-blue-200 text-blue-700 bg-blue-50',
+            )}
+          >
+            {tipo === 'socio' ? 'Sócio' : 'Funcionário'}
+          </Badge>
+          {!modelo.ativo && (
+            <Badge variant="secondary" className="text-[10px]">
+              Inativo
+            </Badge>
+          )}
+        </div>
+        <p className="text-xs text-slate-500 mt-0.5 truncate">
+          {tipo === 'socio'
+            ? `Retirada fixa ${formatCurrency(retiradaFixa)}/mês`
+            : `Salário ${formatCurrency(salarioBase)}/mês`}
+          {modelo.decimo_terceiro_ativo ? ' · 13º' : ''}
+          {(modelo.ferias_programadas || []).length > 0 ? ' · Férias' : ''}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-1 shrink-0">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit?.(modelo)}>
+          <Pencil className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+          onClick={() => onDelete?.(modelo)}
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
   );
 }
