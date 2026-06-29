@@ -30,9 +30,13 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'CaixasAtivos',
   'TurnosFechados',
   'PDVCaixa',
+  'PDVVendedor',
   'PDV',
   'TabelaPrecosConsulta',
 ]);
+
+/** Rotas PDV no mobile: mantêm GlacialBottomNav (atalho rápido em overlay continua fullscreen). */
+const MOBILE_PDV_IN_SHELL_ROUTES = new Set(['PDV', 'PDVCaixa', 'PDVVendedor']);
 /** Páginas pesadas onde expandir o menu não deve reflowar todo o conteúdo. */
 const DESKTOP_OVERLAY_SIDEBAR_PAGES = new Set(['VendasGestao', 'Produtos']);
 
@@ -60,10 +64,10 @@ export default function Layout({ children, currentPageName }) {
 
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
   const routePage = location.pathname.split('/').filter(Boolean)[0] || '';
-  /** Mobile: caixa dentro do shell (bottom nav + scroll-hide); overlay rápido mantém fullscreen. */
-  const isMobileCaixaInShell = isMobile && (routePage === 'PDVCaixa' || routePage === 'PDV');
+  /** Mobile: PDV dentro do shell (bottom nav fixo); overlay rápido mantém fullscreen. */
+  const isMobilePdvInShell = isMobile && MOBILE_PDV_IN_SHELL_ROUTES.has(routePage);
   const isFullscreen =
-    !isMobileCaixaInShell &&
+    !isMobilePdvInShell &&
     fullscreenPages.some((page) => location.pathname.includes(page));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const useDesktopOverlaySidebar = !isMobile && DESKTOP_OVERLAY_SIDEBAR_PAGES.has(currentPageName);

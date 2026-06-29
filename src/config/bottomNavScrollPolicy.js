@@ -16,6 +16,10 @@ export const BOTTOM_NAV_HUB_PAGES = new Set([
   'DashboardVendedor',
   'DashboardCaixa',
   'PainelGerente',
+  /** PDV: menu inferior sempre visível (sem auto-hide ao scroll). */
+  'PDV',
+  'PDVCaixa',
+  'PDVVendedor',
 ]);
 
 export function shouldHideBottomNavOnScroll(pageName) {

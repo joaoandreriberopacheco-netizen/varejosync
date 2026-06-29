@@ -174,6 +174,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   };
 
   const isMobile = useMobileLayout();
+  const inAppLayout = isMobile && !overlayMode;
 
   const { subtotal, valorTotal, valorAjusteCalculado, percentualAjuste, ajusteExcedido } = useMemo(() => {
     const sub = carrinho.reduce((acc, item) => acc + (item.total || 0), 0);
@@ -1042,7 +1043,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
 
   return (
     <CaixaOverlayStackProvider active={overlayMode}>
-    <div className={`${overlayMode ? 'h-full min-h-0' : 'h-screen'} flex flex-col ${screenShellBg} relative`}>
+    <div className={`${overlayMode || inAppLayout ? 'h-full min-h-0' : 'h-screen'} flex flex-col ${screenShellBg} relative`}>
       {/* Feedback Inline - Glacial Style */}
       <AnimatePresence>
         {feedback.message &&
