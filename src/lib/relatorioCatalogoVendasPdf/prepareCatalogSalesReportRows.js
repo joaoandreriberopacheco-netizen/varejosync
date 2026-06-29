@@ -39,11 +39,13 @@ function enrichTreeRows(rows, velocityMap) {
     }
     if (row.type === 'group') {
       const skus = collectSkus(row.node);
+      const hideGroupTotals = isHeterogeneousGroup(skus, velocityMap);
       return {
         ...row,
         velocity: aggregateCatalogSalesVelocity(skus, velocityMap),
         skuCount: skus.length,
-        stock: groupStockTexto(skus),
+        stock: groupStockTexto(skus, { hideGroupTotals }),
+        hideGroupTotals,
         commercial: {
           vCompra: roundToTwoDecimals(row.valorCompraMedio || 0),
           custoCalc: roundToTwoDecimals(row.custoMedio || 0),
@@ -52,6 +54,27 @@ function enrichTreeRows(rows, velocityMap) {
     }
     return row;
   });
+}
+
+function isHeterogeneousGroup(skus = [], velocityMap = {}) {
+  const disp = aggregateEstoqueDisplay(skus);
+  if (disp.mode === 'mixed') return true;
+
+  const stockUnits = new Set();
+  const velocityUnits = new Set();
+
+  for (const sku of skus) {
+    const ap = formatEstoqueApresentacao(sku);
+    if (ap?.sigla) stockUnits.add(String(ap.sigla).trim().toUpperCase());
+    else if (sku?.unidade_principal) {
+      stockUnits.add(String(sku.unidade_principal).trim().toUpperCase());
+    }
+
+    const velocity = velocityMap[String(sku?.id)];
+    if (velocity?.unidade) velocityUnits.add(String(velocity.unidade).trim().toUpperCase());
+  }
+
+  return stockUnits.size > 1 || velocityUnits.size > 1;
 }
 
 function resolveExpandedKeysForCatalogView(tree, treeLevel = 1, expandedKeysFromCatalog = null) {
@@ -105,13 +128,15 @@ export function prepareCatalogSalesReportDocument({
   };
 }
 
-export function groupStockTexto(skus = []) {
+export function groupStockTexto(skus = [], { hideGroupTotals = false } = {}) {
+  if (hideGroupTotals) return { texto: '—', heterogeneous: true };
   const disp = aggregateEstoqueDisplay(skus);
-  if (disp.mode === 'empty') return { texto: '—' };
-  if (disp.mode === 'mixed') {
-    return { texto: `${formatQty(disp.quantidade)} un. base` };
-  }
-  return { texto: `${formatQty(disp.quantidade)} ${disp.sigla || 'UN'}` };
+  if (disp.mode === 'empty') return { texto: '—', heterogeneous: false };
+  if (disp.mode === 'mixed') return { texto: '—', heterogeneous: true };
+  return {
+    texto: `${formatQty(disp.quantidade)} ${disp.sigla || 'UN'}`,
+    heterogeneous: false,
+  };
 }
 
 export function commercialCostValues(produto) {

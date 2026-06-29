@@ -243,11 +243,21 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     produto: Record<string, unknown> | null,
     velocity: { qtd30?: number; qtd60?: number; mediaDiaria?: number; unidade?: string | null },
     commercial: { vCompra?: number; custoCalc?: number } = {},
-    { isGroup = false, stockTexto = null as string | null } = {},
+    { isGroup = false, stockTexto = null as string | null, hideGroupTotals = false } = {},
   ) => {
     doc.setFont(pdfFontFamily, isGroup ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
     doc.setFontSize(FONT.row);
     doc.setTextColor(...ENXUTO.black);
+
+    if (isGroup && hideGroupTotals) {
+      doc.text('—', X.quant, baselineY, { align: 'right' });
+      doc.text('—', X.vCompra, baselineY, { align: 'right' });
+      doc.text('—', X.custo, baselineY, { align: 'right' });
+      doc.text('—', X.v30, baselineY, { align: 'right' });
+      doc.text('—', X.v60, baselineY, { align: 'right' });
+      doc.text('—', X.media, baselineY, { align: 'right' });
+      return;
+    }
 
     const stock = produto
       ? stockQuantTexto(produto)
@@ -279,7 +289,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     produto: Record<string, unknown> | null,
     velocity: { qtd30?: number; qtd60?: number; mediaDiaria?: number; unidade?: string | null },
     commercial: { vCompra?: number; custoCalc?: number } = {},
-    { level = 1, isGroup = false, stockTexto = null as string | null } = {},
+    { level = 1, isGroup = false, stockTexto = null as string | null, hideGroupTotals = false } = {},
   ) => {
     const descX = X.desc + Math.max(0, level - 1) * LEVEL_INDENT;
     const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW(descX));
@@ -292,7 +302,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     const drawY = y;
     const { valuesBaseline, descFirstBaseline } = rowBaselines(drawY, lineCount, extraH);
 
-    drawValueColumns(valuesBaseline, produto, velocity, commercial, { isGroup, stockTexto });
+    drawValueColumns(valuesBaseline, produto, velocity, commercial, { isGroup, stockTexto, hideGroupTotals });
 
     doc.setFont(pdfFontFamily, isGroup ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
     doc.setTextColor(...ENXUTO.black);
@@ -369,7 +379,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
           null,
           row.velocity || {},
           row.commercial || {},
-          { level: row.level || 1, isGroup: true, stockTexto: row.stock?.texto || null },
+          { level: row.level || 1, isGroup: true, stockTexto: row.stock?.texto || null, hideGroupTotals: Boolean(row.hideGroupTotals) },
         );
         continue;
       }
@@ -416,5 +426,5 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
   doc.text('Filtros do catálogo · hierarquia conforme nível seleccionado na tela.', M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v6' };
+  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v7' };
 }
