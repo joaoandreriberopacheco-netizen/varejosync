@@ -88,6 +88,7 @@ import ConsultaVendasCaixa from '@/components/vendas/caixa/ConsultaVendasCaixa';
 import { CaixaOverlayStackProvider } from '@/components/vendas/caixa/CaixaOverlayStackContext';
 import { cleanupQuickAccessPortalLayers } from '@/lib/quickAccessOverlay';
 import { getCachedUserSession } from '@/lib/userSessionCache';
+import { isRateLimitApiError } from '@/lib/p38ApiErrors';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 
 function RascunhoAguardandoCard({ rascunho, onDetalhes, onEditar, onConfirmar, formatarValorExibicao }) {
@@ -347,6 +348,7 @@ export default function PDVCaixa({
 
   const lastUserActivityAtRef = useRef(Date.now());
   const loadDataRef = useRef(null);
+  const hasSnapshotRef = useRef(false);
   const subscribeDebounceRef = useRef(null);
   const idleSyncBlockedRef = useRef(false);
 
@@ -436,6 +438,7 @@ export default function PDVCaixa({
 
   const applySnapshot = useCallback((snapshot) => {
     if (!snapshot) return;
+    hasSnapshotRef.current = true;
     setContaCaixaPDV(snapshot.caixa);
     setPedidosAguardando(snapshot.pedidosAguardando);
     setRascunhosAguardando(snapshot.rascunhosAguardando);
@@ -452,7 +455,7 @@ export default function PDVCaixa({
       if (event.type === 'create' || event.type === 'update') {
         if (subscribeDebounceRef.current) clearTimeout(subscribeDebounceRef.current);
         subscribeDebounceRef.current = setTimeout(() => {
-          loadDataRef.current?.(undefined, undefined, { force: true });
+          loadDataRef.current?.(undefined, undefined, { force: true, silent: true });
         }, CAIXA_SUBSCRIBE_DEBOUNCE_MS);
       }
     });
@@ -584,7 +587,7 @@ export default function PDVCaixa({
   }, [view, isDialogOpen, showMovimentoDialog, showFechamentoDialog, showConfirmarImpressao, valorRestante, pedidosAguardando, scrollToFechamento]); // Updated telaAtual to view
 
   // loadData aceita parâmetros opcionais para contornar stale closure no primeiro carregamento
-  const loadData = useCallback(async (caixaParam, turnoParam, { force = false } = {}) => {
+  const loadData = useCallback(async (caixaParam, turnoParam, { force = false, silent = false } = {}) => {
     const caixa = caixaParam || caixaSelecionado;
     const turno = turnoParam || turnoAtivo;
     if (!caixa || !turno) return;
@@ -610,11 +613,16 @@ export default function PDVCaixa({
       applySnapshot(snapshot);
     } catch (error) {
       console.error('❌ Erro ao carregar dados:', error);
-      toast({
-        title: "Erro ao carregar dados",
-        description: error.message,
-        variant: "destructive"
-      });
+      const suppressToast =
+        silent ||
+        (hasSnapshotRef.current && isRateLimitApiError(error));
+      if (!suppressToast) {
+        toast({
+          title: 'Erro ao carregar dados',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
     }
   }, [caixaSelecionado, turnoAtivo, queryClient, applySnapshot, toast]);
 
@@ -669,7 +677,7 @@ export default function PDVCaixa({
       if (Date.now() - lastUserActivityAtRef.current < CAIXA_IDLE_SYNC_AFTER_MS) return;
       const run = loadDataRef.current;
       if (typeof run === 'function') {
-        void run().finally(() => {
+        void run(undefined, undefined, { silent: true }).finally(() => {
           lastUserActivityAtRef.current = Date.now();
         });
       }
@@ -692,6 +700,7 @@ export default function PDVCaixa({
 
   const handleSelecionarCaixa = (caixa, turno, somenteLeitura) => {
     lastUserActivityAtRef.current = Date.now();
+    hasSnapshotRef.current = false;
     setCaixaSelecionado(caixa);
     setTurnoAtivo(turno);
     setModoVisualizacao(somenteLeitura);

@@ -104,52 +104,50 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
         todosTurnos.some((t) => t.conta_caixa_pdv_id === caixa.id)
       );
 
-      await Promise.all(
-        comTurno.map(async (caixa) => {
+      for (const caixa of comTurno) {
+        if (loadGenerationRef.current !== generation) return;
+
+        const turnoAberto = todosTurnos.find((t) => t.conta_caixa_pdv_id === caixa.id);
+        if (!turnoAberto) continue;
+
+        try {
+          const snapshot = await fetchCaixaTurnoSnapshot({
+            turno: turnoAberto,
+            caixa,
+            incluirRascunhos: true,
+            rascunhoExigirItens: false,
+          });
+
           if (loadGenerationRef.current !== generation) return;
 
-          const turnoAberto = todosTurnos.find((t) => t.conta_caixa_pdv_id === caixa.id);
-          if (!turnoAberto) return;
+          queryClient.setQueryData(
+            [...caixaTurnoQueryKey(turnoAberto.id, caixa.id), 'live', 'sem-itens'],
+            snapshot
+          );
 
-          try {
-            const snapshot = await fetchCaixaTurnoSnapshot({
-              turno: turnoAberto,
-              caixa,
-              incluirRascunhos: true,
-              rascunhoExigirItens: false,
-            });
-
-            if (loadGenerationRef.current !== generation) return;
-
-            queryClient.setQueryData(
-              [...caixaTurnoQueryKey(turnoAberto.id, caixa.id), 'live', 'sem-itens'],
-              snapshot
-            );
-
-            const resumo = buildPainelCaixaResumo(snapshot);
-            setLiquidezPorCaixa((prev) => ({
-              ...prev,
-              [caixa.id]: {
-                turnoAberto: true,
-                saldoInicial: resumo.saldoInicial,
-                totalVendas: resumo.totalVendas,
-                liquidez: resumo.liquidez,
-                loadingDetalhes: false,
-              },
-            }));
-          } catch (error) {
-            if (loadGenerationRef.current !== generation) return;
-            console.error(`Erro ao carregar turno do caixa ${caixa.id}:`, error);
-            setLiquidezPorCaixa((prev) => ({
-              ...prev,
-              [caixa.id]: {
-                ...(prev[caixa.id] || { turnoAberto: true }),
-                loadingDetalhes: false,
-              },
-            }));
-          }
-        })
-      );
+          const resumo = buildPainelCaixaResumo(snapshot);
+          setLiquidezPorCaixa((prev) => ({
+            ...prev,
+            [caixa.id]: {
+              turnoAberto: true,
+              saldoInicial: resumo.saldoInicial,
+              totalVendas: resumo.totalVendas,
+              liquidez: resumo.liquidez,
+              loadingDetalhes: false,
+            },
+          }));
+        } catch (error) {
+          if (loadGenerationRef.current !== generation) return;
+          console.warn(`[SeletorCaixaPDV] liquidez em background (${caixa.id}):`, error?.message || error);
+          setLiquidezPorCaixa((prev) => ({
+            ...prev,
+            [caixa.id]: {
+              ...(prev[caixa.id] || { turnoAberto: true }),
+              loadingDetalhes: false,
+            },
+          }));
+        }
+      }
     },
     [queryClient]
   );
