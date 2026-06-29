@@ -64,7 +64,7 @@ export default function Layout({ children, currentPageName }) {
 
   const fullscreenPages = ['PDV', 'PDVVendedor', 'PDVCaixa', 'AutoAtendimento', 'PedidoCompraDetalhe', 'AnexoCompartilhado'];
   const routePage = location.pathname.split('/').filter(Boolean)[0] || '';
-  /** Mobile: PDV dentro do shell (bottom nav fixo); overlay rápido mantém fullscreen. */
+  /** Mobile: PDV dentro do shell (bottom nav fixo); atalho lateral navega para a rota em vez de overlay. */
   const isMobilePdvInShell = isMobile && MOBILE_PDV_IN_SHELL_ROUTES.has(routePage);
   const isFullscreen =
     !isMobilePdvInShell &&
