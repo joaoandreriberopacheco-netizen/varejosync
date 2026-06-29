@@ -253,7 +253,7 @@ export default function VendasTurnoDialog({
               <VirtualizedList
                 items={vendasFinalizadas}
                 estimateSize={132}
-                className="hidden md:block h-[calc(100vh-190px)] pr-1"
+                className="hidden desktop-layout:block h-[calc(100vh-190px)] pr-1"
                 contentClassName="max-w-4xl mx-auto"
                 itemClassName="pb-3"
                 getItemKey={(venda) => venda.id}
@@ -270,7 +270,7 @@ export default function VendasTurnoDialog({
               <VirtualizedList
                 items={vendasFinalizadas}
                 estimateSize={150}
-                className="md:hidden h-[calc(100vh-190px)] pr-1"
+                className="desktop-layout:hidden h-[calc(100vh-190px)] pr-1"
                 itemClassName="pb-3"
                 getItemKey={(venda) => venda.id}
                 renderItem={(venda) => (

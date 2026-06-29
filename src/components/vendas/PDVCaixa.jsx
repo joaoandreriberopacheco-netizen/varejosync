@@ -1488,7 +1488,7 @@ export default function PDVCaixa({
                 </TabsList>
 
                 {/* KPIs Superiores - Apenas Desktop */}
-                <div className="hidden md:block p-4 pb-0">
+                <div className="hidden desktop-layout:block p-4 pb-0">
                   <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
                     <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm">
                      <div className="text-xs text-muted-foreground dark:text-muted-foreground mb-2">Saldo do Turno</div>
@@ -1508,7 +1508,7 @@ export default function PDVCaixa({
                 </div>
 
                 {/* Tabs Navigation - Desktop */}
-                <div className="hidden md:block border-b border-border/40 dark:border-border/40 px-4">
+                <div className="hidden desktop-layout:block border-b border-border/40 dark:border-border/40 px-4">
                   <TabsList className="h-auto bg-transparent border-0 gap-1 justify-start max-w-4xl mx-auto p-0">
                     <TabsTrigger value="balanco" className="flex items-center gap-2 data-[state=active]:bg-card dark:data-[state=active]:bg-card data-[state=active]:shadow-sm h-12 px-6 rounded-t-xl rounded-b-none border-0">
                       <PieChart className="w-4 h-4" />

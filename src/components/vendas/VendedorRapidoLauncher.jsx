@@ -8,7 +8,7 @@ import { getCachedUserSession } from '@/lib/userSessionCache';
 import { perfilResolvidoParaUsuario, usuarioLegadoSemMatrizPerfil } from '@/lib/perfilPermissoes';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
 import { buildPDVVendedorQuickUrl } from '@/lib/pdvQuickAccessNavigate';
-import { useIsDesktop } from '@/hooks/use-breakpoint';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 import VendedorRapidoPanel from './VendedorRapidoPanel';
 
 function userCanAccessVendedor(user, perfilDeAcesso) {
@@ -25,7 +25,7 @@ export default function VendedorRapidoLauncher() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
-  const isCompactViewport = !useIsDesktop();
+  const isCompactViewport = useCompactShell();
   const [canAccess, setCanAccess] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
