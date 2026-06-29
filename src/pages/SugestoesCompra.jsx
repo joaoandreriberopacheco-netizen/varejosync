@@ -2,21 +2,24 @@ import React, { useState } from 'react';
 import SugestaoCompra from '@/components/compras/SugestaoCompra';
 
 export default function SugestoesCompraPage() {
-  const [sugestaoKey, setSugestaoKey] = useState(0);
+  const [stats, setStats] = useState({ total: 0, selected: 0, catalogo: 0 });
 
   return (
-    <div className="min-h-screen bg-background font-din-1451 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
-      <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground font-glacial">
-            Sugestões de Compra
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Análise inteligente de estoque e reposição
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden space-y-4 font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
+      <div className="pb-3 mb-1 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="space-y-1.5 min-w-0">
+          <h1 className="text-xl font-medium text-foreground font-din-1451">Sugestões de Compra</h1>
+          <p className="text-sm leading-normal text-foreground/85">
+            {stats.total} sugestão(ões) abaixo do mínimo
+            {stats.selected > 0 ? ` · ${stats.selected} selecionada(s)` : ''}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Metas por vendas (90 dias) · unidade de vitrine na compra
           </p>
         </div>
-        <SugestaoCompra key={sugestaoKey} />
       </div>
+
+      <SugestaoCompra onStatsChange={setStats} />
     </div>
   );
 }
