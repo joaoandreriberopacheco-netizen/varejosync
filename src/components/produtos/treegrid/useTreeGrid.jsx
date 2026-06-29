@@ -349,7 +349,6 @@ function sortTreeChildEntries(nodeMap, sortOrder = 'az') {
   });
 }
 function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sortOrder = 'az', options = {}) {
-  const { showLeafGroupHeaders = false } = options;
   const rows = [];
   const rawKey = parentKey ? `${parentKey}||${key}` : key;
   const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
@@ -359,35 +358,6 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sor
   const rowLevel = visualLevel + 1;
 
   const isLeafGroup = Object.keys(finalNode.children || {}).length === 0;
-  const isRoot = visualLevel === 0;
-
-  // Família de um só: produto sobe ao nível do cabeçalho (sem grupo + filho)
-  if (branchSkus.length === 1) {
-    rows.push(makeSkuRow(branchSkus[0], rowLevel));
-    return rows;
-  }
-
-  if (!isRoot && isLeafGroup) {
-    if (showLeafGroupHeaders) {
-      rows.push({
-        type: 'group',
-        key: nodeKey,
-        label: collapsedLabel,
-        level: rowLevel,
-        node: finalNode,
-        isLeafGroup,
-        ...agg,
-      });
-      for (const sku of sortSkus(finalNode.skus, sortOrder)) {
-        rows.push(makeSkuRow(sku, rowLevel + 1));
-      }
-      return rows;
-    }
-    for (const sku of sortSkus(finalNode.skus, sortOrder)) {
-      rows.push(makeSkuRow(sku, rowLevel));
-    }
-    return rows;
-  }
 
   rows.push({
     type: 'group',
@@ -399,7 +369,7 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sor
     ...agg,
   });
 
-  if (isLeafGroup || expandedKeys.has(nodeKey)) {
+  if (expandedKeys.has(nodeKey)) {
     const childMap = finalNode.children || {};
     if (Object.keys(childMap).length > 0) {
       rows.push(...flattenTree(childMap, expandedKeys, nodeKey, rowLevel, sortOrder, options));
@@ -473,7 +443,6 @@ export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', vis
 
     const rawKey  = parentKey ? `${parentKey}||${key}` : key;
     const { node: finalNode } = deepCollapse(node);
-    if (isSoloFamilyBranch(finalNode)) continue;
 
     const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
     const rowLevel = visualLevel + 1;

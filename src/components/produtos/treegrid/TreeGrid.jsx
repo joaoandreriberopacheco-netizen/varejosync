@@ -331,14 +331,13 @@ function groupCellValue(colId, row) {
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
 const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, readOnly }) {
-  const isLeaf = row.isLeafGroup;
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
 
   return (
     <tr
-      className={cn(p38Table.row, !isLeaf && p38Table.rowInteractive, 'select-none group')}
-      onClick={isLeaf ? undefined : () => onToggle(row.key)}
+      className={cn(p38Table.row, p38Table.rowInteractive, 'select-none group')}
+      onClick={() => onToggle(row.key)}
     >
       <td
         className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, 'py-2')}
@@ -346,7 +345,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       >
         <CatalogProdutoCell
           hierDepth={hierDepth}
-          showChevron={!isLeaf}
+          showChevron
           isExpanded={isExpanded}
           showTierDot={isPrimeiroNivel}
           showIcon={false}
