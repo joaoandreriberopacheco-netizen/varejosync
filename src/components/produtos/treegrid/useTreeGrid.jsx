@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { buildCategoryTree, buildTree } from './catalogTreeCore';
+import { buildCategoryTree, buildTree } from '@/lib/catalogTreeCore';
 
-export * from './catalogTreeCore';
+export * from '@/lib/catalogTreeCore';
 
 /** Assinatura estável: evita rebuild da árvore quando o pai recria o array sem mudar catálogo. */
 function catalogTreeSignature(produtos) {

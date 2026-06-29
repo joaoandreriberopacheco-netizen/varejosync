@@ -1,5 +1,5 @@
 import { getCatalogoComercialView } from '@/lib/productUnits';
-import { calcMarkup } from '@/components/produtos/treegrid/catalogTreeCore';
+import { calcMarkup } from '@/lib/catalogTreeCore';
 
 export const NUMERIC_COMPARISON_OPERATORS = [
   { value: 'all', label: 'Qualquer valor' },

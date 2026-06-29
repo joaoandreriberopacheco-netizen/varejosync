@@ -1,6 +1,6 @@
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
-import { calcMarkup } from '@/components/produtos/treegrid/catalogTreeCore';
+import { calcMarkup } from '@/lib/catalogTreeCore';
 
 export function calcPrecoVendaFromMarkup(custoBase, markupPct) {
   const custo = Number(custoBase);
