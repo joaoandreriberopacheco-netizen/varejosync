@@ -62,9 +62,9 @@ const funcionalidades = [
   {
     modulo: "Compras",
     items: [
-      { nome: "Sugestão Inteligente", status: "funcional", obs: "Baseado em estoque mínimo" },
-      { nome: "Cálculo de quantidade", status: "funcional", obs: "Até estoque ideal" },
-      { nome: "Previsão de dias", status: "funcional", obs: "Baseado em vendas" },
+      { nome: "Sugestão Inteligente", status: "funcional", obs: "Metas de estoque + unidade vitrine" },
+      { nome: "Cálculo de quantidade", status: "funcional", obs: "Até estoque ideal (vitrine)" },
+      { nome: "Metas automáticas (job)", status: "funcional", obs: "Vendas 90d sem outliers → min/ideal" },
       { nome: "Agrupamento por fornecedor", status: "funcional", obs: "Facilita criação PC" },
       { nome: "Gerar pedido de compra", status: "funcional", obs: "Direto da sugestão" },
       { nome: "Criar PC manual", status: "funcional", obs: "Com múltiplos itens" },

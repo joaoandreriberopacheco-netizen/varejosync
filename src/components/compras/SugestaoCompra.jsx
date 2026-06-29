@@ -10,7 +10,8 @@ import SearchableFilterSelect from '@/components/compras/SearchableFilterSelect'
 import { ShoppingCart, RefreshCw, Lightbulb, CheckCircle, FileText, FilterX, Truck, Search, Package, X, SlidersHorizontal } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { dataHoje } from '@/components/utils/dateUtils';
-import { resolveCommercialDisplay } from '@/lib/productUnits';
+import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
+import { resolveFatorEmbalagemCompra } from '@/lib/calcularMetasEstoqueVendas';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function SugestaoCompra() {
@@ -38,11 +39,13 @@ export default function SugestaoCompra() {
     return [...tags].sort();
   }, [produtos]);
 
+  const produtoParaCompra = (produto) => buildSnapshotExibicaoComercial(produto);
+
   const calcQuantity = (produto) => {
     const target = produto.estoque_ideal || produto.estoque_maximo || 
                    (produto.estoque_minimo > 0 ? produto.estoque_minimo * 2 : 10);
-    const need = Math.max(target - (produto.estoque_atual || 0), produto.unidades_por_pacote || 1);
-    const pack = produto.unidades_por_pacote || 1;
+    const pack = resolveFatorEmbalagemCompra(produto);
+    const need = Math.max(target - (produto.estoque_atual || 0), pack);
     
     if (pack <= 1) return need;
     
@@ -59,7 +62,11 @@ export default function SugestaoCompra() {
 
   const sugestaoDisplay = (produto) => {
     const qBase = calcQuantity(produto);
-    return resolveCommercialDisplay(produto, qBase, produto.unidade_principal || 'UN');
+    return resolveCommercialDisplay(
+      produtoParaCompra(produto),
+      qBase,
+      produto.unidade_principal || 'UN',
+    );
   };
 
   const loadData = async () => {
@@ -144,7 +151,8 @@ export default function SugestaoCompra() {
         bySupplier[sid] = { fornecedor_id: sid, fornecedor_nome: supplier?.nome || 'N/A', itens: [] };
       }
       const qBase = calcQuantity(p);
-      const disp = resolveCommercialDisplay(p, qBase, p.unidade_principal || 'UN');
+      const snap = produtoParaCompra(p);
+      const disp = resolveCommercialDisplay(snap, qBase, p.unidade_principal || 'UN');
       const custoBase = p.preco_custo_calculado || p.valor_compra || 0;
       const custoUnitCompra = custoBase * (disp.fator_conversao || 1);
       bySupplier[sid].itens.push({
@@ -198,7 +206,7 @@ export default function SugestaoCompra() {
         data_abertura: dataHoje(),
         itens: selected.map((p) => {
           const qBase = calcQuantity(p);
-          const disp = resolveCommercialDisplay(p, qBase, p.unidade_principal || 'UN');
+          const disp = resolveCommercialDisplay(produtoParaCompra(p), qBase, p.unidade_principal || 'UN');
           return {
             produto_id: p.id,
             produto_nome: p.nome,
@@ -340,7 +348,7 @@ export default function SugestaoCompra() {
                 <Lightbulb className="w-5 h-5 text-muted-foreground" />
                 Sugestões de Compra
               </h3>
-              <p className="text-sm text-muted-foreground mt-1">Reposição baseada em estoque mínimo</p>
+              <p className="text-sm text-muted-foreground mt-1">Reposição por metas de estoque (unidade de vitrine)</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Button onClick={loadData} variant="ghost" size="icon" className="h-11 w-11 rounded-2xl bg-card hover:bg-muted text-white border-0">
