@@ -94,23 +94,25 @@ export default function ProdutosHeader({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
                 <DropdownMenuItem
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    onGerarRelatorioEstoque?.();
+                  onClick={() => {
+                    window.setTimeout(() => onGerarRelatorioEstoque?.(), 0);
                   }}
-                  disabled={gerandoRelatorioEstoque}
-                  className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                  className={cn(
+                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    gerandoRelatorioEstoque && 'pointer-events-none opacity-50',
+                  )}
                 >
                   <BarChart3 className="w-4 h-4 mr-2 p38-text-accent" />
                   Estoque enxuto
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    onGerarRelatorioVendas?.();
+                  onClick={() => {
+                    window.setTimeout(() => onGerarRelatorioVendas?.(), 0);
                   }}
-                  disabled={gerandoRelatorioVendas}
-                  className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                  className={cn(
+                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    gerandoRelatorioVendas && 'pointer-events-none opacity-50',
+                  )}
                 >
                   <TrendingUp className="w-4 h-4 mr-2 p38-text-accent" />
                   Desempenho produtos
@@ -140,9 +142,8 @@ export default function ProdutosHeader({
                 <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
                   {filteredProdutos.length > 0 && (
                     <DropdownMenuItem
-                      onSelect={(event) => {
-                        event.preventDefault();
-                        onOpenMassMarkup?.();
+                      onClick={() => {
+                        window.setTimeout(() => onOpenMassMarkup?.(), 0);
                       }}
                       className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
                     >
