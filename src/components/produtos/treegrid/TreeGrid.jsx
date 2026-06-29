@@ -3,7 +3,7 @@ import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus } from './useTreeGrid';
-import { TREE_GRID_EXPAND_ALL_LEVEL } from '@/lib/catalogTreeCore';
+import { TREE_GRID_EXPAND_ALL_LEVEL } from '@/lib/catalogTreeCore.js';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { cn } from '@/components/utils';

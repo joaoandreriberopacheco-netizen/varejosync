@@ -40,8 +40,6 @@ import {
 } from '@/lib/filterProdutos';
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
-import { gerarRelatorioCatalogoEstoque } from '@/functions/gerarRelatorioCatalogoEstoque';
-import { fetchPedidosVenda90d } from '@/hooks/useP38Entities';
 import {
   loadCatalogProdutoColumns,
   saveCatalogProdutoColumns,
@@ -1110,6 +1108,7 @@ function ProdutosPageContent() {
       );
       const groupPdfByCategory = groupTreeByCategory || hasCategorizedProducts;
 
+      const { gerarRelatorioCatalogoEstoque } = await import('@/functions/gerarRelatorioCatalogoEstoque');
       const resposta = await gerarRelatorioCatalogoEstoque({
         produtos: filteredProdutos,
         filters_summary: filtersSummary,
@@ -1155,6 +1154,7 @@ function ProdutosPageContent() {
         (p) => String(p?.categoria_nome || '').trim()
       );
       const groupPdfByCategory = groupTreeByCategory || hasCategorizedProducts;
+      const { fetchPedidosVenda90d } = await import('@/hooks/useP38Entities');
       const pedidos = await fetchPedidosVenda90d();
 
       const { gerarRelatorioCatalogoVendas } = await import('@/functions/gerarRelatorioCatalogoVendas');

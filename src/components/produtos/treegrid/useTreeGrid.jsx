@@ -1,7 +1,37 @@
 import { useMemo } from 'react';
-import { buildCategoryTree, buildTree } from '@/lib/catalogTreeCore';
+import {
+  buildCategoryTree,
+  buildTree,
+  iqrMean,
+  collectSkus,
+  isSoloFamilyBranch,
+  calcCusto,
+  calcMarkup,
+  aggregateEstoqueDisplay,
+  mergeAdjacentDuplicateGroupHeaders,
+  aggregateSkus,
+  buildExpandedForLevel,
+  deepCollapse,
+  flattenTree,
+  TREE_GRID_EXPAND_ALL_LEVEL,
+} from '@/lib/catalogTreeCore.js';
 
-export * from '@/lib/catalogTreeCore';
+export {
+  iqrMean,
+  collectSkus,
+  isSoloFamilyBranch,
+  calcCusto,
+  calcMarkup,
+  aggregateEstoqueDisplay,
+  mergeAdjacentDuplicateGroupHeaders,
+  aggregateSkus,
+  buildCategoryTree,
+  buildTree,
+  deepCollapse,
+  flattenTree,
+  buildExpandedForLevel,
+  TREE_GRID_EXPAND_ALL_LEVEL,
+};
 
 /** Assinatura estável: evita rebuild da árvore quando o pai recria o array sem mudar catálogo. */
 function catalogTreeSignature(produtos) {

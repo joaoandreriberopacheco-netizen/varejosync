@@ -1,4 +1,4 @@
-import { generateRelatorioCatalogoEstoquePdf } from '@/lib/relatorioCatalogoEstoquePdf/generateRelatorioCatalogoEstoquePdf';
+import { generateRelatorioCatalogoEstoquePdf } from '@/lib/relatorioCatalogoEstoquePdf/generateRelatorioCatalogoEstoquePdf.js';
 
 /**
  * Gera PDF de estoque do catálogo no browser (jspdf), com filtros e vista da tela.
