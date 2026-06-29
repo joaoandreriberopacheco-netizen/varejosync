@@ -360,9 +360,21 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sor
 
   const isLeafGroup = Object.keys(finalNode.children || {}).length === 0;
 
-  // PDF/relatório: família com 1 SKU não duplica cabeçalho + produto.
-  if (collapseSoloSkuBranches && branchSkus.length === 1) {
-    rows.push(makeSkuRow(branchSkus[0], rowLevel));
+  // Família com 1 SKU: recolhida → cabeçalho; expandida (ou PDF) → só o produto.
+  if (branchSkus.length === 1) {
+    if (collapseSoloSkuBranches || expandedKeys.has(nodeKey)) {
+      rows.push(makeSkuRow(branchSkus[0], rowLevel));
+      return rows;
+    }
+    rows.push({
+      type: 'group',
+      key: nodeKey,
+      label: collapsedLabel,
+      level: rowLevel,
+      node: finalNode,
+      isLeafGroup,
+      ...agg,
+    });
     return rows;
   }
 
