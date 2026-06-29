@@ -349,6 +349,7 @@ function sortTreeChildEntries(nodeMap, sortOrder = 'az') {
   });
 }
 function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sortOrder = 'az', options = {}) {
+  const { collapseSoloSkuBranches = false } = options;
   const rows = [];
   const rawKey = parentKey ? `${parentKey}||${key}` : key;
   const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
@@ -358,6 +359,12 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sor
   const rowLevel = visualLevel + 1;
 
   const isLeafGroup = Object.keys(finalNode.children || {}).length === 0;
+
+  // PDF/relatório: família com 1 SKU não duplica cabeçalho + produto.
+  if (collapseSoloSkuBranches && branchSkus.length === 1) {
+    rows.push(makeSkuRow(branchSkus[0], rowLevel));
+    return rows;
+  }
 
   rows.push({
     type: 'group',

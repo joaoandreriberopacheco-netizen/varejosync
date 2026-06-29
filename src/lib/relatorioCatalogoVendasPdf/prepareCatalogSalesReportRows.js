@@ -79,7 +79,7 @@ export function prepareCatalogSalesReportDocument({
     const tree = groupByCategory ? buildCategoryTree(list) : buildTree(list);
     const expandedKeys = resolveExpandedKeysForPdf(tree);
     rows = mergeAdjacentDuplicateGroupHeaders(
-      flattenTree(tree, expandedKeys, '', 0, sortOrder),
+      flattenTree(tree, expandedKeys, '', 0, sortOrder, { collapseSoloSkuBranches: true }),
     );
     rows = enrichTreeRows(rows, velocityMap);
   }

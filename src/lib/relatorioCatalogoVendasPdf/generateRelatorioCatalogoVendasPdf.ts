@@ -409,5 +409,5 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
   doc.text('Filtros do catálogo · todos os produtos filtrados · hierarquia completa.', M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v3' };
+  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v4' };
 }
