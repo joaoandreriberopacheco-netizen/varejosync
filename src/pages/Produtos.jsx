@@ -1163,8 +1163,10 @@ function ProdutosPageContent() {
       }
 
       toast({ title: 'Montando PDF de vendas...' });
-      const { gerarRelatorioCatalogoVendas } = await import('@/functions/gerarRelatorioCatalogoVendas');
-      const resposta = await gerarRelatorioCatalogoVendas({
+      const { generateRelatorioCatalogoVendasPdf } = await import(
+        '@/lib/relatorioCatalogoVendasPdf/generateRelatorioCatalogoVendasPdf.js'
+      );
+      const resposta = await generateRelatorioCatalogoVendasPdf({
         produtos: filteredProdutos,
         pedidos,
         filters_summary: filtersSummary,
@@ -1178,7 +1180,10 @@ function ProdutosPageContent() {
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
       downloadBlob(blob, `RelatorioVendas_${dataHoje()}.pdf`);
 
-      toast({ title: 'Relatório de vendas gerado' });
+      toast({
+        title: 'Relatório de vendas gerado',
+        description: resposta?.version ? `Layout ${resposta.version}` : undefined,
+      });
     } catch (error) {
       const msg = error?.message || String(error);
       toast({

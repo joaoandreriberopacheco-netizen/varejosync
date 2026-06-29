@@ -224,6 +224,10 @@ function treeLevelLabel(treeLevel) {
   if (treeLevel >= 99) return "todos os n\xEDveis";
   return `n\xEDvel ${treeLevel}`;
 }
+
+/** Identificador visível no PDF/toast — confirma que o bundle novo carregou. */
+export const CATALOG_SALES_PDF_BUILD = 'enxuto_vendas_compra_custo_v11';
+
 export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   const {
     produtos = [],
@@ -530,7 +534,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(FONT.footer);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text("Filtros do cat\xE1logo \xB7 hierarquia conforme n\xEDvel seleccionado na tela.", M, y);
+  doc.text(`Filtros do cat\xE1logo \xB7 hierarquia conforme n\xEDvel seleccionado na tela.  (${CATALOG_SALES_PDF_BUILD})`, M, y);
   const pdfBytes = doc.output("arraybuffer");
-  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v11' };
+  return { data: pdfBytes, version: CATALOG_SALES_PDF_BUILD };
 }

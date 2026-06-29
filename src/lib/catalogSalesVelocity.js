@@ -1,13 +1,25 @@
 import {
-  lineQuantityBase,
-  pedidoElegivelIep,
-} from '@/lib/calcularIepProdutos';
-import {
   formatEstoqueApresentacao,
   resolveCommercialDisplay,
 } from '@/lib/productUnits';
 
 const DIAS_MEDIA = 30;
+
+/** Evita puxar `calcularIepProdutos` para o chunk do useP38Entities no bundle do PDF. */
+function pedidoElegivelVendas(pedido) {
+  const status = String(pedido?.status ?? '');
+  if (status === 'Cancelado') return false;
+  const tipo = String(pedido?.tipo ?? 'PDV').toUpperCase();
+  return tipo === 'PDV' || tipo === 'PEDIDO';
+}
+
+function lineQuantityBaseVendas(item) {
+  const qtyBase = item?.quantidade_base;
+  if (qtyBase != null && Number.isFinite(Number(qtyBase))) {
+    return Number(qtyBase) || 0;
+  }
+  return Number(item?.quantidade ?? item?.qtd ?? 0) || 0;
+}
 
 function resolveSkuUnidade(produto) {
   const apresent = formatEstoqueApresentacao(produto);
@@ -19,7 +31,6 @@ function emptyVelocity(produto) {
   return {
     qtd30: 0,
     qtd60: 0,
-    mediaDiaria: 0,
     unidade: resolveSkuUnidade(produto),
   };
 }
@@ -43,7 +54,7 @@ export function buildCatalogSalesVelocityMap(produtos = [], pedidos = []) {
   cut60.setDate(cut60.getDate() - 60);
 
   for (const pedido of pedidos || []) {
-    if (!pedidoElegivelIep(pedido)) continue;
+    if (!pedidoElegivelVendas(pedido)) continue;
 
     const rawDate = pedido?.created_date ?? pedido?.created_at;
     if (!rawDate) continue;
@@ -59,7 +70,7 @@ export function buildCatalogSalesVelocityMap(produtos = [], pedidos = []) {
       const product = prodMap[prodId];
       if (!product) continue;
 
-      const qtyBase = lineQuantityBase(item);
+      const qtyBase = lineQuantityBaseVendas(item);
       const resolved = resolveCommercialDisplay(
         product,
         qtyBase,
@@ -80,7 +91,6 @@ export function buildCatalogSalesVelocityMap(produtos = [], pedidos = []) {
     const id = String(produto?.id ?? '');
     if (!id) continue;
     if (!map[id]) map[id] = emptyVelocity(produto);
-    map[id].mediaDiaria = map[id].qtd30 / DIAS_MEDIA;
   }
 
   return map;
@@ -89,7 +99,7 @@ export function buildCatalogSalesVelocityMap(produtos = [], pedidos = []) {
 /** Soma velocidade de vendas para linhas de grupo (mesma unidade ou travessão). */
 export function aggregateCatalogSalesVelocity(skus = [], velocityMap = {}) {
   if (!skus?.length) {
-    return { qtd30: 0, qtd60: 0, mediaDiaria: 0, unidade: null };
+    return { qtd30: 0, qtd60: 0, unidade: null };
   }
 
   let qtd30 = 0;
@@ -106,7 +116,6 @@ export function aggregateCatalogSalesVelocity(skus = [], velocityMap = {}) {
   return {
     qtd30,
     qtd60,
-    mediaDiaria: qtd30 / DIAS_MEDIA,
     unidade: units.size === 1 ? [...units][0] : null,
   };
 }
