@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { roundToTwoDecimals, formatCurrency } from '@/lib/financialUtils';
 import {
@@ -29,11 +29,17 @@ import {
 const STORAGE_KEY = 'home_quick_actions';
 
 export default function HomePage() {
+  const location = useLocation();
   const [currentUser, setCurrentUser] = useState(null);
   const [perfilDeAcesso, setPerfilDeAcesso] = useState(null);
   const [quickActionIds, setQuickActionIds] = useState([]);
   const [showBalance, setShowBalance] = useState(false);
   const [showPersonalizar, setShowPersonalizar] = useState(false);
+
+  // Sempre ocultar ao abrir/voltar para a Home (navegação ou reinício da app).
+  useEffect(() => {
+    setShowBalance(false);
+  }, [location.key]);
   const podeVerResumoVendasEarly = useMemo(() => {
     const cached = getCachedUserSession();
     const user = cached?.user;
@@ -185,16 +191,18 @@ export default function HomePage() {
                 {showBalance ? <Eye className="w-5 h-5 text-muted-foreground" /> : <EyeOff className="w-5 h-5 text-muted-foreground" />}
               </button>
             </div>
-            <div className="text-3xl font-bold text-foreground mb-1">
-              {showBalance ? (
-                <>R$ {formatValor(kpis.valorVendasHoje)}</>
-              ) : (
-                <span className="text-muted-foreground/50">R$ ********</span>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {kpis.vendasHoje} {kpis.vendasHoje === 1 ? 'venda realizada' : 'vendas realizadas'}
-            </p>
+            {showBalance ? (
+              <>
+                <div className="text-3xl font-bold text-foreground mb-1">
+                  R$ {formatValor(kpis.valorVendasHoje)}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {kpis.vendasHoje} {kpis.vendasHoje === 1 ? 'venda realizada' : 'vendas realizadas'}
+                </p>
+              </>
+            ) : (
+              <div className="text-3xl font-bold text-muted-foreground/50 mb-1">••••••</div>
+            )}
           </div>
         )}
 
