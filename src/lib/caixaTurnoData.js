@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
   buildPedidoIdsReceitasTurno,
@@ -359,8 +360,10 @@ export async function fetchCaixaTurnoSnapshot({
   incluirRascunhos = true,
   rascunhoExigirItens = true,
 }) {
-  const raw = await fetchCaixaTurnoRawData({ turno, caixa, incluirRascunhos });
-  return buildCaixaTurnoSnapshot(raw, { incluirRascunhos, rascunhoExigirItens });
+  return withRateLimitRetry(async () => {
+    const raw = await fetchCaixaTurnoRawData({ turno, caixa, incluirRascunhos });
+    return buildCaixaTurnoSnapshot(raw, { incluirRascunhos, rascunhoExigirItens });
+  });
 }
 
 /** Polling / idle sync — menos agressivo que antes */
