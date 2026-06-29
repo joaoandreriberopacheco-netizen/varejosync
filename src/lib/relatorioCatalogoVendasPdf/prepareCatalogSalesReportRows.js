@@ -12,7 +12,8 @@ import {
   aggregateCatalogSalesVelocity,
   buildCatalogSalesVelocityMap,
 } from '@/lib/catalogSalesVelocity';
-import { formatEstoqueApresentacao } from '@/lib/productUnits';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
 
 function prepareFlatRows(produtos, velocityMap, sortOrder = 'az') {
   const sorted = [...produtos].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
@@ -22,6 +23,7 @@ function prepareFlatRows(produtos, velocityMap, sortOrder = 'az') {
     key: produto.id,
     level: 1,
     velocity: velocityMap[String(produto.id)] || aggregateCatalogSalesVelocity([produto], velocityMap),
+    commercial: commercialCostValues(produto),
   }));
 }
 
@@ -31,6 +33,7 @@ function enrichTreeRows(rows, velocityMap) {
       return {
         ...row,
         velocity: velocityMap[String(row.produto?.id)] || aggregateCatalogSalesVelocity([row.produto], velocityMap),
+        commercial: commercialCostValues(row.produto),
       };
     }
     if (row.type === 'group') {
@@ -39,19 +42,18 @@ function enrichTreeRows(rows, velocityMap) {
         ...row,
         velocity: aggregateCatalogSalesVelocity(skus, velocityMap),
         skuCount: skus.length,
+        commercial: {
+          vCompra: roundToTwoDecimals(row.valorCompraMedio || 0),
+          custoCalc: roundToTwoDecimals(row.custoMedio || 0),
+        },
       };
     }
     return row;
   });
 }
 
-function resolveExpandedKeys(tree, treeLevel) {
-  const level = Number(treeLevel) || 1;
-  if (level <= 1) return new Set();
-  if (level >= TREE_GRID_EXPAND_ALL_LEVEL) {
-    return buildExpandedForLevel(tree, TREE_GRID_EXPAND_ALL_LEVEL);
-  }
-  return buildExpandedForLevel(tree, level - 1);
+function resolveExpandedKeysForPdf(tree) {
+  return buildExpandedForLevel(tree, TREE_GRID_EXPAND_ALL_LEVEL);
 }
 
 /**
@@ -75,7 +77,7 @@ export function prepareCatalogSalesReportDocument({
     rows = prepareFlatRows(list, velocityMap, sortOrder);
   } else {
     const tree = groupByCategory ? buildCategoryTree(list) : buildTree(list);
-    const expandedKeys = resolveExpandedKeys(tree, treeLevel);
+    const expandedKeys = resolveExpandedKeysForPdf(tree);
     rows = mergeAdjacentDuplicateGroupHeaders(
       flattenTree(tree, expandedKeys, '', 0, sortOrder),
     );
@@ -89,6 +91,14 @@ export function prepareCatalogSalesReportDocument({
     produtos: list,
     velocityMap,
     rows,
+  };
+}
+
+export function commercialCostValues(produto) {
+  const cat = getCatalogoComercialView(produto);
+  return {
+    vCompra: roundToTwoDecimals(cat.valorCompraNaEmbalagem),
+    custoCalc: roundToTwoDecimals(cat.custoNaEmbalagem),
   };
 }
 

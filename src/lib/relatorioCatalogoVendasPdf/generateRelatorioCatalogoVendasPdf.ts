@@ -1,6 +1,8 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
 import {
+  commercialCostValues,
   prepareCatalogSalesReportDocument,
   stockQuantTexto,
   velocityQuantTexto,
@@ -32,7 +34,12 @@ const TABLE_TOP_CONTINUATION = 14;
 const LEVEL_INDENT = 4.2;
 
 const fmtN = (n: number) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+const fmtR = (n: number) =>
+  (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const safe = (text: unknown) => normalizePdfText(text);
+const moedaSemSimbolo = (valor: number) => fmtR(Number(valor) || 0);
+const moedaOuTraco = (valor: number) =>
+  Number.isFinite(Number(valor)) && Number(valor) > 0 ? moedaSemSimbolo(valor) : '—';
 
 function splitDescriptionLines(
   doc: jsPDF,
@@ -46,10 +53,10 @@ function splitDescriptionLines(
   return lines.length ? lines : [''];
 }
 
-function treeLevelLabel(treeLevel: number) {
-  if (treeLevel <= 1) return 'nível 1';
-  if (treeLevel >= 99) return 'todos os níveis';
-  return `nível ${treeLevel}`;
+function treeLevelLabel(documento: { mode?: string; groupByCategory?: boolean }) {
+  if (documento.mode === 'plana') return 'lista plana A-Z';
+  if (documento.groupByCategory) return 'agrupado por categoria · hierarquia completa';
+  return 'hierarquia completa';
 }
 
 export async function generateRelatorioCatalogoVendasPdf(payload: Record<string, unknown> = {}) {
@@ -92,16 +99,20 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
 
   const descStart = M + 4;
   const tableRight = M + CW;
-  const quantRight = M + 88;
-  const v30Right = M + 118;
-  const v60Right = M + 148;
+  const quantRight = M + 112;
+  const vCompraRight = M + 128;
+  const custoRight = M + 144;
+  const v30Right = M + 162;
+  const v60Right = M + 180;
   const mediaRight = tableRight;
-  const divider = descStart + (quantRight - descStart) * 0.62;
+  const divider = quantRight - 4.5;
 
   const X = {
     desc: descStart,
     divider,
     quant: quantRight,
+    vCompra: vCompraRight,
+    custo: custoRight,
     v30: v30Right,
     v60: v60Right,
     media: mediaRight,
@@ -159,12 +170,16 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     doc.setTextColor(...ENXUTO.muted);
 
     doc.text('QUANT', X.quant, line1, { align: 'right' });
+    doc.text('V.COMPRA', X.vCompra, line1, { align: 'right' });
+    doc.text('CUSTO', X.custo, line1, { align: 'right' });
     doc.text('V.30D', X.v30, line1, { align: 'right' });
     doc.text('V.60D', X.v60, line1, { align: 'right' });
     doc.text('M.DIA', X.media, line1, { align: 'right' });
 
     doc.setFontSize(FONT.colHdr - 0.4);
     doc.text('+ UN', X.quant, line2, { align: 'right' });
+    doc.text('compra', X.vCompra, line2, { align: 'right' });
+    doc.text('calc.', X.custo, line2, { align: 'right' });
     doc.text('30 dias', X.v30, line2, { align: 'right' });
     doc.text('60 dias', X.v60, line2, { align: 'right' });
     doc.text('média', X.media, line2, { align: 'right' });
@@ -204,13 +219,20 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     baselineY: number,
     produto: Record<string, unknown> | null,
     velocity: { qtd30?: number; qtd60?: number; mediaDiaria?: number; unidade?: string | null },
+    commercial: { vCompra?: number; custoCalc?: number } = {},
     { isGroup = false } = {},
   ) => {
     doc.setFont(pdfFontFamily, isGroup ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
     doc.setFontSize(FONT.row);
     doc.setTextColor(...ENXUTO.black);
 
-    const stock = produto ? stockQuantTexto(produto) : { texto: isGroup ? '—' : '—' };
+    const stock = produto ? stockQuantTexto(produto) : { texto: '—' };
+    const vals = produto
+      ? commercialCostValues(produto)
+      : {
+          vCompra: roundToTwoDecimals(commercial.vCompra || 0),
+          custoCalc: roundToTwoDecimals(commercial.custoCalc || 0),
+        };
     const v30 = velocityQuantTexto({ qtd: velocity?.qtd30, unidade: velocity?.unidade }, { showUnit: true });
     const v60 = velocityQuantTexto({ qtd: velocity?.qtd60, unidade: velocity?.unidade }, { showUnit: true });
     const media = velocityQuantTexto(
@@ -219,6 +241,8 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     );
 
     doc.text(stock.texto, X.quant, baselineY, { align: 'right' });
+    doc.text(moedaOuTraco(vals.vCompra), X.vCompra, baselineY, { align: 'right' });
+    doc.text(moedaOuTraco(vals.custoCalc), X.custo, baselineY, { align: 'right' });
     doc.text(v30 || '—', X.v30, baselineY, { align: 'right' });
     doc.text(v60 || '—', X.v60, baselineY, { align: 'right' });
     doc.text(media || '—', X.media, baselineY, { align: 'right' });
@@ -229,6 +253,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     descricao: string,
     produto: Record<string, unknown> | null,
     velocity: { qtd30?: number; qtd60?: number; mediaDiaria?: number; unidade?: string | null },
+    commercial: { vCompra?: number; custoCalc?: number } = {},
     { level = 1, isGroup = false } = {},
   ) => {
     const descX = X.desc + Math.max(0, level - 1) * LEVEL_INDENT;
@@ -242,7 +267,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     const drawY = y;
     const { valuesBaseline, descFirstBaseline } = rowBaselines(drawY, lineCount, extraH);
 
-    drawValueColumns(valuesBaseline, produto, velocity, { isGroup });
+    drawValueColumns(valuesBaseline, produto, velocity, commercial, { isGroup });
 
     doc.setFont(pdfFontFamily, isGroup ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
     doc.setTextColor(...ENXUTO.black);
@@ -263,14 +288,14 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(8);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('A4   estoque + vendas 30/60 dias   média diária   DIN 1451', M, y);
+  doc.text('A4   estoque + compra/custo + vendas 30/60 dias   DIN 1451', M, y);
   y += 4.5;
 
   const modeLabel = documento.mode === 'plana'
-    ? 'Lista plana A-Z'
+    ? 'Lista plana A-Z · todos os filtrados'
     : documento.groupByCategory
-      ? `Agrupado por categoria · ${treeLevelLabel(documento.treeLevel)}`
-      : `Hierarquia do catálogo · ${treeLevelLabel(documento.treeLevel)}`;
+      ? `Agrupado por categoria · ${treeLevelLabel(documento)}`
+      : `Hierarquia do catálogo · ${treeLevelLabel(documento)}`;
   doc.text(modeLabel, M, y);
   y += 4.2;
 
@@ -318,6 +343,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
           `${label}${countSuffix}`,
           null,
           row.velocity || {},
+          row.commercial || {},
           { level: row.level || 1, isGroup: true },
         );
         continue;
@@ -327,7 +353,14 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
       const nome = p?.codigo_interno
         ? `${p.nome || '—'}  ${p.codigo_interno}`
         : String(p?.nome || '—');
-      y = drawDataRow(y, nome, p, row.velocity || {}, { level: row.level || 1, isGroup: false });
+      y = drawDataRow(
+        y,
+        nome,
+        p,
+        row.velocity || {},
+        row.commercial || commercialCostValues(p),
+        { level: row.level || 1, isGroup: false },
+      );
     }
 
     drawVerticalDivider(
@@ -347,8 +380,8 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(FONT.footer);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('Filtros do catálogo · hierarquia conforme seleção na tela.', M, y);
+  doc.text('Filtros do catálogo · todos os produtos filtrados · hierarquia completa.', M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_vendas_30_60_media_v1' };
+  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v2' };
 }
