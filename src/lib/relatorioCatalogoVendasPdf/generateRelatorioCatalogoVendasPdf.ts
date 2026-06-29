@@ -13,11 +13,13 @@ const PDF_FONT_NORMAL = 'normal';
 
 const ENXUTO_LINE_W = 0.12;
 const ROW_RULE_W = 0.07;
+const SUBTLE_DIVIDER_W = 0.07;
 const ENXUTO = {
   black: [0, 0, 0] as [number, number, number],
   muted: [72, 72, 72] as [number, number, number],
   line: [110, 110, 110] as [number, number, number],
   rowRule: [210, 210, 210] as [number, number, number],
+  subtleDivider: [225, 225, 225] as [number, number, number],
 };
 
 const FONT = {
@@ -99,17 +101,29 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
 
   const descStart = M + 4;
   const tableRight = M + CW;
-  const quantRight = M + 112;
-  const vCompraRight = M + 128;
-  const custoRight = M + 144;
-  const v30Right = M + 162;
-  const v60Right = M + 180;
+
+  /** Mesma lógica do estoque enxuto: descrição | respiro | colunas alinhadas à direita. */
+  const QUANT_COL_W = 15;
+  const VALUE_COL_STEP = 13.5;
+  const GUTTER_DESC = 5;
+  const GUTTER_SALES = 4;
+
   const mediaRight = tableRight;
-  const divider = quantRight - 4.5;
+  const v60Right = mediaRight - VALUE_COL_STEP;
+  const v30Right = v60Right - VALUE_COL_STEP;
+  const custoRight = v30Right - VALUE_COL_STEP - GUTTER_SALES;
+  const vCompraRight = custoRight - VALUE_COL_STEP;
+  const quantRight = vCompraRight - VALUE_COL_STEP;
+  const quantLeft = quantRight - QUANT_COL_W;
+  const descEnd = quantLeft - GUTTER_DESC;
+  const divider = descEnd + GUTTER_DESC / 2;
+  const salesDivider = v30Right - VALUE_COL_STEP - GUTTER_SALES / 2;
 
   const X = {
     desc: descStart,
+    descEnd,
     divider,
+    salesDivider,
     quant: quantRight,
     vCompra: vCompraRight,
     custo: custoRight,
@@ -150,6 +164,10 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     yEnd: number,
     startPage: number,
     endPage: number,
+    {
+      color = ENXUTO.line,
+      width = ENXUTO_LINE_W,
+    }: { color?: [number, number, number]; width?: number } = {},
   ) => {
     const bottomPad = 10;
     const savedPage = doc.internal.getNumberOfPages();
@@ -157,7 +175,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
       doc.setPage(page);
       const segTop = page === startPage ? yStart : TABLE_TOP_CONTINUATION;
       const segBottom = page === endPage ? yEnd : pageH - bottomPad;
-      if (segBottom > segTop + 0.5) strokeLine(x, segTop, x, segBottom);
+      if (segBottom > segTop + 0.5) strokeLine(x, segTop, x, segBottom, color, width);
     }
     doc.setPage(savedPage);
   };
@@ -198,7 +216,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
     }
   };
 
-  const descMaxW = (descX = X.desc) => Math.max(20, X.divider - descX - 1);
+  const descMaxW = (descX = X.desc) => Math.max(20, X.descEnd - descX - 1);
 
   const rowBaselines = (drawY: number, lineCount: number, extraH: number) => {
     const cellH = ROW_H + extraH;
@@ -370,6 +388,14 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
       dividerStartPage,
       doc.internal.getNumberOfPages(),
     );
+    drawVerticalDivider(
+      X.salesDivider,
+      dividerStartY,
+      y,
+      dividerStartPage,
+      doc.internal.getNumberOfPages(),
+      { color: ENXUTO.subtleDivider, width: SUBTLE_DIVIDER_W },
+    );
   }
 
   const FOOTER_BLOCK_H = 10;
@@ -383,5 +409,5 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
   doc.text('Filtros do catálogo · todos os produtos filtrados · hierarquia completa.', M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v2' };
+  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v3' };
 }
