@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,7 +9,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Monitor, Lock, X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
-import { fetchCaixaTurnoSnapshot, buildPainelCaixaResumo } from '@/lib/caixaTurnoData';
+import {
+  caixaTurnoQueryKey,
+  fetchCaixaTurnoSnapshot,
+  buildPainelCaixaResumo,
+} from '@/lib/caixaTurnoData';
 import { getCachedUserSession } from '@/lib/userSessionCache';
 import { QUICK_ACCESS_NESTED_DIALOG_CLASS } from '@/lib/quickAccessOverlay';
 
@@ -23,6 +28,7 @@ function isCaixaAutorizado(caixaId, autorizados = []) {
 
 export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, elevatedStack = false }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [caixasDisponiveis, setCaixasDisponiveis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saldoInicial, setSaldoInicial] = useState('');
@@ -32,6 +38,8 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
   const [descricaoSaldo, setDescricaoSaldo] = useState('');
   const [abrirTurnoLoading, setAbrirTurnoLoading] = useState(false);
   const saldoInputRef = useRef(null);
+  const turnosAbertosRef = useRef([]);
+  const loadGenerationRef = useRef(0);
 
   const parseSaldoInicial = useCallback((valor) => {
     if (!valor) return 0;
@@ -76,8 +84,81 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
     loadCaixas();
   }, [open, currentUser]);
 
+  const findTurnoAbertoParaCaixa = useCallback(async (caixaId) => {
+    const cached = turnosAbertosRef.current.find(
+      (t) => t.status === 'Aberto' && t.conta_caixa_pdv_id === caixaId
+    );
+    if (cached) return cached;
+
+    const rows = await base44.entities.TurnoCaixa.filter({
+      status: 'Aberto',
+      conta_caixa_pdv_id: caixaId,
+    });
+    const turno = Array.isArray(rows) ? rows[0] : rows;
+    return turno?.id ? turno : null;
+  }, []);
+
+  const enrichLiquidezEmBackground = useCallback(
+    async (caixasAutorizados, todosTurnos, generation) => {
+      const comTurno = caixasAutorizados.filter((caixa) =>
+        todosTurnos.some((t) => t.conta_caixa_pdv_id === caixa.id)
+      );
+
+      await Promise.all(
+        comTurno.map(async (caixa) => {
+          if (loadGenerationRef.current !== generation) return;
+
+          const turnoAberto = todosTurnos.find((t) => t.conta_caixa_pdv_id === caixa.id);
+          if (!turnoAberto) return;
+
+          try {
+            const snapshot = await fetchCaixaTurnoSnapshot({
+              turno: turnoAberto,
+              caixa,
+              incluirRascunhos: true,
+              rascunhoExigirItens: false,
+            });
+
+            if (loadGenerationRef.current !== generation) return;
+
+            queryClient.setQueryData(
+              [...caixaTurnoQueryKey(turnoAberto.id, caixa.id), 'live', 'sem-itens'],
+              snapshot
+            );
+
+            const resumo = buildPainelCaixaResumo(snapshot);
+            setLiquidezPorCaixa((prev) => ({
+              ...prev,
+              [caixa.id]: {
+                turnoAberto: true,
+                saldoInicial: resumo.saldoInicial,
+                totalVendas: resumo.totalVendas,
+                liquidez: resumo.liquidez,
+                loadingDetalhes: false,
+              },
+            }));
+          } catch (error) {
+            if (loadGenerationRef.current !== generation) return;
+            console.error(`Erro ao carregar turno do caixa ${caixa.id}:`, error);
+            setLiquidezPorCaixa((prev) => ({
+              ...prev,
+              [caixa.id]: {
+                ...(prev[caixa.id] || { turnoAberto: true }),
+                loadingDetalhes: false,
+              },
+            }));
+          }
+        })
+      );
+    },
+    [queryClient]
+  );
+
   const loadCaixas = async () => {
+    const generation = loadGenerationRef.current + 1;
+    loadGenerationRef.current = generation;
     setLoading(true);
+    setLiquidezPorCaixa({});
     try {
       let user = currentUser;
       if (!user) {
@@ -88,6 +169,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
       }
       if (!user) {
         setCaixasDisponiveis([]);
+        setLoading(false);
         return;
       }
       const [todasContas, todosTurnos] = await Promise.all([
@@ -95,39 +177,28 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
         base44.entities.TurnoCaixa.filter({ status: 'Aberto' }),
       ]);
 
+      if (loadGenerationRef.current !== generation) return;
+
+      turnosAbertosRef.current = todosTurnos;
+
       const caixasPDV = todasContas.filter(c => 
         c.ativo && 
         (c.tipo === 'Caixa Físico' || c.tipo === 'Caixa PDV')
       );
 
-      const liquidez = {};
-      await Promise.all(
-        caixasPDV.map(async (caixa) => {
-          const turnoAberto = todosTurnos.find((t) => t.conta_caixa_pdv_id === caixa.id);
-          if (!turnoAberto) {
-            liquidez[caixa.id] = { turnoAberto: false };
-            return;
-          }
-          try {
-            const snapshot = await fetchCaixaTurnoSnapshot({
-              turno: turnoAberto,
-              caixa,
-              incluirRascunhos: false,
-            });
-            const resumo = buildPainelCaixaResumo(snapshot);
-            liquidez[caixa.id] = {
-              turnoAberto: true,
-              saldoInicial: resumo.saldoInicial,
-              totalVendas: resumo.totalVendas,
-              liquidez: resumo.liquidez,
-            };
-          } catch (error) {
-            console.error(`Erro ao carregar turno do caixa ${caixa.id}:`, error);
-            liquidez[caixa.id] = { turnoAberto: false };
-          }
-        })
-      );
-      setLiquidezPorCaixa(liquidez);
+      const liquidezBasica = {};
+      for (const caixa of caixasPDV) {
+        const turnoAberto = todosTurnos.find((t) => t.conta_caixa_pdv_id === caixa.id);
+        if (turnoAberto) {
+          liquidezBasica[caixa.id] = {
+            turnoAberto: true,
+            saldoInicial: turnoAberto.saldo_inicial || 0,
+            loadingDetalhes: true,
+          };
+        } else {
+          liquidezBasica[caixa.id] = { turnoAberto: false };
+        }
+      }
 
       // Filtrar por permissão — PROTEÇÃO TOTAL
       // Usuário só vê caixas explicitamente autorizados (mesmo admin)
@@ -142,8 +213,11 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
         caixasFiltrados = caixasPDV.filter((c) => isCaixaAutorizado(c.id, caixasAutorizados));
       }
 
+      setLiquidezPorCaixa(liquidezBasica);
       setCaixasDisponiveis(caixasFiltrados);
       setLoading(false);
+
+      void enrichLiquidezEmBackground(caixasFiltrados, todosTurnos, generation);
     } catch (error) {
       console.error('Erro ao carregar caixas:', error);
       setLoading(false);
@@ -151,13 +225,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
   };
 
   const handleSelecionarCaixa = async (caixa) => {
-
-    // Verificar se já existe turno aberto
-    const todosTurnos = await base44.entities.TurnoCaixa.list();
-    const turnoAberto = todosTurnos.find(t => 
-      t.status === 'Aberto' && 
-      t.conta_caixa_pdv_id === caixa.id
-    );
+    const turnoAberto = await findTurnoAbertoParaCaixa(caixa.id);
 
     if (turnoAberto) {
       // Turno já existe, apenas conectar
@@ -280,12 +348,20 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
                         </h3>
                         {liquidezPorCaixa[caixa.id]?.turnoAberto ? (
                           <div className="space-y-0.5">
-                            <p className="text-sm font-semibold text-primary">
-                              Turno aberto · Liquidez: R$ {(liquidezPorCaixa[caixa.id].liquidez || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Saldo Inicial: R$ {(liquidezPorCaixa[caixa.id].saldoInicial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · Vendas: R$ {(liquidezPorCaixa[caixa.id].totalVendas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </p>
+                            {liquidezPorCaixa[caixa.id]?.loadingDetalhes ? (
+                              <p className="text-sm font-semibold text-primary">
+                                Turno aberto · Carregando liquidez…
+                              </p>
+                            ) : (
+                              <>
+                                <p className="text-sm font-semibold text-primary">
+                                  Turno aberto · Liquidez: R$ {(liquidezPorCaixa[caixa.id].liquidez || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Saldo Inicial: R$ {(liquidezPorCaixa[caixa.id].saldoInicial || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} · Vendas: R$ {(liquidezPorCaixa[caixa.id].totalVendas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </p>
+                              </>
+                            )}
                           </div>
                         ) : (
                           <p className="text-sm text-muted-foreground">Sem turno aberto</p>

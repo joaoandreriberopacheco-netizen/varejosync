@@ -7,6 +7,7 @@ import { resolverPermissoes } from '@/components/config/usePermissoesResolvidas'
 import { getCachedUserSession } from '@/lib/userSessionCache';
 import { perfilResolvidoParaUsuario, usuarioLegadoSemMatrizPerfil } from '@/lib/perfilPermissoes';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
+import { prefetchPDVCaixa } from '@/lib/prefetchPDVCaixa';
 import CaixaRapidoPanel from './CaixaRapidoPanel';
 import { useIsDesktop } from '@/hooks/use-breakpoint';
 
@@ -30,9 +31,16 @@ export default function CaixaRapidoLauncher() {
   const startPointRef = useRef(null);
 
   const openOrRefresh = useCallback(() => {
-    setSessionKey((key) => key + 1);
-    setOpen(true);
+    prefetchPDVCaixa();
+    setOpen((wasOpen) => {
+      if (wasOpen) setSessionKey((key) => key + 1);
+      return true;
+    });
   }, []);
+
+  useEffect(() => {
+    if (canAccess) prefetchPDVCaixa();
+  }, [canAccess]);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +79,7 @@ export default function CaixaRapidoLauncher() {
   };
 
   const handlePointerDown = (event) => {
+    prefetchPDVCaixa();
     startPointRef.current = { x: event.clientX, y: event.clientY };
     setDragging(true);
   };

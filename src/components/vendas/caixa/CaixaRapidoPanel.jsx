@@ -6,8 +6,9 @@ import {
   QUICK_ACCESS_PANEL_SHELL_CLASS,
   QUICK_ACCESS_Z,
 } from '@/lib/quickAccessOverlay';
+import { prefetchPDVCaixa } from '@/lib/prefetchPDVCaixa';
 
-const PDVCaixa = lazy(() => import('@/components/vendas/PDVCaixa'));
+const PDVCaixa = lazy(() => prefetchPDVCaixa());
 
 function CaixaLoading() {
   return (
