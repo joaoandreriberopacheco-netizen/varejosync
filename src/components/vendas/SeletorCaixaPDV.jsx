@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -30,6 +30,29 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
   const [showSaldoDialog, setShowSaldoDialog] = useState(false);
   const [liquidezPorCaixa, setLiquidezPorCaixa] = useState({});
   const [descricaoSaldo, setDescricaoSaldo] = useState('');
+  const [abrirTurnoLoading, setAbrirTurnoLoading] = useState(false);
+  const saldoInputRef = useRef(null);
+
+  const parseSaldoInicial = useCallback((valor) => {
+    if (!valor) return 0;
+    const normalized = valor.replace(/\./g, '').replace(',', '.');
+    const parsed = parseFloat(normalized);
+    return Number.isFinite(parsed) ? roundToTwoDecimals(parsed) : NaN;
+  }, []);
+
+  const focusSaldoInput = useCallback(() => {
+    const input = saldoInputRef.current;
+    if (!input) return;
+    input.focus();
+    const len = input.value.length;
+    input.setSelectionRange(len, len);
+  }, []);
+
+  useEffect(() => {
+    if (!showSaldoDialog) return undefined;
+    const timer = window.setTimeout(() => focusSaldoInput(), 150);
+    return () => window.clearTimeout(timer);
+  }, [showSaldoDialog, focusSaldoInput]);
 
   const handleSaldoChange = (e) => {
     let numbers = e.target.value.replace(/\D/g, '');
@@ -149,13 +172,20 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
   };
 
   const handleAbrirTurno = async () => {
-    if (!saldoInicial || parseFloat(saldoInicial.replace(',', '.')) < 0) {
+    if (abrirTurnoLoading) return;
+
+    if (!currentUser?.id) {
+      alert('Sessão expirada. Faça login novamente.');
+      return;
+    }
+
+    const saldoFloat = parseSaldoInicial(saldoInicial);
+    if (!Number.isFinite(saldoFloat) || saldoFloat < 0) {
       alert('Informe um saldo inicial válido.');
       return;
     }
 
-    const saldoFloat = roundToTwoDecimals(parseFloat(saldoInicial.replace(',', '.')) || 0);
-    
+    setAbrirTurnoLoading(true);
     try {
       const todosTurnos = await base44.entities.TurnoCaixa.list();
       const numeroTurno = `TC-${String((todosTurnos.length || 0) + 1).padStart(5, '0')}`;
@@ -186,6 +216,8 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
     } catch (error) {
       console.error('Erro ao abrir turno:', error);
       alert('Erro ao abrir turno: ' + error.message);
+    } finally {
+      setAbrirTurnoLoading(false);
     }
   };
 
@@ -301,35 +333,46 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
               <div className="w-6" />
             </div>
 
-            {/* Input invisível para capturar teclado */}
-            <input autoComplete="off"
-              type="text"
-              inputMode="decimal"
-              value={saldoInicial}
-              onChange={handleSaldoChange}
-              className="absolute opacity-0 w-0 h-0 -z-10"
-              autoFocus
-            />
-
             {/* Conteúdo principal */}
             <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 space-y-8">
-              {/* Label VALOR */}
-              <div className="text-center">
+              {/* Campo VALOR — input visível para teclado nativo (mobile e desktop) */}
+              <div className="text-center w-full">
                 <p className="text-xs font-medium text-muted-foreground tracking-widest mb-4">
                   VALOR
                 </p>
 
-                {/* Display do valor com cursor fino */}
-                <div className="relative inline-block">
-                  <div className="text-6xl font-bold text-foreground dark:text-foreground font-mono mb-2 flex items-center justify-center gap-0.5">
-                    <span className={saldoInicial ? 'text-foreground dark:text-foreground' : 'text-muted-foreground dark:text-muted-foreground'}>
-                      {saldoInicial || '0,00'}
-                    </span>
-                    <span className="animate-pulse w-0.5 h-16 bg-muted dark:bg-muted"></span>
-                  </div>
+                <div
+                  role="button"
+                  tabIndex={-1}
+                  onClick={focusSaldoInput}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      focusSaldoInput();
+                    }
+                  }}
+                  className="w-full min-h-[88px] flex flex-col items-center justify-center rounded-2xl active:bg-muted/40 transition-colors cursor-text"
+                  aria-label="Toque para informar o valor de abertura"
+                >
+                  <p className="text-sm text-muted-foreground mb-2">R$</p>
+                  <input
+                    ref={saldoInputRef}
+                    autoComplete="off"
+                    type="text"
+                    inputMode="decimal"
+                    enterKeyHint="done"
+                    value={saldoInicial}
+                    onChange={handleSaldoChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAbrirTurno();
+                      }
+                    }}
+                    placeholder="0,00"
+                    className="w-full text-center text-6xl font-bold font-mono bg-transparent border-0 outline-none text-foreground placeholder:text-muted-foreground caret-foreground"
+                  />
                 </div>
-
-                <p className="text-sm text-muted-foreground">R$</p>
               </div>
 
               {/* Campo de descrição */}
@@ -339,7 +382,7 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
                   placeholder="Descrição (opcional)"
                   value={descricaoSaldo}
                   onChange={(e) => setDescricaoSaldo(e.target.value)}
-                  className="text-center text-muted-foreground border-0 border-b-2 border-border/40 rounded-0 bg-transparent focus:ring-0 focus:border-b-2 focus:border-border/40"
+                  className="text-center text-foreground placeholder:text-muted-foreground border-0 border-b-2 border-border/60 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary"
                 />
               </div>
             </div>
@@ -347,11 +390,13 @@ export default function SeletorCaixaPDV({ open, onSelect, currentUser, onClose, 
             {/* Botão Continuar */}
             <div className="px-6 pb-6">
               <Button
+                type="button"
                 onClick={handleAbrirTurno}
-                className="w-full h-14 bg-background dark:bg-card text-white dark:text-foreground font-semibold rounded-3xl hover:shadow-lg transition-shadow flex items-center justify-center gap-2"
+                disabled={abrirTurnoLoading}
+                className="w-full h-14 bg-primary text-primary-foreground font-semibold rounded-3xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                <span>Abrir Turno</span>
-                <ChevronRight className="w-5 h-5" />
+                <span>{abrirTurnoLoading ? 'Abrindo…' : 'Abrir Turno'}</span>
+                {!abrirTurnoLoading && <ChevronRight className="w-5 h-5" />}
               </Button>
             </div>
           </div>

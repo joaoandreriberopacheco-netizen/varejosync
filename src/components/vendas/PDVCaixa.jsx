@@ -1402,6 +1402,7 @@ export default function PDVCaixa({
           onSelect={handleSelecionarCaixa}
           currentUser={currentUser}
           onClose={handleClose}
+          elevatedStack={overlayMode}
         />
       )}
 
