@@ -118,7 +118,7 @@ export const caixaTabPanel = 'flex-1 min-h-0 overflow-y-auto overscroll-y-contai
 export const caixaTabPanelPad = 'p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]';
 /** Painéis com GlacialBottomNav visível no shell mobile */
 export const caixaTabPanelPadInLayout = 'p-4 pb-[var(--p38-scroll-pad-below-nav)]';
-export const caixaMobileTabBar = 'md:hidden flex-shrink-0';
+export const caixaMobileTabBar = 'desktop-layout:hidden flex-shrink-0';
 /** Detalhe embutido (Caixas Ativos / Turnos Fechados) — portal no body, acima dos atalhos rápidos */
 export const caixaOverlayShell = `fixed inset-0 ${CAIXA_MIRROR_SHELL_CLASS} h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden bg-background pointer-events-auto`;
 
