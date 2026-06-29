@@ -3,6 +3,7 @@ import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus } from './useTreeGrid';
+import { TREE_GRID_EXPAND_ALL_LEVEL } from './catalogTreeCore';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { cn } from '@/components/utils';
@@ -76,7 +77,7 @@ const COL_DEFS = [
 
 export const ALL_COLS     = COL_DEFS;
 export const DEFAULT_COLS = ['preco_venda', 'preco_custo', 'markup', 'inventario_valorizado'];
-export const TREE_GRID_EXPAND_ALL_LEVEL = 99;
+export { TREE_GRID_EXPAND_ALL_LEVEL };
 
 const HIER_STEP = 20;    // recuo por nível hierárquico (filhos vs pais/solteiros)
 const CELL_PAD = 4;

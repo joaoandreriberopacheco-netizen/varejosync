@@ -8,6 +8,9 @@ import {
   parseCatalogSortOrder,
 } from '@/lib/catalogProdutoPerformance';
 
+/** Nível visual "todos" no seletor de profundidade da árvore do catálogo. */
+export const TREE_GRID_EXPAND_ALL_LEVEL = 99;
+
 function sortSkus(skus, sortOrder = 'az') {
   return [...(skus || [])].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 }
