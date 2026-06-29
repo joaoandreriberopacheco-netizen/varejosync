@@ -111,8 +111,9 @@ export default function RelatoriosPage() {
     { 
       id: 'giro-estoque',
       nome: "Giro de Estoque", 
-      descricao: "Análise de rotatividade por produto",
-      icon: TrendingUp
+      descricao: "Estoque + vendas 30/60 dias com hierarquia do catálogo",
+      icon: TrendingUp,
+      highlight: true,
     },
     { 
       id: 'estoque-critico',
@@ -303,6 +304,8 @@ export default function RelatoriosPage() {
                   onClickAbrir={(id) => {
                     if (id === 'inventario-valorizado') {
                       window.location.href = '/Produtos?relatorioEstoque=1';
+                    } else if (id === 'giro-estoque') {
+                      window.location.href = '/Produtos?relatorioVendas=1';
                     } else if (id === 'consumo-interno') {
                       window.location.href = '/RelatorioConsumoInterno';
                     } else if (id === 'performance-produto') {

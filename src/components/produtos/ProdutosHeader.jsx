@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, LayoutGrid } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, LayoutGrid, TrendingUp } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
@@ -41,6 +41,8 @@ export default function ProdutosHeader({
   setIsColumnSelectorOpen,
   onGerarRelatorioEstoque,
   gerandoRelatorioEstoque = false,
+  onGerarRelatorioVendas,
+  gerandoRelatorioVendas = false,
   onOpenMassTag,
   onOpenMassCategory,
   onOpenMassMarkup,
@@ -86,6 +88,20 @@ export default function ProdutosHeader({
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               ) : (
                 <BarChart3 className="w-4 h-4 p38-text-accent" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 flex-shrink-0"
+              title="Relatório de vendas 30/60 dias (PDF)"
+              onClick={onGerarRelatorioVendas}
+              disabled={gerandoRelatorioVendas}
+            >
+              {gerandoRelatorioVendas ? (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              ) : (
+                <TrendingUp className="w-4 h-4 p38-text-accent" />
               )}
             </Button>
             <Button

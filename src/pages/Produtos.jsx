@@ -41,6 +41,8 @@ import {
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
 import { gerarRelatorioCatalogoEstoque } from '@/functions/gerarRelatorioCatalogoEstoque';
+import { gerarRelatorioCatalogoVendas } from '@/functions/gerarRelatorioCatalogoVendas';
+import { fetchPedidosVenda90d } from '@/hooks/useP38Entities';
 import {
   loadCatalogProdutoColumns,
   saveCatalogProdutoColumns,
@@ -163,7 +165,9 @@ function ProdutosPageContent() {
   const [previewCustosData, setPreviewCustosData] = useState(null);
   const [isPreviewCustosDialogOpen, setIsPreviewCustosDialogOpen] = useState(false);
   const [gerandoRelatorioEstoque, setGerandoRelatorioEstoque] = useState(false);
+  const [gerandoRelatorioVendas, setGerandoRelatorioVendas] = useState(false);
   const relatorioEstoqueAutoRef = useRef(false);
+  const relatorioVendasAutoRef = useRef(false);
 
   const { toast } = useToast();
   const isDesktop = useDesktopContent();
@@ -1138,6 +1142,49 @@ function ProdutosPageContent() {
     }
   }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, toast]);
 
+  const handleGerarRelatorioVendas = useCallback(async () => {
+    setGerandoRelatorioVendas(true);
+    toast({ title: 'Gerando relatório de vendas...' });
+    try {
+      const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
+      const hasCategorizedProducts = filteredProdutos.some(
+        (p) => String(p?.categoria_nome || '').trim()
+      );
+      const groupPdfByCategory = groupTreeByCategory || hasCategorizedProducts;
+      const pedidos = await fetchPedidosVenda90d();
+
+      const resposta = await gerarRelatorioCatalogoVendas({
+        produtos: filteredProdutos,
+        pedidos,
+        filters_summary: filtersSummary,
+        layout_mode: viewMode === 'plana' ? 'plana' : 'tree',
+        tree_level: treeLevel,
+        sort_order: sortOrder,
+        group_by_category: groupPdfByCategory,
+      });
+
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `RelatorioVendas_${dataHoje()}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: 'Relatório de vendas gerado' });
+    } catch (error) {
+      const msg = error?.message || String(error);
+      toast({
+        title: 'Erro ao gerar relatório de vendas',
+        description: msg.length > 300 ? `${msg.slice(0, 300)}…` : msg,
+        variant: 'destructive',
+      });
+      console.error(error);
+    } finally {
+      setGerandoRelatorioVendas(false);
+    }
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, toast]);
+
   useEffect(() => {
     if (relatorioEstoqueAutoRef.current) return;
     const params = new URLSearchParams(window.location.search);
@@ -1152,6 +1199,21 @@ function ProdutosPageContent() {
     window.history.replaceState({}, '', nextUrl);
     handleGerarRelatorioEstoque();
   }, [produtos.length, handleGerarRelatorioEstoque]);
+
+  useEffect(() => {
+    if (relatorioVendasAutoRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('relatorioVendas') !== '1') return;
+    if (!produtos.length) return;
+
+    relatorioVendasAutoRef.current = true;
+    params.delete('relatorioVendas');
+    const nextUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', nextUrl);
+    handleGerarRelatorioVendas();
+  }, [produtos.length, handleGerarRelatorioVendas]);
 
   const produtosHeaderProps = {
     stats: headerStats,
@@ -1176,6 +1238,8 @@ function ProdutosPageContent() {
     setIsColumnSelectorOpen,
     onGerarRelatorioEstoque: handleGerarRelatorioEstoque,
     gerandoRelatorioEstoque,
+    onGerarRelatorioVendas: handleGerarRelatorioVendas,
+    gerandoRelatorioVendas,
     onOpenMassTag: () => setIsMassTagOpen(true),
     onOpenMassCategory: () => setIsMassCategoryOpen(true),
     onOpenMassMarkup: () => setIsMassMarkupOpen(true),
