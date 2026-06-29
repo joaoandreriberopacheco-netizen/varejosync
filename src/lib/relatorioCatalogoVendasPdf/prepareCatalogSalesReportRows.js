@@ -6,7 +6,7 @@ import {
   collectSkus,
   flattenTree,
   mergeAdjacentDuplicateGroupHeaders,
-} from '@/components/produtos/treegrid/useTreeGrid';
+} from '@/components/produtos/treegrid/catalogTreeCore';
 import { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components/produtos/treegrid/TreeGrid';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import {

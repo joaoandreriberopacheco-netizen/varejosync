@@ -1,4 +1,4 @@
-import { buildCategoryTree, collectSkus } from '@/components/produtos/treegrid/useTreeGrid';
+import { buildCategoryTree, collectSkus } from '@/components/produtos/treegrid/catalogTreeCore';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import { compareTreeLabels } from '@/lib/treeSort';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
