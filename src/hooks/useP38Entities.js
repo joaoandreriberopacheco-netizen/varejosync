@@ -3,7 +3,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
-import { enrichProdutosComIep, iso90DiasAtras, pedidoDentroJanela90d, pedidoElegivelIep } from '@/lib/calcularIepProdutos';
+import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
+import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+
+export { fetchPedidosVenda90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
@@ -19,31 +22,6 @@ const entityQueryDefaults = {
 
 export function fetchProdutosList(sort = '-created_date') {
   return base44.entities.Produto.list(sort);
-}
-
-export async function fetchPedidosVenda90d() {
-  const dataISO = iso90DiasAtras();
-  const todosPedidos = [];
-  let skip = 0;
-  const pageSize = 500;
-
-  while (true) {
-    const batch = await base44.entities.PedidoVenda.filter(
-      { tipo: 'PDV', status: { $ne: 'Cancelado' } },
-      '-created_date',
-      pageSize,
-      skip,
-    );
-    const rows = Array.isArray(batch) ? batch : batch?.data ?? [];
-    if (!rows.length) break;
-    todosPedidos.push(...rows);
-    if (rows.length < pageSize) break;
-    skip += pageSize;
-  }
-
-  return todosPedidos.filter(
-    (p) => pedidoElegivelIep(p) && pedidoDentroJanela90d(p, dataISO),
-  );
 }
 
 export function fetchTerceirosList() {
@@ -113,7 +91,7 @@ export function useProdutosListQuery(options = {}) {
 
 export function usePedidosVenda90dQuery(options = {}) {
   return useQuery({
-    queryKey: [...p38Keys.all, 'pedido-venda', '90d'],
+    queryKey: p38Keys.pedidosVenda90d(),
     queryFn: fetchPedidosVenda90d,
     staleTime: 10 * 60 * 1000,
     gcTime: P38_GC_TIME,

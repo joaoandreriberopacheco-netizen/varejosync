@@ -46,6 +46,9 @@ import {
 } from '@/lib/catalogProdutoColumnsStorage';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import { useDesktopContent } from '@/hooks/use-breakpoint';
+import { useQueryClient } from '@tanstack/react-query';
+import { p38Keys } from '@/lib/p38QueryConfig';
+import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import {
   useProdutosComIepQuery,
   useFornecedoresQuery,
@@ -168,6 +171,7 @@ function ProdutosPageContent() {
   const catalogExpandedKeysRef = useRef(new Set());
 
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isDesktop = useDesktopContent();
   const { data: produtosQuery, refetch: refetchProdutos } = useProdutosComIepQuery();
   const { data: fornecedoresQuery, refetch: refetchFornecedores } = useFornecedoresQuery();
@@ -1120,12 +1124,7 @@ function ProdutosPageContent() {
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `RelatorioEstoque_${dataHoje()}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `RelatorioEstoque_${dataHoje()}.pdf`);
 
       toast({ title: 'Relatório de estoque gerado' });
     } catch (error) {
@@ -1154,9 +1153,16 @@ function ProdutosPageContent() {
         (p) => String(p?.categoria_nome || '').trim()
       );
       const groupPdfByCategory = groupTreeByCategory || hasCategorizedProducts;
-      const { fetchPedidosVenda90d } = await import('@/hooks/useP38Entities');
-      const pedidos = await fetchPedidosVenda90d();
 
+      let pedidos = queryClient.getQueryData(p38Keys.pedidosVenda90d());
+      if (!Array.isArray(pedidos)) {
+        toast({ title: 'Buscando vendas dos últimos 90 dias...' });
+        const { fetchPedidosVenda90d } = await import('@/lib/fetchPedidosVenda90d');
+        pedidos = await fetchPedidosVenda90d();
+        queryClient.setQueryData(p38Keys.pedidosVenda90d(), pedidos);
+      }
+
+      toast({ title: 'Montando PDF de vendas...' });
       const { gerarRelatorioCatalogoVendas } = await import('@/functions/gerarRelatorioCatalogoVendas');
       const resposta = await gerarRelatorioCatalogoVendas({
         produtos: filteredProdutos,
@@ -1170,12 +1176,7 @@ function ProdutosPageContent() {
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `RelatorioVendas_${dataHoje()}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `RelatorioVendas_${dataHoje()}.pdf`);
 
       toast({ title: 'Relatório de vendas gerado' });
     } catch (error) {
@@ -1189,7 +1190,7 @@ function ProdutosPageContent() {
     } finally {
       setGerandoRelatorioVendas(false);
     }
-  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, toast]);
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, queryClient, toast]);
 
   useEffect(() => {
     if (relatorioEstoqueAutoRef.current) return;
