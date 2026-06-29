@@ -55,10 +55,10 @@ function splitDescriptionLines(
   return lines.length ? lines : [''];
 }
 
-function treeLevelLabel(documento: { mode?: string; groupByCategory?: boolean }) {
-  if (documento.mode === 'plana') return 'lista plana A-Z';
-  if (documento.groupByCategory) return 'agrupado por categoria · hierarquia completa';
-  return 'hierarquia completa';
+function treeLevelLabel(treeLevel: number) {
+  if (treeLevel <= 1) return 'nível 1';
+  if (treeLevel >= 99) return 'todos os níveis';
+  return `nível ${treeLevel}`;
 }
 
 export async function generateRelatorioCatalogoVendasPdf(payload: Record<string, unknown> = {}) {
@@ -251,11 +251,11 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
           vCompra: roundToTwoDecimals(commercial.vCompra || 0),
           custoCalc: roundToTwoDecimals(commercial.custoCalc || 0),
         };
-    const v30 = velocityQuantTexto({ qtd: velocity?.qtd30, unidade: velocity?.unidade }, { showUnit: true });
-    const v60 = velocityQuantTexto({ qtd: velocity?.qtd60, unidade: velocity?.unidade }, { showUnit: true });
+    const v30 = velocityQuantTexto({ qtd: velocity?.qtd30, unidade: velocity?.unidade }, { showUnit: false });
+    const v60 = velocityQuantTexto({ qtd: velocity?.qtd60, unidade: velocity?.unidade }, { showUnit: false });
     const media = velocityQuantTexto(
       { qtd: velocity?.mediaDiaria, unidade: velocity?.unidade },
-      { showUnit: true },
+      { showUnit: false },
     );
 
     doc.text(stock.texto, X.quant, baselineY, { align: 'right' });
@@ -312,8 +312,8 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
   const modeLabel = documento.mode === 'plana'
     ? 'Lista plana A-Z · todos os filtrados'
     : documento.groupByCategory
-      ? `Agrupado por categoria · ${treeLevelLabel(documento)}`
-      : `Hierarquia do catálogo · ${treeLevelLabel(documento)}`;
+      ? `Agrupado por categoria · ${treeLevelLabel(documento.treeLevel)}`
+      : `Hierarquia do catálogo · ${treeLevelLabel(documento.treeLevel)}`;
   doc.text(modeLabel, M, y);
   y += 4.2;
 
@@ -406,8 +406,8 @@ export async function generateRelatorioCatalogoVendasPdf(payload: Record<string,
   doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
   doc.setFontSize(FONT.footer);
   doc.setTextColor(...ENXUTO.muted);
-  doc.text('Filtros do catálogo · todos os produtos filtrados · hierarquia completa.', M, y);
+  doc.text('Filtros do catálogo · hierarquia conforme nível seleccionado na tela.', M, y);
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v4' };
+  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v5' };
 }

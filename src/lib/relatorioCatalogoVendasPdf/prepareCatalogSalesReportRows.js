@@ -52,8 +52,13 @@ function enrichTreeRows(rows, velocityMap) {
   });
 }
 
-function resolveExpandedKeysForPdf(tree) {
-  return buildExpandedForLevel(tree, TREE_GRID_EXPAND_ALL_LEVEL);
+function resolveExpandedKeysForCatalogView(tree, treeLevel = 1) {
+  const level = Number(treeLevel) || 1;
+  if (level <= 1) return new Set();
+  if (level >= TREE_GRID_EXPAND_ALL_LEVEL) {
+    return buildExpandedForLevel(tree, TREE_GRID_EXPAND_ALL_LEVEL);
+  }
+  return buildExpandedForLevel(tree, level - 1);
 }
 
 /**
@@ -77,7 +82,7 @@ export function prepareCatalogSalesReportDocument({
     rows = prepareFlatRows(list, velocityMap, sortOrder);
   } else {
     const tree = groupByCategory ? buildCategoryTree(list) : buildTree(list);
-    const expandedKeys = resolveExpandedKeysForPdf(tree);
+    const expandedKeys = resolveExpandedKeysForCatalogView(tree, treeLevel);
     rows = mergeAdjacentDuplicateGroupHeaders(
       flattenTree(tree, expandedKeys, '', 0, sortOrder, { collapseSoloSkuBranches: true }),
     );
