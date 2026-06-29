@@ -10,7 +10,7 @@ import {
   flattenTree,
   mergeAdjacentDuplicateGroupHeaders,
   TREE_GRID_EXPAND_ALL_LEVEL,
-} from '@/lib/catalogTreeCore';
+} from '@/components/produtos/treegrid/useTreeGrid';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import {
   aggregateCatalogSalesVelocity,
