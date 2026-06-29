@@ -253,22 +253,26 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   const CW = pageW - M * 2;
   const descStart = M + 4;
   const tableRight = M + CW;
-  const QUANT_COL_W = 18;
-  const VALUE_COL_STEP = 13.5;
   const GUTTER_DESC = 5;
-  const GUTTER_SALES = 4;
+  const QUANT_COL_W = 20;
+  const QUANT_VALUE_GAP = 3;
+  const VALUE_COL_COUNT = 4;
+  const descEndMin = descStart + CW * 0.4;
+  const numericStart = descEndMin + GUTTER_DESC;
+  const numericSpan = tableRight - numericStart;
+  const valueColW = (numericSpan - QUANT_COL_W - QUANT_VALUE_GAP) / VALUE_COL_COUNT;
   const v60Right = tableRight;
-  const v30Right = v60Right - VALUE_COL_STEP;
-  const custoRight = v30Right - VALUE_COL_STEP - GUTTER_SALES;
-  const vCompraRight = custoRight - VALUE_COL_STEP;
-  const quantRight = vCompraRight - VALUE_COL_STEP;
+  const v30Right = v60Right - valueColW;
+  const custoRight = v30Right - valueColW;
+  const vCompraRight = custoRight - valueColW;
+  const quantRight = vCompraRight - QUANT_VALUE_GAP;
   const quantLeft = quantRight - QUANT_COL_W;
-  const quantPipe = quantRight - 6.2;
-  const quantQtyEnd = quantPipe - 1.1;
-  const quantUnitStart = quantPipe + 1.1;
+  const quantPipe = quantLeft + QUANT_COL_W * 0.55;
+  const quantQtyEnd = quantPipe - 1;
+  const quantUnitStart = quantPipe + 1.2;
   const descEnd = quantLeft - GUTTER_DESC;
   const divider = descEnd + GUTTER_DESC / 2;
-  const salesDivider = v30Right - VALUE_COL_STEP - GUTTER_SALES / 2;
+  const salesDivider = (custoRight + v30Right) / 2;
   const X = {
     desc: descStart,
     descEnd,
@@ -312,13 +316,18 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     }
     doc.setPage(savedPage);
   };
+  const drawQuantPipe = (baselineY) => {
+    const pipeTop = baselineY - FONT.row * 0.38;
+    const pipeBottom = baselineY + FONT.row * 0.12;
+    strokeLine(X.quantPipe, pipeTop, X.quantPipe, pipeBottom, ENXUTO.line, 0.14);
+  };
   const drawQuantUnCell = (baselineY, stockLike) => {
     if (!stockLike?.quantText || !stockLike?.unitText) {
       doc.text('\u2014', X.quant, baselineY, { align: 'right' });
       return;
     }
     doc.text(stockLike.quantText, X.quantQtyEnd, baselineY, { align: 'right' });
-    doc.text('|', X.quantPipe, baselineY, { align: 'center' });
+    drawQuantPipe(baselineY);
     doc.text(stockLike.unitText, X.quantUnitStart, baselineY, { align: 'left' });
   };
   const drawColumnHeaders = (topY) => {
@@ -328,7 +337,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     doc.setFontSize(FONT.colHdr);
     doc.setTextColor(...ENXUTO.muted);
     doc.text('QUANT', X.quantQtyEnd, line1, { align: 'right' });
-    doc.text('|', X.quantPipe, line1, { align: 'center' });
+    drawQuantPipe(line1);
     doc.text('UN', X.quantUnitStart, line1, { align: 'left' });
     doc.text('V.COMPRA', X.vCompra, line1, { align: 'right' });
     doc.text('CUSTO', X.custo, line1, { align: 'right' });
@@ -336,6 +345,8 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     doc.text('V.60D', X.v60, line1, { align: 'right' });
     doc.setFontSize(FONT.colHdr - 0.4);
     doc.text('estoque', X.quantQtyEnd, line2, { align: 'right' });
+    drawQuantPipe(line2);
+    doc.text('unid.', X.quantUnitStart, line2, { align: 'left' });
     doc.text('compra', X.vCompra, line2, { align: 'right' });
     doc.text('calc.', X.custo, line2, { align: 'right' });
     doc.text('30 dias', X.v30, line2, { align: 'right' });
@@ -510,5 +521,5 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   doc.setTextColor(...ENXUTO.muted);
   doc.text("Filtros do cat\xE1logo \xB7 hierarquia conforme n\xEDvel seleccionado na tela.", M, y);
   const pdfBytes = doc.output("arraybuffer");
-  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v9' };
+  return { data: pdfBytes, version: 'enxuto_vendas_compra_custo_v10' };
 }
