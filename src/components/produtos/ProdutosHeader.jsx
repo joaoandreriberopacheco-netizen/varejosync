@@ -76,34 +76,47 @@ export default function ProdutosHeader({
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0 min-w-0 max-w-[58vw] sm:max-w-none overflow-x-auto overscroll-x-contain">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 flex-shrink-0"
-              title="Relatório de estoque (PDF)"
-              onClick={onGerarRelatorioEstoque}
-              disabled={gerandoRelatorioEstoque}
-            >
-              {gerandoRelatorioEstoque ? (
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-              ) : (
-                <BarChart3 className="w-4 h-4 p38-text-accent" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 flex-shrink-0"
-              title="Relatório de vendas 30/60 dias (PDF)"
-              onClick={onGerarRelatorioVendas}
-              disabled={gerandoRelatorioVendas}
-            >
-              {gerandoRelatorioVendas ? (
-                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-              ) : (
-                <TrendingUp className="w-4 h-4 p38-text-accent" />
-              )}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 flex-shrink-0"
+                  title="Relatórios do catálogo"
+                  disabled={gerandoRelatorioEstoque || gerandoRelatorioVendas}
+                >
+                  {gerandoRelatorioEstoque || gerandoRelatorioVendas ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                  ) : (
+                    <BarChart3 className="w-4 h-4 p38-text-accent" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="dark:bg-muted dark:border-border/40">
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    onGerarRelatorioEstoque?.();
+                  }}
+                  disabled={gerandoRelatorioEstoque}
+                  className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                >
+                  <BarChart3 className="w-4 h-4 mr-2 p38-text-accent" />
+                  Estoque enxuto
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    onGerarRelatorioVendas?.();
+                  }}
+                  disabled={gerandoRelatorioVendas}
+                  className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                >
+                  <TrendingUp className="w-4 h-4 mr-2 p38-text-accent" />
+                  Desempenho produtos
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="ghost"
               size="icon"
