@@ -1,5 +1,7 @@
 /** Campos de performance (ABCD / IEP) — usados em relatórios e ordenação fora do catálogo. */
 
+import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
+
 export const ABCD_RANK = { A: 4, B: 3, C: 2, D: 1 };
 
 export const CATALOG_SORT_OPTIONS = [
@@ -15,7 +17,7 @@ export function getAbcdRank(letter) {
 
 export function getProdutoPerformanceValue(produto, fieldId) {
   if (!produto || !fieldId) return null;
-  if (fieldId === 'abcd') return getAbcdRank(produto.abcd);
+  if (fieldId === 'abcd') return getAbcdRank(resolveProdutoAbcdClasse(produto));
   const raw = produto[fieldId];
   const num = Number(raw);
   return Number.isFinite(num) ? num : 0;
@@ -59,12 +61,12 @@ export function aggregatePerformanceFromSkus(skus) {
     };
   }
 
-  const ranks = skus.map((p) => getAbcdRank(p.abcd));
+  const ranks = skus.map((p) => getAbcdRank(resolveProdutoAbcdClasse(p)));
   const abcdRankMedio = ranks.reduce((s, v) => s + v, 0) / ranks.length;
 
   const freq = {};
   for (const p of skus) {
-    const letter = String(p.abcd || '').toUpperCase();
+    const letter = resolveProdutoAbcdClasse(p);
     if (!letter) continue;
     freq[letter] = (freq[letter] || 0) + 1;
   }

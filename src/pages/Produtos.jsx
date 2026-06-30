@@ -53,6 +53,7 @@ import {
   needsCatalogAbcdEnrichment,
   enrichProdutosForAbcdFilter,
   getEffectiveAbcdFilters,
+  getAbcdPedidosFetchState,
 } from '@/lib/catalogAbcdEnrichment';
 import {
   useProdutosListQuery,
@@ -187,8 +188,8 @@ function ProdutosPageContent() {
   const pedidos90dQuery = usePedidosVenda90dQuery({
     enabled: needsAbcdEnrichment && (produtos.length > 0 || (produtosQuery?.length ?? 0) > 0),
   });
-  const abcdEnrichmentReady = !needsAbcdEnrichment || pedidos90dQuery.isFetched;
-  const abcdFilterLoading = needsAbcdEnrichment && pedidos90dQuery.isFetching;
+  const abcdPedidosFetchState = getAbcdPedidosFetchState(needsAbcdEnrichment, pedidos90dQuery);
+  const abcdFilterLoading = abcdPedidosFetchState === 'loading';
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
   const produtoDetailFetchGenRef = useRef(0);
@@ -1089,23 +1090,20 @@ function ProdutosPageContent() {
 
   const produtosParaCatalogo = useMemo(
     () =>
-      enrichProdutosForAbcdFilter(produtos, pedidos90dQuery.data ?? [], {
-        ready: abcdEnrichmentReady,
-      }),
-    [produtos, pedidos90dQuery.data, abcdEnrichmentReady],
+      enrichProdutosForAbcdFilter(produtos, pedidos90dQuery.data ?? [], abcdPedidosFetchState),
+    [produtos, pedidos90dQuery.data, abcdPedidosFetchState],
   );
 
   const filteredProdutos = useMemo(() => {
     const effectiveFilters = getEffectiveAbcdFilters(filters, {
-      needsEnrichment: needsAbcdEnrichment,
-      enrichmentReady: abcdEnrichmentReady,
+      fetchState: abcdPedidosFetchState,
     });
     let filtered = filterProdutos(produtosParaCatalogo, effectiveFilters);
 
     filtered = [...filtered].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 
     return filtered;
-  }, [produtosParaCatalogo, filters, sortOrder, needsAbcdEnrichment, abcdEnrichmentReady]);
+  }, [produtosParaCatalogo, filters, sortOrder, abcdPedidosFetchState]);
 
   const fornecedorMap = useMemo(() => {
     return fornecedores.reduce((acc, f) => {
