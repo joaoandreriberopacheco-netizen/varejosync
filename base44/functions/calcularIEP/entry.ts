@@ -7,7 +7,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 const DEFAULT_BATCH_SIZE = 50;
 const UPDATE_CONCURRENCY = 5;
 const CACHE_KEY = 'iep_job_run';
-const VERSAO = 'V18-itens-venda-fix';
 
 /** Q3 — limite superior do miolo (exclui 4.º quartil). */
 function q3(values) {
@@ -16,6 +15,11 @@ function q3(values) {
   if (sorted.length === 1) return sorted[0];
   const idx = Math.ceil(sorted.length * 0.75) - 1;
   return sorted[Math.max(0, Math.min(sorted.length - 1, idx))];
+}
+
+function average(values) {
+  if (!values || values.length === 0) return 0;
+  return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
 function hierarchyKey(parts) {
@@ -47,10 +51,23 @@ function lineQuantityBase(item) {
 
 /** ABCD no nível 2 da descrição (h1+h2); se só h1, no nível 1. */
 function grupoAbcdKey(produto) {
-  const h1 = String(produto?.campo_hierarquico_1 ?? 'unassigned').trim();
-  const h2 = String(produto?.campo_hierarquico_2 ?? '').trim();
+  const h1 = (produto.campo_hierarquico_1 || 'unassigned').trim();
+  const h2 = (produto.campo_hierarquico_2 || '').trim();
   if (h2) return hierarchyKey([h1, h2]);
   return hierarchyKey([h1]);
+}
+
+function buildItensPorProdutoId(pedidos90d) {
+  const map = {};
+  for (const pedido of pedidos90d || []) {
+    for (const it of pedido.itens || []) {
+      const pid = String(it?.produto_id ?? '');
+      if (!pid) continue;
+      if (!map[pid]) map[pid] = [];
+      map[pid].push(it);
+    }
+  }
+  return map;
 }
 
 function calcularLucroSkuComQ4(produto, itensPorProduto) {
@@ -88,101 +105,97 @@ function calcularLucroSkuComQ4(produto, itensPorProduto) {
   return { lucro, precoMedio, quantidade, teveVenda: quantidade > 0 };
 }
 
-function lineReceitaItem(it) {
-  const total = Number(it?.total);
-  if (Number.isFinite(total) && total > 0) return total;
-
-  const qtyBase = lineQuantityBase(it);
-  if (qtyBase > 0) {
-    const unit =
-      Number(it?.preco_final_unitario_fator1) ||
-      Number(it?.preco_unitario_fator1) ||
-      Number(it?.preco_unitario) ||
-      0;
-    if (unit > 0) return qtyBase * unit;
-  }
-
-  const qtyCom = Number(it?.quantidade_comercial ?? it?.quantidade) || 0;
-  const precoCom = Number(it?.preco_unitario_comercial) || 0;
-  if (qtyCom > 0 && precoCom > 0) return qtyCom * precoCom;
-
-  return 0;
-}
-
-/** Lucro do SKU — todas as linhas, sem excluir outliers (estilo Excel). */
-function calcularLucroSkuSimples(produto, itensPorProduto) {
-  const custoUnit = resolveCustoCalculado(produto);
-  const pid = String(produto.id ?? '');
-  const itens = itensPorProduto[pid] || [];
-
-  if (!itens.length) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false, receita: 0 };
-  }
-
-  let quantidade = 0;
-  let receita = 0;
-
-  for (const it of itens) {
-    const qtyBase = lineQuantityBase(it);
-    const total = lineReceitaItem(it);
-    if (qtyBase > 0 && total > 0) {
-      quantidade += qtyBase;
-      receita += total;
-    }
-  }
-
-  if (quantidade <= 0) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false, receita: 0 };
-  }
-
-  const precoMedio = receita / quantidade;
-  const lucro = receita - custoUnit * quantidade;
-  return { lucro, precoMedio, quantidade, teveVenda: true, receita };
-}
-
-function normalizeItemVenda(it) {
-  return {
-    produto_id: it?.produto_id ?? it?.produtoId,
-    quantidade_base: it?.quantidade_base,
-    quantidade: it?.quantidade ?? it?.quantidade_comercial,
-    fator_conversao: it?.fator_conversao ?? it?.fator_aplicado,
-    preco_final_unitario_fator1: it?.preco_final_unitario_fator1,
-    preco_unitario_fator1: it?.preco_unitario_fator1,
-    preco_unitario_comercial: it?.preco_unitario_comercial,
-    total: it?.total,
-  };
-}
-
-function appendItemVenda(itensPorProduto, rawItem) {
-  const item = normalizeItemVenda(rawItem);
-  const pid = String(item?.produto_id ?? '');
-  if (!pid) return;
-  if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
-  itensPorProduto[pid].push(item);
-}
-
 // ═══════════════════════════════════════════════════════════════
 // CURVA ABCD — 3 etapas: lista → ordena → classifica (D = restante)
 // ═══════════════════════════════════════════════════════════════
+
+function calcularMediasIepPorNivel(produtos, metricasPorSku) {
+  const skusPorChaveNivel = (nivel) => {
+    const map = {};
+    for (const produto of produtos) {
+      const parts = [
+        produto.campo_hierarquico_1,
+        produto.campo_hierarquico_2,
+        produto.campo_hierarquico_3,
+        produto.campo_hierarquico_4,
+        produto.campo_hierarquico_5,
+      ].slice(0, nivel);
+      if (parts.filter(Boolean).length < nivel) continue;
+      const key = hierarchyKey(parts);
+      if (!map[key]) map[key] = [];
+      map[key].push(produto.id);
+    }
+    return map;
+  };
+
+  const mediaLucroPorChave = {};
+  for (let nivel = 2; nivel <= 5; nivel += 1) {
+    const grupos = skusPorChaveNivel(nivel);
+    for (const [key, skuIds] of Object.entries(grupos)) {
+      const lucros = skuIds.map((id) => metricasPorSku[id]?.lucro ?? 0);
+      mediaLucroPorChave[`n${nivel}:${key}`] = average(lucros);
+    }
+  }
+
+  const mediaNivel2PorH1 = {};
+  for (const [key, media] of Object.entries(mediaLucroPorChave)) {
+    if (!key.startsWith('n2:')) continue;
+    const h1 = key.slice(3).split('\x00')[0];
+    if (!h1) continue;
+    if (!mediaNivel2PorH1[h1]) mediaNivel2PorH1[h1] = [];
+    mediaNivel2PorH1[h1].push(media);
+  }
+  const mediaNivel1PorH1 = {};
+  for (const [h1, medias] of Object.entries(mediaNivel2PorH1)) {
+    mediaNivel1PorH1[h1] = average(medias);
+  }
+
+  return { mediaLucroPorChave, mediaNivel1PorH1 };
+}
 
 function snapshotProduto(produto) {
   return {
     id: produto.id,
     campo_hierarquico_1: produto.campo_hierarquico_1,
     campo_hierarquico_2: produto.campo_hierarquico_2,
+    campo_hierarquico_3: produto.campo_hierarquico_3,
+    campo_hierarquico_4: produto.campo_hierarquico_4,
+    campo_hierarquico_5: produto.campo_hierarquico_5,
+    iep_trava_manual: produto.iep_trava_manual,
     abcd: produto.abcd,
   };
 }
 
-/** Lista lucro por produto (ordenado depois na classificação). */
-function etapa_listarLucroPorProduto(produtos, itensPorProduto) {
-  const lista = produtos.map((produto) => {
-    const { lucro, receita, teveVenda } = calcularLucroSkuSimples(produto, itensPorProduto);
-    return { id: String(produto.id), lucro, receita, teveVenda };
-  });
+/** Etapa 1 — monta a lista: lucro por grupo (nível 2 da descrição), vendas 90d sem outliers. */
+function etapa1_listar(produtos, itensPorProduto) {
+  const metricasPorSku = {};
+  for (const produto of produtos) {
+    metricasPorSku[produto.id] = calcularLucroSkuComQ4(produto, itensPorProduto);
+  }
+
+  const lucroMax = maxLucroPositivo(metricasPorSku);
+  const lucroPorGrupo = {};
+  for (const produto of produtos) {
+    const key = grupoAbcdKey(produto);
+    lucroPorGrupo[key] = (lucroPorGrupo[key] || 0) + (metricasPorSku[produto.id]?.lucro || 0);
+  }
+
+  const lista = Object.entries(lucroPorGrupo).map(([id, lucro]) => ({ id, lucro }));
+  const { mediaLucroPorChave, mediaNivel1PorH1 } = calcularMediasIepPorNivel(produtos, metricasPorSku);
+
+  const metricas = {};
+  for (const [id, m] of Object.entries(metricasPorSku)) {
+    metricas[id] = { l: m.lucro, v: m.teveVenda ? 1 : 0 };
+  }
 
   return {
     lista,
+    lucroMax,
+    metricas,
+    mediaLucroPorChave,
+    mediaNivel1PorH1,
+    grupos_nivel_2: lista.length,
+    produtos_snapshot: produtos.map(snapshotProduto),
     total_produtos: produtos.length,
   };
 }
@@ -217,98 +230,53 @@ function etapa3_classificarAbcd(ranking, totalLucroPositivo) {
   }
   if (totalLucroPositivo <= 0) return mapa;
 
-  let acumulado = 0;
   for (const entry of ranking) {
     if (entry.lucro <= 0) continue;
-    const prevPct = totalLucroPositivo > 0 ? (acumulado / totalLucroPositivo) * 100 : 0;
-    acumulado += entry.lucro;
-    if (prevPct < 70) mapa[entry.id] = 'A';
-    else if (prevPct < 85) mapa[entry.id] = 'B';
-    else if (prevPct < 95) mapa[entry.id] = 'C';
+    const pct = entry.participacao_acumulada_pct ?? 0;
+    if (pct <= 70) mapa[entry.id] = 'A';
+    else if (pct <= 85) mapa[entry.id] = 'B';
+    else if (pct <= 95) mapa[entry.id] = 'C';
   }
   return mapa;
 }
 
-function produtoAbcdVazio(produto) {
-  return !String(produto?.abcd ?? '').trim();
-}
-
-function buildJobCacheSlim(fields) {
-  return {
-    run_id: fields.run_id,
-    created_at: fields.created_at,
-    modo: fields.modo,
-    somente_abcd_vazio: fields.somente_abcd_vazio,
-    batch_size: fields.batch_size,
-    mapaAbcdProduto: fields.mapaAbcdProduto,
-    mapaAbcdGrupo: fields.mapaAbcdProduto,
-    produto_ids: fields.produto_ids,
-    grupos_nivel_2: fields.grupos_nivel_2,
-    total_produtos: fields.total_produtos,
-    pedidos_90d: fields.pedidos_90d,
-    versao: VERSAO,
+function montarUpdatesProdutos(produtosSnapshot, dadosCalculo, somenteAbcdVazio) {
+  const cacheCalc = {
+    lucroMax: dadosCalculo.lucroMax,
+    mapaAbcdGrupo: dadosCalculo.mapaAbcdGrupo,
+    mediaLucroPorChave: dadosCalculo.mediaLucroPorChave,
+    mediaNivel1PorH1: dadosCalculo.mediaNivel1PorH1,
+    metricas: dadosCalculo.metricas,
   };
-}
 
-function jobCacheRespostaCliente(cache) {
-  return {
-    run_id: cache.run_id,
-    mapaAbcdProduto: cache.mapaAbcdProduto || cache.mapaAbcdGrupo,
-    mapaAbcdGrupo: cache.mapaAbcdProduto || cache.mapaAbcdGrupo,
-    somente_abcd_vazio: cache.somente_abcd_vazio,
-    batch_size: cache.batch_size,
-    total_produtos: cache.total_produtos,
-    total_pendentes: Array.isArray(cache.produto_ids) ? cache.produto_ids.length : 0,
-    grupos_nivel_2: cache.grupos_nivel_2,
-    pedidos_90d: cache.pedidos_90d,
-    versao: VERSAO,
-  };
-}
-
-async function fetchProdutosSnapshotPorIds(db, ids) {
-  if (!ids?.length) return [];
-
-  const out = [];
-  const chunkSize = 80;
-
-  for (let i = 0; i < ids.length; i += chunkSize) {
-    const chunk = ids.slice(i, i + chunkSize);
-    try {
-      const rows = await db.Produto.filter({ id: { $in: chunk } });
-      const list = Array.isArray(rows) ? rows : rows ? [rows] : [];
-      for (const row of list) {
-        if (row) out.push(snapshotProduto(row));
-      }
-      continue;
-    } catch {
-      // fallback por id abaixo
-    }
-
-    for (let j = 0; j < chunk.length; j += UPDATE_CONCURRENCY) {
-      const sub = chunk.slice(j, j + UPDATE_CONCURRENCY);
-      const fetched = await Promise.all(
-        sub.map(async (id) => {
-          try {
-            const row = await db.Produto.get(id);
-            return row ? snapshotProduto(row) : null;
-          } catch {
-            try {
-              const rows = await db.Produto.filter({ id });
-              const first = Array.isArray(rows) ? rows[0] : rows;
-              return first ? snapshotProduto(first) : null;
-            } catch {
-              return null;
-            }
-          }
-        }),
-      );
-      for (const row of fetched) {
-        if (row) out.push(row);
-      }
-    }
+  const produtoIds = [];
+  const updatesById = {};
+  for (const produto of produtosSnapshot) {
+    if (somenteAbcdVazio && !produtoAbcdVazio(produto)) continue;
+    produtoIds.push(produto.id);
+    updatesById[produto.id] = buildUpdateData(produto, cacheCalc);
   }
 
-  return out;
+  return { produto_ids: produtoIds, updates_by_id: updatesById };
+}
+
+function maxLucroPositivo(metricasPorSku) {
+  let max = 0;
+  for (const m of Object.values(metricasPorSku)) {
+    const v = Math.max(0, m?.lucro ?? 0);
+    if (v > max) max = v;
+  }
+  return max;
+}
+
+function normalizarScore0a100(lucro, lucroMax, teveVenda) {
+  if (!teveVenda) return 0;
+  if (lucroMax <= 0) return lucro > 0 ? 50 : 1;
+  return Math.round(Math.max(1, Math.min(100, (Math.max(0, lucro) / lucroMax) * 100)));
+}
+
+function produtoAbcdVazio(produto) {
+  return !String(produto?.abcd ?? '').trim();
 }
 
 async function parseRequestBody(req) {
@@ -322,12 +290,37 @@ async function parseRequestBody(req) {
 }
 
 function newRunId() {
-  return `abcd-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return `iep-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 // ═══════════════════════════════════════════════════════════════
 // FETCH COM PAGINAÇÃO
 // ═══════════════════════════════════════════════════════════════
+
+async function fetchPedidosComPaginacao(entities, dataISO, pageSize = 500) {
+  const todosPedidos = [];
+  let skip = 0;
+  let temMais = true;
+
+  while (temMais) {
+    const batch = await entities.PedidoVenda.filter(
+      { tipo: 'PDV', status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
+      '-created_date',
+      pageSize,
+      skip
+    );
+
+    if (!batch || batch.length === 0) {
+      temMais = false;
+    } else {
+      todosPedidos.push(...batch);
+      skip += pageSize;
+      if (batch.length < pageSize) temMais = false;
+    }
+  }
+
+  return todosPedidos;
+}
 
 async function fetchProdutosComPaginacao(entities, pageSize = 500) {
   const todos = [];
@@ -339,7 +332,7 @@ async function fetchProdutosComPaginacao(entities, pageSize = 500) {
     if (!batch || batch.length === 0) {
       temMais = false;
     } else {
-      for (const produto of batch) todos.push(produto);
+      todos.push(...batch);
       skip += pageSize;
       if (batch.length < pageSize) temMais = false;
     }
@@ -358,22 +351,10 @@ async function loadJobCache(db) {
 }
 
 async function resolveJobCache(db, body) {
-  if (body?.run_id) {
-    const serverCache = await loadJobCache(db);
-    if (serverCache?.run_id && String(serverCache.run_id) === String(body.run_id)) {
-      return { cache: serverCache, source: 'server' };
-    }
-  }
-
   const clientCache = body?.job_cache;
-  if (
-    clientCache?.run_id &&
-    (clientCache.mapaAbcdProduto || clientCache.mapaAbcdGrupo) &&
-    Array.isArray(clientCache.produto_ids)
-  ) {
+  if (clientCache?.run_id) {
     return { cache: clientCache, source: 'client' };
   }
-
   const serverCache = await loadJobCache(db);
   return { cache: serverCache, source: 'server' };
 }
@@ -402,127 +383,187 @@ async function clearJobCache(db) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// FASES DO JOB — preparar (lista+ordena+grupos) → gravar (por SKU em blocos)
+// FASES DO JOB — listar → classificar → gravar
 // ═══════════════════════════════════════════════════════════════
-
-async function carregarItensCanonicoPedidos(db, pedidoIds) {
-  const extra = {};
-  if (!pedidoIds?.length || !db.PedidoVendaItem?.filter) return extra;
-
-  const CHUNK = 40;
-  for (let i = 0; i < pedidoIds.length; i += CHUNK) {
-    const chunk = pedidoIds.slice(i, i + CHUNK).map(String);
-    try {
-      const batch = await db.PedidoVendaItem.filter({ pedido_venda_id: { $in: chunk } });
-      for (const it of batch || []) appendItemVenda(extra, it);
-    } catch {
-      for (const pedidoId of chunk) {
-        try {
-          const rows = await db.PedidoVendaItem.filter({ pedido_venda_id: pedidoId });
-          for (const it of rows || []) appendItemVenda(extra, it);
-        } catch {
-          /* sem linhas */
-        }
-      }
-    }
-  }
-
-  return extra;
-}
-
-async function carregarEspelhoItensPedidos(db, pedidoIds, itensPorProduto) {
-  if (!pedidoIds?.length || !db.PedidoVenda?.filter) return;
-
-  const CHUNK = 40;
-  for (let i = 0; i < pedidoIds.length; i += CHUNK) {
-    const chunk = pedidoIds.slice(i, i + CHUNK).map(String);
-    try {
-      const batch = await db.PedidoVenda.filter({ id: { $in: chunk } });
-      for (const pedido of batch || []) {
-        for (const it of pedido?.itens || []) appendItemVenda(itensPorProduto, it);
-      }
-    } catch {
-      /* ignorar chunk */
-    }
-  }
-}
-
-function countLinhasItensMap(itensPorProduto) {
-  let total = 0;
-  for (const linhas of Object.values(itensPorProduto || {})) {
-    total += Array.isArray(linhas) ? linhas.length : 0;
-  }
-  return total;
-}
 
 async function carregarDados90d(db) {
   const hoje = new Date();
   const data90d = new Date();
   data90d.setDate(hoje.getDate() - 90);
   const dataISO = data90d.toISOString();
-
-  const produtos = await fetchProdutosComPaginacao(db);
-  const itensPorProduto = {};
-  const pedidosIds = [];
-  let pedidos90d = 0;
-  let skip = 0;
-  const pageSize = 500;
-  let temMais = true;
-
-  while (temMais) {
-    const batch = await db.PedidoVenda.filter(
-      { status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
-      '-created_date',
-      pageSize,
-      skip,
-    );
-
-    if (!batch || batch.length === 0) {
-      temMais = false;
-    } else {
-      for (const pedido of batch) {
-        const tipo = String(pedido?.tipo ?? 'PDV').toUpperCase();
-        if (tipo !== 'PDV' && tipo !== 'PEDIDO') continue;
-        pedidos90d += 1;
-        const pedidoId = String(pedido.id);
-        pedidosIds.push(pedidoId);
-        for (const it of pedido?.itens || []) appendItemVenda(itensPorProduto, it);
-      }
-      skip += pageSize;
-      if (batch.length < pageSize) temMais = false;
-    }
-  }
-
-  if (countLinhasItensMap(itensPorProduto) < pedidosIds.length) {
-    const canonico = await carregarItensCanonicoPedidos(db, pedidosIds);
-    for (const [pid, linhas] of Object.entries(canonico)) {
-      if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
-      itensPorProduto[pid].push(...linhas);
-    }
-  }
-
-  if (countLinhasItensMap(itensPorProduto) < pedidosIds.length) {
-    await carregarEspelhoItensPedidos(db, pedidosIds, itensPorProduto);
-  }
-
-  return { produtos, itensPorProduto, dataISO, pedidos_90d: pedidos90d };
+  const [produtos, todosPedidos] = await Promise.all([
+    fetchProdutosComPaginacao(db),
+    fetchPedidosComPaginacao(db, dataISO),
+  ]);
+  return { produtos, todosPedidos, dataISO };
 }
 
 async function persistirCacheJob(db, cache) {
+  let cacheNoServidor = false;
   try {
     await saveJobCache(db, cache);
-    const loaded = await loadJobCache(db);
-    if (loaded?.run_id === cache.run_id) {
-      return true;
-    }
+    cacheNoServidor = true;
   } catch {
-    // cliente recebe job_cache na resposta
+    // cliente pode receber job_cache na resposta
   }
-  return false;
+  return cacheNoServidor;
 }
 
-function buildUpdateData(produto, mapaAbcdProduto) {
-  return { abcd: mapaAbcdProduto[String(produto.id)] || 'D' };
+async function runListar(db, body, modo, somenteAbcdVazio, batchSize) {
+  const { produtos, todosPedidos } = await carregarDados90d(db);
+
+  if (somenteAbcdVazio && produtos.filter(produtoAbcdVazio).length === 0) {
+    await clearJobCache(db);
+    return {
+      status: 'sem_alteracao',
+      fase: 'listar',
+      etapa: 'listar',
+      mensagem: 'Nenhum produto com ABCD vazio no cadastro.',
+      modo,
+      somente_abcd_vazio: true,
+      concluido: true,
+      total_produtos: produtos.length,
+    };
+  }
+
+  const itensPorProduto = buildItensPorProdutoId(todosPedidos);
+  const etapa1 = etapa1_listar(produtos, itensPorProduto);
+  const etapa2 = etapa2_ordenarDistribuicao(etapa1.lista);
+  const runId = String(body.run_id || newRunId());
+
+  const cache = {
+    run_id: runId,
+    created_at: new Date().toISOString(),
+    modo,
+    somente_abcd_vazio: somenteAbcdVazio,
+    batch_size: batchSize,
+    etapa: 'listar',
+    lucroMax: etapa1.lucroMax,
+    metricas: etapa1.metricas,
+    mediaLucroPorChave: etapa1.mediaLucroPorChave,
+    mediaNivel1PorH1: etapa1.mediaNivel1PorH1,
+    produtos_snapshot: etapa1.produtos_snapshot,
+    ranking: etapa2.ranking,
+    totalLucroPositivo: etapa2.totalLucroPositivo,
+    grupos_nivel_2: etapa1.grupos_nivel_2,
+    total_produtos: etapa1.total_produtos,
+    pedidos_90d: todosPedidos.length,
+  };
+
+  const cacheNoServidor = await persistirCacheJob(db, cache);
+
+  return {
+    status: 'listado',
+    fase: 'listar',
+    etapa: 'listar',
+    run_id: runId,
+    job_cache: cacheNoServidor ? undefined : cache,
+    cache_no_servidor: cacheNoServidor,
+    modo,
+    somente_abcd_vazio: somenteAbcdVazio,
+    total_produtos: etapa1.total_produtos,
+    grupos_nivel_2: etapa1.grupos_nivel_2,
+    pedidos_90d: todosPedidos.length,
+    proxima_fase: 'classificar',
+  };
+}
+
+async function runClassificar(db, body) {
+  const { cache, source } = await resolveJobCache(db, body);
+  if (!cache?.run_id) {
+    return { status: 'erro', fase: 'classificar', error: 'Execute a etapa listar primeiro.' };
+  }
+  if (body.run_id && String(body.run_id) !== String(cache.run_id)) {
+    return { status: 'erro', fase: 'classificar', error: 'run_id inválido. Execute listar novamente.' };
+  }
+  if (!cache.ranking || !cache.produtos_snapshot) {
+    return { status: 'erro', fase: 'classificar', error: 'Cache incompleto. Execute listar novamente.' };
+  }
+
+  const mapaAbcdGrupo = etapa3_classificarAbcd(cache.ranking, cache.totalLucroPositivo ?? 0);
+  const { produto_ids, updates_by_id } = montarUpdatesProdutos(
+    cache.produtos_snapshot,
+    {
+      lucroMax: cache.lucroMax,
+      mapaAbcdGrupo,
+      mediaLucroPorChave: cache.mediaLucroPorChave,
+      mediaNivel1PorH1: cache.mediaNivel1PorH1,
+      metricas: cache.metricas,
+    },
+    Boolean(cache.somente_abcd_vazio),
+  );
+
+  const batchSize = cache.batch_size || DEFAULT_BATCH_SIZE;
+  const cacheCompleto = {
+    ...cache,
+    etapa: 'classificar',
+    mapaAbcdGrupo,
+    produto_ids,
+    updates_by_id,
+  };
+
+  const cacheNoServidor = await persistirCacheJob(db, cacheCompleto);
+
+  const totalPendentes = produto_ids.length;
+  const totalBlocos = totalPendentes > 0 ? Math.ceil(totalPendentes / batchSize) : 0;
+
+  return {
+    status: 'classificado',
+    fase: 'classificar',
+    etapa: 'classificar',
+    run_id: cache.run_id,
+    job_cache: cacheNoServidor ? undefined : cacheCompleto,
+    cache_no_servidor: cacheNoServidor,
+    modo: cache.modo,
+    somente_abcd_vazio: cache.somente_abcd_vazio,
+    total_produtos: cache.total_produtos,
+    total_pendentes: totalPendentes,
+    grupos_nivel_2: cache.grupos_nivel_2,
+    batch_size: batchSize,
+    total_blocos: totalBlocos,
+    proximo_offset: 0,
+    concluido: totalPendentes === 0,
+    proxima_fase: 'gravar',
+  };
+}
+
+function rollupNivel(produto, nivel, mediaLucroPorChave) {
+  const parts = [
+    produto.campo_hierarquico_1,
+    produto.campo_hierarquico_2,
+    produto.campo_hierarquico_3,
+    produto.campo_hierarquico_4,
+    produto.campo_hierarquico_5,
+  ].slice(0, nivel);
+  if (parts.filter(Boolean).length < nivel) return 0;
+  const key = `n${nivel}:${hierarchyKey(parts)}`;
+  return Math.round(mediaLucroPorChave[key] || 0);
+}
+
+function buildUpdateData(produto, cache) {
+  const sku = cache.metricas[produto.id] || { l: 0, v: 0 };
+  const lucro = sku.l;
+  const teveVenda = sku.v === 1;
+  const h1 = produto.campo_hierarquico_1 || 'unassigned';
+  const grupoKey = grupoAbcdKey(produto);
+  const classe = cache.mapaAbcdGrupo[grupoKey] || 'D';
+  const trava = produto.iep_trava_manual || false;
+
+  const updateData = {
+    abcd: classe,
+    iep_score: normalizarScore0a100(lucro, cache.lucroMax, teveVenda),
+    iep_score_nivel_1: Math.round(cache.mediaNivel1PorH1[h1] || 0),
+    iep_score_nivel_2: rollupNivel(produto, 2, cache.mediaLucroPorChave),
+    iep_score_nivel_3: rollupNivel(produto, 3, cache.mediaLucroPorChave),
+    iep_score_nivel_4: rollupNivel(produto, 4, cache.mediaLucroPorChave),
+    iep_score_nivel_5: rollupNivel(produto, 5, cache.mediaLucroPorChave),
+  };
+
+  if (!trava) {
+    updateData.iep_classe = classe;
+  }
+
+  return updateData;
 }
 
 async function gravarBloco(db, cache, offset, batchSize) {
@@ -531,20 +572,10 @@ async function gravarBloco(db, cache, offset, batchSize) {
     return { atualizados: 0, concluido: true, proximo_offset: offset };
   }
 
-  const snapshotById = new Map((cache.produtos_snapshot || []).map((p) => [String(p.id), p]));
-  const faltantes = ids.filter((id) => !snapshotById.has(String(id)));
-  if (faltantes.length) {
-    const fetched = await fetchProdutosSnapshotPorIds(db, faltantes);
-    for (const produto of fetched) snapshotById.set(String(produto.id), produto);
-  }
-
-  const mapa = cache.mapaAbcdProduto || cache.mapaAbcdGrupo || {};
   const updates = [];
-
   for (const id of ids) {
-    const produto = snapshotById.get(String(id));
-    if (!produto) continue;
-    updates.push({ id, data: buildUpdateData(produto, mapa) });
+    const data = cache.updates_by_id?.[id];
+    if (data) updates.push({ id, data });
   }
 
   for (let i = 0; i < updates.length; i += UPDATE_CONCURRENCY) {
@@ -567,112 +598,36 @@ function regrasResposta(somenteAbcdVazio) {
     janela_dias: 90,
     custo: 'preco_custo_calculado',
     preco: 'media_venda_sem_4_quartil_por_sku',
-    abcd_nivel: 'por_produto (lucro 90d, maior para menor)',
-    pareto: '70/15/10/5 lucro acumulado por produto (A até 70%, B até 85%, C até 95%, D restante)',
-    iqr: 'desativado',
+    abcd_nivel: 'campo_hierarquico_2 (ou campo_hierarquico_1 se h2 vazio)',
+    pareto: '70/15/10/5 lucro acumulado (A até 70%, B até 85%, C até 95%, D restante)',
+    iqr: 'por_sku_exclui_q4',
+    nivel_1: 'media_dos_filhos_nivel_2',
     somente_abcd_vazio: somenteAbcdVazio,
     batch_size: DEFAULT_BATCH_SIZE,
   };
 }
 
-async function runDiagnostico(db) {
-  const hoje = new Date();
-  const data90d = new Date();
-  data90d.setDate(hoje.getDate() - 90);
-  const dataISO = data90d.toISOString();
-
-  const [produtoSample, pedidoSample] = await Promise.all([
-    db.Produto.list('-created_date', 1, 0),
-    db.PedidoVenda.filter(
-      { tipo: 'PDV', status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
-      '-created_date',
-      1,
-      0,
-    ),
-  ]);
-
-  return {
-    status: 'ok',
-    fase: 'diagnostico',
-    versao: VERSAO,
-    produto_sample: Array.isArray(produtoSample) ? produtoSample.length : produtoSample ? 1 : 0,
-    pedido_sample: Array.isArray(pedidoSample) ? pedidoSample.length : pedidoSample ? 1 : 0,
-    data_iso_90d: dataISO,
-    timestamp: new Date().toISOString(),
-  };
-}
-
 async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
-  const { produtos, itensPorProduto, pedidos_90d } = await carregarDados90d(db);
-
-  if (somenteAbcdVazio && produtos.filter(produtoAbcdVazio).length === 0) {
-    await clearJobCache(db);
-    return {
-      status: 'sem_alteracao',
-      fase: 'preparar',
-      mensagem: 'Nenhum produto com ABCD vazio no cadastro.',
-      modo,
-      somente_abcd_vazio: true,
-      concluido: true,
-      total_produtos: produtos.length,
-    };
+  const listado = await runListar(db, body, modo, somenteAbcdVazio, batchSize);
+  if (listado.status === 'sem_alteracao' || listado.concluido) {
+    return { ...listado, fase: 'preparar' };
   }
 
-  const itensPorProdutoMap = itensPorProduto;
-  const etapa1 = etapa_listarLucroPorProduto(produtos, itensPorProdutoMap);
-  const etapa2 = etapa2_ordenarDistribuicao(etapa1.lista);
-  let mapaAbcdProduto = etapa3_classificarAbcd(etapa2.ranking, etapa2.totalLucroPositivo);
-  if (etapa2.totalLucroPositivo <= 0) {
-    const rankingReceita = etapa1.lista
-      .filter((entry) => entry.receita > 0)
-      .map((entry) => ({ id: entry.id, lucro: entry.receita }))
-      .sort((a, b) => b.lucro - a.lucro);
-    const totalReceita = rankingReceita.reduce((acc, entry) => acc + entry.lucro, 0);
-    if (totalReceita > 0) {
-      mapaAbcdProduto = etapa3_classificarAbcd(rankingReceita, totalReceita);
-    }
-  }
-
-  const produtoIds = produtos
-    .filter((p) => !somenteAbcdVazio || produtoAbcdVazio(p))
-    .map((p) => p.id);
-
-  const runId = String(body.run_id || newRunId());
-  const cache = buildJobCacheSlim({
-    run_id: runId,
-    created_at: new Date().toISOString(),
-    modo,
-    somente_abcd_vazio: somenteAbcdVazio,
-    batch_size: batchSize,
-    mapaAbcdProduto,
-    grupos_nivel_2: etapa1.total_produtos,
-    total_produtos: etapa1.total_produtos,
-    produto_ids: produtoIds,
-    pedidos_90d,
+  const classificado = await runClassificar(db, {
+    ...body,
+    run_id: listado.run_id,
+    ...(listado.job_cache ? { job_cache: listado.job_cache } : {}),
   });
 
-  const cacheNoServidor = await persistirCacheJob(db, cache);
-  const totalPendentes = produtoIds.length;
-  const totalBlocos = totalPendentes > 0 ? Math.ceil(totalPendentes / batchSize) : 0;
+  if (classificado.status === 'erro') {
+    return { ...classificado, fase: 'preparar' };
+  }
 
   return {
+    ...classificado,
     status: 'preparado',
     fase: 'preparar',
-    run_id: runId,
-    job_cache: cache,
-    job_cache_cliente: jobCacheRespostaCliente(cache),
-    cache_no_servidor: cacheNoServidor,
-    modo,
-    somente_abcd_vazio: somenteAbcdVazio,
-    total_produtos: etapa1.total_produtos,
-    total_pendentes: totalPendentes,
-    grupos_nivel_2: etapa1.grupos_nivel_2,
-    batch_size: batchSize,
-    total_blocos: totalBlocos,
-    proximo_offset: 0,
-    concluido: totalPendentes === 0,
-    pedidos_90d,
-    proxima_fase: 'gravar',
+    pedidos_90d: listado.pedidos_90d,
   };
 }
 
@@ -682,15 +637,15 @@ async function runGravar(db, body, batchSize) {
     return {
       status: 'erro',
       fase: 'gravar',
-      error: 'Nenhum job preparado. Execute preparar antes de gravar.',
+      error: 'Nenhum job classificado. Execute listar e classificar primeiro.',
     };
   }
 
-  if (!(cache.mapaAbcdProduto || cache.mapaAbcdGrupo) || !cache.produto_ids?.length) {
+  if (!cache.updates_by_id || !cache.produto_ids) {
     return {
       status: 'erro',
       fase: 'gravar',
-      error: 'Cálculo pendente. Execute preparar antes de gravar.',
+      error: 'Classificação pendente. Execute a fase classificar antes de gravar.',
     };
   }
 
@@ -743,14 +698,14 @@ async function runGravar(db, body, batchSize) {
     total_produtos: cache.total_produtos,
     grupos_nivel_2: cache.grupos_nivel_2,
     concluido: bloco.concluido,
-    versao: VERSAO,
+    versao: 'V9-abcd-etapas',
     regras: regrasResposta(cache.somente_abcd_vazio),
     timestamp: new Date().toISOString(),
   };
 }
 
 async function runGravarTodosBlocos(db, body, batchSize) {
-  const prep = await runPreparar(
+  const listado = await runListar(
     db,
     body,
     body.modo || 'agendado',
@@ -758,19 +713,29 @@ async function runGravarTodosBlocos(db, body, batchSize) {
     batchSize,
   );
 
-  if (prep.status === 'sem_alteracao' || prep.concluido) {
+  if (listado.status === 'sem_alteracao' || listado.concluido) {
     return {
-      ...prep,
-      versao: VERSAO,
+      ...listado,
+      versao: 'V9-abcd-etapas',
       regras: regrasResposta(Boolean(body.somente_abcd_vazio)),
       timestamp: new Date().toISOString(),
     };
   }
 
+  const classificado = await runClassificar(db, {
+    ...body,
+    run_id: listado.run_id,
+    ...(listado.job_cache ? { job_cache: listado.job_cache } : {}),
+  });
+
+  if (classificado.status === 'erro') {
+    return classificado;
+  }
+
   let offset = 0;
   let totalAtualizados = 0;
   let ultimoBloco = null;
-  const jobCache = prep.job_cache;
+  const jobCache = classificado.job_cache;
 
   while (true) {
     ultimoBloco = await runGravar(
@@ -778,7 +743,7 @@ async function runGravarTodosBlocos(db, body, batchSize) {
       {
         ...body,
         offset,
-        run_id: prep.run_id,
+        run_id: classificado.run_id,
         batch_size: batchSize,
         ...(jobCache ? { job_cache: jobCache } : {}),
       },
@@ -795,35 +760,23 @@ async function runGravarTodosBlocos(db, body, batchSize) {
   return {
     status: 'sucesso',
     fase: 'completo',
-    modo: prep.modo,
-    somente_abcd_vazio: prep.somente_abcd_vazio,
+    modo: classificado.modo,
+    somente_abcd_vazio: classificado.somente_abcd_vazio,
     atualizados: totalAtualizados,
     processados: totalAtualizados,
-    total_produtos: prep.total_produtos,
-    total_pendentes: prep.total_pendentes,
-    grupos_nivel_2: prep.grupos_nivel_2,
-    total_blocos: prep.total_blocos,
+    total_produtos: classificado.total_produtos,
+    total_pendentes: classificado.total_pendentes,
+    grupos_nivel_2: classificado.grupos_nivel_2,
+    total_blocos: classificado.total_blocos,
     batch_size: batchSize,
-    versao: VERSAO,
-    regras: regrasResposta(prep.somente_abcd_vazio),
+    versao: 'V9-abcd-etapas',
+    regras: regrasResposta(classificado.somente_abcd_vazio),
     timestamp: new Date().toISOString(),
   };
 }
 
-function respostaPrepararHttp(prep, extras = {}) {
-  const jobCacheCliente =
-    prep.job_cache_cliente ||
-    (prep.job_cache ? jobCacheRespostaCliente(prep.job_cache) : undefined);
-  const { job_cache: _full, job_cache_cliente: _slim, ...rest } = prep;
-  return {
-    ...rest,
-    ...extras,
-    ...(jobCacheCliente ? { job_cache: jobCacheCliente } : {}),
-  };
-}
-
 // ═══════════════════════════════════════════════════════════════
-// JOB PRINCIPAL — IQR por SKU + curva ABCD no nível hierárquico 2 (somente campo abcd)
+// JOB PRINCIPAL — IQR por SKU + ABCD no nível hierárquico 2
 // ═══════════════════════════════════════════════════════════════
 
 Deno.serve(async (req) => {
@@ -851,79 +804,36 @@ Deno.serve(async (req) => {
 
     const db = isAutomation ? base44.asServiceRole.entities : base44.entities;
 
-    if (fase === 'diagnostico' || fase === 'ping') {
-      const diag = await runDiagnostico(db);
-      return Response.json(diag);
-    }
-
     if (fase === 'limpar') {
       await clearJobCache(db);
       return Response.json({ status: 'ok', fase: 'limpar', mensagem: 'Cache do job removido.' });
     }
 
-    if (fase === 'preparar') {
-      const prep = await runPreparar(db, body, modo, somenteAbcdVazio, batchSize);
-      return Response.json({
-        ...respostaPrepararHttp(prep),
-        versao: VERSAO,
-        regras: regrasResposta(somenteAbcdVazio),
-        timestamp: new Date().toISOString(),
-      });
-    }
-
     if (fase === 'listar') {
-      const prep = await runPreparar(db, body, modo, somenteAbcdVazio, batchSize);
+      const listado = await runListar(db, body, modo, somenteAbcdVazio, batchSize);
       return Response.json({
-        ...respostaPrepararHttp(prep, {
-          status: prep.status === 'preparado' ? 'listado' : prep.status,
-          fase: 'listar',
-          etapa: 'listar',
-          proxima_fase: 'classificar',
-        }),
-        versao: VERSAO,
+        ...listado,
+        versao: 'V9-abcd-etapas',
         regras: regrasResposta(somenteAbcdVazio),
         timestamp: new Date().toISOString(),
       });
     }
 
     if (fase === 'classificar') {
-      const { cache } = await resolveJobCache(db, body);
-      if ((cache?.mapaAbcdProduto || cache?.mapaAbcdGrupo) && cache?.produto_ids) {
-        const size = cache.batch_size || batchSize;
-        const totalPendentes = cache.produto_ids.length;
-        const totalBlocos = totalPendentes > 0 ? Math.ceil(totalPendentes / size) : 0;
-        return Response.json({
-          status: 'classificado',
-          fase: 'classificar',
-          etapa: 'classificar',
-          run_id: cache.run_id,
-          job_cache: cache,
-          cache_no_servidor: false,
-          modo: cache.modo,
-          somente_abcd_vazio: cache.somente_abcd_vazio,
-          total_produtos: cache.total_produtos,
-          total_pendentes: totalPendentes,
-          grupos_nivel_2: cache.grupos_nivel_2,
-          batch_size: size,
-          total_blocos: totalBlocos,
-          proximo_offset: 0,
-          concluido: totalPendentes === 0,
-          proxima_fase: 'gravar',
-          versao: VERSAO,
-          regras: regrasResposta(Boolean(cache.somente_abcd_vazio)),
-          timestamp: new Date().toISOString(),
-        });
-      }
+      const classificado = await runClassificar(db, body);
+      return Response.json({
+        ...classificado,
+        versao: 'V9-abcd-etapas',
+        regras: regrasResposta(classificado.somente_abcd_vazio ?? somenteAbcdVazio),
+        timestamp: new Date().toISOString(),
+      });
+    }
 
+    if (fase === 'preparar') {
       const prep = await runPreparar(db, body, modo, somenteAbcdVazio, batchSize);
       return Response.json({
-        ...respostaPrepararHttp(prep, {
-          status: prep.status === 'preparado' ? 'classificado' : prep.status,
-          fase: 'classificar',
-          etapa: 'classificar',
-          proxima_fase: 'gravar',
-        }),
-        versao: VERSAO,
+        ...prep,
+        versao: 'V9-abcd-etapas',
         regras: regrasResposta(somenteAbcdVazio),
         timestamp: new Date().toISOString(),
       });
@@ -943,8 +853,8 @@ Deno.serve(async (req) => {
     // Manual sem fase explícita: só prepara (UI deve chamar gravar em loop)
     const prep = await runPreparar(db, body, modo, somenteAbcdVazio, batchSize);
     return Response.json({
-      ...respostaPrepararHttp(prep),
-      versao: VERSAO,
+      ...prep,
+      versao: 'V9-abcd-etapas',
       regras: regrasResposta(somenteAbcdVazio),
       timestamp: new Date().toISOString(),
     });

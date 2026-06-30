@@ -110,21 +110,96 @@ function arredondarQuantidadeSugestao(quantityBase: number, produto: Record<stri
   return Math.ceil(base / pack) * pack;
 }
 
-function buildItensPorProdutoId(pedidos: Record<string, unknown>[]) {
-  const map: Record<string, Record<string, unknown>[]> = {};
-  for (const pedido of pedidos || []) {
-    for (const it of (Array.isArray(pedido.itens) ? pedido.itens : []) as Record<string, unknown>[]) {
-      const pid = String(it?.produto_id ?? '');
-      if (!pid) continue;
-      if (!map[pid]) map[pid] = [];
-      map[pid].push(it);
-    }
-  }
-  return map;
+function localDateKey(value: unknown) {
+  const d = new Date(String(value || ''));
+  if (Number.isNaN(d.getTime())) return 'sem-data';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
-function calcularVendasSemOutliers(itens: Record<string, unknown>[]) {
-  const quantidades = (itens || [])
+function deltaMovimento(mov: Record<string, unknown>) {
+  const q = Number(mov?.quantidade) || 0;
+  const t = mov?.tipo;
+  if (t === 'Entrada') return q;
+  if (t === 'Saída') return -q;
+  return 0;
+}
+
+function buildMapaSaldoFimDia(
+  movimentacoes: Record<string, unknown>[],
+  estoqueAtual: number,
+  janelaDias = JANELA_DIAS,
+) {
+  const hoje = new Date();
+  const inicio = new Date(hoje);
+  inicio.setDate(inicio.getDate() - janelaDias);
+  const diaInicio = localDateKey(inicio);
+
+  const movsJanela = movimentacoes.filter((m) => {
+    const dia = localDateKey(m?.created_date);
+    return dia !== 'sem-data' && dia >= diaInicio;
+  });
+
+  const deltasNaJanela = movsJanela.reduce((acc, m) => acc + deltaMovimento(m), 0);
+  let saldo = (Number(estoqueAtual) || 0) - deltasNaJanela;
+
+  const movsPorDia = new Map<string, Record<string, unknown>[]>();
+  for (const m of movsJanela.sort((a, b) =>
+    new Date(String(a?.created_date || 0)).getTime() - new Date(String(b?.created_date || 0)).getTime()
+  )) {
+    const dia = localDateKey(m?.created_date);
+    if (!movsPorDia.has(dia)) movsPorDia.set(dia, []);
+    movsPorDia.get(dia)!.push(m);
+  }
+
+  const saldoPorDia = new Map<string, number>();
+  const dias: string[] = [];
+  const cur = new Date(inicio);
+  cur.setHours(12, 0, 0, 0);
+  const end = new Date(hoje);
+  end.setHours(12, 0, 0, 0);
+  while (cur <= end) {
+    dias.push(localDateKey(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  for (const dia of dias) {
+    for (const m of movsPorDia.get(dia) || []) {
+      saldo += deltaMovimento(m);
+    }
+    saldoPorDia.set(dia, saldo);
+  }
+
+  return saldoPorDia;
+}
+
+function contarDiasComEstoqueAtivo(saldoPorDia: Map<string, number>) {
+  let count = 0;
+  for (const saldo of saldoPorDia.values()) {
+    if (saldo !== 0) count += 1;
+  }
+  return count;
+}
+
+function arredondarParaVitrineBase(quantityBase: number, fatorVitrine: number) {
+  const base = Number(quantityBase) || 0;
+  if (base <= 0) return 0;
+  const fator = Math.max(1, Number(fatorVitrine) || 1);
+  const packs = Math.ceil(base / fator);
+  return Math.max(fator, packs * fator);
+}
+
+function collectItensProduto(produto: Record<string, unknown>, pedidos: Record<string, unknown>[]) {
+  const pid = String(produto.id ?? '');
+  return pedidos
+    .flatMap((p) => (Array.isArray(p.itens) ? p.itens : []) as Record<string, unknown>[])
+    .filter((it) => String(it?.produto_id ?? '') === pid);
+}
+
+function calcularVendasSemOutliers(produto: Record<string, unknown>, pedidos: Record<string, unknown>[]) {
+  const quantidades = collectItensProduto(produto, pedidos)
     .map((it) => lineQuantityBase(it))
     .filter((qty) => qty > 0);
 
@@ -146,21 +221,25 @@ function calcularVendasSemOutliers(itens: Record<string, unknown>[]) {
 
 function calcularMetas(
   produto: Record<string, unknown>,
-  itens: Record<string, unknown>[],
+  pedidos: Record<string, unknown>[],
+  movimentacoes: Record<string, unknown>[],
 ) {
   const leadTime = Math.max(1, Number(produto?.tempo_reposicao_dias) || LEAD_TIME_PADRAO);
-  const vendas = calcularVendasSemOutliers(itens);
+  const vendas = calcularVendasSemOutliers(produto, pedidos);
+  const saldoPorDia = buildMapaSaldoFimDia(movimentacoes, Number(produto?.estoque_atual) || 0);
+  const diasComEstoque = contarDiasComEstoqueAtivo(saldoPorDia);
 
-  if (!vendas.teveVenda) {
+  if (!vendas.teveVenda || diasComEstoque === 0) {
     return {
       atualizar: false,
-      motivo: 'sem_venda',
+      motivo: !vendas.teveVenda ? 'sem_venda' : 'sem_dias_com_estoque',
       leadTime,
+      diasComEstoque,
       ...vendas,
     };
   }
 
-  const m = vendas.quantidadeLimpa / JANELA_DIAS;
+  const m = vendas.quantidadeLimpa / diasComEstoque;
   const idealBase = m * leadTime;
   const minimoBase = m * 1.5 * leadTime;
   const { unidade, fator } = resolveFatorVitrine(produto);
@@ -178,25 +257,22 @@ function calcularMetas(
     unidade_vitrine_compra: unidade,
     fator_vitrine: fator,
     lote_compra_vitrine: resolveLoteCompraVitrine(produto) || null,
+    dias_com_estoque: diasComEstoque,
     quantidade_limpa_90d: vendas.quantidadeLimpa,
     outliers_descartados: vendas.outliersDescartados,
     linhas_venda_total: vendas.linhasTotal,
     metas_estoque_atualizado_em: new Date().toISOString(),
-    metas_estoque_versao: 'v3-media-90d-lead-time',
+    metas_estoque_versao: 'v2-media-dias-estoque-lote-vitrine',
   };
 }
 
-async function fetchPedidos90d(
-  entities: ReturnType<typeof createClientFromRequest>['entities'],
-  dataISO: string,
-  pageSize = 500,
-) {
+async function fetchPedidos90d(base44: ReturnType<typeof createClientFromRequest>, dataISO: string, pageSize = 500) {
   const todos: Record<string, unknown>[] = [];
   let skip = 0;
   let temMais = true;
 
   while (temMais) {
-    const batch = await entities.PedidoVenda.filter(
+    const batch = await base44.entities.PedidoVenda.filter(
       { status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
       '-created_date',
       pageSize,
@@ -208,6 +284,34 @@ async function fetchPedidos90d(
     } else {
       todos.push(...batch.filter(pedidoElegivel));
       skip += pageSize;
+    }
+  }
+
+  return todos;
+}
+
+async function fetchMovimentacoes90d(
+  base44: ReturnType<typeof createClientFromRequest>,
+  dataISO: string,
+  pageSize = 500,
+) {
+  const todos: Record<string, unknown>[] = [];
+  let skip = 0;
+  let temMais = true;
+
+  while (temMais) {
+    const batch = await base44.entities.MovimentacaoEstoque.filter(
+      { created_date: { $gte: dataISO } },
+      'created_date',
+      pageSize,
+      skip,
+    );
+
+    if (!batch || batch.length === 0) {
+      temMais = false;
+    } else {
+      todos.push(...batch);
+      skip += pageSize;
       if (batch.length < pageSize) temMais = false;
     }
   }
@@ -215,10 +319,20 @@ async function fetchPedidos90d(
   return todos;
 }
 
+function groupMovsPorProduto(movs: Record<string, unknown>[]) {
+  const map: Record<string, Record<string, unknown>[]> = {};
+  for (const m of movs) {
+    const pid = String(m?.produto_id ?? '');
+    if (!pid) continue;
+    if (!map[pid]) map[pid] = [];
+    map[pid].push(m);
+  }
+  return map;
+}
+
 const DEFAULT_BATCH_SIZE = 50;
 const UPDATE_CONCURRENCY = 5;
 const CACHE_KEY = 'metas_estoque_job_run';
-const VERSAO = 'v4-slim-cache-servidor';
 
 async function parseRequestBody(req: Request) {
   try {
@@ -268,24 +382,14 @@ function buildUpdatePayload(metas: Record<string, unknown>) {
     estoque_minimo: metas.estoque_minimo,
     estoque_ideal: metas.estoque_ideal,
     venda_media_dia: metas.venda_media_dia,
+    metas_estoque_lead_time_dias: metas.lead_time_dias,
+    metas_estoque_unidade_compra: metas.unidade_vitrine_compra,
+    metas_estoque_quantidade_limpa_90d: metas.quantidade_limpa_90d,
+    metas_estoque_outliers_descartados: metas.outliers_descartados,
+    metas_estoque_dias_com_estoque: metas.dias_com_estoque,
+    metas_estoque_atualizado_em: metas.metas_estoque_atualizado_em,
+    metas_estoque_versao: metas.metas_estoque_versao,
   };
-}
-
-function jobCacheRespostaSlim(cache: Record<string, unknown>) {
-  return {
-    run_id: cache.run_id,
-    total_pendentes: Array.isArray(cache.produto_ids) ? cache.produto_ids.length : 0,
-  };
-}
-
-async function persistirCacheJob(db: ReturnType<typeof createClientFromRequest>['entities'], cache: Record<string, unknown>) {
-  try {
-    await saveJobCache(db, cache);
-    const loaded = await loadJobCache(db);
-    return loaded?.run_id === cache.run_id;
-  } catch {
-    return false;
-  }
 }
 
 async function loadJobCache(db: ReturnType<typeof createClientFromRequest>['entities']) {
@@ -297,18 +401,10 @@ async function resolveJobCache(
   db: ReturnType<typeof createClientFromRequest>['entities'],
   body: Record<string, unknown>,
 ) {
-  if (body?.run_id) {
-    const serverCache = (await loadJobCache(db)) as Record<string, unknown> | null;
-    if (serverCache?.run_id && String(serverCache.run_id) === String(body.run_id)) {
-      return { cache: serverCache, source: 'server' as const };
-    }
-  }
-
   const clientCache = body?.job_cache as Record<string, unknown> | undefined;
-  if (clientCache?.run_id && clientCache.updates && Array.isArray(clientCache.produto_ids)) {
+  if (clientCache?.run_id && Array.isArray(clientCache.produto_ids)) {
     return { cache: clientCache, source: 'client' as const };
   }
-
   const serverCache = await loadJobCache(db);
   return { cache: serverCache as Record<string, unknown> | null, source: 'server' as const };
 }
@@ -340,7 +436,7 @@ function regrasResposta(somenteMetasVazias: boolean) {
   return {
     janela_dias: JANELA_DIAS,
     lead_time_padrao: LEAD_TIME_PADRAO,
-    media: 'qty_vendida_limpa / 90 dias (sem IEP/ABCD)',
+    media: 'qty_vendida / dias_com_estoque_diferente_de_zero',
     estoque_minimo: 'ponto de pedido = m × 1,5 × lead time',
     estoque_ideal: 'quantidade a repor = m × lead time',
     outliers: 'qty_linha > Q3 descartada',
@@ -352,9 +448,9 @@ function regrasResposta(somenteMetasVazias: boolean) {
 
 function computeSnapshot(
   produtos: Record<string, unknown>[],
-  itensPorProduto: Record<string, Record<string, unknown>[]>,
+  pedidos: Record<string, unknown>[],
+  movsPorProduto: Record<string, Record<string, unknown>[]>,
   somenteMetasVazias: boolean,
-  pedidosAnalisados: number,
 ) {
   const updates: Record<string, Record<string, unknown>> = {};
   const produto_ids: string[] = [];
@@ -368,15 +464,15 @@ function computeSnapshot(
     }
     if (somenteMetasVazias && !produtoMetasVazio(produto)) continue;
 
-    const pid = String(produto.id ?? '');
-    const metas = calcularMetas(produto, itensPorProduto[pid] || []);
+    const metas = calcularMetas(produto, pedidos, movsPorProduto[String(produto.id)] || []);
     if (!metas.atualizar) {
       ignorados_sem_venda += 1;
       continue;
     }
 
-    produto_ids.push(pid);
-    updates[pid] = buildUpdatePayload(metas);
+    const id = String(produto.id);
+    produto_ids.push(id);
+    updates[id] = buildUpdatePayload(metas);
   }
 
   return {
@@ -385,7 +481,7 @@ function computeSnapshot(
     total_produtos: produtos.length,
     ignorados_trava_manual,
     ignorados_sem_venda,
-    pedidos_analisados: pedidosAnalisados,
+    pedidos_analisados: pedidos.length,
   };
 }
 
@@ -401,18 +497,14 @@ async function runPreparar(
   data90d.setDate(hoje.getDate() - JANELA_DIAS);
   const dataISO = data90d.toISOString();
 
-  const [produtos, pedidos] = await Promise.all([
+  const [produtos, pedidos, movimentacoes] = await Promise.all([
     fetchProdutosComPaginacao(db),
     fetchPedidos90d(db, dataISO),
+    fetchMovimentacoes90d(db, dataISO),
   ]);
 
-  const itensPorProduto = buildItensPorProdutoId(pedidos);
-  const snapshot = computeSnapshot(
-    produtos,
-    itensPorProduto,
-    somenteMetasVazias,
-    pedidos.length,
-  );
+  const movsPorProduto = groupMovsPorProduto(movimentacoes);
+  const snapshot = computeSnapshot(produtos, pedidos, movsPorProduto, somenteMetasVazias);
 
   if (somenteMetasVazias && snapshot.produto_ids.length === 0) {
     await clearJobCache(db);
@@ -435,20 +527,13 @@ async function runPreparar(
     modo,
     somente_metas_vazias: somenteMetasVazias,
     batch_size: batchSize,
-    versao: VERSAO,
     ...snapshot,
   };
 
-  const cacheNoServidor = await persistirCacheJob(db, cache);
-  if (!cacheNoServidor) {
-    return {
-      status: 'erro',
-      fase: 'preparar',
-      error:
-        'Não foi possível guardar o job no servidor. Confirme que a função está publicada no Base44 e que ConfiguracoesVenda aceita o campo metas_estoque_job_run.',
-      total_pendentes: snapshot.produto_ids.length,
-      versao: VERSAO,
-    };
+  try {
+    await saveJobCache(db, cache);
+  } catch {
+    // cliente pode enviar job_cache na fase gravar
   }
 
   const totalPendentes = snapshot.produto_ids.length;
@@ -458,20 +543,18 @@ async function runPreparar(
     status: 'preparado',
     fase: 'preparar',
     run_id: runId,
-    job_cache: jobCacheRespostaSlim(cache),
-    cache_no_servidor: true,
+    job_cache: cache,
     modo,
     somente_metas_vazias: somenteMetasVazias,
     total_produtos: snapshot.total_produtos,
     total_pendentes: totalPendentes,
     ignorados_trava_manual: snapshot.ignorados_trava_manual,
     ignorados_sem_venda: snapshot.ignorados_sem_venda,
-    pedidos_analisados: pedidos.length,
+    pedidos_analisados: snapshot.pedidos_analisados,
     batch_size: batchSize,
     total_blocos: totalBlocos,
     proximo_offset: 0,
     concluido: totalPendentes === 0,
-    versao: VERSAO,
   };
 }
 
@@ -518,15 +601,6 @@ async function runGravar(
       status: 'erro',
       fase: 'gravar',
       error: 'Nenhum job preparado. Execute a fase preparar primeiro.',
-    };
-  }
-
-  if (!cache.updates || !Array.isArray(cache.produto_ids) || !cache.produto_ids.length) {
-    return {
-      status: 'erro',
-      fase: 'gravar',
-      error:
-        'Job incompleto no servidor. Execute preparar novamente (cache metas_estoque_job_run em ConfiguracoesVenda).',
     };
   }
 
@@ -580,7 +654,7 @@ async function runGravar(
     ignorados_trava_manual: cache.ignorados_trava_manual,
     pedidos_analisados: cache.pedidos_analisados,
     concluido: bloco.concluido,
-    versao: VERSAO,
+    versao: 'v2-media-dias-estoque-blocos',
     regras: regrasResposta(Boolean(cache.somente_metas_vazias)),
     timestamp: new Date().toISOString(),
   };
@@ -597,7 +671,7 @@ async function runGravarTodosBlocos(
   if (prep.status === 'sem_alteracao' || prep.concluido) {
     return {
       ...prep,
-      versao: VERSAO,
+      versao: 'v2-media-dias-estoque-blocos',
       regras: regrasResposta(somenteMetasVazias),
       timestamp: new Date().toISOString(),
     };
@@ -606,11 +680,12 @@ async function runGravarTodosBlocos(
   let offset = 0;
   let totalAtualizados = 0;
   let ultimoBloco: Record<string, unknown> | null = null;
+  const jobCache = prep.job_cache as Record<string, unknown>;
 
   while (true) {
     ultimoBloco = await runGravar(
       db,
-      { ...body, offset, run_id: prep.run_id, batch_size: batchSize },
+      { ...body, offset, run_id: prep.run_id, batch_size: batchSize, job_cache: jobCache },
       batchSize,
     );
     if (ultimoBloco.status === 'erro') return ultimoBloco;
@@ -633,34 +708,8 @@ async function runGravarTodosBlocos(
     pedidos_analisados: prep.pedidos_analisados,
     total_blocos: prep.total_blocos,
     batch_size: batchSize,
-    versao: VERSAO,
+    versao: 'v2-media-dias-estoque-blocos',
     regras: regrasResposta(somenteMetasVazias),
-    timestamp: new Date().toISOString(),
-  };
-}
-
-async function runDiagnostico(db: ReturnType<typeof createClientFromRequest>['entities']) {
-  const data90d = new Date();
-  data90d.setDate(data90d.getDate() - JANELA_DIAS);
-  const dataISO = data90d.toISOString();
-
-  const [produtoSample, pedidoSample] = await Promise.all([
-    db.Produto.filter({ tipo: 'Produto', ativo: true }, '-created_date', 1, 0),
-    db.PedidoVenda.filter(
-      { status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
-      '-created_date',
-      1,
-      0,
-    ),
-  ]);
-
-  return {
-    status: 'ok',
-    fase: 'diagnostico',
-    versao: VERSAO,
-    produto_sample: Array.isArray(produtoSample) ? produtoSample.length : produtoSample ? 1 : 0,
-    pedido_sample: Array.isArray(pedidoSample) ? pedidoSample.length : pedidoSample ? 1 : 0,
-    data_iso_90d: dataISO,
     timestamp: new Date().toISOString(),
   };
 }
@@ -688,11 +737,6 @@ Deno.serve(async (req) => {
 
     const db = isAutomation ? base44.asServiceRole.entities : base44.entities;
 
-    if (fase === 'diagnostico' || fase === 'ping') {
-      const diag = await runDiagnostico(db);
-      return Response.json(diag);
-    }
-
     if (fase === 'limpar') {
       await clearJobCache(db);
       return Response.json({ status: 'ok', fase: 'limpar', mensagem: 'Cache do job removido.' });
@@ -702,7 +746,7 @@ Deno.serve(async (req) => {
       const prep = await runPreparar(db, body, modo, somenteMetasVazias, batchSize);
       return Response.json({
         ...prep,
-        versao: VERSAO,
+        versao: 'v2-media-dias-estoque-blocos',
         regras: regrasResposta(somenteMetasVazias),
         timestamp: new Date().toISOString(),
       });
@@ -725,13 +769,11 @@ Deno.serve(async (req) => {
     const prep = await runPreparar(db, body, modo, somenteMetasVazias, batchSize);
     return Response.json({
       ...prep,
-      versao: VERSAO,
+      versao: 'v2-media-dias-estoque-blocos',
       regras: regrasResposta(somenteMetasVazias),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('[atualizarMetasEstoque]', message);
-    return Response.json({ error: message, status: 'erro' }, { status: 500 });
+    return Response.json({ error: (error as Error).message }, { status: 500 });
   }
 });

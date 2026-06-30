@@ -89,8 +89,8 @@ export default function ProdutosAbcdQuickFilter({ abcd = 'all', onChange }) {
           <AbcdChipRow current={current} onChange={handleChange} />
           <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
             {isActive
-              ? `Mostrando apenas produtos da classe ${current}.`
-              : 'Todas as classes — toque numa letra para filtrar.'}
+              ? `Mostrando produtos com classe ${current} (gravada no cadastro).`
+              : 'Usa a curva ABCD atualizada pelo processo noturno no cadastro de cada produto.'}
           </p>
         </PopoverContent>
       </Popover>

@@ -1,6 +1,6 @@
 /**
  * Cálculo ABCD / IEP (mesmas regras do job base44/functions/calcularIEP).
- * Usado no catálogo quando os campos ainda não foram persistidos no Produto.
+ * Usado em relatórios sob demanda; o catálogo lê os campos já gravados no Produto.
  */
 
 function q3(values) {
@@ -86,34 +86,23 @@ export function calcularLucroSkuComQ4(produto, pedidos90d) {
   return { lucro, precoMedio, quantidade, teveVenda: quantidade > 0 };
 }
 
+/** Etapa 3 — A até 70%, B até 85%, C até 95%; restante e sem lucro → D. */
 function classificarParetoABCD(ranking, totalLucroPositivo) {
   const mapa = {};
-
-  if (totalLucroPositivo <= 0) {
-    ranking.forEach((entry) => {
-      mapa[entry.id] = 'D';
-    });
-    return mapa;
+  for (const entry of ranking) {
+    mapa[entry.id] = 'D';
   }
+  if (totalLucroPositivo <= 0) return mapa;
 
-  const comLucro = ranking.filter((entry) => entry.lucro > 0);
   let acumulado = 0;
-
-  comLucro.forEach((entry) => {
+  for (const entry of ranking) {
+    if (entry.lucro <= 0) continue;
     acumulado += entry.lucro;
     const percentual = (acumulado / totalLucroPositivo) * 100;
     if (percentual <= 70) mapa[entry.id] = 'A';
     else if (percentual <= 85) mapa[entry.id] = 'B';
     else if (percentual <= 95) mapa[entry.id] = 'C';
-    else mapa[entry.id] = 'D';
-  });
-
-  ranking
-    .filter((entry) => entry.lucro <= 0)
-    .forEach((entry) => {
-      mapa[entry.id] = 'D';
-    });
-
+  }
   return mapa;
 }
 
@@ -124,12 +113,26 @@ function normalizarScore0a100(lucro, lucroMax, teveVenda) {
   return Math.round(Math.max(1, Math.min(100, raw)));
 }
 
-/** Chave do grupo ABCD: nível 2 dentro da família; sem h2 usa só família (nível 1). */
+/**
+ * Chave do grupo ABCD na hierarquia do produto (5 níveis: h1…h5).
+ * - Com nível 2 preenchido (h2): selo no grupo h1 + h2.
+ * - Só nível 1 (h1): selo no grupo h1.
+ * Todos os SKUs do mesmo grupo recebem a mesma letra A/B/C/D.
+ */
 export function grupoAbcdKey(produto) {
   const h1 = (produto.campo_hierarquico_1 || 'unassigned').trim();
   const h2 = (produto.campo_hierarquico_2 || '').trim();
   if (h2) return hierarchyKey([h1, h2]);
-  return hierarchyKey([h1, '__familia__']);
+  return hierarchyKey([h1]);
+}
+
+function maxLucroPositivo(metricasPorSku) {
+  let max = 0;
+  for (const m of Object.values(metricasPorSku)) {
+    const v = Math.max(0, m?.lucro ?? 0);
+    if (v > max) max = v;
+  }
+  return max;
 }
 
 /** Calcula métricas IEP para todos os produtos (não grava no BD). */
@@ -142,7 +145,7 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d) {
     metricasPorSku[produto.id] = calcularLucroSkuComQ4(produto, pedidos);
   }
 
-  const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => Math.max(0, m.lucro)));
+  const lucroMax = maxLucroPositivo(metricasPorSku);
 
   const lucroPorGrupo = {};
   for (const produto of lista) {

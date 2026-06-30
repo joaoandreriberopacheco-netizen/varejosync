@@ -10,12 +10,12 @@ import {
 } from '@/components/ui/dialog';
 import {
   AlertCircle,
+  BarChart3,
   CheckCircle2,
   Loader2,
-  Package,
   RefreshCw,
 } from 'lucide-react';
-import { atualizarMetasEstoque } from '@/functions/atualizarMetasEstoque';
+import { calcularIEP } from '@/functions/calcularIEP';
 
 const BATCH_SIZE = 50;
 
@@ -46,7 +46,7 @@ function extractInvokeError(error) {
   return msg;
 }
 
-export default function MetasEstoqueConfigTool() {
+export default function AbcdConfigTool() {
   const [running, setRunning] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   /** @type {[DialogPhase, React.Dispatch<React.SetStateAction<DialogPhase>>]} */
@@ -76,52 +76,79 @@ export default function MetasEstoqueConfigTool() {
     resetDialog();
   };
 
-  const runJob = async (somenteMetasVazias) => {
-    const key = somenteMetasVazias ? 'vazios' : 'completo';
+  const runJob = async (somenteAbcdVazio) => {
+    const key = somenteAbcdVazio ? 'vazios' : 'completo';
     setRunning(key);
     setDialogOpen(true);
     resetDialog();
     setPhase('preparing');
     setProgress((p) => ({
       ...p,
-      etapa: 'Analisando vendas 90d, dias com estoque e lead time…',
+      etapa: 'Analisando vendas dos últimos 90 dias e calculando a curva ABCD…',
     }));
 
     try {
-      const prepResp = await atualizarMetasEstoque({
-        fase: 'preparar',
-        somente_metas_vazias: somenteMetasVazias,
+      setProgress((p) => ({
+        ...p,
+        etapa: 'Etapa 1: montando lista com vendas dos últimos 90 dias (sem outliers)…',
+      }));
+
+      const listarResp = await calcularIEP({
+        fase: 'listar',
+        somente_abcd_vazio: somenteAbcdVazio,
         modo: 'manual',
         batch_size: BATCH_SIZE,
       });
-      const prep = normalizeJobResponse(prepResp);
+      const listado = normalizeJobResponse(listarResp);
 
-      if (prep.error) {
-        throw new Error(prep.error);
-      }
-      if (prep.status === 'erro') {
-        throw new Error(prep.error || 'Falha ao preparar o job.');
+      if (listado.error || listado.status === 'erro') {
+        throw new Error(listado.error || 'Falha na etapa 1 (lista).');
       }
 
-      if (prep.status === 'sem_alteracao' || prep.concluido) {
+      if (listado.status === 'sem_alteracao' || listado.concluido) {
         setPhase('empty');
         setResult({
-          mensagem: prep.mensagem || 'Nenhum produto pendente de atualização.',
-          somente_metas_vazias: somenteMetasVazias,
+          mensagem: listado.mensagem || 'Nenhum produto pendente de atualização.',
+          somente_abcd_vazio: somenteAbcdVazio,
         });
         return;
       }
 
-      const jobCache = prep.job_cache;
-      if (!jobCache?.run_id || !Array.isArray(jobCache.produto_ids)) {
-        throw new Error(
-          'Resposta incompleta do servidor. Atualize a função atualizarMetasEstoque no Base44.',
-        );
+      setProgress((p) => ({
+        ...p,
+        etapa: 'Etapa 2–3: ordenando por lucro e aplicando A / B / C / D…',
+      }));
+
+      const classificarResp = await calcularIEP({
+        fase: 'classificar',
+        run_id: listado.run_id,
+        ...(listado.job_cache ? { job_cache: listado.job_cache } : {}),
+        modo: 'manual',
+      });
+      const classificado = normalizeJobResponse(classificarResp);
+
+      if (classificado.error || classificado.status === 'erro') {
+        throw new Error(classificado.error || 'Falha na etapa 3 (classificação).');
       }
 
-      const runId = prep.run_id || jobCache.run_id;
-      const totalPendentes = prep.total_pendentes ?? jobCache.produto_ids.length;
-      const totalBlocos = prep.total_blocos ?? Math.ceil(totalPendentes / BATCH_SIZE);
+      if (classificado.concluido && (classificado.total_pendentes ?? 0) === 0) {
+        setPhase('empty');
+        setResult({
+          mensagem: 'Nenhum produto para gravar após a classificação.',
+          somente_abcd_vazio: somenteAbcdVazio,
+        });
+        return;
+      }
+
+      const jobCache = classificado.job_cache;
+      const cacheNoServidor = Boolean(classificado.cache_no_servidor);
+      if (!cacheNoServidor && (!jobCache?.run_id || !jobCache?.updates_by_id)) {
+        throw new Error('Resposta incompleta do servidor. Republica a função calcularIEP no Base44.');
+      }
+
+      const runId = classificado.run_id || jobCache?.run_id;
+      const totalPendentes = classificado.total_pendentes ?? jobCache?.produto_ids?.length ?? 0;
+      const totalBlocos = classificado.total_blocos ?? Math.ceil(totalPendentes / BATCH_SIZE);
       let offset = 0;
       let totalAtualizados = 0;
 
@@ -131,7 +158,7 @@ export default function MetasEstoqueConfigTool() {
         totalBlocos,
         atualizados: 0,
         totalPendentes,
-        etapa: 'Gravando estoque mínimo e ideal nos produtos…',
+        etapa: 'Etapa 4: gravando classificação nos produtos…',
       });
 
       while (offset < totalPendentes) {
@@ -139,10 +166,10 @@ export default function MetasEstoqueConfigTool() {
           throw new Error('Operação cancelada.');
         }
 
-        const gravarResp = await atualizarMetasEstoque({
+        const gravarResp = await calcularIEP({
           fase: 'gravar',
           run_id: runId,
-          job_cache: jobCache,
+          ...(cacheNoServidor ? {} : { job_cache: jobCache }),
           offset,
           batch_size: BATCH_SIZE,
           modo: 'manual',
@@ -161,7 +188,7 @@ export default function MetasEstoqueConfigTool() {
           totalBlocos: bloco.total_blocos ?? totalBlocos,
           atualizados: totalAtualizados,
           totalPendentes,
-          etapa: 'Gravando estoque mínimo e ideal nos produtos…',
+          etapa: 'Etapa 4: gravando classificação nos produtos…',
         });
 
         if (bloco.concluido) break;
@@ -173,8 +200,7 @@ export default function MetasEstoqueConfigTool() {
         atualizados: totalAtualizados,
         total_pendentes: totalPendentes,
         total_blocos: totalBlocos,
-        somente_metas_vazias: somenteMetasVazias,
-        ignorados_sem_venda: prep.ignorados_sem_venda,
+        somente_abcd_vazio: somenteAbcdVazio,
         timestamp: new Date().toISOString(),
       };
 
@@ -199,14 +225,13 @@ export default function MetasEstoqueConfigTool() {
     <>
       <div className="rounded-2xl bg-muted/50/60 p-4 space-y-4">
         <div className="flex items-start gap-3">
-          <Package className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+          <BarChart3 className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
           <div className="min-w-0 space-y-1">
-            <p className="text-sm font-semibold text-foreground/90">Ponto de pedido e estoque mínimo</p>
+            <p className="text-sm font-semibold text-foreground/90">Curva ABCD / IEP</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Calcula a partir das vendas dos últimos 90 dias (dias com estoque, sem outliers) e grava no
-              cadastro: <strong className="font-medium text-foreground/80">estoque mínimo</strong> = ponto de
-              pedido (m × 1,5 × lead time) e <strong className="font-medium text-foreground/80">estoque ideal</strong>{' '}
-              = quantidade a repor (lead time × m). Produtos com trava manual são ignorados.
+              Calcula a classificação com vendas dos últimos 90 dias e grava no cadastro do produto
+              (campo abcd e scores IEP). O processamento roda em blocos de {BATCH_SIZE} produtos.
+              À madrugada o job recalcula todos automaticamente.
             </p>
           </div>
         </div>
@@ -224,7 +249,7 @@ export default function MetasEstoqueConfigTool() {
             ) : (
               <RefreshCw className="w-4 h-4 mr-2" />
             )}
-            Preencher produtos sem metas
+            Preencher produtos sem ABCD
           </Button>
           <Button
             type="button"
@@ -236,7 +261,7 @@ export default function MetasEstoqueConfigTool() {
             {running === 'completo' ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (
-              <Package className="w-4 h-4 mr-2" />
+              <BarChart3 className="w-4 h-4 mr-2" />
             )}
             Recalcular todos os produtos
           </Button>
@@ -282,13 +307,13 @@ export default function MetasEstoqueConfigTool() {
               ) : phase === 'error' ? (
                 <AlertCircle className="w-5 h-5 text-red-500" />
               ) : (
-                <Package className="w-5 h-5 text-muted-foreground" />
+                <BarChart3 className="w-5 h-5 text-muted-foreground" />
               )}
-              Metas de estoque
+              Curva ABCD / IEP
             </DialogTitle>
             <DialogDescription>
-              {phase === 'preparing' && 'Preparando cálculo com vendas e movimentações dos últimos 90 dias.'}
-              {phase === 'writing' && 'Salvando estoque mínimo e ideal no cadastro.'}
+              {phase === 'preparing' && 'Etapas 1–3: lista, ordenação e classificação A/B/C/D.'}
+              {phase === 'writing' && 'Etapa 4: gravando no cadastro de cada produto.'}
               {phase === 'success' && 'Processo concluído com sucesso.'}
               {phase === 'empty' && 'Nenhuma alteração necessária.'}
               {phase === 'error' && 'Não foi possível concluir a atualização.'}
@@ -337,8 +362,8 @@ export default function MetasEstoqueConfigTool() {
                 {result.total_pendentes != null ? ` de ${result.total_pendentes}` : ''}.
               </p>
               <p className="text-xs text-muted-foreground">
-                Estoque mínimo (ponto de pedido) e estoque ideal (qtd a repor) gravados. A tela de
-                Sugestões de Compra usa esses valores quando não recalcula em tempo real.
+                A curva ABCD e os scores IEP já estão gravados. O catálogo e os filtros A/B/C/D passam a
+                usar esses valores.
               </p>
               {result.total_blocos != null && (
                 <p className="text-xs text-muted-foreground">
@@ -361,8 +386,8 @@ export default function MetasEstoqueConfigTool() {
               <p className="text-sm font-medium text-foreground">Erro na atualização</p>
               <p className="text-xs text-muted-foreground break-words">{errorMessage}</p>
               <p className="text-[11px] text-muted-foreground">
-                Se o erro persistir, confirme que a função <strong>atualizarMetasEstoque</strong> foi
-                publicada no Base44 com a versão mais recente.
+                Se o erro persistir, confirme que a função <strong>calcularIEP</strong> foi publicada no
+                Base44 com a versão mais recente.
               </p>
             </div>
           )}

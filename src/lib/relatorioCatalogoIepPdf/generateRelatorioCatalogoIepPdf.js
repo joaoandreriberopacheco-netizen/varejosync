@@ -26,7 +26,7 @@ const safe = (text) => normalizePdfText(text);
 
 export const CATALOG_IEP_PDF_BUILD = 'curva_abc_iep_v1';
 
-export function prepareCatalogIepReportRows(produtos = [], pedidos = [], sortOrder = 'abcd_desc') {
+export function prepareCatalogIepReportRows(produtos = [], pedidos = [], sortOrder = 'iep_score_desc') {
   const list = (produtos || []).filter((p) => p && typeof p === 'object');
   const enriched = enrichProdutosComIep(list, pedidos || []);
   return [...enriched].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
@@ -48,7 +48,7 @@ export async function generateRelatorioCatalogoIepPdf(payload = {}) {
     produtos = [],
     pedidos = [],
     filters_summary: filtersSummary = '',
-    sort_order: sortOrder = 'abcd_desc',
+    sort_order: sortOrder = 'iep_score_desc',
     generated_at: generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
   } = payload;
 

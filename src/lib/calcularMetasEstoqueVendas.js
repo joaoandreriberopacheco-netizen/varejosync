@@ -1,21 +1,24 @@
 /**
  * Metas de estoque (mínimo / ideal) derivadas de vendas recentes.
- * Independente de IEP/ABCD — usa só média de vendas e lead time do produto.
  * Regras:
  * - Janela: 90 dias
  * - Outliers: linhas com quantidade > Q3 descartadas
- * - m = qty vendida (limpa) / 90 dias
+ * - m = qty vendida / dias com estoque ≠ 0 (negativo conta)
  * - Lead time: tempo_reposicao_dias ou 20 dias
  * - Ponto de pedido (mínimo): m × 1,5 × lead time
  * - Ideal / pedido: m × lead time
  * - Arredondamento: lote_compra_vitrine ou fator da unidade de vitrine
  */
 
-import { collectItensVendaProduto, lineQuantityBase } from '@/lib/vendasLinha';
+import { collectItensVendaProduto, lineQuantityBase } from '@/lib/calcularIepProdutos';
 import {
   buildPurchaseUnitOptions,
   resolveUnidadeExibicaoParaCompras,
 } from '@/lib/productUnits';
+import {
+  buildMapaSaldoFimDia,
+  contarDiasComEstoqueAtivo,
+} from '@/lib/estoqueSaldoDiario';
 
 export const METAS_ESTOQUE_JANELA_DIAS = 90;
 export const METAS_ESTOQUE_LEAD_TIME_PADRAO = 20;
@@ -118,24 +121,33 @@ export function arredondarQuantidadeSugestao(quantityBase, produto, roundingMode
   return q === 0 ? pack : q;
 }
 
-/** Média diária m = qty vendida (sem outliers) / janela em dias. */
-export function calcularMediaVendaDia(produto, pedidos90d, _movimentacoesIgnoradas = null, options = {}) {
-  const janelaDias = Math.max(1, options.janelaDias ?? METAS_ESTOQUE_JANELA_DIAS);
+/** Média diária m = qty vendida (sem outliers) / dias com estoque ≠ 0. */
+export function calcularMediaVendaDia(produto, pedidos90d, movimentacoesProduto, options = {}) {
+  const janelaDias = options.janelaDias ?? METAS_ESTOQUE_JANELA_DIAS;
   const vendas = calcularVendasSemOutliersQuantidade(produto, pedidos90d);
 
-  if (!vendas.teveVenda) {
+  const saldoPorDia = buildMapaSaldoFimDia(
+    movimentacoesProduto,
+    produto?.estoque_atual,
+    janelaDias,
+  );
+  const diasComEstoque = contarDiasComEstoqueAtivo(saldoPorDia);
+
+  if (!vendas.teveVenda || diasComEstoque === 0) {
     return {
       mediaDia: 0,
+      diasComEstoque,
       diasJanela: janelaDias,
       ...vendas,
       teveMedia: false,
     };
   }
 
-  const mediaDia = vendas.quantidadeLimpa / janelaDias;
+  const mediaDia = vendas.quantidadeLimpa / diasComEstoque;
 
   return {
     mediaDia,
+    diasComEstoque,
     diasJanela: janelaDias,
     ...vendas,
     teveMedia: mediaDia > 0,
@@ -148,18 +160,20 @@ export function calcularMediaVendaDia(produto, pedidos90d, _movimentacoesIgnorad
 export function calcularMetasEstoqueParaProduto(produto, pedidos90d, options = {}) {
   const janelaDias = options.janelaDias ?? METAS_ESTOQUE_JANELA_DIAS;
   const leadTimePadrao = options.leadTimePadrao ?? METAS_ESTOQUE_LEAD_TIME_PADRAO;
+  const movimentacoes = options.movimentacoes ?? [];
 
   const leadTime = Math.max(
     1,
     Number(produto?.tempo_reposicao_dias) || leadTimePadrao,
   );
 
-  const media = calcularMediaVendaDia(produto, pedidos90d, null, { janelaDias });
+  const media = calcularMediaVendaDia(produto, pedidos90d, movimentacoes, { janelaDias });
   if (!media.teveMedia) {
     return {
       atualizar: false,
-      motivo: 'sem_venda',
+      motivo: !media.teveVenda ? 'sem_venda' : 'sem_dias_com_estoque',
       lead_time_dias: leadTime,
+      dias_com_estoque: media.diasComEstoque,
       ...media,
     };
   }
@@ -186,11 +200,12 @@ export function calcularMetasEstoqueParaProduto(produto, pedidos90d, options = {
     fator_vitrine: fator,
     lote_compra_vitrine: resolveLoteCompraVitrine(produto) || null,
     lote_compra_base: resolveLoteCompraBase(produto),
+    dias_com_estoque: media.diasComEstoque,
     quantidade_limpa_90d: media.quantidadeLimpa,
     outliers_descartados: media.outliersDescartados,
     linhas_venda_total: media.linhasTotal,
     metas_estoque_atualizado_em: new Date().toISOString(),
-    metas_estoque_versao: 'v3-media-90d-lead-time',
+    metas_estoque_versao: 'v2-media-dias-estoque-lote-vitrine',
   };
 }
 
