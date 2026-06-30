@@ -389,14 +389,16 @@ async function carregarDados90d(db) {
 }
 
 async function persistirCacheJob(db, cache) {
-  let cacheNoServidor = false;
   try {
     await saveJobCache(db, cache);
-    cacheNoServidor = true;
+    const loaded = await loadJobCache(db);
+    if (loaded?.run_id === cache.run_id) {
+      return true;
+    }
   } catch {
-    // cliente pode receber job_cache na resposta
+    // cliente recebe job_cache na resposta
   }
-  return cacheNoServidor;
+  return false;
 }
 
 function rollupNivel(produto, nivel, mediaLucroPorChave) {
@@ -538,7 +540,7 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
     status: 'preparado',
     fase: 'preparar',
     run_id: runId,
-    job_cache: cacheNoServidor ? undefined : cache,
+    job_cache: cache,
     cache_no_servidor: cacheNoServidor,
     modo,
     somente_abcd_vazio: somenteAbcdVazio,
@@ -722,11 +724,66 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'ok', fase: 'limpar', mensagem: 'Cache do job removido.' });
     }
 
-    if (fase === 'listar' || fase === 'classificar' || fase === 'preparar') {
+    if (fase === 'preparar') {
       const prep = await runPreparar(db, body, modo, somenteAbcdVazio, batchSize);
       return Response.json({
         ...prep,
-        fase: fase === 'preparar' ? 'preparar' : prep.fase,
+        versao: 'V10-abcd-preparar-unico',
+        regras: regrasResposta(somenteAbcdVazio),
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    if (fase === 'listar') {
+      const prep = await runPreparar(db, body, modo, somenteAbcdVazio, batchSize);
+      return Response.json({
+        ...prep,
+        status: prep.status === 'preparado' ? 'listado' : prep.status,
+        fase: 'listar',
+        etapa: 'listar',
+        proxima_fase: 'classificar',
+        versao: 'V10-abcd-preparar-unico',
+        regras: regrasResposta(somenteAbcdVazio),
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    if (fase === 'classificar') {
+      const { cache } = await resolveJobCache(db, body);
+      if (cache?.mapaAbcdGrupo && cache?.produto_ids) {
+        const size = cache.batch_size || batchSize;
+        const totalPendentes = cache.produto_ids.length;
+        const totalBlocos = totalPendentes > 0 ? Math.ceil(totalPendentes / size) : 0;
+        return Response.json({
+          status: 'classificado',
+          fase: 'classificar',
+          etapa: 'classificar',
+          run_id: cache.run_id,
+          job_cache: cache,
+          cache_no_servidor: false,
+          modo: cache.modo,
+          somente_abcd_vazio: cache.somente_abcd_vazio,
+          total_produtos: cache.total_produtos,
+          total_pendentes: totalPendentes,
+          grupos_nivel_2: cache.grupos_nivel_2,
+          batch_size: size,
+          total_blocos: totalBlocos,
+          proximo_offset: 0,
+          concluido: totalPendentes === 0,
+          proxima_fase: 'gravar',
+          versao: 'V10-abcd-preparar-unico',
+          regras: regrasResposta(Boolean(cache.somente_abcd_vazio)),
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      const prep = await runPreparar(db, body, modo, somenteAbcdVazio, batchSize);
+      return Response.json({
+        ...prep,
+        status: prep.status === 'preparado' ? 'classificado' : prep.status,
+        fase: 'classificar',
+        etapa: 'classificar',
+        proxima_fase: 'gravar',
         versao: 'V10-abcd-preparar-unico',
         regras: regrasResposta(somenteAbcdVazio),
         timestamp: new Date().toISOString(),
