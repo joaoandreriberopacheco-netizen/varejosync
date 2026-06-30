@@ -186,13 +186,17 @@ function calcularMetas(
   };
 }
 
-async function fetchPedidos90d(base44: ReturnType<typeof createClientFromRequest>, dataISO: string, pageSize = 500) {
+async function fetchPedidos90d(
+  entities: ReturnType<typeof createClientFromRequest>['entities'],
+  dataISO: string,
+  pageSize = 500,
+) {
   const todos: Record<string, unknown>[] = [];
   let skip = 0;
   let temMais = true;
 
   while (temMais) {
-    const batch = await base44.entities.PedidoVenda.filter(
+    const batch = await entities.PedidoVenda.filter(
       { status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
       '-created_date',
       pageSize,
