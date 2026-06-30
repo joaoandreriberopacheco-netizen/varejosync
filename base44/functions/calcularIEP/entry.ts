@@ -149,10 +149,25 @@ async function fetchPedidosComPaginacao(base44, dataISO, pageSize = 500) {
 
 // ═══════════════════════════════════════════════════════════════
 // JOB PRINCIPAL — IQR por SKU + ABCD no nível hierárquico 2
+// Desligado por defeito: catálogo calcula ABCD ao vivo (não grava no Produto).
+// Para reativar: ABCD_JOB_NOTURNO=true no painel Base44 → Environment Variables.
 // ═══════════════════════════════════════════════════════════════
+
+const JOB_ABCD_NOTURNO_ATIVO = Deno.env.get('ABCD_JOB_NOTURNO') === 'true';
 
 Deno.serve(async (req) => {
   try {
+    if (!JOB_ABCD_NOTURNO_ATIVO) {
+      return Response.json({
+        status: 'desligado',
+        versao: 'off-catalogo-ao-vivo',
+        mensagem:
+          'Job noturno calcularIEP desativado. A classificação ABCD é feita ao vivo no catálogo, sem gravar no cadastro.',
+        reativar: 'Defina ABCD_JOB_NOTURNO=true nas variáveis de ambiente da app (painel Base44).',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
