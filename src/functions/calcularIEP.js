@@ -9,6 +9,7 @@ import { invokeFunction } from './_invokeHelper';
  *   run_id?: string,
  *   offset?: number,
  *   batch_size?: number,
+ *   job_cache?: object,
  * }} body
  */
 export function calcularIEP(body = {}) {

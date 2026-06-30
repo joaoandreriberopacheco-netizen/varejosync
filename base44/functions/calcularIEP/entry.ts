@@ -210,6 +210,15 @@ async function loadJobCache(db) {
   return configs?.[0]?.[CACHE_KEY] ?? null;
 }
 
+async function resolveJobCache(db, body) {
+  const clientCache = body?.job_cache;
+  if (clientCache?.run_id && Array.isArray(clientCache.produto_ids)) {
+    return { cache: clientCache, source: 'client' };
+  }
+  const serverCache = await loadJobCache(db);
+  return { cache: serverCache, source: 'server' };
+}
+
 async function saveJobCache(db, cache) {
   const configs = await db.ConfiguracoesVenda.list();
   if (configs?.[0]?.id) {
@@ -462,7 +471,11 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
     ...snapshot,
   };
 
-  await saveJobCache(db, cache);
+  try {
+    await saveJobCache(db, cache);
+  } catch {
+    // Se o campo não existir na entidade, o cliente usa job_cache da resposta.
+  }
 
   const totalPendentes = snapshot.produto_ids.length;
   const totalBlocos = totalPendentes > 0 ? Math.ceil(totalPendentes / batchSize) : 0;
@@ -471,6 +484,7 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
     status: 'preparado',
     fase: 'preparar',
     run_id: runId,
+    job_cache: cache,
     modo,
     somente_abcd_vazio: somenteAbcdVazio,
     total_produtos: snapshot.total_produtos,
@@ -485,7 +499,7 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
 }
 
 async function runGravar(db, body, batchSize) {
-  const cache = await loadJobCache(db);
+  const { cache, source } = await resolveJobCache(db, body);
   if (!cache?.run_id) {
     return {
       status: 'erro',
@@ -507,7 +521,7 @@ async function runGravar(db, body, batchSize) {
   const totalPendentes = cache.produto_ids?.length || 0;
 
   if (totalPendentes === 0) {
-    await clearJobCache(db);
+    if (source === 'server') await clearJobCache(db);
     return {
       status: 'sem_alteracao',
       fase: 'gravar',
@@ -522,7 +536,7 @@ async function runGravar(db, body, batchSize) {
   const atualizadosAcumulado = bloco.proximo_offset;
   const totalBlocos = Math.ceil(totalPendentes / size);
 
-  if (bloco.concluido) {
+  if (bloco.concluido && source === 'server') {
     await clearJobCache(db);
   }
 
@@ -564,9 +578,14 @@ async function runGravarTodosBlocos(db, body, batchSize) {
   let offset = 0;
   let totalAtualizados = 0;
   let ultimoBloco = null;
+  const jobCache = prep.job_cache;
 
   while (true) {
-    ultimoBloco = await runGravar(db, { ...body, offset, run_id: prep.run_id, batch_size: batchSize }, batchSize);
+    ultimoBloco = await runGravar(
+      db,
+      { ...body, offset, run_id: prep.run_id, batch_size: batchSize, job_cache: jobCache },
+      batchSize,
+    );
     if (ultimoBloco.status === 'erro') {
       return ultimoBloco;
     }
@@ -639,9 +658,6 @@ Deno.serve(async (req) => {
 
     if (fase === 'gravar') {
       const gravar = await runGravar(db, body, batchSize);
-      if (gravar.status === 'erro') {
-        return Response.json(gravar, { status: 400 });
-      }
       return Response.json(gravar);
     }
 
