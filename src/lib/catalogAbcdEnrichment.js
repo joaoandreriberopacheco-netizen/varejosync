@@ -1,9 +1,6 @@
 /**
- * Classe ABCD no catálogo — campo estático gravado no produto.
- *
- * A curva é calculada pelo job `calcularIEP` (madrugada), que persiste
- * `abcd`, `iep_classe` e scores no cadastro. O catálogo só lê esses valores;
- * não recalcula vendas de 90 dias (isso fica nos relatórios IEP sob demanda).
+ * Classe ABCD no catálogo — valor calculado ao vivo (enrichProdutosComIep)
+ * ou trava manual no cadastro.
  */
 
 export function resolveProdutoAbcdClasse(produto) {

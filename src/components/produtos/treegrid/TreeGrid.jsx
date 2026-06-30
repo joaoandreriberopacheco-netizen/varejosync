@@ -14,6 +14,34 @@ const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 
 const fmtPct = (n) => `${(n ?? 0).toFixed(1)}%`;
 const fmtN   = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
+function AbcdBadge({ letter }) {
+  const value = String(letter || '').toUpperCase();
+  if (!value) return <span className="text-xs text-muted-foreground">—</span>;
+  const tone =
+    value === 'A' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+    : value === 'B' ? 'bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300'
+    : value === 'C' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+    : 'bg-muted text-muted-foreground';
+  return (
+    <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded px-1 text-[10px] font-bold ${tone}`}>
+      {value}
+    </span>
+  );
+}
+
+function scoreCell(value, tilde = false) {
+  const num = Number(value);
+  if (value == null || !Number.isFinite(num)) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  const text = Math.round(num).toLocaleString('pt-BR');
+  return (
+    <span className="text-xs text-muted-foreground tabular-nums">
+      {tilde ? `~${text}` : text}
+    </span>
+  );
+}
+
 // ── Definição completa de colunas ─────────────────────────────────────────────
 const COL_DEFS = [
   { id: 'status',               label: 'Status',         w: 72  },
@@ -38,6 +66,13 @@ const COL_DEFS = [
   { id: 'tipo',                 label: 'Tipo',           w: 80  },
   { id: 'unidade',              label: 'Unidades',       w: 72  },
   { id: 'unidades_pacote',      label: 'Un/Pct',         w: 72  },
+  { id: 'abcd',                 label: 'Classe ABCD',    w: 72  },
+  { id: 'iep_score',            label: 'Score IEP',      w: 80  },
+  { id: 'iep_score_nivel_1',    label: 'Média N1',       w: 80  },
+  { id: 'iep_score_nivel_2',    label: 'Média N2',       w: 80  },
+  { id: 'iep_score_nivel_3',    label: 'Média N3',       w: 80  },
+  { id: 'iep_score_nivel_4',    label: 'Média N4',       w: 80  },
+  { id: 'iep_score_nivel_5',    label: 'Média N5',       w: 80  },
 ];
 
 export const ALL_COLS     = COL_DEFS;
@@ -226,6 +261,13 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
       );
     }
     case 'unidades_pacote':      return <span className="text-xs text-muted-foreground">{produto.unidades_por_pacote || 1}</span>;
+    case 'abcd':                 return <AbcdBadge letter={produto.abcd} />;
+    case 'iep_score':            return scoreCell(produto.iep_score);
+    case 'iep_score_nivel_1':    return scoreCell(produto.iep_score_nivel_1);
+    case 'iep_score_nivel_2':    return scoreCell(produto.iep_score_nivel_2);
+    case 'iep_score_nivel_3':    return scoreCell(produto.iep_score_nivel_3);
+    case 'iep_score_nivel_4':    return scoreCell(produto.iep_score_nivel_4);
+    case 'iep_score_nivel_5':    return scoreCell(produto.iep_score_nivel_5);
     default:                     return <span className="text-xs text-muted-foreground">—</span>;
   }
 }
@@ -277,6 +319,13 @@ function groupCellValue(colId, row) {
           OK
         </Badge>
       );
+    case 'abcd':                  return <AbcdBadge letter={row.abcdDominante} />;
+    case 'iep_score':             return scoreCell(row.iepScoreMedio, true);
+    case 'iep_score_nivel_1':     return scoreCell(row.iepScoreNivel1Medio, true);
+    case 'iep_score_nivel_2':     return scoreCell(row.iepScoreNivel2Medio, true);
+    case 'iep_score_nivel_3':     return scoreCell(row.iepScoreNivel3Medio, true);
+    case 'iep_score_nivel_4':     return scoreCell(row.iepScoreNivel4Medio, true);
+    case 'iep_score_nivel_5':     return scoreCell(row.iepScoreNivel5Medio, true);
     default:                      return dash();
   }
 }

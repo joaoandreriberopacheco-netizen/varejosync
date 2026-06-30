@@ -50,7 +50,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import {
-  useProdutosListQuery,
+  useProdutosComIepQuery,
   useFornecedoresQuery,
 } from '@/hooks/useP38Entities';
 
@@ -174,7 +174,7 @@ function ProdutosPageContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isDesktop = useDesktopContent();
-  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosListQuery();
+  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosComIepQuery();
   const { data: fornecedoresQuery, refetch: refetchFornecedores } = useFornecedoresQuery();
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
