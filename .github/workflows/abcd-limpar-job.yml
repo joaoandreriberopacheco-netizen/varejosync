@@ -1,0 +1,61 @@
+# Limpa campos abcd / IEP gravados pelo job noturno em Produto (Base44).
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#   VITE_BASE44_APP_ID
+#   VITE_BASE44_BACKEND_URL   (ex.: https://p38.base44.app)
+#   BASE44_API_KEY  ou  BASE44_ACCESS_TOKEN
+#
+# Pré-requisito: função limparAbcdJobProdutos deployada (merge + Publish no Base44).
+#
+# Disparo: Actions → "Limpar ABCD job" → Run workflow
+
+name: Limpar ABCD job
+
+concurrency:
+  group: abcd-limpar-job
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Apenas contar (não altera produtos)'
+        type: boolean
+        default: true
+      somente_d:
+        description: 'Limpar só produtos com abcd=D (se false, limpa todos os campos do job)'
+        type: boolean
+        default: true
+
+jobs:
+  limpar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Dry-run ou limpeza em lotes
+        env:
+          VITE_BASE44_APP_ID: ${{ secrets.VITE_BASE44_APP_ID }}
+          VITE_BASE44_BACKEND_URL: ${{ secrets.VITE_BASE44_BACKEND_URL }}
+          BASE44_API_KEY: ${{ secrets.BASE44_API_KEY }}
+          BASE44_ACCESS_TOKEN: ${{ secrets.BASE44_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          ARGS=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Modo dry-run"
+          else
+            ARGS="--apply"
+          fi
+          if [ "${{ inputs.somente_d }}" = "true" ]; then
+            ARGS="$ARGS --somente-d"
+          fi
+          npm run abcd:limpar -- $ARGS
