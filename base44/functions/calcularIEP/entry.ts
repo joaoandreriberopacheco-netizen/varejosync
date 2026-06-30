@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 const DEFAULT_BATCH_SIZE = 50;
 const UPDATE_CONCURRENCY = 5;
 const CACHE_KEY = 'iep_job_run';
-const VERSAO = 'V16-pareto-prevpct-fix';
+const VERSAO = 'V17-abcd-por-produto-excel';
 
 /** Q3 — limite superior do miolo (exclui 4.º quartil). */
 function q3(values) {
@@ -88,6 +88,55 @@ function calcularLucroSkuComQ4(produto, itensPorProduto) {
   return { lucro, precoMedio, quantidade, teveVenda: quantidade > 0 };
 }
 
+/** Lucro do SKU — todas as linhas, sem excluir outliers (estilo Excel). */
+function calcularLucroSkuSimples(produto, itensPorProduto) {
+  const custoUnit = resolveCustoCalculado(produto);
+  const pid = String(produto.id ?? '');
+  const itens = itensPorProduto[pid] || [];
+
+  if (!itens.length) {
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
+  }
+
+  let quantidade = 0;
+  let receita = 0;
+
+  for (const it of itens) {
+    const qtyBase = lineQuantityBase(it);
+    const total = Number(it.total) || 0;
+    if (qtyBase > 0 && total > 0) {
+      quantidade += qtyBase;
+      receita += total;
+    }
+  }
+
+  if (quantidade <= 0) {
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
+  }
+
+  const precoMedio = receita / quantidade;
+  const lucro = receita - custoUnit * quantidade;
+  return { lucro, precoMedio, quantidade, teveVenda: true };
+}
+
+function normalizeItemVenda(it) {
+  return {
+    produto_id: it?.produto_id ?? it?.produtoId,
+    quantidade_base: it?.quantidade_base,
+    quantidade: it?.quantidade ?? it?.quantidade_comercial,
+    fator_conversao: it?.fator_conversao ?? it?.fator_aplicado,
+    total: it?.total,
+  };
+}
+
+function appendItemVenda(itensPorProduto, rawItem) {
+  const item = normalizeItemVenda(rawItem);
+  const pid = String(item?.produto_id ?? '');
+  if (!pid) return;
+  if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
+  itensPorProduto[pid].push(item);
+}
+
 // ═══════════════════════════════════════════════════════════════
 // CURVA ABCD — 3 etapas: lista → ordena → classifica (D = restante)
 // ═══════════════════════════════════════════════════════════════
@@ -101,20 +150,15 @@ function snapshotProduto(produto) {
   };
 }
 
-/** Etapa 1 — lucro por grupo (nível 2 da descrição), vendas 90d sem outliers. */
-function etapa1_listar(produtos, itensPorProduto) {
-  const lucroPorGrupo = {};
-  for (const produto of produtos) {
-    const { lucro } = calcularLucroSkuComQ4(produto, itensPorProduto);
-    const key = grupoAbcdKey(produto);
-    lucroPorGrupo[key] = (lucroPorGrupo[key] || 0) + lucro;
-  }
-
-  const lista = Object.entries(lucroPorGrupo).map(([id, lucro]) => ({ id, lucro }));
+/** Lista lucro por produto (ordenado depois na classificação). */
+function etapa_listarLucroPorProduto(produtos, itensPorProduto) {
+  const lista = produtos.map((produto) => {
+    const { lucro } = calcularLucroSkuSimples(produto, itensPorProduto);
+    return { id: String(produto.id), lucro };
+  });
 
   return {
     lista,
-    grupos_nivel_2: lista.length,
     total_produtos: produtos.length,
   };
 }
@@ -172,7 +216,8 @@ function buildJobCacheSlim(fields) {
     modo: fields.modo,
     somente_abcd_vazio: fields.somente_abcd_vazio,
     batch_size: fields.batch_size,
-    mapaAbcdGrupo: fields.mapaAbcdGrupo,
+    mapaAbcdProduto: fields.mapaAbcdProduto,
+    mapaAbcdGrupo: fields.mapaAbcdProduto,
     produto_ids: fields.produto_ids,
     grupos_nivel_2: fields.grupos_nivel_2,
     total_produtos: fields.total_produtos,
@@ -184,7 +229,8 @@ function buildJobCacheSlim(fields) {
 function jobCacheRespostaCliente(cache) {
   return {
     run_id: cache.run_id,
-    mapaAbcdGrupo: cache.mapaAbcdGrupo,
+    mapaAbcdProduto: cache.mapaAbcdProduto || cache.mapaAbcdGrupo,
+    mapaAbcdGrupo: cache.mapaAbcdProduto || cache.mapaAbcdGrupo,
     somente_abcd_vazio: cache.somente_abcd_vazio,
     batch_size: cache.batch_size,
     total_produtos: cache.total_produtos,
@@ -296,7 +342,11 @@ async function resolveJobCache(db, body) {
   }
 
   const clientCache = body?.job_cache;
-  if (clientCache?.run_id && clientCache.mapaAbcdGrupo && Array.isArray(clientCache.produto_ids)) {
+  if (
+    clientCache?.run_id &&
+    (clientCache.mapaAbcdProduto || clientCache.mapaAbcdGrupo) &&
+    Array.isArray(clientCache.produto_ids)
+  ) {
     return { cache: clientCache, source: 'client' };
   }
 
@@ -331,6 +381,30 @@ async function clearJobCache(db) {
 // FASES DO JOB — preparar (lista+ordena+grupos) → gravar (por SKU em blocos)
 // ═══════════════════════════════════════════════════════════════
 
+async function carregarItensCanonicoPedidos(db, pedidoIds) {
+  const needIds = new Set(pedidoIds.map(String));
+  const extra = {};
+  if (!needIds.size || !db.PedidoVendaItem?.list) return extra;
+
+  let skip = 0;
+  const pageSize = 500;
+
+  while (true) {
+    const batch = await db.PedidoVendaItem.list('-created_date', pageSize, skip);
+    if (!batch?.length) break;
+
+    for (const it of batch) {
+      if (!needIds.has(String(it?.pedido_venda_id ?? ''))) continue;
+      appendItemVenda(extra, it);
+    }
+
+    skip += pageSize;
+    if (batch.length < pageSize) break;
+  }
+
+  return extra;
+}
+
 async function carregarDados90d(db) {
   const hoje = new Date();
   const data90d = new Date();
@@ -339,6 +413,8 @@ async function carregarDados90d(db) {
 
   const produtos = await fetchProdutosComPaginacao(db);
   const itensPorProduto = {};
+  const pedidosIds = [];
+  const pedidosComEspelho = new Set();
   let pedidos90d = 0;
   let skip = 0;
   const pageSize = 500;
@@ -355,17 +431,27 @@ async function carregarDados90d(db) {
     if (!batch || batch.length === 0) {
       temMais = false;
     } else {
-      pedidos90d += batch.length;
       for (const pedido of batch) {
-        for (const it of pedido.itens || []) {
-          const pid = String(it?.produto_id ?? '');
-          if (!pid) continue;
-          if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
-          itensPorProduto[pid].push(it);
+        pedidos90d += 1;
+        const pedidoId = String(pedido.id);
+        pedidosIds.push(pedidoId);
+        const itens = pedido.itens;
+        if (Array.isArray(itens) && itens.length) {
+          pedidosComEspelho.add(pedidoId);
+          for (const it of itens) appendItemVenda(itensPorProduto, it);
         }
       }
       skip += pageSize;
       if (batch.length < pageSize) temMais = false;
+    }
+  }
+
+  const pedidosSemEspelho = pedidosIds.filter((id) => !pedidosComEspelho.has(id));
+  if (pedidosSemEspelho.length) {
+    const canonico = await carregarItensCanonicoPedidos(db, pedidosSemEspelho);
+    for (const [pid, linhas] of Object.entries(canonico)) {
+      if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
+      itensPorProduto[pid].push(...linhas);
     }
   }
 
@@ -385,9 +471,8 @@ async function persistirCacheJob(db, cache) {
   return false;
 }
 
-function buildUpdateData(produto, mapaAbcdGrupo) {
-  const grupoKey = grupoAbcdKey(produto);
-  return { abcd: mapaAbcdGrupo[grupoKey] || 'D' };
+function buildUpdateData(produto, mapaAbcdProduto) {
+  return { abcd: mapaAbcdProduto[String(produto.id)] || 'D' };
 }
 
 async function gravarBloco(db, cache, offset, batchSize) {
@@ -403,7 +488,7 @@ async function gravarBloco(db, cache, offset, batchSize) {
     for (const produto of fetched) snapshotById.set(String(produto.id), produto);
   }
 
-  const mapa = cache.mapaAbcdGrupo || {};
+  const mapa = cache.mapaAbcdProduto || cache.mapaAbcdGrupo || {};
   const updates = [];
 
   for (const id of ids) {
@@ -432,9 +517,9 @@ function regrasResposta(somenteAbcdVazio) {
     janela_dias: 90,
     custo: 'preco_custo_calculado',
     preco: 'media_venda_sem_4_quartil_por_sku',
-    abcd_nivel: 'campo_hierarquico_2 (ou campo_hierarquico_1 se h2 vazio)',
-    pareto: '70/15/10/5 lucro acumulado (A até 70%, B até 85%, C até 95%, D restante)',
-    iqr: 'por_sku_exclui_q4',
+    abcd_nivel: 'por_produto (lucro 90d, maior para menor)',
+    pareto: '70/15/10/5 lucro acumulado por produto (A até 70%, B até 85%, C até 95%, D restante)',
+    iqr: 'desativado',
     somente_abcd_vazio: somenteAbcdVazio,
     batch_size: DEFAULT_BATCH_SIZE,
   };
@@ -484,9 +569,9 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
   }
 
   const itensPorProdutoMap = itensPorProduto;
-  const etapa1 = etapa1_listar(produtos, itensPorProdutoMap);
+  const etapa1 = etapa_listarLucroPorProduto(produtos, itensPorProdutoMap);
   const etapa2 = etapa2_ordenarDistribuicao(etapa1.lista);
-  const mapaAbcdGrupo = etapa3_classificarAbcd(etapa2.ranking, etapa2.totalLucroPositivo);
+  const mapaAbcdProduto = etapa3_classificarAbcd(etapa2.ranking, etapa2.totalLucroPositivo);
 
   const produtoIds = produtos
     .filter((p) => !somenteAbcdVazio || produtoAbcdVazio(p))
@@ -499,8 +584,8 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
     modo,
     somente_abcd_vazio: somenteAbcdVazio,
     batch_size: batchSize,
-    mapaAbcdGrupo,
-    grupos_nivel_2: etapa1.grupos_nivel_2,
+    mapaAbcdProduto,
+    grupos_nivel_2: etapa1.total_produtos,
     total_produtos: etapa1.total_produtos,
     produto_ids: produtoIds,
     pedidos_90d,
@@ -541,7 +626,7 @@ async function runGravar(db, body, batchSize) {
     };
   }
 
-  if (!cache.mapaAbcdGrupo || !cache.produto_ids?.length) {
+  if (!(cache.mapaAbcdProduto || cache.mapaAbcdGrupo) || !cache.produto_ids?.length) {
     return {
       status: 'erro',
       fase: 'gravar',
@@ -743,7 +828,7 @@ Deno.serve(async (req) => {
 
     if (fase === 'classificar') {
       const { cache } = await resolveJobCache(db, body);
-      if (cache?.mapaAbcdGrupo && cache?.produto_ids) {
+      if ((cache?.mapaAbcdProduto || cache?.mapaAbcdGrupo) && cache?.produto_ids) {
         const size = cache.batch_size || batchSize;
         const totalPendentes = cache.produto_ids.length;
         const totalBlocos = totalPendentes > 0 ? Math.ceil(totalPendentes / size) : 0;

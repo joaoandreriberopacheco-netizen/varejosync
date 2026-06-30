@@ -52,6 +52,42 @@ export function collectItensVendaProduto(produto, pedidos90d) {
     .filter((it) => String(it?.produto_id ?? it?.produtoId ?? '') === pid);
 }
 
+/** Lucro do SKU nos últimos 90d — todas as linhas, sem excluir outliers. */
+export function calcularLucroSkuSimples(produto, itens) {
+  const custoUnit = resolveCustoCalculadoProduto(produto);
+  const linhas = Array.isArray(itens) ? itens : [];
+
+  if (!linhas.length) {
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
+  }
+
+  let quantidade = 0;
+  let receita = 0;
+
+  for (const it of linhas) {
+    const qtyBase = lineQuantityBase(it);
+    const total = Number(it.total) || 0;
+    if (qtyBase > 0 && total > 0) {
+      quantidade += qtyBase;
+      receita += total;
+    }
+  }
+
+  if (quantidade <= 0) {
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
+  }
+
+  const precoMedio = receita / quantidade;
+  const lucro = receita - custoUnit * quantidade;
+  return { lucro, precoMedio, quantidade, teveVenda: true };
+}
+
+export function collectItensVendaProdutoFromIndex(produto, itensPorProduto) {
+  const pid = String(produto?.id ?? '');
+  if (!pid) return [];
+  return itensPorProduto?.[pid] || [];
+}
+
 export function calcularLucroSkuComQ4(produto, pedidos90d) {
   const custoUnit = resolveCustoCalculadoProduto(produto);
   const itens = collectItensVendaProduto(produto, pedidos90d);
@@ -104,6 +140,48 @@ function classificarParetoABCD(ranking, totalLucroPositivo) {
     else if (prevPct < 95) mapa[entry.id] = 'C';
   }
   return mapa;
+}
+
+function countLinhasItens(itensPorProduto) {
+  let total = 0;
+  for (const linhas of Object.values(itensPorProduto || {})) {
+    total += Array.isArray(linhas) ? linhas.length : 0;
+  }
+  return total;
+}
+
+/**
+ * Curva ABCD por produto (estilo Excel): ordena SKUs por lucro 90d (maior → menor)
+ * e aplica Pareto no lucro total positivo. Sem exclusão de outliers.
+ */
+export function calcularMapaAbcdPorProduto(produtos, itensPorProduto) {
+  const lista = Array.isArray(produtos) ? produtos : [];
+  const index = itensPorProduto || {};
+
+  const ranking = lista.map((produto) => {
+    const pid = String(produto.id);
+    const itens = collectItensVendaProdutoFromIndex(produto, index);
+    const { lucro, teveVenda } = calcularLucroSkuSimples(produto, itens);
+    return { id: pid, lucro, teveVenda };
+  });
+
+  ranking.sort((a, b) => b.lucro - a.lucro);
+
+  const lucroTotalPositivo = ranking.reduce((acc, entry) => acc + Math.max(0, entry.lucro), 0);
+  const mapaAbcdProduto = classificarParetoABCD(ranking, lucroTotalPositivo);
+  const produtosComVenda = ranking.filter((entry) => entry.teveVenda && entry.lucro > 0).length;
+
+  return {
+    mapaAbcdProduto,
+    total_produtos: lista.length,
+    total_lucro_positivo: lucroTotalPositivo,
+    produtos_com_venda: produtosComVenda,
+    itens_linhas: countLinhasItens(index),
+  };
+}
+
+export function abcdClasseParaProdutoId(produtoId, mapaAbcdProduto) {
+  return mapaAbcdProduto?.[String(produtoId)] || 'D';
 }
 
 /** Curva ABCD somente — mapa grupo → letra A/B/C/D (sem IEP). */
