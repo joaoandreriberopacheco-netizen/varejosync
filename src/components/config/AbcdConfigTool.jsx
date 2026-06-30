@@ -38,6 +38,15 @@ function sleep(ms) {
 }
 
 function extractInvokeError(error) {
+  const responseData = error?.response?.data ?? error?.data;
+  if (responseData) {
+    if (typeof responseData === 'string') return responseData;
+    if (typeof responseData === 'object') {
+      const msg = responseData.error || responseData.message || responseData.mensagem;
+      if (msg) return String(msg);
+    }
+  }
+
   const msg = error?.message || String(error);
   const match = msg.match(/HTTP (\d+)/);
   if (match) {
@@ -110,14 +119,9 @@ export default function AbcdConfigTool() {
       }
 
       const jobCache = preparado.job_cache;
-      if (
-        !jobCache?.run_id ||
-        !jobCache?.mapaAbcdGrupo ||
-        !jobCache?.produto_ids ||
-        !jobCache?.produtos_snapshot
-      ) {
+      if (!jobCache?.run_id || !jobCache?.mapaAbcdGrupo || !jobCache?.produto_ids?.length) {
         throw new Error(
-          'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (versão V11-abcd-somente).',
+          'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (versão V12-abcd-slim-cache).',
         );
       }
 
@@ -363,7 +367,7 @@ export default function AbcdConfigTool() {
               <p className="text-xs text-muted-foreground break-words">{errorMessage}</p>
               <p className="text-[11px] text-muted-foreground">
                 Se o erro persistir, confirme que a função <strong>calcularIEP</strong> foi publicada no
-                Base44 com a versão <strong>V11-abcd-somente</strong>.
+                Base44 com a versão <strong>V12-abcd-slim-cache</strong>.
               </p>
             </div>
           )}

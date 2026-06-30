@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 const DEFAULT_BATCH_SIZE = 50;
 const UPDATE_CONCURRENCY = 5;
 const CACHE_KEY = 'iep_job_run';
-const VERSAO = 'V11-abcd-somente';
+const VERSAO = 'V12-abcd-slim-cache';
 
 /** Q3 — limite superior do miolo (exclui 4.º quartil). */
 function q3(values) {
@@ -47,23 +47,10 @@ function lineQuantityBase(item) {
 
 /** ABCD no nível 2 da descrição (h1+h2); se só h1, no nível 1. */
 function grupoAbcdKey(produto) {
-  const h1 = (produto.campo_hierarquico_1 || 'unassigned').trim();
-  const h2 = (produto.campo_hierarquico_2 || '').trim();
+  const h1 = String(produto?.campo_hierarquico_1 ?? 'unassigned').trim();
+  const h2 = String(produto?.campo_hierarquico_2 ?? '').trim();
   if (h2) return hierarchyKey([h1, h2]);
   return hierarchyKey([h1]);
-}
-
-function buildItensPorProdutoId(pedidos90d) {
-  const map = {};
-  for (const pedido of pedidos90d || []) {
-    for (const it of pedido.itens || []) {
-      const pid = String(it?.produto_id ?? '');
-      if (!pid) continue;
-      if (!map[pid]) map[pid] = [];
-      map[pid].push(it);
-    }
-  }
-  return map;
 }
 
 function calcularLucroSkuComQ4(produto, itensPorProduto) {
@@ -128,7 +115,6 @@ function etapa1_listar(produtos, itensPorProduto) {
   return {
     lista,
     grupos_nivel_2: lista.length,
-    produtos_snapshot: produtos.map(snapshotProduto),
     total_produtos: produtos.length,
   };
 }
@@ -177,6 +163,58 @@ function produtoAbcdVazio(produto) {
   return !String(produto?.abcd ?? '').trim();
 }
 
+function buildJobCacheSlim(fields) {
+  return {
+    run_id: fields.run_id,
+    created_at: fields.created_at,
+    modo: fields.modo,
+    somente_abcd_vazio: fields.somente_abcd_vazio,
+    batch_size: fields.batch_size,
+    mapaAbcdGrupo: fields.mapaAbcdGrupo,
+    produto_ids: fields.produto_ids,
+    grupos_nivel_2: fields.grupos_nivel_2,
+    total_produtos: fields.total_produtos,
+    pedidos_90d: fields.pedidos_90d,
+  };
+}
+
+async function fetchProdutosSnapshotPorIds(db, ids) {
+  if (!ids?.length) return [];
+
+  try {
+    const rows = await db.Produto.filter({ id: ids });
+    const list = Array.isArray(rows) ? rows : rows ? [rows] : [];
+    if (list.length) return list.map(snapshotProduto);
+  } catch {
+    // fallback abaixo
+  }
+
+  const out = [];
+  for (let i = 0; i < ids.length; i += UPDATE_CONCURRENCY) {
+    const chunk = ids.slice(i, i + UPDATE_CONCURRENCY);
+    const fetched = await Promise.all(
+      chunk.map(async (id) => {
+        try {
+          const row = await db.Produto.get(id);
+          return row ? snapshotProduto(row) : null;
+        } catch {
+          try {
+            const rows = await db.Produto.filter({ id });
+            const first = Array.isArray(rows) ? rows[0] : rows;
+            return first ? snapshotProduto(first) : null;
+          } catch {
+            return null;
+          }
+        }
+      }),
+    );
+    for (const row of fetched) {
+      if (row) out.push(row);
+    }
+  }
+  return out;
+}
+
 async function parseRequestBody(req) {
   try {
     const raw = await req.text();
@@ -195,31 +233,6 @@ function newRunId() {
 // FETCH COM PAGINAÇÃO
 // ═══════════════════════════════════════════════════════════════
 
-async function fetchPedidosComPaginacao(entities, dataISO, pageSize = 500) {
-  const todosPedidos = [];
-  let skip = 0;
-  let temMais = true;
-
-  while (temMais) {
-    const batch = await entities.PedidoVenda.filter(
-      { tipo: 'PDV', status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
-      '-created_date',
-      pageSize,
-      skip
-    );
-
-    if (!batch || batch.length === 0) {
-      temMais = false;
-    } else {
-      todosPedidos.push(...batch);
-      skip += pageSize;
-      if (batch.length < pageSize) temMais = false;
-    }
-  }
-
-  return todosPedidos;
-}
-
 async function fetchProdutosComPaginacao(entities, pageSize = 500) {
   const todos = [];
   let skip = 0;
@@ -230,7 +243,7 @@ async function fetchProdutosComPaginacao(entities, pageSize = 500) {
     if (!batch || batch.length === 0) {
       temMais = false;
     } else {
-      todos.push(...batch);
+      for (const produto of batch) todos.push(produto);
       skip += pageSize;
       if (batch.length < pageSize) temMais = false;
     }
@@ -289,11 +302,40 @@ async function carregarDados90d(db) {
   const data90d = new Date();
   data90d.setDate(hoje.getDate() - 90);
   const dataISO = data90d.toISOString();
-  const [produtos, todosPedidos] = await Promise.all([
-    fetchProdutosComPaginacao(db),
-    fetchPedidosComPaginacao(db, dataISO),
-  ]);
-  return { produtos, todosPedidos, dataISO };
+
+  const produtos = await fetchProdutosComPaginacao(db);
+  const itensPorProduto = {};
+  let pedidos90d = 0;
+  let skip = 0;
+  const pageSize = 500;
+  let temMais = true;
+
+  while (temMais) {
+    const batch = await db.PedidoVenda.filter(
+      { tipo: 'PDV', status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
+      '-created_date',
+      pageSize,
+      skip,
+    );
+
+    if (!batch || batch.length === 0) {
+      temMais = false;
+    } else {
+      pedidos90d += batch.length;
+      for (const pedido of batch) {
+        for (const it of pedido.itens || []) {
+          const pid = String(it?.produto_id ?? '');
+          if (!pid) continue;
+          if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
+          itensPorProduto[pid].push(it);
+        }
+      }
+      skip += pageSize;
+      if (batch.length < pageSize) temMais = false;
+    }
+  }
+
+  return { produtos, itensPorProduto, dataISO, pedidos_90d: pedidos90d };
 }
 
 async function persistirCacheJob(db, cache) {
@@ -320,12 +362,18 @@ async function gravarBloco(db, cache, offset, batchSize) {
     return { atualizados: 0, concluido: true, proximo_offset: offset };
   }
 
-  const byId = new Map((cache.produtos_snapshot || []).map((p) => [p.id, p]));
+  const snapshotById = new Map((cache.produtos_snapshot || []).map((p) => [String(p.id), p]));
+  const faltantes = ids.filter((id) => !snapshotById.has(String(id)));
+  if (faltantes.length) {
+    const fetched = await fetchProdutosSnapshotPorIds(db, faltantes);
+    for (const produto of fetched) snapshotById.set(String(produto.id), produto);
+  }
+
   const mapa = cache.mapaAbcdGrupo || {};
   const updates = [];
 
   for (const id of ids) {
-    const produto = byId.get(id);
+    const produto = snapshotById.get(String(id));
     if (!produto) continue;
     updates.push({ id, data: buildUpdateData(produto, mapa) });
   }
@@ -359,7 +407,7 @@ function regrasResposta(somenteAbcdVazio) {
 }
 
 async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
-  const { produtos, todosPedidos } = await carregarDados90d(db);
+  const { produtos, itensPorProduto, pedidos_90d } = await carregarDados90d(db);
 
   if (somenteAbcdVazio && produtos.filter(produtoAbcdVazio).length === 0) {
     await clearJobCache(db);
@@ -374,29 +422,28 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
     };
   }
 
-  const itensPorProduto = buildItensPorProdutoId(todosPedidos);
-  const etapa1 = etapa1_listar(produtos, itensPorProduto);
+  const itensPorProdutoMap = itensPorProduto;
+  const etapa1 = etapa1_listar(produtos, itensPorProdutoMap);
   const etapa2 = etapa2_ordenarDistribuicao(etapa1.lista);
   const mapaAbcdGrupo = etapa3_classificarAbcd(etapa2.ranking, etapa2.totalLucroPositivo);
 
-  const produtoIds = etapa1.produtos_snapshot
+  const produtoIds = produtos
     .filter((p) => !somenteAbcdVazio || produtoAbcdVazio(p))
     .map((p) => p.id);
 
   const runId = String(body.run_id || newRunId());
-  const cache = {
+  const cache = buildJobCacheSlim({
     run_id: runId,
     created_at: new Date().toISOString(),
     modo,
     somente_abcd_vazio: somenteAbcdVazio,
     batch_size: batchSize,
-    produtos_snapshot: etapa1.produtos_snapshot,
     mapaAbcdGrupo,
     grupos_nivel_2: etapa1.grupos_nivel_2,
     total_produtos: etapa1.total_produtos,
     produto_ids: produtoIds,
-    pedidos_90d: todosPedidos.length,
-  };
+    pedidos_90d,
+  });
 
   const cacheNoServidor = await persistirCacheJob(db, cache);
   const totalPendentes = produtoIds.length;
@@ -417,7 +464,7 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
     total_blocos: totalBlocos,
     proximo_offset: 0,
     concluido: totalPendentes === 0,
-    pedidos_90d: todosPedidos.length,
+    pedidos_90d,
     proxima_fase: 'gravar',
   };
 }
@@ -432,7 +479,7 @@ async function runGravar(db, body, batchSize) {
     };
   }
 
-  if (!cache.mapaAbcdGrupo || !cache.produto_ids || !cache.produtos_snapshot) {
+  if (!cache.mapaAbcdGrupo || !cache.produto_ids?.length) {
     return {
       status: 'erro',
       fase: 'gravar',
