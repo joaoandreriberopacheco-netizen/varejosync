@@ -89,6 +89,100 @@ function resolveFatorVitrine(produto: Record<string, unknown>) {
   };
 }
 
+function resolveLoteCompraVitrine(produto: Record<string, unknown>) {
+  const explicito = Number(produto?.lote_compra_vitrine);
+  if (explicito > 1) return explicito;
+  return 0;
+}
+
+function resolveLoteCompraBase(produto: Record<string, unknown>) {
+  const loteVitrine = resolveLoteCompraVitrine(produto);
+  const { fator } = resolveFatorVitrine(produto);
+  if (loteVitrine > 1) return loteVitrine * fator;
+  return Math.max(1, fator);
+}
+
+function arredondarQuantidadeSugestao(quantityBase: number, produto: Record<string, unknown>) {
+  const base = Number(quantityBase) || 0;
+  if (base <= 0) return 0;
+  const pack = resolveLoteCompraBase(produto);
+  if (pack <= 1) return Math.max(1, Math.ceil(base));
+  return Math.ceil(base / pack) * pack;
+}
+
+function localDateKey(value: unknown) {
+  const d = new Date(String(value || ''));
+  if (Number.isNaN(d.getTime())) return 'sem-data';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function deltaMovimento(mov: Record<string, unknown>) {
+  const q = Number(mov?.quantidade) || 0;
+  const t = mov?.tipo;
+  if (t === 'Entrada') return q;
+  if (t === 'Saída') return -q;
+  return 0;
+}
+
+function buildMapaSaldoFimDia(
+  movimentacoes: Record<string, unknown>[],
+  estoqueAtual: number,
+  janelaDias = JANELA_DIAS,
+) {
+  const hoje = new Date();
+  const inicio = new Date(hoje);
+  inicio.setDate(inicio.getDate() - janelaDias);
+  const diaInicio = localDateKey(inicio);
+
+  const movsJanela = movimentacoes.filter((m) => {
+    const dia = localDateKey(m?.created_date);
+    return dia !== 'sem-data' && dia >= diaInicio;
+  });
+
+  const deltasNaJanela = movsJanela.reduce((acc, m) => acc + deltaMovimento(m), 0);
+  let saldo = (Number(estoqueAtual) || 0) - deltasNaJanela;
+
+  const movsPorDia = new Map<string, Record<string, unknown>[]>();
+  for (const m of movsJanela.sort((a, b) =>
+    new Date(String(a?.created_date || 0)).getTime() - new Date(String(b?.created_date || 0)).getTime()
+  )) {
+    const dia = localDateKey(m?.created_date);
+    if (!movsPorDia.has(dia)) movsPorDia.set(dia, []);
+    movsPorDia.get(dia)!.push(m);
+  }
+
+  const saldoPorDia = new Map<string, number>();
+  const dias: string[] = [];
+  const cur = new Date(inicio);
+  cur.setHours(12, 0, 0, 0);
+  const end = new Date(hoje);
+  end.setHours(12, 0, 0, 0);
+  while (cur <= end) {
+    dias.push(localDateKey(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  for (const dia of dias) {
+    for (const m of movsPorDia.get(dia) || []) {
+      saldo += deltaMovimento(m);
+    }
+    saldoPorDia.set(dia, saldo);
+  }
+
+  return saldoPorDia;
+}
+
+function contarDiasComEstoqueAtivo(saldoPorDia: Map<string, number>) {
+  let count = 0;
+  for (const saldo of saldoPorDia.values()) {
+    if (saldo !== 0) count += 1;
+  }
+  return count;
+}
+
 function arredondarParaVitrineBase(quantityBase: number, fatorVitrine: number) {
   const base = Number(quantityBase) || 0;
   if (base <= 0) return 0;
@@ -125,36 +219,50 @@ function calcularVendasSemOutliers(produto: Record<string, unknown>, pedidos: Re
   };
 }
 
-function calcularMetas(produto: Record<string, unknown>, pedidos: Record<string, unknown>[]) {
+function calcularMetas(
+  produto: Record<string, unknown>,
+  pedidos: Record<string, unknown>[],
+  movimentacoes: Record<string, unknown>[],
+) {
   const leadTime = Math.max(1, Number(produto?.tempo_reposicao_dias) || LEAD_TIME_PADRAO);
   const vendas = calcularVendasSemOutliers(produto, pedidos);
+  const saldoPorDia = buildMapaSaldoFimDia(movimentacoes, Number(produto?.estoque_atual) || 0);
+  const diasComEstoque = contarDiasComEstoqueAtivo(saldoPorDia);
 
-  if (!vendas.teveVenda) {
-    return { atualizar: false, motivo: 'sem_venda', leadTime, ...vendas };
+  if (!vendas.teveVenda || diasComEstoque === 0) {
+    return {
+      atualizar: false,
+      motivo: !vendas.teveVenda ? 'sem_venda' : 'sem_dias_com_estoque',
+      leadTime,
+      diasComEstoque,
+      ...vendas,
+    };
   }
 
-  const vendaMediaDia = vendas.quantidadeLimpa / JANELA_DIAS;
-  const idealBase = vendaMediaDia * (leadTime / 2);
-  const minimoBase = vendaMediaDia * (leadTime * 1.5);
+  const m = vendas.quantidadeLimpa / diasComEstoque;
+  const idealBase = m * leadTime;
+  const minimoBase = m * 1.5 * leadTime;
   const { unidade, fator } = resolveFatorVitrine(produto);
 
-  let estoqueIdeal = arredondarParaVitrineBase(idealBase, fator);
-  let estoqueMinimo = arredondarParaVitrineBase(minimoBase, fator);
+  let estoqueIdeal = arredondarQuantidadeSugestao(idealBase, produto);
+  let estoqueMinimo = arredondarQuantidadeSugestao(minimoBase, produto);
   if (estoqueMinimo < estoqueIdeal) estoqueMinimo = estoqueIdeal;
 
   return {
     atualizar: true,
     estoque_minimo: estoqueMinimo,
     estoque_ideal: estoqueIdeal,
-    venda_media_dia: vendaMediaDia,
+    venda_media_dia: m,
     lead_time_dias: leadTime,
     unidade_vitrine_compra: unidade,
     fator_vitrine: fator,
+    lote_compra_vitrine: resolveLoteCompraVitrine(produto) || null,
+    dias_com_estoque: diasComEstoque,
     quantidade_limpa_90d: vendas.quantidadeLimpa,
     outliers_descartados: vendas.outliersDescartados,
     linhas_venda_total: vendas.linhasTotal,
     metas_estoque_atualizado_em: new Date().toISOString(),
-    metas_estoque_versao: 'v1-vendas90d-outliers-vitrine',
+    metas_estoque_versao: 'v2-media-dias-estoque-lote-vitrine',
   };
 }
 
@@ -182,6 +290,46 @@ async function fetchPedidos90d(base44: ReturnType<typeof createClientFromRequest
   return todos;
 }
 
+async function fetchMovimentacoes90d(
+  base44: ReturnType<typeof createClientFromRequest>,
+  dataISO: string,
+  pageSize = 500,
+) {
+  const todos: Record<string, unknown>[] = [];
+  let skip = 0;
+  let temMais = true;
+
+  while (temMais) {
+    const batch = await base44.entities.MovimentacaoEstoque.filter(
+      { created_date: { $gte: dataISO } },
+      'created_date',
+      pageSize,
+      skip,
+    );
+
+    if (!batch || batch.length === 0) {
+      temMais = false;
+    } else {
+      todos.push(...batch);
+      skip += pageSize;
+      if (batch.length < pageSize) temMais = false;
+    }
+  }
+
+  return todos;
+}
+
+function groupMovsPorProduto(movs: Record<string, unknown>[]) {
+  const map: Record<string, Record<string, unknown>[]> = {};
+  for (const m of movs) {
+    const pid = String(m?.produto_id ?? '');
+    if (!pid) continue;
+    if (!map[pid]) map[pid] = [];
+    map[pid].push(m);
+  }
+  return map;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -196,10 +344,13 @@ Deno.serve(async (req) => {
     data90d.setDate(hoje.getDate() - JANELA_DIAS);
     const dataISO = data90d.toISOString();
 
-    const [produtos, pedidos] = await Promise.all([
+    const [produtos, pedidos, movimentacoes] = await Promise.all([
       base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
       fetchPedidos90d(base44, dataISO),
+      fetchMovimentacoes90d(base44, dataISO),
     ]);
+
+    const movsPorProduto = groupMovsPorProduto(movimentacoes);
 
     let atualizados = 0;
     let ignoradosTrava = 0;
@@ -211,7 +362,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const metas = calcularMetas(produto, pedidos);
+      const metas = calcularMetas(produto, pedidos, movsPorProduto[String(produto.id)] || []);
       if (!metas.atualizar) {
         ignoradosSemVenda += 1;
         continue;
@@ -225,6 +376,7 @@ Deno.serve(async (req) => {
         metas_estoque_unidade_compra: metas.unidade_vitrine_compra,
         metas_estoque_quantidade_limpa_90d: metas.quantidade_limpa_90d,
         metas_estoque_outliers_descartados: metas.outliers_descartados,
+        metas_estoque_dias_com_estoque: metas.dias_com_estoque,
         metas_estoque_atualizado_em: metas.metas_estoque_atualizado_em,
         metas_estoque_versao: metas.metas_estoque_versao,
       });
@@ -241,10 +393,11 @@ Deno.serve(async (req) => {
       regras: {
         janela_dias: JANELA_DIAS,
         lead_time_padrao: LEAD_TIME_PADRAO,
-        ideal: '50% do lead time (venda média/dia)',
-        minimo: '150% do lead time (venda média/dia)',
+        media: 'qty_vendida / dias_com_estoque_diferente_de_zero',
+        ponto_pedido: 'm × 1,5 × lead time',
+        ideal: 'm × lead time',
         outliers: 'qty_linha > Q3 descartada',
-        arredondamento: 'multiplo_unidade_vitrine_compra',
+        arredondamento: 'lote_compra_vitrine ou fator_vitrine',
       },
       timestamp: new Date().toISOString(),
     });

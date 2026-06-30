@@ -10,17 +10,24 @@ import {
 const LINE_CLASS =
   'w-full text-left max-md:!py-3.5 max-md:min-h-[58px] [&>div:last-child]:max-w-[42%] sm:[&>div:last-child]:max-w-[38%] [&>div:first-child]:min-w-0';
 
-function rowAccent(produto, selecionado) {
+function fmtNum(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '0';
+  return v < 10 ? v.toFixed(2).replace(/\.?0+$/, '') : Math.round(v * 10) / 10;
+}
+
+function rowAccent(produto, selecionado, sugestao) {
   if (selecionado) return 'info';
   const atual = produto.estoque_atual || 0;
-  const minimo = produto.estoque_minimo || 0;
+  const ponto = sugestao?.ponto_pedido ?? produto.estoque_minimo ?? 0;
   if (atual <= 0) return 'danger';
-  if (atual < minimo) return 'warning';
+  if (atual < ponto) return 'warning';
   return 'muted';
 }
 
 export default function SugestaoCompraLinha({
   produto,
+  sugestao,
   disp,
   selecionado,
   onToggleSelecionado,
@@ -28,24 +35,32 @@ export default function SugestaoCompraLinha({
   striped,
 }) {
   const pendente = produto.quantidade_pendente > 0;
-  const ideal = produto.estoque_ideal || produto.estoque_maximo || 0;
+  const m = sugestao?.media_dia ?? 0;
+  const ponto = sugestao?.ponto_pedido ?? 0;
+  const lead = sugestao?.lead_time_dias ?? 0;
 
   return (
     <P38MobileLine
       thinAccent
       striped={striped}
-      accent={p38AccentKeyFromTone(rowAccent(produto, selecionado))}
+      accent={p38AccentKeyFromTone(rowAccent(produto, selecionado, sugestao))}
       className={LINE_CLASS}
       title={produto.nome}
       subtitle={
         <>
           Estoque {produto.estoque_atual || 0}
-          <span className="text-muted-foreground/70"> / </span>
-          mín {produto.estoque_minimo || 0}
-          {ideal > 0 ? (
+          <span className="text-muted-foreground/70"> · </span>
+          pedido {fmtNum(ponto)}
+          {m > 0 ? (
             <>
               <span className="text-muted-foreground/70"> · </span>
-              ideal {ideal}
+              m {fmtNum(m)}/dia
+              {lead > 0 ? (
+                <>
+                  <span className="text-muted-foreground/70"> · </span>
+                  LT {lead}d
+                </>
+              ) : null}
             </>
           ) : null}
         </>
@@ -53,7 +68,7 @@ export default function SugestaoCompraLinha({
       meta={
         <>
           <P38StatusLabel
-            tone={(produto.estoque_atual || 0) <= (produto.estoque_minimo || 0) ? 'warning' : 'success'}
+            tone={(produto.estoque_atual || 0) < ponto ? 'warning' : 'success'}
           >
             Repor
           </P38StatusLabel>

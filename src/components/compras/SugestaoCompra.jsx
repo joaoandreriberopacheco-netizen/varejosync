@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast as sonnerToast } from 'sonner';
 import { base44 } from '@/api/base44Client';
@@ -12,24 +12,15 @@ import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
-import { resolveFatorEmbalagemCompra } from '@/lib/calcularMetasEstoqueVendas';
+import { calcularSugestaoCompraProduto } from '@/lib/calcularSugestaoCompra';
+import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+import {
+  fetchMovimentacoesEstoque90d,
+  groupMovimentacoesPorProduto,
+} from '@/lib/fetchMovimentacoesEstoque90d';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 
 const FORNECEDOR_VAZIO = '__none__';
-
-/** Produto entra na lista se estiver abaixo do mínimo ou abaixo do ideal (quando definido). */
-export function produtoElegivelSugestaoCompra(p) {
-  const ea = Number(p.estoque_atual) || 0;
-  const em = Number(p.estoque_minimo) || 0;
-  const ei = Number(p.estoque_ideal) || 0;
-  const emax = Number(p.estoque_maximo) || 0;
-
-  if (em > 0 && ea < em) return true;
-  if (ei > 0 && ea < ei) return true;
-  if (emax > 0 && ea < emax) return true;
-  if (ea === 0 && (em > 0 || ei > 0 || emax > 0)) return true;
-  return false;
-}
 
 export default function SugestaoCompra({ onStatsChange }) {
   const [produtos, setProdutos] = useState([]);
@@ -49,11 +40,14 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [loadStats, setLoadStats] = useState({
     totalAtivos: 0,
     elegiveis: 0,
-    semMetas: 0,
+    semVenda90d: 0,
+    semDiasEstoque: 0,
   });
 
   const { toast } = useToast();
   const navigate = useNavigate();
+  const calcContextRef = useRef({ pedidos: [], movsPorProduto: {} });
+  const dadosCarregadosRef = useRef(false);
 
   const allTags = useMemo(() => {
     const tags = new Set();
@@ -64,24 +58,10 @@ export default function SugestaoCompra({ onStatsChange }) {
   const produtoParaCompra = (produto) => buildSnapshotExibicaoComercial(produto);
 
   const calcQuantity = (produto) => {
-    const target =
-      produto.estoque_ideal ||
-      produto.estoque_maximo ||
-      (produto.estoque_minimo > 0 ? produto.estoque_minimo * 2 : 10);
-    const pack = resolveFatorEmbalagemCompra(produto);
-    const need = Math.max(target - (produto.estoque_atual || 0), pack);
-
-    if (pack <= 1) return need;
-
-    if (roundingMode === 'up') return Math.ceil(need / pack) * pack;
-    if (roundingMode === 'down') {
-      const q = Math.floor(need / pack) * pack;
-      return q === 0 ? pack : q;
-    }
-    if (roundingMode === 'none') return need;
-
-    const q = Math.round(need / pack) * pack;
-    return q === 0 ? pack : q;
+    const base =
+      produto._sugestao?.quantidade_sugerida_base ??
+      calcularSugestaoCompraProduto(produto, [], [], { roundingMode }).quantidade_sugerida_base;
+    return base || 0;
   };
 
   const sugestaoDisplay = (produto) => {
@@ -96,43 +76,57 @@ export default function SugestaoCompra({ onStatsChange }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [prods, forn, cats, pedidos] = await Promise.all([
+      const [prods, forn, cats, pedidos, pedidosCompra, movimentacoes] = await Promise.all([
         base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
         base44.entities.Terceiro.list(),
         base44.entities.Categoria.list(),
+        fetchPedidosVenda90d(),
         base44.entities.PedidoCompra.filter({
           status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'],
         }),
+        fetchMovimentacoesEstoque90d(),
       ]);
 
       const pending = {};
-      pedidos.forEach((p) => {
+      pedidosCompra.forEach((p) => {
         p.itens?.forEach((i) => {
           pending[i.produto_id] = (pending[i.produto_id] || 0) + (i.quantidade || 0);
         });
       });
 
-      const elegiveis = prods.filter(produtoElegivelSugestaoCompra);
-      const semMetas = prods.filter(
-        (p) =>
-          !(Number(p.estoque_minimo) > 0) &&
-          !(Number(p.estoque_ideal) > 0) &&
-          !(Number(p.estoque_maximo) > 0),
-      ).length;
+      const movsPorProduto = groupMovimentacoesPorProduto(movimentacoes);
+      calcContextRef.current = { pedidos, movsPorProduto };
+      dadosCarregadosRef.current = true;
 
-      const filtered = elegiveis
-        .map((p) => ({
-          ...p,
-          quantidade_pendente: pending[p.id] || 0,
-        }))
+      let semVenda90d = 0;
+      let semDiasEstoque = 0;
+
+      const elegiveis = prods
+        .map((p) => {
+          const sugestao = calcularSugestaoCompraProduto(
+            p,
+            pedidos,
+            movsPorProduto[p.id] || [],
+            { roundingMode },
+          );
+          if (sugestao.motivo === 'sem_venda') semVenda90d += 1;
+          if (sugestao.motivo === 'sem_dias_com_estoque') semDiasEstoque += 1;
+          return {
+            ...p,
+            _sugestao: sugestao,
+            quantidade_pendente: pending[p.id] || 0,
+          };
+        })
+        .filter((p) => p._sugestao?.elegivel)
         .sort((a, b) => a.nome.localeCompare(b.nome));
 
       setLoadStats({
         totalAtivos: prods.length,
         elegiveis: elegiveis.length,
-        semMetas,
+        semVenda90d,
+        semDiasEstoque,
       });
-      setProdutos(filtered);
+      setProdutos(elegiveis);
       setFornecedores(forn);
       setCategorias(cats);
     } catch (error) {
@@ -145,6 +139,23 @@ export default function SugestaoCompra({ onStatsChange }) {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (!dadosCarregadosRef.current) return;
+    const { pedidos, movsPorProduto } = calcContextRef.current;
+    setProdutos((prev) => {
+      if (!prev.length) return prev;
+      return prev.map((p) => ({
+        ...p,
+        _sugestao: calcularSugestaoCompraProduto(
+          p,
+          pedidos,
+          movsPorProduto[p.id] || [],
+          { roundingMode },
+        ),
+      }));
+    });
+  }, [roundingMode]);
 
   const filteredProducts = useMemo(() => {
     const s = searchTerm.toLowerCase();
@@ -409,22 +420,24 @@ export default function SugestaoCompra({ onStatsChange }) {
       </div>
 
       {produtos.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-14 px-4 text-center max-w-md mx-auto">
+        <div className="flex flex-col items-center gap-3 py-14 px-4 text-center max-w-lg mx-auto">
           <CheckCircle className="w-9 h-9 text-muted-foreground/40" />
           <p className="text-sm text-foreground/90 font-medium">Nenhuma sugestão no momento</p>
           <p className="text-xs text-muted-foreground leading-relaxed">
             {loadStats.totalAtivos > 0 ? (
               <>
-                {loadStats.totalAtivos} produto(s) ativo(s) consultado(s).
-                {loadStats.semMetas > 0 ? (
-                  <>
-                    {' '}
-                    {loadStats.semMetas} sem estoque mínimo/ideal definido — rode o job de metas automáticas
-                    ou ajuste no cadastro.
-                  </>
-                ) : (
-                  <> Nenhum está abaixo do mínimo ou do ideal.</>
-                )}
+                {loadStats.totalAtivos} produto(s) analisado(s) nos últimos 90 dias.
+                {loadStats.semVenda90d > 0 ? (
+                  <> {loadStats.semVenda90d} sem venda no período.</>
+                ) : null}
+                {loadStats.semDiasEstoque > 0 ? (
+                  <> {loadStats.semDiasEstoque} sem dias com estoque para calcular a média.</>
+                ) : null}
+                {loadStats.elegiveis === 0 &&
+                loadStats.semVenda90d === 0 &&
+                loadStats.semDiasEstoque === 0 ? (
+                  <> Nenhum está abaixo do ponto de pedido (média × 1,5 × lead time).</>
+                ) : null}
               </>
             ) : (
               <>Não foi possível carregar produtos ou o catálogo está vazio.</>
@@ -454,6 +467,7 @@ export default function SugestaoCompra({ onStatsChange }) {
               <SugestaoCompraLinha
                 key={p.id}
                 produto={p}
+                sugestao={p._sugestao}
                 disp={sugestaoDisplay(p)}
                 selecionado={!!selectedItems[p.id]}
                 striped={index % 2 === 1}
