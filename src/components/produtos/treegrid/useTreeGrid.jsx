@@ -473,6 +473,28 @@ export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', vis
   return keys;
 }
 
+/**
+ * Assinatura só da estrutura (filtros / hierarquia) — não inclui preços nem ABCD/IEP.
+ * Usada para reiniciar expansão sem colapsar a árvore quando métricas mudam.
+ */
+export function catalogProdutosStructureSig(produtos, { groupByCategory = false } = {}) {
+  if (!produtos?.length) return '';
+  return produtos
+    .map((p) =>
+      [
+        p?.id,
+        groupByCategory ? (p?.categoria_nome || '').trim() : '',
+        (p?.campo_hierarquico_1 || '').trim(),
+        (p?.campo_hierarquico_2 || '').trim(),
+        (p?.campo_hierarquico_3 || '').trim(),
+        (p?.campo_hierarquico_4 || '').trim(),
+        p?.ativo ? 1 : 0,
+      ].join('|')
+    )
+    .filter(Boolean)
+    .join('\0');
+}
+
 /** Assinatura estável: evita rebuild da árvore quando o pai recria o array sem mudar catálogo. */
 function catalogTreeSignature(produtos) {
   if (!produtos?.length) return '';
@@ -521,7 +543,7 @@ function categoryTreeSignature(produtos) {
 
 export function useTreeGrid(produtos) {
   const sig = useMemo(() => catalogTreeSignature(produtos), [produtos]);
-  return useMemo(() => buildTree(produtos), [sig, produtos]);
+  return useMemo(() => buildTree(produtos), [sig]);
 }
 
 export function useCatalogTreeGrid(produtos, { groupByCategory = false } = {}) {
@@ -531,6 +553,6 @@ export function useCatalogTreeGrid(produtos, { groupByCategory = false } = {}) {
   );
   return useMemo(
     () => (groupByCategory ? buildCategoryTree(produtos) : buildTree(produtos)),
-    [sig, produtos, groupByCategory]
+    [sig, groupByCategory]
   );
 }

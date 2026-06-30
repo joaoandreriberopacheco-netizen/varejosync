@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders } from './treegrid/useTreeGrid';
+import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, catalogProdutosStructureSig } from './treegrid/useTreeGrid';
 import {
   buildPurchaseUnitOptions,
   buildSaleUnitOptions,
@@ -13,6 +13,7 @@ import {
   resolveCustoTotalUnitBaseProduto,
 } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
+import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
 import {
   p38Table,
   MARGIN_ACCENT_VALUE,
@@ -47,7 +48,6 @@ const CATALOGO_MOBILE_NOME_TYPO =
   'text-[12px] font-light leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
 const CATALOGO_MOBILE_ROW_H_GROUP = 56;
 const CATALOGO_MOBILE_ROW_H_SKU = 196;
-const CATALOGO_VIRTUALIZE_MIN_ROWS = 30;
 
 const CatalogoMobileScrollContext = createContext(null);
 
@@ -662,24 +662,19 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
   const pendingScrollRestoreRef = useRef(null);
 
   const tree = useCatalogTreeGrid(produtos, { groupByCategory });
-  const produtosSig = useMemo(
-    () => produtos.map((p) => [
-      p?.id,
-      groupByCategory ? (p?.categoria_nome || '') : '',
-      (p?.campo_hierarquico_1 || '').trim(),
-      (p?.campo_hierarquico_2 || '').trim(),
-    ].join('|')).filter(Boolean).join('\0'),
+  const produtosStructureSig = useMemo(
+    () => catalogProdutosStructureSig(produtos, { groupByCategory }),
     [produtos, groupByCategory]
   );
 
-  // Reinicia expansão só quando o conjunto de produtos filtrados muda — não a cada rebuild da árvore.
+  // Reinicia expansão só quando filtros/hierarquia mudam — não a cada rebuild por ABCD/IEP ou preços.
   useEffect(() => {
     setExpandedKeys(
       masterLevel === 1 ? new Set() : buildExpandedForLevel(tree, masterLevel - 1)
     );
     const scrollEl = scrollRef?.current;
     if (scrollEl) scrollEl.scrollTop = 0;
-  }, [produtosSig, groupByCategory, masterLevel, tree, scrollRef]);
+  }, [produtosStructureSig, groupByCategory, masterLevel, scrollRef]);
 
   useEffect(() => {
     onExpandedKeysChange?.(expandedKeys);

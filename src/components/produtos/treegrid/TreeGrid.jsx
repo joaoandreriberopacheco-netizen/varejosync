@@ -2,9 +2,10 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffe
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
+import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
+import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 
@@ -457,7 +458,12 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   const tree = useCatalogTreeGrid(produtos, { groupByCategory });
   treeRef.current = tree;
 
-  // Reaplica o nível selecionado quando filtros/dados reconstruírem a árvore.
+  const produtosStructureSig = useMemo(
+    () => catalogProdutosStructureSig(produtos, { groupByCategory }),
+    [produtos, groupByCategory]
+  );
+
+  // Reinicia expansão só quando filtros/hierarquia mudam — não a cada rebuild por ABCD/IEP ou preços.
   useEffect(() => {
     const scrollEl = scrollContainerRef.current;
     if (scrollEl) {
@@ -466,7 +472,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     setExpandedKeys(
       masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
     );
-  }, [masterLevel, tree, groupByCategory]);
+  }, [produtosStructureSig, groupByCategory, masterLevel]);
 
   useEffect(() => {
     onExpandedKeysChange?.(expandedKeys);
@@ -512,7 +518,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     overscan: 10,
     scrollElementRef: scrollContainerRef,
   });
-  const shouldVirtualizeRows = rows.length > 100;
+  const shouldVirtualizeRows = rows.length >= CATALOGO_VIRTUALIZE_MIN_ROWS;
   const visibleRows = useMemo(
     () => shouldVirtualizeRows ? rows.slice(virtualRows.startIndex, virtualRows.endIndex) : rows,
     [rows, shouldVirtualizeRows, virtualRows.endIndex, virtualRows.startIndex]
