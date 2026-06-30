@@ -21,9 +21,13 @@ import {
   calcularMapaAbcdSomente,
 } from '@/lib/calcularIepProdutos';
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 
 const BATCH_SIZE = 50;
-const UPDATE_CONCURRENCY = 5;
+const UPDATE_CONCURRENCY = 3;
+const PAUSE_BETWEEN_CHUNKS_MS = 300;
+const PAUSE_BETWEEN_BLOCKS_MS = 700;
+const RATE_LIMIT_RETRY = { maxAttempts: 5, baseDelayMs: 900 };
 
 /** @typedef {'idle' | 'preparing' | 'writing' | 'success' | 'empty' | 'error'} DialogPhase */
 
@@ -64,11 +68,18 @@ async function gravarAbcdEmLotes(produtos, mapaAbcdGrupo, onProgress) {
       const chunk = bloco.slice(j, j + UPDATE_CONCURRENCY);
       await Promise.all(
         chunk.map((produto) =>
-          base44.entities.Produto.update(produto.id, {
-            abcd: abcdClasseParaProduto(produto, mapaAbcdGrupo),
-          }),
+          withRateLimitRetry(
+            () =>
+              base44.entities.Produto.update(produto.id, {
+                abcd: abcdClasseParaProduto(produto, mapaAbcdGrupo),
+              }),
+            RATE_LIMIT_RETRY,
+          ),
         ),
       );
+      if (j + UPDATE_CONCURRENCY < bloco.length) {
+        await sleep(PAUSE_BETWEEN_CHUNKS_MS);
+      }
     }
 
     atualizados += bloco.length;
@@ -79,7 +90,9 @@ async function gravarAbcdEmLotes(produtos, mapaAbcdGrupo, onProgress) {
       totalPendentes: produtos.length,
     });
 
-    await sleep(80);
+    if (i + BATCH_SIZE < produtos.length) {
+      await sleep(PAUSE_BETWEEN_BLOCKS_MS);
+    }
   }
 
   return atualizados;
