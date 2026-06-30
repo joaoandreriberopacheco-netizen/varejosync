@@ -116,7 +116,7 @@ export function filterProdutos(produtos, filters) {
       filters.fornecedorId === 'all' || p.fornecedor_padrao_id === filters.fornecedorId;
     const abcdMatch =
       filters.abcd === 'all' ||
-      String(p.abcd_cadastro || '').toUpperCase() === String(filters.abcd).toUpperCase();
+      String(p.abcd || '').toUpperCase() === String(filters.abcd).toUpperCase();
     const ativoMatch =
       !filters.ativoStatus ||
       filters.ativoStatus === 'all' ||

@@ -3,10 +3,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
-import { enrichProdutosComIep, attachAbcdCadastro } from '@/lib/calcularIepProdutos';
-import { fetchDadosVendaAbcd90d, fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
+import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 
-export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
+export { fetchPedidosVenda90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
@@ -99,38 +99,26 @@ export function usePedidosVenda90dQuery(options = {}) {
   });
 }
 
-export function useDadosVendaAbcd90dQuery(options = {}) {
-  return useQuery({
-    queryKey: p38Keys.dadosVendaAbcd90d(),
-    queryFn: fetchDadosVendaAbcd90d,
-    staleTime: 10 * 60 * 1000,
-    gcTime: P38_GC_TIME,
-    ...options,
-  });
-}
-
-/** Catálogo — ABCD/IEP ao vivo (grupo h1+h2); ignora campo abcd gravado pelo job. */
+/** Lista de produtos com ABCD/IEP calculados no cliente quando ainda não persistidos. */
 export function useProdutosComIepQuery(options = {}) {
   const sort = options.sort ?? '-created_date';
   const { sort: _sort, ...rest } = options;
   const produtosQuery = useProdutosListQuery({ sort, ...rest });
-  const vendasQuery = useDadosVendaAbcd90dQuery({
+  const pedidosQuery = usePedidosVenda90dQuery({
     enabled: (rest.enabled ?? true) && Boolean(produtosQuery.data?.length),
   });
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
-    if (!vendasQuery.isSuccess) {
-      return produtosQuery.data.map(attachAbcdCadastro);
-    }
-    return enrichProdutosComIep(produtosQuery.data, vendasQuery.data?.pedidos90d ?? []);
-  }, [produtosQuery.data, vendasQuery.data, vendasQuery.isSuccess]);
+    if (!pedidosQuery.isFetched) return produtosQuery.data;
+    return enrichProdutosComIep(produtosQuery.data, pedidosQuery.data ?? []);
+  }, [produtosQuery.data, pedidosQuery.data, pedidosQuery.isFetched]);
 
   return {
     ...produtosQuery,
     data,
-    isLoading: produtosQuery.isLoading || vendasQuery.isLoading,
-    isFetching: produtosQuery.isFetching || vendasQuery.isFetching,
+    isLoading: produtosQuery.isLoading || pedidosQuery.isLoading,
+    isFetching: produtosQuery.isFetching || pedidosQuery.isFetching,
   };
 }
 

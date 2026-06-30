@@ -19,7 +19,7 @@ import { base44 } from '@/api/base44Client';
 import {
   abcdClasseParaProduto,
   calcularMapaAbcdSomente,
-} from '@/lib/calcularIepProdutos';
+} from '@/lib/calcularAbcdJob';
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 

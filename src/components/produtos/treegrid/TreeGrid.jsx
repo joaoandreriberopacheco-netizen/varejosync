@@ -2,10 +2,9 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffe
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
+import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
-import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 
@@ -66,8 +65,7 @@ const COL_DEFS = [
   { id: 'tipo',                 label: 'Tipo',           w: 80  },
   { id: 'unidade',              label: 'Unidades',       w: 72  },
   { id: 'unidades_pacote',      label: 'Un/Pct',         w: 72  },
-  { id: 'abcd',                 label: 'ABCD vivo',      w: 72  },
-  { id: 'abcd_cadastro',        label: 'ABCD cad.',      w: 72  },
+  { id: 'abcd',                 label: 'Classe ABCD',    w: 72  },
   { id: 'iep_score',            label: 'Score IEP',      w: 80  },
   { id: 'iep_score_nivel_1',    label: 'Média N1',       w: 80  },
   { id: 'iep_score_nivel_2',    label: 'Média N2',       w: 80  },
@@ -263,7 +261,6 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
     }
     case 'unidades_pacote':      return <span className="text-xs text-muted-foreground">{produto.unidades_por_pacote || 1}</span>;
     case 'abcd':                 return <AbcdBadge letter={produto.abcd} />;
-    case 'abcd_cadastro':        return <AbcdBadge letter={produto.abcd_cadastro} />;
     case 'iep_score':              return scoreCell(produto.iep_score);
     case 'iep_score_nivel_1':      return scoreCell(produto.iep_score_nivel_1);
     case 'iep_score_nivel_2':      return scoreCell(produto.iep_score_nivel_2);
@@ -322,7 +319,6 @@ function groupCellValue(colId, row) {
         </Badge>
       );
     case 'abcd':                  return <AbcdBadge letter={row.abcdDominante} />;
-    case 'abcd_cadastro':         return <AbcdBadge letter={row.abcdCadastroDominante} />;
     case 'iep_score':               return scoreCell(row.iepScoreMedio, true);
     case 'iep_score_nivel_1':       return scoreCell(row.iepScoreNivel1Medio, true);
     case 'iep_score_nivel_2':       return scoreCell(row.iepScoreNivel2Medio, true);
@@ -461,12 +457,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   const tree = useCatalogTreeGrid(produtos, { groupByCategory });
   treeRef.current = tree;
 
-  const produtosStructureSig = useMemo(
-    () => catalogProdutosStructureSig(produtos, { groupByCategory }),
-    [produtos, groupByCategory]
-  );
-
-  // Reinicia expansão só quando filtros/hierarquia mudam — não a cada rebuild por ABCD/IEP ou preços.
+  // Reaplica o nível selecionado quando filtros/dados reconstruírem a árvore.
   useEffect(() => {
     const scrollEl = scrollContainerRef.current;
     if (scrollEl) {
@@ -475,7 +466,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     setExpandedKeys(
       masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
     );
-  }, [produtosStructureSig, groupByCategory, masterLevel]);
+  }, [masterLevel, tree, groupByCategory]);
 
   useEffect(() => {
     onExpandedKeysChange?.(expandedKeys);
@@ -521,7 +512,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     overscan: 10,
     scrollElementRef: scrollContainerRef,
   });
-  const shouldVirtualizeRows = rows.length >= CATALOGO_VIRTUALIZE_MIN_ROWS;
+  const shouldVirtualizeRows = rows.length > 100;
   const visibleRows = useMemo(
     () => shouldVirtualizeRows ? rows.slice(virtualRows.startIndex, virtualRows.endIndex) : rows,
     [rows, shouldVirtualizeRows, virtualRows.endIndex, virtualRows.startIndex]

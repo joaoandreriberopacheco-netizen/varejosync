@@ -43,8 +43,6 @@ export default function ProdutosHeader({
   gerandoRelatorioEstoque = false,
   onGerarRelatorioVendas,
   gerandoRelatorioVendas = false,
-  onGerarRelatorioIep,
-  gerandoRelatorioIep = false,
   onOpenMassTag,
   onOpenMassCategory,
   onOpenMassMarkup,
@@ -85,9 +83,9 @@ export default function ProdutosHeader({
                   size="icon"
                   className="h-9 w-9 flex-shrink-0"
                   title="Relatórios do catálogo"
-                  disabled={gerandoRelatorioEstoque || gerandoRelatorioVendas || gerandoRelatorioIep}
+                  disabled={gerandoRelatorioEstoque || gerandoRelatorioVendas}
                 >
-                  {gerandoRelatorioEstoque || gerandoRelatorioVendas || gerandoRelatorioIep ? (
+                  {gerandoRelatorioEstoque || gerandoRelatorioVendas ? (
                     <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                   ) : (
                     <BarChart3 className="w-4 h-4 p38-text-accent" />
@@ -118,18 +116,6 @@ export default function ProdutosHeader({
                 >
                   <TrendingUp className="w-4 h-4 mr-2 p38-text-accent" />
                   Desempenho produtos
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    window.setTimeout(() => onGerarRelatorioIep?.(), 0);
-                  }}
-                  className={cn(
-                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
-                    gerandoRelatorioIep && 'pointer-events-none opacity-50',
-                  )}
-                >
-                  <BarChart3 className="w-4 h-4 mr-2 p38-text-accent" />
-                  Curva ABC / IEP
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

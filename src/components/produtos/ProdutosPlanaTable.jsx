@@ -33,8 +33,7 @@ const headMap = {
   show_comercial: 'Unidade comercial (PDV)',
   show_logistica: 'Unidade de exibição (sigla)',
   inventario_valorizado: 'Inventário valorizado',
-  abcd: 'ABCD ao vivo',
-  abcd_cadastro: 'ABCD cadastro',
+  abcd: 'Classe ABCD',
   iep_score: 'Score IEP',
   iep_score_nivel_1: 'Média N1',
   iep_score_nivel_2: 'Média N2',
@@ -69,7 +68,6 @@ const widthMap = {
   show_logistica: 'min-w-[120px]',
   inventario_valorizado: 'min-w-[120px]',
   abcd: 'min-w-[80px]',
-  abcd_cadastro: 'min-w-[90px]',
   iep_score: 'min-w-[90px]',
   iep_score_nivel_1: 'min-w-[90px]',
   iep_score_nivel_2: 'min-w-[90px]',
@@ -181,14 +179,6 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
       return <TableCell key={col} className="text-xs text-foreground/90">{(produto.unidade_exibicao_sigla || getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN') || produto.unidade_show_logistica || '-').toString().toUpperCase()}</TableCell>;
     case 'abcd': {
       const letter = String(produto.abcd || '').toUpperCase();
-      return (
-        <TableCell key={col} className="text-xs font-bold text-foreground/90">
-          {letter || '—'}
-        </TableCell>
-      );
-    }
-    case 'abcd_cadastro': {
-      const letter = String(produto.abcd_cadastro || '').toUpperCase();
       return (
         <TableCell key={col} className="text-xs font-bold text-foreground/90">
           {letter || '—'}

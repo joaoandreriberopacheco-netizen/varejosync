@@ -1,6 +1,6 @@
 /**
  * Cálculo ABCD / IEP (mesmas regras do job base44/functions/calcularIEP).
- * Catálogo: enrichProdutosComIep recalcula ao vivo e ignora abcd gravado no cadastro.
+ * Usado no catálogo quando os campos ainda não foram persistidos no Produto.
  */
 
 function q3(values) {
@@ -52,64 +52,6 @@ export function collectItensVendaProduto(produto, pedidos90d) {
     .filter((it) => String(it?.produto_id ?? it?.produtoId ?? '') === pid);
 }
 
-/** Valor da linha de venda (total gravado ou qty × preço unitário). */
-export function lineReceitaItem(it) {
-  const total = Number(it?.total);
-  if (Number.isFinite(total) && total > 0) return total;
-
-  const qtyBase = lineQuantityBase(it);
-  if (qtyBase > 0) {
-    const unit =
-      Number(it?.preco_final_unitario_fator1) ||
-      Number(it?.preco_unitario_fator1) ||
-      Number(it?.preco_unitario) ||
-      0;
-    if (unit > 0) return qtyBase * unit;
-  }
-
-  const qtyCom = Number(it?.quantidade_comercial ?? it?.quantidade) || 0;
-  const precoCom = Number(it?.preco_unitario_comercial) || 0;
-  if (qtyCom > 0 && precoCom > 0) return qtyCom * precoCom;
-
-  return 0;
-}
-
-/** Lucro do SKU nos últimos 90d — todas as linhas, sem excluir outliers. */
-export function calcularLucroSkuSimples(produto, itens) {
-  const custoUnit = resolveCustoCalculadoProduto(produto);
-  const linhas = Array.isArray(itens) ? itens : [];
-
-  if (!linhas.length) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false, receita: 0 };
-  }
-
-  let quantidade = 0;
-  let receita = 0;
-
-  for (const it of linhas) {
-    const qtyBase = lineQuantityBase(it);
-    const total = lineReceitaItem(it);
-    if (qtyBase > 0 && total > 0) {
-      quantidade += qtyBase;
-      receita += total;
-    }
-  }
-
-  if (quantidade <= 0) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false, receita: 0 };
-  }
-
-  const precoMedio = receita / quantidade;
-  const lucro = receita - custoUnit * quantidade;
-  return { lucro, precoMedio, quantidade, teveVenda: true, receita };
-}
-
-export function collectItensVendaProdutoFromIndex(produto, itensPorProduto) {
-  const pid = String(produto?.id ?? '');
-  if (!pid) return [];
-  return itensPorProduto?.[pid] || [];
-}
-
 export function calcularLucroSkuComQ4(produto, pedidos90d) {
   const custoUnit = resolveCustoCalculadoProduto(produto);
   const itens = collectItensVendaProduto(produto, pedidos90d);
@@ -121,7 +63,7 @@ export function calcularLucroSkuComQ4(produto, pedidos90d) {
   const linhas = itens
     .map((it) => {
       const qtyBase = lineQuantityBase(it);
-      const total = lineReceitaItem(it);
+      const total = Number(it.total) || 0;
       const unitPrice = qtyBase > 0 ? total / qtyBase : 0;
       return { unitPrice, qtyBase, total };
     })
@@ -144,108 +86,35 @@ export function calcularLucroSkuComQ4(produto, pedidos90d) {
   return { lucro, precoMedio, quantidade, teveVenda: quantidade > 0 };
 }
 
-/** Etapa 3 — A até 70%, B até 85%, C até 95%; restante e sem lucro → D. */
 function classificarParetoABCD(ranking, totalLucroPositivo) {
   const mapa = {};
-  for (const entry of ranking) {
-    mapa[entry.id] = 'D';
-  }
-  if (totalLucroPositivo <= 0) return mapa;
 
+  if (totalLucroPositivo <= 0) {
+    ranking.forEach((entry) => {
+      mapa[entry.id] = 'D';
+    });
+    return mapa;
+  }
+
+  const comLucro = ranking.filter((entry) => entry.lucro > 0);
   let acumulado = 0;
-  for (const entry of ranking) {
-    if (entry.lucro <= 0) continue;
-    const prevPct = (acumulado / totalLucroPositivo) * 100;
+
+  comLucro.forEach((entry) => {
     acumulado += entry.lucro;
-    if (prevPct < 70) mapa[entry.id] = 'A';
-    else if (prevPct < 85) mapa[entry.id] = 'B';
-    else if (prevPct < 95) mapa[entry.id] = 'C';
-  }
-  return mapa;
-}
-
-function countLinhasItens(itensPorProduto) {
-  let total = 0;
-  for (const linhas of Object.values(itensPorProduto || {})) {
-    total += Array.isArray(linhas) ? linhas.length : 0;
-  }
-  return total;
-}
-
-/**
- * Curva ABCD por produto (estilo Excel): ordena SKUs por lucro 90d (maior → menor)
- * e aplica Pareto no lucro total positivo. Sem exclusão de outliers.
- */
-export function calcularMapaAbcdPorProduto(produtos, itensPorProduto) {
-  const lista = Array.isArray(produtos) ? produtos : [];
-  const index = itensPorProduto || {};
-
-  const ranking = lista.map((produto) => {
-    const pid = String(produto.id);
-    const itens = collectItensVendaProdutoFromIndex(produto, index);
-    const { lucro, teveVenda, receita } = calcularLucroSkuSimples(produto, itens);
-    return { id: pid, lucro, teveVenda, receita };
+    const percentual = (acumulado / totalLucroPositivo) * 100;
+    if (percentual <= 70) mapa[entry.id] = 'A';
+    else if (percentual <= 85) mapa[entry.id] = 'B';
+    else if (percentual <= 95) mapa[entry.id] = 'C';
+    else mapa[entry.id] = 'D';
   });
 
-  ranking.sort((a, b) => b.lucro - a.lucro);
+  ranking
+    .filter((entry) => entry.lucro <= 0)
+    .forEach((entry) => {
+      mapa[entry.id] = 'D';
+    });
 
-  const lucroTotalPositivo = ranking.reduce((acc, entry) => acc + Math.max(0, entry.lucro), 0);
-  let mapaAbcdProduto = classificarParetoABCD(ranking, lucroTotalPositivo);
-
-  if (lucroTotalPositivo <= 0) {
-    const rankingReceita = ranking
-      .filter((entry) => entry.receita > 0)
-      .map((entry) => ({ id: entry.id, lucro: entry.receita, teveVenda: entry.teveVenda }))
-      .sort((a, b) => b.lucro - a.lucro);
-    const totalReceita = rankingReceita.reduce((acc, entry) => acc + entry.lucro, 0);
-    if (totalReceita > 0) {
-      mapaAbcdProduto = classificarParetoABCD(rankingReceita, totalReceita);
-    }
-  }
-
-  const produtosComVenda = ranking.filter((entry) => entry.teveVenda).length;
-
-  return {
-    mapaAbcdProduto,
-    total_produtos: lista.length,
-    total_lucro_positivo: lucroTotalPositivo,
-    produtos_com_venda: produtosComVenda,
-    itens_linhas: countLinhasItens(index),
-  };
-}
-
-export function abcdClasseParaProdutoId(produtoId, mapaAbcdProduto) {
-  return mapaAbcdProduto?.[String(produtoId)] || 'D';
-}
-
-/** Curva ABCD somente — mapa grupo → letra A/B/C/D (sem IEP). */
-export function calcularMapaAbcdSomente(produtos, pedidos90d) {
-  const lista = Array.isArray(produtos) ? produtos : [];
-  const pedidos = Array.isArray(pedidos90d) ? pedidos90d : [];
-
-  const lucroPorGrupo = {};
-  for (const produto of lista) {
-    const { lucro } = calcularLucroSkuComQ4(produto, pedidos);
-    const key = grupoAbcdKey(produto);
-    lucroPorGrupo[key] = (lucroPorGrupo[key] || 0) + lucro;
-  }
-
-  const rankingGrupos = Object.entries(lucroPorGrupo)
-    .map(([id, lucro]) => ({ id, lucro }))
-    .sort((a, b) => b.lucro - a.lucro);
-
-  const lucroTotalPositivo = rankingGrupos.reduce((acc, g) => acc + Math.max(0, g.lucro), 0);
-  const mapaAbcdGrupo = classificarParetoABCD(rankingGrupos, lucroTotalPositivo);
-
-  return {
-    mapaAbcdGrupo,
-    grupos_nivel_2: rankingGrupos.length,
-    total_produtos: lista.length,
-  };
-}
-
-export function abcdClasseParaProduto(produto, mapaAbcdGrupo) {
-  return mapaAbcdGrupo[grupoAbcdKey(produto)] || 'D';
+  return mapa;
 }
 
 function normalizarScore0a100(lucro, lucroMax, teveVenda) {
@@ -255,26 +124,12 @@ function normalizarScore0a100(lucro, lucroMax, teveVenda) {
   return Math.round(Math.max(1, Math.min(100, raw)));
 }
 
-/**
- * Chave do grupo ABCD na hierarquia do produto (5 níveis: h1…h5).
- * - Com nível 2 preenchido (h2): selo no grupo h1 + h2.
- * - Só nível 1 (h1): selo no grupo h1.
- * Todos os SKUs do mesmo grupo recebem a mesma letra A/B/C/D.
- */
+/** Chave do grupo ABCD: nível 2 dentro da família; sem h2 usa só família (nível 1). */
 export function grupoAbcdKey(produto) {
-  const h1 = String(produto?.campo_hierarquico_1 ?? 'unassigned').trim();
-  const h2 = String(produto?.campo_hierarquico_2 ?? '').trim();
+  const h1 = (produto.campo_hierarquico_1 || 'unassigned').trim();
+  const h2 = (produto.campo_hierarquico_2 || '').trim();
   if (h2) return hierarchyKey([h1, h2]);
-  return hierarchyKey([h1]);
-}
-
-function maxLucroPositivo(metricasPorSku) {
-  let max = 0;
-  for (const m of Object.values(metricasPorSku)) {
-    const v = Math.max(0, m?.lucro ?? 0);
-    if (v > max) max = v;
-  }
-  return max;
+  return hierarchyKey([h1, '__familia__']);
 }
 
 /** Calcula métricas IEP para todos os produtos (não grava no BD). */
@@ -287,7 +142,7 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d) {
     metricasPorSku[produto.id] = calcularLucroSkuComQ4(produto, pedidos);
   }
 
-  const lucroMax = maxLucroPositivo(metricasPorSku);
+  const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => Math.max(0, m.lucro)));
 
   const lucroPorGrupo = {};
   for (const produto of lista) {
@@ -381,54 +236,16 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d) {
   return porId;
 }
 
-const CAMPOS_ABCD_IEP_CATALOGO = [
-  'abcd',
-  'iep_score',
-  'iep_score_nivel_1',
-  'iep_score_nivel_2',
-  'iep_score_nivel_3',
-  'iep_score_nivel_4',
-  'iep_score_nivel_5',
-  'iep_classe',
-];
-
-/** Remove ABCD/IEP gravados no cadastro — o catálogo usa só o cálculo ao vivo. */
-export function stripAbcdIepCadastro(produto) {
-  if (!produto || typeof produto !== 'object') return produto;
-  const next = { ...produto };
-  for (const key of CAMPOS_ABCD_IEP_CATALOGO) {
-    delete next[key];
-  }
-  return next;
-}
-
-function normalizeAbcdLetter(value) {
-  const letter = String(value ?? '').trim().toUpperCase();
-  return letter === 'A' || letter === 'B' || letter === 'C' || letter === 'D' ? letter : '';
-}
-
-/** Preserva letra ABCD gravada no cadastro (job) em `abcd_cadastro` para coluna/filtro. */
-export function attachAbcdCadastro(produto) {
-  if (!produto || typeof produto !== 'object') return produto;
-  const fromCadastro = normalizeAbcdLetter(produto.abcd);
-  const preserved = normalizeAbcdLetter(produto.abcd_cadastro) || fromCadastro;
-  const base = stripAbcdIepCadastro(produto);
-  return preserved ? { ...base, abcd_cadastro: preserved } : base;
-}
-
 /** Aplica métricas IEP/ABCD calculadas a partir das vendas de 90 dias. */
 export function enrichProdutosComIep(produtos, pedidos90d) {
   const lista = Array.isArray(produtos) ? produtos : [];
-  if (!lista.length || !Array.isArray(pedidos90d)) {
-    return lista.map(attachAbcdCadastro);
-  }
+  if (!lista.length || !Array.isArray(pedidos90d)) return lista;
 
   const calculado = calcularMetricasIepParaCatalogo(lista, pedidos90d);
   return lista.map((produto) => {
-    const base = attachAbcdCadastro(produto);
     const m = calculado[produto.id];
-    if (!m) return base;
-    return { ...base, ...m };
+    if (!m) return produto;
+    return { ...produto, ...m };
   });
 }
 
