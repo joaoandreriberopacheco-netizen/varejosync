@@ -1,4 +1,4 @@
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/components/utils';
 import { ABCD_FILTER_VALUES } from '@/lib/filterProdutos';
@@ -16,14 +16,9 @@ function mobileAbcdSummary(abcd) {
   return { short: current, detail: `Classe ${current}` };
 }
 
-function AbcdChipRow({ current, onChange, className = '', loading = false }) {
+function AbcdChipRow({ current, onChange, className = '' }) {
   return (
     <div className={cn('flex items-center gap-0.5 rounded-xl bg-muted p-0.5', className)} role="group">
-      {loading && (
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center text-muted-foreground" aria-hidden>
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        </span>
-      )}
       <button
         type="button"
         onClick={() => onChange('all')}
@@ -50,7 +45,7 @@ function AbcdChipRow({ current, onChange, className = '', loading = false }) {
 }
 
 /** Atalho A/B/C/D — desktop: chips inline; mobile: botão + chips horizontais no popover. */
-export default function ProdutosAbcdQuickFilter({ abcd = 'all', onChange, loading = false }) {
+export default function ProdutosAbcdQuickFilter({ abcd = 'all', onChange }) {
   const current = abcd || 'all';
   const isActive = current !== 'all';
   const summary = mobileAbcdSummary(current);
@@ -91,13 +86,11 @@ export default function ProdutosAbcdQuickFilter({ abcd = 'all', onChange, loadin
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             Curva ABCD
           </p>
-          <AbcdChipRow current={current} onChange={handleChange} loading={loading} />
+          <AbcdChipRow current={current} onChange={handleChange} />
           <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
-            {loading
-              ? 'Calculando curva com vendas dos últimos 90 dias…'
-              : isActive
-                ? `Mostrando apenas produtos da classe ${current}.`
-                : 'Todas as classes — toque numa letra para filtrar.'}
+            {isActive
+              ? `Mostrando produtos com classe ${current} (gravada no cadastro).`
+              : 'Usa a curva ABCD atualizada pelo processo noturno no cadastro de cada produto.'}
           </p>
         </PopoverContent>
       </Popover>
@@ -105,7 +98,6 @@ export default function ProdutosAbcdQuickFilter({ abcd = 'all', onChange, loadin
       <AbcdChipRow
         current={current}
         onChange={onChange}
-        loading={loading}
         className="hidden desktop-layout:flex flex-shrink-0"
       />
     </>

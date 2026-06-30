@@ -50,7 +50,6 @@ export default function ProdutosHeader({
   onOpenMassMarkup,
   groupTreeByCategory = false,
   onGroupTreeByCategoryChange,
-  abcdFilterLoading = false,
 }) {
   const isMobileLayout = useCompactShell();
   const quantidadeOperador = filters.quantidadeOperador || 'all';
@@ -229,7 +228,6 @@ export default function ProdutosHeader({
             <ProdutosSomentePositivosToggle filters={filters} setFilters={setFilters} />
             <ProdutosAbcdQuickFilter
               abcd={filters.abcd}
-              loading={abcdFilterLoading}
               onChange={(value) => handleFilterChange('abcd', value)}
             />
             <ProdutosTreeByCategoryToggle

@@ -1,6 +1,6 @@
 /**
  * Cálculo ABCD / IEP (mesmas regras do job base44/functions/calcularIEP).
- * Usado no catálogo quando os campos ainda não foram persistidos no Produto.
+ * Usado em relatórios sob demanda; o catálogo lê os campos já gravados no Produto.
  */
 
 function q3(values) {
