@@ -35,6 +35,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
         { id: 'fornecedor', label: 'Fornecedor Padrão' },
         { id: 'preco_venda', label: 'Preço Venda' },
         { id: 'margem', label: 'Margem Bruta' },
+        { id: 'abcd', label: 'Curva ABCD' },
         { id: 'show_comercial', label: 'Unidade comercial (PDV)' }
       ],
       subgroups: [

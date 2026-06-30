@@ -8,6 +8,8 @@ import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
+import AbcdCatalogBadge from '@/components/produtos/AbcdCatalogBadge';
+import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -24,6 +26,7 @@ const COL_DEFS = [
   { id: 'fornecedor',           label: 'Fornecedor',     w: 130 },
   { id: 'preco_venda',          label: 'Preço de venda', w: 108 },
   { id: 'margem',               label: 'Margem',         w: 80  },
+  { id: 'abcd',                 label: 'ABCD',           w: 56  },
   { id: 'preco_custo',          label: 'Custo Total',    w: 104 },
   { id: 'valor_compra',         label: 'Vl. Compra',     w: 100 },
   { id: 'markup',               label: 'Markup %',       w: 80  },
@@ -181,6 +184,7 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
       </span>
     );
     case 'margem':               return <span className={`text-xs tabular-nums ${margem >= 30 ? 'p38-text-accent font-medium' : margem > 0 ? 'text-muted-foreground' : 'text-red-400'}`}>{margem > 0 ? fmtPct(margem) : '—'}</span>;
+    case 'abcd':                 return <AbcdCatalogBadge letter={resolveProdutoAbcdClasse(produto)} />;
     case 'preco_custo':          return (
       <span className="text-xs text-muted-foreground tabular-nums">
         {cat.custoNaEmbalagem > 0 ? `R$ ${fmtR(cat.custoNaEmbalagem)}` : '—'}
@@ -241,6 +245,9 @@ function groupCellValue(colId, row) {
     case 'valor_compra':          return tilde(row.valorCompraMedio);
     case 'markup':                return tildeP(row.markupMedio);
     case 'margem':                return tildeP(row.margemMedia);
+    case 'abcd':                  return row.abcdDominante
+      ? <AbcdCatalogBadge letter={row.abcdDominante} />
+      : dash();
     case 'inventario_valorizado': return row.lastroTotal > 0
       ? <span className="text-xs font-semibold text-muted-foreground tabular-nums">{fmtR(row.lastroTotal)}</span>
       : dash();

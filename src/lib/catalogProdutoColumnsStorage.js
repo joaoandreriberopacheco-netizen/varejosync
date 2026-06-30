@@ -4,11 +4,12 @@ export const DEFAULT_CATALOG_PRODUTO_COLUMNS = [
   'estoque_atual',
   'preco_venda',
   'margem',
+  'abcd',
   'show_logistica',
 ];
 
 const CATALOG_PRODUTO_COLUMNS_STORAGE_KEY = 'varejosync.catalogoProdutoColumns';
-const CATALOG_PRODUTO_COLUMNS_STORAGE_VERSION = 1;
+const CATALOG_PRODUTO_COLUMNS_STORAGE_VERSION = 2;
 
 const KNOWN_CATALOG_PRODUTO_COLUMNS = new Set([
   'status',
@@ -35,6 +36,7 @@ const KNOWN_CATALOG_PRODUTO_COLUMNS = new Set([
   'unidades_pacote',
   'show_comercial',
   'show_logistica',
+  'abcd',
   'inventario_valorizado',
 ]);
 
@@ -54,7 +56,14 @@ export function loadCatalogProdutoColumns() {
     const raw = localStorage.getItem(CATALOG_PRODUTO_COLUMNS_STORAGE_KEY);
     if (!raw) return [...DEFAULT_CATALOG_PRODUTO_COLUMNS];
     const parsed = JSON.parse(raw);
-    return normalizeCatalogProdutoColumns(Array.isArray(parsed) ? parsed : parsed?.columns);
+    const columns = normalizeCatalogProdutoColumns(Array.isArray(parsed) ? parsed : parsed?.columns);
+    const version = Array.isArray(parsed) ? 1 : Number(parsed?.storageVersion) || 1;
+    if (version < CATALOG_PRODUTO_COLUMNS_STORAGE_VERSION && !columns.includes('abcd')) {
+      const margemIdx = columns.indexOf('margem');
+      if (margemIdx >= 0) columns.splice(margemIdx + 1, 0, 'abcd');
+      else columns.push('abcd');
+    }
+    return columns;
   } catch {
     return [...DEFAULT_CATALOG_PRODUTO_COLUMNS];
   }

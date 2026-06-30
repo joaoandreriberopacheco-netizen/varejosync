@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
-import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
+import { enrichProdutosComAbcdAoVivo } from '@/lib/catalogAbcdEnrichment';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 
 const PDF_FONT_BOLD = 'bold';
@@ -24,11 +24,15 @@ const ROW_STEP = ROW_H + ROW_GAP;
 
 const safe = (text) => normalizePdfText(text);
 
-export const CATALOG_IEP_PDF_BUILD = 'curva_abc_iep_v1';
+export const CATALOG_IEP_PDF_BUILD = 'curva_abc_produto_v2';
 
-export function prepareCatalogIepReportRows(produtos = [], pedidos = [], sortOrder = 'iep_score_desc') {
+export function prepareCatalogIepReportRows(
+  produtos = [],
+  itensPorProduto = {},
+  sortOrder = 'abcd_desc',
+) {
   const list = (produtos || []).filter((p) => p && typeof p === 'object');
-  const enriched = enrichProdutosComIep(list, pedidos || []);
+  const enriched = enrichProdutosComAbcdAoVivo(list, itensPorProduto);
   return [...enriched].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 }
 
@@ -46,13 +50,14 @@ function abcdText(letter) {
 export async function generateRelatorioCatalogoIepPdf(payload = {}) {
   const {
     produtos = [],
-    pedidos = [],
+    itensPorProduto = {},
+    pedidos: _legacyPedidos,
     filters_summary: filtersSummary = '',
-    sort_order: sortOrder = 'iep_score_desc',
+    sort_order: sortOrder = 'abcd_desc',
     generated_at: generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
   } = payload;
 
-  const rows = prepareCatalogIepReportRows(produtos, pedidos, sortOrder);
+  const rows = prepareCatalogIepReportRows(produtos, itensPorProduto, sortOrder);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pdfFontFamily = await registerJsPdfDin1451Fonts(doc);
 

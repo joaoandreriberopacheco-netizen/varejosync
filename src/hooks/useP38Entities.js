@@ -4,9 +4,10 @@ import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
 import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
-import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+import { enrichProdutosComAbcdAoVivo } from '@/lib/catalogAbcdEnrichment';
+import { fetchDadosVendaAbcd90d, fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 
-export { fetchPedidosVenda90d };
+export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
@@ -97,6 +98,45 @@ export function usePedidosVenda90dQuery(options = {}) {
     gcTime: P38_GC_TIME,
     ...options,
   });
+}
+
+export function useDadosVendaAbcd90dQuery(options = {}) {
+  return useQuery({
+    queryKey: p38Keys.dadosVendaAbcd90d(),
+    queryFn: fetchDadosVendaAbcd90d,
+    staleTime: 10 * 60 * 1000,
+    gcTime: P38_GC_TIME,
+    ...options,
+  });
+}
+
+/** Catálogo — ABCD ao vivo (90d) com fallback no cadastro. */
+export function useProdutosComAbcdAoVivoQuery(options = {}) {
+  const sort = options.sort ?? '-created_date';
+  const { sort: _sort, ...rest } = options;
+  const produtosQuery = useProdutosListQuery({ sort, ...rest });
+  const vendasQuery = useDadosVendaAbcd90dQuery({
+    enabled: (rest.enabled ?? true) && Boolean(produtosQuery.data?.length),
+  });
+
+  const data = useMemo(() => {
+    if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
+    if (!vendasQuery.isFetched || !vendasQuery.data?.itensPorProduto) {
+      return produtosQuery.data;
+    }
+    return enrichProdutosComAbcdAoVivo(
+      produtosQuery.data,
+      vendasQuery.data.itensPorProduto,
+    );
+  }, [produtosQuery.data, vendasQuery.data, vendasQuery.isFetched]);
+
+  return {
+    ...produtosQuery,
+    data,
+    isLoading: produtosQuery.isLoading || vendasQuery.isLoading,
+    isFetching: produtosQuery.isFetching || vendasQuery.isFetching,
+    vendas90d: vendasQuery.data,
+  };
 }
 
 /** Lista de produtos com ABCD/IEP calculados no cliente quando ainda não persistidos. */

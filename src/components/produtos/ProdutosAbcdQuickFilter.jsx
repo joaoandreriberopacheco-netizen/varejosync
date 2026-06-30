@@ -89,8 +89,8 @@ export default function ProdutosAbcdQuickFilter({ abcd = 'all', onChange }) {
           <AbcdChipRow current={current} onChange={handleChange} />
           <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
             {isActive
-              ? `Mostrando produtos com classe ${current} (gravada no cadastro).`
-              : 'Usa a curva ABCD atualizada pelo processo noturno no cadastro de cada produto.'}
+              ? `Mostrando produtos com classe ${current} (calculada ao vivo, 90 dias).`
+              : 'Calcula A/B/C/D na hora com vendas dos últimos 90 dias (lucro por produto).'}
           </p>
         </PopoverContent>
       </Popover>

@@ -6,6 +6,8 @@ import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
 import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
+import AbcdCatalogBadge from '@/components/produtos/AbcdCatalogBadge';
+import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 
 const headMap = {
   status: 'Status',
@@ -18,6 +20,7 @@ const headMap = {
   preco_venda: 'Preço Venda',
   preco_custo: 'Custo Total',
   margem: 'Margem',
+  abcd: 'ABCD',
   valor_compra: 'Vl. Compra',
   markup: 'Markup %',
   estoque_atual: 'Estoque',
@@ -45,6 +48,7 @@ const widthMap = {
   preco_venda: 'min-w-[110px]',
   preco_custo: 'min-w-[110px]',
   margem: 'min-w-[90px]',
+  abcd: 'min-w-[56px]',
   valor_compra: 'min-w-[110px]',
   markup: 'min-w-[90px]',
   estoque_atual: 'min-w-[110px]',
@@ -86,6 +90,12 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
       );
     case 'margem':
       return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(margem)}%</TableCell>;
+    case 'abcd':
+      return (
+        <TableCell key={col} className="text-xs text-foreground/90">
+          <AbcdCatalogBadge letter={resolveProdutoAbcdClasse(produto)} />
+        </TableCell>
+      );
     case 'preco_custo':
       return (
         <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">

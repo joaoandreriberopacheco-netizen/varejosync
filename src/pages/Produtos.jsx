@@ -50,7 +50,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import {
-  useProdutosListQuery,
+  useProdutosComAbcdAoVivoQuery,
   useFornecedoresQuery,
 } from '@/hooks/useP38Entities';
 
@@ -174,7 +174,7 @@ function ProdutosPageContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isDesktop = useDesktopContent();
-  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosListQuery();
+  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosComAbcdAoVivoQuery();
   const { data: fornecedoresQuery, refetch: refetchFornecedores } = useFornecedoresQuery();
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
@@ -1204,12 +1204,12 @@ function ProdutosPageContent() {
     try {
       const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
 
-      let pedidos = queryClient.getQueryData(p38Keys.pedidosVenda90d());
-      if (!Array.isArray(pedidos)) {
+      let dadosVenda = queryClient.getQueryData(p38Keys.dadosVendaAbcd90d());
+      if (!dadosVenda?.itensPorProduto) {
         toast({ title: 'Buscando vendas dos últimos 90 dias...' });
-        const { fetchPedidosVenda90d } = await import('@/lib/fetchPedidosVenda90d');
-        pedidos = await fetchPedidosVenda90d();
-        queryClient.setQueryData(p38Keys.pedidosVenda90d(), pedidos);
+        const { fetchDadosVendaAbcd90d } = await import('@/lib/fetchPedidosVenda90d');
+        dadosVenda = await fetchDadosVendaAbcd90d();
+        queryClient.setQueryData(p38Keys.dadosVendaAbcd90d(), dadosVenda);
       }
 
       toast({ title: 'Montando PDF Curva ABC / IEP...' });
@@ -1218,9 +1218,9 @@ function ProdutosPageContent() {
       );
       const resposta = await generateRelatorioCatalogoIepPdf({
         produtos: filteredProdutos,
-        pedidos,
+        itensPorProduto: dadosVenda.itensPorProduto,
         filters_summary: filtersSummary,
-        sort_order: 'iep_score_desc',
+        sort_order: 'abcd_desc',
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
