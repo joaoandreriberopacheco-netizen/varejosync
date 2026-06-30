@@ -1,5 +1,5 @@
 /**
- * Diagnóstico legível para ficha IEP / ABCD do produto (job calcularIEP V8).
+ * Diagnóstico legível para ficha IEP / ABCD do produto (cálculo ao vivo no catálogo).
  */
 
 const CLASSE_LABEL = {
@@ -33,7 +33,7 @@ export function gerarDiagnosticoProdutoIep(produto) {
       temDados: false,
       titulo: 'Sem análise disponível',
       texto:
-        'Ainda não há classificação para este item. Isso costuma acontecer quando não houve venda nos últimos 90 dias ou o cálculo automático ainda não rodou. Peça para atualizar com o processo «calcular IEP» (job diário ou manual).',
+        'Ainda não há classificação para este item. Isso costuma acontecer quando não houve venda nos últimos 90 dias. Abra o catálogo de produtos para o sistema recalcular automaticamente.',
     };
   }
 

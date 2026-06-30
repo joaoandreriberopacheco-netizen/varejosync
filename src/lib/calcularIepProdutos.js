@@ -1,6 +1,6 @@
 /**
- * Cálculo ABCD / IEP (mesmas regras do job base44/functions/calcularIEP).
- * Catálogo: enrichProdutosComIep recalcula ao vivo e ignora abcd gravado no cadastro.
+ * Cálculo ABCD / IEP ao vivo no catálogo (sem gravar no cadastro).
+ * Ao abrir o catálogo, enrichProdutosComIep recalcula com vendas dos últimos 90 dias.
  */
 
 import {
@@ -278,7 +278,12 @@ export function enrichProdutosComIep(produtos, vendasDados) {
   return lista.map((produto) => {
     const m = calculado[produto.id];
     if (!m) return stripAbcdIepCadastro(produto);
-    return { ...stripAbcdIepCadastro(produto), ...m };
+    const merged = { ...stripAbcdIepCadastro(produto), ...m };
+    if (produto.iep_trava_manual) {
+      const locked = String(produto.iep_classe || '').toUpperCase().trim();
+      if (locked) merged.abcd = locked;
+    }
+    return merged;
   });
 }
 

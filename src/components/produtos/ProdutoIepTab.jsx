@@ -117,11 +117,11 @@ export default function ProdutoIepTab({ produto }) {
               </dd>
             </div>
           ) : (
-            <div className="flex gap-2 text-xs text-amber-700 dark:text-amber-400">
+            <div className="flex gap-2 text-xs text-muted-foreground">
               <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
               <span>
-                Preencha o <strong>campo hierárquico 2</strong> para entrar na curva ABCD do subtipo.
-                Sem ele, o item fica como classe D.
+                Sem <strong>nível 2</strong> no cadastro, a curva usa só a <strong>família (nível 1)</strong>{' '}
+                para comparar com as outras famílias.
               </span>
             </div>
           )}
@@ -129,8 +129,8 @@ export default function ProdutoIepTab({ produto }) {
       </div>
 
       <p className="text-[11px] text-muted-foreground leading-relaxed px-1">
-        Valores atualizados pelo processo automático «calcular IEP». A classe vale para todos os
-        produtos do mesmo subtipo; o score IEP é específico deste SKU.
+        Valores calculados automaticamente ao abrir o catálogo, com base nas vendas dos últimos 90 dias.
+        A classe vale para todos os produtos do mesmo grupo; o score IEP é específico deste SKU.
       </p>
     </div>
   );
