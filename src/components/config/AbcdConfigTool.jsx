@@ -23,11 +23,10 @@ import {
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 
-const BATCH_SIZE = 50;
-const UPDATE_CONCURRENCY = 3;
-const PAUSE_BETWEEN_CHUNKS_MS = 300;
-const PAUSE_BETWEEN_BLOCKS_MS = 700;
-const RATE_LIMIT_RETRY = { maxAttempts: 5, baseDelayMs: 900 };
+const BATCH_SIZE = 40;
+const PAUSE_BETWEEN_BLOCKS_MS = 2200;
+const RATE_LIMIT_RETRY = { maxAttempts: 8, baseDelayMs: 2000 };
+const PAUSE_BETWEEN_FALLBACK_UPDATES_MS = 350;
 
 /** @typedef {'idle' | 'preparing' | 'writing' | 'success' | 'empty' | 'error'} DialogPhase */
 
@@ -56,33 +55,45 @@ async function fetchAllProdutos() {
   return todos;
 }
 
-async function gravarAbcdEmLotes(produtos, mapaAbcdGrupo, onProgress) {
+async function gravarBlocoBulk(bloco, mapaAbcdGrupo) {
+  const payload = bloco.map((produto) => ({
+    id: produto.id,
+    abcd: abcdClasseParaProduto(produto, mapaAbcdGrupo),
+  }));
+
+  if (typeof base44.entities.Produto.bulkUpdate === 'function') {
+    await withRateLimitRetry(
+      () => base44.entities.Produto.bulkUpdate(payload),
+      RATE_LIMIT_RETRY,
+    );
+    return payload.length;
+  }
+
+  let count = 0;
+  for (const item of payload) {
+    await withRateLimitRetry(
+      () => base44.entities.Produto.update(item.id, { abcd: item.abcd }),
+      RATE_LIMIT_RETRY,
+    );
+    count += 1;
+    await sleep(PAUSE_BETWEEN_FALLBACK_UPDATES_MS);
+  }
+  return count;
+}
+
+async function gravarAbcdEmLotes(produtos, mapaAbcdGrupo, onProgress, shouldAbort = () => false) {
   let atualizados = 0;
+  const totalBlocos = Math.ceil(produtos.length / BATCH_SIZE);
 
   for (let i = 0; i < produtos.length; i += BATCH_SIZE) {
+    if (shouldAbort()) throw new Error('Operação cancelada.');
+
     const bloco = produtos.slice(i, i + BATCH_SIZE);
-    const totalBlocos = Math.ceil(produtos.length / BATCH_SIZE);
     const blocoAtual = Math.floor(i / BATCH_SIZE) + 1;
 
-    for (let j = 0; j < bloco.length; j += UPDATE_CONCURRENCY) {
-      const chunk = bloco.slice(j, j + UPDATE_CONCURRENCY);
-      await Promise.all(
-        chunk.map((produto) =>
-          withRateLimitRetry(
-            () =>
-              base44.entities.Produto.update(produto.id, {
-                abcd: abcdClasseParaProduto(produto, mapaAbcdGrupo),
-              }),
-            RATE_LIMIT_RETRY,
-          ),
-        ),
-      );
-      if (j + UPDATE_CONCURRENCY < bloco.length) {
-        await sleep(PAUSE_BETWEEN_CHUNKS_MS);
-      }
-    }
+    const gravados = await gravarBlocoBulk(bloco, mapaAbcdGrupo);
+    atualizados += gravados;
 
-    atualizados += bloco.length;
     onProgress({
       bloco: blocoAtual,
       totalBlocos,
@@ -182,14 +193,19 @@ export default function AbcdConfigTool() {
         etapa: 'Gravando classificação em cada produto…',
       });
 
-      const totalAtualizados = await gravarAbcdEmLotes(pendentes, mapaAbcdGrupo, (p) => {
-        if (abortRef.current) return;
-        setProgress((prev) => ({
-          ...prev,
-          ...p,
-          etapa: 'Gravando classificação em cada produto…',
-        }));
-      });
+      const totalAtualizados = await gravarAbcdEmLotes(
+        pendentes,
+        mapaAbcdGrupo,
+        (p) => {
+          if (abortRef.current) return;
+          setProgress((prev) => ({
+            ...prev,
+            ...p,
+            etapa: 'Gravando classificação em cada produto…',
+          }));
+        },
+        () => abortRef.current,
+      );
 
       if (abortRef.current) throw new Error('Operação cancelada.');
 
@@ -228,8 +244,8 @@ export default function AbcdConfigTool() {
             <p className="text-sm font-semibold text-foreground/90">Curva ABCD</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Calcula a classificação A/B/C/D com vendas dos últimos 90 dias e grava no campo{' '}
-              <strong>abcd</strong> de cada produto. O cálculo roda aqui no navegador; a gravação
-              é feita em blocos de {BATCH_SIZE} produtos.
+              <strong>abcd</strong> de cada produto. A gravação usa lotes de {BATCH_SIZE} produtos
+              por chamada à API, com pausa entre lotes para evitar bloqueio.
             </p>
           </div>
         </div>
