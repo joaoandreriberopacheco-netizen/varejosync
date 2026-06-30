@@ -121,7 +121,7 @@ export default function AbcdConfigTool() {
       const jobCache = preparado.job_cache;
       if (!jobCache?.run_id || !jobCache?.mapaAbcdGrupo || !jobCache?.produto_ids?.length) {
         throw new Error(
-          'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (versão V12-abcd-slim-cache).',
+          'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (versão V13-abcd-diagnostico ou mais recente).',
         );
       }
 

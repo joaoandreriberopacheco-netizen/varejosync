@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 const DEFAULT_BATCH_SIZE = 50;
 const UPDATE_CONCURRENCY = 5;
 const CACHE_KEY = 'iep_job_run';
-const VERSAO = 'V12-abcd-slim-cache';
+const VERSAO = 'V13-abcd-diagnostico';
 
 /** Q3 — limite superior do miolo (exclui 4.º quartil). */
 function q3(values) {
@@ -181,37 +181,46 @@ function buildJobCacheSlim(fields) {
 async function fetchProdutosSnapshotPorIds(db, ids) {
   if (!ids?.length) return [];
 
-  try {
-    const rows = await db.Produto.filter({ id: ids });
-    const list = Array.isArray(rows) ? rows : rows ? [rows] : [];
-    if (list.length) return list.map(snapshotProduto);
-  } catch {
-    // fallback abaixo
-  }
-
   const out = [];
-  for (let i = 0; i < ids.length; i += UPDATE_CONCURRENCY) {
-    const chunk = ids.slice(i, i + UPDATE_CONCURRENCY);
-    const fetched = await Promise.all(
-      chunk.map(async (id) => {
-        try {
-          const row = await db.Produto.get(id);
-          return row ? snapshotProduto(row) : null;
-        } catch {
+  const chunkSize = 80;
+
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    try {
+      const rows = await db.Produto.filter({ id: { $in: chunk } });
+      const list = Array.isArray(rows) ? rows : rows ? [rows] : [];
+      for (const row of list) {
+        if (row) out.push(snapshotProduto(row));
+      }
+      continue;
+    } catch {
+      // fallback por id abaixo
+    }
+
+    for (let j = 0; j < chunk.length; j += UPDATE_CONCURRENCY) {
+      const sub = chunk.slice(j, j + UPDATE_CONCURRENCY);
+      const fetched = await Promise.all(
+        sub.map(async (id) => {
           try {
-            const rows = await db.Produto.filter({ id });
-            const first = Array.isArray(rows) ? rows[0] : rows;
-            return first ? snapshotProduto(first) : null;
+            const row = await db.Produto.get(id);
+            return row ? snapshotProduto(row) : null;
           } catch {
-            return null;
+            try {
+              const rows = await db.Produto.filter({ id });
+              const first = Array.isArray(rows) ? rows[0] : rows;
+              return first ? snapshotProduto(first) : null;
+            } catch {
+              return null;
+            }
           }
-        }
-      }),
-    );
-    for (const row of fetched) {
-      if (row) out.push(row);
+        }),
+      );
+      for (const row of fetched) {
+        if (row) out.push(row);
+      }
     }
   }
+
   return out;
 }
 
@@ -403,6 +412,33 @@ function regrasResposta(somenteAbcdVazio) {
     iqr: 'por_sku_exclui_q4',
     somente_abcd_vazio: somenteAbcdVazio,
     batch_size: DEFAULT_BATCH_SIZE,
+  };
+}
+
+async function runDiagnostico(db) {
+  const hoje = new Date();
+  const data90d = new Date();
+  data90d.setDate(hoje.getDate() - 90);
+  const dataISO = data90d.toISOString();
+
+  const [produtoSample, pedidoSample] = await Promise.all([
+    db.Produto.list('-created_date', 1, 0),
+    db.PedidoVenda.filter(
+      { tipo: 'PDV', status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
+      '-created_date',
+      1,
+      0,
+    ),
+  ]);
+
+  return {
+    status: 'ok',
+    fase: 'diagnostico',
+    versao: VERSAO,
+    produto_sample: Array.isArray(produtoSample) ? produtoSample.length : produtoSample ? 1 : 0,
+    pedido_sample: Array.isArray(pedidoSample) ? pedidoSample.length : pedidoSample ? 1 : 0,
+    data_iso_90d: dataISO,
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -631,6 +667,11 @@ Deno.serve(async (req) => {
     const fase = String(body.fase || '').toLowerCase();
 
     const db = isAutomation ? base44.asServiceRole.entities : base44.entities;
+
+    if (fase === 'diagnostico' || fase === 'ping') {
+      const diag = await runDiagnostico(db);
+      return Response.json(diag);
+    }
 
     if (fase === 'limpar') {
       await clearJobCache(db);

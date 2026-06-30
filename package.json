@@ -27,6 +27,7 @@
     "corrigir:recepcao": "node scripts/corrigir-recepcao-pedido.mjs",
     "corrigir:wx7-console": "node scripts/corrigir-wx7-a5n-console.mjs",
     "iep:calcular": "node scripts/invoke-calcular-iep.mjs",
+    "abcd:debug": "node scripts/debug-calcular-iep.mjs",
     "estoque:atualizar-metas": "node scripts/invoke-atualizar-metas-estoque.mjs",
     "estoque:debug-metas": "node scripts/debug-atualizar-metas-estoque.mjs",
     "git:ship": "node scripts/git-ship.mjs",
