@@ -1156,13 +1156,15 @@ function ProdutosPageContent() {
       );
       const groupPdfByCategory = groupTreeByCategory || hasCategorizedProducts;
 
-      let pedidos = queryClient.getQueryData(p38Keys.pedidosVenda90d());
-      if (!Array.isArray(pedidos)) {
+      let dadosVenda = queryClient.getQueryData(p38Keys.dadosVendaAbcd90d());
+      const pedidosCache = dadosVenda?.pedidos90d;
+      const { pedidosPrecisamHidratarItens } = await import('@/lib/catalogSalesVelocity');
+      if (!Array.isArray(pedidosCache) || pedidosPrecisamHidratarItens(pedidosCache)) {
         toast({ title: 'Buscando vendas dos últimos 90 dias...' });
-        const { fetchPedidosVenda90d } = await import('@/lib/fetchPedidosVenda90d');
-        pedidos = await fetchPedidosVenda90d();
-        queryClient.setQueryData(p38Keys.pedidosVenda90d(), pedidos);
+        dadosVenda = await fetchDadosVendaAbcd90d();
+        queryClient.setQueryData(p38Keys.dadosVendaAbcd90d(), dadosVenda);
       }
+      const pedidos = dadosVenda.pedidos90d ?? [];
 
       toast({ title: 'Montando PDF de vendas...' });
       const { generateRelatorioCatalogoVendasPdf } = await import(
