@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast as sonnerToast } from 'sonner';
 import { base44 } from '@/api/base44Client';
@@ -7,12 +7,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import FiltrosSugestaoCompra from '@/components/compras/FiltrosSugestaoCompra';
 import SugestaoCompraLinha from '@/components/compras/SugestaoCompraLinha';
+import SugestaoCompraLinhaGrupo from '@/components/compras/SugestaoCompraLinhaGrupo';
 import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
 import { calcularSugestaoCompraProduto } from '@/lib/calcularSugestaoCompra';
+import {
+  buildLinhasSugestaoCompra,
+  distribuirQuantidadeGrupo,
+} from '@/lib/calcularSugestaoCompraHierarquia';
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 import {
   fetchMovimentacoesEstoque90d,
@@ -22,13 +27,23 @@ import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 
 const FORNECEDOR_VAZIO = '__none__';
 
+function fornecedorPadraoLinha(linha) {
+  const ids = linha.skus.map((p) => p.fornecedor_padrao_id).filter(Boolean);
+  if (!ids.length) return '';
+  const freq = {};
+  ids.forEach((id) => {
+    freq[id] = (freq[id] || 0) + 1;
+  });
+  return Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
+}
+
 export default function SugestaoCompra({ onStatsChange }) {
-  const [produtos, setProdutos] = useState([]);
+  const [linhas, setLinhas] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState({});
-  const [fornecedorPorProduto, setFornecedorPorProduto] = useState({});
+  const [fornecedorPorLinha, setFornecedorPorLinha] = useState({});
 
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -37,41 +52,49 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [tagSearch, setTagSearch] = useState('');
   const [hidePending, setHidePending] = useState(false);
   const [roundingMode, setRoundingMode] = useState('auto');
+  const [agruparHierarquia, setAgruparHierarquia] = useState(true);
   const [loadStats, setLoadStats] = useState({
     totalAtivos: 0,
     elegiveis: 0,
     semVenda90d: 0,
     semDiasEstoque: 0,
+    linhasGrupo: 0,
   });
 
   const { toast } = useToast();
   const navigate = useNavigate();
-  const calcContextRef = useRef({ pedidos: [], movsPorProduto: {} });
-  const dadosCarregadosRef = useRef(false);
+  const calcContextRef = useRef({ pedidos: [], movsPorProduto: {}, prods: [], pending: {} });
 
   const allTags = useMemo(() => {
     const tags = new Set();
-    produtos.forEach((p) => p.tags?.forEach((t) => tags.add(t)));
+    linhas.forEach((l) => l.skus.forEach((p) => p.tags?.forEach((t) => tags.add(t))));
     return [...tags].sort();
-  }, [produtos]);
+  }, [linhas]);
 
   const produtoParaCompra = (produto) => buildSnapshotExibicaoComercial(produto);
 
-  const calcQuantity = (produto) => {
-    const base =
-      produto._sugestao?.quantidade_sugerida_base ??
-      calcularSugestaoCompraProduto(produto, [], [], { roundingMode }).quantidade_sugerida_base;
-    return base || 0;
-  };
+  const calcQuantityLinha = (linha) => linha.sugestao?.quantidade_sugerida_base || 0;
 
-  const sugestaoDisplay = (produto) => {
-    const qBase = calcQuantity(produto);
+  const sugestaoDisplayLinha = (linha) => {
+    const qBase = calcQuantityLinha(linha);
     return resolveCommercialDisplay(
-      produtoParaCompra(produto),
+      produtoParaCompra(linha.produto),
       qBase,
-      produto.unidade_principal || 'UN',
+      linha.produto.unidade_principal || 'UN',
     );
   };
+
+  const recomputarLinhas = useCallback(
+    (prods, pedidos, movsPorProduto, pending, opts = {}) => {
+      const agrupar = opts.agruparHierarquia ?? agruparHierarquia;
+      const round = opts.roundingMode ?? roundingMode;
+      return buildLinhasSugestaoCompra(prods, pedidos, movsPorProduto, pending, {
+        agruparHierarquia: agrupar,
+        roundingMode: round,
+      });
+    },
+    [agruparHierarquia, roundingMode],
+  );
 
   const loadData = async () => {
     setIsLoading(true);
@@ -95,38 +118,28 @@ export default function SugestaoCompra({ onStatsChange }) {
       });
 
       const movsPorProduto = groupMovimentacoesPorProduto(movimentacoes);
-      calcContextRef.current = { pedidos, movsPorProduto };
-      dadosCarregadosRef.current = true;
+      calcContextRef.current = { pedidos, movsPorProduto, prods, pending };
 
       let semVenda90d = 0;
       let semDiasEstoque = 0;
+      prods.forEach((p) => {
+        const s = calcularSugestaoCompraProduto(p, pedidos, movsPorProduto[p.id] || [], {
+          roundingMode,
+        });
+        if (s.motivo === 'sem_venda') semVenda90d += 1;
+        if (s.motivo === 'sem_dias_com_estoque') semDiasEstoque += 1;
+      });
 
-      const elegiveis = prods
-        .map((p) => {
-          const sugestao = calcularSugestaoCompraProduto(
-            p,
-            pedidos,
-            movsPorProduto[p.id] || [],
-            { roundingMode },
-          );
-          if (sugestao.motivo === 'sem_venda') semVenda90d += 1;
-          if (sugestao.motivo === 'sem_dias_com_estoque') semDiasEstoque += 1;
-          return {
-            ...p,
-            _sugestao: sugestao,
-            quantidade_pendente: pending[p.id] || 0,
-          };
-        })
-        .filter((p) => p._sugestao?.elegivel)
-        .sort((a, b) => a.nome.localeCompare(b.nome));
+      const novasLinhas = recomputarLinhas(prods, pedidos, movsPorProduto, pending);
 
       setLoadStats({
         totalAtivos: prods.length,
-        elegiveis: elegiveis.length,
+        elegiveis: novasLinhas.length,
         semVenda90d,
         semDiasEstoque,
+        linhasGrupo: novasLinhas.filter((l) => l.tipo === 'grupo').length,
       });
-      setProdutos(elegiveis);
+      setLinhas(novasLinhas);
       setFornecedores(forn);
       setCategorias(cats);
     } catch (error) {
@@ -141,50 +154,56 @@ export default function SugestaoCompra({ onStatsChange }) {
   }, []);
 
   useEffect(() => {
-    if (!dadosCarregadosRef.current) return;
-    const { pedidos, movsPorProduto } = calcContextRef.current;
-    setProdutos((prev) => {
-      if (!prev.length) return prev;
-      return prev.map((p) => ({
-        ...p,
-        _sugestao: calcularSugestaoCompraProduto(
-          p,
-          pedidos,
-          movsPorProduto[p.id] || [],
-          { roundingMode },
-        ),
-      }));
-    });
-  }, [roundingMode]);
+    const ctx = calcContextRef.current;
+    if (!ctx.prods?.length) return;
+    setLinhas(
+      recomputarLinhas(ctx.prods, ctx.pedidos, ctx.movsPorProduto, ctx.pending, {
+        agruparHierarquia,
+        roundingMode,
+      }),
+    );
+  }, [roundingMode, agruparHierarquia, recomputarLinhas]);
 
-  const filteredProducts = useMemo(() => {
-    const s = searchTerm.toLowerCase();
-    return produtos.filter((p) => {
-      if (hidePending && p.quantidade_pendente > 0) return false;
-      if (s && !p.nome.toLowerCase().includes(s)) return false;
-      if (categoryFilter !== 'all' && p.categoria_id !== categoryFilter) return false;
-      if (supplierFilter !== 'all' && p.fornecedor_padrao_id !== supplierFilter) return false;
-      if (selectedTags.length > 0 && !selectedTags.every((t) => p.tags?.includes(t))) return false;
+  const filteredLinhas = useMemo(() => {
+    const s = searchTerm.toLowerCase().trim();
+    return linhas.filter((linha) => {
+      if (hidePending && linha.quantidade_pendente > 0) return false;
+      if (s && !linha.searchText.includes(s)) return false;
+      if (categoryFilter !== 'all' && !linha.skus.some((p) => p.categoria_id === categoryFilter)) {
+        return false;
+      }
+      if (
+        supplierFilter !== 'all' &&
+        !linha.skus.some((p) => p.fornecedor_padrao_id === supplierFilter)
+      ) {
+        return false;
+      }
+      if (
+        selectedTags.length > 0 &&
+        !linha.skus.some((p) => selectedTags.every((t) => p.tags?.includes(t)))
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [produtos, searchTerm, categoryFilter, supplierFilter, selectedTags, hidePending]);
+  }, [linhas, searchTerm, categoryFilter, supplierFilter, selectedTags, hidePending]);
 
   const selectedCount = Object.keys(selectedItems).length;
 
   useEffect(() => {
     onStatsChange?.({
-      total: filteredProducts.length,
+      total: filteredLinhas.length,
       selected: selectedCount,
-      catalogo: produtos.length,
+      catalogo: linhas.length,
       ...loadStats,
     });
-  }, [filteredProducts.length, selectedCount, produtos.length, loadStats, onStatsChange]);
+  }, [filteredLinhas.length, selectedCount, linhas.length, loadStats, onStatsChange]);
 
   const handleSelectAll = (checked) => {
     if (checked) {
       const all = {};
-      filteredProducts.forEach((p) => {
-        all[p.id] = true;
+      filteredLinhas.forEach((l) => {
+        all[l.id] = true;
       });
       setSelectedItems(all);
     } else {
@@ -199,43 +218,69 @@ export default function SugestaoCompra({ onStatsChange }) {
     setTagSearch('');
     setHidePending(false);
     setRoundingMode('auto');
+    setAgruparHierarquia(true);
   };
 
+  const expandirLinhaItens = (linha) => {
+    const { pedidos } = calcContextRef.current;
+    if (linha.tipo === 'sku') {
+      const p = linha.produto;
+      const qBase = calcQuantityLinha(linha);
+      return [{ produto: p, quantidade_base: qBase, nome: p.nome }];
+    }
+
+    const total = calcQuantityLinha(linha);
+    const partes = distribuirQuantidadeGrupo(linha.skus, total, pedidos, roundingMode);
+    return partes.map(({ produto, quantidade_base }) => ({
+      produto,
+      quantidade_base,
+      nome:
+        linha.skus.length > 1
+          ? `${linha.label} (${produto.campo_hierarquico_5 || produto.marca || produto.nome})`
+          : linha.label,
+    }));
+  };
+
+  const fornecedorLinha = (linha) =>
+    fornecedorPorLinha[linha.id] || fornecedorPadraoLinha(linha);
+
   const handleGenerate = async () => {
-    const selected = filteredProducts.filter((p) => selectedItems[p.id]);
+    const selected = filteredLinhas.filter((l) => selectedItems[l.id]);
     if (selected.length === 0) return;
 
-    const noSupplier = selected.filter((p) => !fornecedorPorProduto[p.id] && !p.fornecedor_padrao_id);
-    if (noSupplier.length > 0) {
+    const semFornecedor = selected.filter((l) => !fornecedorLinha(l));
+    if (semFornecedor.length > 0) {
       toast({
-        title: 'Produtos sem fornecedor',
-        description: `${noSupplier.length} produto(s) sem fornecedor`,
+        title: 'Itens sem fornecedor',
+        description: `${semFornecedor.length} linha(s) sem fornecedor`,
         variant: 'destructive',
       });
       return;
     }
 
     const bySupplier = {};
-    selected.forEach((p) => {
-      const sid = fornecedorPorProduto[p.id] || p.fornecedor_padrao_id;
+    selected.forEach((linha) => {
+      const sid = fornecedorLinha(linha);
       const supplier = fornecedores.find((f) => f.id === sid);
       if (!bySupplier[sid]) {
         bySupplier[sid] = { fornecedor_id: sid, fornecedor_nome: supplier?.nome || 'N/A', itens: [] };
       }
-      const qBase = calcQuantity(p);
-      const snap = produtoParaCompra(p);
-      const disp = resolveCommercialDisplay(snap, qBase, p.unidade_principal || 'UN');
-      const custoBase = p.preco_custo_calculado || p.valor_compra || 0;
-      const custoUnitCompra = custoBase * (disp.fator_conversao || 1);
-      bySupplier[sid].itens.push({
-        produto_id: p.id,
-        produto_nome: p.nome,
-        quantidade: disp.quantidade,
-        quantidade_base: qBase,
-        fator_conversao: disp.fator_conversao,
-        unidade: disp.unidade,
-        custo_unitario: custoUnitCompra,
-        total: qBase * custoBase,
+
+      expandirLinhaItens(linha).forEach(({ produto, quantidade_base, nome }) => {
+        const snap = produtoParaCompra(produto);
+        const disp = resolveCommercialDisplay(snap, quantidade_base, produto.unidade_principal || 'UN');
+        const custoBase = produto.preco_custo_calculado || produto.valor_compra || 0;
+        const custoUnitCompra = custoBase * (disp.fator_conversao || 1);
+        bySupplier[sid].itens.push({
+          produto_id: produto.id,
+          produto_nome: nome,
+          quantidade: disp.quantidade,
+          quantidade_base,
+          fator_conversao: disp.fator_conversao,
+          unidade: disp.unidade,
+          custo_unitario: custoUnitCompra,
+          total: quantidade_base * custoBase,
+        });
       });
     });
 
@@ -279,7 +324,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   };
 
   const handleQuote = async () => {
-    const selected = filteredProducts.filter((p) => selectedItems[p.id]);
+    const selected = filteredLinhas.filter((l) => selectedItems[l.id]);
     if (selected.length === 0) return;
 
     try {
@@ -287,28 +332,51 @@ export default function SugestaoCompra({ onStatsChange }) {
       const num =
         (all.length > 0 ? Math.max(...all.map((c) => parseInt(c.numero?.split('-')[1] || 0, 10))) : 0) + 1;
 
-      const suppliers = [
-        ...new Set(selected.map((p) => fornecedorPorProduto[p.id] || p.fornecedor_padrao_id).filter(Boolean)),
-      ];
+      const itens = [];
+      const supplierIds = new Set();
+
+      selected.forEach((linha) => {
+        const sid = fornecedorLinha(linha);
+        if (sid) supplierIds.add(sid);
+
+        if (linha.tipo === 'grupo') {
+          const qBase = calcQuantityLinha(linha);
+          const disp = sugestaoDisplayLinha(linha);
+          itens.push({
+            produto_id: linha.produto.id,
+            produto_nome: linha.label,
+            quantidade: disp.quantidade,
+            unidade: disp.unidade,
+            quantidade_base: qBase,
+            fator_conversao: disp.fator_conversao,
+            observacao: `${linha.skus.length} modelo(s) — família hierárquica`,
+          });
+        } else {
+          expandirLinhaItens(linha).forEach(({ produto, quantidade_base, nome }) => {
+            const disp = resolveCommercialDisplay(
+              produtoParaCompra(produto),
+              quantidade_base,
+              produto.unidade_principal || 'UN',
+            );
+            itens.push({
+              produto_id: produto.id,
+              produto_nome: nome,
+              quantidade: disp.quantidade,
+              unidade: disp.unidade,
+              quantidade_base,
+              fator_conversao: disp.fator_conversao,
+            });
+          });
+        }
+      });
 
       await base44.entities.Cotacao.create({
         numero: `COT-${String(num).padStart(5, '0')}`,
         titulo: `Cotação - ${new Date().toLocaleDateString()}`,
         status: 'Rascunho',
         data_abertura: dataHoje(),
-        itens: selected.map((p) => {
-          const qBase = calcQuantity(p);
-          const disp = resolveCommercialDisplay(produtoParaCompra(p), qBase, p.unidade_principal || 'UN');
-          return {
-            produto_id: p.id,
-            produto_nome: p.nome,
-            quantidade: disp.quantidade,
-            unidade: disp.unidade,
-            quantidade_base: qBase,
-            fator_conversao: disp.fator_conversao,
-          };
-        }),
-        fornecedores: suppliers.map((id) => {
+        itens,
+        fornecedores: [...supplierIds].map((id) => {
           const f = fornecedores.find((x) => x.id === id);
           return { fornecedor_id: id, fornecedor_nome: f?.nome || 'N/A', status_envio: 'Pendente' };
         }),
@@ -321,15 +389,15 @@ export default function SugestaoCompra({ onStatsChange }) {
     }
   };
 
-  const renderFornecedorSelect = (produto, className = '') => {
-    const value = fornecedorPorProduto[produto.id] || produto.fornecedor_padrao_id || FORNECEDOR_VAZIO;
+  const renderFornecedorSelect = (linha, className = '') => {
+    const value = fornecedorLinha(linha) || FORNECEDOR_VAZIO;
     return (
       <Select
         value={value}
         onValueChange={(v) =>
-          setFornecedorPorProduto({
-            ...fornecedorPorProduto,
-            [produto.id]: v === FORNECEDOR_VAZIO ? '' : v,
+          setFornecedorPorLinha({
+            ...fornecedorPorLinha,
+            [linha.id]: v === FORNECEDOR_VAZIO ? '' : v,
           })
         }
       >
@@ -376,12 +444,15 @@ export default function SugestaoCompra({ onStatsChange }) {
         onHidePending={setHidePending}
         roundingMode={roundingMode}
         onRoundingMode={setRoundingMode}
+        agruparHierarquia={agruparHierarquia}
+        onAgruparHierarquia={setAgruparHierarquia}
         onLimparFiltros={limparFiltros}
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-foreground/85">
-          {filteredProducts.length} sugestão(ões)
+          {filteredLinhas.length} sugestão(ões)
+          {loadStats.linhasGrupo > 0 ? ` · ${loadStats.linhasGrupo} família(s)` : ''}
           {selectedCount > 0 ? ` · ${selectedCount} selecionada(s)` : ''}
         </p>
         <div className="flex flex-wrap items-center gap-2">
@@ -419,7 +490,7 @@ export default function SugestaoCompra({ onStatsChange }) {
         </div>
       </div>
 
-      {produtos.length === 0 ? (
+      {linhas.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-14 px-4 text-center max-w-lg mx-auto">
           <CheckCircle className="w-9 h-9 text-muted-foreground/40" />
           <p className="text-sm text-foreground/90 font-medium">Nenhuma sugestão no momento</p>
@@ -427,9 +498,7 @@ export default function SugestaoCompra({ onStatsChange }) {
             {loadStats.totalAtivos > 0 ? (
               <>
                 {loadStats.totalAtivos} produto(s) analisado(s) nos últimos 90 dias.
-                {loadStats.semVenda90d > 0 ? (
-                  <> {loadStats.semVenda90d} sem venda no período.</>
-                ) : null}
+                {loadStats.semVenda90d > 0 ? <> {loadStats.semVenda90d} sem venda no período.</> : null}
                 {loadStats.semDiasEstoque > 0 ? (
                   <> {loadStats.semDiasEstoque} sem dias com estoque para calcular a média.</>
                 ) : null}
@@ -444,9 +513,9 @@ export default function SugestaoCompra({ onStatsChange }) {
             )}
           </p>
         </div>
-      ) : filteredProducts.length === 0 ? (
+      ) : filteredLinhas.length === 0 ? (
         <div className="py-14 text-center text-sm text-muted-foreground">
-          Nenhum produto corresponde aos filtros.
+          Nenhum item corresponde aos filtros.
         </div>
       ) : (
         <div className="min-w-0 w-full space-y-2">
@@ -454,7 +523,7 @@ export default function SugestaoCompra({ onStatsChange }) {
             <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
               <Checkbox
                 checked={
-                  filteredProducts.length > 0 && filteredProducts.every((p) => selectedItems[p.id])
+                  filteredLinhas.length > 0 && filteredLinhas.every((l) => selectedItems[l.id])
                 }
                 onCheckedChange={handleSelectAll}
               />
@@ -463,25 +532,38 @@ export default function SugestaoCompra({ onStatsChange }) {
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Qtd sugerida</span>
           </div>
           <P38MobileLineList allViewports className="rounded-none border-0 shadow-none bg-transparent">
-            {filteredProducts.map((p, index) => (
-              <SugestaoCompraLinha
-                key={p.id}
-                produto={p}
-                sugestao={p._sugestao}
-                disp={sugestaoDisplay(p)}
-                selecionado={!!selectedItems[p.id]}
-                striped={index % 2 === 1}
-                onToggleSelecionado={(c) =>
-                  setSelectedItems((prev) =>
-                    c ? { ...prev, [p.id]: true } : { ...prev, [p.id]: undefined },
-                  )
-                }
-                fornecedorSelect={renderFornecedorSelect(
-                  p,
-                  'h-8 w-full max-w-[16rem] rounded-md border-0 bg-muted/30 text-xs',
-                )}
-              />
-            ))}
+            {filteredLinhas.map((linha, index) => {
+              const LinhaComp = linha.tipo === 'grupo' ? SugestaoCompraLinhaGrupo : SugestaoCompraLinha;
+              const props =
+                linha.tipo === 'grupo'
+                  ? {
+                      linha,
+                      disp: sugestaoDisplayLinha(linha),
+                    }
+                  : {
+                      produto: linha.produto,
+                      sugestao: linha.sugestao,
+                      disp: sugestaoDisplayLinha(linha),
+                    };
+
+              return (
+                <LinhaComp
+                  key={linha.id}
+                  {...props}
+                  selecionado={!!selectedItems[linha.id]}
+                  striped={index % 2 === 1}
+                  onToggleSelecionado={(c) =>
+                    setSelectedItems((prev) =>
+                      c ? { ...prev, [linha.id]: true } : { ...prev, [linha.id]: undefined },
+                    )
+                  }
+                  fornecedorSelect={renderFornecedorSelect(
+                    linha,
+                    'h-8 w-full max-w-[16rem] rounded-md border-0 bg-muted/30 text-xs',
+                  )}
+                />
+              );
+            })}
           </P38MobileLineList>
         </div>
       )}

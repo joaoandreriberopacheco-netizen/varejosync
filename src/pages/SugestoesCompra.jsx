@@ -17,7 +17,7 @@ export default function SugestoesCompraPage() {
               : ''}
           </p>
           <p className="text-xs text-muted-foreground">
-            Média 90d (dias com estoque) · ponto = m × 1,5 × lead time · qtd = lead time × m
+            Média 90d · famílias por hierarquia (h1–h4) · qtd = lead time × m
           </p>
         </div>
       </div>
