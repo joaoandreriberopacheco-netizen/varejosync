@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
-import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
+import { enrichProdutosComIep, stripAbcdIepCadastro } from '@/lib/calcularIepProdutos';
 import { fetchDadosVendaAbcd90d, fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
@@ -109,26 +109,28 @@ export function useDadosVendaAbcd90dQuery(options = {}) {
   });
 }
 
-/** Catálogo — ABCD/IEP com vendas 90d leves (estado estável 1dfe00d2). */
+/** Catálogo — ABCD/IEP ao vivo (grupo h1+h2); ignora campo abcd gravado pelo job. */
 export function useProdutosComIepQuery(options = {}) {
   const sort = options.sort ?? '-created_date';
   const { sort: _sort, ...rest } = options;
   const produtosQuery = useProdutosListQuery({ sort, ...rest });
-  const pedidosQuery = usePedidosVenda90dQuery({
+  const vendasQuery = useDadosVendaAbcd90dQuery({
     enabled: (rest.enabled ?? true) && Boolean(produtosQuery.data?.length),
   });
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
-    if (!pedidosQuery.isFetched) return produtosQuery.data;
-    return enrichProdutosComIep(produtosQuery.data, pedidosQuery.data ?? []);
-  }, [produtosQuery.data, pedidosQuery.data, pedidosQuery.isFetched]);
+    if (!vendasQuery.isSuccess) {
+      return produtosQuery.data.map(stripAbcdIepCadastro);
+    }
+    return enrichProdutosComIep(produtosQuery.data, vendasQuery.data?.pedidos90d ?? []);
+  }, [produtosQuery.data, vendasQuery.data, vendasQuery.isSuccess]);
 
   return {
     ...produtosQuery,
     data,
-    isLoading: produtosQuery.isLoading || pedidosQuery.isLoading,
-    isFetching: produtosQuery.isFetching || pedidosQuery.isFetching,
+    isLoading: produtosQuery.isLoading || vendasQuery.isLoading,
+    isFetching: produtosQuery.isFetching || vendasQuery.isFetching,
   };
 }
 

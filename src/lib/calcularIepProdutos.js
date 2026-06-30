@@ -1,6 +1,6 @@
 /**
  * Cálculo ABCD / IEP (mesmas regras do job base44/functions/calcularIEP).
- * Usado em relatórios sob demanda; o catálogo lê os campos já gravados no Produto.
+ * Catálogo: enrichProdutosComIep recalcula ao vivo e ignora abcd gravado no cadastro.
  */
 
 function q3(values) {
@@ -381,16 +381,39 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d) {
   return porId;
 }
 
+const CAMPOS_ABCD_IEP_CATALOGO = [
+  'abcd',
+  'iep_score',
+  'iep_score_nivel_1',
+  'iep_score_nivel_2',
+  'iep_score_nivel_3',
+  'iep_score_nivel_4',
+  'iep_score_nivel_5',
+  'iep_classe',
+];
+
+/** Remove ABCD/IEP gravados no cadastro — o catálogo usa só o cálculo ao vivo. */
+export function stripAbcdIepCadastro(produto) {
+  if (!produto || typeof produto !== 'object') return produto;
+  const next = { ...produto };
+  for (const key of CAMPOS_ABCD_IEP_CATALOGO) {
+    delete next[key];
+  }
+  return next;
+}
+
 /** Aplica métricas IEP/ABCD calculadas a partir das vendas de 90 dias. */
 export function enrichProdutosComIep(produtos, pedidos90d) {
   const lista = Array.isArray(produtos) ? produtos : [];
-  if (!lista.length || !Array.isArray(pedidos90d)) return lista;
+  if (!lista.length || !Array.isArray(pedidos90d)) {
+    return lista.map(stripAbcdIepCadastro);
+  }
 
   const calculado = calcularMetricasIepParaCatalogo(lista, pedidos90d);
   return lista.map((produto) => {
     const m = calculado[produto.id];
-    if (!m) return produto;
-    return { ...produto, ...m };
+    if (!m) return stripAbcdIepCadastro(produto);
+    return { ...stripAbcdIepCadastro(produto), ...m };
   });
 }
 
