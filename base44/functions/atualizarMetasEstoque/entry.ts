@@ -110,87 +110,6 @@ function arredondarQuantidadeSugestao(quantityBase: number, produto: Record<stri
   return Math.ceil(base / pack) * pack;
 }
 
-function localDateKey(value: unknown) {
-  const d = new Date(String(value || ''));
-  if (Number.isNaN(d.getTime())) return 'sem-data';
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function deltaMovimento(mov: Record<string, unknown>) {
-  const q = Number(mov?.quantidade) || 0;
-  const t = mov?.tipo;
-  if (t === 'Entrada') return q;
-  if (t === 'Saída') return -q;
-  return 0;
-}
-
-function buildMapaSaldoFimDia(
-  movimentacoes: Record<string, unknown>[],
-  estoqueAtual: number,
-  janelaDias = JANELA_DIAS,
-) {
-  const hoje = new Date();
-  const inicio = new Date(hoje);
-  inicio.setDate(inicio.getDate() - janelaDias);
-  const diaInicio = localDateKey(inicio);
-
-  const movsJanela = movimentacoes.filter((m) => {
-    const dia = localDateKey(m?.created_date);
-    return dia !== 'sem-data' && dia >= diaInicio;
-  });
-
-  const deltasNaJanela = movsJanela.reduce((acc, m) => acc + deltaMovimento(m), 0);
-  let saldo = (Number(estoqueAtual) || 0) - deltasNaJanela;
-
-  const movsPorDia = new Map<string, Record<string, unknown>[]>();
-  for (const m of movsJanela.sort((a, b) =>
-    new Date(String(a?.created_date || 0)).getTime() - new Date(String(b?.created_date || 0)).getTime()
-  )) {
-    const dia = localDateKey(m?.created_date);
-    if (!movsPorDia.has(dia)) movsPorDia.set(dia, []);
-    movsPorDia.get(dia)!.push(m);
-  }
-
-  const saldoPorDia = new Map<string, number>();
-  const dias: string[] = [];
-  const cur = new Date(inicio);
-  cur.setHours(12, 0, 0, 0);
-  const end = new Date(hoje);
-  end.setHours(12, 0, 0, 0);
-  while (cur <= end) {
-    dias.push(localDateKey(cur));
-    cur.setDate(cur.getDate() + 1);
-  }
-
-  for (const dia of dias) {
-    for (const m of movsPorDia.get(dia) || []) {
-      saldo += deltaMovimento(m);
-    }
-    saldoPorDia.set(dia, saldo);
-  }
-
-  return saldoPorDia;
-}
-
-function contarDiasComEstoqueAtivo(saldoPorDia: Map<string, number>) {
-  let count = 0;
-  for (const saldo of saldoPorDia.values()) {
-    if (saldo !== 0) count += 1;
-  }
-  return count;
-}
-
-function arredondarParaVitrineBase(quantityBase: number, fatorVitrine: number) {
-  const base = Number(quantityBase) || 0;
-  if (base <= 0) return 0;
-  const fator = Math.max(1, Number(fatorVitrine) || 1);
-  const packs = Math.ceil(base / fator);
-  return Math.max(fator, packs * fator);
-}
-
 function buildItensPorProdutoId(pedidos: Record<string, unknown>[]) {
   const map: Record<string, Record<string, unknown>[]> = {};
   for (const pedido of pedidos || []) {
@@ -228,7 +147,6 @@ function calcularVendasSemOutliers(itens: Record<string, unknown>[]) {
 function calcularMetas(
   produto: Record<string, unknown>,
   itens: Record<string, unknown>[],
-  movimentacoes: Record<string, unknown>[],
 ) {
   const leadTime = Math.max(1, Number(produto?.tempo_reposicao_dias) || LEAD_TIME_PADRAO);
   const vendas = calcularVendasSemOutliers(itens);
@@ -238,25 +156,11 @@ function calcularMetas(
       atualizar: false,
       motivo: 'sem_venda',
       leadTime,
-      diasComEstoque: 0,
       ...vendas,
     };
   }
 
-  const saldoPorDia = buildMapaSaldoFimDia(movimentacoes, Number(produto?.estoque_atual) || 0);
-  const diasComEstoque = contarDiasComEstoqueAtivo(saldoPorDia);
-
-  if (diasComEstoque === 0) {
-    return {
-      atualizar: false,
-      motivo: 'sem_dias_com_estoque',
-      leadTime,
-      diasComEstoque,
-      ...vendas,
-    };
-  }
-
-  const m = vendas.quantidadeLimpa / diasComEstoque;
+  const m = vendas.quantidadeLimpa / JANELA_DIAS;
   const idealBase = m * leadTime;
   const minimoBase = m * 1.5 * leadTime;
   const { unidade, fator } = resolveFatorVitrine(produto);
@@ -274,12 +178,11 @@ function calcularMetas(
     unidade_vitrine_compra: unidade,
     fator_vitrine: fator,
     lote_compra_vitrine: resolveLoteCompraVitrine(produto) || null,
-    dias_com_estoque: diasComEstoque,
     quantidade_limpa_90d: vendas.quantidadeLimpa,
     outliers_descartados: vendas.outliersDescartados,
     linhas_venda_total: vendas.linhasTotal,
     metas_estoque_atualizado_em: new Date().toISOString(),
-    metas_estoque_versao: 'v2-media-dias-estoque-lote-vitrine',
+    metas_estoque_versao: 'v3-media-90d-lead-time',
   };
 }
 
@@ -306,83 +209,6 @@ async function fetchPedidos90d(base44: ReturnType<typeof createClientFromRequest
   }
 
   return todos;
-}
-
-async function fetchMovimentacoes90dPorProdutos(
-  entities: ReturnType<typeof createClientFromRequest>['entities'],
-  dataISO: string,
-  produtoIds: string[],
-  pageSize = 500,
-) {
-  if (!produtoIds.length) return [];
-
-  const todos: Record<string, unknown>[] = [];
-  const chunkSize = 80;
-
-  for (let i = 0; i < produtoIds.length; i += chunkSize) {
-    const chunk = produtoIds.slice(i, i + chunkSize);
-    let skip = 0;
-    let temMais = true;
-
-    while (temMais) {
-      const batch = await entities.MovimentacaoEstoque.filter(
-        { created_date: { $gte: dataISO }, produto_id: { $in: chunk } },
-        'created_date',
-        pageSize,
-        skip,
-      );
-
-      if (!batch || batch.length === 0) {
-        temMais = false;
-      } else {
-        todos.push(...batch);
-        skip += pageSize;
-        if (batch.length < pageSize) temMais = false;
-      }
-    }
-  }
-
-  return todos;
-}
-
-async function fetchMovimentacoes90d(
-  base44: ReturnType<typeof createClientFromRequest>,
-  dataISO: string,
-  pageSize = 500,
-) {
-  const todos: Record<string, unknown>[] = [];
-  let skip = 0;
-  let temMais = true;
-
-  while (temMais) {
-    const batch = await base44.entities.MovimentacaoEstoque.filter(
-      { created_date: { $gte: dataISO } },
-      'created_date',
-      pageSize,
-      skip,
-    );
-
-    if (!batch || batch.length === 0) {
-      temMais = false;
-    } else {
-      todos.push(...batch);
-      skip += pageSize;
-      if (batch.length < pageSize) temMais = false;
-    }
-  }
-
-  return todos;
-}
-
-function groupMovsPorProduto(movs: Record<string, unknown>[]) {
-  const map: Record<string, Record<string, unknown>[]> = {};
-  for (const m of movs) {
-    const pid = String(m?.produto_id ?? '');
-    if (!pid) continue;
-    if (!map[pid]) map[pid] = [];
-    map[pid].push(m);
-  }
-  return map;
 }
 
 const DEFAULT_BATCH_SIZE = 50;
@@ -490,7 +316,7 @@ function regrasResposta(somenteMetasVazias: boolean) {
   return {
     janela_dias: JANELA_DIAS,
     lead_time_padrao: LEAD_TIME_PADRAO,
-    media: 'qty_vendida / dias_com_estoque_diferente_de_zero',
+    media: 'qty_vendida_limpa / 90 dias (sem IEP/ABCD)',
     estoque_minimo: 'ponto de pedido = m × 1,5 × lead time',
     estoque_ideal: 'quantidade a repor = m × lead time',
     outliers: 'qty_linha > Q3 descartada',
@@ -500,26 +326,9 @@ function regrasResposta(somenteMetasVazias: boolean) {
   };
 }
 
-function collectIdsCandidatosMetas(
-  produtos: Record<string, unknown>[],
-  itensPorProduto: Record<string, Record<string, unknown>[]>,
-  somenteMetasVazias: boolean,
-) {
-  const ids: string[] = [];
-  for (const produto of produtos) {
-    if (produto.estoque_trava_manual === true) continue;
-    if (somenteMetasVazias && !produtoMetasVazio(produto)) continue;
-    const pid = String(produto.id ?? '');
-    if (!pid || !(itensPorProduto[pid]?.length)) continue;
-    ids.push(pid);
-  }
-  return ids;
-}
-
 function computeSnapshot(
   produtos: Record<string, unknown>[],
   itensPorProduto: Record<string, Record<string, unknown>[]>,
-  movsPorProduto: Record<string, Record<string, unknown>[]>,
   somenteMetasVazias: boolean,
   pedidosAnalisados: number,
 ) {
@@ -536,11 +345,7 @@ function computeSnapshot(
     if (somenteMetasVazias && !produtoMetasVazio(produto)) continue;
 
     const pid = String(produto.id ?? '');
-    const metas = calcularMetas(
-      produto,
-      itensPorProduto[pid] || [],
-      movsPorProduto[pid] || [],
-    );
+    const metas = calcularMetas(produto, itensPorProduto[pid] || []);
     if (!metas.atualizar) {
       ignorados_sem_venda += 1;
       continue;
@@ -578,13 +383,9 @@ async function runPreparar(
   ]);
 
   const itensPorProduto = buildItensPorProdutoId(pedidos);
-  const candidatosIds = collectIdsCandidatosMetas(produtos, itensPorProduto, somenteMetasVazias);
-  const movimentacoes = await fetchMovimentacoes90dPorProdutos(db, dataISO, candidatosIds);
-  const movsPorProduto = groupMovsPorProduto(movimentacoes);
   const snapshot = computeSnapshot(
     produtos,
     itensPorProduto,
-    movsPorProduto,
     somenteMetasVazias,
     pedidos.length,
   );
@@ -634,7 +435,6 @@ async function runPreparar(
     ignorados_trava_manual: snapshot.ignorados_trava_manual,
     ignorados_sem_venda: snapshot.ignorados_sem_venda,
     pedidos_analisados: pedidos.length,
-    produtos_com_venda_candidatos: candidatosIds.length,
     batch_size: batchSize,
     total_blocos: totalBlocos,
     proximo_offset: 0,

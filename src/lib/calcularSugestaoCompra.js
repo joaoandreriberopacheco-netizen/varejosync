@@ -43,7 +43,7 @@ export function calcularSugestaoCompraProduto(
   if (!media.teveMedia) {
     return {
       elegivel: false,
-      motivo: !media.teveVenda ? 'sem_venda' : 'sem_dias_com_estoque',
+      motivo: 'sem_venda',
       lead_time_dias: leadTime,
       estoque_atual: estoqueAtual,
       ...media,
@@ -79,10 +79,9 @@ export function calcularSugestaoCompraProduto(
     fator_vitrine: fator,
     lote_compra_vitrine: loteVitrine || null,
     lote_compra_base: resolveLoteCompraBase(produto),
-    dias_com_estoque: media.diasComEstoque,
     quantidade_limpa_90d: media.quantidadeLimpa,
     outliers_descartados: media.outliersDescartados,
     linhas_venda_total: media.linhasTotal,
-    versao: 'v2-media-dias-estoque-lote-vitrine',
+    versao: 'v3-media-90d-lead-time',
   };
 }

@@ -19,10 +19,6 @@ import {
   distribuirQuantidadeGrupo,
 } from '@/lib/calcularSugestaoCompraHierarquia';
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
-import {
-  fetchMovimentacoesEstoque90d,
-  groupMovimentacoesPorProduto,
-} from '@/lib/fetchMovimentacoesEstoque90d';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 
 const FORNECEDOR_VAZIO = '__none__';
@@ -63,7 +59,7 @@ export default function SugestaoCompra({ onStatsChange }) {
 
   const { toast } = useToast();
   const navigate = useNavigate();
-  const calcContextRef = useRef({ pedidos: [], movsPorProduto: {}, prods: [], pending: {} });
+  const calcContextRef = useRef({ pedidos: [], prods: [], pending: {} });
 
   const allTags = useMemo(() => {
     const tags = new Set();
@@ -85,10 +81,10 @@ export default function SugestaoCompra({ onStatsChange }) {
   };
 
   const recomputarLinhas = useCallback(
-    (prods, pedidos, movsPorProduto, pending, opts = {}) => {
+    (prods, pedidos, pending, opts = {}) => {
       const agrupar = opts.agruparHierarquia ?? agruparHierarquia;
       const round = opts.roundingMode ?? roundingMode;
-      return buildLinhasSugestaoCompra(prods, pedidos, movsPorProduto, pending, {
+      return buildLinhasSugestaoCompra(prods, pedidos, {}, pending, {
         agruparHierarquia: agrupar,
         roundingMode: round,
       });
@@ -99,7 +95,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [prods, forn, cats, pedidos, pedidosCompra, movimentacoes] = await Promise.all([
+      const [prods, forn, cats, pedidos, pedidosCompra] = await Promise.all([
         base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
         base44.entities.Terceiro.list(),
         base44.entities.Categoria.list(),
@@ -107,7 +103,6 @@ export default function SugestaoCompra({ onStatsChange }) {
         base44.entities.PedidoCompra.filter({
           status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'],
         }),
-        fetchMovimentacoesEstoque90d(),
       ]);
 
       const pending = {};
@@ -117,26 +112,23 @@ export default function SugestaoCompra({ onStatsChange }) {
         });
       });
 
-      const movsPorProduto = groupMovimentacoesPorProduto(movimentacoes);
-      calcContextRef.current = { pedidos, movsPorProduto, prods, pending };
+      calcContextRef.current = { pedidos, prods, pending };
 
       let semVenda90d = 0;
-      let semDiasEstoque = 0;
       prods.forEach((p) => {
-        const s = calcularSugestaoCompraProduto(p, pedidos, movsPorProduto[p.id] || [], {
+        const s = calcularSugestaoCompraProduto(p, pedidos, [], {
           roundingMode,
         });
         if (s.motivo === 'sem_venda') semVenda90d += 1;
-        if (s.motivo === 'sem_dias_com_estoque') semDiasEstoque += 1;
       });
 
-      const novasLinhas = recomputarLinhas(prods, pedidos, movsPorProduto, pending);
+      const novasLinhas = recomputarLinhas(prods, pedidos, pending);
 
       setLoadStats({
         totalAtivos: prods.length,
         elegiveis: novasLinhas.length,
         semVenda90d,
-        semDiasEstoque,
+        semDiasEstoque: 0,
         linhasGrupo: novasLinhas.filter((l) => l.tipo === 'grupo').length,
       });
       setLinhas(novasLinhas);
@@ -157,7 +149,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     const ctx = calcContextRef.current;
     if (!ctx.prods?.length) return;
     setLinhas(
-      recomputarLinhas(ctx.prods, ctx.pedidos, ctx.movsPorProduto, ctx.pending, {
+      recomputarLinhas(ctx.prods, ctx.pedidos, ctx.pending, {
         agruparHierarquia,
         roundingMode,
       }),

@@ -91,7 +91,7 @@ export default function MetasEstoqueConfigTool() {
     setPhase('preparing');
     setProgress((p) => ({
       ...p,
-      etapa: 'Analisando vendas 90d, dias com estoque e lead time…',
+      etapa: 'Analisando vendas 90d e lead time dos produtos…',
     }));
 
     try {
@@ -210,10 +210,12 @@ export default function MetasEstoqueConfigTool() {
           <div className="min-w-0 space-y-1">
             <p className="text-sm font-semibold text-foreground/90">Ponto de pedido e estoque mínimo</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Calcula a partir das vendas dos últimos 90 dias (dias com estoque, sem outliers) e grava no
-              cadastro: <strong className="font-medium text-foreground/80">estoque mínimo</strong> = ponto de
-              pedido (m × 1,5 × lead time) e <strong className="font-medium text-foreground/80">estoque ideal</strong>{' '}
-              = quantidade a repor (lead time × m). Produtos com trava manual são ignorados.
+              <strong className="font-medium text-foreground/80">Não calcula IEP/ABCD.</strong>{' '}
+              Usa só a média de vendas dos últimos 90 dias (sem outliers) e o lead time do produto
+              (<code className="text-[11px]">tempo_reposicao_dias</code>). Grava{' '}
+              <strong className="font-medium text-foreground/80">estoque mínimo</strong> = ponto de pedido
+              (m × 1,5 × lead time) e <strong className="font-medium text-foreground/80">estoque ideal</strong>{' '}
+              = quantidade a repor (m × lead time). Produtos com trava manual são ignorados.
             </p>
           </div>
         </div>

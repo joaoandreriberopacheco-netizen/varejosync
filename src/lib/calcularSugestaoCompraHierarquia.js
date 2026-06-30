@@ -3,7 +3,7 @@
  * h5 / modelo fica dentro do grupo — ex.: «200 CX» de piso 45×45 sem escolher marca.
  */
 
-import { collectItensVendaProduto, lineQuantityBase } from '@/lib/calcularIepProdutos';
+import { collectItensVendaProduto, lineQuantityBase } from '@/lib/vendasLinha';
 import {
   METAS_ESTOQUE_JANELA_DIAS,
   METAS_ESTOQUE_LEAD_TIME_PADRAO,
@@ -12,11 +12,6 @@ import {
   resolveFatorUnidadeVitrineCompra,
 } from '@/lib/calcularMetasEstoqueVendas';
 import { calcularSugestaoCompraProduto } from '@/lib/calcularSugestaoCompra';
-import {
-  buildMapaSaldoFimDia,
-  contarDiasComEstoqueAtivo,
-  iterarDiasCalendario,
-} from '@/lib/estoqueSaldoDiario';
 
 function q3(values) {
   if (!values || values.length === 0) return Infinity;
@@ -100,29 +95,6 @@ function calcularVendasSemOutliersGrupo(skus, pedidos90d) {
   };
 }
 
-function buildMapaSaldoFimDiaGrupo(skus, movsPorProduto, janelaDias = METAS_ESTOQUE_JANELA_DIAS) {
-  if (!skus?.length) return new Map();
-
-  const mapas = skus.map((p) =>
-    buildMapaSaldoFimDia(movsPorProduto[p.id] || [], p.estoque_atual, janelaDias),
-  );
-
-  const hoje = new Date();
-  const inicio = new Date(hoje);
-  inicio.setDate(inicio.getDate() - janelaDias);
-  const dias = iterarDiasCalendario(inicio, hoje);
-
-  const combined = new Map();
-  for (const dia of dias) {
-    let sum = 0;
-    for (const m of mapas) {
-      sum += m.get(dia) ?? 0;
-    }
-    combined.set(dia, sum);
-  }
-  return combined;
-}
-
 function escolherProdutoRepresentativo(skus, pedidos90d) {
   let best = skus[0];
   let bestV = -1;
@@ -181,23 +153,20 @@ export function calcularSugestaoCompraGrupo(
   const estoqueAtual = lista.reduce((s, p) => s + (Number(p.estoque_atual) || 0), 0);
 
   const vendas = calcularVendasSemOutliersGrupo(lista, pedidos90d);
-  const saldoPorDia = buildMapaSaldoFimDiaGrupo(lista, movsPorProduto, janelaDias);
-  const diasComEstoque = contarDiasComEstoqueAtivo(saldoPorDia);
 
-  if (!vendas.teveVenda || diasComEstoque === 0) {
+  if (!vendas.teveVenda) {
     return {
       elegivel: false,
-      motivo: !vendas.teveVenda ? 'sem_venda' : 'sem_dias_com_estoque',
+      motivo: 'sem_venda',
       lead_time_dias: leadTime,
       estoque_atual: estoqueAtual,
-      dias_com_estoque: diasComEstoque,
       quantidade_limpa_90d: vendas.quantidadeLimpa,
       skus_no_grupo: lista.length,
       agrupado: true,
     };
   }
 
-  const m = vendas.quantidadeLimpa / diasComEstoque;
+  const m = vendas.quantidadeLimpa / janelaDias;
   const pontoPedido = m * 1.5 * leadTime;
   const quantidadeBruta = m * leadTime;
   const quantidadeSugeridaBase = arredondarQuantidadeSugestao(
@@ -221,13 +190,12 @@ export function calcularSugestaoCompraGrupo(
     produto_representativo_id: representativo.id,
     unidade_vitrine_compra: unidade,
     fator_vitrine: fator,
-    dias_com_estoque: diasComEstoque,
     quantidade_limpa_90d: vendas.quantidadeLimpa,
     outliers_descartados: vendas.outliersDescartados,
     linhas_venda_total: vendas.linhasTotal,
     skus_no_grupo: lista.length,
     agrupado: true,
-    versao: 'v2-grupo-hierarquia',
+    versao: 'v3-grupo-media-90d',
   };
 }
 
