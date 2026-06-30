@@ -86,34 +86,23 @@ export function calcularLucroSkuComQ4(produto, pedidos90d) {
   return { lucro, precoMedio, quantidade, teveVenda: quantidade > 0 };
 }
 
+/** Etapa 3 — A até 70%, B até 85%, C até 95%; restante e sem lucro → D. */
 function classificarParetoABCD(ranking, totalLucroPositivo) {
   const mapa = {};
-
-  if (totalLucroPositivo <= 0) {
-    ranking.forEach((entry) => {
-      mapa[entry.id] = 'D';
-    });
-    return mapa;
+  for (const entry of ranking) {
+    mapa[entry.id] = 'D';
   }
+  if (totalLucroPositivo <= 0) return mapa;
 
-  const comLucro = ranking.filter((entry) => entry.lucro > 0);
   let acumulado = 0;
-
-  comLucro.forEach((entry) => {
+  for (const entry of ranking) {
+    if (entry.lucro <= 0) continue;
     acumulado += entry.lucro;
     const percentual = (acumulado / totalLucroPositivo) * 100;
     if (percentual <= 70) mapa[entry.id] = 'A';
     else if (percentual <= 85) mapa[entry.id] = 'B';
     else if (percentual <= 95) mapa[entry.id] = 'C';
-    else mapa[entry.id] = 'D';
-  });
-
-  ranking
-    .filter((entry) => entry.lucro <= 0)
-    .forEach((entry) => {
-      mapa[entry.id] = 'D';
-    });
-
+  }
   return mapa;
 }
 

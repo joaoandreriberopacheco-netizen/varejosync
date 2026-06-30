@@ -88,39 +88,67 @@ export default function AbcdConfigTool() {
     }));
 
     try {
-      const prepResp = await calcularIEP({
-        fase: 'preparar',
+      setProgress((p) => ({
+        ...p,
+        etapa: 'Etapa 1: montando lista com vendas dos últimos 90 dias (sem outliers)…',
+      }));
+
+      const listarResp = await calcularIEP({
+        fase: 'listar',
         somente_abcd_vazio: somenteAbcdVazio,
         modo: 'manual',
         batch_size: BATCH_SIZE,
       });
-      const prep = normalizeJobResponse(prepResp);
+      const listado = normalizeJobResponse(listarResp);
 
-      if (prep.error) {
-        throw new Error(prep.error);
-      }
-      if (prep.status === 'erro') {
-        throw new Error(prep.error || 'Falha ao preparar o job.');
+      if (listado.error || listado.status === 'erro') {
+        throw new Error(listado.error || 'Falha na etapa 1 (lista).');
       }
 
-      if (prep.status === 'sem_alteracao' || prep.concluido) {
+      if (listado.status === 'sem_alteracao' || listado.concluido) {
         setPhase('empty');
         setResult({
-          mensagem: prep.mensagem || 'Nenhum produto pendente de atualização.',
+          mensagem: listado.mensagem || 'Nenhum produto pendente de atualização.',
           somente_abcd_vazio: somenteAbcdVazio,
         });
         return;
       }
 
-  const jobCache = prep.job_cache;
-  const cacheNoServidor = Boolean(prep.cache_no_servidor);
-  if (!cacheNoServidor && (!jobCache?.run_id || !jobCache?.updates_by_id)) {
-    throw new Error('Resposta incompleta do servidor. Republica a função calcularIEP no Base44.');
-  }
+      setProgress((p) => ({
+        ...p,
+        etapa: 'Etapa 2–3: ordenando por lucro e aplicando A / B / C / D…',
+      }));
 
-      const runId = prep.run_id || jobCache?.run_id;
-      const totalPendentes = prep.total_pendentes ?? jobCache.produto_ids.length;
-      const totalBlocos = prep.total_blocos ?? Math.ceil(totalPendentes / BATCH_SIZE);
+      const classificarResp = await calcularIEP({
+        fase: 'classificar',
+        run_id: listado.run_id,
+        ...(listado.job_cache ? { job_cache: listado.job_cache } : {}),
+        modo: 'manual',
+      });
+      const classificado = normalizeJobResponse(classificarResp);
+
+      if (classificado.error || classificado.status === 'erro') {
+        throw new Error(classificado.error || 'Falha na etapa 3 (classificação).');
+      }
+
+      if (classificado.concluido && (classificado.total_pendentes ?? 0) === 0) {
+        setPhase('empty');
+        setResult({
+          mensagem: 'Nenhum produto para gravar após a classificação.',
+          somente_abcd_vazio: somenteAbcdVazio,
+        });
+        return;
+      }
+
+      const jobCache = classificado.job_cache;
+      const cacheNoServidor = Boolean(classificado.cache_no_servidor);
+      if (!cacheNoServidor && (!jobCache?.run_id || !jobCache?.updates_by_id)) {
+        throw new Error('Resposta incompleta do servidor. Republica a função calcularIEP no Base44.');
+      }
+
+      const runId = classificado.run_id || jobCache?.run_id;
+      const totalPendentes = classificado.total_pendentes ?? jobCache?.produto_ids?.length ?? 0;
+      const totalBlocos = classificado.total_blocos ?? Math.ceil(totalPendentes / BATCH_SIZE);
       let offset = 0;
       let totalAtualizados = 0;
 
@@ -130,7 +158,7 @@ export default function AbcdConfigTool() {
         totalBlocos,
         atualizados: 0,
         totalPendentes,
-        etapa: 'Gravando classificação nos produtos…',
+        etapa: 'Etapa 4: gravando classificação nos produtos…',
       });
 
       while (offset < totalPendentes) {
@@ -160,7 +188,7 @@ export default function AbcdConfigTool() {
           totalBlocos: bloco.total_blocos ?? totalBlocos,
           atualizados: totalAtualizados,
           totalPendentes,
-          etapa: 'Gravando classificação nos produtos…',
+          etapa: 'Etapa 4: gravando classificação nos produtos…',
         });
 
         if (bloco.concluido) break;
@@ -284,8 +312,8 @@ export default function AbcdConfigTool() {
               Curva ABCD / IEP
             </DialogTitle>
             <DialogDescription>
-              {phase === 'preparing' && 'Preparando cálculo com base nas vendas recentes.'}
-              {phase === 'writing' && 'Salvando a classificação no cadastro dos produtos.'}
+              {phase === 'preparing' && 'Etapas 1–3: lista, ordenação e classificação A/B/C/D.'}
+              {phase === 'writing' && 'Etapa 4: gravando no cadastro de cada produto.'}
               {phase === 'success' && 'Processo concluído com sucesso.'}
               {phase === 'empty' && 'Nenhuma alteração necessária.'}
               {phase === 'error' && 'Não foi possível concluir a atualização.'}

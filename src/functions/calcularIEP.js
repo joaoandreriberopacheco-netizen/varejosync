@@ -5,7 +5,7 @@ import { invokeFunction } from './_invokeHelper';
  * @param {{
  *   somente_abcd_vazio?: boolean,
  *   modo?: 'manual' | 'agendado',
- *   fase?: 'preparar' | 'gravar' | 'limpar',
+ *   fase?: 'listar' | 'classificar' | 'preparar' | 'gravar' | 'limpar',
  *   run_id?: string,
  *   offset?: number,
  *   batch_size?: number,
