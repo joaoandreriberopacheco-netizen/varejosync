@@ -240,24 +240,14 @@ function etapa3_classificarAbcd(ranking, totalLucroPositivo) {
   return mapa;
 }
 
-function montarUpdatesProdutos(produtosSnapshot, dadosCalculo, somenteAbcdVazio) {
-  const cacheCalc = {
-    lucroMax: dadosCalculo.lucroMax,
-    mapaAbcdGrupo: dadosCalculo.mapaAbcdGrupo,
-    mediaLucroPorChave: dadosCalculo.mediaLucroPorChave,
-    mediaNivel1PorH1: dadosCalculo.mediaNivel1PorH1,
-    metricas: dadosCalculo.metricas,
+function cacheCalculoFromJob(cache) {
+  return {
+    lucroMax: cache.lucroMax,
+    mapaAbcdGrupo: cache.mapaAbcdGrupo,
+    mediaLucroPorChave: cache.mediaLucroPorChave,
+    mediaNivel1PorH1: cache.mediaNivel1PorH1,
+    metricas: cache.metricas,
   };
-
-  const produtoIds = [];
-  const updatesById = {};
-  for (const produto of produtosSnapshot) {
-    if (somenteAbcdVazio && !produtoAbcdVazio(produto)) continue;
-    produtoIds.push(produto.id);
-    updatesById[produto.id] = buildUpdateData(produto, cacheCalc);
-  }
-
-  return { produto_ids: produtoIds, updates_by_id: updatesById };
 }
 
 function maxLucroPositivo(metricasPorSku) {
@@ -383,7 +373,7 @@ async function clearJobCache(db) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// FASES DO JOB — listar → classificar → gravar
+// FASES DO JOB — preparar (lista+ordena+grupos) → gravar (por SKU em blocos)
 // ═══════════════════════════════════════════════════════════════
 
 async function carregarDados90d(db) {
@@ -407,124 +397,6 @@ async function persistirCacheJob(db, cache) {
     // cliente pode receber job_cache na resposta
   }
   return cacheNoServidor;
-}
-
-async function runListar(db, body, modo, somenteAbcdVazio, batchSize) {
-  const { produtos, todosPedidos } = await carregarDados90d(db);
-
-  if (somenteAbcdVazio && produtos.filter(produtoAbcdVazio).length === 0) {
-    await clearJobCache(db);
-    return {
-      status: 'sem_alteracao',
-      fase: 'listar',
-      etapa: 'listar',
-      mensagem: 'Nenhum produto com ABCD vazio no cadastro.',
-      modo,
-      somente_abcd_vazio: true,
-      concluido: true,
-      total_produtos: produtos.length,
-    };
-  }
-
-  const itensPorProduto = buildItensPorProdutoId(todosPedidos);
-  const etapa1 = etapa1_listar(produtos, itensPorProduto);
-  const etapa2 = etapa2_ordenarDistribuicao(etapa1.lista);
-  const runId = String(body.run_id || newRunId());
-
-  const cache = {
-    run_id: runId,
-    created_at: new Date().toISOString(),
-    modo,
-    somente_abcd_vazio: somenteAbcdVazio,
-    batch_size: batchSize,
-    etapa: 'listar',
-    lucroMax: etapa1.lucroMax,
-    metricas: etapa1.metricas,
-    mediaLucroPorChave: etapa1.mediaLucroPorChave,
-    mediaNivel1PorH1: etapa1.mediaNivel1PorH1,
-    produtos_snapshot: etapa1.produtos_snapshot,
-    ranking: etapa2.ranking,
-    totalLucroPositivo: etapa2.totalLucroPositivo,
-    grupos_nivel_2: etapa1.grupos_nivel_2,
-    total_produtos: etapa1.total_produtos,
-    pedidos_90d: todosPedidos.length,
-  };
-
-  const cacheNoServidor = await persistirCacheJob(db, cache);
-
-  return {
-    status: 'listado',
-    fase: 'listar',
-    etapa: 'listar',
-    run_id: runId,
-    job_cache: cacheNoServidor ? undefined : cache,
-    cache_no_servidor: cacheNoServidor,
-    modo,
-    somente_abcd_vazio: somenteAbcdVazio,
-    total_produtos: etapa1.total_produtos,
-    grupos_nivel_2: etapa1.grupos_nivel_2,
-    pedidos_90d: todosPedidos.length,
-    proxima_fase: 'classificar',
-  };
-}
-
-async function runClassificar(db, body) {
-  const { cache, source } = await resolveJobCache(db, body);
-  if (!cache?.run_id) {
-    return { status: 'erro', fase: 'classificar', error: 'Execute a etapa listar primeiro.' };
-  }
-  if (body.run_id && String(body.run_id) !== String(cache.run_id)) {
-    return { status: 'erro', fase: 'classificar', error: 'run_id inválido. Execute listar novamente.' };
-  }
-  if (!cache.ranking || !cache.produtos_snapshot) {
-    return { status: 'erro', fase: 'classificar', error: 'Cache incompleto. Execute listar novamente.' };
-  }
-
-  const mapaAbcdGrupo = etapa3_classificarAbcd(cache.ranking, cache.totalLucroPositivo ?? 0);
-  const { produto_ids, updates_by_id } = montarUpdatesProdutos(
-    cache.produtos_snapshot,
-    {
-      lucroMax: cache.lucroMax,
-      mapaAbcdGrupo,
-      mediaLucroPorChave: cache.mediaLucroPorChave,
-      mediaNivel1PorH1: cache.mediaNivel1PorH1,
-      metricas: cache.metricas,
-    },
-    Boolean(cache.somente_abcd_vazio),
-  );
-
-  const batchSize = cache.batch_size || DEFAULT_BATCH_SIZE;
-  const cacheCompleto = {
-    ...cache,
-    etapa: 'classificar',
-    mapaAbcdGrupo,
-    produto_ids,
-    updates_by_id,
-  };
-
-  const cacheNoServidor = await persistirCacheJob(db, cacheCompleto);
-
-  const totalPendentes = produto_ids.length;
-  const totalBlocos = totalPendentes > 0 ? Math.ceil(totalPendentes / batchSize) : 0;
-
-  return {
-    status: 'classificado',
-    fase: 'classificar',
-    etapa: 'classificar',
-    run_id: cache.run_id,
-    job_cache: cacheNoServidor ? undefined : cacheCompleto,
-    cache_no_servidor: cacheNoServidor,
-    modo: cache.modo,
-    somente_abcd_vazio: cache.somente_abcd_vazio,
-    total_produtos: cache.total_produtos,
-    total_pendentes: totalPendentes,
-    grupos_nivel_2: cache.grupos_nivel_2,
-    batch_size: batchSize,
-    total_blocos: totalBlocos,
-    proximo_offset: 0,
-    concluido: totalPendentes === 0,
-    proxima_fase: 'gravar',
-  };
 }
 
 function rollupNivel(produto, nivel, mediaLucroPorChave) {
@@ -572,10 +444,14 @@ async function gravarBloco(db, cache, offset, batchSize) {
     return { atualizados: 0, concluido: true, proximo_offset: offset };
   }
 
+  const byId = new Map((cache.produtos_snapshot || []).map((p) => [p.id, p]));
+  const cacheCalc = cacheCalculoFromJob(cache);
   const updates = [];
+
   for (const id of ids) {
-    const data = cache.updates_by_id?.[id];
-    if (data) updates.push({ id, data });
+    const produto = byId.get(id);
+    if (!produto) continue;
+    updates.push({ id, data: buildUpdateData(produto, cacheCalc) });
   }
 
   for (let i = 0; i < updates.length; i += UPDATE_CONCURRENCY) {
@@ -608,26 +484,73 @@ function regrasResposta(somenteAbcdVazio) {
 }
 
 async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
-  const listado = await runListar(db, body, modo, somenteAbcdVazio, batchSize);
-  if (listado.status === 'sem_alteracao' || listado.concluido) {
-    return { ...listado, fase: 'preparar' };
+  const { produtos, todosPedidos } = await carregarDados90d(db);
+
+  if (somenteAbcdVazio && produtos.filter(produtoAbcdVazio).length === 0) {
+    await clearJobCache(db);
+    return {
+      status: 'sem_alteracao',
+      fase: 'preparar',
+      mensagem: 'Nenhum produto com ABCD vazio no cadastro.',
+      modo,
+      somente_abcd_vazio: true,
+      concluido: true,
+      total_produtos: produtos.length,
+    };
   }
 
-  const classificado = await runClassificar(db, {
-    ...body,
-    run_id: listado.run_id,
-    ...(listado.job_cache ? { job_cache: listado.job_cache } : {}),
-  });
+  const itensPorProduto = buildItensPorProdutoId(todosPedidos);
+  const etapa1 = etapa1_listar(produtos, itensPorProduto);
+  const etapa2 = etapa2_ordenarDistribuicao(etapa1.lista);
+  const mapaAbcdGrupo = etapa3_classificarAbcd(etapa2.ranking, etapa2.totalLucroPositivo);
 
-  if (classificado.status === 'erro') {
-    return { ...classificado, fase: 'preparar' };
-  }
+  const produtoIds = etapa1.produtos_snapshot
+    .filter((p) => !somenteAbcdVazio || produtoAbcdVazio(p))
+    .map((p) => p.id);
+
+  const runId = String(body.run_id || newRunId());
+  const cache = {
+    run_id: runId,
+    created_at: new Date().toISOString(),
+    modo,
+    somente_abcd_vazio: somenteAbcdVazio,
+    batch_size: batchSize,
+    etapa: 'calculado',
+    lucroMax: etapa1.lucroMax,
+    metricas: etapa1.metricas,
+    mediaLucroPorChave: etapa1.mediaLucroPorChave,
+    mediaNivel1PorH1: etapa1.mediaNivel1PorH1,
+    produtos_snapshot: etapa1.produtos_snapshot,
+    mapaAbcdGrupo,
+    ranking: etapa2.ranking,
+    totalLucroPositivo: etapa2.totalLucroPositivo,
+    grupos_nivel_2: etapa1.grupos_nivel_2,
+    total_produtos: etapa1.total_produtos,
+    produto_ids: produtoIds,
+    pedidos_90d: todosPedidos.length,
+  };
+
+  const cacheNoServidor = await persistirCacheJob(db, cache);
+  const totalPendentes = produtoIds.length;
+  const totalBlocos = totalPendentes > 0 ? Math.ceil(totalPendentes / batchSize) : 0;
 
   return {
-    ...classificado,
     status: 'preparado',
     fase: 'preparar',
-    pedidos_90d: listado.pedidos_90d,
+    run_id: runId,
+    job_cache: cacheNoServidor ? undefined : cache,
+    cache_no_servidor: cacheNoServidor,
+    modo,
+    somente_abcd_vazio: somenteAbcdVazio,
+    total_produtos: etapa1.total_produtos,
+    total_pendentes: totalPendentes,
+    grupos_nivel_2: etapa1.grupos_nivel_2,
+    batch_size: batchSize,
+    total_blocos: totalBlocos,
+    proximo_offset: 0,
+    concluido: totalPendentes === 0,
+    pedidos_90d: todosPedidos.length,
+    proxima_fase: 'gravar',
   };
 }
 
@@ -637,15 +560,15 @@ async function runGravar(db, body, batchSize) {
     return {
       status: 'erro',
       fase: 'gravar',
-      error: 'Nenhum job classificado. Execute listar e classificar primeiro.',
+      error: 'Nenhum job preparado. Execute preparar antes de gravar.',
     };
   }
 
-  if (!cache.updates_by_id || !cache.produto_ids) {
+  if (!cache.mapaAbcdGrupo || !cache.produto_ids || !cache.produtos_snapshot) {
     return {
       status: 'erro',
       fase: 'gravar',
-      error: 'Classificação pendente. Execute a fase classificar antes de gravar.',
+      error: 'Cálculo pendente. Execute preparar antes de gravar.',
     };
   }
 
@@ -698,14 +621,14 @@ async function runGravar(db, body, batchSize) {
     total_produtos: cache.total_produtos,
     grupos_nivel_2: cache.grupos_nivel_2,
     concluido: bloco.concluido,
-    versao: 'V9-abcd-etapas',
+    versao: 'V10-abcd-preparar-unico',
     regras: regrasResposta(cache.somente_abcd_vazio),
     timestamp: new Date().toISOString(),
   };
 }
 
 async function runGravarTodosBlocos(db, body, batchSize) {
-  const listado = await runListar(
+  const prep = await runPreparar(
     db,
     body,
     body.modo || 'agendado',
@@ -713,29 +636,19 @@ async function runGravarTodosBlocos(db, body, batchSize) {
     batchSize,
   );
 
-  if (listado.status === 'sem_alteracao' || listado.concluido) {
+  if (prep.status === 'sem_alteracao' || prep.concluido) {
     return {
-      ...listado,
-      versao: 'V9-abcd-etapas',
+      ...prep,
+      versao: 'V10-abcd-preparar-unico',
       regras: regrasResposta(Boolean(body.somente_abcd_vazio)),
       timestamp: new Date().toISOString(),
     };
   }
 
-  const classificado = await runClassificar(db, {
-    ...body,
-    run_id: listado.run_id,
-    ...(listado.job_cache ? { job_cache: listado.job_cache } : {}),
-  });
-
-  if (classificado.status === 'erro') {
-    return classificado;
-  }
-
   let offset = 0;
   let totalAtualizados = 0;
   let ultimoBloco = null;
-  const jobCache = classificado.job_cache;
+  const jobCache = prep.job_cache;
 
   while (true) {
     ultimoBloco = await runGravar(
@@ -743,7 +656,7 @@ async function runGravarTodosBlocos(db, body, batchSize) {
       {
         ...body,
         offset,
-        run_id: classificado.run_id,
+        run_id: prep.run_id,
         batch_size: batchSize,
         ...(jobCache ? { job_cache: jobCache } : {}),
       },
@@ -760,17 +673,17 @@ async function runGravarTodosBlocos(db, body, batchSize) {
   return {
     status: 'sucesso',
     fase: 'completo',
-    modo: classificado.modo,
-    somente_abcd_vazio: classificado.somente_abcd_vazio,
+    modo: prep.modo,
+    somente_abcd_vazio: prep.somente_abcd_vazio,
     atualizados: totalAtualizados,
     processados: totalAtualizados,
-    total_produtos: classificado.total_produtos,
-    total_pendentes: classificado.total_pendentes,
-    grupos_nivel_2: classificado.grupos_nivel_2,
-    total_blocos: classificado.total_blocos,
+    total_produtos: prep.total_produtos,
+    total_pendentes: prep.total_pendentes,
+    grupos_nivel_2: prep.grupos_nivel_2,
+    total_blocos: prep.total_blocos,
     batch_size: batchSize,
-    versao: 'V9-abcd-etapas',
-    regras: regrasResposta(classificado.somente_abcd_vazio),
+    versao: 'V10-abcd-preparar-unico',
+    regras: regrasResposta(prep.somente_abcd_vazio),
     timestamp: new Date().toISOString(),
   };
 }
@@ -809,31 +722,12 @@ Deno.serve(async (req) => {
       return Response.json({ status: 'ok', fase: 'limpar', mensagem: 'Cache do job removido.' });
     }
 
-    if (fase === 'listar') {
-      const listado = await runListar(db, body, modo, somenteAbcdVazio, batchSize);
-      return Response.json({
-        ...listado,
-        versao: 'V9-abcd-etapas',
-        regras: regrasResposta(somenteAbcdVazio),
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    if (fase === 'classificar') {
-      const classificado = await runClassificar(db, body);
-      return Response.json({
-        ...classificado,
-        versao: 'V9-abcd-etapas',
-        regras: regrasResposta(classificado.somente_abcd_vazio ?? somenteAbcdVazio),
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    if (fase === 'preparar') {
+    if (fase === 'listar' || fase === 'classificar' || fase === 'preparar') {
       const prep = await runPreparar(db, body, modo, somenteAbcdVazio, batchSize);
       return Response.json({
         ...prep,
-        versao: 'V9-abcd-etapas',
+        fase: fase === 'preparar' ? 'preparar' : prep.fase,
+        versao: 'V10-abcd-preparar-unico',
         regras: regrasResposta(somenteAbcdVazio),
         timestamp: new Date().toISOString(),
       });
@@ -854,7 +748,7 @@ Deno.serve(async (req) => {
     const prep = await runPreparar(db, body, modo, somenteAbcdVazio, batchSize);
     return Response.json({
       ...prep,
-      versao: 'V9-abcd-etapas',
+      versao: 'V10-abcd-preparar-unico',
       regras: regrasResposta(somenteAbcdVazio),
       timestamp: new Date().toISOString(),
     });
