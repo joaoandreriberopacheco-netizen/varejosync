@@ -1,14 +1,38 @@
-/** Campos de performance (ABCD / IEP) — usados em relatórios e ordenação fora do catálogo. */
-
-import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
+/** Campos de performance (ABCD / IEP) no catálogo de produtos. */
 
 export const ABCD_RANK = { A: 4, B: 3, C: 2, D: 1 };
+
+export const CATALOG_PERFORMANCE_COLUMN_IDS = [
+  'abcd',
+  'iep_score',
+  'iep_score_nivel_1',
+  'iep_score_nivel_2',
+  'iep_score_nivel_3',
+  'iep_score_nivel_4',
+  'iep_score_nivel_5',
+];
+
+export const CATALOG_PERFORMANCE_COLUMN_LABELS = {
+  abcd: 'Classe ABCD',
+  iep_score: 'Score IEP',
+  iep_score_nivel_1: 'Média nível 1',
+  iep_score_nivel_2: 'Média nível 2',
+  iep_score_nivel_3: 'Média nível 3',
+  iep_score_nivel_4: 'Média nível 4',
+  iep_score_nivel_5: 'Média nível 5',
+};
 
 export const CATALOG_SORT_OPTIONS = [
   { id: 'az', label: 'Nome A → Z' },
   { id: 'za', label: 'Nome Z → A' },
   { id: 'abcd_desc', label: 'Classe ABCD (A primeiro)' },
   { id: 'abcd_asc', label: 'Classe ABCD (D primeiro)' },
+  { id: 'iep_score_desc', label: 'Score IEP (maior)' },
+  { id: 'iep_score_asc', label: 'Score IEP (menor)' },
+  { id: 'iep_score_nivel_1_desc', label: 'Média nível 1 (maior)' },
+  { id: 'iep_score_nivel_1_asc', label: 'Média nível 1 (menor)' },
+  { id: 'iep_score_nivel_2_desc', label: 'Média nível 2 (maior)' },
+  { id: 'iep_score_nivel_2_asc', label: 'Média nível 2 (menor)' },
 ];
 
 export function getAbcdRank(letter) {
@@ -17,7 +41,7 @@ export function getAbcdRank(letter) {
 
 export function getProdutoPerformanceValue(produto, fieldId) {
   if (!produto || !fieldId) return null;
-  if (fieldId === 'abcd') return getAbcdRank(resolveProdutoAbcdClasse(produto));
+  if (fieldId === 'abcd') return getAbcdRank(produto.abcd);
   const raw = produto[fieldId];
   const num = Number(raw);
   return Number.isFinite(num) ? num : 0;
@@ -61,12 +85,12 @@ export function aggregatePerformanceFromSkus(skus) {
     };
   }
 
-  const ranks = skus.map((p) => getAbcdRank(resolveProdutoAbcdClasse(p)));
+  const ranks = skus.map((p) => getAbcdRank(p.abcd));
   const abcdRankMedio = ranks.reduce((s, v) => s + v, 0) / ranks.length;
 
   const freq = {};
   for (const p of skus) {
-    const letter = resolveProdutoAbcdClasse(p);
+    const letter = String(p.abcd || '').toUpperCase();
     if (!letter) continue;
     freq[letter] = (freq[letter] || 0) + 1;
   }

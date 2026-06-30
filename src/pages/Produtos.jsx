@@ -50,8 +50,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import {
-  useProdutosComAbcdAoVivoQuery,
+  useProdutosComIepQuery,
   useFornecedoresQuery,
+  fetchDadosVendaAbcd90d,
 } from '@/hooks/useP38Entities';
 
 const CATALOG_GROUP_BY_CATEGORY_KEY = 'catalogo.groupTreeByCategory';
@@ -174,7 +175,7 @@ function ProdutosPageContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isDesktop = useDesktopContent();
-  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosComAbcdAoVivoQuery();
+  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosComIepQuery();
   const { data: fornecedoresQuery, refetch: refetchFornecedores } = useFornecedoresQuery();
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
@@ -1205,20 +1206,18 @@ function ProdutosPageContent() {
       const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
 
       let dadosVenda = queryClient.getQueryData(p38Keys.dadosVendaAbcd90d());
-      if (!dadosVenda?.itensPorProduto) {
+      if (!dadosVenda?.pedidos90d) {
         toast({ title: 'Buscando vendas dos últimos 90 dias...' });
-        const { fetchDadosVendaAbcd90d } = await import('@/lib/fetchPedidosVenda90d');
         dadosVenda = await fetchDadosVendaAbcd90d();
         queryClient.setQueryData(p38Keys.dadosVendaAbcd90d(), dadosVenda);
       }
 
-      toast({ title: 'Montando PDF Curva ABC / IEP...' });
       const { generateRelatorioCatalogoIepPdf } = await import(
         '@/lib/relatorioCatalogoIepPdf/generateRelatorioCatalogoIepPdf.js'
       );
       const resposta = await generateRelatorioCatalogoIepPdf({
         produtos: filteredProdutos,
-        itensPorProduto: dadosVenda.itensPorProduto,
+        pedidos: dadosVenda.pedidos90d,
         filters_summary: filtersSummary,
         sort_order: 'abcd_desc',
       });

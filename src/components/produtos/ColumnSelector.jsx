@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ArrowDown, ArrowUp, Columns, Package, DollarSign, Truck, Settings, RotateCcw } from 'lucide-react';
+import { ArrowDown, ArrowUp, Columns, Package, DollarSign, Truck, Settings, RotateCcw, BarChart3 } from 'lucide-react';
 import { DEFAULT_CATALOG_PRODUTO_COLUMNS } from '@/lib/catalogProdutoColumnsStorage';
 
 export default function ColumnSelector({ visibleColumns, onColumnsChange, open, onClose }) {
@@ -35,7 +35,6 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
         { id: 'fornecedor', label: 'Fornecedor Padrão' },
         { id: 'preco_venda', label: 'Preço Venda' },
         { id: 'margem', label: 'Margem Bruta' },
-        { id: 'abcd', label: 'Curva ABCD' },
         { id: 'show_comercial', label: 'Unidade comercial (PDV)' }
       ],
       subgroups: [
@@ -71,6 +70,19 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
         { id: 'tipo', label: 'Tipo' },
         { id: 'unidade', label: 'Unidade' },
         { id: 'unidades_pacote', label: 'Unidades/Pacote' }
+      ]
+    },
+    performance: {
+      name: 'Performance (ABCD / IEP)',
+      icon: BarChart3,
+      columns: [
+        { id: 'abcd', label: 'Classe ABCD' },
+        { id: 'iep_score', label: 'Score IEP' },
+        { id: 'iep_score_nivel_1', label: 'Média nível 1' },
+        { id: 'iep_score_nivel_2', label: 'Média nível 2' },
+        { id: 'iep_score_nivel_3', label: 'Média nível 3' },
+        { id: 'iep_score_nivel_4', label: 'Média nível 4' },
+        { id: 'iep_score_nivel_5', label: 'Média nível 5' },
       ]
     }
   };

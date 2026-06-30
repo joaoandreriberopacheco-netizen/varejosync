@@ -6,8 +6,6 @@ import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
 import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
-import AbcdCatalogBadge from '@/components/produtos/AbcdCatalogBadge';
-import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 
 const headMap = {
   status: 'Status',
@@ -20,7 +18,6 @@ const headMap = {
   preco_venda: 'Preço Venda',
   preco_custo: 'Custo Total',
   margem: 'Margem',
-  abcd: 'ABCD',
   valor_compra: 'Vl. Compra',
   markup: 'Markup %',
   estoque_atual: 'Estoque',
@@ -36,6 +33,13 @@ const headMap = {
   show_comercial: 'Unidade comercial (PDV)',
   show_logistica: 'Unidade de exibição (sigla)',
   inventario_valorizado: 'Inventário valorizado',
+  abcd: 'Classe ABCD',
+  iep_score: 'Score IEP',
+  iep_score_nivel_1: 'Média N1',
+  iep_score_nivel_2: 'Média N2',
+  iep_score_nivel_3: 'Média N3',
+  iep_score_nivel_4: 'Média N4',
+  iep_score_nivel_5: 'Média N5',
 };
 const widthMap = {
   status: 'min-w-[100px]',
@@ -48,7 +52,6 @@ const widthMap = {
   preco_venda: 'min-w-[110px]',
   preco_custo: 'min-w-[110px]',
   margem: 'min-w-[90px]',
-  abcd: 'min-w-[56px]',
   valor_compra: 'min-w-[110px]',
   markup: 'min-w-[90px]',
   estoque_atual: 'min-w-[110px]',
@@ -64,6 +67,13 @@ const widthMap = {
   show_comercial: 'min-w-[120px]',
   show_logistica: 'min-w-[120px]',
   inventario_valorizado: 'min-w-[120px]',
+  abcd: 'min-w-[80px]',
+  iep_score: 'min-w-[90px]',
+  iep_score_nivel_1: 'min-w-[90px]',
+  iep_score_nivel_2: 'min-w-[90px]',
+  iep_score_nivel_3: 'min-w-[90px]',
+  iep_score_nivel_4: 'min-w-[90px]',
+  iep_score_nivel_5: 'min-w-[90px]',
 };
 
 function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap }) {
@@ -90,12 +100,6 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
       );
     case 'margem':
       return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(margem)}%</TableCell>;
-    case 'abcd':
-      return (
-        <TableCell key={col} className="text-xs text-foreground/90">
-          <AbcdCatalogBadge letter={resolveProdutoAbcdClasse(produto)} />
-        </TableCell>
-      );
     case 'preco_custo':
       return (
         <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
@@ -173,6 +177,27 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
       return <TableCell key={col} className="text-xs text-foreground/90">{getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN')}</TableCell>;
     case 'show_logistica':
       return <TableCell key={col} className="text-xs text-foreground/90">{(produto.unidade_exibicao_sigla || getUnidadeExibicaoSigla(produto, produto.unidade_principal || 'UN') || produto.unidade_show_logistica || '-').toString().toUpperCase()}</TableCell>;
+    case 'abcd': {
+      const letter = String(produto.abcd || '').toUpperCase();
+      return (
+        <TableCell key={col} className="text-xs font-bold text-foreground/90">
+          {letter || '—'}
+        </TableCell>
+      );
+    }
+    case 'iep_score':
+    case 'iep_score_nivel_1':
+    case 'iep_score_nivel_2':
+    case 'iep_score_nivel_3':
+    case 'iep_score_nivel_4':
+    case 'iep_score_nivel_5':
+      return (
+        <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
+          {produto[col] != null && Number.isFinite(Number(produto[col]))
+            ? Math.round(Number(produto[col])).toLocaleString('pt-BR')
+            : '—'}
+        </TableCell>
+      );
     default:
       return <TableCell key={col} className="text-xs text-foreground/90">-</TableCell>;
   }

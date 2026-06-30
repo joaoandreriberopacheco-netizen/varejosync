@@ -4,7 +4,6 @@ import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
 import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
-import { enrichProdutosComAbcdAoVivo } from '@/lib/catalogAbcdEnrichment';
 import { fetchDadosVendaAbcd90d, fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
@@ -110,8 +109,8 @@ export function useDadosVendaAbcd90dQuery(options = {}) {
   });
 }
 
-/** Catálogo — ABCD ao vivo (90d) com fallback no cadastro. */
-export function useProdutosComAbcdAoVivoQuery(options = {}) {
+/** Catálogo — ABCD/IEP calculados no cliente (versão que funcionava antes de aliviar a página). */
+export function useProdutosComIepQuery(options = {}) {
   const sort = options.sort ?? '-created_date';
   const { sort: _sort, ...rest } = options;
   const produtosQuery = useProdutosListQuery({ sort, ...rest });
@@ -121,14 +120,8 @@ export function useProdutosComAbcdAoVivoQuery(options = {}) {
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
-    if (!vendasQuery.isFetched || !vendasQuery.data?.itensPorProduto) {
-      return produtosQuery.data;
-    }
-    return enrichProdutosComAbcdAoVivo(
-      produtosQuery.data,
-      vendasQuery.data.itensPorProduto,
-      { itens_linhas: vendasQuery.data.itens_linhas },
-    );
+    if (!vendasQuery.isFetched) return produtosQuery.data;
+    return enrichProdutosComIep(produtosQuery.data, vendasQuery.data?.pedidos90d ?? []);
   }, [produtosQuery.data, vendasQuery.data, vendasQuery.isFetched]);
 
   return {
@@ -136,30 +129,6 @@ export function useProdutosComAbcdAoVivoQuery(options = {}) {
     data,
     isLoading: produtosQuery.isLoading || vendasQuery.isLoading,
     isFetching: produtosQuery.isFetching || vendasQuery.isFetching,
-    vendas90d: vendasQuery.data,
-  };
-}
-
-/** Lista de produtos com ABCD/IEP calculados no cliente quando ainda não persistidos. */
-export function useProdutosComIepQuery(options = {}) {
-  const sort = options.sort ?? '-created_date';
-  const { sort: _sort, ...rest } = options;
-  const produtosQuery = useProdutosListQuery({ sort, ...rest });
-  const pedidosQuery = usePedidosVenda90dQuery({
-    enabled: (rest.enabled ?? true) && Boolean(produtosQuery.data?.length),
-  });
-
-  const data = useMemo(() => {
-    if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
-    if (!pedidosQuery.isFetched) return produtosQuery.data;
-    return enrichProdutosComIep(produtosQuery.data, pedidosQuery.data ?? []);
-  }, [produtosQuery.data, pedidosQuery.data, pedidosQuery.isFetched]);
-
-  return {
-    ...produtosQuery,
-    data,
-    isLoading: produtosQuery.isLoading || pedidosQuery.isLoading,
-    isFetching: produtosQuery.isFetching || pedidosQuery.isFetching,
   };
 }
 

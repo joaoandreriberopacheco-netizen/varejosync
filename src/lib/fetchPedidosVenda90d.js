@@ -22,12 +22,19 @@ function normalizeItemVenda(it) {
   };
 }
 
-function appendItem(itensPorProduto, rawItem) {
+function appendItemToIndexes(itensPorProduto, itensPorPedido, pedidoId, rawItem) {
   const item = normalizeItemVenda(rawItem);
   const pid = String(item?.produto_id ?? item?.produtoId ?? '').trim();
-  if (!pid) return;
-  if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
-  itensPorProduto[pid].push(item);
+  const pvid = String(pedidoId ?? rawItem?.pedido_venda_id ?? '').trim();
+
+  if (pid) {
+    if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
+    itensPorProduto[pid].push(item);
+  }
+  if (pvid) {
+    if (!itensPorPedido[pvid]) itensPorPedido[pvid] = [];
+    itensPorPedido[pvid].push(item);
+  }
 }
 
 function countLinhasItens(itensPorProduto) {
@@ -42,21 +49,26 @@ function rowsFromApi(batch) {
   return Array.isArray(batch) ? batch : batch?.data ?? [];
 }
 
-async function carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto) {
-  if (!pedidoIds.length || !base44.entities.PedidoVendaItem?.filter) return 0;
+function hydratePedidosComItens(pedidos, itensPorPedido) {
+  return pedidos.map((pedido) => {
+    const carregados = itensPorPedido[String(pedido.id)] || [];
+    const espelho = Array.isArray(pedido.itens) && pedido.itens.length ? pedido.itens : [];
+    const itens = espelho.length ? espelho : carregados;
+    return { ...pedido, itens };
+  });
+}
 
-  let added = 0;
+async function carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto, itensPorPedido) {
+  if (!pedidoIds.length || !base44.entities.PedidoVendaItem?.filter) return;
+
   for (let i = 0; i < pedidoIds.length; i += PEDIDO_IDS_CHUNK) {
     const chunk = pedidoIds.slice(i, i + PEDIDO_IDS_CHUNK);
     try {
       const batch = await base44.entities.PedidoVendaItem.filter({
         pedido_venda_id: { $in: chunk },
       });
-      const rows = rowsFromApi(batch);
-      for (const it of rows) {
-        const before = countLinhasItens(itensPorProduto);
-        appendItem(itensPorProduto, it);
-        if (countLinhasItens(itensPorProduto) > before) added += 1;
+      for (const it of rowsFromApi(batch)) {
+        appendItemToIndexes(itensPorProduto, itensPorPedido, it.pedido_venda_id, it);
       }
     } catch {
       for (const pedidoId of chunk) {
@@ -64,17 +76,18 @@ async function carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto) {
           const batch = await base44.entities.PedidoVendaItem.filter({
             pedido_venda_id: pedidoId,
           });
-          for (const it of rowsFromApi(batch)) appendItem(itensPorProduto, it);
+          for (const it of rowsFromApi(batch)) {
+            appendItemToIndexes(itensPorProduto, itensPorPedido, pedidoId, it);
+          }
         } catch {
           /* pedido sem linhas canónicas */
         }
       }
     }
   }
-  return added;
 }
 
-async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto) {
+async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto, itensPorPedido) {
   if (!pedidoIds.length || !base44.entities.PedidoVenda?.filter) return;
 
   for (let i = 0; i < pedidoIds.length; i += PEDIDO_IDS_CHUNK) {
@@ -82,7 +95,9 @@ async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto) {
     try {
       const batch = await base44.entities.PedidoVenda.filter({ id: { $in: chunk } });
       for (const pedido of rowsFromApi(batch)) {
-        for (const it of pedido?.itens || []) appendItem(itensPorProduto, it);
+        for (const it of pedido?.itens || []) {
+          appendItemToIndexes(itensPorProduto, itensPorPedido, pedido.id, it);
+        }
       }
     } catch {
       for (let j = 0; j < chunk.length; j += PEDIDO_GET_CHUNK) {
@@ -92,7 +107,9 @@ async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto) {
             try {
               const pedido = await base44.entities.PedidoVenda.get(pedidoId);
               const row = pedido?.data ?? pedido;
-              for (const it of row?.itens || []) appendItem(itensPorProduto, it);
+              for (const it of row?.itens || []) {
+                appendItemToIndexes(itensPorProduto, itensPorPedido, pedidoId, it);
+              }
             } catch {
               /* ignorar */
             }
@@ -104,13 +121,46 @@ async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto) {
 }
 
 /**
- * Pedidos elegíveis para ABCD (últimos 90 dias).
- * Não filtra tipo no servidor — o espelho da listagem muitas vezes vem sem `itens`.
+ * Pedidos elegíveis para ABCD/IEP (últimos 90 dias).
+ * A listagem paginada muitas vezes vem sem `itens` — hidratação em fetchDadosVendaAbcd90d.
  */
 export async function fetchPedidosVenda90d() {
+  const { pedidos90d } = await fetchDadosVendaAbcd90d();
+  return pedidos90d;
+}
+
+/**
+ * Índices de venda 90d + pedidos com `itens` preenchidos para enrichProdutosComIep.
+ */
+export async function buildItensIndexes90d(pedidos90d) {
+  const pedidos = Array.isArray(pedidos90d) ? pedidos90d : [];
+  const itensPorProduto = {};
+  const itensPorPedido = {};
+  const pedidoIds = pedidos.map((p) => String(p.id)).filter(Boolean);
+
+  for (const pedido of pedidos) {
+    for (const it of pedido?.itens || []) {
+      appendItemToIndexes(itensPorProduto, itensPorPedido, pedido.id, it);
+    }
+  }
+
+  if (pedidoIds.length) {
+    if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
+      await carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto, itensPorPedido);
+    }
+    if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
+      await carregarEspelhoItensPorIds(pedidoIds, itensPorProduto, itensPorPedido);
+    }
+  }
+
+  return { itensPorProduto, itensPorPedido };
+}
+
+/** Pedidos 90d com itens + índice por produto. */
+export async function fetchDadosVendaAbcd90d() {
   const dataISO = iso90DiasAtras();
   const cutMs = new Date(dataISO).getTime();
-  const todosPedidos = [];
+  const pedidosBase = [];
   let skip = 0;
   const pageSize = 500;
 
@@ -129,7 +179,7 @@ export async function fetchPedidosVenda90d() {
 
     for (const pedido of rows) {
       if (pedidoElegivelIep(pedido) && pedidoDentroJanela90d(pedido, dataISO)) {
-        todosPedidos.push(pedido);
+        pedidosBase.push(pedido);
       }
     }
 
@@ -142,40 +192,9 @@ export async function fetchPedidosVenda90d() {
     skip += pageSize;
   }
 
-  return todosPedidos;
-}
+  const { itensPorProduto, itensPorPedido } = await buildItensIndexes90d(pedidosBase);
+  const pedidos90d = hydratePedidosComItens(pedidosBase, itensPorPedido);
 
-/**
- * Índice produto_id → linhas de venda (90d).
- * 1) espelho na listagem (se vier)  2) PedidoVendaItem ($in)  3) PedidoVenda completo
- */
-export async function buildItensPorProduto90d(pedidos90d) {
-  const pedidos = Array.isArray(pedidos90d) ? pedidos90d : [];
-  const itensPorProduto = {};
-  const pedidoIds = pedidos.map((p) => String(p.id)).filter(Boolean);
-
-  for (const pedido of pedidos) {
-    for (const it of pedido?.itens || []) appendItem(itensPorProduto, it);
-  }
-
-  if (!pedidoIds.length) return itensPorProduto;
-
-  const linhasIniciais = countLinhasItens(itensPorProduto);
-  if (linhasIniciais < pedidoIds.length) {
-    await carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto);
-  }
-
-  if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
-    await carregarEspelhoItensPorIds(pedidoIds, itensPorProduto);
-  }
-
-  return itensPorProduto;
-}
-
-/** Pedidos 90d + índice de itens por produto (para ABCD). */
-export async function fetchDadosVendaAbcd90d() {
-  const pedidos90d = await fetchPedidosVenda90d();
-  const itensPorProduto = await buildItensPorProduto90d(pedidos90d);
   return {
     pedidos90d,
     itensPorProduto,

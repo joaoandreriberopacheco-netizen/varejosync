@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
-import { enrichProdutosComAbcdAoVivo } from '@/lib/catalogAbcdEnrichment';
+import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 
 const PDF_FONT_BOLD = 'bold';
@@ -24,19 +24,11 @@ const ROW_STEP = ROW_H + ROW_GAP;
 
 const safe = (text) => normalizePdfText(text);
 
-export const CATALOG_IEP_PDF_BUILD = 'curva_abc_produto_v2';
+export const CATALOG_IEP_PDF_BUILD = 'curva_abc_iep_v1';
 
-export function prepareCatalogIepReportRows(
-  produtos = [],
-  itensPorProduto = {},
-  sortOrder = 'abcd_desc',
-) {
+export function prepareCatalogIepReportRows(produtos = [], pedidos = [], sortOrder = 'abcd_desc') {
   const list = (produtos || []).filter((p) => p && typeof p === 'object');
-  const linhas = Object.values(itensPorProduto || {}).reduce(
-    (acc, rows) => acc + (Array.isArray(rows) ? rows.length : 0),
-    0,
-  );
-  const enriched = enrichProdutosComAbcdAoVivo(list, itensPorProduto, { itens_linhas: linhas });
+  const enriched = enrichProdutosComIep(list, pedidos || []);
   return [...enriched].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 }
 
@@ -54,14 +46,13 @@ function abcdText(letter) {
 export async function generateRelatorioCatalogoIepPdf(payload = {}) {
   const {
     produtos = [],
-    itensPorProduto = {},
-    pedidos: _legacyPedidos,
+    pedidos = [],
     filters_summary: filtersSummary = '',
     sort_order: sortOrder = 'abcd_desc',
     generated_at: generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }),
   } = payload;
 
-  const rows = prepareCatalogIepReportRows(produtos, itensPorProduto, sortOrder);
+  const rows = prepareCatalogIepReportRows(produtos, pedidos, sortOrder);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pdfFontFamily = await registerJsPdfDin1451Fonts(doc);
 

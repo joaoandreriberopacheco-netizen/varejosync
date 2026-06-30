@@ -14,7 +14,6 @@ import {
   parseNumericFilterValue,
   CATALOG_NUMERIC_METRIC_LABELS,
 } from '@/lib/catalogNumericFilters';
-import { produtoMatchesAbcdFilter } from '@/lib/catalogAbcdEnrichment';
 
 /** Filtro de quantidade do atalho «somente positivos» (estoque > 0). */
 export const CATALOG_SOMENTE_POSITIVOS_QUANTIDADE = {
@@ -115,7 +114,9 @@ export function filterProdutos(produtos, filters) {
         p.tags.some((t) => t && t.toLowerCase().includes(String(filters.tag).toLowerCase())));
     const fornecedorMatch =
       filters.fornecedorId === 'all' || p.fornecedor_padrao_id === filters.fornecedorId;
-    const abcdMatch = produtoMatchesAbcdFilter(p, filters.abcd);
+    const abcdMatch =
+      filters.abcd === 'all' ||
+      String(p.abcd || '').toUpperCase() === String(filters.abcd).toUpperCase();
     const ativoMatch =
       !filters.ativoStatus ||
       filters.ativoStatus === 'all' ||
