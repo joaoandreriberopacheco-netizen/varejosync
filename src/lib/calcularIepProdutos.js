@@ -137,6 +137,15 @@ export function grupoAbcdKey(produto) {
   return hierarchyKey([h1]);
 }
 
+function maxLucroPositivo(metricasPorSku) {
+  let max = 0;
+  for (const m of Object.values(metricasPorSku)) {
+    const v = Math.max(0, m?.lucro ?? 0);
+    if (v > max) max = v;
+  }
+  return max;
+}
+
 /** Calcula métricas IEP para todos os produtos (não grava no BD). */
 export function calcularMetricasIepParaCatalogo(produtos, pedidos90d) {
   const lista = Array.isArray(produtos) ? produtos : [];
@@ -147,7 +156,7 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d) {
     metricasPorSku[produto.id] = calcularLucroSkuComQ4(produto, pedidos);
   }
 
-  const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => Math.max(0, m.lucro)));
+  const lucroMax = maxLucroPositivo(metricasPorSku);
 
   const lucroPorGrupo = {};
   for (const produto of lista) {

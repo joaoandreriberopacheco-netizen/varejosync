@@ -112,12 +112,13 @@ export default function AbcdConfigTool() {
         return;
       }
 
-      const jobCache = prep.job_cache;
-      if (!jobCache?.run_id || !Array.isArray(jobCache.produto_ids)) {
-        throw new Error('Resposta incompleta do servidor. Atualize a função calcularIEP no Base44.');
-      }
+  const jobCache = prep.job_cache;
+  const cacheNoServidor = Boolean(prep.cache_no_servidor);
+  if (!cacheNoServidor && (!jobCache?.run_id || !jobCache?.updates_by_id)) {
+    throw new Error('Resposta incompleta do servidor. Republica a função calcularIEP no Base44.');
+  }
 
-      const runId = prep.run_id || jobCache.run_id;
+      const runId = prep.run_id || jobCache?.run_id;
       const totalPendentes = prep.total_pendentes ?? jobCache.produto_ids.length;
       const totalBlocos = prep.total_blocos ?? Math.ceil(totalPendentes / BATCH_SIZE);
       let offset = 0;
@@ -140,7 +141,7 @@ export default function AbcdConfigTool() {
         const gravarResp = await calcularIEP({
           fase: 'gravar',
           run_id: runId,
-          job_cache: jobCache,
+          ...(cacheNoServidor ? {} : { job_cache: jobCache }),
           offset,
           batch_size: BATCH_SIZE,
           modo: 'manual',

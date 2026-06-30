@@ -129,6 +129,15 @@ function classificarParetoABCD(ranking, totalLucroPositivo) {
   return mapa;
 }
 
+function maxLucroPositivo(metricasPorSku) {
+  let max = 0;
+  for (const m of Object.values(metricasPorSku)) {
+    const v = Math.max(0, m?.lucro ?? 0);
+    if (v > max) max = v;
+  }
+  return max;
+}
+
 function normalizarScore0a100(lucro, lucroMax, teveVenda) {
   if (!teveVenda) return 0;
   if (lucroMax <= 0) return lucro > 0 ? 50 : 1;
@@ -212,7 +221,7 @@ async function loadJobCache(db) {
 
 async function resolveJobCache(db, body) {
   const clientCache = body?.job_cache;
-  if (clientCache?.run_id && Array.isArray(clientCache.produto_ids)) {
+  if (clientCache?.run_id && Array.isArray(clientCache.produto_ids) && clientCache.updates_by_id) {
     return { cache: clientCache, source: 'client' };
   }
   const serverCache = await loadJobCache(db);
@@ -252,7 +261,7 @@ function computeSnapshot(produtos, itensPorProduto, somenteAbcdVazio) {
     metricasPorSku[produto.id] = calcularLucroSkuComQ4(produto, itensPorProduto);
   }
 
-  const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => Math.max(0, m.lucro)));
+  const lucroMax = maxLucroPositivo(metricasPorSku);
 
   const lucroPorGrupo = {};
   for (const produto of produtos) {
@@ -308,24 +317,28 @@ function computeSnapshot(produtos, itensPorProduto, somenteAbcdVazio) {
   }
 
   const produtoIds = [];
-  for (const produto of produtos) {
-    if (somenteAbcdVazio && !produtoAbcdVazio(produto)) continue;
-    produtoIds.push(produto.id);
-  }
-
-  const metricasCompact = {};
-  for (const [id, m] of Object.entries(metricasPorSku)) {
-    metricasCompact[id] = { l: m.lucro, v: m.teveVenda ? 1 : 0 };
-  }
-
-  return {
+  const updatesById = {};
+  const cacheCalc = {
     lucroMax,
     mapaAbcdGrupo,
     mediaLucroPorChave,
     mediaNivel1PorH1,
+    metricas: {},
+  };
+
+  for (const produto of produtos) {
+    const m = metricasPorSku[produto.id];
+    cacheCalc.metricas[produto.id] = { l: m?.lucro ?? 0, v: m?.teveVenda ? 1 : 0 };
+    if (somenteAbcdVazio && !produtoAbcdVazio(produto)) continue;
+    produtoIds.push(produto.id);
+    updatesById[produto.id] = buildUpdateData(produto, cacheCalc);
+  }
+
+  return {
+    lucroMax,
     grupos_nivel_2: Object.keys(lucroPorGrupo).length,
     produto_ids: produtoIds,
-    metricas: metricasCompact,
+    updates_by_id: updatesById,
     total_produtos: produtos.length,
   };
 }
@@ -369,36 +382,16 @@ function buildUpdateData(produto, cache) {
   return updateData;
 }
 
-async function fetchProdutosPorIds(db, ids) {
-  if (!ids.length) return [];
-  try {
-    const batch = await db.Produto.list(null, ids.length, { id: { $in: ids } });
-    if (batch?.length) return batch;
-  } catch {
-    // fallback abaixo
-  }
-  const map = new Map();
-  for (const id of ids) {
-    const rows = await db.Produto.filter({ id }, null, 1);
-    if (rows?.[0]) map.set(rows[0].id, rows[0]);
-  }
-  return ids.map((id) => map.get(id)).filter(Boolean);
-}
-
 async function gravarBloco(db, cache, offset, batchSize) {
   const ids = cache.produto_ids.slice(offset, offset + batchSize);
   if (!ids.length) {
     return { atualizados: 0, concluido: true, proximo_offset: offset };
   }
 
-  const produtos = await fetchProdutosPorIds(db, ids);
-  const byId = new Map(produtos.map((p) => [p.id, p]));
   const updates = [];
-
   for (const id of ids) {
-    const produto = byId.get(id);
-    if (!produto) continue;
-    updates.push({ id, data: buildUpdateData(produto, cache) });
+    const data = cache.updates_by_id?.[id];
+    if (data) updates.push({ id, data });
   }
 
   for (let i = 0; i < updates.length; i += UPDATE_CONCURRENCY) {
@@ -422,7 +415,7 @@ function regrasResposta(somenteAbcdVazio) {
     custo: 'preco_custo_calculado',
     preco: 'media_venda_sem_4_quartil_por_sku',
     abcd_nivel: 'campo_hierarquico_2 (ou campo_hierarquico_1 se h2 vazio)',
-    pareto: '70/15/10/5',
+    pareto: '70/15/10/5 lucro acumulado (A até 70%, B até 85%, C até 95%, D restante)',
     iqr: 'por_sku_exclui_q4',
     nivel_1: 'media_dos_filhos_nivel_2',
     somente_abcd_vazio: somenteAbcdVazio,
@@ -471,10 +464,12 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
     ...snapshot,
   };
 
+  let cacheNoServidor = false;
   try {
     await saveJobCache(db, cache);
+    cacheNoServidor = true;
   } catch {
-    // Se o campo não existir na entidade, o cliente usa job_cache da resposta.
+    // Cliente recebe job_cache na resposta para gravar em blocos.
   }
 
   const totalPendentes = snapshot.produto_ids.length;
@@ -484,7 +479,8 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
     status: 'preparado',
     fase: 'preparar',
     run_id: runId,
-    job_cache: cache,
+    job_cache: cacheNoServidor ? undefined : cache,
+    cache_no_servidor: cacheNoServidor,
     modo,
     somente_abcd_vazio: somenteAbcdVazio,
     total_produtos: snapshot.total_produtos,
@@ -583,7 +579,13 @@ async function runGravarTodosBlocos(db, body, batchSize) {
   while (true) {
     ultimoBloco = await runGravar(
       db,
-      { ...body, offset, run_id: prep.run_id, batch_size: batchSize, job_cache: jobCache },
+      {
+        ...body,
+        offset,
+        run_id: prep.run_id,
+        batch_size: batchSize,
+        ...(jobCache ? { job_cache: jobCache } : {}),
+      },
       batchSize,
     );
     if (ultimoBloco.status === 'erro') {
@@ -676,6 +678,11 @@ Deno.serve(async (req) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    const message = error?.message || String(error);
+    console.error('[calcularIEP]', message, error?.stack);
+    return Response.json(
+      { error: message, fase: 'erro', status: 'erro' },
+      { status: 500 },
+    );
   }
 });
