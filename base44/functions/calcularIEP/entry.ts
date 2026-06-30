@@ -45,11 +45,12 @@ function lineQuantityBase(item) {
   return qty * fator;
 }
 
+/** ABCD no nível 2 da descrição (h1+h2); se só h1, no nível 1. */
 function grupoAbcdKey(produto) {
   const h1 = (produto.campo_hierarquico_1 || 'unassigned').trim();
   const h2 = (produto.campo_hierarquico_2 || '').trim();
   if (h2) return hierarchyKey([h1, h2]);
-  return hierarchyKey([h1, '__familia__']);
+  return hierarchyKey([h1]);
 }
 
 function calcularLucroSkuComQ4(produto, pedidos90d) {
@@ -337,7 +338,7 @@ Deno.serve(async (req) => {
         janela_dias: 90,
         custo: 'preco_custo_calculado',
         preco: 'media_venda_sem_4_quartil_por_sku',
-        abcd_nivel: 'campo_hierarquico_2',
+        abcd_nivel: 'campo_hierarquico_2 (ou campo_hierarquico_1 se h2 vazio)',
         pareto: '70/15/10/5',
         iqr: 'por_sku_exclui_q4',
         nivel_1: 'media_dos_filhos_nivel_2',

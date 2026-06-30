@@ -124,12 +124,17 @@ function normalizarScore0a100(lucro, lucroMax, teveVenda) {
   return Math.round(Math.max(1, Math.min(100, raw)));
 }
 
-/** Chave do grupo ABCD: nível 2 dentro da família; sem h2 usa só família (nível 1). */
+/**
+ * Chave do grupo ABCD na hierarquia do produto (5 níveis: h1…h5).
+ * - Com nível 2 preenchido (h2): selo no grupo h1 + h2.
+ * - Só nível 1 (h1): selo no grupo h1.
+ * Todos os SKUs do mesmo grupo recebem a mesma letra A/B/C/D.
+ */
 export function grupoAbcdKey(produto) {
   const h1 = (produto.campo_hierarquico_1 || 'unassigned').trim();
   const h2 = (produto.campo_hierarquico_2 || '').trim();
   if (h2) return hierarchyKey([h1, h2]);
-  return hierarchyKey([h1, '__familia__']);
+  return hierarchyKey([h1]);
 }
 
 /** Calcula métricas IEP para todos os produtos (não grava no BD). */
