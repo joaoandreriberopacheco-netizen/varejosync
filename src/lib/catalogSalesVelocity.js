@@ -5,12 +5,13 @@ import {
 
 const DIAS_MEDIA = 30;
 
-/** Evita puxar `calcularIepProdutos` para o chunk do useP38Entities no bundle do PDF. */
 function pedidoElegivelVendas(pedido) {
   const status = String(pedido?.status ?? '');
   if (status === 'Cancelado') return false;
-  const tipo = String(pedido?.tipo ?? 'PDV').toUpperCase();
-  return tipo === 'PDV' || tipo === 'PEDIDO';
+  const tipo = String(pedido?.tipo ?? 'PDV').trim().toUpperCase();
+  if (tipo === 'PEDIDO') return true;
+  if (tipo === 'PDV' || tipo.startsWith('PDV ')) return true;
+  return false;
 }
 
 function lineQuantityBaseVendas(item) {
