@@ -3,6 +3,16 @@
  * Catálogo: enrichProdutosComIep recalcula ao vivo e ignora abcd gravado no cadastro.
  */
 
+import {
+  ABCD_CURVA_VERSAO,
+  abcdClasseParaProduto,
+  agregarLucroPorGrupoAbcd,
+  classificarGruposAbcdPareto,
+  grupoAbcdKey,
+} from '@/lib/abcdCurvaOrganizacao';
+
+export { ABCD_CURVA_VERSAO, grupoAbcdKey };
+
 function q3(values) {
   if (!values || values.length === 0) return Infinity;
   const sorted = [...values].sort((a, b) => a - b);
@@ -92,7 +102,7 @@ export function calcularLucroSkuComQ4(produto, pedidos90d, itensPorProduto = nul
   const itens = resolveItensVendaProduto(produto, pedidos90d, itensPorProduto);
 
   if (itens.length === 0) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false, receita: 0 };
   }
 
   const linhas = itens
@@ -105,7 +115,7 @@ export function calcularLucroSkuComQ4(produto, pedidos90d, itensPorProduto = nul
     .filter((l) => l.qtyBase > 0 && l.total > 0);
 
   if (linhas.length === 0) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false, receita: 0 };
   }
 
   const unitPrices = linhas.map((l) => l.unitPrice);
@@ -118,36 +128,13 @@ export function calcularLucroSkuComQ4(produto, pedidos90d, itensPorProduto = nul
   const precoMedio = quantidade > 0 ? receita / quantidade : 0;
   const lucro = receita - custoUnit * quantidade;
 
-  return { lucro, precoMedio, quantidade, teveVenda: quantidade > 0 };
+  return { lucro, precoMedio, quantidade, teveVenda: quantidade > 0, receita };
 }
 
-function classificarParetoABCD(ranking, totalLucroPositivo) {
-  const mapa = {};
-
-  if (totalLucroPositivo <= 0) {
-    for (const entry of ranking) {
-      mapa[entry.id] = 'D';
-    }
-    return mapa;
-  }
-
-  const comLucro = ranking.filter((entry) => entry.lucro > 0);
-  let acumulado = 0;
-
-  for (const entry of comLucro) {
-    acumulado += entry.lucro;
-    const percentual = (acumulado / totalLucroPositivo) * 100;
-    if (percentual <= 70) mapa[entry.id] = 'A';
-    else if (percentual <= 85) mapa[entry.id] = 'B';
-    else if (percentual <= 95) mapa[entry.id] = 'C';
-    else mapa[entry.id] = 'D';
-  }
-
-  for (const entry of ranking) {
-    if (entry.lucro <= 0) mapa[entry.id] = 'D';
-  }
-
-  return mapa;
+export function calcularMapaAbcdGrupo(produtos, metricasPorSku) {
+  const entradas = agregarLucroPorGrupoAbcd(produtos, metricasPorSku);
+  const { mapaAbcdGrupo } = classificarGruposAbcdPareto(entradas);
+  return mapaAbcdGrupo;
 }
 
 function normalizarScore0a100(lucro, lucroMax, teveVenda) {
@@ -157,13 +144,8 @@ function normalizarScore0a100(lucro, lucroMax, teveVenda) {
   return Math.round(Math.max(1, Math.min(100, raw)));
 }
 
-/** Chave do grupo ABCD: nível 2 dentro da família; sem h2 usa só família (nível 1). */
-export function grupoAbcdKey(produto) {
-  const h1 = String(produto?.campo_hierarquico_1 ?? 'unassigned').trim();
-  const h2 = String(produto?.campo_hierarquico_2 ?? '').trim();
-  if (h2) return hierarchyKey([h1, h2]);
-  return hierarchyKey([h1, '__familia__']);
-}
+/** Chave do grupo ABCD — reexportada de abcdCurvaOrganizacao (h1+h2 ou só h1). */
+// grupoAbcdKey importado acima
 
 /** Calcula métricas IEP para todos os produtos (não grava no BD). */
 export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorProduto = null) {
@@ -176,23 +158,10 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
   }
 
   const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => Math.max(0, m.lucro)));
-
-  const lucroPorGrupo = {};
-  for (const produto of lista) {
-    const key = grupoAbcdKey(produto);
-    lucroPorGrupo[key] = (lucroPorGrupo[key] || 0) + (metricasPorSku[produto.id]?.lucro || 0);
-  }
-
-  const rankingGrupos = Object.entries(lucroPorGrupo)
-    .map(([id, lucro]) => ({ id, lucro }))
-    .sort((a, b) => b.lucro - a.lucro);
-
-  const lucroTotalPositivo = rankingGrupos.reduce((acc, g) => acc + Math.max(0, g.lucro), 0);
-  const mapaAbcdGrupo = classificarParetoABCD(rankingGrupos, lucroTotalPositivo);
+  const mapaAbcdGrupo = calcularMapaAbcdGrupo(lista, metricasPorSku);
 
   function classeAbcdProduto(produto) {
-    const key = grupoAbcdKey(produto);
-    return mapaAbcdGrupo[key] || 'D';
+    return abcdClasseParaProduto(produto, mapaAbcdGrupo);
   }
 
   const skusPorChaveNivel = (nivel) => {

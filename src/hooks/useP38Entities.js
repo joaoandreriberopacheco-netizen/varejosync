@@ -5,7 +5,6 @@ import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
 import { enrichProdutosComIep, stripAbcdIepCadastro } from '@/lib/calcularIepProdutos';
 import {
-  buildItensPorProdutoFromPedidos,
   fetchDadosVendaAbcd90d,
   fetchPedidosVenda90d,
 } from '@/lib/fetchPedidosVenda90d';
@@ -119,25 +118,24 @@ export function useProdutosComIepQuery(options = {}) {
   const sort = options.sort ?? '-created_date';
   const { sort: _sort, ...rest } = options;
   const produtosQuery = useProdutosListQuery({ sort, ...rest });
-  const pedidosQuery = usePedidosVenda90dQuery({
+  const vendasQuery = useDadosVendaAbcd90dQuery({
     enabled: (rest.enabled ?? true) && Boolean(produtosQuery.data?.length),
   });
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
-    if (!pedidosQuery.data) {
+    const vendas = vendasQuery.data;
+    if (!vendas?.pedidos90d) {
       return produtosQuery.data.map(stripAbcdIepCadastro);
     }
-    const pedidos90d = pedidosQuery.data ?? [];
-    const itensPorProduto = buildItensPorProdutoFromPedidos(pedidos90d);
-    return enrichProdutosComIep(produtosQuery.data, { pedidos90d, itensPorProduto });
-  }, [produtosQuery.data, pedidosQuery.data]);
+    return enrichProdutosComIep(produtosQuery.data, vendas);
+  }, [produtosQuery.data, vendasQuery.data]);
 
   return {
     ...produtosQuery,
     data,
-    isLoading: produtosQuery.isLoading || pedidosQuery.isLoading,
-    isFetching: produtosQuery.isFetching || pedidosQuery.isFetching,
+    isLoading: produtosQuery.isLoading || vendasQuery.isLoading,
+    isFetching: produtosQuery.isFetching || vendasQuery.isFetching,
   };
 }
 
