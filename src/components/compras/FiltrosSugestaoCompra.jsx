@@ -52,6 +52,8 @@ function FiltrosPainel({
   onHidePending,
   roundingMode,
   onRoundingMode,
+  agruparHierarquia,
+  onAgruparHierarquia,
 }) {
   return (
     <div className="space-y-3">
@@ -137,6 +139,25 @@ function FiltrosPainel({
         </Select>
       </FilterSection>
 
+      <FilterSection title="Hierarquia" icon={Layers}>
+        <button
+          type="button"
+          onClick={() => onAgruparHierarquia(!agruparHierarquia)}
+          className={cn(
+            'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
+            agruparHierarquia
+              ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
+              : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
+          )}
+        >
+          <Layers className="h-4 w-4" />
+          {agruparHierarquia ? 'Agrupar famílias (h1–h4)' : 'Listar por SKU'}
+        </button>
+        <p className="text-[11px] text-muted-foreground leading-snug">
+          Famílias com 2+ modelos aparecem numa linha (ex.: piso 45×45 sem escolher marca).
+        </p>
+      </FilterSection>
+
       <button
         type="button"
         onClick={() => onHidePending(!hidePending)}
@@ -173,6 +194,8 @@ export default function FiltrosSugestaoCompra({
   onHidePending,
   roundingMode,
   onRoundingMode,
+  agruparHierarquia,
+  onAgruparHierarquia,
   onLimparFiltros,
 }) {
   const [showFilters, setShowFilters] = useState(false);
@@ -183,6 +206,7 @@ export default function FiltrosSugestaoCompra({
     selectedTags.length > 0,
     hidePending,
     roundingMode !== 'auto',
+    !agruparHierarquia,
   ].filter(Boolean).length;
 
   const activeChips = useMemo(() => {
@@ -224,6 +248,13 @@ export default function FiltrosSugestaoCompra({
         onRemove: () => onRoundingMode('auto'),
       });
     }
+    if (!agruparHierarquia) {
+      chips.push({
+        key: 'sku',
+        label: 'Por SKU',
+        onRemove: () => onAgruparHierarquia(true),
+      });
+    }
     return chips;
   }, [
     categoryFilter,
@@ -231,6 +262,7 @@ export default function FiltrosSugestaoCompra({
     selectedTags,
     hidePending,
     roundingMode,
+    agruparHierarquia,
     categorias,
     fornecedores,
     onCategoryFilter,
@@ -238,6 +270,7 @@ export default function FiltrosSugestaoCompra({
     onSelectedTags,
     onHidePending,
     onRoundingMode,
+    onAgruparHierarquia,
   ]);
 
   const limpar = () => {
@@ -261,6 +294,8 @@ export default function FiltrosSugestaoCompra({
     onHidePending,
     roundingMode,
     onRoundingMode,
+    agruparHierarquia,
+    onAgruparHierarquia,
   };
 
   return (

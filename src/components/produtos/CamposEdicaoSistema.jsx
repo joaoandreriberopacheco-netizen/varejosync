@@ -25,6 +25,7 @@ export default function CamposEdicaoSistema({ produto, campo, valor, onSave, onC
       estoque_maximo: 'Est. Máximo',
       estoque_trava_manual: 'Trava metas auto',
       unidades_por_pacote: 'Qtd/Pacote',
+      lote_compra_vitrine: 'Lote compra (vitrine)',
       peso_kg: 'Peso (kg)',
     };
     return labels[campo] || campo;

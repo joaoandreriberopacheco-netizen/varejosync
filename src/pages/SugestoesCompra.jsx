@@ -17,7 +17,7 @@ export default function SugestoesCompraPage() {
               : ''}
           </p>
           <p className="text-xs text-muted-foreground">
-            Metas por vendas (90 dias) · unidade de vitrine na compra
+            Média 90d · famílias por hierarquia (h1–h4) · qtd = lead time × m
           </p>
         </div>
       </div>

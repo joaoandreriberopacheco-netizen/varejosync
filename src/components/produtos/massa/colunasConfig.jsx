@@ -273,6 +273,7 @@ export const COLUNAS_CONFIG = [
   { key: 'estoque_maximo',          label: 'Estoque Máximo',         editavel: true,  width: 16, tipo: 'numero' },
 
   { key: 'tempo_reposicao_dias',    label: 'Tempo Reposição (dias)', editavel: true,  width: 22, tipo: 'numero' },
+  { key: 'lote_compra_vitrine',     label: 'Lote compra (vitrine)',  editavel: true,  width: 18, tipo: 'numero' },
 
 
 
