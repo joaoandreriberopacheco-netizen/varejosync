@@ -97,11 +97,11 @@ function classificarParetoABCD(ranking, totalLucroPositivo) {
   let acumulado = 0;
   for (const entry of ranking) {
     if (entry.lucro <= 0) continue;
+    const prevPct = (acumulado / totalLucroPositivo) * 100;
     acumulado += entry.lucro;
-    const percentual = (acumulado / totalLucroPositivo) * 100;
-    if (percentual <= 70) mapa[entry.id] = 'A';
-    else if (percentual <= 85) mapa[entry.id] = 'B';
-    else if (percentual <= 95) mapa[entry.id] = 'C';
+    if (prevPct < 70) mapa[entry.id] = 'A';
+    else if (prevPct < 85) mapa[entry.id] = 'B';
+    else if (prevPct < 95) mapa[entry.id] = 'C';
   }
   return mapa;
 }

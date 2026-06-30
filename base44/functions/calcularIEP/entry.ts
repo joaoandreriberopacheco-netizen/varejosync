@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 const DEFAULT_BATCH_SIZE = 50;
 const UPDATE_CONCURRENCY = 5;
 const CACHE_KEY = 'iep_job_run';
-const VERSAO = 'V15-abcd-cliente-ou-servidor';
+const VERSAO = 'V16-pareto-prevpct-fix';
 
 /** Q3 — limite superior do miolo (exclui 4.º quartil). */
 function q3(values) {
@@ -149,12 +149,14 @@ function etapa3_classificarAbcd(ranking, totalLucroPositivo) {
   }
   if (totalLucroPositivo <= 0) return mapa;
 
+  let acumulado = 0;
   for (const entry of ranking) {
     if (entry.lucro <= 0) continue;
-    const pct = entry.participacao_acumulada_pct ?? 0;
-    if (pct <= 70) mapa[entry.id] = 'A';
-    else if (pct <= 85) mapa[entry.id] = 'B';
-    else if (pct <= 95) mapa[entry.id] = 'C';
+    const prevPct = totalLucroPositivo > 0 ? (acumulado / totalLucroPositivo) * 100 : 0;
+    acumulado += entry.lucro;
+    if (prevPct < 70) mapa[entry.id] = 'A';
+    else if (prevPct < 85) mapa[entry.id] = 'B';
+    else if (prevPct < 95) mapa[entry.id] = 'C';
   }
   return mapa;
 }

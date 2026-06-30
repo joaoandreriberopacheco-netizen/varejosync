@@ -38,6 +38,16 @@ function produtoAbcdVazio(produto) {
   return !String(produto?.abcd ?? '').trim();
 }
 
+function contarAbcdProdutos(produtos, mapaAbcdGrupo) {
+  const contagem = { A: 0, B: 0, C: 0, D: 0 };
+  for (const produto of produtos) {
+    const letra = abcdClasseParaProduto(produto, mapaAbcdGrupo);
+    if (letra in contagem) contagem[letra] += 1;
+    else contagem.D += 1;
+  }
+  return contagem;
+}
+
 async function fetchAllProdutos() {
   const todos = [];
   let skip = 0;
@@ -209,6 +219,8 @@ export default function AbcdConfigTool() {
 
       if (abortRef.current) throw new Error('Operação cancelada.');
 
+      const contagem_abcd = contarAbcdProdutos(pendentes, mapaAbcdGrupo);
+
       setResult({
         status: 'sucesso',
         atualizados: totalAtualizados,
@@ -216,6 +228,7 @@ export default function AbcdConfigTool() {
         total_blocos: totalBlocos,
         grupos_nivel_2,
         pedidos_90d: pedidos90d.length,
+        contagem_abcd,
         somente_abcd_vazio: somenteAbcdVazio,
         timestamp: new Date().toISOString(),
       });
@@ -382,6 +395,13 @@ export default function AbcdConfigTool() {
               {result.total_blocos != null && (
                 <p className="text-xs text-muted-foreground">
                   Processado em {result.total_blocos} bloco(s) · janela de 90 dias
+                  {result.pedidos_90d != null ? ` · ${result.pedidos_90d} pedido(s)` : ''}
+                </p>
+              )}
+              {result.contagem_abcd && (
+                <p className="text-xs text-muted-foreground tabular-nums">
+                  Distribuição: A {result.contagem_abcd.A} · B {result.contagem_abcd.B} · C{' '}
+                  {result.contagem_abcd.C} · D {result.contagem_abcd.D}
                 </p>
               )}
             </div>
