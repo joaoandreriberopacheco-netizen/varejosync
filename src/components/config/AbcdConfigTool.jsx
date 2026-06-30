@@ -111,11 +111,12 @@ export default function AbcdConfigTool() {
 
       const jobCache = preparado.job_cache;
       const cacheNoServidor = Boolean(preparado.cache_no_servidor);
-      if (
-        !cacheNoServidor &&
-        (!jobCache?.run_id || !jobCache?.mapaAbcdGrupo || !jobCache?.produto_ids)
-      ) {
-        throw new Error('Resposta incompleta do servidor. Republica a função calcularIEP no Base44.');
+      if (!jobCache?.run_id || !jobCache?.mapaAbcdGrupo || !jobCache?.produto_ids) {
+        throw new Error(
+          cacheNoServidor
+            ? 'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (V10).'
+            : 'Resposta incompleta do servidor. Republica a função calcularIEP no Base44.',
+        );
       }
 
       const runId = preparado.run_id || jobCache?.run_id;
@@ -141,7 +142,7 @@ export default function AbcdConfigTool() {
         const gravarResp = await calcularIEP({
           fase: 'gravar',
           run_id: runId,
-          ...(cacheNoServidor ? {} : { job_cache: jobCache }),
+          job_cache: jobCache,
           offset,
           batch_size: BATCH_SIZE,
           modo: 'manual',
