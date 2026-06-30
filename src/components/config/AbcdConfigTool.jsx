@@ -17,10 +17,10 @@ import {
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
-  abcdClasseParaProdutoId,
-  calcularMapaAbcdPorProduto,
+  abcdClasseParaProduto,
+  calcularMapaAbcdSomente,
 } from '@/lib/calcularIepProdutos';
-import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
+import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 
 const BATCH_SIZE = 25;
@@ -38,10 +38,10 @@ function produtoAbcdVazio(produto) {
   return !String(produto?.abcd ?? '').trim();
 }
 
-function contarAbcdProdutos(produtos, mapaAbcdProduto) {
+function contarAbcdProdutos(produtos, mapaAbcdGrupo) {
   const contagem = { A: 0, B: 0, C: 0, D: 0 };
   for (const produto of produtos) {
-    const letra = abcdClasseParaProdutoId(produto.id, mapaAbcdProduto);
+    const letra = abcdClasseParaProduto(produto, mapaAbcdGrupo);
     if (letra in contagem) contagem[letra] += 1;
     else contagem.D += 1;
   }
@@ -65,10 +65,10 @@ async function fetchAllProdutos() {
   return todos;
 }
 
-async function gravarBlocoBulk(bloco, mapaAbcdProduto) {
+async function gravarBlocoBulk(bloco, mapaAbcdGrupo) {
   const payload = bloco.map((produto) => ({
     id: produto.id,
-    abcd: abcdClasseParaProdutoId(produto.id, mapaAbcdProduto),
+    abcd: abcdClasseParaProduto(produto, mapaAbcdGrupo),
   }));
 
   if (typeof base44.entities.Produto.bulkUpdate === 'function') {
@@ -91,7 +91,7 @@ async function gravarBlocoBulk(bloco, mapaAbcdProduto) {
   return count;
 }
 
-async function gravarAbcdEmLotes(produtos, mapaAbcdProduto, onProgress, shouldAbort = () => false) {
+async function gravarAbcdEmLotes(produtos, mapaAbcdGrupo, onProgress, shouldAbort = () => false) {
   let atualizados = 0;
   const totalBlocos = Math.ceil(produtos.length / BATCH_SIZE);
 
@@ -101,7 +101,7 @@ async function gravarAbcdEmLotes(produtos, mapaAbcdProduto, onProgress, shouldAb
     const bloco = produtos.slice(i, i + BATCH_SIZE);
     const blocoAtual = Math.floor(i / BATCH_SIZE) + 1;
 
-    const gravados = await gravarBlocoBulk(bloco, mapaAbcdProduto);
+    const gravados = await gravarBlocoBulk(bloco, mapaAbcdGrupo);
     atualizados += gravados;
 
     onProgress({
@@ -162,8 +162,10 @@ export default function AbcdConfigTool() {
         etapa: 'Carregando vendas dos últimos 90 dias…',
       }));
 
-      const { pedidos90d, itensPorProduto } = await fetchDadosVendaAbcd90d();
-      const produtos = await fetchAllProdutos();
+      const [pedidos90d, produtos] = await Promise.all([
+        fetchPedidosVenda90d(),
+        fetchAllProdutos(),
+      ]);
 
       if (abortRef.current) throw new Error('Operação cancelada.');
 
@@ -175,7 +177,7 @@ export default function AbcdConfigTool() {
         setPhase('empty');
         setResult({
           mensagem: somenteAbcdVazio
-            ? 'Nenhum produto com ABCD vazio no cadastro.'
+            ? 'Nenhum produto com ABCD vazio no cadastro. Se todos ficaram como D por engano, use «Recalcular todos os produtos».'
             : 'Nenhum produto no cadastro.',
           somente_abcd_vazio: somenteAbcdVazio,
         });
@@ -184,15 +186,10 @@ export default function AbcdConfigTool() {
 
       setProgress((p) => ({
         ...p,
-        etapa: 'Calculando lucro por produto e curva A / B / C / D…',
+        etapa: 'Calculando curva A / B / C / D por grupo (h1+h2)…',
       }));
 
-      const {
-        mapaAbcdProduto,
-        total_lucro_positivo,
-        produtos_com_venda,
-        itens_linhas,
-      } = calcularMapaAbcdPorProduto(produtos, itensPorProduto);
+      const { mapaAbcdGrupo, grupos_nivel_2 } = calcularMapaAbcdSomente(produtos, pedidos90d);
 
       if (abortRef.current) throw new Error('Operação cancelada.');
 
@@ -208,7 +205,7 @@ export default function AbcdConfigTool() {
 
       const totalAtualizados = await gravarAbcdEmLotes(
         pendentes,
-        mapaAbcdProduto,
+        mapaAbcdGrupo,
         (p) => {
           if (abortRef.current) return;
           setProgress((prev) => ({
@@ -222,16 +219,14 @@ export default function AbcdConfigTool() {
 
       if (abortRef.current) throw new Error('Operação cancelada.');
 
-      const contagem_abcd = contarAbcdProdutos(pendentes, mapaAbcdProduto);
+      const contagem_abcd = contarAbcdProdutos(pendentes, mapaAbcdGrupo);
 
       setResult({
         status: 'sucesso',
         atualizados: totalAtualizados,
         total_pendentes: pendentes.length,
         total_blocos: totalBlocos,
-        total_lucro_positivo,
-        produtos_com_venda,
-        itens_linhas,
+        grupos_nivel_2,
         pedidos_90d: pedidos90d.length,
         contagem_abcd,
         somente_abcd_vazio: somenteAbcdVazio,
@@ -261,10 +256,11 @@ export default function AbcdConfigTool() {
           <div className="min-w-0 space-y-1">
             <p className="text-sm font-semibold text-foreground/90">Curva ABCD</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Calcula a classificação A/B/C/D com vendas dos últimos 90 dias (lucro por produto,
-              ordenado do maior para o menor) e grava no campo <strong>abcd</strong> de cada
-              produto. A gravação usa lotes de {BATCH_SIZE} produtos por chamada à API, com pausa
-              entre lotes para evitar bloqueio.
+              Calcula a classificação A/B/C/D com vendas dos últimos 90 dias (grupo h1+h2, Pareto
+              70/85/95 no lucro) e grava no campo <strong>abcd</strong> de cada produto. O catálogo
+              recalcula ao vivo e ignora valores gravados errados até concluir o carregamento. Se
+              todos ficaram D, use <strong>Recalcular todos os produtos</strong>. Gravação em lotes
+              de {BATCH_SIZE}.
             </p>
           </div>
         </div>
@@ -345,7 +341,7 @@ export default function AbcdConfigTool() {
               Curva ABCD
             </DialogTitle>
             <DialogDescription>
-              {phase === 'preparing' && 'Lendo vendas e calculando os grupos A/B/C/D.'}
+              {phase === 'preparing' && 'Lendo vendas e calculando os grupos A/B/C/D (h1+h2).'}
               {phase === 'writing' && 'Gravando a classificação em cada produto, em blocos.'}
               {phase === 'success' && 'Processo concluído com sucesso.'}
               {phase === 'empty' && 'Nenhuma alteração necessária.'}
@@ -395,19 +391,14 @@ export default function AbcdConfigTool() {
                 {result.total_pendentes != null ? ` de ${result.total_pendentes}` : ''}.
               </p>
               <p className="text-xs text-muted-foreground">
-                A classificação ABCD já está gravada. O catálogo e os filtros A/B/C/D passam a usar
-                esses valores.
+                A classificação ABCD já está gravada. O catálogo recalcula ao vivo com a mesma regra
+                por grupo.
               </p>
               {result.total_blocos != null && (
                 <p className="text-xs text-muted-foreground">
                   Processado em {result.total_blocos} bloco(s) · janela de 90 dias
                   {result.pedidos_90d != null ? ` · ${result.pedidos_90d} pedido(s)` : ''}
-                  {result.itens_linhas != null ? ` · ${result.itens_linhas} linha(s) de venda` : ''}
-                </p>
-              )}
-              {result.produtos_com_venda != null && (
-                <p className="text-xs text-muted-foreground tabular-nums">
-                  Produtos com lucro positivo: {result.produtos_com_venda}
+                  {result.grupos_nivel_2 != null ? ` · ${result.grupos_nivel_2} grupo(s)` : ''}
                 </p>
               )}
               {result.contagem_abcd && (

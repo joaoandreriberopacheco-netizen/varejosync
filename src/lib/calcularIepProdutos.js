@@ -121,7 +121,7 @@ export function calcularLucroSkuComQ4(produto, pedidos90d) {
   const linhas = itens
     .map((it) => {
       const qtyBase = lineQuantityBase(it);
-      const total = Number(it.total) || 0;
+      const total = lineReceitaItem(it);
       const unitPrice = qtyBase > 0 ? total / qtyBase : 0;
       return { unitPrice, qtyBase, total };
     })

@@ -120,9 +120,21 @@ export function useProdutosComIepQuery(options = {}) {
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
-    if (!vendasQuery.isFetched) return produtosQuery.data;
+    if (!vendasQuery.isSuccess) {
+      return produtosQuery.data.map((produto) => ({
+        ...produto,
+        abcd: undefined,
+        iep_score: undefined,
+        iep_score_nivel_1: undefined,
+        iep_score_nivel_2: undefined,
+        iep_score_nivel_3: undefined,
+        iep_score_nivel_4: undefined,
+        iep_score_nivel_5: undefined,
+        iep_classe: undefined,
+      }));
+    }
     return enrichProdutosComIep(produtosQuery.data, vendasQuery.data?.pedidos90d ?? []);
-  }, [produtosQuery.data, vendasQuery.data, vendasQuery.isFetched]);
+  }, [produtosQuery.data, vendasQuery.data, vendasQuery.isSuccess]);
 
   return {
     ...produtosQuery,
