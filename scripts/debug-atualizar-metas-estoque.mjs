@@ -22,9 +22,8 @@ function summarize(data) {
     const jc = copy.job_cache;
     copy.job_cache = {
       run_id: jc.run_id,
-      produto_ids_count: Array.isArray(jc.produto_ids) ? jc.produto_ids.length : 0,
-      updates_count: jc.updates ? Object.keys(jc.updates).length : 0,
-      total_produtos: jc.total_produtos,
+      total_pendentes: jc.total_pendentes ?? (Array.isArray(jc.produto_ids) ? jc.produto_ids.length : 0),
+      cache_no_servidor: copy.cache_no_servidor,
     };
   }
   return copy;
@@ -95,6 +94,8 @@ try {
     return { count: batch?.length ?? 0 };
   });
 
+  await runStep(log, 'function diagnostico', () => invokeFn(base44, { fase: 'diagnostico', modo: 'manual' }));
+
   const prep = await runStep(log, 'function preparar', () =>
     invokeFn(base44, {
       fase: 'preparar',
@@ -105,9 +106,8 @@ try {
   );
 
   if (gravar || completo) {
-    const jobCache = prep.job_cache;
-    if (!jobCache?.run_id) {
-      throw new Error('preparar não devolveu job_cache — função no Base44 desatualizada?');
+    if (!prep.run_id || prep.total_pendentes == null) {
+      throw new Error('preparar incompleto — republica atualizarMetasEstoque (v4-slim-cache-servidor)');
     }
 
     let offset = 0;
@@ -116,12 +116,14 @@ try {
       bloco += 1;
       const gravarBody = {
         fase: 'gravar',
-        run_id: prep.run_id || jobCache.run_id,
-        job_cache: jobCache,
+        run_id: prep.run_id,
         offset,
         batch_size: completo ? 50 : 1,
         modo: 'manual',
       };
+      if (!prep.cache_no_servidor && prep.job_cache) {
+        gravarBody.job_cache = prep.job_cache;
+      }
       const blocoRes = await runStep(log, `function gravar bloco ${bloco}`, () =>
         invokeFn(base44, gravarBody),
       );

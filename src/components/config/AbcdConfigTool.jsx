@@ -119,10 +119,18 @@ export default function AbcdConfigTool() {
       }
 
       const jobCache = preparado.job_cache;
-      if (!jobCache?.run_id || !jobCache?.mapaAbcdGrupo || !jobCache?.produto_ids?.length) {
+      if (!preparado.run_id || preparado.total_pendentes == null) {
         throw new Error(
-          'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (versão V13-abcd-diagnostico ou mais recente).',
+          'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (versão V14-slim-response ou mais recente).',
         );
+      }
+
+      if (!preparado.cache_no_servidor) {
+        if (!jobCache?.mapaAbcdGrupo || !jobCache?.produto_ids?.length) {
+          throw new Error(
+            'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (versão V14-slim-response ou mais recente).',
+          );
+        }
       }
 
       const runId = preparado.run_id || jobCache?.run_id;
@@ -148,7 +156,7 @@ export default function AbcdConfigTool() {
         const gravarResp = await calcularIEP({
           fase: 'gravar',
           run_id: runId,
-          job_cache: jobCache,
+          ...(preparado.cache_no_servidor ? {} : { job_cache: jobCache }),
           offset,
           batch_size: BATCH_SIZE,
           modo: 'manual',

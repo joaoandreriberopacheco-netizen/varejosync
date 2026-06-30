@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 const DEFAULT_BATCH_SIZE = 50;
 const UPDATE_CONCURRENCY = 5;
 const CACHE_KEY = 'iep_job_run';
-const VERSAO = 'V13-abcd-diagnostico';
+const VERSAO = 'V14-slim-response';
 
 /** Q3 — limite superior do miolo (exclui 4.º quartil). */
 function q3(values) {
@@ -175,6 +175,15 @@ function buildJobCacheSlim(fields) {
     grupos_nivel_2: fields.grupos_nivel_2,
     total_produtos: fields.total_produtos,
     pedidos_90d: fields.pedidos_90d,
+    versao: VERSAO,
+  };
+}
+
+function jobCacheRespostaSlim(cache) {
+  return {
+    run_id: cache.run_id,
+    total_pendentes: Array.isArray(cache.produto_ids) ? cache.produto_ids.length : 0,
+    grupos_nivel_2: cache.grupos_nivel_2,
   };
 }
 
@@ -271,10 +280,18 @@ async function loadJobCache(db) {
 }
 
 async function resolveJobCache(db, body) {
+  if (body?.run_id) {
+    const serverCache = await loadJobCache(db);
+    if (serverCache?.run_id && String(serverCache.run_id) === String(body.run_id)) {
+      return { cache: serverCache, source: 'server' };
+    }
+  }
+
   const clientCache = body?.job_cache;
-  if (clientCache?.run_id) {
+  if (clientCache?.run_id && clientCache.mapaAbcdGrupo && Array.isArray(clientCache.produto_ids)) {
     return { cache: clientCache, source: 'client' };
   }
+
   const serverCache = await loadJobCache(db);
   return { cache: serverCache, source: 'server' };
 }
@@ -482,6 +499,17 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
   });
 
   const cacheNoServidor = await persistirCacheJob(db, cache);
+  if (!cacheNoServidor) {
+    return {
+      status: 'erro',
+      fase: 'preparar',
+      error:
+        'Não foi possível guardar o job no servidor. Confirme que a função está publicada no Base44 e que ConfiguracoesVenda aceita o campo iep_job_run.',
+      total_pendentes: produtoIds.length,
+      versao: VERSAO,
+    };
+  }
+
   const totalPendentes = produtoIds.length;
   const totalBlocos = totalPendentes > 0 ? Math.ceil(totalPendentes / batchSize) : 0;
 
@@ -489,8 +517,8 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
     status: 'preparado',
     fase: 'preparar',
     run_id: runId,
-    job_cache: cache,
-    cache_no_servidor: cacheNoServidor,
+    job_cache: jobCacheRespostaSlim(cache),
+    cache_no_servidor: true,
     modo,
     somente_abcd_vazio: somenteAbcdVazio,
     total_produtos: etapa1.total_produtos,
@@ -599,7 +627,6 @@ async function runGravarTodosBlocos(db, body, batchSize) {
   let offset = 0;
   let totalAtualizados = 0;
   let ultimoBloco = null;
-  const jobCache = prep.job_cache;
 
   while (true) {
     ultimoBloco = await runGravar(
@@ -609,7 +636,6 @@ async function runGravarTodosBlocos(db, body, batchSize) {
         offset,
         run_id: prep.run_id,
         batch_size: batchSize,
-        ...(jobCache ? { job_cache: jobCache } : {}),
       },
       batchSize,
     );

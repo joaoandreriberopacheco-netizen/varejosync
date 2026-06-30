@@ -114,26 +114,26 @@ try {
   );
 
   if (gravar || completo) {
-    const jobCache = prep.job_cache;
-    if (!jobCache?.run_id || !jobCache?.mapaAbcdGrupo || !jobCache?.produto_ids?.length) {
-      throw new Error(
-        'preparar incompleto — republica calcularIEP no Base44 (versão V12-abcd-slim-cache ou mais recente)',
-      );
+    if (!prep.run_id || prep.total_pendentes == null) {
+      throw new Error('preparar incompleto — republica calcularIEP (V14-slim-response)');
     }
 
     let offset = 0;
     let bloco = 0;
     do {
       bloco += 1;
+      const gravarBody = {
+        fase: 'gravar',
+        run_id: prep.run_id,
+        offset,
+        batch_size: completo ? 50 : 1,
+        modo: 'manual',
+      };
+      if (!prep.cache_no_servidor && prep.job_cache) {
+        gravarBody.job_cache = prep.job_cache;
+      }
       const blocoRes = await runStep(log, `function gravar bloco ${bloco}`, () =>
-        invokeFn(base44, {
-          fase: 'gravar',
-          run_id: prep.run_id || jobCache.run_id,
-          job_cache: jobCache,
-          offset,
-          batch_size: completo ? 50 : 1,
-          modo: 'manual',
-        }),
+        invokeFn(base44, gravarBody),
       );
       if (!completo) break;
       if (blocoRes.concluido) break;

@@ -218,6 +218,7 @@ async function fetchPedidos90d(
 const DEFAULT_BATCH_SIZE = 50;
 const UPDATE_CONCURRENCY = 5;
 const CACHE_KEY = 'metas_estoque_job_run';
+const VERSAO = 'v4-slim-cache-servidor';
 
 async function parseRequestBody(req: Request) {
   try {
@@ -267,13 +268,24 @@ function buildUpdatePayload(metas: Record<string, unknown>) {
     estoque_minimo: metas.estoque_minimo,
     estoque_ideal: metas.estoque_ideal,
     venda_media_dia: metas.venda_media_dia,
-    metas_estoque_lead_time_dias: metas.lead_time_dias,
-    metas_estoque_unidade_compra: metas.unidade_vitrine_compra,
-    metas_estoque_quantidade_limpa_90d: metas.quantidade_limpa_90d,
-    metas_estoque_outliers_descartados: metas.outliers_descartados,
-    metas_estoque_atualizado_em: metas.metas_estoque_atualizado_em,
-    metas_estoque_versao: metas.metas_estoque_versao,
   };
+}
+
+function jobCacheRespostaSlim(cache: Record<string, unknown>) {
+  return {
+    run_id: cache.run_id,
+    total_pendentes: Array.isArray(cache.produto_ids) ? cache.produto_ids.length : 0,
+  };
+}
+
+async function persistirCacheJob(db: ReturnType<typeof createClientFromRequest>['entities'], cache: Record<string, unknown>) {
+  try {
+    await saveJobCache(db, cache);
+    const loaded = await loadJobCache(db);
+    return loaded?.run_id === cache.run_id;
+  } catch {
+    return false;
+  }
 }
 
 async function loadJobCache(db: ReturnType<typeof createClientFromRequest>['entities']) {
@@ -285,10 +297,18 @@ async function resolveJobCache(
   db: ReturnType<typeof createClientFromRequest>['entities'],
   body: Record<string, unknown>,
 ) {
+  if (body?.run_id) {
+    const serverCache = (await loadJobCache(db)) as Record<string, unknown> | null;
+    if (serverCache?.run_id && String(serverCache.run_id) === String(body.run_id)) {
+      return { cache: serverCache, source: 'server' as const };
+    }
+  }
+
   const clientCache = body?.job_cache as Record<string, unknown> | undefined;
-  if (clientCache?.run_id && Array.isArray(clientCache.produto_ids)) {
+  if (clientCache?.run_id && clientCache.updates && Array.isArray(clientCache.produto_ids)) {
     return { cache: clientCache, source: 'client' as const };
   }
+
   const serverCache = await loadJobCache(db);
   return { cache: serverCache as Record<string, unknown> | null, source: 'server' as const };
 }
@@ -415,13 +435,20 @@ async function runPreparar(
     modo,
     somente_metas_vazias: somenteMetasVazias,
     batch_size: batchSize,
+    versao: VERSAO,
     ...snapshot,
   };
 
-  try {
-    await saveJobCache(db, cache);
-  } catch {
-    // cliente pode enviar job_cache na fase gravar
+  const cacheNoServidor = await persistirCacheJob(db, cache);
+  if (!cacheNoServidor) {
+    return {
+      status: 'erro',
+      fase: 'preparar',
+      error:
+        'Não foi possível guardar o job no servidor. Confirme que a função está publicada no Base44 e que ConfiguracoesVenda aceita o campo metas_estoque_job_run.',
+      total_pendentes: snapshot.produto_ids.length,
+      versao: VERSAO,
+    };
   }
 
   const totalPendentes = snapshot.produto_ids.length;
@@ -431,7 +458,8 @@ async function runPreparar(
     status: 'preparado',
     fase: 'preparar',
     run_id: runId,
-    job_cache: cache,
+    job_cache: jobCacheRespostaSlim(cache),
+    cache_no_servidor: true,
     modo,
     somente_metas_vazias: somenteMetasVazias,
     total_produtos: snapshot.total_produtos,
@@ -443,6 +471,7 @@ async function runPreparar(
     total_blocos: totalBlocos,
     proximo_offset: 0,
     concluido: totalPendentes === 0,
+    versao: VERSAO,
   };
 }
 
@@ -489,6 +518,15 @@ async function runGravar(
       status: 'erro',
       fase: 'gravar',
       error: 'Nenhum job preparado. Execute a fase preparar primeiro.',
+    };
+  }
+
+  if (!cache.updates || !Array.isArray(cache.produto_ids) || !cache.produto_ids.length) {
+    return {
+      status: 'erro',
+      fase: 'gravar',
+      error:
+        'Job incompleto no servidor. Execute preparar novamente (cache metas_estoque_job_run em ConfiguracoesVenda).',
     };
   }
 
@@ -542,7 +580,7 @@ async function runGravar(
     ignorados_trava_manual: cache.ignorados_trava_manual,
     pedidos_analisados: cache.pedidos_analisados,
     concluido: bloco.concluido,
-    versao: 'v2-media-dias-estoque-blocos',
+    versao: VERSAO,
     regras: regrasResposta(Boolean(cache.somente_metas_vazias)),
     timestamp: new Date().toISOString(),
   };
@@ -559,7 +597,7 @@ async function runGravarTodosBlocos(
   if (prep.status === 'sem_alteracao' || prep.concluido) {
     return {
       ...prep,
-      versao: 'v2-media-dias-estoque-blocos',
+      versao: VERSAO,
       regras: regrasResposta(somenteMetasVazias),
       timestamp: new Date().toISOString(),
     };
@@ -568,12 +606,11 @@ async function runGravarTodosBlocos(
   let offset = 0;
   let totalAtualizados = 0;
   let ultimoBloco: Record<string, unknown> | null = null;
-  const jobCache = prep.job_cache as Record<string, unknown>;
 
   while (true) {
     ultimoBloco = await runGravar(
       db,
-      { ...body, offset, run_id: prep.run_id, batch_size: batchSize, job_cache: jobCache },
+      { ...body, offset, run_id: prep.run_id, batch_size: batchSize },
       batchSize,
     );
     if (ultimoBloco.status === 'erro') return ultimoBloco;
@@ -596,8 +633,34 @@ async function runGravarTodosBlocos(
     pedidos_analisados: prep.pedidos_analisados,
     total_blocos: prep.total_blocos,
     batch_size: batchSize,
-    versao: 'v2-media-dias-estoque-blocos',
+    versao: VERSAO,
     regras: regrasResposta(somenteMetasVazias),
+    timestamp: new Date().toISOString(),
+  };
+}
+
+async function runDiagnostico(db: ReturnType<typeof createClientFromRequest>['entities']) {
+  const data90d = new Date();
+  data90d.setDate(data90d.getDate() - JANELA_DIAS);
+  const dataISO = data90d.toISOString();
+
+  const [produtoSample, pedidoSample] = await Promise.all([
+    db.Produto.filter({ tipo: 'Produto', ativo: true }, '-created_date', 1, 0),
+    db.PedidoVenda.filter(
+      { status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
+      '-created_date',
+      1,
+      0,
+    ),
+  ]);
+
+  return {
+    status: 'ok',
+    fase: 'diagnostico',
+    versao: VERSAO,
+    produto_sample: Array.isArray(produtoSample) ? produtoSample.length : produtoSample ? 1 : 0,
+    pedido_sample: Array.isArray(pedidoSample) ? pedidoSample.length : pedidoSample ? 1 : 0,
+    data_iso_90d: dataISO,
     timestamp: new Date().toISOString(),
   };
 }
@@ -625,6 +688,11 @@ Deno.serve(async (req) => {
 
     const db = isAutomation ? base44.asServiceRole.entities : base44.entities;
 
+    if (fase === 'diagnostico' || fase === 'ping') {
+      const diag = await runDiagnostico(db);
+      return Response.json(diag);
+    }
+
     if (fase === 'limpar') {
       await clearJobCache(db);
       return Response.json({ status: 'ok', fase: 'limpar', mensagem: 'Cache do job removido.' });
@@ -634,7 +702,7 @@ Deno.serve(async (req) => {
       const prep = await runPreparar(db, body, modo, somenteMetasVazias, batchSize);
       return Response.json({
         ...prep,
-        versao: 'v2-media-dias-estoque-blocos',
+        versao: VERSAO,
         regras: regrasResposta(somenteMetasVazias),
         timestamp: new Date().toISOString(),
       });
@@ -657,7 +725,7 @@ Deno.serve(async (req) => {
     const prep = await runPreparar(db, body, modo, somenteMetasVazias, batchSize);
     return Response.json({
       ...prep,
-      versao: 'v2-media-dias-estoque-blocos',
+      versao: VERSAO,
       regras: regrasResposta(somenteMetasVazias),
       timestamp: new Date().toISOString(),
     });

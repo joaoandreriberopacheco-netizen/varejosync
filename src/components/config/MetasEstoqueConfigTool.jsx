@@ -120,14 +120,20 @@ export default function MetasEstoqueConfigTool() {
       }
 
       const jobCache = prep.job_cache;
-      if (!jobCache?.run_id || !Array.isArray(jobCache.produto_ids)) {
+      if (!prep.run_id || prep.total_pendentes == null) {
         throw new Error(
-          'Resposta incompleta do servidor. Atualize a função atualizarMetasEstoque no Base44.',
+          'Resposta incompleta do servidor. Republica a função atualizarMetasEstoque no Base44 (versão v4-slim-cache-servidor ou mais recente).',
         );
       }
 
-      const runId = prep.run_id || jobCache.run_id;
-      const totalPendentes = prep.total_pendentes ?? jobCache.produto_ids.length;
+      if (!prep.cache_no_servidor && (!jobCache?.run_id || !Array.isArray(jobCache?.produto_ids))) {
+        throw new Error(
+          'Resposta incompleta do servidor. Republica a função atualizarMetasEstoque no Base44.',
+        );
+      }
+
+      const runId = prep.run_id || jobCache?.run_id;
+      const totalPendentes = prep.total_pendentes ?? jobCache?.produto_ids?.length ?? 0;
       const totalBlocos = prep.total_blocos ?? Math.ceil(totalPendentes / BATCH_SIZE);
       let offset = 0;
       let totalAtualizados = 0;
@@ -149,7 +155,7 @@ export default function MetasEstoqueConfigTool() {
         const gravarResp = await atualizarMetasEstoque({
           fase: 'gravar',
           run_id: runId,
-          job_cache: jobCache,
+          ...(prep.cache_no_servidor ? {} : { job_cache: jobCache }),
           offset,
           batch_size: BATCH_SIZE,
           modo: 'manual',
