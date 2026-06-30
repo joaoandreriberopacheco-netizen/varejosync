@@ -23,7 +23,7 @@ import {
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 
-const BATCH_SIZE = 40;
+const BATCH_SIZE = 25;
 const PAUSE_BETWEEN_BLOCKS_MS = 2200;
 const RATE_LIMIT_RETRY = { maxAttempts: 8, baseDelayMs: 2000 };
 const PAUSE_BETWEEN_FALLBACK_UPDATES_MS = 350;
