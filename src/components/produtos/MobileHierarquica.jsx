@@ -65,7 +65,7 @@ const CATALOGO_MOBILE_VALUE_ROWS = [
   [
     { key: 'precoVenda', label: 'VENDA' },
     { key: 'inventarioValorizado', label: 'INVENT.' },
-    { key: 'categoriaAbcd', label: 'ABC' },
+    { key: 'estoqueAtual', label: 'ESTOQUE' },
   ],
 ];
 
@@ -146,7 +146,9 @@ function buildCatalogoMobileTabulatedValues(produto) {
     markup: formatCatalogoMobilePct(markupPct),
     inventarioValorizado: inventarioFmt,
     precoVenda: cat.precoVenda > 0 ? formatCatalogoMobileNum(cat.precoVenda) : '—',
-    categoriaAbcd: produto?.abcd || '—',
+    estoqueAtual: formatEstoqueApresentacao(produto)?.quantidade != null
+      ? fmtN(formatEstoqueApresentacao(produto).quantidade)
+      : fmtN(produto?.estoque_atual || 0),
   };
 }
 
@@ -176,7 +178,7 @@ function CatalogoMobileQtdUnCol({ quantidade, unidade, stockTone = 'success' }) 
 }
 
 function catalogoMetricValueClass(key) {
-  if (key === 'markup' || key === 'categoriaAbcd') {
+  if (key === 'markup') {
     return `${MARGIN_ACCENT_VALUE} font-normal`;
   }
   if (key === 'valorCompra' || key === 'custoCalculado') {

@@ -510,10 +510,6 @@ function catalogTreeSignature(produtos) {
         p?.preco_custo_calculado ?? '',
         p?.preco_venda_padrao ?? '',
         p?.ativo ? 1 : 0,
-        p?.abcd ?? '',
-        p?.iep_score ?? '',
-        p?.iep_score_nivel_1 ?? '',
-        p?.iep_score_nivel_2 ?? '',
       ].join('|')
     )
     .sort()

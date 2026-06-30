@@ -50,7 +50,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import {
-  useProdutosComIepQuery,
+  useProdutosListQuery,
   useFornecedoresQuery,
 } from '@/hooks/useP38Entities';
 
@@ -166,6 +166,7 @@ function ProdutosPageContent() {
   const [isPreviewCustosDialogOpen, setIsPreviewCustosDialogOpen] = useState(false);
   const [gerandoRelatorioEstoque, setGerandoRelatorioEstoque] = useState(false);
   const [gerandoRelatorioVendas, setGerandoRelatorioVendas] = useState(false);
+  const [gerandoRelatorioIep, setGerandoRelatorioIep] = useState(false);
   const relatorioEstoqueAutoRef = useRef(false);
   const relatorioVendasAutoRef = useRef(false);
   const catalogExpandedKeysRef = useRef(new Set());
@@ -173,7 +174,7 @@ function ProdutosPageContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isDesktop = useDesktopContent();
-  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosComIepQuery();
+  const { data: produtosQuery, refetch: refetchProdutos } = useProdutosListQuery();
   const { data: fornecedoresQuery, refetch: refetchFornecedores } = useFornecedoresQuery();
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
@@ -1197,6 +1198,51 @@ function ProdutosPageContent() {
     }
   }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, queryClient, toast]);
 
+  const handleGerarRelatorioIep = useCallback(async () => {
+    setGerandoRelatorioIep(true);
+    toast({ title: 'Gerando relatório Curva ABC / IEP...' });
+    try {
+      const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
+
+      let pedidos = queryClient.getQueryData(p38Keys.pedidosVenda90d());
+      if (!Array.isArray(pedidos)) {
+        toast({ title: 'Buscando vendas dos últimos 90 dias...' });
+        const { fetchPedidosVenda90d } = await import('@/lib/fetchPedidosVenda90d');
+        pedidos = await fetchPedidosVenda90d();
+        queryClient.setQueryData(p38Keys.pedidosVenda90d(), pedidos);
+      }
+
+      toast({ title: 'Montando PDF Curva ABC / IEP...' });
+      const { generateRelatorioCatalogoIepPdf } = await import(
+        '@/lib/relatorioCatalogoIepPdf/generateRelatorioCatalogoIepPdf.js'
+      );
+      const resposta = await generateRelatorioCatalogoIepPdf({
+        produtos: filteredProdutos,
+        pedidos,
+        filters_summary: filtersSummary,
+        sort_order: 'iep_score_desc',
+      });
+
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      downloadBlob(blob, `RelatorioCurvaABC_IEP_${dataHoje()}.pdf`);
+
+      toast({
+        title: 'Relatório Curva ABC / IEP gerado',
+        description: resposta?.version ? `Layout ${resposta.version}` : undefined,
+      });
+    } catch (error) {
+      const msg = error?.message || String(error);
+      toast({
+        title: 'Erro ao gerar relatório Curva ABC / IEP',
+        description: msg.length > 300 ? `${msg.slice(0, 300)}…` : msg,
+        variant: 'destructive',
+      });
+      console.error(error);
+    } finally {
+      setGerandoRelatorioIep(false);
+    }
+  }, [filteredProdutos, filters, categorias, fornecedores, queryClient, toast]);
+
   useEffect(() => {
     if (relatorioEstoqueAutoRef.current) return;
     const params = new URLSearchParams(window.location.search);
@@ -1252,6 +1298,8 @@ function ProdutosPageContent() {
     gerandoRelatorioEstoque,
     onGerarRelatorioVendas: handleGerarRelatorioVendas,
     gerandoRelatorioVendas,
+    onGerarRelatorioIep: handleGerarRelatorioIep,
+    gerandoRelatorioIep,
     onOpenMassTag: () => setIsMassTagOpen(true),
     onOpenMassCategory: () => setIsMassCategoryOpen(true),
     onOpenMassMarkup: () => setIsMassMarkupOpen(true),
