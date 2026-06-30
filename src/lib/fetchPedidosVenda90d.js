@@ -10,13 +10,15 @@ const PEDIDO_GET_CHUNK = 20;
 
 function normalizeItemVenda(it) {
   return {
+    ...it,
     produto_id: it?.produto_id ?? it?.produtoId,
     produtoId: it?.produto_id ?? it?.produtoId,
     quantidade_base: it?.quantidade_base,
     quantidade: it?.quantidade ?? it?.quantidade_comercial,
-    fator_conversao: it?.fator_conversao ?? it?.fator_aplicado,
+    fator_conversao: it?.fator_conversao ?? it?.fator_aplicado ?? 1,
     preco_final_unitario_fator1: it?.preco_final_unitario_fator1,
-    preco_unitario_fator1: it?.preco_unitario_fator1,
+    preco_unitario_fator1: it?.preco_unitario_fator1 ?? it?.preco_unitario_praticado,
+    preco_unitario_praticado: it?.preco_unitario_praticado ?? it?.preco_unitario_fator1,
     preco_unitario_comercial: it?.preco_unitario_comercial,
     total: it?.total,
   };
@@ -35,6 +37,35 @@ function appendItemToIndexes(itensPorProduto, itensPorPedido, pedidoId, rawItem)
     if (!itensPorPedido[pvid]) itensPorPedido[pvid] = [];
     itensPorPedido[pvid].push(item);
   }
+}
+
+export function buildItensPorProdutoFromPedidos(pedidos90d) {
+  const itensPorProduto = {};
+  const itensPorPedido = {};
+  for (const pedido of pedidos90d || []) {
+    for (const raw of pedido?.itens || []) {
+      appendItemToIndexes(itensPorProduto, itensPorPedido, pedido.id, raw);
+    }
+  }
+  return itensPorProduto;
+}
+
+async function hidratarPedidosSemItens(pedidos90d) {
+  const pedidos = Array.isArray(pedidos90d) ? [...pedidos90d] : [];
+  const semItens = pedidos.filter((p) => !(p?.itens?.length));
+  if (!semItens.length) return pedidos;
+
+  const itensPorProduto = {};
+  const itensPorPedido = {};
+  const ids = semItens.map((p) => String(p.id)).filter(Boolean);
+  await carregarPedidoVendaItensPorIds(ids, itensPorProduto, itensPorPedido);
+  if (countLinhasItens(itensPorProduto) < ids.length) {
+    await carregarEspelhoItensPorIds(ids, itensPorProduto, itensPorPedido);
+  }
+
+  const hidratados = hydratePedidosComItens(semItens, itensPorPedido);
+  const porId = Object.fromEntries(hidratados.map((p) => [String(p.id), p]));
+  return pedidos.map((p) => porId[String(p.id)] || p);
 }
 
 function countLinhasItens(itensPorProduto) {
@@ -140,7 +171,6 @@ export async function fetchPedidosVenda90d() {
   while (true) {
     const batch = await base44.entities.PedidoVenda.filter(
       {
-        tipo: 'PDV',
         status: { $ne: 'Cancelado' },
         created_date: { $gte: dataISO },
       },
@@ -166,7 +196,7 @@ export async function fetchPedidosVenda90d() {
     skip += pageSize;
   }
 
-  return todosPedidos;
+  return hidratarPedidosSemItens(todosPedidos);
 }
 
 /**

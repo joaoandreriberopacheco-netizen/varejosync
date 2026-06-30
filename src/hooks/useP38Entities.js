@@ -4,7 +4,11 @@ import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
 import { enrichProdutosComIep, stripAbcdIepCadastro } from '@/lib/calcularIepProdutos';
-import { fetchDadosVendaAbcd90d, fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+import {
+  buildItensPorProdutoFromPedidos,
+  fetchDadosVendaAbcd90d,
+  fetchPedidosVenda90d,
+} from '@/lib/fetchPedidosVenda90d';
 
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
@@ -115,24 +119,25 @@ export function useProdutosComIepQuery(options = {}) {
   const sort = options.sort ?? '-created_date';
   const { sort: _sort, ...rest } = options;
   const produtosQuery = useProdutosListQuery({ sort, ...rest });
-  const vendasQuery = useDadosVendaAbcd90dQuery({
+  const pedidosQuery = usePedidosVenda90dQuery({
     enabled: (rest.enabled ?? true) && Boolean(produtosQuery.data?.length),
   });
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
-    const vendas = vendasQuery.data;
-    if (!vendas?.pedidos90d) {
+    if (!pedidosQuery.data) {
       return produtosQuery.data.map(stripAbcdIepCadastro);
     }
-    return enrichProdutosComIep(produtosQuery.data, vendas);
-  }, [produtosQuery.data, vendasQuery.data]);
+    const pedidos90d = pedidosQuery.data ?? [];
+    const itensPorProduto = buildItensPorProdutoFromPedidos(pedidos90d);
+    return enrichProdutosComIep(produtosQuery.data, { pedidos90d, itensPorProduto });
+  }, [produtosQuery.data, pedidosQuery.data]);
 
   return {
     ...produtosQuery,
     data,
-    isLoading: produtosQuery.isLoading || vendasQuery.isLoading,
-    isFetching: produtosQuery.isFetching || vendasQuery.isFetching,
+    isLoading: produtosQuery.isLoading || pedidosQuery.isLoading,
+    isFetching: produtosQuery.isFetching || pedidosQuery.isFetching,
   };
 }
 

@@ -33,14 +33,13 @@ export function resolveCustoCalculadoProduto(produto) {
   );
 }
 
-/** Quantidade em unidade base (alinha ao RelatorioMargem). */
 export function lineQuantityBase(item) {
   const qtyBase = item?.quantidade_base;
-  if (qtyBase != null && Number.isFinite(Number(qtyBase))) {
+  if (qtyBase != null && Number.isFinite(Number(qtyBase)) && Number(qtyBase) > 0) {
     return Number(qtyBase) || 0;
   }
-  const qty = Number(item?.quantidade) || 0;
-  const fator = Number(item?.fator_conversao) || 1;
+  const qty = Number(item?.quantidade ?? item?.quantidade_comercial) || 0;
+  const fator = Number(item?.fator_conversao ?? item?.fator_aplicado) || 1;
   return qty * fator;
 }
 
@@ -75,6 +74,7 @@ export function lineReceitaItem(it) {
     const unit =
       Number(it?.preco_final_unitario_fator1) ||
       Number(it?.preco_unitario_fator1) ||
+      Number(it?.preco_unitario_praticado) ||
       Number(it?.preco_unitario) ||
       0;
     if (unit > 0) return qtyBase * unit;
@@ -123,20 +123,30 @@ export function calcularLucroSkuComQ4(produto, pedidos90d, itensPorProduto = nul
 
 function classificarParetoABCD(ranking, totalLucroPositivo) {
   const mapa = {};
-  for (const entry of ranking) {
-    mapa[entry.id] = 'D';
-  }
-  if (totalLucroPositivo <= 0) return mapa;
 
-  let acumulado = 0;
-  for (const entry of ranking) {
-    if (entry.lucro <= 0) continue;
-    const prevPct = (acumulado / totalLucroPositivo) * 100;
-    acumulado += entry.lucro;
-    if (prevPct < 70) mapa[entry.id] = 'A';
-    else if (prevPct < 85) mapa[entry.id] = 'B';
-    else if (prevPct < 95) mapa[entry.id] = 'C';
+  if (totalLucroPositivo <= 0) {
+    for (const entry of ranking) {
+      mapa[entry.id] = 'D';
+    }
+    return mapa;
   }
+
+  const comLucro = ranking.filter((entry) => entry.lucro > 0);
+  let acumulado = 0;
+
+  for (const entry of comLucro) {
+    acumulado += entry.lucro;
+    const percentual = (acumulado / totalLucroPositivo) * 100;
+    if (percentual <= 70) mapa[entry.id] = 'A';
+    else if (percentual <= 85) mapa[entry.id] = 'B';
+    else if (percentual <= 95) mapa[entry.id] = 'C';
+    else mapa[entry.id] = 'D';
+  }
+
+  for (const entry of ranking) {
+    if (entry.lucro <= 0) mapa[entry.id] = 'D';
+  }
+
   return mapa;
 }
 
@@ -152,7 +162,7 @@ export function grupoAbcdKey(produto) {
   const h1 = String(produto?.campo_hierarquico_1 ?? 'unassigned').trim();
   const h2 = String(produto?.campo_hierarquico_2 ?? '').trim();
   if (h2) return hierarchyKey([h1, h2]);
-  return hierarchyKey([h1]);
+  return hierarchyKey([h1, '__familia__']);
 }
 
 /** Calcula métricas IEP para todos os produtos (não grava no BD). */
@@ -319,6 +329,8 @@ export function pedidoDentroJanela90d(pedido, dataISO) {
 export function pedidoElegivelIep(pedido) {
   const status = String(pedido?.status ?? '');
   if (status === 'Cancelado') return false;
-  const tipo = String(pedido?.tipo ?? 'PDV').toUpperCase();
-  return tipo === 'PDV' || tipo === 'PEDIDO';
+  const tipo = String(pedido?.tipo ?? 'PDV').trim().toUpperCase();
+  if (tipo === 'PEDIDO') return true;
+  if (tipo === 'PDV' || tipo.startsWith('PDV ')) return true;
+  return false;
 }
