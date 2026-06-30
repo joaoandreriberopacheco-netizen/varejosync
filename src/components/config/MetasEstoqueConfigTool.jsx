@@ -38,6 +38,13 @@ function sleep(ms) {
 }
 
 function extractInvokeError(error) {
+  const nested =
+    error?.response?.data?.error ||
+    error?.data?.error ||
+    error?.response?.data?.message ||
+    error?.response?.data?.detail;
+  if (nested) return String(nested);
+
   const msg = error?.message || String(error);
   const match = msg.match(/HTTP (\d+)/);
   if (match) {
