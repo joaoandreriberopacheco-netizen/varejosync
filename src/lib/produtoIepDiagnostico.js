@@ -3,7 +3,7 @@
  */
 
 const CLASSE_LABEL = {
-  A: 'Classe A — entre os que mais geram lucro no subtipo (nível 2 da descrição)',
+  A: 'Classe A — entre os que mais geram lucro no subtipo (nível 2)',
   B: 'Classe B — relevância intermediária-alta',
   C: 'Classe C — relevância intermediária-baixa',
   D: 'Classe D — menor contribuição de lucro no período',
@@ -44,7 +44,7 @@ export function gerarDiagnosticoProdutoIep(produto) {
       temDados: true,
       titulo: 'Destaque estratégico',
       texto:
-        'Este item está entre os que mais geram lucro no subtipo (nível 2) e apresenta bom desempenho individual. Vale proteger estoque, manter visibilidade e usar o volume para negociar com fornecedores.',
+        'Este item está entre os que mais geram lucro no subtipo e apresenta bom desempenho individual. Vale proteger estoque, manter visibilidade e usar o volume para negociar com fornecedores.',
     };
   }
   if (classeEfetiva === 'A' && iep < 50) {

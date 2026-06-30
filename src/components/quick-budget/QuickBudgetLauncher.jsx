@@ -4,14 +4,14 @@ import { useLocation } from 'react-router-dom';
 import { ChevronUp, Search } from 'lucide-react';
 import { shouldShowQuickAccessLaunchers } from '@/config/quickAccessLauncherPolicy';
 import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
-import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useIsDesktop } from '@/hooks/use-breakpoint';
 import QuickBudgetPanel from './QuickBudgetPanel';
 
 export default function QuickBudgetLauncher() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
-  const isCompactViewport = useCompactShell();
+  const isCompactViewport = !useIsDesktop();
   const showOnRoute = shouldShowQuickAccessLaunchers(location.pathname);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);

@@ -3,10 +3,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
-import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
-import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+import { enrichProdutosComIep, stripAbcdIepCadastro } from '@/lib/calcularIepProdutos';
+import { fetchDadosVendaAbcd90d, fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 
-export { fetchPedidosVenda90d };
+export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
 import { unifyLogisticaEventos } from '@/components/logistica-sandbox/fluvialDataUtils';
 import { roundToTwoDecimals } from '@/lib/financialUtils';
 import { dataHoje, toLocalDateKey } from '@/components/utils/dateUtils';
@@ -99,26 +99,38 @@ export function usePedidosVenda90dQuery(options = {}) {
   });
 }
 
-/** Lista de produtos com ABCD/IEP calculados no cliente quando ainda não persistidos. */
+export function useDadosVendaAbcd90dQuery(options = {}) {
+  return useQuery({
+    queryKey: p38Keys.dadosVendaAbcd90d(),
+    queryFn: fetchDadosVendaAbcd90d,
+    staleTime: 10 * 60 * 1000,
+    gcTime: P38_GC_TIME,
+    ...options,
+  });
+}
+
+/** Catálogo — ABCD/IEP ao vivo; ignora valores gravados pelo job. */
 export function useProdutosComIepQuery(options = {}) {
   const sort = options.sort ?? '-created_date';
   const { sort: _sort, ...rest } = options;
   const produtosQuery = useProdutosListQuery({ sort, ...rest });
-  const pedidosQuery = usePedidosVenda90dQuery({
+  const vendasQuery = useDadosVendaAbcd90dQuery({
     enabled: (rest.enabled ?? true) && Boolean(produtosQuery.data?.length),
   });
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
-    if (!pedidosQuery.isFetched) return produtosQuery.data;
-    return enrichProdutosComIep(produtosQuery.data, pedidosQuery.data ?? []);
-  }, [produtosQuery.data, pedidosQuery.data, pedidosQuery.isFetched]);
+    if (!vendasQuery.isSuccess) {
+      return produtosQuery.data.map(stripAbcdIepCadastro);
+    }
+    return enrichProdutosComIep(produtosQuery.data, vendasQuery.data?.pedidos90d ?? []);
+  }, [produtosQuery.data, vendasQuery.data, vendasQuery.isSuccess]);
 
   return {
     ...produtosQuery,
     data,
-    isLoading: produtosQuery.isLoading || pedidosQuery.isLoading,
-    isFetching: produtosQuery.isFetching || pedidosQuery.isFetching,
+    isLoading: produtosQuery.isLoading || vendasQuery.isLoading,
+    isFetching: produtosQuery.isFetching || vendasQuery.isFetching,
   };
 }
 

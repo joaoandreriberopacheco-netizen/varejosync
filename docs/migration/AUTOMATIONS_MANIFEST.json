@@ -157,34 +157,6 @@
       "schedule": "daily at 05:00 UTC",
       "function": "gerarLancamentosCartao",
       "note": "DUPLICATE of 69be3ff0 — same function, same schedule. Review before migration."
-    },
-    {
-      "id": "scheduled-calcular-iep-abcd-madrugada",
-      "name": "Curva ABCD / IEP — madrugada (todos os produtos)",
-      "type": "scheduled",
-      "is_active": true,
-      "schedule": "daily at 07:00 UTC (04:00 America/Sao_Paulo)",
-      "function": "calcularIEP",
-      "payload": {
-        "somente_abcd_vazio": false,
-        "modo": "agendado"
-      },
-      "description": "Recalcula ABCD/IEP (90d) e grava abcd, iep_classe e scores em todos os produtos. Catálogo lê campo estático.",
-      "supabase_equivalent": "SELECT cron.schedule('calcular-iep-abcd', '0 7 * * *', $$ SELECT net.http_post(url:='https://your-project.supabase.co/functions/v1/calcularIEP', body:='{\"somente_abcd_vazio\":false,\"modo\":\"agendado\"}'::jsonb) $$);"
-    },
-    {
-      "id": "scheduled-atualizar-metas-estoque-madrugada",
-      "name": "Metas de estoque — madrugada (todos os produtos)",
-      "type": "scheduled",
-      "is_active": true,
-      "schedule": "daily at 08:00 UTC (05:00 America/Sao_Paulo)",
-      "function": "atualizarMetasEstoque",
-      "payload": {
-        "somente_metas_vazias": false,
-        "modo": "agendado"
-      },
-      "description": "Recalcula estoque mínimo (ponto de pedido) e estoque ideal (qtd a repor) a partir de vendas 90d.",
-      "supabase_equivalent": "SELECT cron.schedule('atualizar-metas-estoque', '0 8 * * *', $$ SELECT net.http_post(url:='https://your-project.supabase.co/functions/v1/atualizarMetasEstoque', body:='{\"somente_metas_vazias\":false,\"modo\":\"agendado\"}'::jsonb) $$);"
     }
   ],
   "migration_notes": {
