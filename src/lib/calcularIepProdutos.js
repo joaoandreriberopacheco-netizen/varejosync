@@ -106,6 +106,36 @@ function classificarParetoABCD(ranking, totalLucroPositivo) {
   return mapa;
 }
 
+/** Curva ABCD somente — mapa grupo → letra A/B/C/D (sem IEP). */
+export function calcularMapaAbcdSomente(produtos, pedidos90d) {
+  const lista = Array.isArray(produtos) ? produtos : [];
+  const pedidos = Array.isArray(pedidos90d) ? pedidos90d : [];
+
+  const lucroPorGrupo = {};
+  for (const produto of lista) {
+    const { lucro } = calcularLucroSkuComQ4(produto, pedidos);
+    const key = grupoAbcdKey(produto);
+    lucroPorGrupo[key] = (lucroPorGrupo[key] || 0) + lucro;
+  }
+
+  const rankingGrupos = Object.entries(lucroPorGrupo)
+    .map(([id, lucro]) => ({ id, lucro }))
+    .sort((a, b) => b.lucro - a.lucro);
+
+  const lucroTotalPositivo = rankingGrupos.reduce((acc, g) => acc + Math.max(0, g.lucro), 0);
+  const mapaAbcdGrupo = classificarParetoABCD(rankingGrupos, lucroTotalPositivo);
+
+  return {
+    mapaAbcdGrupo,
+    grupos_nivel_2: rankingGrupos.length,
+    total_produtos: lista.length,
+  };
+}
+
+export function abcdClasseParaProduto(produto, mapaAbcdGrupo) {
+  return mapaAbcdGrupo[grupoAbcdKey(produto)] || 'D';
+}
+
 function normalizarScore0a100(lucro, lucroMax, teveVenda) {
   if (!teveVenda) return null;
   if (lucroMax <= 0) return lucro > 0 ? 50 : 1;
@@ -120,8 +150,8 @@ function normalizarScore0a100(lucro, lucroMax, teveVenda) {
  * Todos os SKUs do mesmo grupo recebem a mesma letra A/B/C/D.
  */
 export function grupoAbcdKey(produto) {
-  const h1 = (produto.campo_hierarquico_1 || 'unassigned').trim();
-  const h2 = (produto.campo_hierarquico_2 || '').trim();
+  const h1 = String(produto?.campo_hierarquico_1 ?? 'unassigned').trim();
+  const h2 = String(produto?.campo_hierarquico_2 ?? '').trim();
   if (h2) return hierarchyKey([h1, h2]);
   return hierarchyKey([h1]);
 }

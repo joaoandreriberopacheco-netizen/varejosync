@@ -15,44 +15,74 @@ import {
   Loader2,
   RefreshCw,
 } from 'lucide-react';
-import { calcularIEP } from '@/functions/calcularIEP';
+import { base44 } from '@/api/base44Client';
+import {
+  abcdClasseParaProduto,
+  calcularMapaAbcdSomente,
+} from '@/lib/calcularIepProdutos';
+import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 
 const BATCH_SIZE = 50;
+const UPDATE_CONCURRENCY = 5;
 
 /** @typedef {'idle' | 'preparing' | 'writing' | 'success' | 'empty' | 'error'} DialogPhase */
-
-function normalizeJobResponse(resp) {
-  const data = resp?.data ?? resp;
-  if (typeof data === 'string') {
-    try {
-      return JSON.parse(data);
-    } catch {
-      return { mensagem: data };
-    }
-  }
-  return data && typeof data === 'object' ? data : {};
-}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function extractInvokeError(error) {
-  const responseData = error?.response?.data ?? error?.data;
-  if (responseData) {
-    if (typeof responseData === 'string') return responseData;
-    if (typeof responseData === 'object') {
-      const msg = responseData.error || responseData.message || responseData.mensagem;
-      if (msg) return String(msg);
-    }
+function produtoAbcdVazio(produto) {
+  return !String(produto?.abcd ?? '').trim();
+}
+
+async function fetchAllProdutos() {
+  const todos = [];
+  let skip = 0;
+  const pageSize = 500;
+
+  while (true) {
+    const batch = await base44.entities.Produto.list('-created_date', pageSize, skip);
+    const rows = Array.isArray(batch) ? batch : [];
+    if (!rows.length) break;
+    for (const produto of rows) todos.push(produto);
+    skip += pageSize;
+    if (rows.length < pageSize) break;
   }
 
-  const msg = error?.message || String(error);
-  const match = msg.match(/HTTP (\d+)/);
-  if (match) {
-    return msg.replace(/^.*?:\s*/, '').trim() || `Erro HTTP ${match[1]}`;
+  return todos;
+}
+
+async function gravarAbcdEmLotes(produtos, mapaAbcdGrupo, onProgress) {
+  let atualizados = 0;
+
+  for (let i = 0; i < produtos.length; i += BATCH_SIZE) {
+    const bloco = produtos.slice(i, i + BATCH_SIZE);
+    const totalBlocos = Math.ceil(produtos.length / BATCH_SIZE);
+    const blocoAtual = Math.floor(i / BATCH_SIZE) + 1;
+
+    for (let j = 0; j < bloco.length; j += UPDATE_CONCURRENCY) {
+      const chunk = bloco.slice(j, j + UPDATE_CONCURRENCY);
+      await Promise.all(
+        chunk.map((produto) =>
+          base44.entities.Produto.update(produto.id, {
+            abcd: abcdClasseParaProduto(produto, mapaAbcdGrupo),
+          }),
+        ),
+      );
+    }
+
+    atualizados += bloco.length;
+    onProgress({
+      bloco: blocoAtual,
+      totalBlocos,
+      atualizados,
+      totalPendentes: produtos.length,
+    });
+
+    await sleep(80);
   }
-  return msg;
+
+  return atualizados;
 }
 
 export default function AbcdConfigTool() {
@@ -91,110 +121,78 @@ export default function AbcdConfigTool() {
     setDialogOpen(true);
     resetDialog();
     setPhase('preparing');
-    setProgress((p) => ({
-      ...p,
-      etapa: 'Montando lista, ordenando por lucro e classificando grupos A / B / C / D…',
-    }));
 
     try {
-      const prepararResp = await calcularIEP({
-        fase: 'preparar',
-        somente_abcd_vazio: somenteAbcdVazio,
-        modo: 'manual',
-        batch_size: BATCH_SIZE,
-      });
-      const preparado = normalizeJobResponse(prepararResp);
+      setProgress((p) => ({
+        ...p,
+        etapa: 'Carregando vendas dos últimos 90 dias…',
+      }));
 
-      if (preparado.error || preparado.status === 'erro') {
-        throw new Error(preparado.error || 'Falha ao preparar o cálculo ABCD.');
-      }
+      const [pedidos90d, produtos] = await Promise.all([
+        fetchPedidosVenda90d(),
+        fetchAllProdutos(),
+      ]);
 
-      if (preparado.status === 'sem_alteracao' || preparado.concluido) {
+      if (abortRef.current) throw new Error('Operação cancelada.');
+
+      const pendentes = somenteAbcdVazio
+        ? produtos.filter(produtoAbcdVazio)
+        : produtos;
+
+      if (!pendentes.length) {
         setPhase('empty');
         setResult({
-          mensagem: preparado.mensagem || 'Nenhum produto pendente de atualização.',
+          mensagem: somenteAbcdVazio
+            ? 'Nenhum produto com ABCD vazio no cadastro.'
+            : 'Nenhum produto no cadastro.',
           somente_abcd_vazio: somenteAbcdVazio,
         });
         return;
       }
 
-      const jobCache = preparado.job_cache;
-      if (!preparado.run_id || preparado.total_pendentes == null) {
-        throw new Error(
-          'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (versão V14-slim-response ou mais recente).',
-        );
-      }
+      setProgress((p) => ({
+        ...p,
+        etapa: 'Calculando curva A / B / C / D por grupo de produto…',
+      }));
 
-      if (!preparado.cache_no_servidor) {
-        if (!jobCache?.mapaAbcdGrupo || !jobCache?.produto_ids?.length) {
-          throw new Error(
-            'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (versão V14-slim-response ou mais recente).',
-          );
-        }
-      }
+      const { mapaAbcdGrupo, grupos_nivel_2 } = calcularMapaAbcdSomente(produtos, pedidos90d);
 
-      const runId = preparado.run_id || jobCache?.run_id;
-      const totalPendentes = preparado.total_pendentes ?? jobCache?.produto_ids?.length ?? 0;
-      const totalBlocos = preparado.total_blocos ?? Math.ceil(totalPendentes / BATCH_SIZE);
-      let offset = 0;
-      let totalAtualizados = 0;
+      if (abortRef.current) throw new Error('Operação cancelada.');
 
+      const totalBlocos = Math.ceil(pendentes.length / BATCH_SIZE);
       setPhase('writing');
       setProgress({
         bloco: 0,
         totalBlocos,
         atualizados: 0,
-        totalPendentes,
-        etapa: 'Aplicando classificação em cada produto…',
+        totalPendentes: pendentes.length,
+        etapa: 'Gravando classificação em cada produto…',
       });
 
-      while (offset < totalPendentes) {
-        if (abortRef.current) {
-          throw new Error('Operação cancelada.');
-        }
+      const totalAtualizados = await gravarAbcdEmLotes(pendentes, mapaAbcdGrupo, (p) => {
+        if (abortRef.current) return;
+        setProgress((prev) => ({
+          ...prev,
+          ...p,
+          etapa: 'Gravando classificação em cada produto…',
+        }));
+      });
 
-        const gravarResp = await calcularIEP({
-          fase: 'gravar',
-          run_id: runId,
-          ...(preparado.cache_no_servidor ? {} : { job_cache: jobCache }),
-          offset,
-          batch_size: BATCH_SIZE,
-          modo: 'manual',
-        });
-        const bloco = normalizeJobResponse(gravarResp);
+      if (abortRef.current) throw new Error('Operação cancelada.');
 
-        if (bloco.error || bloco.status === 'erro') {
-          throw new Error(bloco.error || 'Falha ao gravar um bloco de produtos.');
-        }
-
-        totalAtualizados += bloco.atualizados ?? 0;
-        offset = bloco.proximo_offset ?? offset + BATCH_SIZE;
-
-        setProgress({
-          bloco: bloco.bloco_atual ?? Math.ceil(offset / BATCH_SIZE),
-          totalBlocos: bloco.total_blocos ?? totalBlocos,
-          atualizados: totalAtualizados,
-          totalPendentes,
-          etapa: 'Aplicando classificação em cada produto…',
-        });
-
-        if (bloco.concluido) break;
-        await sleep(150);
-      }
-
-      const finalResult = {
+      setResult({
         status: 'sucesso',
         atualizados: totalAtualizados,
-        total_pendentes: totalPendentes,
+        total_pendentes: pendentes.length,
         total_blocos: totalBlocos,
+        grupos_nivel_2,
+        pedidos_90d: pedidos90d.length,
         somente_abcd_vazio: somenteAbcdVazio,
         timestamp: new Date().toISOString(),
-      };
-
-      setResult(finalResult);
+      });
       setPhase('success');
     } catch (error) {
-      setErrorMessage(extractInvokeError(error));
+      setErrorMessage(error?.message || String(error));
       setPhase('error');
     } finally {
       setRunning(null);
@@ -217,9 +215,8 @@ export default function AbcdConfigTool() {
             <p className="text-sm font-semibold text-foreground/90">Curva ABCD</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Calcula a classificação A/B/C/D com vendas dos últimos 90 dias e grava no campo{' '}
-              <strong>abcd</strong> de cada produto. A análise dos grupos é feita de uma vez; só a
-              gravação em cada SKU roda em blocos de {BATCH_SIZE}. À madrugada o job recalcula todos
-              automaticamente.
+              <strong>abcd</strong> de cada produto. O cálculo roda aqui no navegador; a gravação
+              é feita em blocos de {BATCH_SIZE} produtos.
             </p>
           </div>
         </div>
@@ -300,7 +297,7 @@ export default function AbcdConfigTool() {
               Curva ABCD
             </DialogTitle>
             <DialogDescription>
-              {phase === 'preparing' && 'Lista, ordenação e classificação dos grupos (uma etapa).'}
+              {phase === 'preparing' && 'Lendo vendas e calculando os grupos A/B/C/D.'}
               {phase === 'writing' && 'Gravando a classificação em cada produto, em blocos.'}
               {phase === 'success' && 'Processo concluído com sucesso.'}
               {phase === 'empty' && 'Nenhuma alteração necessária.'}
@@ -374,8 +371,8 @@ export default function AbcdConfigTool() {
               <p className="text-sm font-medium text-foreground">Erro na atualização</p>
               <p className="text-xs text-muted-foreground break-words">{errorMessage}</p>
               <p className="text-[11px] text-muted-foreground">
-                Se o erro persistir, confirme que a função <strong>calcularIEP</strong> foi publicada no
-                Base44 com a versão <strong>V12-abcd-slim-cache</strong>.
+                Mantenha a página aberta até concluir. Se falhar no meio, pode executar de novo —
+                produtos já gravados serão apenas recalculados.
               </p>
             </div>
           )}
