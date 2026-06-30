@@ -5,6 +5,9 @@ import {
   pedidoElegivelIep,
 } from '@/lib/calcularIepProdutos';
 
+const PEDIDO_IDS_CHUNK = 40;
+const PEDIDO_GET_CHUNK = 20;
+
 function normalizeItemVenda(it) {
   return {
     produto_id: it?.produto_id ?? it?.produtoId,
@@ -12,21 +15,97 @@ function normalizeItemVenda(it) {
     quantidade_base: it?.quantidade_base,
     quantidade: it?.quantidade ?? it?.quantidade_comercial,
     fator_conversao: it?.fator_conversao ?? it?.fator_aplicado,
+    preco_final_unitario_fator1: it?.preco_final_unitario_fator1,
+    preco_unitario_fator1: it?.preco_unitario_fator1,
+    preco_unitario_comercial: it?.preco_unitario_comercial,
     total: it?.total,
   };
 }
 
 function appendItem(itensPorProduto, rawItem) {
   const item = normalizeItemVenda(rawItem);
-  const pid = String(item?.produto_id ?? item?.produtoId ?? '');
+  const pid = String(item?.produto_id ?? item?.produtoId ?? '').trim();
   if (!pid) return;
   if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
   itensPorProduto[pid].push(item);
 }
 
+function countLinhasItens(itensPorProduto) {
+  let total = 0;
+  for (const linhas of Object.values(itensPorProduto || {})) {
+    total += Array.isArray(linhas) ? linhas.length : 0;
+  }
+  return total;
+}
+
+function rowsFromApi(batch) {
+  return Array.isArray(batch) ? batch : batch?.data ?? [];
+}
+
+async function carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto) {
+  if (!pedidoIds.length || !base44.entities.PedidoVendaItem?.filter) return 0;
+
+  let added = 0;
+  for (let i = 0; i < pedidoIds.length; i += PEDIDO_IDS_CHUNK) {
+    const chunk = pedidoIds.slice(i, i + PEDIDO_IDS_CHUNK);
+    try {
+      const batch = await base44.entities.PedidoVendaItem.filter({
+        pedido_venda_id: { $in: chunk },
+      });
+      const rows = rowsFromApi(batch);
+      for (const it of rows) {
+        const before = countLinhasItens(itensPorProduto);
+        appendItem(itensPorProduto, it);
+        if (countLinhasItens(itensPorProduto) > before) added += 1;
+      }
+    } catch {
+      for (const pedidoId of chunk) {
+        try {
+          const batch = await base44.entities.PedidoVendaItem.filter({
+            pedido_venda_id: pedidoId,
+          });
+          for (const it of rowsFromApi(batch)) appendItem(itensPorProduto, it);
+        } catch {
+          /* pedido sem linhas canónicas */
+        }
+      }
+    }
+  }
+  return added;
+}
+
+async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto) {
+  if (!pedidoIds.length || !base44.entities.PedidoVenda?.filter) return;
+
+  for (let i = 0; i < pedidoIds.length; i += PEDIDO_IDS_CHUNK) {
+    const chunk = pedidoIds.slice(i, i + PEDIDO_IDS_CHUNK);
+    try {
+      const batch = await base44.entities.PedidoVenda.filter({ id: { $in: chunk } });
+      for (const pedido of rowsFromApi(batch)) {
+        for (const it of pedido?.itens || []) appendItem(itensPorProduto, it);
+      }
+    } catch {
+      for (let j = 0; j < chunk.length; j += PEDIDO_GET_CHUNK) {
+        const sub = chunk.slice(j, j + PEDIDO_GET_CHUNK);
+        await Promise.all(
+          sub.map(async (pedidoId) => {
+            try {
+              const pedido = await base44.entities.PedidoVenda.get(pedidoId);
+              const row = pedido?.data ?? pedido;
+              for (const it of row?.itens || []) appendItem(itensPorProduto, it);
+            } catch {
+              /* ignorar */
+            }
+          }),
+        );
+      }
+    }
+  }
+}
+
 /**
- * Pedidos PDV elegíveis para IEP / velocidade de vendas (últimos 90 dias).
- * Filtro de data no servidor + paragem antecipada na paginação (ordem -created_date).
+ * Pedidos elegíveis para ABCD (últimos 90 dias).
+ * Não filtra tipo no servidor — o espelho da listagem muitas vezes vem sem `itens`.
  */
 export async function fetchPedidosVenda90d() {
   const dataISO = iso90DiasAtras();
@@ -38,7 +117,6 @@ export async function fetchPedidosVenda90d() {
   while (true) {
     const batch = await base44.entities.PedidoVenda.filter(
       {
-        tipo: 'PDV',
         status: { $ne: 'Cancelado' },
         created_date: { $gte: dataISO },
       },
@@ -46,7 +124,7 @@ export async function fetchPedidosVenda90d() {
       pageSize,
       skip,
     );
-    const rows = Array.isArray(batch) ? batch : batch?.data ?? [];
+    const rows = rowsFromApi(batch);
     if (!rows.length) break;
 
     for (const pedido of rows) {
@@ -69,45 +147,26 @@ export async function fetchPedidosVenda90d() {
 
 /**
  * Índice produto_id → linhas de venda (90d).
- * Usa espelho PedidoVenda.itens e, quando vazio, PedidoVendaItem (fonte canónica).
+ * 1) espelho na listagem (se vier)  2) PedidoVendaItem ($in)  3) PedidoVenda completo
  */
 export async function buildItensPorProduto90d(pedidos90d) {
   const pedidos = Array.isArray(pedidos90d) ? pedidos90d : [];
   const itensPorProduto = {};
-  const pedidosComEspelho = new Set();
+  const pedidoIds = pedidos.map((p) => String(p.id)).filter(Boolean);
 
   for (const pedido of pedidos) {
-    const itens = pedido?.itens;
-    if (!Array.isArray(itens) || !itens.length) continue;
-    pedidosComEspelho.add(String(pedido.id));
-    for (const it of itens) appendItem(itensPorProduto, it);
+    for (const it of pedido?.itens || []) appendItem(itensPorProduto, it);
   }
 
-  const pedidoIdsCanonico = new Set(
-    pedidos
-      .filter((p) => !pedidosComEspelho.has(String(p.id)))
-      .map((p) => String(p.id)),
-  );
+  if (!pedidoIds.length) return itensPorProduto;
 
-  if (!pedidoIdsCanonico.size || !base44.entities.PedidoVendaItem) {
-    return itensPorProduto;
+  const linhasIniciais = countLinhasItens(itensPorProduto);
+  if (linhasIniciais < pedidoIds.length) {
+    await carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto);
   }
 
-  let skip = 0;
-  const pageSize = 500;
-
-  while (true) {
-    const batch = await base44.entities.PedidoVendaItem.list('-created_date', pageSize, skip);
-    const rows = Array.isArray(batch) ? batch : batch?.data ?? [];
-    if (!rows.length) break;
-
-    for (const it of rows) {
-      if (!pedidoIdsCanonico.has(String(it?.pedido_venda_id ?? ''))) continue;
-      appendItem(itensPorProduto, it);
-    }
-
-    skip += pageSize;
-    if (rows.length < pageSize) break;
+  if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
+    await carregarEspelhoItensPorIds(pedidoIds, itensPorProduto);
   }
 
   return itensPorProduto;
@@ -117,5 +176,11 @@ export async function buildItensPorProduto90d(pedidos90d) {
 export async function fetchDadosVendaAbcd90d() {
   const pedidos90d = await fetchPedidosVenda90d();
   const itensPorProduto = await buildItensPorProduto90d(pedidos90d);
-  return { pedidos90d, itensPorProduto };
+  return {
+    pedidos90d,
+    itensPorProduto,
+    itens_linhas: countLinhasItens(itensPorProduto),
+  };
 }
+
+export { countLinhasItens };

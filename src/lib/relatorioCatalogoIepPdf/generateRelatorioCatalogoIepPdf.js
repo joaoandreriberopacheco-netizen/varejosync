@@ -32,7 +32,11 @@ export function prepareCatalogIepReportRows(
   sortOrder = 'abcd_desc',
 ) {
   const list = (produtos || []).filter((p) => p && typeof p === 'object');
-  const enriched = enrichProdutosComAbcdAoVivo(list, itensPorProduto);
+  const linhas = Object.values(itensPorProduto || {}).reduce(
+    (acc, rows) => acc + (Array.isArray(rows) ? rows.length : 0),
+    0,
+  );
+  const enriched = enrichProdutosComAbcdAoVivo(list, itensPorProduto, { itens_linhas: linhas });
   return [...enriched].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 }
 

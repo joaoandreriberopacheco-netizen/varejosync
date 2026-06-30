@@ -52,13 +52,35 @@ export function collectItensVendaProduto(produto, pedidos90d) {
     .filter((it) => String(it?.produto_id ?? it?.produtoId ?? '') === pid);
 }
 
+/** Valor da linha de venda (total gravado ou qty × preço unitário). */
+export function lineReceitaItem(it) {
+  const total = Number(it?.total);
+  if (Number.isFinite(total) && total > 0) return total;
+
+  const qtyBase = lineQuantityBase(it);
+  if (qtyBase > 0) {
+    const unit =
+      Number(it?.preco_final_unitario_fator1) ||
+      Number(it?.preco_unitario_fator1) ||
+      Number(it?.preco_unitario) ||
+      0;
+    if (unit > 0) return qtyBase * unit;
+  }
+
+  const qtyCom = Number(it?.quantidade_comercial ?? it?.quantidade) || 0;
+  const precoCom = Number(it?.preco_unitario_comercial) || 0;
+  if (qtyCom > 0 && precoCom > 0) return qtyCom * precoCom;
+
+  return 0;
+}
+
 /** Lucro do SKU nos últimos 90d — todas as linhas, sem excluir outliers. */
 export function calcularLucroSkuSimples(produto, itens) {
   const custoUnit = resolveCustoCalculadoProduto(produto);
   const linhas = Array.isArray(itens) ? itens : [];
 
   if (!linhas.length) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false, receita: 0 };
   }
 
   let quantidade = 0;
@@ -66,7 +88,7 @@ export function calcularLucroSkuSimples(produto, itens) {
 
   for (const it of linhas) {
     const qtyBase = lineQuantityBase(it);
-    const total = Number(it.total) || 0;
+    const total = lineReceitaItem(it);
     if (qtyBase > 0 && total > 0) {
       quantidade += qtyBase;
       receita += total;
@@ -74,12 +96,12 @@ export function calcularLucroSkuSimples(produto, itens) {
   }
 
   if (quantidade <= 0) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false, receita: 0 };
   }
 
   const precoMedio = receita / quantidade;
   const lucro = receita - custoUnit * quantidade;
-  return { lucro, precoMedio, quantidade, teveVenda: true };
+  return { lucro, precoMedio, quantidade, teveVenda: true, receita };
 }
 
 export function collectItensVendaProdutoFromIndex(produto, itensPorProduto) {
@@ -161,15 +183,27 @@ export function calcularMapaAbcdPorProduto(produtos, itensPorProduto) {
   const ranking = lista.map((produto) => {
     const pid = String(produto.id);
     const itens = collectItensVendaProdutoFromIndex(produto, index);
-    const { lucro, teveVenda } = calcularLucroSkuSimples(produto, itens);
-    return { id: pid, lucro, teveVenda };
+    const { lucro, teveVenda, receita } = calcularLucroSkuSimples(produto, itens);
+    return { id: pid, lucro, teveVenda, receita };
   });
 
   ranking.sort((a, b) => b.lucro - a.lucro);
 
   const lucroTotalPositivo = ranking.reduce((acc, entry) => acc + Math.max(0, entry.lucro), 0);
-  const mapaAbcdProduto = classificarParetoABCD(ranking, lucroTotalPositivo);
-  const produtosComVenda = ranking.filter((entry) => entry.teveVenda && entry.lucro > 0).length;
+  let mapaAbcdProduto = classificarParetoABCD(ranking, lucroTotalPositivo);
+
+  if (lucroTotalPositivo <= 0) {
+    const rankingReceita = ranking
+      .filter((entry) => entry.receita > 0)
+      .map((entry) => ({ id: entry.id, lucro: entry.receita, teveVenda: entry.teveVenda }))
+      .sort((a, b) => b.lucro - a.lucro);
+    const totalReceita = rankingReceita.reduce((acc, entry) => acc + entry.lucro, 0);
+    if (totalReceita > 0) {
+      mapaAbcdProduto = classificarParetoABCD(rankingReceita, totalReceita);
+    }
+  }
+
+  const produtosComVenda = ranking.filter((entry) => entry.teveVenda).length;
 
   return {
     mapaAbcdProduto,

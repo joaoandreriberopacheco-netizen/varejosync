@@ -7,6 +7,14 @@ import {
   calcularMapaAbcdPorProduto,
 } from '@/lib/calcularIepProdutos';
 
+function countLinhasVenda(itensPorProduto) {
+  let total = 0;
+  for (const linhas of Object.values(itensPorProduto || {})) {
+    total += Array.isArray(linhas) ? linhas.length : 0;
+  }
+  return total;
+}
+
 const ABCD_BADGE_CLASS = {
   A: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
   B: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
@@ -14,9 +22,21 @@ const ABCD_BADGE_CLASS = {
   D: 'bg-muted text-muted-foreground',
 };
 
-export function enrichProdutosComAbcdAoVivo(produtos, itensPorProduto) {
+export function enrichProdutosComAbcdAoVivo(produtos, itensPorProduto, meta = {}) {
   const lista = Array.isArray(produtos) ? produtos : [];
-  if (!lista.length || !itensPorProduto) return lista;
+  if (!lista.length) return lista;
+
+  const linhasVenda = meta.itens_linhas ?? countLinhasVenda(itensPorProduto);
+  if (!itensPorProduto || linhasVenda <= 0) {
+    return lista.map((produto) => {
+      const cadastro = String(produto.abcd || produto.iep_classe || '').toUpperCase().trim();
+      return {
+        ...produto,
+        abcd_fonte: cadastro ? 'cadastro' : 'sem_vendas',
+        abcd_ao_vivo: null,
+      };
+    });
+  }
 
   const { mapaAbcdProduto } = calcularMapaAbcdPorProduto(lista, itensPorProduto);
 

@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 const DEFAULT_BATCH_SIZE = 50;
 const UPDATE_CONCURRENCY = 5;
 const CACHE_KEY = 'iep_job_run';
-const VERSAO = 'V17-abcd-por-produto-excel';
+const VERSAO = 'V18-itens-venda-fix';
 
 /** Q3 — limite superior do miolo (exclui 4.º quartil). */
 function q3(values) {
@@ -88,6 +88,27 @@ function calcularLucroSkuComQ4(produto, itensPorProduto) {
   return { lucro, precoMedio, quantidade, teveVenda: quantidade > 0 };
 }
 
+function lineReceitaItem(it) {
+  const total = Number(it?.total);
+  if (Number.isFinite(total) && total > 0) return total;
+
+  const qtyBase = lineQuantityBase(it);
+  if (qtyBase > 0) {
+    const unit =
+      Number(it?.preco_final_unitario_fator1) ||
+      Number(it?.preco_unitario_fator1) ||
+      Number(it?.preco_unitario) ||
+      0;
+    if (unit > 0) return qtyBase * unit;
+  }
+
+  const qtyCom = Number(it?.quantidade_comercial ?? it?.quantidade) || 0;
+  const precoCom = Number(it?.preco_unitario_comercial) || 0;
+  if (qtyCom > 0 && precoCom > 0) return qtyCom * precoCom;
+
+  return 0;
+}
+
 /** Lucro do SKU — todas as linhas, sem excluir outliers (estilo Excel). */
 function calcularLucroSkuSimples(produto, itensPorProduto) {
   const custoUnit = resolveCustoCalculado(produto);
@@ -95,7 +116,7 @@ function calcularLucroSkuSimples(produto, itensPorProduto) {
   const itens = itensPorProduto[pid] || [];
 
   if (!itens.length) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false, receita: 0 };
   }
 
   let quantidade = 0;
@@ -103,7 +124,7 @@ function calcularLucroSkuSimples(produto, itensPorProduto) {
 
   for (const it of itens) {
     const qtyBase = lineQuantityBase(it);
-    const total = Number(it.total) || 0;
+    const total = lineReceitaItem(it);
     if (qtyBase > 0 && total > 0) {
       quantidade += qtyBase;
       receita += total;
@@ -111,12 +132,12 @@ function calcularLucroSkuSimples(produto, itensPorProduto) {
   }
 
   if (quantidade <= 0) {
-    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
+    return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false, receita: 0 };
   }
 
   const precoMedio = receita / quantidade;
   const lucro = receita - custoUnit * quantidade;
-  return { lucro, precoMedio, quantidade, teveVenda: true };
+  return { lucro, precoMedio, quantidade, teveVenda: true, receita };
 }
 
 function normalizeItemVenda(it) {
@@ -125,6 +146,9 @@ function normalizeItemVenda(it) {
     quantidade_base: it?.quantidade_base,
     quantidade: it?.quantidade ?? it?.quantidade_comercial,
     fator_conversao: it?.fator_conversao ?? it?.fator_aplicado,
+    preco_final_unitario_fator1: it?.preco_final_unitario_fator1,
+    preco_unitario_fator1: it?.preco_unitario_fator1,
+    preco_unitario_comercial: it?.preco_unitario_comercial,
     total: it?.total,
   };
 }
@@ -153,8 +177,8 @@ function snapshotProduto(produto) {
 /** Lista lucro por produto (ordenado depois na classificação). */
 function etapa_listarLucroPorProduto(produtos, itensPorProduto) {
   const lista = produtos.map((produto) => {
-    const { lucro } = calcularLucroSkuSimples(produto, itensPorProduto);
-    return { id: String(produto.id), lucro };
+    const { lucro, receita, teveVenda } = calcularLucroSkuSimples(produto, itensPorProduto);
+    return { id: String(produto.id), lucro, receita, teveVenda };
   });
 
   return {
@@ -382,27 +406,53 @@ async function clearJobCache(db) {
 // ═══════════════════════════════════════════════════════════════
 
 async function carregarItensCanonicoPedidos(db, pedidoIds) {
-  const needIds = new Set(pedidoIds.map(String));
   const extra = {};
-  if (!needIds.size || !db.PedidoVendaItem?.list) return extra;
+  if (!pedidoIds?.length || !db.PedidoVendaItem?.filter) return extra;
 
-  let skip = 0;
-  const pageSize = 500;
-
-  while (true) {
-    const batch = await db.PedidoVendaItem.list('-created_date', pageSize, skip);
-    if (!batch?.length) break;
-
-    for (const it of batch) {
-      if (!needIds.has(String(it?.pedido_venda_id ?? ''))) continue;
-      appendItemVenda(extra, it);
+  const CHUNK = 40;
+  for (let i = 0; i < pedidoIds.length; i += CHUNK) {
+    const chunk = pedidoIds.slice(i, i + CHUNK).map(String);
+    try {
+      const batch = await db.PedidoVendaItem.filter({ pedido_venda_id: { $in: chunk } });
+      for (const it of batch || []) appendItemVenda(extra, it);
+    } catch {
+      for (const pedidoId of chunk) {
+        try {
+          const rows = await db.PedidoVendaItem.filter({ pedido_venda_id: pedidoId });
+          for (const it of rows || []) appendItemVenda(extra, it);
+        } catch {
+          /* sem linhas */
+        }
+      }
     }
-
-    skip += pageSize;
-    if (batch.length < pageSize) break;
   }
 
   return extra;
+}
+
+async function carregarEspelhoItensPedidos(db, pedidoIds, itensPorProduto) {
+  if (!pedidoIds?.length || !db.PedidoVenda?.filter) return;
+
+  const CHUNK = 40;
+  for (let i = 0; i < pedidoIds.length; i += CHUNK) {
+    const chunk = pedidoIds.slice(i, i + CHUNK).map(String);
+    try {
+      const batch = await db.PedidoVenda.filter({ id: { $in: chunk } });
+      for (const pedido of batch || []) {
+        for (const it of pedido?.itens || []) appendItemVenda(itensPorProduto, it);
+      }
+    } catch {
+      /* ignorar chunk */
+    }
+  }
+}
+
+function countLinhasItensMap(itensPorProduto) {
+  let total = 0;
+  for (const linhas of Object.values(itensPorProduto || {})) {
+    total += Array.isArray(linhas) ? linhas.length : 0;
+  }
+  return total;
 }
 
 async function carregarDados90d(db) {
@@ -414,7 +464,6 @@ async function carregarDados90d(db) {
   const produtos = await fetchProdutosComPaginacao(db);
   const itensPorProduto = {};
   const pedidosIds = [];
-  const pedidosComEspelho = new Set();
   let pedidos90d = 0;
   let skip = 0;
   const pageSize = 500;
@@ -422,7 +471,7 @@ async function carregarDados90d(db) {
 
   while (temMais) {
     const batch = await db.PedidoVenda.filter(
-      { tipo: 'PDV', status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
+      { status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
       '-created_date',
       pageSize,
       skip,
@@ -432,27 +481,28 @@ async function carregarDados90d(db) {
       temMais = false;
     } else {
       for (const pedido of batch) {
+        const tipo = String(pedido?.tipo ?? 'PDV').toUpperCase();
+        if (tipo !== 'PDV' && tipo !== 'PEDIDO') continue;
         pedidos90d += 1;
         const pedidoId = String(pedido.id);
         pedidosIds.push(pedidoId);
-        const itens = pedido.itens;
-        if (Array.isArray(itens) && itens.length) {
-          pedidosComEspelho.add(pedidoId);
-          for (const it of itens) appendItemVenda(itensPorProduto, it);
-        }
+        for (const it of pedido?.itens || []) appendItemVenda(itensPorProduto, it);
       }
       skip += pageSize;
       if (batch.length < pageSize) temMais = false;
     }
   }
 
-  const pedidosSemEspelho = pedidosIds.filter((id) => !pedidosComEspelho.has(id));
-  if (pedidosSemEspelho.length) {
-    const canonico = await carregarItensCanonicoPedidos(db, pedidosSemEspelho);
+  if (countLinhasItensMap(itensPorProduto) < pedidosIds.length) {
+    const canonico = await carregarItensCanonicoPedidos(db, pedidosIds);
     for (const [pid, linhas] of Object.entries(canonico)) {
       if (!itensPorProduto[pid]) itensPorProduto[pid] = [];
       itensPorProduto[pid].push(...linhas);
     }
+  }
+
+  if (countLinhasItensMap(itensPorProduto) < pedidosIds.length) {
+    await carregarEspelhoItensPedidos(db, pedidosIds, itensPorProduto);
   }
 
   return { produtos, itensPorProduto, dataISO, pedidos_90d: pedidos90d };
@@ -571,7 +621,17 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
   const itensPorProdutoMap = itensPorProduto;
   const etapa1 = etapa_listarLucroPorProduto(produtos, itensPorProdutoMap);
   const etapa2 = etapa2_ordenarDistribuicao(etapa1.lista);
-  const mapaAbcdProduto = etapa3_classificarAbcd(etapa2.ranking, etapa2.totalLucroPositivo);
+  let mapaAbcdProduto = etapa3_classificarAbcd(etapa2.ranking, etapa2.totalLucroPositivo);
+  if (etapa2.totalLucroPositivo <= 0) {
+    const rankingReceita = etapa1.lista
+      .filter((entry) => entry.receita > 0)
+      .map((entry) => ({ id: entry.id, lucro: entry.receita }))
+      .sort((a, b) => b.lucro - a.lucro);
+    const totalReceita = rankingReceita.reduce((acc, entry) => acc + entry.lucro, 0);
+    if (totalReceita > 0) {
+      mapaAbcdProduto = etapa3_classificarAbcd(rankingReceita, totalReceita);
+    }
+  }
 
   const produtoIds = produtos
     .filter((p) => !somenteAbcdVazio || produtoAbcdVazio(p))

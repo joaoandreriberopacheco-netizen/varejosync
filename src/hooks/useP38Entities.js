@@ -127,6 +127,7 @@ export function useProdutosComAbcdAoVivoQuery(options = {}) {
     return enrichProdutosComAbcdAoVivo(
       produtosQuery.data,
       vendasQuery.data.itensPorProduto,
+      { itens_linhas: vendasQuery.data.itens_linhas },
     );
   }, [produtosQuery.data, vendasQuery.data, vendasQuery.isFetched]);
 
