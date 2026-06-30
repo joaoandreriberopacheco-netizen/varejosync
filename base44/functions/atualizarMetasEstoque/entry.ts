@@ -191,15 +191,21 @@ function arredondarParaVitrineBase(quantityBase: number, fatorVitrine: number) {
   return Math.max(fator, packs * fator);
 }
 
-function collectItensProduto(produto: Record<string, unknown>, pedidos: Record<string, unknown>[]) {
-  const pid = String(produto.id ?? '');
-  return pedidos
-    .flatMap((p) => (Array.isArray(p.itens) ? p.itens : []) as Record<string, unknown>[])
-    .filter((it) => String(it?.produto_id ?? '') === pid);
+function buildItensPorProdutoId(pedidos: Record<string, unknown>[]) {
+  const map: Record<string, Record<string, unknown>[]> = {};
+  for (const pedido of pedidos || []) {
+    for (const it of (Array.isArray(pedido.itens) ? pedido.itens : []) as Record<string, unknown>[]) {
+      const pid = String(it?.produto_id ?? '');
+      if (!pid) continue;
+      if (!map[pid]) map[pid] = [];
+      map[pid].push(it);
+    }
+  }
+  return map;
 }
 
-function calcularVendasSemOutliers(produto: Record<string, unknown>, pedidos: Record<string, unknown>[]) {
-  const quantidades = collectItensProduto(produto, pedidos)
+function calcularVendasSemOutliers(itens: Record<string, unknown>[]) {
+  const quantidades = (itens || [])
     .map((it) => lineQuantityBase(it))
     .filter((qty) => qty > 0);
 
@@ -221,18 +227,29 @@ function calcularVendasSemOutliers(produto: Record<string, unknown>, pedidos: Re
 
 function calcularMetas(
   produto: Record<string, unknown>,
-  pedidos: Record<string, unknown>[],
+  itens: Record<string, unknown>[],
   movimentacoes: Record<string, unknown>[],
 ) {
   const leadTime = Math.max(1, Number(produto?.tempo_reposicao_dias) || LEAD_TIME_PADRAO);
-  const vendas = calcularVendasSemOutliers(produto, pedidos);
+  const vendas = calcularVendasSemOutliers(itens);
+
+  if (!vendas.teveVenda) {
+    return {
+      atualizar: false,
+      motivo: 'sem_venda',
+      leadTime,
+      diasComEstoque: 0,
+      ...vendas,
+    };
+  }
+
   const saldoPorDia = buildMapaSaldoFimDia(movimentacoes, Number(produto?.estoque_atual) || 0);
   const diasComEstoque = contarDiasComEstoqueAtivo(saldoPorDia);
 
-  if (!vendas.teveVenda || diasComEstoque === 0) {
+  if (diasComEstoque === 0) {
     return {
       atualizar: false,
-      motivo: !vendas.teveVenda ? 'sem_venda' : 'sem_dias_com_estoque',
+      motivo: 'sem_dias_com_estoque',
       leadTime,
       diasComEstoque,
       ...vendas,
@@ -284,6 +301,44 @@ async function fetchPedidos90d(base44: ReturnType<typeof createClientFromRequest
     } else {
       todos.push(...batch.filter(pedidoElegivel));
       skip += pageSize;
+      if (batch.length < pageSize) temMais = false;
+    }
+  }
+
+  return todos;
+}
+
+async function fetchMovimentacoes90dPorProdutos(
+  entities: ReturnType<typeof createClientFromRequest>['entities'],
+  dataISO: string,
+  produtoIds: string[],
+  pageSize = 500,
+) {
+  if (!produtoIds.length) return [];
+
+  const todos: Record<string, unknown>[] = [];
+  const chunkSize = 80;
+
+  for (let i = 0; i < produtoIds.length; i += chunkSize) {
+    const chunk = produtoIds.slice(i, i + chunkSize);
+    let skip = 0;
+    let temMais = true;
+
+    while (temMais) {
+      const batch = await entities.MovimentacaoEstoque.filter(
+        { created_date: { $gte: dataISO }, produto_id: { $in: chunk } },
+        'created_date',
+        pageSize,
+        skip,
+      );
+
+      if (!batch || batch.length === 0) {
+        temMais = false;
+      } else {
+        todos.push(...batch);
+        skip += pageSize;
+        if (batch.length < pageSize) temMais = false;
+      }
     }
   }
 
@@ -386,7 +441,6 @@ function buildUpdatePayload(metas: Record<string, unknown>) {
     metas_estoque_unidade_compra: metas.unidade_vitrine_compra,
     metas_estoque_quantidade_limpa_90d: metas.quantidade_limpa_90d,
     metas_estoque_outliers_descartados: metas.outliers_descartados,
-    metas_estoque_dias_com_estoque: metas.dias_com_estoque,
     metas_estoque_atualizado_em: metas.metas_estoque_atualizado_em,
     metas_estoque_versao: metas.metas_estoque_versao,
   };
@@ -446,11 +500,28 @@ function regrasResposta(somenteMetasVazias: boolean) {
   };
 }
 
+function collectIdsCandidatosMetas(
+  produtos: Record<string, unknown>[],
+  itensPorProduto: Record<string, Record<string, unknown>[]>,
+  somenteMetasVazias: boolean,
+) {
+  const ids: string[] = [];
+  for (const produto of produtos) {
+    if (produto.estoque_trava_manual === true) continue;
+    if (somenteMetasVazias && !produtoMetasVazio(produto)) continue;
+    const pid = String(produto.id ?? '');
+    if (!pid || !(itensPorProduto[pid]?.length)) continue;
+    ids.push(pid);
+  }
+  return ids;
+}
+
 function computeSnapshot(
   produtos: Record<string, unknown>[],
-  pedidos: Record<string, unknown>[],
+  itensPorProduto: Record<string, Record<string, unknown>[]>,
   movsPorProduto: Record<string, Record<string, unknown>[]>,
   somenteMetasVazias: boolean,
+  pedidosAnalisados: number,
 ) {
   const updates: Record<string, Record<string, unknown>> = {};
   const produto_ids: string[] = [];
@@ -464,15 +535,19 @@ function computeSnapshot(
     }
     if (somenteMetasVazias && !produtoMetasVazio(produto)) continue;
 
-    const metas = calcularMetas(produto, pedidos, movsPorProduto[String(produto.id)] || []);
+    const pid = String(produto.id ?? '');
+    const metas = calcularMetas(
+      produto,
+      itensPorProduto[pid] || [],
+      movsPorProduto[pid] || [],
+    );
     if (!metas.atualizar) {
       ignorados_sem_venda += 1;
       continue;
     }
 
-    const id = String(produto.id);
-    produto_ids.push(id);
-    updates[id] = buildUpdatePayload(metas);
+    produto_ids.push(pid);
+    updates[pid] = buildUpdatePayload(metas);
   }
 
   return {
@@ -481,7 +556,7 @@ function computeSnapshot(
     total_produtos: produtos.length,
     ignorados_trava_manual,
     ignorados_sem_venda,
-    pedidos_analisados: pedidos.length,
+    pedidos_analisados: pedidosAnalisados,
   };
 }
 
@@ -497,14 +572,22 @@ async function runPreparar(
   data90d.setDate(hoje.getDate() - JANELA_DIAS);
   const dataISO = data90d.toISOString();
 
-  const [produtos, pedidos, movimentacoes] = await Promise.all([
+  const [produtos, pedidos] = await Promise.all([
     fetchProdutosComPaginacao(db),
     fetchPedidos90d(db, dataISO),
-    fetchMovimentacoes90d(db, dataISO),
   ]);
 
+  const itensPorProduto = buildItensPorProdutoId(pedidos);
+  const candidatosIds = collectIdsCandidatosMetas(produtos, itensPorProduto, somenteMetasVazias);
+  const movimentacoes = await fetchMovimentacoes90dPorProdutos(db, dataISO, candidatosIds);
   const movsPorProduto = groupMovsPorProduto(movimentacoes);
-  const snapshot = computeSnapshot(produtos, pedidos, movsPorProduto, somenteMetasVazias);
+  const snapshot = computeSnapshot(
+    produtos,
+    itensPorProduto,
+    movsPorProduto,
+    somenteMetasVazias,
+    pedidos.length,
+  );
 
   if (somenteMetasVazias && snapshot.produto_ids.length === 0) {
     await clearJobCache(db);
@@ -550,7 +633,8 @@ async function runPreparar(
     total_pendentes: totalPendentes,
     ignorados_trava_manual: snapshot.ignorados_trava_manual,
     ignorados_sem_venda: snapshot.ignorados_sem_venda,
-    pedidos_analisados: snapshot.pedidos_analisados,
+    pedidos_analisados: pedidos.length,
+    produtos_com_venda_candidatos: candidatosIds.length,
     batch_size: batchSize,
     total_blocos: totalBlocos,
     proximo_offset: 0,
@@ -774,6 +858,8 @@ Deno.serve(async (req) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return Response.json({ error: (error as Error).message }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[atualizarMetasEstoque]', message);
+    return Response.json({ error: message, status: 'erro' }, { status: 500 });
   }
 });
