@@ -226,7 +226,7 @@ function treeLevelLabel(treeLevel) {
 }
 
 /** Identificador visível no PDF/toast — confirma que o bundle novo carregou. */
-export const CATALOG_SALES_PDF_BUILD = 'enxuto_vendas_compra_custo_v12';
+export const CATALOG_SALES_PDF_BUILD = 'enxuto_vendas_compra_custo_v11';
 
 export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   const {
@@ -258,8 +258,8 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   const descStart = M + 4;
   const tableRight = M + CW;
   const GUTTER_DESC = 5;
-  const QUANT_COL_W = 26;
-  const QUANT_VALUE_GAP = 8;
+  const QUANT_COL_W = 24;
+  const QUANT_VALUE_GAP = 4;
   const VALUE_COL_COUNT = 4;
   const descEndMin = descStart + CW * 0.34;
   const numericStart = descEndMin + GUTTER_DESC;
@@ -271,10 +271,9 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   const vCompraRight = custoRight - valueColW;
   const quantRight = vCompraRight - QUANT_VALUE_GAP;
   const quantLeft = quantRight - QUANT_COL_W;
-  const quantPipe = quantLeft + QUANT_COL_W * 0.54;
-  const quantQtyEnd = quantPipe - 1.6;
-  const quantUnitEnd = quantRight - 1.2;
-  const quantUnitStart = quantPipe + 1.8;
+  const quantPipe = quantLeft + QUANT_COL_W * 0.58;
+  const quantQtyEnd = quantPipe - 1.2;
+  const quantUnitStart = quantPipe + 1.4;
   const descEnd = quantLeft - GUTTER_DESC;
   const divider = descEnd + GUTTER_DESC / 2;
   const valueColDividers = [
@@ -292,16 +291,15 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     quantPipe,
     quantQtyEnd,
     quantUnitStart,
-    quantUnitEnd,
     vCompra: vCompraRight,
     custo: custoRight,
     v30: v30Right,
     v60: v60Right,
   };
   const ROW_H = 6.1;
-  const ROW_GAP = 1.35;
+  const ROW_GAP = 1.15;
   const ROW_STEP = ROW_H + ROW_GAP;
-  const BASELINE_RATIO = 0.68;
+  const BASELINE_RATIO = 0.72;
   let y = 16;
   let dividerStartY = 0;
   let dividerStartPage = 1;
@@ -343,10 +341,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     }
     doc.text(stockLike.quantText, X.quantQtyEnd, baselineY, { align: 'right' });
     drawQuantPipe(baselineY);
-    doc.text(stockLike.unitText, X.quantUnitStart, baselineY, {
-      align: 'left',
-      maxWidth: Math.max(6, X.quantUnitEnd - X.quantUnitStart),
-    });
+    doc.text(stockLike.unitText, X.quantUnitStart, baselineY, { align: 'left' });
   };
   const drawColumnHeaders = (topY) => {
     const line1 = topY + 3.2;
@@ -437,7 +432,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     for (let i = 0; i < lineCount; i += 1) {
       doc.text(descLines[i], descX, descFirstBaseline + i * DESC_LINE_LEAD);
     }
-    drawRowSeparator(drawY + rowStep - 0.15);
+    drawRowSeparator(drawY + rowStep - ROW_GAP * 0.35);
     return drawY + rowStep;
   };
   doc.setFont(pdfFontFamily, PDF_FONT_BOLD);
@@ -482,8 +477,8 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     doc.text("Nenhum produto encontrado com os filtros actuais.", M, y);
   } else {
     dividerStartPage = doc.internal.getNumberOfPages();
-    beginTablePage();
     dividerStartY = y;
+    beginTablePage();
     for (const row of documento.rows) {
       if (row.type === "group") {
         const label = String(row.label || "\u2014");

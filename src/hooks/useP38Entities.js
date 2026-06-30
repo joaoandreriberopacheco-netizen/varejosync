@@ -109,38 +109,26 @@ export function useDadosVendaAbcd90dQuery(options = {}) {
   });
 }
 
-/** Catálogo — ABCD/IEP calculados no cliente (versão que funcionava antes de aliviar a página). */
+/** Catálogo — ABCD/IEP com vendas 90d leves (estado estável 1dfe00d2). */
 export function useProdutosComIepQuery(options = {}) {
   const sort = options.sort ?? '-created_date';
   const { sort: _sort, ...rest } = options;
   const produtosQuery = useProdutosListQuery({ sort, ...rest });
-  const vendasQuery = useDadosVendaAbcd90dQuery({
+  const pedidosQuery = usePedidosVenda90dQuery({
     enabled: (rest.enabled ?? true) && Boolean(produtosQuery.data?.length),
   });
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
-    if (!vendasQuery.isSuccess) {
-      return produtosQuery.data.map((produto) => ({
-        ...produto,
-        abcd: undefined,
-        iep_score: undefined,
-        iep_score_nivel_1: undefined,
-        iep_score_nivel_2: undefined,
-        iep_score_nivel_3: undefined,
-        iep_score_nivel_4: undefined,
-        iep_score_nivel_5: undefined,
-        iep_classe: undefined,
-      }));
-    }
-    return enrichProdutosComIep(produtosQuery.data, vendasQuery.data?.pedidos90d ?? []);
-  }, [produtosQuery.data, vendasQuery.data, vendasQuery.isSuccess]);
+    if (!pedidosQuery.isFetched) return produtosQuery.data;
+    return enrichProdutosComIep(produtosQuery.data, pedidosQuery.data ?? []);
+  }, [produtosQuery.data, pedidosQuery.data, pedidosQuery.isFetched]);
 
   return {
     ...produtosQuery,
     data,
-    isLoading: produtosQuery.isLoading || vendasQuery.isLoading,
-    isFetching: produtosQuery.isFetching || vendasQuery.isFetching,
+    isLoading: produtosQuery.isLoading || pedidosQuery.isLoading,
+    isFetching: produtosQuery.isFetching || pedidosQuery.isFetching,
   };
 }
 

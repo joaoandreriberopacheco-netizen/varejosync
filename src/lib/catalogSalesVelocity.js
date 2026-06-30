@@ -18,9 +18,7 @@ function lineQuantityBaseVendas(item) {
   if (qtyBase != null && Number.isFinite(Number(qtyBase))) {
     return Number(qtyBase) || 0;
   }
-  const qty = Number(item?.quantidade ?? item?.qtd ?? item?.quantidade_comercial ?? 0) || 0;
-  const fator = Number(item?.fator_conversao ?? item?.fator_aplicado) || 1;
-  return qty * fator;
+  return Number(item?.quantidade ?? item?.qtd ?? 0) || 0;
 }
 
 function resolveSkuUnidade(produto) {
@@ -67,8 +65,7 @@ export function buildCatalogSalesVelocityMap(produtos = [], pedidos = []) {
     if (!in60) continue;
     const in30 = saleDate >= cut30;
 
-    const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-    for (const item of itens) {
+    for (const item of pedido.itens || []) {
       const prodId = String(item?.produto_id ?? item?.produtoId ?? '');
       const product = prodMap[prodId];
       if (!product) continue;
@@ -121,13 +118,6 @@ export function aggregateCatalogSalesVelocity(skus = [], velocityMap = {}) {
     qtd60,
     unidade: units.size === 1 ? [...units][0] : null,
   };
-}
-
-/** Pedidos da listagem paginada costumam vir sem `itens` — relatório precisa de hidratação. */
-export function pedidosPrecisamHidratarItens(pedidos = []) {
-  if (!Array.isArray(pedidos) || pedidos.length === 0) return true;
-  const comItens = pedidos.filter((p) => Array.isArray(p.itens) && p.itens.length > 0).length;
-  return comItens === 0;
 }
 
 export { DIAS_MEDIA };

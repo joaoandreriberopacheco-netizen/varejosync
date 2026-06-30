@@ -121,16 +121,51 @@ async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto, itensPorPe
 }
 
 /**
- * Pedidos elegíveis para ABCD/IEP (últimos 90 dias).
- * A listagem paginada muitas vezes vem sem `itens` — hidratação em fetchDadosVendaAbcd90d.
+ * Pedidos PDV elegíveis para catálogo / relatório de vendas (últimos 90 dias).
+ * Versão leve — sem hidratação PedidoVendaItem (estado estável 1dfe00d2).
+ * Para job ABCD e relatório IEP use fetchDadosVendaAbcd90d.
  */
 export async function fetchPedidosVenda90d() {
-  const { pedidos90d } = await fetchDadosVendaAbcd90d();
-  return pedidos90d;
+  const dataISO = iso90DiasAtras();
+  const cutMs = new Date(dataISO).getTime();
+  const todosPedidos = [];
+  let skip = 0;
+  const pageSize = 500;
+
+  while (true) {
+    const batch = await base44.entities.PedidoVenda.filter(
+      {
+        tipo: 'PDV',
+        status: { $ne: 'Cancelado' },
+        created_date: { $gte: dataISO },
+      },
+      '-created_date',
+      pageSize,
+      skip,
+    );
+    const rows = rowsFromApi(batch);
+    if (!rows.length) break;
+
+    for (const pedido of rows) {
+      if (pedidoElegivelIep(pedido) && pedidoDentroJanela90d(pedido, dataISO)) {
+        todosPedidos.push(pedido);
+      }
+    }
+
+    if (rows.length < pageSize) break;
+
+    const last = rows[rows.length - 1];
+    const lastRaw = last?.created_date ?? last?.created_at;
+    if (lastRaw && new Date(lastRaw).getTime() < cutMs) break;
+
+    skip += pageSize;
+  }
+
+  return todosPedidos;
 }
 
 /**
- * Índices de venda 90d + pedidos com `itens` preenchidos para enrichProdutosComIep.
+ * Índices de venda 90d + pedidos com `itens` preenchidos (job ABCD / relatório IEP).
  */
 export async function buildItensIndexes90d(pedidos90d) {
   const pedidos = Array.isArray(pedidos90d) ? pedidos90d : [];
