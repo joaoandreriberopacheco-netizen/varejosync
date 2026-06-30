@@ -62,8 +62,8 @@ export default function AbcdConfigTool() {
           <p className="text-sm font-semibold text-foreground/90">Curva ABCD / IEP</p>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Calcula a classificação com vendas dos últimos 90 dias e grava no cadastro do produto
-            (campo abcd e scores IEP). O catálogo só lê esses valores. À madrugada o sistema preenche
-            automaticamente os produtos que ainda estão sem ABCD.
+            (campo abcd e scores IEP). O catálogo só lê esses valores. À madrugada o job
+            recalcula e grava todos os produtos automaticamente.
           </p>
         </div>
       </div>

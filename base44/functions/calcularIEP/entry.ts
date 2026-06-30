@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
     const somenteAbcdVazio =
       body.somente_abcd_vazio != null
         ? Boolean(body.somente_abcd_vazio)
-        : modo === 'agendado';
+        : false;
 
     const db = isAutomation ? base44.asServiceRole.entities : base44.entities;
 

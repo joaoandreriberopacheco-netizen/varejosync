@@ -283,7 +283,7 @@
     },
     {
       "name": "calcularIEP",
-      "description": "Calcula curva ABCD / IEP (90d) e grava abcd, iep_classe e scores no Produto. Agendado de madrugada (só vazios) ou manual em Configurações.",
+      "description": "Calcula curva ABCD / IEP (90d) e grava abcd, iep_classe e scores no Produto. Madrugada: todos; manual: opção só vazios ou completo.",
       "entities_written": ["Produto"],
       "admin_only": false,
       "critical": false
