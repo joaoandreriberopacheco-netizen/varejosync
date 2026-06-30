@@ -52,8 +52,13 @@ function rowsFromApi(batch) {
 function hydratePedidosComItens(pedidos, itensPorPedido) {
   return pedidos.map((pedido) => {
     const carregados = itensPorPedido[String(pedido.id)] || [];
-    const espelho = Array.isArray(pedido.itens) && pedido.itens.length ? pedido.itens : [];
-    const itens = espelho.length ? espelho : carregados;
+    const espelho = Array.isArray(pedido.itens) ? pedido.itens : [];
+    const itens =
+      carregados.length > espelho.length
+        ? carregados
+        : espelho.length
+          ? espelho
+          : carregados;
     return { ...pedido, itens };
   });
 }
@@ -180,7 +185,9 @@ export async function buildItensIndexes90d(pedidos90d) {
   }
 
   if (pedidoIds.length) {
-    if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
+    const pedidosSemEspelho = pedidos.filter((p) => !(p?.itens?.length)).length;
+    const poucasLinhas = countLinhasItens(itensPorProduto) < pedidoIds.length;
+    if (pedidosSemEspelho > 0 || poucasLinhas) {
       await carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto, itensPorPedido);
     }
     if (countLinhasItens(itensPorProduto) < pedidoIds.length) {

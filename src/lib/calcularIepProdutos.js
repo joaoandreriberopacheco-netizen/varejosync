@@ -52,6 +52,19 @@ export function collectItensVendaProduto(produto, pedidos90d) {
     .filter((it) => String(it?.produto_id ?? it?.produtoId ?? '') === pid);
 }
 
+/** Linhas de venda do produto via índice (mais fiável que espelho vazio no pedido). */
+export function collectItensVendaProdutoFromIndex(produto, itensPorProduto) {
+  const pid = String(produto?.id ?? '');
+  if (!pid) return [];
+  return itensPorProduto?.[pid] || [];
+}
+
+function resolveItensVendaProduto(produto, pedidos90d, itensPorProduto) {
+  const doIndex = collectItensVendaProdutoFromIndex(produto, itensPorProduto);
+  if (doIndex.length) return doIndex;
+  return collectItensVendaProduto(produto, pedidos90d);
+}
+
 /** Valor da linha de venda (total gravado ou qty × preço unitário). */
 export function lineReceitaItem(it) {
   const total = Number(it?.total);
@@ -74,9 +87,9 @@ export function lineReceitaItem(it) {
   return 0;
 }
 
-export function calcularLucroSkuComQ4(produto, pedidos90d) {
+export function calcularLucroSkuComQ4(produto, pedidos90d, itensPorProduto = null) {
   const custoUnit = resolveCustoCalculadoProduto(produto);
-  const itens = collectItensVendaProduto(produto, pedidos90d);
+  const itens = resolveItensVendaProduto(produto, pedidos90d, itensPorProduto);
 
   if (itens.length === 0) {
     return { lucro: 0, precoMedio: 0, quantidade: 0, teveVenda: false };
@@ -143,13 +156,13 @@ export function grupoAbcdKey(produto) {
 }
 
 /** Calcula métricas IEP para todos os produtos (não grava no BD). */
-export function calcularMetricasIepParaCatalogo(produtos, pedidos90d) {
+export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorProduto = null) {
   const lista = Array.isArray(produtos) ? produtos : [];
   const pedidos = Array.isArray(pedidos90d) ? pedidos90d : [];
 
   const metricasPorSku = {};
   for (const produto of lista) {
-    metricasPorSku[produto.id] = calcularLucroSkuComQ4(produto, pedidos);
+    metricasPorSku[produto.id] = calcularLucroSkuComQ4(produto, pedidos, itensPorProduto);
   }
 
   const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => Math.max(0, m.lucro)));
@@ -267,14 +280,22 @@ export function stripAbcdIepCadastro(produto) {
   return next;
 }
 
-/** Aplica métricas IEP/ABCD calculadas a partir das vendas de 90 dias. */
-export function enrichProdutosComIep(produtos, pedidos90d) {
+/**
+ * Aplica métricas IEP/ABCD calculadas a partir das vendas de 90 dias.
+ * Aceita pedidos90d[] ou { pedidos90d, itensPorProduto }.
+ */
+export function enrichProdutosComIep(produtos, vendasDados) {
   const lista = Array.isArray(produtos) ? produtos : [];
+  const pedidos90d = Array.isArray(vendasDados)
+    ? vendasDados
+    : vendasDados?.pedidos90d;
+  const itensPorProduto = Array.isArray(vendasDados) ? null : vendasDados?.itensPorProduto;
+
   if (!lista.length || !Array.isArray(pedidos90d)) {
     return lista.map(stripAbcdIepCadastro);
   }
 
-  const calculado = calcularMetricasIepParaCatalogo(lista, pedidos90d);
+  const calculado = calcularMetricasIepParaCatalogo(lista, pedidos90d, itensPorProduto);
   return lista.map((produto) => {
     const m = calculado[produto.id];
     if (!m) return stripAbcdIepCadastro(produto);

@@ -105,6 +105,7 @@ export function useDadosVendaAbcd90dQuery(options = {}) {
     queryFn: fetchDadosVendaAbcd90d,
     staleTime: 10 * 60 * 1000,
     gcTime: P38_GC_TIME,
+    retry: 2,
     ...options,
   });
 }
@@ -120,11 +121,12 @@ export function useProdutosComIepQuery(options = {}) {
 
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
-    if (!vendasQuery.isSuccess) {
+    const vendas = vendasQuery.data;
+    if (!vendas?.pedidos90d) {
       return produtosQuery.data.map(stripAbcdIepCadastro);
     }
-    return enrichProdutosComIep(produtosQuery.data, vendasQuery.data?.pedidos90d ?? []);
-  }, [produtosQuery.data, vendasQuery.data, vendasQuery.isSuccess]);
+    return enrichProdutosComIep(produtosQuery.data, vendas);
+  }, [produtosQuery.data, vendasQuery.data]);
 
   return {
     ...produtosQuery,
