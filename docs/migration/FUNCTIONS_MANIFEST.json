@@ -189,7 +189,7 @@
     },
     {
       "name": "calcularIEP",
-      "description": "Calcula Índice de Eficiência de Pedidos.",
+      "description": "Calcula curva ABCD / IEP (90d) e grava abcd, iep_classe e scores no Produto. Agendado de madrugada (só vazios) ou manual em Configurações.",
       "critical": false
     },
     {

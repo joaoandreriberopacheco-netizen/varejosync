@@ -157,6 +157,20 @@
       "schedule": "daily at 05:00 UTC",
       "function": "gerarLancamentosCartao",
       "note": "DUPLICATE of 69be3ff0 — same function, same schedule. Review before migration."
+    },
+    {
+      "id": "scheduled-calcular-iep-abcd-madrugada",
+      "name": "Curva ABCD / IEP — madrugada (só vazios)",
+      "type": "scheduled",
+      "is_active": true,
+      "schedule": "daily at 07:00 UTC (04:00 America/Sao_Paulo)",
+      "function": "calcularIEP",
+      "payload": {
+        "somente_abcd_vazio": true,
+        "modo": "agendado"
+      },
+      "description": "Calcula ABCD/IEP (90d) e grava no cadastro dos produtos que ainda não têm abcd. Catálogo lê campo estático.",
+      "supabase_equivalent": "SELECT cron.schedule('calcular-iep-abcd', '0 7 * * *', $$ SELECT net.http_post(url:='https://your-project.supabase.co/functions/v1/calcularIEP', body:='{\"somente_abcd_vazio\":true,\"modo\":\"agendado\"}'::jsonb) $$);"
     }
   ],
   "migration_notes": {

@@ -119,17 +119,31 @@ function normalizarScore0a100(lucro, lucroMax, teveVenda) {
   return Math.round(Math.max(1, Math.min(100, (Math.max(0, lucro) / lucroMax) * 100)));
 }
 
+function produtoAbcdVazio(produto) {
+  return !String(produto?.abcd ?? '').trim();
+}
+
+async function parseRequestBody(req) {
+  try {
+    const raw = await req.text();
+    if (!raw?.trim()) return {};
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════
 // FETCH COM PAGINAÇÃO
 // ═══════════════════════════════════════════════════════════════
 
-async function fetchPedidosComPaginacao(base44, dataISO, pageSize = 500) {
+async function fetchPedidosComPaginacao(entities, dataISO, pageSize = 500) {
   const todosPedidos = [];
   let skip = 0;
   let temMais = true;
 
   while (temMais) {
-    const batch = await base44.entities.PedidoVenda.filter(
+    const batch = await entities.PedidoVenda.filter(
       { tipo: 'PDV', status: { $ne: 'Cancelado' }, created_date: { $gte: dataISO } },
       '-created_date',
       pageSize,
@@ -154,11 +168,25 @@ async function fetchPedidosComPaginacao(base44, dataISO, pageSize = 500) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
 
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Acesso negado.' }, { status: 403 });
+    let isAutomation = false;
+    try {
+      const user = await base44.auth.me();
+      if (user && user.role !== 'admin') {
+        return Response.json({ error: 'Acesso negado.' }, { status: 403 });
+      }
+    } catch {
+      isAutomation = true;
     }
+
+    const body = await parseRequestBody(req);
+    const modo = String(body.modo || (isAutomation ? 'agendado' : 'manual'));
+    const somenteAbcdVazio =
+      body.somente_abcd_vazio != null
+        ? Boolean(body.somente_abcd_vazio)
+        : modo === 'agendado';
+
+    const db = isAutomation ? base44.asServiceRole.entities : base44.entities;
 
     const hoje = new Date();
     const data90d = new Date();
@@ -166,9 +194,25 @@ Deno.serve(async (req) => {
     const dataISO = data90d.toISOString();
 
     const [produtos, todosPedidos] = await Promise.all([
-      base44.entities.Produto.list('-created_date'),
-      fetchPedidosComPaginacao(base44, dataISO),
+      db.Produto.list('-created_date'),
+      fetchPedidosComPaginacao(db, dataISO),
     ]);
+
+    if (somenteAbcdVazio) {
+      const vazios = produtos.filter(produtoAbcdVazio);
+      if (vazios.length === 0) {
+        return Response.json({
+          status: 'sem_alteracao',
+          mensagem: 'Nenhum produto com ABCD vazio no cadastro.',
+          modo,
+          somente_abcd_vazio: true,
+          atualizados: 0,
+          total_produtos: produtos.length,
+          versao: 'V8-abcd-iqr-nivel2',
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }
 
     // 1. Lucro por SKU (IQR/Q4 por SKU; custo calculado + preço médio sem 4.º quartil)
     const metricasPorSku = {};
@@ -253,7 +297,10 @@ Deno.serve(async (req) => {
     }
 
     // 4. Persistência
+    let atualizados = 0;
     for (const produto of produtos) {
+      if (somenteAbcdVazio && !produtoAbcdVazio(produto)) continue;
+
       const sku = metricasPorSku[produto.id];
       const h1 = produto.campo_hierarquico_1 || 'unassigned';
       const classe = classeAbcdProduto(produto);
@@ -273,12 +320,17 @@ Deno.serve(async (req) => {
         updateData.iep_classe = classe;
       }
 
-      await base44.entities.Produto.update(produto.id, updateData);
+      await db.Produto.update(produto.id, updateData);
+      atualizados += 1;
     }
 
     return Response.json({
       status: 'sucesso',
-      processados: produtos.length,
+      modo,
+      somente_abcd_vazio: somenteAbcdVazio,
+      atualizados,
+      processados: atualizados,
+      total_produtos: produtos.length,
       grupos_nivel_2: Object.keys(lucroPorGrupo).length,
       versao: 'V8-abcd-iqr-nivel2',
       regras: {
@@ -289,6 +341,7 @@ Deno.serve(async (req) => {
         pareto: '70/15/10/5',
         iqr: 'por_sku_exclui_q4',
         nivel_1: 'media_dos_filhos_nivel_2',
+        somente_abcd_vazio: somenteAbcdVazio,
       },
       timestamp: new Date().toISOString(),
     });
