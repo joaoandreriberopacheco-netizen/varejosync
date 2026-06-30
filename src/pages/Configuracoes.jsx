@@ -18,6 +18,7 @@ import DadosEmpresaManager from '@/components/config/DadosEmpresaManager';
 import PerfisDeAcessoManager from '@/components/config/PerfisDeAcessoManager';
 import RecomecarDoZero from '@/components/config/RecomecarDoZero';
 import AbcdConfigTool from '@/components/config/AbcdConfigTool';
+import MetasEstoqueConfigTool from '@/components/config/MetasEstoqueConfigTool';
 import { useNavigate } from 'react-router-dom';
 import PersonalizacaoComprovanteManager from '@/components/config/PersonalizacaoComprovanteManager';
 import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
@@ -196,6 +197,8 @@ export default function ConfiguracoesPage() {
             </div>
 
             <AbcdConfigTool />
+
+            <MetasEstoqueConfigTool />
 
             <RecomecarDoZero />
           </div>

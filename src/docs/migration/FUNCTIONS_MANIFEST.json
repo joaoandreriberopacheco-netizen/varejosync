@@ -289,6 +289,13 @@
       "critical": false
     },
     {
+      "name": "atualizarMetasEstoque",
+      "description": "Calcula ponto de pedido (estoque mínimo) e qtd a repor (estoque ideal) a partir de vendas 90d e grava no Produto.",
+      "entities_written": ["Produto"],
+      "admin_only": true,
+      "critical": false
+    },
+    {
       "name": "gerarRelatorioConferencia",
       "description": "Gera relatório de conferência de estoque.",
       "entities_written": [],

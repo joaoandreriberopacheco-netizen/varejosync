@@ -193,6 +193,11 @@
       "critical": false
     },
     {
+      "name": "atualizarMetasEstoque",
+      "description": "Calcula ponto de pedido (estoque mínimo) e qtd a repor (estoque ideal) a partir de vendas 90d e grava no Produto.",
+      "critical": false
+    },
+    {
       "name": "commitMigrationManifests",
       "description": "Commita os manifestos de migração (entities, automations, functions, checklist) para o GitHub.",
       "admin_only": true,
