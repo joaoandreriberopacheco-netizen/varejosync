@@ -23,6 +23,7 @@ export default function CamposEdicaoSistema({ produto, campo, valor, onSave, onC
       estoque_minimo: 'Est. Mínimo',
       estoque_ideal: 'Est. Ideal',
       estoque_maximo: 'Est. Máximo',
+      estoque_trava_manual: 'Trava metas auto',
       unidades_por_pacote: 'Qtd/Pacote',
       peso_kg: 'Peso (kg)',
     };

@@ -27,6 +27,7 @@
     "corrigir:recepcao": "node scripts/corrigir-recepcao-pedido.mjs",
     "corrigir:wx7-console": "node scripts/corrigir-wx7-a5n-console.mjs",
     "iep:calcular": "node scripts/invoke-calcular-iep.mjs",
+    "estoque:atualizar-metas": "node scripts/invoke-atualizar-metas-estoque.mjs",
     "git:ship": "node scripts/git-ship.mjs",
     "p38:color-audit": "node scripts/p38-color-audit.mjs",
     "p38:color-fix": "node scripts/p38-color-audit.mjs --fix",
