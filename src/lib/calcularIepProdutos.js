@@ -402,18 +402,33 @@ export function stripAbcdIepCadastro(produto) {
   return next;
 }
 
+function normalizeAbcdLetter(value) {
+  const letter = String(value ?? '').trim().toUpperCase();
+  return letter === 'A' || letter === 'B' || letter === 'C' || letter === 'D' ? letter : '';
+}
+
+/** Preserva letra ABCD gravada no cadastro (job) em `abcd_cadastro` para coluna/filtro. */
+export function attachAbcdCadastro(produto) {
+  if (!produto || typeof produto !== 'object') return produto;
+  const fromCadastro = normalizeAbcdLetter(produto.abcd);
+  const preserved = normalizeAbcdLetter(produto.abcd_cadastro) || fromCadastro;
+  const base = stripAbcdIepCadastro(produto);
+  return preserved ? { ...base, abcd_cadastro: preserved } : base;
+}
+
 /** Aplica métricas IEP/ABCD calculadas a partir das vendas de 90 dias. */
 export function enrichProdutosComIep(produtos, pedidos90d) {
   const lista = Array.isArray(produtos) ? produtos : [];
   if (!lista.length || !Array.isArray(pedidos90d)) {
-    return lista.map(stripAbcdIepCadastro);
+    return lista.map(attachAbcdCadastro);
   }
 
   const calculado = calcularMetricasIepParaCatalogo(lista, pedidos90d);
   return lista.map((produto) => {
+    const base = attachAbcdCadastro(produto);
     const m = calculado[produto.id];
-    if (!m) return stripAbcdIepCadastro(produto);
-    return { ...stripAbcdIepCadastro(produto), ...m };
+    if (!m) return base;
+    return { ...base, ...m };
   });
 }
 

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, subDays, addDays } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { p38Keys, P38_GC_TIME, P38_STALE_TIME } from '@/lib/p38QueryConfig';
-import { enrichProdutosComIep, stripAbcdIepCadastro } from '@/lib/calcularIepProdutos';
+import { enrichProdutosComIep, attachAbcdCadastro } from '@/lib/calcularIepProdutos';
 import { fetchDadosVendaAbcd90d, fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 
 export { fetchPedidosVenda90d, fetchDadosVendaAbcd90d };
@@ -121,7 +121,7 @@ export function useProdutosComIepQuery(options = {}) {
   const data = useMemo(() => {
     if (!produtosQuery.data?.length) return produtosQuery.data ?? [];
     if (!vendasQuery.isSuccess) {
-      return produtosQuery.data.map(stripAbcdIepCadastro);
+      return produtosQuery.data.map(attachAbcdCadastro);
     }
     return enrichProdutosComIep(produtosQuery.data, vendasQuery.data?.pedidos90d ?? []);
   }, [produtosQuery.data, vendasQuery.data, vendasQuery.isSuccess]);

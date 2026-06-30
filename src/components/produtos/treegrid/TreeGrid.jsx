@@ -66,7 +66,8 @@ const COL_DEFS = [
   { id: 'tipo',                 label: 'Tipo',           w: 80  },
   { id: 'unidade',              label: 'Unidades',       w: 72  },
   { id: 'unidades_pacote',      label: 'Un/Pct',         w: 72  },
-  { id: 'abcd',                 label: 'Classe ABCD',    w: 72  },
+  { id: 'abcd',                 label: 'ABCD vivo',      w: 72  },
+  { id: 'abcd_cadastro',        label: 'ABCD cad.',      w: 72  },
   { id: 'iep_score',            label: 'Score IEP',      w: 80  },
   { id: 'iep_score_nivel_1',    label: 'Média N1',       w: 80  },
   { id: 'iep_score_nivel_2',    label: 'Média N2',       w: 80  },
@@ -262,6 +263,7 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
     }
     case 'unidades_pacote':      return <span className="text-xs text-muted-foreground">{produto.unidades_por_pacote || 1}</span>;
     case 'abcd':                 return <AbcdBadge letter={produto.abcd} />;
+    case 'abcd_cadastro':        return <AbcdBadge letter={produto.abcd_cadastro} />;
     case 'iep_score':              return scoreCell(produto.iep_score);
     case 'iep_score_nivel_1':      return scoreCell(produto.iep_score_nivel_1);
     case 'iep_score_nivel_2':      return scoreCell(produto.iep_score_nivel_2);
@@ -320,6 +322,7 @@ function groupCellValue(colId, row) {
         </Badge>
       );
     case 'abcd':                  return <AbcdBadge letter={row.abcdDominante} />;
+    case 'abcd_cadastro':         return <AbcdBadge letter={row.abcdCadastroDominante} />;
     case 'iep_score':               return scoreCell(row.iepScoreMedio, true);
     case 'iep_score_nivel_1':       return scoreCell(row.iepScoreNivel1Medio, true);
     case 'iep_score_nivel_2':       return scoreCell(row.iepScoreNivel2Medio, true);

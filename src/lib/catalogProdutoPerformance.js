@@ -4,6 +4,7 @@ export const ABCD_RANK = { A: 4, B: 3, C: 2, D: 1 };
 
 export const CATALOG_PERFORMANCE_COLUMN_IDS = [
   'abcd',
+  'abcd_cadastro',
   'iep_score',
   'iep_score_nivel_1',
   'iep_score_nivel_2',
@@ -13,7 +14,8 @@ export const CATALOG_PERFORMANCE_COLUMN_IDS = [
 ];
 
 export const CATALOG_PERFORMANCE_COLUMN_LABELS = {
-  abcd: 'Classe ABCD',
+  abcd: 'ABCD ao vivo',
+  abcd_cadastro: 'ABCD cadastro (filtro)',
   iep_score: 'Score IEP',
   iep_score_nivel_1: 'Média nível 1',
   iep_score_nivel_2: 'Média nível 2',
@@ -25,8 +27,10 @@ export const CATALOG_PERFORMANCE_COLUMN_LABELS = {
 export const CATALOG_SORT_OPTIONS = [
   { id: 'az', label: 'Nome A → Z' },
   { id: 'za', label: 'Nome Z → A' },
-  { id: 'abcd_desc', label: 'Classe ABCD (A primeiro)' },
-  { id: 'abcd_asc', label: 'Classe ABCD (D primeiro)' },
+  { id: 'abcd_desc', label: 'ABCD ao vivo (A primeiro)' },
+  { id: 'abcd_asc', label: 'ABCD ao vivo (D primeiro)' },
+  { id: 'abcd_cadastro_desc', label: 'ABCD cadastro (A primeiro)' },
+  { id: 'abcd_cadastro_asc', label: 'ABCD cadastro (D primeiro)' },
   { id: 'iep_score_desc', label: 'Score IEP (maior)' },
   { id: 'iep_score_asc', label: 'Score IEP (menor)' },
   { id: 'iep_score_nivel_1_desc', label: 'Média nível 1 (maior)' },
@@ -42,6 +46,7 @@ export function getAbcdRank(letter) {
 export function getProdutoPerformanceValue(produto, fieldId) {
   if (!produto || !fieldId) return null;
   if (fieldId === 'abcd') return getAbcdRank(produto.abcd);
+  if (fieldId === 'abcd_cadastro') return getAbcdRank(produto.abcd_cadastro);
   const raw = produto[fieldId];
   const num = Number(raw);
   return Number.isFinite(num) ? num : 0;
@@ -76,6 +81,7 @@ export function aggregatePerformanceFromSkus(skus) {
     return {
       abcdRankMedio: 0,
       abcdDominante: '',
+      abcdCadastroDominante: '',
       iepScoreMedio: 0,
       iepScoreNivel1Medio: 0,
       iepScoreNivel2Medio: 0,
@@ -96,6 +102,14 @@ export function aggregatePerformanceFromSkus(skus) {
   }
   const abcdDominante = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
 
+  const freqCadastro = {};
+  for (const p of skus) {
+    const letter = String(p.abcd_cadastro || '').toUpperCase();
+    if (!letter) continue;
+    freqCadastro[letter] = (freqCadastro[letter] || 0) + 1;
+  }
+  const abcdCadastroDominante = Object.entries(freqCadastro).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+
   const avg = (field) => {
     const vals = skus.map((p) => Number(p[field]) || 0);
     return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : 0;
@@ -104,6 +118,7 @@ export function aggregatePerformanceFromSkus(skus) {
   return {
     abcdRankMedio,
     abcdDominante,
+    abcdCadastroDominante,
     iepScoreMedio: avg('iep_score'),
     iepScoreNivel1Medio: avg('iep_score_nivel_1'),
     iepScoreNivel2Medio: avg('iep_score_nivel_2'),
@@ -117,6 +132,9 @@ export function getGroupPerformanceSortValue(agg, sortOrder) {
   const parsed = parseCatalogSortOrder(sortOrder);
   if (parsed.mode === 'name') return agg?.label || '';
   if (parsed.mode === 'abcd') return agg?.abcdRankMedio ?? 0;
+  if (parsed.mode === 'abcd_cadastro') {
+    return getAbcdRank(agg?.abcdCadastroDominante);
+  }
   const map = {
     iep_score: 'iepScoreMedio',
     iep_score_nivel_1: 'iepScoreNivel1Medio',
