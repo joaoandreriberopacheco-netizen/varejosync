@@ -6,9 +6,7 @@ export function isRateLimitApiError(error) {
   const status =
     error?.status ??
     error?.statusCode ??
-    error?.response?.status ??
     error?.cause?.status ??
-    error?.cause?.response?.status ??
     error?.originalError?.response?.status;
 
   if (status === 429) return true;
@@ -29,21 +27,8 @@ export function isRateLimitApiError(error) {
     msg.includes('rate-limit') ||
     msg.includes('data rate') ||
     msg.includes('too many requests') ||
-    msg.includes('over_request_rate_limit') ||
-    msg.includes('status code 429')
+    msg.includes('over_request_rate_limit')
   );
-}
-
-export function isTransientApiError(error) {
-  if (isRateLimitApiError(error)) return true;
-  const status =
-    error?.status ??
-    error?.statusCode ??
-    error?.response?.status ??
-    error?.cause?.response?.status;
-  if (status === 502 || status === 503 || status === 504) return true;
-  const msg = String(error?.message ?? '').toLowerCase();
-  return msg.includes('network') || msg.includes('timeout') || msg.includes('econnreset');
 }
 
 function sleep(ms) {
@@ -53,7 +38,7 @@ function sleep(ms) {
 }
 
 /**
- * Retry com backoff para rate limit e falhas transitórias.
+ * Retry exponencial curto só para rate limit (evita rajada no caixa rápido / seletor).
  */
 export async function withRateLimitRetry(fn, { maxAttempts = 3, baseDelayMs = 350 } = {}) {
   let lastError;
@@ -62,12 +47,10 @@ export async function withRateLimitRetry(fn, { maxAttempts = 3, baseDelayMs = 35
       return await fn();
     } catch (error) {
       lastError = error;
-      const retryable = isTransientApiError(error);
-      if (!retryable || attempt >= maxAttempts - 1) {
+      if (!isRateLimitApiError(error) || attempt >= maxAttempts - 1) {
         throw error;
       }
-      const jitter = Math.floor(Math.random() * 400);
-      await sleep(baseDelayMs * (attempt + 1) + jitter);
+      await sleep(baseDelayMs * (attempt + 1));
     }
   }
   throw lastError;

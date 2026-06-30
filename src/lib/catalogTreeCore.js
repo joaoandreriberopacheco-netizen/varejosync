@@ -15,7 +15,7 @@ function sortSkus(skus, sortOrder = 'az') {
   return [...(skus || [])].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 }
 
-// -- IQR Mean: remove outliers e retorna média do miolo -----------------------
+// ── IQR Mean: remove outliers e retorna média do miolo ───────────────────────
 export function iqrMean(values) {
   if (!values || values.length === 0) return 0;
   if (values.length === 1) return values[0];
@@ -27,7 +27,7 @@ export function iqrMean(values) {
   return used.reduce((s, v) => s + v, 0) / used.length;
 }
 
-// -- Coleta todos os SKUs descendentes de um nó --------------------------------
+// ── Coleta todos os SKUs descendentes de um nó ────────────────────────────────
 export function collectSkus(node) {
   if (!node) return [];
   const skus = [...(node.skus || [])];
@@ -44,8 +44,8 @@ export function isSoloFamilyBranch(node) {
   return collectSkus(node).length === 1;
 }
 
-// -- Calcula o custo real de um produto (usa preco_custo_calculado se válido,
-//    senão reconstrói a partir dos componentes) --------------------------------
+// ── Calcula o custo real de um produto (usa preco_custo_calculado se válido,
+//    senão reconstrói a partir dos componentes) ────────────────────────────────
 export function calcCusto(p) {
   const salvo = p.preco_custo_calculado || 0;
   if (salvo > 0) return salvo;
@@ -58,7 +58,7 @@ export function calcCusto(p) {
     - (p.desconto_compra_padrao || 0);
 }
 
-// -- Markup % sobre custo na embalagem comercial (alinha ao catálogo A29) -----
+// ── Markup % sobre custo na embalagem comercial (alinha ao catálogo A29) ─────
 export function calcMarkup(p) {
   const cat = getCatalogoComercialView(p);
   if (cat.precoVenda > 0 && cat.custoNaEmbalagem > 0) return cat.markupSobreCustoPct;
@@ -158,7 +158,7 @@ export function mergeAdjacentDuplicateGroupHeaders(rows) {
   return out;
 }
 
-// -- Agrega métricas IQR para um conjunto de SKUs -----------------------------
+// ── Agrega métricas IQR para um conjunto de SKUs ─────────────────────────────
 export function aggregateSkus(skus) {
   const precos = skus.map((p) => getCatalogoComercialView(p).precoVenda).filter((v) => v > 0);
   const custos = skus.map((p) => getCatalogoComercialView(p).custoNaEmbalagem).filter((v) => v > 0);
@@ -191,7 +191,7 @@ export function aggregateSkus(skus) {
   };
 }
 
-// -- Árvore por categoria de cadastro, com hierarquia h1–h4 dentro de cada grupo -
+// ── Árvore por categoria de cadastro, com hierarquia h1–h4 dentro de cada grupo ─
 export function buildCategoryTree(produtos) {
   const root = {};
   const byCategory = new Map();
@@ -235,7 +235,7 @@ export function buildCategoryTree(produtos) {
   return root;
 }
 
-// -- Constrói a árvore: h1-h4 são agrupadores; h5 é dado do SKU, nunca nó -----
+// ── Constrói a árvore: h1-h4 são agrupadores; h5 é dado do SKU, nunca nó ─────
 export function buildTree(produtos) {
   const root = {};
 
@@ -280,7 +280,7 @@ export function buildTree(produtos) {
   return root;
 }
 
-// -- Deep Collapse: funde cadeia de filho-único sem SKUs diretos ---------------
+// ── Deep Collapse: funde cadeia de filho-único sem SKUs diretos ───────────────
 export function deepCollapse(node) {
   if (!node || typeof node !== 'object' || Array.isArray(node) || !node.children) {
     return { label: node?.label || '', node: node ?? {} };
@@ -290,7 +290,7 @@ export function deepCollapse(node) {
     const child = node.children[childKeys[0]];
     const inner = deepCollapse(child);
     return {
-      label: `${node.label} > ${inner.label}`,
+      label: `${node.label} › ${inner.label}`,
       node: inner.node,
     };
   }

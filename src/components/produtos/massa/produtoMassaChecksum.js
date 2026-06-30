@@ -41,7 +41,6 @@ export const PRODUTO_CANON_SEGMENTS = [
   { key: 'preco_venda_padrao', kind: 'num' },
   { key: 'unidade_principal', kind: 'str' },
   { key: 'unidades_por_pacote', kind: 'num' },
-  { key: 'lote_compra_vitrine', kind: 'num' },
   { key: 'estoque_minimo', kind: 'num' },
   { key: 'estoque_ideal', kind: 'num' },
   { key: 'estoque_maximo', kind: 'num' },

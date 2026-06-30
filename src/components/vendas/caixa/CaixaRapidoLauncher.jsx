@@ -10,7 +10,7 @@ import { QUICK_ACCESS_Z } from '@/lib/quickAccessOverlay';
 import { prefetchPDVCaixa } from '@/lib/prefetchPDVCaixa';
 import { buildPDVCaixaQuickUrl } from '@/lib/pdvQuickAccessNavigate';
 import CaixaRapidoPanel from './CaixaRapidoPanel';
-import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useIsDesktop } from '@/hooks/use-breakpoint';
 
 function userCanAccessCaixa(user, perfilDeAcesso) {
   if (!user) return false;
@@ -26,7 +26,7 @@ export default function CaixaRapidoLauncher() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [sessionKey, setSessionKey] = useState(0);
-  const isCompactViewport = useCompactShell();
+  const isCompactViewport = !useIsDesktop();
   const [canAccess, setCanAccess] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);

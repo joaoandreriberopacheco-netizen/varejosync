@@ -17,7 +17,6 @@ import ListaUsuariosApp from '../components/config/ListaUsuariosApp';
 import DadosEmpresaManager from '@/components/config/DadosEmpresaManager';
 import PerfisDeAcessoManager from '@/components/config/PerfisDeAcessoManager';
 import RecomecarDoZero from '@/components/config/RecomecarDoZero';
-import MetasEstoqueConfigTool from '@/components/config/MetasEstoqueConfigTool';
 import { useNavigate } from 'react-router-dom';
 import PersonalizacaoComprovanteManager from '@/components/config/PersonalizacaoComprovanteManager';
 import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
@@ -194,8 +193,6 @@ export default function ConfiguracoesPage() {
                 </Link>
               </div>
             </div>
-
-            <MetasEstoqueConfigTool />
 
             <RecomecarDoZero />
           </div>

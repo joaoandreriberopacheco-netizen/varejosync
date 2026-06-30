@@ -168,7 +168,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
     preco_venda_tipo: 'percentual', preco_venda_percentual: 0, preco_custo_calculado: 0,
     unidade_principal: 'UN', unidade_vitrine: '', unidade_exibicao_sigla: '', unidade_show_ativa: true, unidades_por_pacote: 1, unidades_alternativas: [],
     estoque_atual: 0, estoque_minimo: 0, estoque_ideal: 0, estoque_maximo: 0, estoque_avariado: 0,
-    lote_compra_vitrine: 0,
     tempo_reposicao_dias: 0, fornecedor_padrao_id: '', fornecedor_padrao_codigo: '',
     controla_serial: false, controla_lote: false, controla_validade: false, peso_kg: 0, dimensoes_cm: '', volume_cm3: 0, ativo: true
   });
@@ -1773,24 +1772,6 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
                   placeholder="0"
                   className={P38_INPUT_UNDERLINE}
                 />
-              </div>
-
-              <div>
-                <Label className="text-sm text-muted-foreground mb-2 block">Lote de compra (unid. vitrine)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={formData.lote_compra_vitrine || ''}
-                  onChange={(e) =>
-                    handleChange('lote_compra_vitrine', parseInt(e.target.value, 10) || 0)
-                  }
-                  placeholder="Ex.: 100 (palete)"
-                  className={P38_INPUT_UNDERLINE}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Mínimo por pedido em unidades de vitrine. Vazio = só a embalagem de vitrine.
-                </p>
               </div>
 
               <div className="md:col-span-2">

@@ -189,12 +189,7 @@
     },
     {
       "name": "calcularIEP",
-      "description": "Calcula curva ABCD / IEP (90d) e grava abcd, iep_classe e scores no Produto. Madrugada: todos; manual: opção só vazios ou completo.",
-      "critical": false
-    },
-    {
-      "name": "atualizarMetasEstoque",
-      "description": "Calcula ponto de pedido (estoque mínimo) e qtd a repor (estoque ideal) a partir de vendas 90d e grava no Produto.",
+      "description": "Calcula Índice de Eficiência de Pedidos.",
       "critical": false
     },
     {

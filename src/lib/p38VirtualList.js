@@ -1,8 +1,6 @@
 /** Constantes partilhadas para listas virtualizadas P38 */
 export const P38_VIRTUAL_OVERSCAN = 8;
 export const P38_VIRTUAL_MIN_ROWS = 50;
-/** Catálogo hierárquico (desktop + mobile): virtualiza a partir deste nº de linhas visíveis. */
-export const CATALOGO_VIRTUALIZE_MIN_ROWS = 30;
 export const P38_VIRTUAL_LIST_MAX_HEIGHT = 'calc(100vh - 260px)';
 
 export const measureVirtualItem = (element) => element?.getBoundingClientRect().height ?? 0;
