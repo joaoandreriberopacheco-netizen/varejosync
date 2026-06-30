@@ -1,11 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { Search, X, SlidersHorizontal, Package, FilterX, Tag, Layers, Building2 } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import SearchableFilterSelect from '@/components/compras/SearchableFilterSelect';
-import { useCompactShell } from '@/hooks/use-breakpoint';
 import { cn } from '@/lib/utils';
 
 const SECTION_CARD = 'rounded-2xl border border-border/40 bg-muted/20 dark:bg-muted/10 p-3.5 space-y-3';
@@ -35,31 +33,6 @@ function ActiveFilterChip({ label, onRemove }) {
         <X className="h-3 w-3" />
       </button>
     </span>
-  );
-}
-
-function QuickFilterToggle({ label, checked, onCheckedChange }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onCheckedChange(!checked)}
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] leading-none transition-colors whitespace-nowrap',
-        checked
-          ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200 font-medium'
-          : 'bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground/80',
-      )}
-      aria-pressed={checked}
-    >
-      <span
-        className={cn(
-          'h-1.5 w-1.5 rounded-full shrink-0',
-          checked ? 'bg-teal-600 dark:bg-teal-400' : 'bg-muted-foreground/35',
-        )}
-        aria-hidden
-      />
-      {label}
-    </button>
   );
 }
 
@@ -163,10 +136,25 @@ function FiltrosPainel({
           </SelectContent>
         </Select>
       </FilterSection>
+
+      <button
+        type="button"
+        onClick={() => onHidePending(!hidePending)}
+        className={cn(
+          'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
+          hidePending
+            ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
+            : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
+        )}
+      >
+        <FilterX className="h-4 w-4" />
+        {hidePending ? 'Mostrar itens em trânsito' : 'Ocultar itens em trânsito'}
+      </button>
     </div>
   );
 }
 
+/** Busca + ícone de filtros; painel avançado só no drawer (mobile e desktop). */
 export default function FiltrosSugestaoCompra({
   searchTerm,
   onSearchTerm,
@@ -187,7 +175,6 @@ export default function FiltrosSugestaoCompra({
   onRoundingMode,
   onLimparFiltros,
 }) {
-  const isMobile = useCompactShell();
   const [showFilters, setShowFilters] = useState(false);
 
   const activeFilterCount = [
@@ -226,7 +213,7 @@ export default function FiltrosSugestaoCompra({
     if (hidePending) {
       chips.push({
         key: 'pending',
-        label: 'Sem pendentes',
+        label: 'Sem em trânsito',
         onRemove: () => onHidePending(false),
       });
     }
@@ -276,151 +263,96 @@ export default function FiltrosSugestaoCompra({
     onRoundingMode,
   };
 
-  const searchBar = (
-    <div className="relative min-w-0 flex-1">
-      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <input
-        autoComplete="off"
-        value={searchTerm}
-        onChange={(e) => onSearchTerm(e.target.value)}
-        placeholder="Buscar produto..."
-        className="h-12 w-full rounded-2xl border border-border/30 bg-card pl-10 pr-10 text-sm text-foreground/90 shadow-sm outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-teal-300 dark:bg-muted dark:text-foreground dark:focus:ring-teal-600"
-      />
-      {searchTerm ? (
-        <button
-          type="button"
-          onClick={() => onSearchTerm('')}
-          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
-          aria-label="Limpar busca"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      ) : null}
-    </div>
-  );
-
-  const filterToggleButton = (
-    <button
-      type="button"
-      onClick={isMobile ? () => setShowFilters(true) : undefined}
-      className={cn(
-        'relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all',
-        'bg-muted dark:bg-muted text-foreground/90',
-        !isMobile && showFilters && 'ring-2 ring-teal-500/40 bg-teal-50 dark:bg-teal-950/30',
-      )}
-      title="Filtros"
-      aria-label="Filtros"
-      aria-expanded={showFilters}
-    >
-      <SlidersHorizontal className="h-5 w-5" />
-      {activeFilterCount > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-teal-600 px-1 text-[10px] font-semibold leading-none text-white dark:bg-teal-500">
-          {activeFilterCount > 9 ? '9+' : activeFilterCount}
-        </span>
-      )}
-    </button>
-  );
-
-  const quickToggles = (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <QuickFilterToggle
-        label="Ocultar em trânsito"
-        checked={hidePending}
-        onCheckedChange={onHidePending}
-      />
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <div className="space-y-2.5">
-        <div className="flex gap-2.5">
-          {searchBar}
-          {filterToggleButton}
-        </div>
-        {quickToggles}
-        {activeChips.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {activeChips.map((chip) => (
-              <ActiveFilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
-            ))}
+  return (
+    <div className="space-y-2.5">
+      <div className="flex gap-2.5">
+        <div className="relative min-w-0 flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            autoComplete="off"
+            value={searchTerm}
+            onChange={(e) => onSearchTerm(e.target.value)}
+            placeholder="Buscar produto..."
+            className="h-12 w-full rounded-2xl border border-border/30 bg-card pl-10 pr-10 text-sm text-foreground/90 shadow-sm outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-teal-300 dark:bg-muted dark:text-foreground dark:focus:ring-teal-600"
+          />
+          {searchTerm ? (
             <button
               type="button"
-              onClick={limpar}
-              className="text-xs text-muted-foreground underline-offset-2 hover:underline px-1"
+              onClick={() => onSearchTerm('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
+              aria-label="Limpar busca"
             >
-              Limpar tudo
+              <X className="h-4 w-4" />
             </button>
-          </div>
-        )}
-        <Drawer open={showFilters} onOpenChange={setShowFilters}>
-          <DrawerContent className="max-h-[92vh] border-0 rounded-t-[28px] bg-card px-4 pb-0 dark:bg-card">
-            <DrawerHeader className="px-0 pb-1 text-left shrink-0">
-              <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
-              {activeFilterCount > 0 ? (
-                <p className="text-xs text-muted-foreground">{activeFilterCount} filtro(s) ativo(s)</p>
-              ) : null}
-            </DrawerHeader>
-            <div className="overflow-y-auto pb-4 -mx-1 px-1 max-h-[calc(92vh-9rem)]">
-              <FiltrosPainel {...painelProps} />
-            </div>
-            <div className="sticky bottom-0 -mx-4 border-t border-border/40 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95">
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={limpar}
-                  className="h-11 flex-1 rounded-2xl bg-muted text-sm text-muted-foreground"
-                >
-                  Limpar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowFilters(false)}
-                  className="h-11 flex-1 rounded-2xl bg-teal-600 text-sm text-white dark:bg-teal-500"
-                >
-                  Aplicar
-                </button>
-              </div>
-            </div>
-          </DrawerContent>
-        </Drawer>
-      </div>
-    );
-  }
+          ) : null}
+        </div>
 
-  return (
-    <Collapsible open={showFilters} onOpenChange={setShowFilters} className="space-y-2.5">
-      <div className="flex items-center gap-2.5">
-        {searchBar}
-        <CollapsibleTrigger asChild>{filterToggleButton}</CollapsibleTrigger>
-        {activeFilterCount > 0 ? (
-          <button
-            type="button"
-            onClick={limpar}
-            className="hidden lg:inline-flex h-10 items-center gap-1 rounded-xl px-3 text-xs text-muted-foreground hover:bg-muted/60 transition-colors"
-          >
-            <FilterX className="h-3.5 w-3.5" />
-            Limpar filtros
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={() => setShowFilters(true)}
+          className={cn(
+            'relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-all',
+            'bg-muted dark:bg-muted text-foreground/90',
+            activeFilterCount > 0 && 'ring-2 ring-teal-500/40 bg-teal-50 dark:bg-teal-950/30',
+          )}
+          title="Filtros"
+          aria-label="Filtros"
+        >
+          <SlidersHorizontal className="h-5 w-5" />
+          {activeFilterCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-teal-600 px-1 text-[10px] font-semibold leading-none text-white dark:bg-teal-500">
+              {activeFilterCount > 9 ? '9+' : activeFilterCount}
+            </span>
+          )}
+        </button>
       </div>
-      {quickToggles}
+
       {activeChips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
           {activeChips.map((chip) => (
             <ActiveFilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
           ))}
+          <button
+            type="button"
+            onClick={limpar}
+            className="text-xs text-muted-foreground underline-offset-2 hover:underline px-1"
+          >
+            Limpar tudo
+          </button>
         </div>
       )}
-      <CollapsibleContent>
-        <div className="rounded-2xl border border-border/40 bg-card/80 p-4 shadow-sm dark:bg-card/60">
-          <div className="mb-4 flex items-center gap-2 text-sm font-medium text-foreground">
-            <SlidersHorizontal className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-            Filtros avançados
+
+      <Drawer open={showFilters} onOpenChange={setShowFilters}>
+        <DrawerContent className="max-h-[92vh] border-0 rounded-t-[28px] bg-card px-4 pb-0 dark:bg-card md:mx-auto md:max-w-lg">
+          <DrawerHeader className="px-0 pb-1 text-left shrink-0">
+            <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
+            {activeFilterCount > 0 ? (
+              <p className="text-xs text-muted-foreground">{activeFilterCount} filtro(s) ativo(s)</p>
+            ) : null}
+          </DrawerHeader>
+          <div className="overflow-y-auto pb-4 -mx-1 px-1 max-h-[calc(92vh-9rem)]">
+            <FiltrosPainel {...painelProps} />
           </div>
-          <FiltrosPainel {...painelProps} />
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+          <div className="sticky bottom-0 -mx-4 border-t border-border/40 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={limpar}
+                className="h-11 flex-1 rounded-2xl bg-muted text-sm text-muted-foreground"
+              >
+                Limpar
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowFilters(false)}
+                className="h-11 flex-1 rounded-2xl bg-teal-600 text-sm text-white dark:bg-teal-500"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </div>
   );
 }

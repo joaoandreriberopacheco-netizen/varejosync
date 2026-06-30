@@ -17,6 +17,20 @@ import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 
 const FORNECEDOR_VAZIO = '__none__';
 
+/** Produto entra na lista se estiver abaixo do mínimo ou abaixo do ideal (quando definido). */
+export function produtoElegivelSugestaoCompra(p) {
+  const ea = Number(p.estoque_atual) || 0;
+  const em = Number(p.estoque_minimo) || 0;
+  const ei = Number(p.estoque_ideal) || 0;
+  const emax = Number(p.estoque_maximo) || 0;
+
+  if (em > 0 && ea < em) return true;
+  if (ei > 0 && ea < ei) return true;
+  if (emax > 0 && ea < emax) return true;
+  if (ea === 0 && (em > 0 || ei > 0 || emax > 0)) return true;
+  return false;
+}
+
 export default function SugestaoCompra({ onStatsChange }) {
   const [produtos, setProdutos] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
@@ -32,6 +46,11 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [tagSearch, setTagSearch] = useState('');
   const [hidePending, setHidePending] = useState(false);
   const [roundingMode, setRoundingMode] = useState('auto');
+  const [loadStats, setLoadStats] = useState({
+    totalAtivos: 0,
+    elegiveis: 0,
+    semMetas: 0,
+  });
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -93,18 +112,26 @@ export default function SugestaoCompra({ onStatsChange }) {
         });
       });
 
-      const filtered = prods
-        .filter((p) => {
-          const ea = p.estoque_atual || 0;
-          const em = p.estoque_minimo || 0;
-          return ea < em || (ea === 0 && (em > 0 || p.estoque_ideal > 0 || p.estoque_maximo > 0));
-        })
+      const elegiveis = prods.filter(produtoElegivelSugestaoCompra);
+      const semMetas = prods.filter(
+        (p) =>
+          !(Number(p.estoque_minimo) > 0) &&
+          !(Number(p.estoque_ideal) > 0) &&
+          !(Number(p.estoque_maximo) > 0),
+      ).length;
+
+      const filtered = elegiveis
         .map((p) => ({
           ...p,
           quantidade_pendente: pending[p.id] || 0,
         }))
         .sort((a, b) => a.nome.localeCompare(b.nome));
 
+      setLoadStats({
+        totalAtivos: prods.length,
+        elegiveis: elegiveis.length,
+        semMetas,
+      });
       setProdutos(filtered);
       setFornecedores(forn);
       setCategorias(cats);
@@ -138,8 +165,9 @@ export default function SugestaoCompra({ onStatsChange }) {
       total: filteredProducts.length,
       selected: selectedCount,
       catalogo: produtos.length,
+      ...loadStats,
     });
-  }, [filteredProducts.length, selectedCount, produtos.length, onStatsChange]);
+  }, [filteredProducts.length, selectedCount, produtos.length, loadStats, onStatsChange]);
 
   const handleSelectAll = (checked) => {
     if (checked) {
@@ -381,9 +409,27 @@ export default function SugestaoCompra({ onStatsChange }) {
       </div>
 
       {produtos.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-14 text-center">
+        <div className="flex flex-col items-center gap-3 py-14 px-4 text-center max-w-md mx-auto">
           <CheckCircle className="w-9 h-9 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">Estoque saudável. Nenhuma sugestão no momento.</p>
+          <p className="text-sm text-foreground/90 font-medium">Nenhuma sugestão no momento</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {loadStats.totalAtivos > 0 ? (
+              <>
+                {loadStats.totalAtivos} produto(s) ativo(s) consultado(s).
+                {loadStats.semMetas > 0 ? (
+                  <>
+                    {' '}
+                    {loadStats.semMetas} sem estoque mínimo/ideal definido — rode o job de metas automáticas
+                    ou ajuste no cadastro.
+                  </>
+                ) : (
+                  <> Nenhum está abaixo do mínimo ou do ideal.</>
+                )}
+              </>
+            ) : (
+              <>Não foi possível carregar produtos ou o catálogo está vazio.</>
+            )}
+          </p>
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="py-14 text-center text-sm text-muted-foreground">
