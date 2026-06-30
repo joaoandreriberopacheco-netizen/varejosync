@@ -260,35 +260,6 @@ function montarUpdatesProdutos(produtosSnapshot, dadosCalculo, somenteAbcdVazio)
   return { produto_ids: produtoIds, updates_by_id: updatesById };
 }
 
-function pipelineAbcdCompleto(produtos, itensPorProduto, somenteAbcdVazio) {
-  const etapa1 = etapa1_listar(produtos, itensPorProduto);
-  const etapa2 = etapa2_ordenarDistribuicao(etapa1.lista);
-  const mapaAbcdGrupo = etapa3_classificarAbcd(etapa2.ranking, etapa2.totalLucroPositivo);
-  const { produto_ids, updates_by_id } = montarUpdatesProdutos(
-    etapa1.produtos_snapshot,
-    {
-      lucroMax: etapa1.lucroMax,
-      mapaAbcdGrupo,
-      mediaLucroPorChave: etapa1.mediaLucroPorChave,
-      mediaNivel1PorH1: etapa1.mediaNivel1PorH1,
-      metricas: etapa1.metricas,
-    },
-    somenteAbcdVazio,
-  );
-
-  return {
-    lucroMax: etapa1.lucroMax,
-    grupos_nivel_2: etapa1.grupos_nivel_2,
-    total_produtos: etapa1.total_produtos,
-    ranking: etapa2.ranking,
-    totalLucroPositivo: etapa2.totalLucroPositivo,
-    mapaAbcdGrupo,
-    produto_ids,
-    updates_by_id,
-    etapa: 'classificar',
-  };
-}
-
 function maxLucroPositivo(metricasPorSku) {
   let max = 0;
   for (const m of Object.values(metricasPorSku)) {
