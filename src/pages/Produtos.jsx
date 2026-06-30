@@ -50,8 +50,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { p38Keys } from '@/lib/p38QueryConfig';
 import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import {
+  needsCatalogAbcdEnrichment,
+  enrichProdutosForAbcdFilter,
+  getEffectiveAbcdFilters,
+} from '@/lib/catalogAbcdEnrichment';
+import {
   useProdutosListQuery,
   useFornecedoresQuery,
+  usePedidosVenda90dQuery,
 } from '@/hooks/useP38Entities';
 
 const CATALOG_GROUP_BY_CATEGORY_KEY = 'catalogo.groupTreeByCategory';
@@ -176,6 +182,13 @@ function ProdutosPageContent() {
   const isDesktop = useDesktopContent();
   const { data: produtosQuery, refetch: refetchProdutos } = useProdutosListQuery();
   const { data: fornecedoresQuery, refetch: refetchFornecedores } = useFornecedoresQuery();
+
+  const needsAbcdEnrichment = needsCatalogAbcdEnrichment(filters, sortOrder);
+  const pedidos90dQuery = usePedidosVenda90dQuery({
+    enabled: needsAbcdEnrichment && (produtos.length > 0 || (produtosQuery?.length ?? 0) > 0),
+  });
+  const abcdEnrichmentReady = !needsAbcdEnrichment || pedidos90dQuery.isFetched;
+  const abcdFilterLoading = needsAbcdEnrichment && pedidos90dQuery.isFetching;
 
   /** Evita que um `Produto.get` antigo (ex.: abertura do formulário) sobrescreva o estado após save/`loadData`. */
   const produtoDetailFetchGenRef = useRef(0);
@@ -1074,13 +1087,25 @@ function ProdutosPageContent() {
     }
   };
 
+  const produtosParaCatalogo = useMemo(
+    () =>
+      enrichProdutosForAbcdFilter(produtos, pedidos90dQuery.data ?? [], {
+        ready: abcdEnrichmentReady,
+      }),
+    [produtos, pedidos90dQuery.data, abcdEnrichmentReady],
+  );
+
   const filteredProdutos = useMemo(() => {
-    let filtered = filterProdutos(produtos, filters);
+    const effectiveFilters = getEffectiveAbcdFilters(filters, {
+      needsEnrichment: needsAbcdEnrichment,
+      enrichmentReady: abcdEnrichmentReady,
+    });
+    let filtered = filterProdutos(produtosParaCatalogo, effectiveFilters);
 
     filtered = [...filtered].sort((a, b) => compareProdutosForCatalogSort(a, b, sortOrder));
 
     return filtered;
-  }, [produtos, filters, sortOrder]);
+  }, [produtosParaCatalogo, filters, sortOrder, needsAbcdEnrichment, abcdEnrichmentReady]);
 
   const fornecedorMap = useMemo(() => {
     return fornecedores.reduce((acc, f) => {
@@ -1305,6 +1330,7 @@ function ProdutosPageContent() {
     onOpenMassMarkup: () => setIsMassMarkupOpen(true),
     groupTreeByCategory,
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
+    abcdFilterLoading,
   };
 
   return (
