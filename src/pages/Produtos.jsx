@@ -1145,6 +1145,30 @@ function ProdutosPageContent() {
     catalogExpandedKeysRef.current = keys instanceof Set ? keys : new Set(keys || []);
   }, []);
 
+  const loadPedidosVenda90dParaRelatorio = useCallback(async () => {
+    const { resolvePedidosVenda90dComItens, pedidosVenda90dPrecisamHidratar, pedidosTemLinhasVenda } =
+      await import('@/lib/fetchPedidosVenda90d');
+    const pedidosCache = queryClient.getQueryData(p38Keys.pedidosVenda90d());
+    const dadosAbcdCache = queryClient.getQueryData(p38Keys.dadosVendaAbcd90d());
+    const cacheTemLinhas =
+      pedidosTemLinhasVenda(dadosAbcdCache?.pedidos90d) || pedidosTemLinhasVenda(pedidosCache);
+    if (
+      !cacheTemLinhas &&
+      (pedidosVenda90dPrecisamHidratar(pedidosCache) || dadosAbcdCache == null)
+    ) {
+      toast({ title: 'Buscando vendas dos últimos 90 dias...' });
+    }
+    const { pedidos, dadosAbcd } = await resolvePedidosVenda90dComItens({
+      pedidosCache,
+      dadosAbcdCache,
+    });
+    if (dadosAbcd) {
+      queryClient.setQueryData(p38Keys.dadosVendaAbcd90d(), dadosAbcd);
+      queryClient.setQueryData(p38Keys.pedidosVenda90d(), dadosAbcd.pedidos90d);
+    }
+    return pedidos ?? [];
+  }, [queryClient, toast]);
+
   const handleGerarRelatorioVendas = useCallback(async () => {
     setGerandoRelatorioVendas(true);
     toast({ title: 'Gerando relatório de vendas...' });
@@ -1155,13 +1179,7 @@ function ProdutosPageContent() {
       );
       const groupPdfByCategory = groupTreeByCategory || hasCategorizedProducts;
 
-      let pedidos = queryClient.getQueryData(p38Keys.pedidosVenda90d());
-      if (!Array.isArray(pedidos)) {
-        toast({ title: 'Buscando vendas dos últimos 90 dias...' });
-        const { fetchPedidosVenda90d } = await import('@/lib/fetchPedidosVenda90d');
-        pedidos = await fetchPedidosVenda90d();
-        queryClient.setQueryData(p38Keys.pedidosVenda90d(), pedidos);
-      }
+      const pedidos = await loadPedidosVenda90dParaRelatorio();
 
       toast({ title: 'Montando PDF de vendas...' });
       const { generateRelatorioCatalogoVendasPdf } = await import(
@@ -1196,7 +1214,7 @@ function ProdutosPageContent() {
     } finally {
       setGerandoRelatorioVendas(false);
     }
-  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, queryClient, toast]);
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, loadPedidosVenda90dParaRelatorio, toast]);
 
   const handleGerarRelatorioIep = useCallback(async () => {
     setGerandoRelatorioIep(true);
@@ -1204,13 +1222,7 @@ function ProdutosPageContent() {
     try {
       const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
 
-      let pedidos = queryClient.getQueryData(p38Keys.pedidosVenda90d());
-      if (!Array.isArray(pedidos)) {
-        toast({ title: 'Buscando vendas dos últimos 90 dias...' });
-        const { fetchPedidosVenda90d } = await import('@/lib/fetchPedidosVenda90d');
-        pedidos = await fetchPedidosVenda90d();
-        queryClient.setQueryData(p38Keys.pedidosVenda90d(), pedidos);
-      }
+      const pedidos = await loadPedidosVenda90dParaRelatorio();
 
       toast({ title: 'Montando PDF Curva ABC / IEP...' });
       const { generateRelatorioCatalogoIepPdf } = await import(
@@ -1241,7 +1253,7 @@ function ProdutosPageContent() {
     } finally {
       setGerandoRelatorioIep(false);
     }
-  }, [filteredProdutos, filters, categorias, fornecedores, queryClient, toast]);
+  }, [filteredProdutos, filters, categorias, fornecedores, loadPedidosVenda90dParaRelatorio, toast]);
 
   useEffect(() => {
     if (relatorioEstoqueAutoRef.current) return;

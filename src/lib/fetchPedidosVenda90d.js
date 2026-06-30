@@ -50,24 +50,6 @@ export function buildItensPorProdutoFromPedidos(pedidos90d) {
   return itensPorProduto;
 }
 
-async function hidratarPedidosSemItens(pedidos90d) {
-  const pedidos = Array.isArray(pedidos90d) ? [...pedidos90d] : [];
-  const semItens = pedidos.filter((p) => !(p?.itens?.length));
-  if (!semItens.length) return pedidos;
-
-  const itensPorProduto = {};
-  const itensPorPedido = {};
-  const ids = semItens.map((p) => String(p.id)).filter(Boolean);
-  await carregarPedidoVendaItensPorIds(ids, itensPorProduto, itensPorPedido);
-  if (countLinhasItens(itensPorProduto) < ids.length) {
-    await carregarEspelhoItensPorIds(ids, itensPorProduto, itensPorPedido);
-  }
-
-  const hidratados = hydratePedidosComItens(semItens, itensPorPedido);
-  const porId = Object.fromEntries(hidratados.map((p) => [String(p.id), p]));
-  return pedidos.map((p) => porId[String(p.id)] || p);
-}
-
 function countLinhasItens(itensPorProduto) {
   let total = 0;
   for (const linhas of Object.values(itensPorProduto || {})) {
@@ -156,80 +138,19 @@ async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto, itensPorPe
   }
 }
 
-/**
- * Pedidos PDV elegíveis para catálogo / relatório de vendas (últimos 90 dias).
- * Versão leve — sem hidratação PedidoVendaItem (estado estável 1dfe00d2).
- * Para job ABCD e relatório IEP use fetchDadosVendaAbcd90d.
- */
-export async function fetchPedidosVenda90d() {
-  const dataISO = iso90DiasAtras();
-  const cutMs = new Date(dataISO).getTime();
-  const todosPedidos = [];
-  let skip = 0;
-  const pageSize = 500;
-
-  while (true) {
-    const batch = await base44.entities.PedidoVenda.filter(
-      {
-        status: { $ne: 'Cancelado' },
-        created_date: { $gte: dataISO },
-      },
-      '-created_date',
-      pageSize,
-      skip,
-    );
-    const rows = rowsFromApi(batch);
-    if (!rows.length) break;
-
-    for (const pedido of rows) {
-      if (pedidoElegivelIep(pedido) && pedidoDentroJanela90d(pedido, dataISO)) {
-        todosPedidos.push(pedido);
-      }
-    }
-
-    if (rows.length < pageSize) break;
-
-    const last = rows[rows.length - 1];
-    const lastRaw = last?.created_date ?? last?.created_at;
-    if (lastRaw && new Date(lastRaw).getTime() < cutMs) break;
-
-    skip += pageSize;
-  }
-
-  return hidratarPedidosSemItens(todosPedidos);
+/** Pedidos com linhas de venda já hidratadas (evita relatório 30/60d zerado). */
+export function pedidosTemLinhasVenda(pedidos) {
+  return Array.isArray(pedidos) && pedidos.some((p) => (p?.itens?.length ?? 0) > 0);
 }
 
-/**
- * Índices de venda 90d + pedidos com `itens` preenchidos (job ABCD / relatório IEP).
- */
-export async function buildItensIndexes90d(pedidos90d) {
-  const pedidos = Array.isArray(pedidos90d) ? pedidos90d : [];
-  const itensPorProduto = {};
-  const itensPorPedido = {};
-  const pedidoIds = pedidos.map((p) => String(p.id)).filter(Boolean);
-
-  for (const pedido of pedidos) {
-    for (const it of pedido?.itens || []) {
-      appendItemToIndexes(itensPorProduto, itensPorPedido, pedido.id, it);
-    }
-  }
-
-  if (pedidoIds.length) {
-    const pedidosSemEspelho = pedidos.filter((p) => !(p?.itens?.length)).length;
-    const poucasLinhas = countLinhasItens(itensPorProduto) < pedidoIds.length;
-    if (pedidosSemEspelho > 0 || poucasLinhas) {
-      await carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto, itensPorPedido);
-    }
-    if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
-      await carregarEspelhoItensPorIds(pedidoIds, itensPorProduto, itensPorPedido);
-    }
-  }
-
-  return { itensPorProduto, itensPorPedido };
+/** Cache antigo: pedidos existem mas nenhum traz `itens` — precisa re-hidratar. */
+export function pedidosVenda90dPrecisamHidratar(pedidos) {
+  if (!Array.isArray(pedidos)) return true;
+  if (!pedidos.length) return false;
+  return !pedidosTemLinhasVenda(pedidos);
 }
 
-/** Pedidos 90d com itens + índice por produto. */
-export async function fetchDadosVendaAbcd90d() {
+async function fetchPedidosElegiveis90dBase() {
   const dataISO = iso90DiasAtras();
   const cutMs = new Date(dataISO).getTime();
   const pedidosBase = [];
@@ -264,6 +185,51 @@ export async function fetchDadosVendaAbcd90d() {
     skip += pageSize;
   }
 
+  return pedidosBase;
+}
+
+/**
+ * Pedidos PDV elegíveis com linhas de venda hidratadas (últimos 90 dias).
+ * Usa o mesmo índice PedidoVendaItem que o ABCD/IEP.
+ */
+export async function fetchPedidosVenda90d() {
+  const pedidosBase = await fetchPedidosElegiveis90dBase();
+  const { itensPorPedido } = await buildItensIndexes90d(pedidosBase);
+  return hydratePedidosComItens(pedidosBase, itensPorPedido);
+}
+
+/**
+ * Índices de venda 90d + pedidos com `itens` preenchidos (job ABCD / relatório IEP).
+ */
+export async function buildItensIndexes90d(pedidos90d) {
+  const pedidos = Array.isArray(pedidos90d) ? pedidos90d : [];
+  const itensPorProduto = {};
+  const itensPorPedido = {};
+  const pedidoIds = pedidos.map((p) => String(p.id)).filter(Boolean);
+
+  for (const pedido of pedidos) {
+    for (const it of pedido?.itens || []) {
+      appendItemToIndexes(itensPorProduto, itensPorPedido, pedido.id, it);
+    }
+  }
+
+  if (pedidoIds.length) {
+    const pedidosSemEspelho = pedidos.filter((p) => !(p?.itens?.length)).length;
+    const poucasLinhas = countLinhasItens(itensPorProduto) < pedidoIds.length;
+    if (pedidosSemEspelho > 0 || poucasLinhas) {
+      await carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto, itensPorPedido);
+    }
+    if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
+      await carregarEspelhoItensPorIds(pedidoIds, itensPorProduto, itensPorPedido);
+    }
+  }
+
+  return { itensPorProduto, itensPorPedido };
+}
+
+/** Pedidos 90d com itens + índice por produto. */
+export async function fetchDadosVendaAbcd90d() {
+  const pedidosBase = await fetchPedidosElegiveis90dBase();
   const { itensPorProduto, itensPorPedido } = await buildItensIndexes90d(pedidosBase);
   const pedidos90d = hydratePedidosComItens(pedidosBase, itensPorPedido);
 
@@ -272,6 +238,21 @@ export async function fetchDadosVendaAbcd90d() {
     itensPorProduto,
     itens_linhas: countLinhasItens(itensPorProduto),
   };
+}
+
+/**
+ * Resolve pedidos com linhas para relatórios (vendas 30/60d, IEP).
+ * Reaproveita cache ABCD quando já hidratado; senão busca índice completo.
+ */
+export async function resolvePedidosVenda90dComItens({ pedidosCache = null, dadosAbcdCache = null } = {}) {
+  if (pedidosTemLinhasVenda(dadosAbcdCache?.pedidos90d)) {
+    return { pedidos: dadosAbcdCache.pedidos90d, dadosAbcd: dadosAbcdCache };
+  }
+  if (pedidosTemLinhasVenda(pedidosCache)) {
+    return { pedidos: pedidosCache, dadosAbcd: dadosAbcdCache ?? null };
+  }
+  const dadosAbcd = await fetchDadosVendaAbcd90d();
+  return { pedidos: dadosAbcd.pedidos90d, dadosAbcd };
 }
 
 export { countLinhasItens };
