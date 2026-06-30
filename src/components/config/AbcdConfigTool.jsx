@@ -110,12 +110,14 @@ export default function AbcdConfigTool() {
       }
 
       const jobCache = preparado.job_cache;
-      const cacheNoServidor = Boolean(preparado.cache_no_servidor);
-      if (!jobCache?.run_id || !jobCache?.mapaAbcdGrupo || !jobCache?.produto_ids) {
+      if (
+        !jobCache?.run_id ||
+        !jobCache?.mapaAbcdGrupo ||
+        !jobCache?.produto_ids ||
+        !jobCache?.produtos_snapshot
+      ) {
         throw new Error(
-          cacheNoServidor
-            ? 'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (V10).'
-            : 'Resposta incompleta do servidor. Republica a função calcularIEP no Base44.',
+          'Resposta incompleta do servidor. Republica a função calcularIEP no Base44 (versão V11-abcd-somente).',
         );
       }
 
@@ -200,10 +202,10 @@ export default function AbcdConfigTool() {
         <div className="flex items-start gap-3">
           <BarChart3 className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
           <div className="min-w-0 space-y-1">
-            <p className="text-sm font-semibold text-foreground/90">Curva ABCD / IEP</p>
+            <p className="text-sm font-semibold text-foreground/90">Curva ABCD</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Calcula a classificação com vendas dos últimos 90 dias e grava no cadastro do produto
-              (campo abcd e scores IEP). A lista e a curva ABCD são calculadas de uma vez; só a
+              Calcula a classificação A/B/C/D com vendas dos últimos 90 dias e grava no campo{' '}
+              <strong>abcd</strong> de cada produto. A análise dos grupos é feita de uma vez; só a
               gravação em cada SKU roda em blocos de {BATCH_SIZE}. À madrugada o job recalcula todos
               automaticamente.
             </p>
@@ -283,7 +285,7 @@ export default function AbcdConfigTool() {
               ) : (
                 <BarChart3 className="w-5 h-5 text-muted-foreground" />
               )}
-              Curva ABCD / IEP
+              Curva ABCD
             </DialogTitle>
             <DialogDescription>
               {phase === 'preparing' && 'Lista, ordenação e classificação dos grupos (uma etapa).'}
@@ -336,8 +338,8 @@ export default function AbcdConfigTool() {
                 {result.total_pendentes != null ? ` de ${result.total_pendentes}` : ''}.
               </p>
               <p className="text-xs text-muted-foreground">
-                A curva ABCD e os scores IEP já estão gravados. O catálogo e os filtros A/B/C/D passam a
-                usar esses valores.
+                A classificação ABCD já está gravada. O catálogo e os filtros A/B/C/D passam a usar
+                esses valores.
               </p>
               {result.total_blocos != null && (
                 <p className="text-xs text-muted-foreground">
@@ -361,7 +363,7 @@ export default function AbcdConfigTool() {
               <p className="text-xs text-muted-foreground break-words">{errorMessage}</p>
               <p className="text-[11px] text-muted-foreground">
                 Se o erro persistir, confirme que a função <strong>calcularIEP</strong> foi publicada no
-                Base44 com a versão mais recente.
+                Base44 com a versão <strong>V11-abcd-somente</strong>.
               </p>
             </div>
           )}
