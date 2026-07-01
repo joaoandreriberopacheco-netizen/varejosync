@@ -1,4 +1,4 @@
-const CACHE_NAME = 'p38-erp-v16';
+const CACHE_NAME = 'p38-erp-v17';
 const SHARED_CACHE = 'VarejoSync-shared-files';
 /** Ícone P38 (raio) — alinhado ao manifest; pré-cache para instalação PWA / notificações. */
 const APP_ICON_PATH = '/brand/p38-app-icon.png';
@@ -15,22 +15,36 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) =>
-      Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== SHARED_CACHE)
-          .map((name) => caches.delete(name))
+    caches
+      .keys()
+      .then((cacheNames) =>
+        Promise.all(
+          cacheNames
+            .filter((name) => name !== CACHE_NAME && name !== SHARED_CACHE)
+            .map((name) => caches.delete(name))
+        )
       )
-    ).then(() => self.clients.claim())
+      .then(() => self.clients.claim())
   );
 });
 
+function normalizePathname(pathname) {
+  const p = String(pathname || '/');
+  if (p.length > 1 && p.endsWith('/')) return p.slice(0, -1);
+  return p;
+}
+
+function isAnexoCompartilhadoPath(pathname) {
+  const p = normalizePathname(pathname).toLowerCase();
+  return p === '/anexocompartilhado' || p.endsWith('/anexocompartilhado');
+}
+
 function isShareTargetPostUrl(url) {
-  const p = url.pathname || '';
-  return (
-    (p === '/AnexoCompartilhado' || p.endsWith('/AnexoCompartilhado')) &&
-    url.origin === self.location.origin
-  );
+  return isAnexoCompartilhadoPath(url.pathname) && url.origin === self.location.origin;
+}
+
+function isSharedFileGetUrl(url) {
+  return url.origin === self.location.origin && normalizePathname(url.pathname).startsWith('/shared/');
 }
 
 /** Chrome/Android podem usar "files", "file" ou outro nome no multipart. */
@@ -90,9 +104,18 @@ async function handleShareTargetPost(request) {
   if (text) redirectParams.set('text', text);
   if (urlParam) redirectParams.set('url', urlParam);
   redirectParams.set('share-target', '1');
+  if (files.length === 0) redirectParams.set('share-error', 'no-files');
 
-  const dest = `${self.location.origin}${url.pathname}?${redirectParams.toString()}`;
+  const destPath = normalizePathname(url.pathname) || '/AnexoCompartilhado';
+  const dest = `${self.location.origin}${destPath}?${redirectParams.toString()}`;
   return Response.redirect(dest, 303);
+}
+
+async function serveSharedFileFromCache(request) {
+  const cache = await caches.open(SHARED_CACHE);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  return new Response('Arquivo partilhado não encontrado', { status: 404 });
 }
 
 self.addEventListener('fetch', (event) => {
@@ -104,6 +127,11 @@ self.addEventListener('fetch', (event) => {
         Response.redirect(`${self.location.origin}/AnexoCompartilhado?share-error=1`, 303)
       )
     );
+    return;
+  }
+
+  if (event.request.method === 'GET' && isSharedFileGetUrl(url)) {
+    event.respondWith(serveSharedFileFromCache(event.request));
     return;
   }
 

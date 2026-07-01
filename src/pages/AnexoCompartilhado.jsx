@@ -58,6 +58,7 @@ export default function AnexoCompartilhado() {
   const [dadosComprovante, setDadosComprovante] = useState(null);
   const [lendoComprovante, setLendoComprovante] = useState(false);
   const extracaoComprovanteSeq = useRef(0);
+  const [erroCompartilhamento, setErroCompartilhamento] = useState('');
 
   const tiposDocumentoDisponiveis = useMemo(
     () => Array.from(new Set([...TIPOS_DOCUMENTO_ANEXO, ...tiposDocumentoCustom])),
@@ -364,8 +365,17 @@ export default function AnexoCompartilhado() {
     const tentar = async () => {
       const params = new URLSearchParams(window.location.search);
       const shareTarget = params.get('share-target') === '1';
+      const shareError = params.get('share-error');
       const focoClipboard = params.get('clipboard') === '1';
       const destino = params.get(SHARE_DESTINO_QUERY);
+
+      if (shareError) {
+        const msg =
+          shareError === 'no-files'
+            ? 'O sistema não recebeu o arquivo. Tente partilhar de novo ou use Selecionar arquivo.'
+            : 'Não foi possível receber o arquivo partilhado. Abra o P38 uma vez, actualize a app e tente de novo.';
+        setErroCompartilhamento(msg);
+      }
 
       if (primeiraExecucaoTentar) {
         primeiraExecucaoTentar = false;
@@ -895,6 +905,11 @@ export default function AnexoCompartilhado() {
             {(feedbackClipboard || modoAtalhoClipboard) && (
               <p className={`mt-2 text-xs ${brandSurface.textLabel}`}>
                 {feedbackClipboard || 'Toque em "Colar da área de transferência" para continuar com o conteúdo copiado.'}
+              </p>
+            )}
+            {erroCompartilhamento && (
+              <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                {erroCompartilhamento}
               </p>
             )}
           </div>
