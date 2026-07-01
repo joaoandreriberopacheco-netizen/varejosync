@@ -258,29 +258,40 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   const descStart = M + 4;
   const tableRight = M + CW;
   const GUTTER_DESC = 5;
-  const QUANT_COL_W = 24;
-  const QUANT_VALUE_GAP = 4;
+  const COL_GUTTER = 2.8;
+  const QUANT_COL_W = 23;
+  const PIPE_PAD = 1.5;
   const VALUE_COL_COUNT = 4;
   const descEndMin = descStart + CW * 0.34;
   const numericStart = descEndMin + GUTTER_DESC;
   const numericSpan = tableRight - numericStart;
-  const valueColW = (numericSpan - QUANT_COL_W - QUANT_VALUE_GAP) / VALUE_COL_COUNT;
-  const v60Right = tableRight;
-  const v30Right = v60Right - valueColW;
-  const custoRight = v30Right - valueColW;
-  const vCompraRight = custoRight - valueColW;
-  const quantRight = vCompraRight - QUANT_VALUE_GAP;
+  const valueColW = (numericSpan - QUANT_COL_W - COL_GUTTER * VALUE_COL_COUNT) / VALUE_COL_COUNT;
+
+  let colRight = tableRight;
+  const v60Right = colRight;
+  colRight -= valueColW;
+  colRight -= COL_GUTTER;
+  const v30Right = colRight;
+  colRight -= valueColW;
+  colRight -= COL_GUTTER;
+  const custoRight = colRight;
+  colRight -= valueColW;
+  colRight -= COL_GUTTER;
+  const vCompraRight = colRight;
+  colRight -= valueColW;
+  colRight -= COL_GUTTER;
+  const quantRight = colRight;
   const quantLeft = quantRight - QUANT_COL_W;
-  const quantPipe = quantLeft + QUANT_COL_W * 0.58;
-  const quantQtyEnd = quantPipe - 1.2;
-  const quantUnitStart = quantPipe + 1.4;
+  const quantPipe = quantLeft + QUANT_COL_W / 2;
+  const quantQtyEnd = quantPipe - PIPE_PAD;
+  const quantUnitStart = quantPipe + PIPE_PAD;
   const descEnd = quantLeft - GUTTER_DESC;
   const divider = descEnd + GUTTER_DESC / 2;
   const valueColDividers = [
-    (quantRight + vCompraRight) / 2,
-    (vCompraRight + custoRight) / 2,
-    (custoRight + v30Right) / 2,
-    (v30Right + v60Right) / 2,
+    quantRight + COL_GUTTER / 2,
+    vCompraRight + COL_GUTTER / 2,
+    custoRight + COL_GUTTER / 2,
+    v30Right + COL_GUTTER / 2,
   ];
   const X = {
     desc: descStart,
@@ -325,32 +336,32 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     }
     doc.setPage(savedPage);
   };
-  const drawQuantPipe = (baselineY, { restoreFont = PDF_FONT_NORMAL, restoreColor = ENXUTO.black, restoreSize = FONT.row } = {}) => {
-    doc.setFont('helvetica', PDF_FONT_NORMAL);
-    doc.setFontSize(FONT.row);
-    doc.setTextColor(...ENXUTO.line);
-    doc.text('|', X.quantPipe, baselineY, { align: 'center' });
+  const drawQuantPipe = (baselineY, rowTop, rowBottom, { restoreFont = PDF_FONT_NORMAL, restoreColor = ENXUTO.black, restoreSize = FONT.row } = {}) => {
+    const tickTop = rowTop != null ? rowTop + 0.6 : baselineY - FONT.row * 0.35;
+    const tickBottom = rowBottom != null ? rowBottom - 0.6 : baselineY + FONT.row * 0.1;
+    strokeLine(X.quantPipe, tickTop, X.quantPipe, tickBottom, ENXUTO.line, SUBTLE_DIVIDER_W);
     doc.setFont(pdfFontFamily, restoreFont);
     doc.setFontSize(restoreSize);
     doc.setTextColor(...restoreColor);
   };
-  const drawQuantUnCell = (baselineY, stockLike) => {
+  const drawQuantUnCell = (baselineY, stockLike, rowTop, rowBottom) => {
     if (!stockLike?.quantText || !stockLike?.unitText) {
-      doc.text('\u2014', X.quant, baselineY, { align: 'right' });
+      doc.text('\u2014', X.quantPipe, baselineY, { align: 'center' });
       return;
     }
     doc.text(stockLike.quantText, X.quantQtyEnd, baselineY, { align: 'right' });
-    drawQuantPipe(baselineY);
+    drawQuantPipe(baselineY, rowTop, rowBottom);
     doc.text(stockLike.unitText, X.quantUnitStart, baselineY, { align: 'left' });
   };
   const drawColumnHeaders = (topY) => {
     const line1 = topY + 3.2;
     const line2 = topY + 6.8;
+    const hdrTop = topY + 1.2;
+    const hdrBottom = topY + COL_HDR_BLOCK - 0.4;
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
     doc.setFontSize(FONT.colHdr);
     doc.setTextColor(...ENXUTO.muted);
     doc.text('QUANT', X.quantQtyEnd, line1, { align: 'right' });
-    drawQuantPipe(line1, { restoreColor: ENXUTO.muted, restoreSize: FONT.colHdr });
     doc.text('UN', X.quantUnitStart, line1, { align: 'left' });
     doc.text('V.COMPRA', X.vCompra, line1, { align: 'right' });
     doc.text('CUSTO', X.custo, line1, { align: 'right' });
@@ -358,12 +369,12 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     doc.text('V.60D', X.v60, line1, { align: 'right' });
     doc.setFontSize(FONT.colHdr - 0.4);
     doc.text('estoque', X.quantQtyEnd, line2, { align: 'right' });
-    drawQuantPipe(line2, { restoreColor: ENXUTO.muted, restoreSize: FONT.colHdr - 0.4 });
     doc.text('unid.', X.quantUnitStart, line2, { align: 'left' });
     doc.text('compra', X.vCompra, line2, { align: 'right' });
     doc.text('calc.', X.custo, line2, { align: 'right' });
     doc.text('30 dias', X.v30, line2, { align: 'right' });
     doc.text('60 dias', X.v60, line2, { align: 'right' });
+    strokeLine(X.quantPipe, hdrTop, X.quantPipe, hdrBottom, ENXUTO.line, SUBTLE_DIVIDER_W);
   };
   const beginTablePage = () => {
     drawColumnHeaders(y);
@@ -391,12 +402,12 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
       descFirstBaseline: midY - descSpan / 2 + textLift * 0.35
     };
   };
-  const drawValueColumns = (baselineY, produto, velocity, commercial = {}, { isGroup = false, stock = null, hideGroupTotals = false } = {}) => {
+  const drawValueColumns = (baselineY, produto, velocity, commercial = {}, { isGroup = false, stock = null, hideGroupTotals = false, rowTop = null, rowBottom = null } = {}) => {
     doc.setFont(pdfFontFamily, isGroup ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
     doc.setFontSize(FONT.row);
     doc.setTextColor(...ENXUTO.black);
     if (isGroup && hideGroupTotals) {
-      doc.text('\u2014', X.quant, baselineY, { align: 'right' });
+      doc.text('\u2014', X.quantPipe, baselineY, { align: 'center' });
       doc.text('\u2014', X.vCompra, baselineY, { align: 'right' });
       doc.text('\u2014', X.custo, baselineY, { align: 'right' });
       doc.text('\u2014', X.v30, baselineY, { align: 'right' });
@@ -410,7 +421,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     };
     const v30 = velocityQuantTexto({ qtd: velocity?.qtd30, unidade: velocity?.unidade }, { showUnit: false });
     const v60 = velocityQuantTexto({ qtd: velocity?.qtd60, unidade: velocity?.unidade }, { showUnit: false });
-    drawQuantUnCell(baselineY, stockDisplay);
+    drawQuantUnCell(baselineY, stockDisplay, rowTop, rowBottom);
     doc.text(moedaOuTraco(vals.vCompra), X.vCompra, baselineY, { align: 'right' });
     doc.text(moedaOuTraco(vals.custoCalc), X.custo, baselineY, { align: 'right' });
     doc.text(cellText(v30), X.v30, baselineY, { align: 'right' });
@@ -426,7 +437,8 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     ensureTableSpace(rowStep + 1);
     const drawY = y;
     const { valuesBaseline, descFirstBaseline } = rowBaselines(drawY, lineCount, extraH);
-    drawValueColumns(valuesBaseline, produto, velocity, commercial, { isGroup, stock, hideGroupTotals });
+    const rowBottom = drawY + rowStep - ROW_GAP * 0.35;
+    drawValueColumns(valuesBaseline, produto, velocity, commercial, { isGroup, stock, hideGroupTotals, rowTop: drawY, rowBottom });
     doc.setFont(pdfFontFamily, isGroup ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
     doc.setTextColor(...ENXUTO.black);
     for (let i = 0; i < lineCount; i += 1) {
