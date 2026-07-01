@@ -1,12 +1,14 @@
 import { base44 } from '@/api/base44Client';
 import {
   iso90DiasAtras,
+  isoDiasAtrasDateKey,
   pedidoDentroJanela90d,
   pedidoElegivelIep,
 } from '@/lib/calcularIepProdutos';
 
 const PEDIDO_IDS_CHUNK = 40;
-const PEDIDO_GET_CHUNK = 20;
+const PEDIDO_GET_CHUNK = 10;
+const TIPOS_VENDA_PDV = ['PDV', 'PDV Supermercado', 'PDV Autosserviço'];
 
 function normalizeItemVenda(it) {
   return {
@@ -50,27 +52,17 @@ export function buildItensPorProdutoFromPedidos(pedidos90d) {
   return itensPorProduto;
 }
 
-async function hidratarPedidosSemItens(pedidos90d) {
-  const pedidos = Array.isArray(pedidos90d) ? [...pedidos90d] : [];
-  const semItens = pedidos.filter((p) => !(p?.itens?.length));
-  if (!semItens.length) return pedidos;
-
-  const itensPorProduto = {};
-  const itensPorPedido = {};
-  const ids = semItens.map((p) => String(p.id)).filter(Boolean);
-  await carregarPedidoVendaItensPorIds(ids, itensPorProduto, itensPorPedido);
-  if (countLinhasItens(itensPorProduto) < ids.length) {
-    await carregarEspelhoItensPorIds(ids, itensPorProduto, itensPorPedido);
-  }
-
-  const hidratados = hydratePedidosComItens(semItens, itensPorPedido);
-  const porId = Object.fromEntries(hidratados.map((p) => [String(p.id), p]));
-  return pedidos.map((p) => porId[String(p.id)] || p);
-}
-
 function countLinhasItens(itensPorProduto) {
   let total = 0;
   for (const linhas of Object.values(itensPorProduto || {})) {
+    total += Array.isArray(linhas) ? linhas.length : 0;
+  }
+  return total;
+}
+
+function countLinhasPedido(itensPorPedido) {
+  let total = 0;
+  for (const linhas of Object.values(itensPorPedido || {})) {
     total += Array.isArray(linhas) ? linhas.length : 0;
   }
   return total;
@@ -92,6 +84,10 @@ function hydratePedidosComItens(pedidos, itensPorPedido) {
           : carregados;
     return { ...pedido, itens };
   });
+}
+
+function pedidoTemItens(pedido) {
+  return Array.isArray(pedido?.itens) && pedido.itens.length > 0;
 }
 
 async function carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto, itensPorPedido) {
@@ -121,6 +117,42 @@ async function carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto, itensP
       }
     }
   }
+}
+
+/** Carrega linhas canónicas por data (evita depender do espelho no PedidoVenda). */
+async function carregarPedidoVendaItensPorData(dataKey, itensPorProduto, itensPorPedido) {
+  if (!base44.entities.PedidoVendaItem?.filter) return 0;
+
+  let skip = 0;
+  const pageSize = 500;
+  let total = 0;
+
+  while (true) {
+    let batch;
+    try {
+      batch = await base44.entities.PedidoVendaItem.filter(
+        { created_date: { $gte: dataKey } },
+        '-created_date',
+        pageSize,
+        skip,
+      );
+    } catch {
+      break;
+    }
+
+    const rows = rowsFromApi(batch);
+    if (!rows.length) break;
+
+    for (const it of rows) {
+      appendItemToIndexes(itensPorProduto, itensPorPedido, it.pedido_venda_id, it);
+      total += 1;
+    }
+
+    if (rows.length < pageSize) break;
+    skip += pageSize;
+  }
+
+  return total;
 }
 
 async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto, itensPorPedido) {
@@ -156,12 +188,7 @@ async function carregarEspelhoItensPorIds(pedidoIds, itensPorProduto, itensPorPe
   }
 }
 
-/**
- * Pedidos PDV elegíveis para catálogo / relatório de vendas (últimos 90 dias).
- * Versão leve — sem hidratação PedidoVendaItem (estado estável 1dfe00d2).
- * Para job ABCD e relatório IEP use fetchDadosVendaAbcd90d.
- */
-export async function fetchPedidosVenda90d() {
+async function fetchPedidosPaginados(query) {
   const dataISO = iso90DiasAtras();
   const cutMs = new Date(dataISO).getTime();
   const todosPedidos = [];
@@ -170,10 +197,7 @@ export async function fetchPedidosVenda90d() {
 
   while (true) {
     const batch = await base44.entities.PedidoVenda.filter(
-      {
-        status: { $ne: 'Cancelado' },
-        created_date: { $gte: dataISO },
-      },
+      query,
       '-created_date',
       pageSize,
       skip,
@@ -196,7 +220,89 @@ export async function fetchPedidosVenda90d() {
     skip += pageSize;
   }
 
-  return hidratarPedidosSemItens(todosPedidos);
+  return todosPedidos;
+}
+
+async function buscarPedidos90dBase() {
+  const dataKey = isoDiasAtrasDateKey(90);
+  const porId = new Map();
+
+  for (const tipo of TIPOS_VENDA_PDV) {
+    try {
+      const rows = await fetchPedidosPaginados({
+        tipo,
+        status: { $ne: 'Cancelado' },
+        created_date: { $gte: dataKey },
+      });
+      for (const pedido of rows) {
+        if (pedido?.id != null) porId.set(String(pedido.id), pedido);
+      }
+    } catch {
+      /* tenta próximo tipo */
+    }
+  }
+
+  if (porId.size === 0) {
+    const fallbacks = [
+      {
+        tipo: 'PDV',
+        status: { $ne: 'Cancelado' },
+        created_date: { $gte: iso90DiasAtras() },
+      },
+      { tipo: 'PDV', status: { $ne: 'Cancelado' } },
+      { status: { $ne: 'Cancelado' }, created_date: { $gte: dataKey } },
+    ];
+    for (const query of fallbacks) {
+      try {
+        const rows = await fetchPedidosPaginados(query);
+        for (const pedido of rows) {
+          if (pedido?.id != null) porId.set(String(pedido.id), pedido);
+        }
+        if (porId.size > 0) break;
+      } catch {
+        /* próximo fallback */
+      }
+    }
+  }
+
+  return [...porId.values()];
+}
+
+async function hidratarPedidosSemItens(pedidos90d, dataKey) {
+  const pedidos = Array.isArray(pedidos90d) ? [...pedidos90d] : [];
+  const semItens = pedidos.filter((p) => !pedidoTemItens(p));
+  if (!semItens.length) return pedidos;
+
+  const itensPorProduto = {};
+  const itensPorPedido = {};
+
+  await carregarPedidoVendaItensPorData(dataKey, itensPorProduto, itensPorPedido);
+
+  const idsSemLinhas = semItens
+    .filter((p) => !(itensPorPedido[String(p.id)]?.length))
+    .map((p) => String(p.id))
+    .filter(Boolean);
+
+  if (idsSemLinhas.length) {
+    await carregarEspelhoItensPorIds(idsSemLinhas, itensPorProduto, itensPorPedido);
+  }
+
+  if (idsSemLinhas.length && countLinhasPedido(itensPorPedido) < idsSemLinhas.length) {
+    await carregarPedidoVendaItensPorIds(idsSemLinhas, itensPorProduto, itensPorPedido);
+  }
+
+  const hidratados = hydratePedidosComItens(semItens, itensPorPedido);
+  const porId = Object.fromEntries(hidratados.map((p) => [String(p.id), p]));
+  return pedidos.map((p) => porId[String(p.id)] || p);
+}
+
+/**
+ * Pedidos PDV elegíveis para catálogo / relatório de vendas (últimos 90 dias).
+ */
+export async function fetchPedidosVenda90d() {
+  const dataKey = isoDiasAtrasDateKey(90);
+  const pedidosBase = await buscarPedidos90dBase();
+  return hidratarPedidosSemItens(pedidosBase, dataKey);
 }
 
 /**
@@ -215,13 +321,24 @@ export async function buildItensIndexes90d(pedidos90d) {
   }
 
   if (pedidoIds.length) {
-    const pedidosSemEspelho = pedidos.filter((p) => !(p?.itens?.length)).length;
+    const dataKey = isoDiasAtrasDateKey(90);
+    const pedidosSemEspelho = pedidos.filter((p) => !pedidoTemItens(p)).length;
     const poucasLinhas = countLinhasItens(itensPorProduto) < pedidoIds.length;
+
     if (pedidosSemEspelho > 0 || poucasLinhas) {
-      await carregarPedidoVendaItensPorIds(pedidoIds, itensPorProduto, itensPorPedido);
+      await carregarPedidoVendaItensPorData(dataKey, itensPorProduto, itensPorPedido);
     }
     if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
-      await carregarEspelhoItensPorIds(pedidoIds, itensPorProduto, itensPorPedido);
+      const faltam = pedidoIds.filter((id) => !(itensPorPedido[id]?.length));
+      if (faltam.length) {
+        await carregarEspelhoItensPorIds(faltam, itensPorProduto, itensPorPedido);
+      }
+    }
+    if (countLinhasItens(itensPorProduto) < pedidoIds.length) {
+      const faltam = pedidoIds.filter((id) => !(itensPorPedido[id]?.length));
+      if (faltam.length) {
+        await carregarPedidoVendaItensPorIds(faltam, itensPorProduto, itensPorPedido);
+      }
     }
   }
 
@@ -230,42 +347,8 @@ export async function buildItensIndexes90d(pedidos90d) {
 
 /** Pedidos 90d com itens + índice por produto. */
 export async function fetchDadosVendaAbcd90d() {
-  const dataISO = iso90DiasAtras();
-  const cutMs = new Date(dataISO).getTime();
-  const pedidosBase = [];
-  let skip = 0;
-  const pageSize = 500;
-
-  while (true) {
-    const batch = await base44.entities.PedidoVenda.filter(
-      {
-        status: { $ne: 'Cancelado' },
-        created_date: { $gte: dataISO },
-      },
-      '-created_date',
-      pageSize,
-      skip,
-    );
-    const rows = rowsFromApi(batch);
-    if (!rows.length) break;
-
-    for (const pedido of rows) {
-      if (pedidoElegivelIep(pedido) && pedidoDentroJanela90d(pedido, dataISO)) {
-        pedidosBase.push(pedido);
-      }
-    }
-
-    if (rows.length < pageSize) break;
-
-    const last = rows[rows.length - 1];
-    const lastRaw = last?.created_date ?? last?.created_at;
-    if (lastRaw && new Date(lastRaw).getTime() < cutMs) break;
-
-    skip += pageSize;
-  }
-
-  const { itensPorProduto, itensPorPedido } = await buildItensIndexes90d(pedidosBase);
-  const pedidos90d = hydratePedidosComItens(pedidosBase, itensPorPedido);
+  const pedidos90d = await fetchPedidosVenda90d();
+  const itensPorProduto = buildItensPorProdutoFromPedidos(pedidos90d);
 
   return {
     pedidos90d,

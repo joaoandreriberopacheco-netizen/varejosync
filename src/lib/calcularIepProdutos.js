@@ -293,6 +293,16 @@ export function iso90DiasAtras() {
   return data.toISOString();
 }
 
+/** Chave yyyy-MM-dd para filtros Base44 (mesmo padrão do Dashboard). */
+export function isoDiasAtrasDateKey(dias = 90) {
+  const data = new Date();
+  data.setDate(data.getDate() - dias);
+  const y = data.getFullYear();
+  const m = String(data.getMonth() + 1).padStart(2, '0');
+  const d = String(data.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export function pedidoDentroJanela90d(pedido, dataISO) {
   const cut = new Date(dataISO).getTime();
   const raw = pedido?.created_date ?? pedido?.created_at;
