@@ -755,8 +755,8 @@ export default function RelatorioMargemVendas() {
   }, [treeLevel, marginTree, processedData?.length]);
 
   const displayRows = useMemo(
-    () => flattenMarginTree(marginTree, expandedKeys ?? new Set()),
-    [marginTree, expandedKeys]
+    () => flattenMarginTree(marginTree, expandedKeys ?? new Set(), '', 0, sortField, sortOrder),
+    [marginTree, expandedKeys, sortField, sortOrder]
   );
 
   const desktopScrollRef = useRef(null);
@@ -841,8 +841,8 @@ export default function RelatorioMargemVendas() {
   }, [expandedKeys, displayRows.length]);
 
   const exportRows = useMemo(
-    () => (processedData.length ? collectAllMarginLeaves(marginTree) : []),
-    [marginTree, processedData.length]
+    () => (processedData.length ? collectAllMarginLeaves(marginTree, sortField, sortOrder) : []),
+    [marginTree, processedData.length, sortField, sortOrder]
   );
 
   const handleMetricSort = useCallback(
