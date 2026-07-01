@@ -1021,8 +1021,31 @@ export default function RelatorioMargemVendas() {
     }
 
     const isMobilePdf = version === 'expandida_mobile';
+    const isEnxutoPdf = version === 'a4_enxuto';
 
     try {
+    if (isEnxutoPdf) {
+      const { generateRelatorioMargemEnxutoPdf } = await import('@/lib/relatorioMargemPdf');
+      const resposta = await generateRelatorioMargemEnxutoPdf({
+        displayRows: displayRows.length ? displayRows : [],
+        totals,
+        totalMarkup,
+        productCount,
+        filtersDesc: buildMarginFiltrosDesc({ dateRange, searchTerm, treeLevel }),
+        generatedAt: format(new Date(), 'dd/MM/yyyy HH:mm'),
+      });
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      const fileDate = format(new Date(), 'yyyy-MM-dd');
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `relatorio_margem_enxuto_${fileDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+      return;
+    }
+
     if (isMobilePdf) {
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -1742,6 +1765,12 @@ export default function RelatorioMargemVendas() {
                 <DropdownMenuContent align="end" className="dark:bg-secondary dark:border-border text-sm">
                   <DropdownMenuItem onClick={() => exportToPDF('a4')} className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer">
                     PDF (A4)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => exportToPDF('a4_enxuto')}
+                    className="dark:hover:bg-muted/80 dark:text-foreground cursor-pointer"
+                  >
+                    PDF enxuto (A4)
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => exportToPDF('expandida_mobile')}
