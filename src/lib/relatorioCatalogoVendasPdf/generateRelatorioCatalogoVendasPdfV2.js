@@ -16,7 +16,7 @@ import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import {
   aggregateCatalogSalesVelocity,
   buildCatalogSalesVelocityMap,
-  filterProdutosComVendas30ou60d,
+  filterProdutosRelatorioVendasV2,
 } from '@/lib/catalogSalesVelocity';
 import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
 import {
@@ -169,7 +169,7 @@ export function prepareCatalogSalesReportDocumentV2({
 } = {}) {
   const list = (produtos || []).filter((p) => p && typeof p === 'object');
   const velocityMap = buildCatalogSalesVelocityMap(list, pedidos);
-  const comVenda = filterProdutosComVendas30ou60d(list, velocityMap);
+  const comVenda = filterProdutosRelatorioVendasV2(list, velocityMap);
 
   const isFlat = layoutMode === 'plana';
   let rows;
@@ -189,7 +189,7 @@ export function prepareCatalogSalesReportDocumentV2({
     mode: isFlat ? 'plana' : groupByCategory ? 'categoria' : 'tree',
     groupByCategory: Boolean(groupByCategory),
     treeLevel: Number(treeLevel) || 1,
-    inclusionLabel: 'vendas nos últimos 30 ou 60 dias',
+    inclusionLabel: 'venda nos últimos 30 ou 60 dias, ou estoque > 0',
     produtos: comVenda,
     velocityMap,
     rows,
@@ -243,7 +243,7 @@ export function buildUniformSalesPdfColumns({
   };
 }
 
-export const CATALOG_SALES_PDF_V2_BUILD = 'enxuto_vendas_preco_mkup_v1';
+export const CATALOG_SALES_PDF_V2_BUILD = 'enxuto_vendas_preco_mkup_v2';
 
 export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
   const {
@@ -475,7 +475,7 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
   doc.text(modeLabel, M, y);
   y += 4.2;
   doc.setFontSize(8.8);
-  doc.text(safe(`${documento.produtos?.length ?? 0} SKU(s) com venda`), M, y);
+  doc.text(safe(`${documento.produtos?.length ?? 0} SKU(s) no relatório`), M, y);
   y += 4.2;
   doc.text(safe(`Inclusão: ${documento.inclusionLabel}`), M, y);
   y += 4.2;

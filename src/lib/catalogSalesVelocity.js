@@ -165,3 +165,23 @@ export function filterProdutosComVendas30ou60d(produtos, velocityMap) {
     return produtoTeveVenda30ou60d(velocityMap[String(p.id)]);
   });
 }
+
+/** Estoque comercial > 0 (mesma ideia do atalho «somente positivos» do catálogo). */
+export function produtoTemEstoquePositivo(produto) {
+  return (Number(produto?.estoque_atual) || 0) > 0;
+}
+
+/**
+ * Critério do relatório v2: entra se teve venda em 30/60d OU tem estoque > 0.
+ * Os filtros do catálogo (categoria, busca, etc.) aplicam-se antes, na lista recebida.
+ */
+export function produtoIncluirRelatorioVendasV2(produto, velocity) {
+  return produtoTeveVenda30ou60d(velocity) || produtoTemEstoquePositivo(produto);
+}
+
+export function filterProdutosRelatorioVendasV2(produtos, velocityMap) {
+  return (produtos || []).filter((p) => {
+    if (!p?.id) return false;
+    return produtoIncluirRelatorioVendasV2(p, velocityMap[String(p.id)]);
+  });
+}
