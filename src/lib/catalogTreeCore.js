@@ -357,10 +357,14 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sor
   const isLeafGroup = Object.keys(finalNode.children || {}).length === 0;
 
   if (branchSkus.length === 1) {
-    if (collapseSoloSkuBranches || expandedKeys.has(nodeKey)) {
-      rows.push(makeSkuRow(branchSkus[0], rowLevel));
+    const soloSku = branchSkus[0];
+    const isExpanded = expandedKeys.has(nodeKey);
+
+    if (collapseSoloSkuBranches) {
+      rows.push(makeSkuRow(soloSku, rowLevel));
       return rows;
     }
+
     rows.push({
       type: 'group',
       key: nodeKey,
@@ -370,6 +374,10 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sor
       isLeafGroup,
       ...agg,
     });
+
+    if (isExpanded) {
+      rows.push(makeSkuRow(soloSku, rowLevel + 1));
+    }
     return rows;
   }
 

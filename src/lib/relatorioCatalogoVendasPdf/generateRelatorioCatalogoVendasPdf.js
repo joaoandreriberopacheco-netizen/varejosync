@@ -121,7 +121,7 @@ export function prepareCatalogSalesReportDocument({
     const tree = groupByCategory ? buildCategoryTree(comVenda) : buildTree(comVenda);
     const expandedKeys = resolveExpandedKeysForCatalogView(tree, treeLevel, expandedKeysFromCatalog);
     rows = mergeAdjacentDuplicateGroupHeaders(
-      flattenTree(tree, expandedKeys, '', 0, sortOrder, { collapseSoloSkuBranches: true }),
+      flattenTree(tree, expandedKeys, '', 0, sortOrder, { collapseSoloSkuBranches: false }),
     );
     rows = enrichTreeRows(rows, velocityMap);
   }
@@ -234,7 +234,7 @@ function treeLevelLabel(treeLevel) {
 }
 
 /** Identificador visível no PDF/toast — confirma que o bundle novo carregou. */
-export const CATALOG_SALES_PDF_BUILD = 'enxuto_vendas_compra_custo_v12';
+export const CATALOG_SALES_PDF_BUILD = 'enxuto_vendas_compra_custo_v13';
 
 export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   const {
