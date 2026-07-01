@@ -27,6 +27,16 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 import { formatarDataHora, formatarSoData } from '@/components/utils/dateUtils';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  P38TableShell,
+} from '@/components/ui/table';
+import { P38MobileLineList, P38MobileLine } from '@/components/ui/p38-mobile-line';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : 'N/A';
 const fmtData = (d) => d ? formatarSoData(d) : '-';
 
@@ -85,7 +95,7 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-background border-0 p-0">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card p-4 md:p-6 border-b border-border/40">
