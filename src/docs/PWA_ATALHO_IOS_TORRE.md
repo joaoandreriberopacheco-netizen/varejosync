@@ -25,3 +25,4 @@ Usar a Torre de Controle no iOS sem depender de Web Share Target, com base em co
 
 - Se a permissão de clipboard estiver bloqueada, a Torre exibe mensagem e mantém o utilizador na mesma etapa.
 - O share target nativo (manifest + service worker) continua ativo para navegadores/plataformas compatíveis.
+- **Android / partilhar PDF para o P38:** o service worker tem de estar activo em `p38.base44.app` (não no preview Base44). Se vir "Method Not Allowed", abra o app uma vez, actualize o PWA e tente de novo; o fallback é **Selecionar arquivo** ou **Colar**.

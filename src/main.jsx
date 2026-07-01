@@ -5,6 +5,7 @@ import '@/index.css'
 import { installMobileFocusPolicy } from '@/lib/focusPolicy'
 import { uppercaseInputValue } from '@/lib/uppercaseInputHandlers'
 import { installChunkErrorHandlers, reloadOnceOnChunkError } from '@/lib/lazyPage'
+import { shouldRegisterServiceWorker } from '@/lib/pwaServiceWorkerEnv'
 
 // Tema antes da primeira pintura (splash, login, etc.)
 try {
@@ -33,19 +34,11 @@ document.addEventListener('blur', (e) => uppercaseInputValue(e.target), true);
 installMobileFocusPolicy();
 installChunkErrorHandlers();
 
-/** Remove SW antigo no preview/dev (cache de /src/*.jsx quebrava HMR). */
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  const host = window.location.hostname;
-  const isPreviewOrDev =
-    host === 'localhost' ||
-    host === '127.0.0.1' ||
-    host.includes('base44.app') ||
-    window.location.port === '5173';
-  if (isPreviewOrDev) {
-    navigator.serviceWorker.getRegistrations().then((regs) => {
-      regs.forEach((reg) => reg.unregister());
-    }).catch(() => {});
-  }
+/** Remove SW antigo no preview/dev (cache de /src/*.jsx quebrava HMR). Produção p38.base44.app mantém SW. */
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator && !shouldRegisterServiceWorker()) {
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((reg) => reg.unregister());
+  }).catch(() => {});
 }
 
 if (typeof window !== 'undefined') {
