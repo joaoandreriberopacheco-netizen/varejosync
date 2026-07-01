@@ -24,6 +24,25 @@ const DESC_LINE_LEAD = 4.5;
 const COL_HDR_BLOCK = 9;
 const TABLE_TOP_CONTINUATION = 14;
 
+/** Espelha `RelatorioMargem.jsx`: seta à esquerda; pais e solteiros no mesmo alinhamento. */
+const INDENT_GROUP_MM = 3.7;
+const CHEVRON_SLOT_MM = 3.7;
+const CHEVRON_GAP_MM = 1.6;
+const CHEVRON_PULL_MM = CHEVRON_SLOT_MM + CHEVRON_GAP_MM;
+
+function marginDescTextStartMm(level = 1) {
+  return CHEVRON_PULL_MM + Math.max(0, (level ?? 1) - 1) * INDENT_GROUP_MM;
+}
+
+function marginDescChevronLeftMm(textStartMm) {
+  return Math.max(0, textStartMm - CHEVRON_PULL_MM);
+}
+
+function getMarginRowTier(treeRow) {
+  if (treeRow?.type === 'group') return 'pai';
+  return (treeRow?.level ?? 1) <= 1 ? 'solteiro' : 'filho';
+}
+
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtPct = (n) => `${(n ?? 0).toFixed(1)}%`;
 const safe = (text) => normalizePdfText(text);
@@ -80,8 +99,8 @@ function linhaMargemPdf(dataRow, { isGroup = false } = {}) {
   };
 }
 
-function splitDescriptionLines(doc, pdfFontFamily, text, maxW) {
-  doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+function splitDescriptionLines(doc, pdfFontFamily, text, maxW, fontStyle = PDF_FONT_NORMAL) {
+  doc.setFont(pdfFontFamily, fontStyle);
   doc.setFontSize(FONT.row);
   const lines = doc.splitTextToSize(safe(text), maxW);
   return lines.length ? lines : [''];
@@ -132,8 +151,6 @@ async function generateRelatorioMargemEnxutoPdf(payload = {}) {
   const ROW_GAP = 1.15;
   const ROW_STEP = ROW_H + ROW_GAP;
   const BASELINE_RATIO = 0.72;
-  const GROUP_DESC_INDENT = 1.8;
-  const LEVEL_DESC_STEP = 3.2;
   let y = 16;
   let dividerStartY = 0;
   let dividerStartPage = 1;
@@ -195,7 +212,8 @@ async function generateRelatorioMargemEnxutoPdf(payload = {}) {
     }
   };
 
-  const descMaxW = (descX = X.desc) => Math.max(18, descEnd - descX - 1);
+  const descMaxW = (descX = X.desc, reserveBadgeMm = 0) =>
+    Math.max(18, descEnd - descX - 1 - reserveBadgeMm);
 
   const rowBaselines = (drawY, lineCount, extraH) => {
     const cellH = ROW_H + extraH;
@@ -226,14 +244,56 @@ async function generateRelatorioMargemEnxutoPdf(payload = {}) {
     doc.text(moedaSemSimbolo(vals.lucro), X.lucro, baselineY, { align: 'right' });
   };
 
-  const descXForLevel = (level = 1, { isGroup = false } = {}) => {
-    const base = isGroup ? GROUP_DESC_INDENT : GROUP_DESC_INDENT + LEVEL_DESC_STEP;
-    return X.desc + base + Math.max(0, level - 1) * LEVEL_DESC_STEP;
+  const drawCountBadge = (badgeX, baselineY, count) => {
+    const label = String(count ?? 0);
+    doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+    doc.setFontSize(FONT.row - 1.6);
+    const textW = doc.getTextWidth(label);
+    const padX = 1.4;
+    const badgeW = textW + padX * 2;
+    const badgeH = 3.4;
+    const badgeY = baselineY - badgeH * 0.72;
+    strokeLine(badgeX, badgeY, badgeX + badgeW, badgeY, ENXUTO.line, ENXUTO_LINE_W);
+    strokeLine(badgeX, badgeY + badgeH, badgeX + badgeW, badgeY + badgeH, ENXUTO.line, ENXUTO_LINE_W);
+    strokeLine(badgeX, badgeY, badgeX, badgeY + badgeH, ENXUTO.line, ENXUTO_LINE_W);
+    strokeLine(badgeX + badgeW, badgeY, badgeX + badgeW, badgeY + badgeH, ENXUTO.line, ENXUTO_LINE_W);
+    doc.setTextColor(...ENXUTO.muted);
+    doc.text(label, badgeX + badgeW / 2, baselineY - 0.15, { align: 'center' });
+    return badgeW;
   };
 
-  const drawDataRow = (y0, descricao, dataRow, { isGroup = false, level = 1, showMetrics = true, boldDesc = false } = {}) => {
-    const descX = descXForLevel(level, { isGroup });
-    const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW(descX));
+  const drawChevron = (chevronX, baselineY, expanded = false) => {
+    doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+    doc.setFontSize(FONT.row - 0.8);
+    doc.setTextColor(...ENXUTO.muted);
+    doc.text(expanded ? 'v' : '>', chevronX + CHEVRON_SLOT_MM * 0.42, baselineY);
+  };
+
+  const descStyleForTier = (tier) => {
+    if (tier === 'filho') {
+      return { font: PDF_FONT_NORMAL, color: ENXUTO.muted };
+    }
+    return { font: PDF_FONT_BOLD, color: ENXUTO.black };
+  };
+
+  const drawDataRow = (
+    y0,
+    descricao,
+    dataRow,
+    {
+      level = 1,
+      showMetrics = true,
+      tier = 'solteiro',
+      showChevron = false,
+      expanded = false,
+      count = null,
+    } = {}
+  ) => {
+    const textStartMm = marginDescTextStartMm(level);
+    const descX = X.desc + textStartMm;
+    const reserveBadgeMm = count != null ? 8 : 0;
+    const { font, color } = descStyleForTier(tier);
+    const descLines = splitDescriptionLines(doc, pdfFontFamily, descricao, descMaxW(descX, reserveBadgeMm), font);
     const lineCount = descLines.length;
     const extraH = (lineCount - 1) * DESC_LINE_LEAD;
     const rowStep = ROW_STEP + extraH;
@@ -243,16 +303,27 @@ async function generateRelatorioMargemEnxutoPdf(payload = {}) {
     const { valuesBaseline, descFirstBaseline } = rowBaselines(drawY, lineCount, extraH);
 
     if (showMetrics) {
-      const vals = linhaMargemPdf(dataRow, { isGroup });
+      const vals = linhaMargemPdf(dataRow, { isGroup: tier === 'pai' });
       drawValueColumns(valuesBaseline, vals);
     }
 
-    doc.setFont(pdfFontFamily, boldDesc || isGroup ? PDF_FONT_BOLD : PDF_FONT_NORMAL);
+    if (showChevron) {
+      const chevronX = X.desc + marginDescChevronLeftMm(textStartMm);
+      drawChevron(chevronX, descFirstBaseline, expanded);
+    }
+
+    doc.setFont(pdfFontFamily, font);
     doc.setFontSize(FONT.row);
-    doc.setTextColor(...ENXUTO.black);
+    doc.setTextColor(...color);
     for (let i = 0; i < lineCount; i += 1) {
       doc.text(descLines[i], descX, descFirstBaseline + i * DESC_LINE_LEAD);
     }
+
+    if (count != null && lineCount > 0) {
+      const firstLineW = doc.getTextWidth(descLines[0]);
+      drawCountBadge(descX + firstLineW + 1.6, descFirstBaseline, count);
+    }
+
     drawRowSeparator(drawY + rowStep - ROW_GAP * 0.35);
     return drawY + rowStep;
   };
@@ -302,24 +373,25 @@ async function generateRelatorioMargemEnxutoPdf(payload = {}) {
 
     for (const treeRow of displayRows) {
       if (treeRow.type === 'group') {
-        const label = `${String(treeRow.label || '').toUpperCase()} (${treeRow.count ?? 0})`;
+        const label = String(treeRow.label || '').toUpperCase();
         y = drawDataRow(y, label, treeRow, {
-          isGroup: true,
           level: treeRow.level ?? 1,
           showMetrics: treeRow.showMetrics !== false,
-          boldDesc: true,
+          tier: 'pai',
+          showChevron: !treeRow.isLeafGroup,
+          expanded: treeRow.showMetrics === false,
+          count: treeRow.count ?? null,
         });
         continue;
       }
       if (treeRow.type !== 'produto') continue;
       const item = treeRow.item || {};
-      const nome = item.codigo_interno
-        ? `${item.nome || '—'}  ${item.codigo_interno}`
-        : item.nome || '—';
+      const nome = String(item.nome || '—').toUpperCase();
+      const tier = getMarginRowTier(treeRow);
       y = drawDataRow(y, nome, item, {
-        isGroup: false,
         level: treeRow.level ?? 1,
         showMetrics: true,
+        tier,
       });
     }
 
@@ -350,7 +422,7 @@ async function generateRelatorioMargemEnxutoPdf(payload = {}) {
   );
 
   const pdfBytes = doc.output('arraybuffer');
-  return { data: pdfBytes, version: 'enxuto_margem_vendas_a4_v1' };
+  return { data: pdfBytes, version: 'enxuto_margem_vendas_a4_v2_desc_hierarquia' };
 }
 
 export { generateRelatorioMargemEnxutoPdf };
