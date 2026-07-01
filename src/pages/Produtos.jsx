@@ -170,6 +170,7 @@ function ProdutosPageContent() {
   const [isPreviewCustosDialogOpen, setIsPreviewCustosDialogOpen] = useState(false);
   const [gerandoRelatorioEstoque, setGerandoRelatorioEstoque] = useState(false);
   const [gerandoRelatorioVendas, setGerandoRelatorioVendas] = useState(false);
+  const [gerandoRelatorioVendasV2, setGerandoRelatorioVendasV2] = useState(false);
   const [gerandoRelatorioIep, setGerandoRelatorioIep] = useState(false);
   const relatorioEstoqueAutoRef = useRef(false);
   const relatorioVendasAutoRef = useRef(false);
@@ -1210,6 +1211,62 @@ function ProdutosPageContent() {
     }
   }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, queryClient, toast]);
 
+  const handleGerarRelatorioVendasV2 = useCallback(async () => {
+    setGerandoRelatorioVendasV2(true);
+    toast({
+      title: 'Gerando relatório de vendas v2 (beta)...',
+      description: '30 e 60 dias no mesmo PDF, com preço e MKUP',
+    });
+    try {
+      const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
+      const hasCategorizedProducts = filteredProdutos.some(
+        (p) => String(p?.categoria_nome || '').trim(),
+      );
+      const groupPdfByCategory = groupTreeByCategory || hasCategorizedProducts;
+
+      let pedidos = queryClient.getQueryData(p38Keys.pedidosVenda90d());
+      if (!Array.isArray(pedidos)) {
+        toast({ title: 'Buscando vendas dos últimos 90 dias...' });
+        const { fetchPedidosVenda90d } = await import('@/lib/fetchPedidosVenda90d');
+        pedidos = await fetchPedidosVenda90d();
+        queryClient.setQueryData(p38Keys.pedidosVenda90d(), pedidos);
+      }
+
+      toast({ title: 'Montando PDF de vendas v2...' });
+      const { generateRelatorioCatalogoVendasPdfV2 } = await import(
+        '@/lib/relatorioCatalogoVendasPdf/generateRelatorioCatalogoVendasPdfV2.js'
+      );
+      const resposta = await generateRelatorioCatalogoVendasPdfV2({
+        produtos: filteredProdutos,
+        pedidos,
+        filters_summary: filtersSummary,
+        layout_mode: viewMode === 'plana' ? 'plana' : 'tree',
+        tree_level: treeLevel,
+        sort_order: sortOrder,
+        group_by_category: groupPdfByCategory,
+        expanded_keys: [...catalogExpandedKeysRef.current],
+      });
+
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      downloadBlob(blob, `RelatorioVendas_v2_${dataHoje()}.pdf`);
+
+      toast({
+        title: 'Relatório de vendas v2 gerado',
+        description: resposta?.version ? `Layout ${resposta.version}` : undefined,
+      });
+    } catch (error) {
+      const msg = error?.message || String(error);
+      toast({
+        title: 'Erro ao gerar relatório de vendas v2',
+        description: msg.length > 300 ? `${msg.slice(0, 300)}…` : msg,
+        variant: 'destructive',
+      });
+      console.error(error);
+    } finally {
+      setGerandoRelatorioVendasV2(false);
+    }
+  }, [filteredProdutos, filters, categorias, fornecedores, viewMode, treeLevel, sortOrder, groupTreeByCategory, queryClient, toast]);
+
   const handleGerarRelatorioIep = useCallback(async () => {
     setGerandoRelatorioIep(true);
     toast({ title: 'Gerando relatório Curva ABC / IEP...' });
@@ -1317,6 +1374,8 @@ function ProdutosPageContent() {
     gerandoRelatorioEstoque,
     onGerarRelatorioVendas: handleGerarRelatorioVendas,
     gerandoRelatorioVendas,
+    onGerarRelatorioVendasV2: handleGerarRelatorioVendasV2,
+    gerandoRelatorioVendasV2,
     onGerarRelatorioIep: handleGerarRelatorioIep,
     gerandoRelatorioIep,
     onOpenMassTag: () => setIsMassTagOpen(true),

@@ -43,6 +43,8 @@ export default function ProdutosHeader({
   gerandoRelatorioEstoque = false,
   onGerarRelatorioVendas,
   gerandoRelatorioVendas = false,
+  onGerarRelatorioVendasV2,
+  gerandoRelatorioVendasV2 = false,
   onGerarRelatorioIep,
   gerandoRelatorioIep = false,
   onOpenMassTag,
@@ -85,9 +87,9 @@ export default function ProdutosHeader({
                   size="icon"
                   className="h-9 w-9 flex-shrink-0"
                   title="Relatórios do catálogo"
-                  disabled={gerandoRelatorioEstoque || gerandoRelatorioVendas || gerandoRelatorioIep}
+                  disabled={gerandoRelatorioEstoque || gerandoRelatorioVendas || gerandoRelatorioVendasV2 || gerandoRelatorioIep}
                 >
-                  {gerandoRelatorioEstoque || gerandoRelatorioVendas || gerandoRelatorioIep ? (
+                  {gerandoRelatorioEstoque || gerandoRelatorioVendas || gerandoRelatorioVendasV2 || gerandoRelatorioIep ? (
                     <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                   ) : (
                     <BarChart3 className="w-4 h-4 p38-text-accent" />
@@ -130,6 +132,18 @@ export default function ProdutosHeader({
                 >
                   <TrendingUp className="w-4 h-4 mr-2 p38-text-accent" />
                   Desempenho — 60 dias
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.setTimeout(() => onGerarRelatorioVendasV2?.(), 0);
+                  }}
+                  className={cn(
+                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    gerandoRelatorioVendasV2 && 'pointer-events-none opacity-50',
+                  )}
+                >
+                  <TrendingUp className="w-4 h-4 mr-2 p38-text-accent" />
+                  Desempenho v2 (beta) — 30+60d
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {

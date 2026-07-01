@@ -153,3 +153,15 @@ export function filterProdutosComVendasNaJanela(produtos, velocityMap, window = 
     return produtoTeveVendaNaJanela(velocityMap[String(p.id)], w);
   });
 }
+
+/** Inclusão no relatório unificado 30+60d: vendeu em qualquer uma das janelas. */
+export function produtoTeveVenda30ou60d(velocity) {
+  return produtoTeveVendaNaJanela(velocity, '30d') || produtoTeveVendaNaJanela(velocity, '60d');
+}
+
+export function filterProdutosComVendas30ou60d(produtos, velocityMap) {
+  return (produtos || []).filter((p) => {
+    if (!p?.id) return false;
+    return produtoTeveVenda30ou60d(velocityMap[String(p.id)]);
+  });
+}
