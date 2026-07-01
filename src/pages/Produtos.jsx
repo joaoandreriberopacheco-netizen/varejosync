@@ -38,6 +38,10 @@ import {
   describeProdutoFilters,
   getCatalogProdutoEntryFilters,
 } from '@/lib/filterProdutos';
+import {
+  CATALOG_SALES_WINDOW_LABELS,
+  normalizeCatalogSalesWindow,
+} from '@/lib/catalogSalesVelocity';
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
 import {
@@ -1145,11 +1149,18 @@ function ProdutosPageContent() {
     catalogExpandedKeysRef.current = keys instanceof Set ? keys : new Set(keys || []);
   }, []);
 
-  const handleGerarRelatorioVendas = useCallback(async () => {
+  const handleGerarRelatorioVendas = useCallback(async (salesWindow = '60d') => {
+    const windowKey = normalizeCatalogSalesWindow(salesWindow);
     setGerandoRelatorioVendas(true);
-    toast({ title: 'Gerando relatório de vendas...' });
+    toast({
+      title: 'Gerando relatório de vendas...',
+      description: CATALOG_SALES_WINDOW_LABELS[windowKey],
+    });
     try {
-      const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
+      const catalogFilters = describeProdutoFilters(filters, { categorias, fornecedores });
+      const filtersSummary = [catalogFilters, CATALOG_SALES_WINDOW_LABELS[windowKey]]
+        .filter(Boolean)
+        .join(' · ');
       const hasCategorizedProducts = filteredProdutos.some(
         (p) => String(p?.categoria_nome || '').trim()
       );
@@ -1176,10 +1187,11 @@ function ProdutosPageContent() {
         sort_order: sortOrder,
         group_by_category: groupPdfByCategory,
         expanded_keys: [...catalogExpandedKeysRef.current],
+        sales_window: windowKey,
       });
 
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
-      downloadBlob(blob, `RelatorioVendas_${dataHoje()}.pdf`);
+      downloadBlob(blob, `RelatorioVendas_${windowKey}_${dataHoje()}.pdf`);
 
       toast({
         title: 'Relatório de vendas gerado',
@@ -1261,7 +1273,14 @@ function ProdutosPageContent() {
   useEffect(() => {
     if (relatorioVendasAutoRef.current) return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get('relatorioVendas') !== '1') return;
+    const relatorioVendasParam = params.get('relatorioVendas');
+    const salesWindow =
+      relatorioVendasParam === '30d'
+        ? '30d'
+        : relatorioVendasParam === '1' || relatorioVendasParam === '60d'
+          ? '60d'
+          : null;
+    if (!salesWindow) return;
     if (!produtos.length) return;
 
     relatorioVendasAutoRef.current = true;
@@ -1270,7 +1289,7 @@ function ProdutosPageContent() {
       ? `${window.location.pathname}?${params.toString()}`
       : window.location.pathname;
     window.history.replaceState({}, '', nextUrl);
-    handleGerarRelatorioVendas();
+    handleGerarRelatorioVendas(salesWindow);
   }, [produtos.length, handleGerarRelatorioVendas]);
 
   const produtosHeaderProps = {

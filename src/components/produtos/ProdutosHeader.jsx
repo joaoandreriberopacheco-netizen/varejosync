@@ -109,7 +109,7 @@ export default function ProdutosHeader({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    window.setTimeout(() => onGerarRelatorioVendas?.(), 0);
+                    window.setTimeout(() => onGerarRelatorioVendas?.('30d'), 0);
                   }}
                   className={cn(
                     'dark:text-foreground dark:hover:bg-primary/90 text-sm',
@@ -117,7 +117,19 @@ export default function ProdutosHeader({
                   )}
                 >
                   <TrendingUp className="w-4 h-4 mr-2 p38-text-accent" />
-                  Desempenho produtos
+                  Desempenho — 30 dias
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.setTimeout(() => onGerarRelatorioVendas?.('60d'), 0);
+                  }}
+                  className={cn(
+                    'dark:text-foreground dark:hover:bg-primary/90 text-sm',
+                    gerandoRelatorioVendas && 'pointer-events-none opacity-50',
+                  )}
+                >
+                  <TrendingUp className="w-4 h-4 mr-2 p38-text-accent" />
+                  Desempenho — 60 dias
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {

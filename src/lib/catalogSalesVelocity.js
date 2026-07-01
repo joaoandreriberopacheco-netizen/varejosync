@@ -125,3 +125,31 @@ export function aggregateCatalogSalesVelocity(skus = [], velocityMap = {}) {
 }
 
 export { DIAS_MEDIA };
+
+export const CATALOG_SALES_WINDOW_LABELS = {
+  '30d': 'vendas nos últimos 30 dias',
+  '60d': 'vendas nos últimos 60 dias',
+};
+
+export function normalizeCatalogSalesWindow(window) {
+  return window === '30d' ? '30d' : '60d';
+}
+
+export function getCatalogSalesQty(velocity, window = '60d') {
+  if (!velocity) return 0;
+  const w = normalizeCatalogSalesWindow(window);
+  return Number(w === '30d' ? velocity.qtd30 : velocity.qtd60) || 0;
+}
+
+/** Produto entrou no relatório só se teve quantidade vendida > 0 na janela. */
+export function produtoTeveVendaNaJanela(velocity, window = '60d') {
+  return getCatalogSalesQty(velocity, window) > 0;
+}
+
+export function filterProdutosComVendasNaJanela(produtos, velocityMap, window = '60d') {
+  const w = normalizeCatalogSalesWindow(window);
+  return (produtos || []).filter((p) => {
+    if (!p?.id) return false;
+    return produtoTeveVendaNaJanela(velocityMap[String(p.id)], w);
+  });
+}

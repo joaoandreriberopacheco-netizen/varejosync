@@ -15,6 +15,9 @@ import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import {
   aggregateCatalogSalesVelocity,
   buildCatalogSalesVelocityMap,
+  CATALOG_SALES_WINDOW_LABELS,
+  filterProdutosComVendasNaJanela,
+  normalizeCatalogSalesWindow,
 } from '@/lib/catalogSalesVelocity';
 import { formatEstoqueApresentacao, getCatalogoComercialView } from '@/lib/productUnits';
 
@@ -102,17 +105,20 @@ export function prepareCatalogSalesReportDocument({
   sortOrder = 'az',
   groupByCategory = false,
   expandedKeys: expandedKeysFromCatalog = null,
+  salesWindow = '60d',
 } = {}) {
   const list = (produtos || []).filter((p) => p && typeof p === 'object');
   const velocityMap = buildCatalogSalesVelocityMap(list, pedidos);
+  const windowKey = normalizeCatalogSalesWindow(salesWindow);
+  const comVenda = filterProdutosComVendasNaJanela(list, velocityMap, windowKey);
 
   const isFlat = layoutMode === 'plana';
   let rows;
 
   if (isFlat) {
-    rows = prepareFlatRows(list, velocityMap, sortOrder);
+    rows = prepareFlatRows(comVenda, velocityMap, sortOrder);
   } else {
-    const tree = groupByCategory ? buildCategoryTree(list) : buildTree(list);
+    const tree = groupByCategory ? buildCategoryTree(comVenda) : buildTree(comVenda);
     const expandedKeys = resolveExpandedKeysForCatalogView(tree, treeLevel, expandedKeysFromCatalog);
     rows = mergeAdjacentDuplicateGroupHeaders(
       flattenTree(tree, expandedKeys, '', 0, sortOrder, { collapseSoloSkuBranches: true }),
@@ -124,7 +130,9 @@ export function prepareCatalogSalesReportDocument({
     mode: isFlat ? 'plana' : groupByCategory ? 'categoria' : 'tree',
     groupByCategory: Boolean(groupByCategory),
     treeLevel: Number(treeLevel) || 1,
-    produtos: list,
+    salesWindow: windowKey,
+    salesWindowLabel: CATALOG_SALES_WINDOW_LABELS[windowKey],
+    produtos: comVenda,
     velocityMap,
     rows,
   };
@@ -226,7 +234,7 @@ function treeLevelLabel(treeLevel) {
 }
 
 /** Identificador visível no PDF/toast — confirma que o bundle novo carregou. */
-export const CATALOG_SALES_PDF_BUILD = 'enxuto_vendas_compra_custo_v11';
+export const CATALOG_SALES_PDF_BUILD = 'enxuto_vendas_compra_custo_v12';
 
 export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   const {
@@ -238,6 +246,7 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     sort_order: sortOrder = "az",
     group_by_category: groupByCategory = false,
     expanded_keys: expandedKeysFromCatalog = null,
+    sales_window: salesWindow = "60d",
     generated_at: generatedAt = (/* @__PURE__ */ new Date()).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })
   } = payload;
   const documento = prepareCatalogSalesReportDocument({
@@ -247,7 +256,8 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
     treeLevel: Number(treeLevel) || 1,
     sortOrder,
     groupByCategory: Boolean(groupByCategory),
-    expandedKeys: Array.isArray(expandedKeysFromCatalog) ? expandedKeysFromCatalog : null
+    expandedKeys: Array.isArray(expandedKeysFromCatalog) ? expandedKeysFromCatalog : null,
+    salesWindow,
   });
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pdfFontFamily = await registerJsPdfDin1451Fonts(doc);
@@ -461,8 +471,12 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   doc.text(modeLabel, M, y);
   y += 4.2;
   doc.setFontSize(8.8);
-  doc.text(safe(`${produtos?.length ?? 0} SKU(s)`), M, y);
+  doc.text(safe(`${documento.produtos?.length ?? 0} SKU(s) com venda`), M, y);
   y += 4.2;
+  if (documento.salesWindowLabel) {
+    doc.text(safe(`Inclusão: ${documento.salesWindowLabel}`), M, y);
+    y += 4.2;
+  }
   if (filtersSummary) {
     doc.text(doc.splitTextToSize(safe(filtersSummary), CW)[0] || "-", M, y);
     y += 4.2;
@@ -470,12 +484,12 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   doc.setFontSize(8.2);
   doc.text(`Gerado em ${generatedAt}`, M, y);
   y += 5;
-  const totalV30 = Object.values(documento.velocityMap || {}).reduce(
-    (s, v) => s + (Number(v.qtd30) || 0),
+  const totalV30 = (documento.produtos || []).reduce(
+    (s, p) => s + (Number(documento.velocityMap?.[String(p.id)]?.qtd30) || 0),
     0
   );
-  const totalV60 = Object.values(documento.velocityMap || {}).reduce(
-    (s, v) => s + (Number(v.qtd60) || 0),
+  const totalV60 = (documento.produtos || []).reduce(
+    (s, p) => s + (Number(documento.velocityMap?.[String(p.id)]?.qtd60) || 0),
     0
   );
   doc.setFontSize(FONT.kpi);
@@ -486,7 +500,15 @@ export async function generateRelatorioCatalogoVendasPdf(payload = {}) {
   y += 8;
   if (!documento.rows?.length) {
     doc.setTextColor(...ENXUTO.muted);
-    doc.text("Nenhum produto encontrado com os filtros actuais.", M, y);
+    doc.text(
+      safe(
+        documento.salesWindowLabel
+          ? `Nenhum produto com ${documento.salesWindowLabel} nos filtros actuais.`
+          : 'Nenhum produto encontrado com os filtros actuais.',
+      ),
+      M,
+      y,
+    );
   } else {
     dividerStartPage = doc.internal.getNumberOfPages();
     dividerStartY = y;
