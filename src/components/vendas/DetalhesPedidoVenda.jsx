@@ -37,6 +37,7 @@ import {
   P38TableShell,
 } from '@/components/ui/table';
 import { P38MobileLineList, P38MobileLine } from '@/components/ui/p38-mobile-line';
+import { formatCommercialQuantity, getUnidadeMedidaItemPedidoVenda } from '@/lib/productUnits';
 const fmtDtHora = (d) => d ? formatarDataHora(d) : 'N/A';
 const fmtData = (d) => d ? formatarSoData(d) : '-';
 
@@ -73,6 +74,14 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
 
   const formatValor = (valor) => {
     return `R$ ${(Math.round((valor || 0) * 100) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const formatItemQuantidade = (item) => {
+    const unidade = getUnidadeMedidaItemPedidoVenda(item);
+    return {
+      unidade,
+      quantidade: formatCommercialQuantity(item.quantidade, unidade),
+    };
   };
 
   const getStatusBadge = (status) => {
@@ -256,17 +265,20 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                     </TableHeader>
                     <TableBody>
                       {pedido.itens && pedido.itens.length > 0 ? (
-                        pedido.itens.map((item, idx) => (
+                        pedido.itens.map((item, idx) => {
+                          const { quantidade, unidade } = formatItemQuantidade(item);
+                          return (
                           <TableRow key={idx}>
                             <TableCell>
                               <div className="font-medium">{item.produto_nome}</div>
                               <div className="text-xs text-muted-foreground font-mono">{item.produto_id?.substring(0, 8) || '-'}</div>
                             </TableCell>
-                            <TableCell className="text-right">{item.quantidade}</TableCell>
+                            <TableCell className="text-right">{quantidade} {unidade}</TableCell>
                             <TableCell className="text-right">{formatValor(item.preco_unitario_praticado)}</TableCell>
                             <TableCell className="text-right font-semibold">{formatValor(item.total)}</TableCell>
                           </TableRow>
-                        ))
+                          );
+                        })
                       ) : (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
@@ -281,16 +293,19 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                 {/* Mobile List */}
                 {pedido.itens && pedido.itens.length > 0 ? (
                   <P38MobileLineList>
-                    {pedido.itens.map((item, idx) => (
+                    {pedido.itens.map((item, idx) => {
+                      const { quantidade, unidade } = formatItemQuantidade(item);
+                      return (
                       <P38MobileLine
                         key={idx}
                         striped={idx % 2 === 1}
                         title={item.produto_nome}
                         subtitle={item.produto_id?.substring(0, 8) || '-'}
-                        meta={<span>{item.quantidade} un × {formatValor(item.preco_unitario_praticado)}</span>}
+                        meta={<span>{quantidade} {unidade} × {formatValor(item.preco_unitario_praticado)}</span>}
                         value={formatValor(item.total)}
                       />
-                    ))}
+                      );
+                    })}
                   </P38MobileLineList>
                 ) : (
                   <div className="desktop-layout:hidden p-8 text-center text-muted-foreground">
@@ -451,11 +466,13 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                   <h3 className="text-sm font-medium text-foreground/90 uppercase tracking-wide">Status de Entrega</h3>
                 </div>
                 <div className="space-y-3">
-                  {pedido.itens && pedido.itens.map((item, idx) => (
+                  {pedido.itens && pedido.itens.map((item, idx) => {
+                    const { quantidade, unidade } = formatItemQuantidade(item);
+                    return (
                   <div key={idx} className="bg-card p-4 md:p-4 rounded-xl flex items-center justify-between min-h-[64px]">
                     <div className="flex-1">
                       <div className="font-medium text-foreground">{item.produto_nome}</div>
-                      <div className="text-sm text-muted-foreground">Qtd: {item.quantidade}</div>
+                      <div className="text-sm text-muted-foreground">Qtd: {quantidade} {unidade}</div>
                     </div>
                     {pedido.status === 'Finalizado' ? (
                       <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 gap-1 px-3 py-1.5">
@@ -468,7 +485,8 @@ export default function DetalhesPedidoVenda({ pedido, isOpen, onClose }) {
                       </Badge>
                     )}
                   </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
 
