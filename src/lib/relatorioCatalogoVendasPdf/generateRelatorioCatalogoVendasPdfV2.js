@@ -31,6 +31,7 @@ const PDF_FONT_NORMAL = 'normal';
 const ENXUTO_LINE_W = 0.12;
 const ROW_RULE_W = 0.07;
 const SUBTLE_DIVIDER_W = 0.07;
+const QUANT_PIPE_W = 0.04;
 const ENXUTO = {
   black: [0, 0, 0],
   muted: [72, 72, 72],
@@ -48,7 +49,8 @@ const FONT = {
 const DESC_LINE_LEAD = 4.5;
 const COL_HDR_BLOCK = 9;
 const TABLE_TOP_CONTINUATION = 14;
-const LEVEL_INDENT = 4.2;
+const LEVEL_INDENT = 2.8;
+const DESC_COL_SHARE = 0.38;
 const VALUE_COL_KEYS = ['vCompra', 'custo', 'preco', 'markup', 'v30', 'v60'];
 
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -204,7 +206,7 @@ export function buildUniformSalesPdfColumns({
   valueColCount,
   gutter,
 }) {
-  const descEndMin = descStart + (tableRight - descStart) * 0.3;
+  const descEndMin = descStart + (tableRight - descStart) * DESC_COL_SHARE;
   const numericStart = descEndMin + gutter;
   const numericSpan = tableRight - numericStart;
   const valueColWidth = (numericSpan - quantColWidth - gutter * valueColCount) / valueColCount;
@@ -243,7 +245,7 @@ export function buildUniformSalesPdfColumns({
   };
 }
 
-export const CATALOG_SALES_PDF_V2_BUILD = 'enxuto_vendas_preco_mkup_v3';
+export const CATALOG_SALES_PDF_V2_BUILD = 'enxuto_vendas_preco_mkup_v4';
 
 export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
   const {
@@ -319,7 +321,7 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
   const drawQuantPipe = (baselineY, rowTop, rowBottom) => {
     const tickTop = rowTop != null ? rowTop + 0.6 : baselineY - FONT.row * 0.35;
     const tickBottom = rowBottom != null ? rowBottom - 0.6 : baselineY + FONT.row * 0.1;
-    strokeLine(X.quantPipe, tickTop, X.quantPipe, tickBottom, ENXUTO.line, SUBTLE_DIVIDER_W);
+    strokeLine(X.quantPipe, tickTop, X.quantPipe, tickBottom, ENXUTO.subtleDivider, QUANT_PIPE_W);
     doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
     doc.setFontSize(FONT.row);
     doc.setTextColor(...ENXUTO.black);
@@ -358,7 +360,7 @@ export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
     doc.text('s/custo', X.markup, line2, { align: 'right' });
     doc.text('30 dias', X.v30, line2, { align: 'right' });
     doc.text('60 dias', X.v60, line2, { align: 'right' });
-    strokeLine(X.quantPipe, hdrTop, X.quantPipe, hdrBottom, ENXUTO.line, SUBTLE_DIVIDER_W);
+    strokeLine(X.quantPipe, hdrTop, X.quantPipe, hdrBottom, ENXUTO.subtleDivider, QUANT_PIPE_W);
   };
   const beginTablePage = () => {
     drawColumnHeaders(y);
