@@ -11,7 +11,7 @@ import {
   flattenTree,
   mergeAdjacentDuplicateGroupHeaders,
   TREE_GRID_EXPAND_ALL_LEVEL,
-} from '@/lib/catalogTreeCore';
+} from '@/components/produtos/treegrid/useTreeGrid';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
 import {
   aggregateCatalogSalesVelocity,
@@ -180,7 +180,7 @@ export function prepareCatalogSalesReportDocumentV2({
     const tree = groupByCategory ? buildCategoryTree(comVenda) : buildTree(comVenda);
     const expandedKeys = resolveExpandedKeysForCatalogView(tree, treeLevel, expandedKeysFromCatalog);
     rows = mergeAdjacentDuplicateGroupHeaders(
-      flattenTree(tree, expandedKeys, '', 0, sortOrder, { collapseSoloSkuBranches: false }),
+      flattenTree(tree, expandedKeys, '', 0, sortOrder),
     );
     rows = enrichTreeRows(rows, velocityMap);
   }
@@ -243,7 +243,7 @@ export function buildUniformSalesPdfColumns({
   };
 }
 
-export const CATALOG_SALES_PDF_V2_BUILD = 'enxuto_vendas_preco_mkup_v2';
+export const CATALOG_SALES_PDF_V2_BUILD = 'enxuto_vendas_preco_mkup_v3';
 
 export async function generateRelatorioCatalogoVendasPdfV2(payload = {}) {
   const {
