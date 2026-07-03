@@ -60,6 +60,24 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "Novo compromisso",
+      "short_name": "Agenda",
+      "description": "Cadastrar evento, compromisso ou tarefa",
+      "url": "/Notificacoes?novo=1",
+      "icons": [
+        {
+          "src": "/brand/shortcut-novo-compromisso-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "src": "/brand/shortcut-novo-compromisso-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "share_target": {

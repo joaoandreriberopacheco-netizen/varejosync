@@ -31,6 +31,10 @@ import {
   formatAgendaDate,
   saveAgendaItem,
 } from '@/lib/agenda/agendaService';
+import {
+  limparParamsNovoCompromissoAgenda,
+  parseNovoCompromissoAgendaParams,
+} from '@/lib/agenda/agendaShortcutBridge';
 
 const FILTERS = [
   { id: 'todos', label: 'Todos' },
@@ -67,6 +71,15 @@ export default function NotificacoesPage() {
   useEffect(() => {
     loadAgenda();
   }, [loadAgenda]);
+
+  useEffect(() => {
+    const draft = parseNovoCompromissoAgendaParams();
+    if (!draft) return;
+
+    setEditingItem(Object.keys(draft).length ? draft : null);
+    setDialogOpen(true);
+    limparParamsNovoCompromissoAgenda();
+  }, []);
 
   const filteredItems = useMemo(() => filterAgendaFeed(items, filter), [items, filter]);
   const pendingCount = useMemo(() => countPendingFeed(items), [items]);
