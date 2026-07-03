@@ -425,6 +425,7 @@ export const ENTITY_TO_TABLE = {
 
   FolhaPrevisaoModelo: { table: 'folha_previsao_modelo', mode: 'jsonb' },
   FolhaPrevisaoCompetencia: { table: 'folha_previsao_competencia', mode: 'jsonb' },
+  AgendaItem: { table: 'agenda_item', mode: 'jsonb' },
 };
 
 /**

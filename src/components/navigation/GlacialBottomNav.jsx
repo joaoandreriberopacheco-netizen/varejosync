@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { 
   Home, 
   Search, 
-  Bell, 
+  CalendarDays, 
   User, 
   Menu as MenuIcon 
 } from 'lucide-react';
@@ -18,7 +18,7 @@ export default function GlacialBottomNav({ onMenuClick, onProfileClick, currentP
     { id: 'menu', icon: MenuIcon, label: 'Menu', action: 'menu' },
     { id: 'home', icon: Home, label: 'Início', page: 'Home', action: null },
     { id: 'search', icon: Search, label: 'Busca', action: 'search' },
-    { id: 'notifications', icon: Bell, label: 'Avisos', page: 'Notificacoes', action: null },
+    { id: 'notifications', icon: CalendarDays, label: 'Agenda', page: 'Notificacoes', action: null },
     { id: 'profile', icon: User, label: 'Perfil', action: 'profile' },
   ];
 
