@@ -24,6 +24,7 @@ export default function ProdutosHeader({
   filters,
   categorias,
   fornecedores,
+  unidadesVitrine = [],
   activeFilterCount,
   isSummaryFiltered = false,
   isFilterOpen,
@@ -393,6 +394,22 @@ export default function ProdutosHeader({
             </div>
 
             <div className="hidden desktop-layout:block">
+              <Select value={filters.unidadeVitrine || 'all'} onValueChange={(v) => handleFilterChange('unidadeVitrine', v)}>
+                <SelectTrigger className="bg-muted border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg">
+                  <SelectValue placeholder="Unidade vitrine" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-muted dark:border-border/40">
+                  <SelectItem value="all" className="text-sm md:text-xs">Todas as unidades</SelectItem>
+                  {unidadesVitrine.map((sigla) => (
+                    <SelectItem key={sigla} value={sigla} className="text-sm md:text-xs">
+                      {sigla}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="hidden desktop-layout:block">
               <Select value={filters.statusEstoque} onValueChange={v => handleFilterChange('statusEstoque', v)}>
                 <SelectTrigger className="bg-muted border-none h-10 md:h-9 text-sm md:text-xs w-full rounded-xl md:rounded-lg">
                   <SelectValue placeholder="Status do estoque" />
@@ -538,6 +555,7 @@ export default function ProdutosHeader({
           filters={filters}
           categorias={categorias}
           fornecedores={fornecedores}
+          unidadesVitrine={unidadesVitrine}
           activeFilterCount={activeFilterCount}
           handleFilterChange={handleFilterChange}
           setFilters={setFilters}

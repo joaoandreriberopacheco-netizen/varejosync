@@ -79,6 +79,7 @@ export default function ProdutosMobileFiltersSheet({
   filters,
   categorias,
   fornecedores,
+  unidadesVitrine = [],
   activeFilterCount,
   handleFilterChange,
   setFilters,
@@ -168,7 +169,7 @@ export default function ProdutosMobileFiltersSheet({
 
           <MobileFilterSection
             title="Origem"
-            hint="Categoria de cadastro e fornecedor principal."
+            hint="Categoria de cadastro, fornecedor e unidade de vitrine (exibição no catálogo)."
           >
             <div className="space-y-2">
               <Select value={filters.categoria} onValueChange={(v) => handleFilterChange('categoria', v)}>
@@ -191,6 +192,20 @@ export default function ProdutosMobileFiltersSheet({
                   <SelectItem value="all" className="text-xs">Todos os fornecedores</SelectItem>
                   {fornecedores.map((f) => (
                     <SelectItem key={f.id} value={f.id} className="text-xs">{f.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filters.unidadeVitrine || 'all'} onValueChange={(v) => handleFilterChange('unidadeVitrine', v)}>
+                <SelectTrigger className={MOBILE_FILTER_SELECT}>
+                  <SelectValue placeholder="Unidade vitrine" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-muted dark:border-border/40">
+                  <SelectItem value="all" className="text-xs">Todas as unidades</SelectItem>
+                  {unidadesVitrine.map((sigla) => (
+                    <SelectItem key={sigla} value={sigla} className="text-xs">
+                      {sigla}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

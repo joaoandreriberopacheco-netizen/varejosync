@@ -15,6 +15,7 @@ import {
   CATALOG_NUMERIC_METRIC_LABELS,
 } from '@/lib/catalogNumericFilters';
 import { produtoMatchesAbcdFilter } from '@/lib/catalogAbcdEnrichment';
+import { getUnidadeExibicaoSigla } from '@/lib/productUnits';
 
 /** Filtro de quantidade do atalho «somente positivos» (estoque > 0). */
 export const CATALOG_SOMENTE_POSITIVOS_QUANTIDADE = {
@@ -43,6 +44,7 @@ export const DEFAULT_PRODUTO_FILTERS = {
   tag: '',
   cadastroIncompleto: 'all',
   ativoStatus: 'ativos',
+  unidadeVitrine: 'all',
   ...CATALOG_SOMENTE_POSITIVOS_QUANTIDADE,
   ...DEFAULT_CATALOG_METRIC_FILTER,
 };
@@ -99,6 +101,23 @@ export function produtoMatchesSearchTerm(produto, rawTerm, options = {}) {
   );
 }
 
+/** Siglas de vitrine presentes no catálogo (para o select de filtro). */
+export function collectCatalogVitrineUnits(produtos = []) {
+  const siglas = new Set();
+  for (const produto of produtos) {
+    if (!produto || typeof produto !== 'object') continue;
+    const sigla = getUnidadeExibicaoSigla(produto);
+    if (sigla) siglas.add(String(sigla).trim().toUpperCase());
+  }
+  return Array.from(siglas).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+export function produtoMatchesVitrineFilter(produto, unidadeVitrine = 'all') {
+  if (!unidadeVitrine || unidadeVitrine === 'all') return true;
+  const sigla = getUnidadeExibicaoSigla(produto);
+  return String(sigla).trim().toUpperCase() === String(unidadeVitrine).trim().toUpperCase();
+}
+
 /** Mesma lógica de filtros do catálogo (`Produtos.jsx`). */
 export function filterProdutos(produtos, filters) {
   if (!Array.isArray(produtos)) return [];
@@ -115,6 +134,7 @@ export function filterProdutos(produtos, filters) {
         p.tags.some((t) => t && t.toLowerCase().includes(String(filters.tag).toLowerCase())));
     const fornecedorMatch =
       filters.fornecedorId === 'all' || p.fornecedor_padrao_id === filters.fornecedorId;
+    const vitrineMatch = produtoMatchesVitrineFilter(p, filters.unidadeVitrine);
     const abcdMatch = produtoMatchesAbcdFilter(p, filters.abcd);
     const ativoMatch =
       !filters.ativoStatus ||
@@ -171,6 +191,7 @@ export function filterProdutos(produtos, filters) {
       categoriaMatch &&
       tagMatch &&
       fornecedorMatch &&
+      vitrineMatch &&
       abcdMatch &&
       ativoMatch &&
       quantidadeMatch() &&
@@ -186,6 +207,7 @@ export function countActiveProdutoFilters(filters) {
     filters.searchTerm?.trim(),
     filters.categoria !== 'all' && filters.categoria,
     filters.fornecedorId !== 'all' && filters.fornecedorId,
+    filters.unidadeVitrine !== 'all' && filters.unidadeVitrine,
     filters.abcd !== 'all' && filters.abcd,
     filters.statusEstoque !== 'all' && filters.statusEstoque,
     filters.tag,
@@ -227,6 +249,9 @@ export function describeProdutoFilters(filters, { categorias = [], fornecedores 
   if (filters.fornecedorId && filters.fornecedorId !== 'all') {
     const f = fornecedores.find((x) => x.id === filters.fornecedorId);
     parts.push(`fornecedor: ${f?.nome || filters.fornecedorId}`);
+  }
+  if (filters.unidadeVitrine && filters.unidadeVitrine !== 'all') {
+    parts.push(`unidade vitrine: ${filters.unidadeVitrine}`);
   }
   if (filters.statusEstoque && filters.statusEstoque !== 'all') {
     const labels = { ok: 'OK', baixo: 'Baixo', critico: 'Crítico', inativo: 'Inativo' };

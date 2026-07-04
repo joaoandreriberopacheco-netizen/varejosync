@@ -37,6 +37,7 @@ import {
   countActiveProdutoFilters,
   describeProdutoFilters,
   getCatalogProdutoEntryFilters,
+  collectCatalogVitrineUnits,
 } from '@/lib/filterProdutos';
 import {
   CATALOG_SALES_WINDOW_LABELS,
@@ -1094,6 +1095,8 @@ function ProdutosPageContent() {
     }, {});
   }, [fornecedores]);
 
+  const unidadesVitrine = useMemo(() => collectCatalogVitrineUnits(produtos), [produtos]);
+
   const activeFilterCount = countActiveProdutoFilters(filters);
   const filteredStats = useMemo(() => calculateProdutoStats(filteredProdutos), [filteredProdutos]);
   const headerStats = filteredStats;
@@ -1354,6 +1357,7 @@ function ProdutosPageContent() {
     filters,
     categorias,
     fornecedores,
+    unidadesVitrine,
     activeFilterCount,
     isSummaryFiltered: activeFilterCount > 0 || filteredStats.total !== stats.total,
     isFilterOpen,
