@@ -1,12 +1,9 @@
-import { BarChart3, Info, Target } from 'lucide-react';
+import { BarChart3, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/components/utils';
 import {
-  gerarDiagnosticoProdutoIep,
-  gerarLaudoProdutoIep,
   produtoTemMetricasIep,
   rotuloClasseAbcd,
-  tonalidadeClasseAbcd,
 } from '@/lib/produtoIepDiagnostico';
 
 const P38_SECTION =
@@ -18,6 +15,12 @@ const ABCD_TONE = {
   C: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
   D: 'bg-muted text-muted-foreground border-border/40',
 };
+
+function fmtNumber(value, max = 2) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return n.toLocaleString('pt-BR', { maximumFractionDigits: max });
+}
 
 function ScoreTile({ label, value, hint }) {
   const isText = typeof value === 'string';
@@ -36,26 +39,22 @@ function ScoreTile({ label, value, hint }) {
 export default function ProdutoIepTab({ produto }) {
   const classe = String(produto?.abcd || produto?.iep_classe || '').toUpperCase() || null;
   const score = Number(produto?.iep_score) || 0;
+  const scoreBase = Number(produto?.iep_score_base);
+  const coefConfianca = Number(produto?.iep_coef_confianca);
+  const lucro90d = Number(produto?.iep_lucro_90d);
+  const lucroRefGrupo = Number(produto?.iep_lucro_ref_grupo);
+  const memoriaConfianca = produto?.iep_memoria_confianca || {};
   const confiancaSimbolo = String(produto?.iep_confianca_simbolo || '').trim();
+  const confiancaIndice = Number(produto?.iep_confianca_indice);
   const iepExibicao = score > 0 ? `${score}${confiancaSimbolo}` : '—';
   const codigoComportamento = String(produto?.iep_codigo_comportamento || '').toUpperCase().trim();
-  const diagnostico = gerarDiagnosticoProdutoIep(produto);
-  const laudo = gerarLaudoProdutoIep(produto);
   const temDados = produtoTemMetricasIep(produto);
 
   const h1 = produto?.campo_hierarquico_1;
   const h2 = produto?.campo_hierarquico_2;
   const grupoLabel = [h1, h2].filter(Boolean).join(' · ') || 'Sem subtipo (nível 2)';
-
-  const tone = tonalidadeClasseAbcd(classe);
-  const insightBorder =
-    tone === 'success'
-      ? 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20'
-      : tone === 'warning'
-        ? 'border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/50 bg-amber-50/50'
-        : tone === 'info'
-          ? 'border-sky-200 dark:bg-sky-950/20 dark:border-sky-900/50 bg-sky-50/50'
-          : 'border-border/40 bg-muted/30';
+  const qtdVitrine = Number(produto?.iep_quantidade_vitrine_90d);
+  const unVitrine = String(produto?.iep_unidade_vitrine || '').trim();
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -67,9 +66,7 @@ export default function ProdutoIepTab({ produto }) {
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold text-foreground">Desempenho recente</h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Resumo com base nas <strong className="font-medium text-foreground/80">vendas dos últimos 90 dias</strong>.
-              Vendas com preço muito acima do habitual são ignoradas para não distorcer a análise.
-              O custo usado é o <strong className="font-medium text-foreground/80">custo calculado</strong> do cadastro.
+              Memória de cálculo do IEP com referência de grupo e coeficientes da amostra (janela 90 dias).
             </p>
           </div>
         </div>
@@ -91,7 +88,7 @@ export default function ProdutoIepTab({ produto }) {
         <ScoreTile
           label="IEP"
           value={iepExibicao}
-          hint="0–100 com confiabilidade da amostra (++ / + / -)"
+          hint="score final após coeficiente de confiança"
         />
         <ScoreTile
           label="Média do subtipo"
@@ -100,10 +97,9 @@ export default function ProdutoIepTab({ produto }) {
         />
       </div>
 
-      <div className={cn('rounded-lg border p-4', insightBorder)}>
-        <div className="flex items-center gap-2 mb-2">
-          <Target className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden />
-          <p className="text-sm font-semibold text-foreground">{diagnostico.titulo}</p>
+      <div className={P38_SECTION}>
+        <div className="flex items-center gap-2 mb-3">
+          <p className="text-xs font-semibold text-foreground">Memória de cálculo — índice</p>
           {temDados && classe ? (
             <Badge variant="outline" className="text-[10px] h-5 ml-auto">
               {classe}
@@ -115,19 +111,78 @@ export default function ProdutoIepTab({ produto }) {
             </Badge>
           ) : null}
         </div>
-        <p className="text-sm text-foreground/90 leading-relaxed">{diagnostico.texto}</p>
+        <dl className="grid gap-2 text-xs">
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Lucro item (90d)</dt>
+            <dd className="font-medium text-foreground">R$ {fmtNumber(lucro90d)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Lucro referência do grupo</dt>
+            <dd className="font-medium text-foreground">R$ {fmtNumber(lucroRefGrupo)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Score base</dt>
+            <dd className="font-medium text-foreground">{fmtNumber(scoreBase, 0)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Coeficiente confiança</dt>
+            <dd className="font-medium text-foreground">{fmtNumber(coefConfianca)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">IEP final</dt>
+            <dd className="font-semibold text-foreground">{iepExibicao}</dd>
+          </div>
+        </dl>
       </div>
 
       <div className={P38_SECTION}>
-        <p className="text-xs font-semibold text-foreground mb-2">Laudo de desempenho</p>
-        <p className="text-xs text-muted-foreground leading-relaxed">{laudo.resumo}</p>
-        {laudo.disponivel && laudo.pontos.length ? (
-          <ul className="mt-3 space-y-1.5 text-xs text-foreground/90 list-disc pl-4">
-            {laudo.pontos.map((item, idx) => (
-              <li key={`${idx}-${item.slice(0, 12)}`}>{item}</li>
-            ))}
-          </ul>
-        ) : null}
+        <p className="text-xs font-semibold text-foreground mb-3">Memória de cálculo — confiança</p>
+        <dl className="grid gap-2 text-xs">
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Índice de confiança</dt>
+            <dd className="font-medium text-foreground">
+              {fmtNumber(confiancaIndice, 0)} {confiancaSimbolo || ''}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Pedidos com o item (90d)</dt>
+            <dd className="font-medium text-foreground">{fmtNumber(memoriaConfianca?.pedidos, 0)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Semanas ativas</dt>
+            <dd className="font-medium text-foreground">{fmtNumber(memoriaConfianca?.semanas, 0)}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Qtd vitrine 90d</dt>
+            <dd className="font-medium text-foreground">
+              {fmtNumber(qtdVitrine)} {unVitrine || 'UN'}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Concentração no maior pedido</dt>
+            <dd className="font-medium text-foreground">
+              {fmtNumber(memoriaConfianca?.maxPedidoSharePct)}%
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Movimento contextual (score)</dt>
+            <dd className="font-medium text-foreground">
+              {fmtNumber(memoriaConfianca?.movimentoContextual, 0)}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Limites movimento do grupo (Q1/Q3)</dt>
+            <dd className="font-medium text-foreground">
+              {fmtNumber(memoriaConfianca?.limitesMovimento?.low)} / {fmtNumber(memoriaConfianca?.limitesMovimento?.high)}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Componentes normalizados</dt>
+            <dd className="font-medium text-foreground text-right">
+              ped {fmtNumber(memoriaConfianca?.componentes?.pedidosNorm, 0)} · sem {fmtNumber(memoriaConfianca?.componentes?.semanasNorm, 0)} · mov {fmtNumber(memoriaConfianca?.componentes?.movimentoContextual, 0)} · conc {fmtNumber(memoriaConfianca?.componentes?.concentracaoNorm, 0)} · qtd {fmtNumber(memoriaConfianca?.componentes?.quantidadeNorm, 0)}
+            </dd>
+          </div>
+        </dl>
       </div>
 
       <div className={P38_SECTION}>
@@ -157,8 +212,7 @@ export default function ProdutoIepTab({ produto }) {
       </div>
 
       <p className="text-[11px] text-muted-foreground leading-relaxed px-1">
-        Valores calculados automaticamente ao abrir o catálogo, com base nas vendas dos últimos 90 dias.
-        A classe vale para todos os produtos do mesmo grupo; o score IEP é específico deste SKU.
+        Valores calculados automaticamente ao abrir o catálogo. Exibição focada em memória de cálculo.
       </p>
     </div>
   );

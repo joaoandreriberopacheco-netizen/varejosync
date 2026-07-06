@@ -312,6 +312,52 @@ function calcularConfiancaAmostra(stats, contexto) {
   );
 }
 
+function buildMemoriaConfianca(stats, contexto) {
+  const pedidos = Number(stats?.movimentoPedidos) || 0;
+  const semanas = Number(stats?.semanasAtivas) || 0;
+  const quantidade = Number(stats?.quantidadeVitrineTotal) || Number(stats?.quantidadeTotal) || 0;
+  const maxPedidoShare = clamp(Number(stats?.maxPedidoShare) || 0, 0, 1);
+  const movimentoContextual = scoreMovimentoContextual(pedidos, contexto);
+  const pedidosNorm = clamp((pedidos / 8) * 100, 0, 100);
+  const semanasNorm = clamp((semanas / 6) * 100, 0, 100);
+  const quantidadeNorm = clamp((quantidade / 30) * 100, 0, 100);
+  const concentracaoNorm = clamp((1 - maxPedidoShare) * 100, 0, 100);
+  const indiceConfianca = Math.round(
+    pedidosNorm * 0.3 +
+      semanasNorm * 0.2 +
+      movimentoContextual * 0.2 +
+      concentracaoNorm * 0.2 +
+      quantidadeNorm * 0.1,
+  );
+  return {
+    indiceConfianca,
+    pedidos,
+    semanas,
+    quantidadeVitrine: Math.round(quantidade * 100) / 100,
+    unidadeVitrine: stats?.unidadeVitrine || 'UN',
+    maxPedidoSharePct: Math.round(maxPedidoShare * 1000) / 10,
+    movimentoContextual,
+    limitesMovimento: {
+      low: Math.round((Number(contexto?.low) || 0) * 100) / 100,
+      high: Math.round((Number(contexto?.high) || 0) * 100) / 100,
+    },
+    componentes: {
+      pedidosNorm: Math.round(pedidosNorm),
+      semanasNorm: Math.round(semanasNorm),
+      quantidadeNorm: Math.round(quantidadeNorm),
+      concentracaoNorm: Math.round(concentracaoNorm),
+      movimentoContextual: Math.round(movimentoContextual),
+    },
+    pesos: {
+      pedidos: 0.3,
+      semanas: 0.2,
+      quantidade: 0.1,
+      concentracao: 0.2,
+      movimento: 0.2,
+    },
+  };
+}
+
 function simboloConfiancaAmostra(indice) {
   const score = Number(indice) || 0;
   if (score >= 70) return '++';
@@ -473,8 +519,10 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
       unidadeVitrine: produto?.unidade_vitrine || produto?.unidade_principal || 'UN',
     };
     const contexto = movimentoContextoByGrupo[groupKey] || { low: 0, high: 1 };
-    const confianca = calcularConfiancaAmostra(movimentoStats, contexto);
+    const memoriaConfianca = buildMemoriaConfianca(movimentoStats, contexto);
+    const confianca = memoriaConfianca.indiceConfianca;
     const confiancaSimbolo = simboloConfiancaAmostra(confianca);
+    const fatorConfianca = fatorConfiancaAmostra(confianca);
     const scoreAjustado = scoreIepAjustadoPorConfianca(scoreBase, confianca);
     const codigoComportamento = classificarCodigoComportamento({
       scoreBase,
@@ -494,6 +542,10 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
       iep_codigo_comportamento: codigoComportamento,
       iep_quantidade_vitrine_90d: Math.round((Number(movimentoStats?.quantidadeVitrineTotal) || 0) * 100) / 100,
       iep_unidade_vitrine: movimentoStats?.unidadeVitrine || produto?.unidade_vitrine || produto?.unidade_principal || 'UN',
+      iep_lucro_90d: Math.round((Number(sku?.lucro) || 0) * 100) / 100,
+      iep_lucro_ref_grupo: Math.round((Number(lucroMaxPorGrupo[groupKey]) || 0) * 100) / 100,
+      iep_coef_confianca: fatorConfianca,
+      iep_memoria_confianca: scoreBase == null ? null : memoriaConfianca,
       iep_score_nivel_1: mediaNivel1PorH1[h1] != null ? Math.round(mediaNivel1PorH1[h1]) : null,
       iep_score_nivel_2: rollupNivel(produto, 2),
       iep_score_nivel_3: rollupNivel(produto, 3),
@@ -516,6 +568,10 @@ const CAMPOS_ABCD_IEP_CATALOGO = [
   'iep_codigo_comportamento',
   'iep_quantidade_vitrine_90d',
   'iep_unidade_vitrine',
+  'iep_lucro_90d',
+  'iep_lucro_ref_grupo',
+  'iep_coef_confianca',
+  'iep_memoria_confianca',
   'iep_score_nivel_1',
   'iep_score_nivel_2',
   'iep_score_nivel_3',
