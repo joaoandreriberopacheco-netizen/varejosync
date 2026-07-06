@@ -24,7 +24,7 @@ const ROW_STEP = ROW_H + ROW_GAP;
 
 const safe = (text) => normalizePdfText(text);
 
-export const CATALOG_IEP_PDF_BUILD = 'curva_abc_iep_v1';
+export const CATALOG_IEP_PDF_BUILD = 'curva_abc_iep_v2';
 
 export function prepareCatalogIepReportRows(produtos = [], pedidos = [], sortOrder = 'iep_score_desc') {
   const list = (produtos || []).filter((p) => p && typeof p === 'object');
@@ -36,6 +36,20 @@ function scoreText(value) {
   const num = Number(value);
   if (value == null || !Number.isFinite(num)) return '—';
   return String(Math.round(num));
+}
+
+function iepDisplayText(produto) {
+  const explicit = String(produto?.iep_score_exibicao || '').trim();
+  if (explicit) return explicit;
+  const score = scoreText(produto?.iep_score);
+  if (score === '—') return score;
+  const suffix = String(produto?.iep_confianca_simbolo || '').trim();
+  return `${score}${suffix}`;
+}
+
+function perfilText(value) {
+  const code = String(value || '').toUpperCase().trim();
+  return code || '—';
 }
 
 function abcdText(letter) {
@@ -64,8 +78,8 @@ export async function generateRelatorioCatalogoIepPdf(payload = {}) {
 
   const colAbc = tableRight - 12;
   const colIep = colAbc - 16;
-  const colN1 = colIep - 16;
-  const colN2 = colN1 - 16;
+  const colPerfil = colIep - 16;
+  const colN2 = colPerfil - 16;
   const descEnd = colN2 - 4;
 
   let y = 14;
@@ -90,7 +104,7 @@ export async function generateRelatorioCatalogoIepPdf(payload = {}) {
     doc.text('PRODUTO', M, y);
     doc.text('ABC', colAbc, y, { align: 'right' });
     doc.text('IEP', colIep, y, { align: 'right' });
-    doc.text('M.N1', colN1, y, { align: 'right' });
+    doc.text('PERF', colPerfil, y, { align: 'right' });
     doc.text('M.N2', colN2, y, { align: 'right' });
     y += 3.2;
     strokeLine(M, y, tableRight, y, ENXUTO.line);
@@ -108,6 +122,12 @@ export async function generateRelatorioCatalogoIepPdf(payload = {}) {
   doc.setTextColor(...ENXUTO.muted);
   doc.text(safe(`Gerado em ${generatedAt} · ${rows.length} produto(s) · janela 90 dias`), M, y);
   y += 4.2;
+
+  doc.setFont(pdfFontFamily, PDF_FONT_NORMAL);
+  doc.setFontSize(FONT.subtitle);
+  doc.setTextColor(...ENXUTO.muted);
+  doc.text(safe('IEP: score com confiabilidade (++/+/-) · Perfis: TOP, ESP, NEU, CAR'), M, y);
+  y += 4;
 
   if (filtersSummary) {
     const filterLines = doc.splitTextToSize(safe(`Filtros: ${filtersSummary}`), CW);
@@ -134,8 +154,8 @@ export async function generateRelatorioCatalogoIepPdf(payload = {}) {
     });
 
     doc.text(abcdText(produto?.abcd), colAbc, baseline, { align: 'right' });
-    doc.text(scoreText(produto?.iep_score), colIep, baseline, { align: 'right' });
-    doc.text(scoreText(produto?.iep_score_nivel_1), colN1, baseline, { align: 'right' });
+    doc.text(iepDisplayText(produto), colIep, baseline, { align: 'right' });
+    doc.text(perfilText(produto?.iep_codigo_comportamento), colPerfil, baseline, { align: 'right' });
     doc.text(scoreText(produto?.iep_score_nivel_2), colN2, baseline, { align: 'right' });
 
     y += Math.max(ROW_STEP, blockH + ROW_GAP);
