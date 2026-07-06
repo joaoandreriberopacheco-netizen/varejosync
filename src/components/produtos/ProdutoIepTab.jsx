@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/components/utils';
 import {
   gerarDiagnosticoProdutoIep,
+  gerarLaudoProdutoIep,
   produtoTemMetricasIep,
   rotuloClasseAbcd,
   tonalidadeClasseAbcd,
@@ -39,6 +40,7 @@ export default function ProdutoIepTab({ produto }) {
   const iepExibicao = score > 0 ? `${score}${confiancaSimbolo}` : '—';
   const codigoComportamento = String(produto?.iep_codigo_comportamento || '').toUpperCase().trim();
   const diagnostico = gerarDiagnosticoProdutoIep(produto);
+  const laudo = gerarLaudoProdutoIep(produto);
   const temDados = produtoTemMetricasIep(produto);
 
   const h1 = produto?.campo_hierarquico_1;
@@ -114,6 +116,18 @@ export default function ProdutoIepTab({ produto }) {
           ) : null}
         </div>
         <p className="text-sm text-foreground/90 leading-relaxed">{diagnostico.texto}</p>
+      </div>
+
+      <div className={P38_SECTION}>
+        <p className="text-xs font-semibold text-foreground mb-2">Laudo de desempenho</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">{laudo.resumo}</p>
+        {laudo.disponivel && laudo.pontos.length ? (
+          <ul className="mt-3 space-y-1.5 text-xs text-foreground/90 list-disc pl-4">
+            {laudo.pontos.map((item, idx) => (
+              <li key={`${idx}-${item.slice(0, 12)}`}>{item}</li>
+            ))}
+          </ul>
+        ) : null}
       </div>
 
       <div className={P38_SECTION}>

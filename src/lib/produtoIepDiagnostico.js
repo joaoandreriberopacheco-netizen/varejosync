@@ -9,6 +9,19 @@ const CLASSE_LABEL = {
   D: 'Classe D — menor contribuição de lucro no período',
 };
 
+const PERFIL_LABEL = {
+  TOP: 'TOP — desempenho forte com boa consistência',
+  ESP: 'ESP — resultado pontual (esporádico), precisa maturar',
+  NEU: 'NEU — comportamento neutro no período',
+  CAR: 'CAR — baixa energia com evidência consistente',
+};
+
+const CONFIANCA_LABEL = {
+  '++': 'Amostra robusta',
+  '+': 'Amostra suficiente',
+  '-': 'Amostra fraca',
+};
+
 export function produtoTemMetricasIep(produto) {
   if (!produto?.id) return false;
   const classe = String(produto.abcd || produto.iep_classe || '').toUpperCase();
@@ -102,4 +115,51 @@ export function tonalidadeClasseAbcd(classe) {
   if (c === 'B') return 'info';
   if (c === 'C') return 'warning';
   return 'muted';
+}
+
+export function gerarLaudoProdutoIep(produto) {
+  const score = Number(produto?.iep_score);
+  const scoreBase = Number(produto?.iep_score_base);
+  const scoreExibicao = String(produto?.iep_score_exibicao || '').trim();
+  const confiancaIndice = Number(produto?.iep_confianca_indice);
+  const confiancaSimbolo = String(produto?.iep_confianca_simbolo || '').trim();
+  const perfil = String(produto?.iep_codigo_comportamento || '').toUpperCase().trim();
+  const qtdVitrine = Number(produto?.iep_quantidade_vitrine_90d);
+  const unVitrine = String(produto?.iep_unidade_vitrine || '').trim();
+  const mediaSubtipo = Number(produto?.iep_score_nivel_2);
+
+  if (!Number.isFinite(score) || score <= 0) {
+    return {
+      disponivel: false,
+      resumo: 'Sem vendas elegíveis no período de 90 dias para gerar laudo.',
+      pontos: [],
+    };
+  }
+
+  const pontos = [];
+  pontos.push(`IEP atual: ${scoreExibicao || `${Math.round(score)}${confiancaSimbolo}`}.`);
+  if (Number.isFinite(scoreBase) && scoreBase > 0) {
+    pontos.push(`Score base (antes da confiança): ${Math.round(scoreBase)}.`);
+  }
+  if (Number.isFinite(confiancaIndice)) {
+    const lbl = CONFIANCA_LABEL[confiancaSimbolo] || 'Confiabilidade sem faixa';
+    pontos.push(`Confiabilidade: ${Math.round(confiancaIndice)} (${lbl}).`);
+  }
+  if (perfil) {
+    pontos.push(`Perfil comportamental: ${PERFIL_LABEL[perfil] || perfil}.`);
+  }
+  if (Number.isFinite(qtdVitrine) && qtdVitrine > 0 && unVitrine) {
+    pontos.push(`Movimento 90d em vitrine: ${qtdVitrine.toLocaleString('pt-BR')} ${unVitrine}.`);
+  }
+  if (Number.isFinite(mediaSubtipo) && mediaSubtipo > 0) {
+    const delta = Math.round(score - mediaSubtipo);
+    const sinal = delta > 0 ? '+' : '';
+    pontos.push(`Comparação com média do subtipo: ${Math.round(mediaSubtipo)} (${sinal}${delta} pontos).`);
+  }
+
+  return {
+    disponivel: true,
+    resumo: 'Laudo gerado com base no comportamento de vendas dos últimos 90 dias.',
+    pontos,
+  };
 }
