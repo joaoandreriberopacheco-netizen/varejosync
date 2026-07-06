@@ -33,11 +33,11 @@ function IepCodigoBadge({ code }) {
   const value = String(code || '').toUpperCase().trim();
   if (!value) return <span className="text-xs text-muted-foreground">—</span>;
   const tone =
-    value === 'RBS'
+    value === 'TOP'
       ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
-      : value === 'LGY'
+      : value === 'ESP'
         ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
-        : value === 'DRN'
+        : value === 'CAR'
           ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
           : 'bg-muted text-muted-foreground';
   return (

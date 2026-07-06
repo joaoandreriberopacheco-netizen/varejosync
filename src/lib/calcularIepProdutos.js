@@ -316,7 +316,7 @@ function scoreIepAjustadoPorConfianca(scoreBase, indiceConfianca) {
 }
 
 function classificarCodigoComportamento({ scoreBase, scoreAjustado, confianca, movimentoStats, lucro, teveVenda }) {
-  if (!teveVenda) return 'OBS';
+  if (!teveVenda) return 'NEU';
   const pedidos = Number(movimentoStats?.movimentoPedidos) || 0;
   const semanas = Number(movimentoStats?.semanasAtivas) || 0;
   const maxPedidoShare = Number(movimentoStats?.maxPedidoShare) || 0;
@@ -327,10 +327,10 @@ function classificarCodigoComportamento({ scoreBase, scoreAjustado, confianca, m
     semanas <= 2 &&
     maxPedidoShare >= 0.7 &&
     ((Number(scoreBase) || 0) >= 60 || (Number(lucro) || 0) > 0);
-  if (luckyGuy) return 'LGY';
-  if ((Number(scoreAjustado) || 0) < 40 && confianca >= 60) return 'DRN';
-  if ((Number(scoreAjustado) || 0) >= 70 && confianca >= 70) return 'RBS';
-  return 'OBS';
+  if (luckyGuy) return 'ESP';
+  if ((Number(scoreAjustado) || 0) < 40 && confianca >= 60) return 'CAR';
+  if ((Number(scoreAjustado) || 0) >= 70 && confianca >= 70) return 'TOP';
+  return 'NEU';
 }
 
 /** Chave do grupo ABCD — reexportada de abcdCurvaOrganizacao (h1+h2 ou só h1). */
