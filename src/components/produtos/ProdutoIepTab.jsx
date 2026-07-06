@@ -19,8 +19,10 @@ const ABCD_TONE = {
 };
 
 function ScoreTile({ label, value, hint }) {
+  const isText = typeof value === 'string';
   const num = Number(value);
-  const display = Number.isFinite(num) && num > 0 ? Math.round(num) : '—';
+  const display =
+    isText ? value : Number.isFinite(num) && num > 0 ? Math.round(num) : '—';
   return (
     <div className="rounded-lg border border-border/40 dark:border-white/10 bg-secondary/30 dark:bg-[#26262e]/80 p-3">
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
@@ -33,6 +35,9 @@ function ScoreTile({ label, value, hint }) {
 export default function ProdutoIepTab({ produto }) {
   const classe = String(produto?.abcd || produto?.iep_classe || '').toUpperCase() || null;
   const score = Number(produto?.iep_score) || 0;
+  const confiancaSimbolo = String(produto?.iep_confianca_simbolo || '').trim();
+  const iepExibicao = score > 0 ? `${score}${confiancaSimbolo}` : '—';
+  const codigoComportamento = String(produto?.iep_codigo_comportamento || '').toUpperCase().trim();
   const diagnostico = gerarDiagnosticoProdutoIep(produto);
   const temDados = produtoTemMetricasIep(produto);
 
@@ -81,7 +86,11 @@ export default function ProdutoIepTab({ produto }) {
             {classe ? rotuloClasseAbcd(classe).split('—')[0].trim() : 'Aguardando cálculo'}
           </p>
         </div>
-        <ScoreTile label="Score IEP" value={score} hint="0–100 · lucro recente do SKU" />
+        <ScoreTile
+          label="IEP"
+          value={iepExibicao}
+          hint="0–100 com confiabilidade da amostra (++ / + / -)"
+        />
         <ScoreTile
           label="Média do subtipo"
           value={produto?.iep_score_nivel_2}
@@ -96,6 +105,11 @@ export default function ProdutoIepTab({ produto }) {
           {temDados && classe ? (
             <Badge variant="outline" className="text-[10px] h-5 ml-auto">
               {classe}
+            </Badge>
+          ) : null}
+          {codigoComportamento ? (
+            <Badge variant="outline" className="text-[10px] h-5">
+              {codigoComportamento}
             </Badge>
           ) : null}
         </div>

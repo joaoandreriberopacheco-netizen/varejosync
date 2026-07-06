@@ -26,6 +26,21 @@ function average(values) {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
+function quantile(values, q) {
+  if (!values || values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  if (sorted.length === 1) return sorted[0];
+  const pos = (sorted.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+  const right = sorted[base + 1] ?? sorted[base];
+  return sorted[base] + rest * (right - sorted[base]);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
 function hierarchyKey(parts) {
   return parts.filter(Boolean).join('\x00');
 }
@@ -144,6 +159,180 @@ function normalizarScore0a100(lucro, lucroMax, teveVenda) {
   return Math.round(Math.max(1, Math.min(100, raw)));
 }
 
+function isoWeekKey(rawDate) {
+  if (!rawDate) return '';
+  const date = new Date(rawDate);
+  if (Number.isNaN(date.getTime())) return '';
+  const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = utcDate.getUTCDay() || 7;
+  utcDate.setUTCDate(utcDate.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((utcDate - yearStart) / 86400000) + 1) / 7);
+  return `${utcDate.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
+function buildMovimentoStatsBySku(produtos, pedidos90d, itensPorProduto) {
+  const stats = {};
+  for (const produto of produtos || []) {
+    stats[String(produto?.id || '')] = {
+      pedidoIds: new Set(),
+      weekKeys: new Set(),
+      receitaPorPedido: {},
+      quantidadeTotal: 0,
+      receitaTotal: 0,
+    };
+  }
+
+  const touch = (skuId, pedidoId, weekKey, qty, total) => {
+    const id = String(skuId || '');
+    if (!id || !stats[id]) return;
+    if (pedidoId) {
+      stats[id].pedidoIds.add(pedidoId);
+      stats[id].receitaPorPedido[pedidoId] = (stats[id].receitaPorPedido[pedidoId] || 0) + Math.max(0, total);
+    }
+    if (weekKey) stats[id].weekKeys.add(weekKey);
+    stats[id].quantidadeTotal += Math.max(0, qty);
+    stats[id].receitaTotal += Math.max(0, total);
+  };
+
+  for (const pedido of pedidos90d || []) {
+    const pedidoId = String(pedido?.id || '');
+    const weekKey = isoWeekKey(pedido?.created_date ?? pedido?.created_at);
+    for (const item of pedido?.itens || []) {
+      const skuId = String(item?.produto_id ?? item?.produtoId ?? '');
+      if (!skuId) continue;
+      touch(skuId, pedidoId, weekKey, lineQuantityBase(item), lineReceitaItem(item));
+    }
+  }
+
+  for (const [skuId, itens] of Object.entries(itensPorProduto || {})) {
+    if (!stats[skuId] || stats[skuId].pedidoIds.size > 0) continue;
+    for (const item of itens || []) {
+      const pedidoId = String(item?.pedido_venda_id || '');
+      touch(skuId, pedidoId, '', lineQuantityBase(item), lineReceitaItem(item));
+    }
+  }
+
+  const out = {};
+  for (const [skuId, entry] of Object.entries(stats)) {
+    const pedidoCount = entry.pedidoIds.size;
+    const weekCount = entry.weekKeys.size;
+    const receitaPedidos = Object.values(entry.receitaPorPedido);
+    const maxReceitaPedido = receitaPedidos.length ? Math.max(...receitaPedidos) : 0;
+    const maxPedidoShare = entry.receitaTotal > 0 ? maxReceitaPedido / entry.receitaTotal : 0;
+    out[skuId] = {
+      movimentoPedidos: pedidoCount,
+      semanasAtivas: weekCount,
+      maxPedidoShare,
+      quantidadeTotal: entry.quantidadeTotal,
+      receitaTotal: entry.receitaTotal,
+    };
+  }
+  return out;
+}
+
+function buildMovimentoContextoPorGrupo(produtos, movimentoBySku) {
+  const porGrupo = {};
+  for (const produto of produtos || []) {
+    const skuId = String(produto?.id || '');
+    if (!skuId) continue;
+    const key = grupoAbcdKey(produto);
+    const movimentos = Number(movimentoBySku?.[skuId]?.movimentoPedidos) || 0;
+    if (!porGrupo[key]) porGrupo[key] = [];
+    if (movimentos > 0) porGrupo[key].push(movimentos);
+  }
+
+  const contexto = {};
+  for (const [key, values] of Object.entries(porGrupo)) {
+    if (!values.length) {
+      contexto[key] = { low: 0, high: 1 };
+      continue;
+    }
+    const q3Base = quantile(values, 0.75);
+    const trimmed = values.filter((value) => value <= q3Base);
+    const base = trimmed.length ? trimmed : values;
+    const low = quantile(base, 0.25);
+    const high = Math.max(low + 1, quantile(base, 0.75));
+    contexto[key] = { low, high };
+  }
+
+  return contexto;
+}
+
+function scoreMovimentoContextual(movimentos, contexto) {
+  const m = Number(movimentos) || 0;
+  if (m <= 0) return 0;
+  const low = Number(contexto?.low) || 0;
+  const high = Number(contexto?.high) || Math.max(low + 1, 1);
+  if (m <= low) return 25;
+  if (m >= high) {
+    const extra = high > 0 ? ((m - high) / high) * 15 : 0;
+    return Math.round(clamp(80 + extra, 80, 95));
+  }
+  const ratio = (m - low) / Math.max(1, high - low);
+  return Math.round(25 + ratio * 55);
+}
+
+function calcularConfiancaAmostra(stats, contexto) {
+  const pedidos = Number(stats?.movimentoPedidos) || 0;
+  const semanas = Number(stats?.semanasAtivas) || 0;
+  const quantidade = Number(stats?.quantidadeTotal) || 0;
+  const maxPedidoShare = clamp(Number(stats?.maxPedidoShare) || 0, 0, 1);
+  const movimentoContextual = scoreMovimentoContextual(pedidos, contexto);
+
+  const pedidosNorm = clamp((pedidos / 8) * 100, 0, 100);
+  const semanasNorm = clamp((semanas / 6) * 100, 0, 100);
+  const quantidadeNorm = clamp((quantidade / 30) * 100, 0, 100);
+  const concentracaoNorm = clamp((1 - maxPedidoShare) * 100, 0, 100);
+
+  return Math.round(
+    pedidosNorm * 0.3 +
+      semanasNorm * 0.2 +
+      movimentoContextual * 0.2 +
+      concentracaoNorm * 0.2 +
+      quantidadeNorm * 0.1,
+  );
+}
+
+function simboloConfiancaAmostra(indice) {
+  const score = Number(indice) || 0;
+  if (score >= 70) return '++';
+  if (score >= 40) return '+';
+  return '-';
+}
+
+function fatorConfiancaAmostra(indice) {
+  const simbolo = simboloConfiancaAmostra(indice);
+  if (simbolo === '++') return 1;
+  if (simbolo === '+') return 0.85;
+  return 0.65;
+}
+
+function scoreIepAjustadoPorConfianca(scoreBase, indiceConfianca) {
+  const base = Number(scoreBase);
+  if (!Number.isFinite(base) || base <= 0) return scoreBase;
+  const ajustado = Math.round(base * fatorConfiancaAmostra(indiceConfianca));
+  return clamp(ajustado, 1, 100);
+}
+
+function classificarCodigoComportamento({ scoreBase, scoreAjustado, confianca, movimentoStats, lucro, teveVenda }) {
+  if (!teveVenda) return 'OBS';
+  const pedidos = Number(movimentoStats?.movimentoPedidos) || 0;
+  const semanas = Number(movimentoStats?.semanasAtivas) || 0;
+  const maxPedidoShare = Number(movimentoStats?.maxPedidoShare) || 0;
+
+  const luckyGuy =
+    confianca < 40 &&
+    pedidos <= 2 &&
+    semanas <= 2 &&
+    maxPedidoShare >= 0.7 &&
+    ((Number(scoreBase) || 0) >= 60 || (Number(lucro) || 0) > 0);
+  if (luckyGuy) return 'LGY';
+  if ((Number(scoreAjustado) || 0) < 40 && confianca >= 60) return 'DRN';
+  if ((Number(scoreAjustado) || 0) >= 70 && confianca >= 70) return 'RBS';
+  return 'OBS';
+}
+
 /** Chave do grupo ABCD — reexportada de abcdCurvaOrganizacao (h1+h2 ou só h1). */
 // grupoAbcdKey importado acima
 
@@ -159,6 +348,8 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
 
   const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => Math.max(0, m.lucro)));
   const mapaAbcdGrupo = calcularMapaAbcdGrupo(lista, metricasPorSku);
+  const movimentoBySku = buildMovimentoStatsBySku(lista, pedidos, itensPorProduto);
+  const movimentoContextoByGrupo = buildMovimentoContextoPorGrupo(lista, movimentoBySku);
 
   function classeAbcdProduto(produto) {
     return abcdClasseParaProduto(produto, mapaAbcdGrupo);
@@ -223,9 +414,33 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
     const sku = metricasPorSku[produto.id];
     const h1 = produto.campo_hierarquico_1 || 'unassigned';
     const classe = classeAbcdProduto(produto);
+    const scoreBase = normalizarScore0a100(sku.lucro, lucroMax, sku.teveVenda);
+    const movimentoStats = movimentoBySku[String(produto.id)] || {
+      movimentoPedidos: 0,
+      semanasAtivas: 0,
+      maxPedidoShare: 0,
+      quantidadeTotal: 0,
+    };
+    const contexto = movimentoContextoByGrupo[grupoAbcdKey(produto)] || { low: 0, high: 1 };
+    const confianca = calcularConfiancaAmostra(movimentoStats, contexto);
+    const confiancaSimbolo = simboloConfiancaAmostra(confianca);
+    const scoreAjustado = scoreIepAjustadoPorConfianca(scoreBase, confianca);
+    const codigoComportamento = classificarCodigoComportamento({
+      scoreBase,
+      scoreAjustado,
+      confianca,
+      movimentoStats,
+      lucro: sku.lucro,
+      teveVenda: sku.teveVenda,
+    });
     porId[produto.id] = {
       abcd: classe,
-      iep_score: normalizarScore0a100(sku.lucro, lucroMax, sku.teveVenda),
+      iep_score: scoreAjustado,
+      iep_score_base: scoreBase,
+      iep_confianca_indice: scoreBase == null ? null : confianca,
+      iep_confianca_simbolo: scoreBase == null ? null : confiancaSimbolo,
+      iep_score_exibicao: scoreAjustado != null ? `${scoreAjustado}${confiancaSimbolo}` : null,
+      iep_codigo_comportamento: codigoComportamento,
       iep_score_nivel_1: mediaNivel1PorH1[h1] != null ? Math.round(mediaNivel1PorH1[h1]) : null,
       iep_score_nivel_2: rollupNivel(produto, 2),
       iep_score_nivel_3: rollupNivel(produto, 3),
@@ -241,6 +456,11 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
 const CAMPOS_ABCD_IEP_CATALOGO = [
   'abcd',
   'iep_score',
+  'iep_score_base',
+  'iep_confianca_indice',
+  'iep_confianca_simbolo',
+  'iep_score_exibicao',
+  'iep_codigo_comportamento',
   'iep_score_nivel_1',
   'iep_score_nivel_2',
   'iep_score_nivel_3',

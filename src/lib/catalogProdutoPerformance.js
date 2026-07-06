@@ -4,6 +4,14 @@ import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 
 export const ABCD_RANK = { A: 4, B: 3, C: 2, D: 1 };
 
+function confiancaSymbolFromIndex(indice) {
+  const value = Number(indice);
+  if (!Number.isFinite(value)) return '';
+  if (value >= 70) return '++';
+  if (value >= 40) return '+';
+  return '-';
+}
+
 export const CATALOG_SORT_OPTIONS = [
   { id: 'az', label: 'Nome A → Z' },
   { id: 'za', label: 'Nome Z → A' },
@@ -53,6 +61,9 @@ export function aggregatePerformanceFromSkus(skus) {
       abcdRankMedio: 0,
       abcdDominante: '',
       iepScoreMedio: 0,
+      iepConfiancaMedia: 0,
+      iepConfiancaSimbolo: '',
+      iepCodigoComportamentoDominante: '',
       iepScoreNivel1Medio: 0,
       iepScoreNivel2Medio: 0,
       iepScoreNivel3Medio: 0,
@@ -71,16 +82,27 @@ export function aggregatePerformanceFromSkus(skus) {
     freq[letter] = (freq[letter] || 0) + 1;
   }
   const abcdDominante = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+  const perfFreq = {};
+  for (const p of skus) {
+    const code = String(p?.iep_codigo_comportamento || '').toUpperCase().trim();
+    if (!code) continue;
+    perfFreq[code] = (perfFreq[code] || 0) + 1;
+  }
 
   const avg = (field) => {
     const vals = skus.map((p) => Number(p[field]) || 0);
     return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : 0;
   };
+  const iepConfiancaMedia = avg('iep_confianca_indice');
 
   return {
     abcdRankMedio,
     abcdDominante,
     iepScoreMedio: avg('iep_score'),
+    iepConfiancaMedia,
+    iepConfiancaSimbolo: confiancaSymbolFromIndex(iepConfiancaMedia),
+    iepCodigoComportamentoDominante:
+      Object.entries(perfFreq).sort((a, b) => b[1] - a[1])[0]?.[0] || '',
     iepScoreNivel1Medio: avg('iep_score_nivel_1'),
     iepScoreNivel2Medio: avg('iep_score_nivel_2'),
     iepScoreNivel3Medio: avg('iep_score_nivel_3'),

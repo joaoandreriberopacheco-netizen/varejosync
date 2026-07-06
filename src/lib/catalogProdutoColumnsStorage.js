@@ -38,6 +38,7 @@ const KNOWN_CATALOG_PRODUTO_COLUMNS = new Set([
   'inventario_valorizado',
   'abcd',
   'iep_score',
+  'iep_codigo_comportamento',
   'iep_score_nivel_1',
   'iep_score_nivel_2',
   'iep_score_nivel_3',

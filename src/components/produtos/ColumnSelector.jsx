@@ -78,6 +78,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
       columns: [
         { id: 'abcd', label: 'Classe ABCD' },
         { id: 'iep_score', label: 'Score IEP' },
+        { id: 'iep_codigo_comportamento', label: 'Código comportamento IEP' },
         { id: 'iep_score_nivel_1', label: 'Média nível 1' },
         { id: 'iep_score_nivel_2', label: 'Média nível 2' },
         { id: 'iep_score_nivel_3', label: 'Média nível 3' },

@@ -29,12 +29,30 @@ function AbcdBadge({ letter }) {
   );
 }
 
-function scoreCell(value, tilde = false) {
+function IepCodigoBadge({ code }) {
+  const value = String(code || '').toUpperCase().trim();
+  if (!value) return <span className="text-xs text-muted-foreground">—</span>;
+  const tone =
+    value === 'RBS'
+      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+      : value === 'LGY'
+        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+        : value === 'DRN'
+          ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300'
+          : 'bg-muted text-muted-foreground';
+  return (
+    <span className={`inline-flex h-5 items-center justify-center rounded px-1.5 text-[10px] font-bold ${tone}`}>
+      {value}
+    </span>
+  );
+}
+
+function scoreCell(value, tilde = false, suffix = '') {
   const num = Number(value);
   if (value == null || !Number.isFinite(num)) {
     return <span className="text-xs text-muted-foreground">—</span>;
   }
-  const text = Math.round(num).toLocaleString('pt-BR');
+  const text = `${Math.round(num).toLocaleString('pt-BR')}${suffix || ''}`;
   return (
     <span className="text-xs text-muted-foreground tabular-nums">
       {tilde ? `~${text}` : text}
@@ -67,7 +85,8 @@ const COL_DEFS = [
   { id: 'unidade',              label: 'Unidades',       w: 72  },
   { id: 'unidades_pacote',      label: 'Un/Pct',         w: 72  },
   { id: 'abcd',                 label: 'Classe ABCD',    w: 72  },
-  { id: 'iep_score',            label: 'Score IEP',      w: 80  },
+  { id: 'iep_score',            label: 'IEP',            w: 84  },
+  { id: 'iep_codigo_comportamento', label: 'Perfil IEP', w: 84  },
   { id: 'iep_score_nivel_1',    label: 'Média N1',       w: 80  },
   { id: 'iep_score_nivel_2',    label: 'Média N2',       w: 80  },
   { id: 'iep_score_nivel_3',    label: 'Média N3',       w: 80  },
@@ -262,7 +281,9 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
     }
     case 'unidades_pacote':      return <span className="text-xs text-muted-foreground">{produto.unidades_por_pacote || 1}</span>;
     case 'abcd':                 return <AbcdBadge letter={produto.abcd} />;
-    case 'iep_score':            return scoreCell(produto.iep_score);
+    case 'iep_score':            return scoreCell(produto.iep_score, false, produto?.iep_confianca_simbolo || '');
+    case 'iep_codigo_comportamento':
+      return <IepCodigoBadge code={produto?.iep_codigo_comportamento} />;
     case 'iep_score_nivel_1':    return scoreCell(produto.iep_score_nivel_1);
     case 'iep_score_nivel_2':    return scoreCell(produto.iep_score_nivel_2);
     case 'iep_score_nivel_3':    return scoreCell(produto.iep_score_nivel_3);
@@ -320,7 +341,9 @@ function groupCellValue(colId, row) {
         </Badge>
       );
     case 'abcd':                  return <AbcdBadge letter={row.abcdDominante} />;
-    case 'iep_score':             return scoreCell(row.iepScoreMedio, true);
+    case 'iep_score':             return scoreCell(row.iepScoreMedio, true, row.iepConfiancaSimbolo || '');
+    case 'iep_codigo_comportamento':
+      return <IepCodigoBadge code={row.iepCodigoComportamentoDominante} />;
     case 'iep_score_nivel_1':     return scoreCell(row.iepScoreNivel1Medio, true);
     case 'iep_score_nivel_2':     return scoreCell(row.iepScoreNivel2Medio, true);
     case 'iep_score_nivel_3':     return scoreCell(row.iepScoreNivel3Medio, true);
