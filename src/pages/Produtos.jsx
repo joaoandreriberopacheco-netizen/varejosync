@@ -1272,7 +1272,7 @@ function ProdutosPageContent() {
 
   const handleGerarRelatorioIep = useCallback(async () => {
     setGerandoRelatorioIep(true);
-    toast({ title: 'Gerando relatório Curva ABC / IEP...' });
+    toast({ title: 'Gerando planilha Curva ABC / IEP...' });
     try {
       const filtersSummary = describeProdutoFilters(filters, { categorias, fornecedores });
 
@@ -1284,22 +1284,22 @@ function ProdutosPageContent() {
         queryClient.setQueryData(p38Keys.pedidosVenda90d(), pedidos);
       }
 
-      toast({ title: 'Montando PDF Curva ABC / IEP...' });
-      const { generateRelatorioCatalogoIepPdf } = await import(
-        '@/lib/relatorioCatalogoIepPdf/generateRelatorioCatalogoIepPdf.js'
+      toast({ title: 'Montando XLSX Curva ABC / IEP...' });
+      const { generateRelatorioCatalogoIepXlsx } = await import(
+        '@/lib/relatorioCatalogoIepXlsx/generateRelatorioCatalogoIepXlsx.js'
       );
-      const resposta = await generateRelatorioCatalogoIepPdf({
+      const resposta = await generateRelatorioCatalogoIepXlsx({
         produtos: filteredProdutos,
         pedidos,
         filters_summary: filtersSummary,
         sort_order: 'iep_score_desc',
       });
 
-      const blob = new Blob([resposta.data], { type: 'application/pdf' });
-      downloadBlob(blob, `RelatorioCurvaABC_IEP_${dataHoje()}.pdf`);
+      const blob = new Blob([resposta.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      downloadBlob(blob, `RelatorioCurvaABC_IEP_${dataHoje()}.xlsx`);
 
       toast({
-        title: 'Relatório Curva ABC / IEP gerado',
+        title: 'Planilha Curva ABC / IEP gerada',
         description: resposta?.version ? `Layout ${resposta.version}` : undefined,
       });
     } catch (error) {

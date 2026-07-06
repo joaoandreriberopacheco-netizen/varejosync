@@ -10,6 +10,7 @@ import {
   classificarGruposAbcdPareto,
   grupoAbcdKey,
 } from '@/lib/abcdCurvaOrganizacao';
+import { resolveCommercialDisplay } from '@/lib/productUnits';
 
 export { ABCD_CURVA_VERSAO, grupoAbcdKey };
 
@@ -173,12 +174,19 @@ function isoWeekKey(rawDate) {
 
 function buildMovimentoStatsBySku(produtos, pedidos90d, itensPorProduto) {
   const stats = {};
+  const produtoById = {};
   for (const produto of produtos || []) {
-    stats[String(produto?.id || '')] = {
+    const pid = String(produto?.id || '');
+    if (!pid) continue;
+    produtoById[pid] = produto;
+    const vitrine = resolveCommercialDisplay(produto, 0, produto?.unidade_principal || 'UN');
+    stats[pid] = {
       pedidoIds: new Set(),
       weekKeys: new Set(),
       receitaPorPedido: {},
       quantidadeTotal: 0,
+      quantidadeVitrineTotal: 0,
+      unidadeVitrine: vitrine?.unidade || produto?.unidade_principal || 'UN',
       receitaTotal: 0,
     };
   }
@@ -186,12 +194,20 @@ function buildMovimentoStatsBySku(produtos, pedidos90d, itensPorProduto) {
   const touch = (skuId, pedidoId, weekKey, qty, total) => {
     const id = String(skuId || '');
     if (!id || !stats[id]) return;
+    const produto = produtoById[id];
+    const quantidadeBase = Math.max(0, qty);
+    const qtyVitrine = resolveCommercialDisplay(
+      produto,
+      quantidadeBase,
+      produto?.unidade_principal || 'UN',
+    )?.quantidade;
     if (pedidoId) {
       stats[id].pedidoIds.add(pedidoId);
       stats[id].receitaPorPedido[pedidoId] = (stats[id].receitaPorPedido[pedidoId] || 0) + Math.max(0, total);
     }
     if (weekKey) stats[id].weekKeys.add(weekKey);
-    stats[id].quantidadeTotal += Math.max(0, qty);
+    stats[id].quantidadeTotal += quantidadeBase;
+    stats[id].quantidadeVitrineTotal += Math.max(0, Number(qtyVitrine) || 0);
     stats[id].receitaTotal += Math.max(0, total);
   };
 
@@ -225,6 +241,8 @@ function buildMovimentoStatsBySku(produtos, pedidos90d, itensPorProduto) {
       semanasAtivas: weekCount,
       maxPedidoShare,
       quantidadeTotal: entry.quantidadeTotal,
+      quantidadeVitrineTotal: entry.quantidadeVitrineTotal,
+      unidadeVitrine: entry.unidadeVitrine,
       receitaTotal: entry.receitaTotal,
     };
   }
@@ -276,7 +294,7 @@ function scoreMovimentoContextual(movimentos, contexto) {
 function calcularConfiancaAmostra(stats, contexto) {
   const pedidos = Number(stats?.movimentoPedidos) || 0;
   const semanas = Number(stats?.semanasAtivas) || 0;
-  const quantidade = Number(stats?.quantidadeTotal) || 0;
+  const quantidade = Number(stats?.quantidadeVitrineTotal) || Number(stats?.quantidadeTotal) || 0;
   const maxPedidoShare = clamp(Number(stats?.maxPedidoShare) || 0, 0, 1);
   const movimentoContextual = scoreMovimentoContextual(pedidos, contexto);
 
@@ -333,6 +351,32 @@ function classificarCodigoComportamento({ scoreBase, scoreAjustado, confianca, m
   return 'NEU';
 }
 
+function buildLucroMaxContextoPorGrupo(produtos, metricasPorSku) {
+  const porGrupo = {};
+  for (const produto of produtos || []) {
+    const skuId = String(produto?.id || '');
+    if (!skuId) continue;
+    const key = grupoAbcdKey(produto);
+    const lucro = Math.max(0, Number(metricasPorSku?.[skuId]?.lucro) || 0);
+    if (lucro <= 0) continue;
+    if (!porGrupo[key]) porGrupo[key] = [];
+    porGrupo[key].push(lucro);
+  }
+
+  const contexto = {};
+  for (const [key, values] of Object.entries(porGrupo)) {
+    if (!values.length) {
+      contexto[key] = 0;
+      continue;
+    }
+    const q3Limite = quantile(values, 0.75);
+    const base = values.filter((value) => value <= q3Limite);
+    const usada = base.length ? base : values;
+    contexto[key] = Math.max(...usada);
+  }
+  return contexto;
+}
+
 /** Chave do grupo ABCD — reexportada de abcdCurvaOrganizacao (h1+h2 ou só h1). */
 // grupoAbcdKey importado acima
 
@@ -346,8 +390,8 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
     metricasPorSku[produto.id] = calcularLucroSkuComQ4(produto, pedidos, itensPorProduto);
   }
 
-  const lucroMax = Math.max(0, ...Object.values(metricasPorSku).map((m) => Math.max(0, m.lucro)));
   const mapaAbcdGrupo = calcularMapaAbcdGrupo(lista, metricasPorSku);
+  const lucroMaxPorGrupo = buildLucroMaxContextoPorGrupo(lista, metricasPorSku);
   const movimentoBySku = buildMovimentoStatsBySku(lista, pedidos, itensPorProduto);
   const movimentoContextoByGrupo = buildMovimentoContextoPorGrupo(lista, movimentoBySku);
 
@@ -414,14 +458,21 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
     const sku = metricasPorSku[produto.id];
     const h1 = produto.campo_hierarquico_1 || 'unassigned';
     const classe = classeAbcdProduto(produto);
-    const scoreBase = normalizarScore0a100(sku.lucro, lucroMax, sku.teveVenda);
+    const groupKey = grupoAbcdKey(produto);
+    const scoreBase = normalizarScore0a100(
+      sku.lucro,
+      Number(lucroMaxPorGrupo[groupKey]) || 0,
+      sku.teveVenda,
+    );
     const movimentoStats = movimentoBySku[String(produto.id)] || {
       movimentoPedidos: 0,
       semanasAtivas: 0,
       maxPedidoShare: 0,
       quantidadeTotal: 0,
+      quantidadeVitrineTotal: 0,
+      unidadeVitrine: produto?.unidade_vitrine || produto?.unidade_principal || 'UN',
     };
-    const contexto = movimentoContextoByGrupo[grupoAbcdKey(produto)] || { low: 0, high: 1 };
+    const contexto = movimentoContextoByGrupo[groupKey] || { low: 0, high: 1 };
     const confianca = calcularConfiancaAmostra(movimentoStats, contexto);
     const confiancaSimbolo = simboloConfiancaAmostra(confianca);
     const scoreAjustado = scoreIepAjustadoPorConfianca(scoreBase, confianca);
@@ -441,6 +492,8 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
       iep_confianca_simbolo: scoreBase == null ? null : confiancaSimbolo,
       iep_score_exibicao: scoreAjustado != null ? `${scoreAjustado}${confiancaSimbolo}` : null,
       iep_codigo_comportamento: codigoComportamento,
+      iep_quantidade_vitrine_90d: Math.round((Number(movimentoStats?.quantidadeVitrineTotal) || 0) * 100) / 100,
+      iep_unidade_vitrine: movimentoStats?.unidadeVitrine || produto?.unidade_vitrine || produto?.unidade_principal || 'UN',
       iep_score_nivel_1: mediaNivel1PorH1[h1] != null ? Math.round(mediaNivel1PorH1[h1]) : null,
       iep_score_nivel_2: rollupNivel(produto, 2),
       iep_score_nivel_3: rollupNivel(produto, 3),
@@ -461,6 +514,8 @@ const CAMPOS_ABCD_IEP_CATALOGO = [
   'iep_confianca_simbolo',
   'iep_score_exibicao',
   'iep_codigo_comportamento',
+  'iep_quantidade_vitrine_90d',
+  'iep_unidade_vitrine',
   'iep_score_nivel_1',
   'iep_score_nivel_2',
   'iep_score_nivel_3',
