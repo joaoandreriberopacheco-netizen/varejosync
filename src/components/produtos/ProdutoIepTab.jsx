@@ -36,6 +36,15 @@ function ScoreTile({ label, value, hint }) {
   );
 }
 
+function MemRow({ label, value, strong = false }) {
+  return (
+    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className={cn('text-foreground sm:text-right', strong ? 'font-semibold' : 'font-medium')}>{value}</dd>
+    </div>
+  );
+}
+
 export default function ProdutoIepTab({ produto }) {
   const classe = String(produto?.abcd || produto?.iep_classe || '').toUpperCase() || null;
   const score = Number(produto?.iep_score) || 0;
@@ -133,74 +142,38 @@ export default function ProdutoIepTab({ produto }) {
           ) : null}
         </div>
         <dl className="grid gap-2 text-xs">
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Lucro item (90d)</dt>
-            <dd className="font-medium text-foreground">R$ {fmtNumber(lucro90d)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Lucro referência do grupo</dt>
-            <dd className="font-medium text-foreground">R$ {fmtNumber(lucroRefGrupo)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Score base</dt>
-            <dd className="font-medium text-foreground">{fmtNumber(scoreBase, 0)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Coeficiente confiança</dt>
-            <dd className="font-medium text-foreground">{fmtNumber(coefConfianca)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">IEP final</dt>
-            <dd className="font-semibold text-foreground">{iepExibicao}</dd>
-          </div>
+          <MemRow label="Lucro item (90d)" value={`R$ ${fmtNumber(lucro90d)}`} />
+          <MemRow label="Lucro referência do grupo" value={`R$ ${fmtNumber(lucroRefGrupo)}`} />
+          <MemRow label="Score base" value={fmtNumber(scoreBase, 0)} />
+          <MemRow label="Coeficiente confiança" value={fmtNumber(coefConfianca)} />
+          <MemRow label="IEP final" value={iepExibicao} strong />
         </dl>
       </div>
 
       <div className={P38_SECTION}>
         <p className="text-xs font-semibold text-foreground mb-3">Memória de cálculo — confiança</p>
         <dl className="grid gap-2 text-xs">
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Índice de confiança</dt>
-            <dd className="font-medium text-foreground">
-              {fmtNumber(confiancaIndice, 0)} {confiancaSimbolo || ''}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Pedidos com o item (90d)</dt>
-            <dd className="font-medium text-foreground">{fmtNumber(memoriaConfianca?.pedidos, 0)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Semanas ativas</dt>
-            <dd className="font-medium text-foreground">{fmtNumber(memoriaConfianca?.semanas, 0)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Qtd vitrine 90d</dt>
-            <dd className="font-medium text-foreground">
-              {fmtNumber(qtdVitrine)} {unVitrine || 'UN'}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Concentração no maior pedido</dt>
-            <dd className="font-medium text-foreground">
-              {fmtNumber(memoriaConfianca?.maxPedidoSharePct)}%
-            </dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Movimento contextual (score)</dt>
-            <dd className="font-medium text-foreground">
-              {fmtNumber(memoriaConfianca?.movimentoContextual, 0)}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Limites movimento do grupo (Q1/Q3)</dt>
-            <dd className="font-medium text-foreground">
-              {fmtNumber(memoriaConfianca?.limitesMovimento?.low)} / {fmtNumber(memoriaConfianca?.limitesMovimento?.high)}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-4">
+          <MemRow
+            label="Índice de confiança"
+            value={`${fmtNumber(confiancaIndice, 0)} ${confiancaSimbolo || ''}`.trim()}
+          />
+          <MemRow label="Pedidos com o item (90d)" value={fmtNumber(memoriaConfianca?.pedidos, 0)} />
+          <MemRow label="Semanas ativas" value={fmtNumber(memoriaConfianca?.semanas, 0)} />
+          <MemRow label="Qtd vitrine 90d" value={`${fmtNumber(qtdVitrine)} ${unVitrine || 'UN'}`} />
+          <MemRow label="Concentração no maior pedido" value={`${fmtNumber(memoriaConfianca?.maxPedidoSharePct)}%`} />
+          <MemRow label="Movimento contextual (score)" value={fmtNumber(memoriaConfianca?.movimentoContextual, 0)} />
+          <MemRow
+            label="Limites movimento do grupo (Q1/Q3)"
+            value={`${fmtNumber(memoriaConfianca?.limitesMovimento?.low)} / ${fmtNumber(memoriaConfianca?.limitesMovimento?.high)}`}
+          />
+          <div className="grid gap-1 border border-border/40 rounded-md p-2 bg-secondary/20">
             <dt className="text-muted-foreground">Componentes normalizados</dt>
-            <dd className="font-medium text-foreground text-right">
-              ped {fmtNumber(memoriaConfianca?.componentes?.pedidosNorm, 0)} · sem {fmtNumber(memoriaConfianca?.componentes?.semanasNorm, 0)} · mov {fmtNumber(memoriaConfianca?.componentes?.movimentoContextual, 0)} · conc {fmtNumber(memoriaConfianca?.componentes?.concentracaoNorm, 0)} · qtd {fmtNumber(memoriaConfianca?.componentes?.quantidadeNorm, 0)}
+            <dd className="grid grid-cols-2 sm:grid-cols-5 gap-1 text-foreground font-medium">
+              <span>ped {fmtNumber(memoriaConfianca?.componentes?.pedidosNorm, 0)}</span>
+              <span>sem {fmtNumber(memoriaConfianca?.componentes?.semanasNorm, 0)}</span>
+              <span>mov {fmtNumber(memoriaConfianca?.componentes?.movimentoContextual, 0)}</span>
+              <span>conc {fmtNumber(memoriaConfianca?.componentes?.concentracaoNorm, 0)}</span>
+              <span>qtd {fmtNumber(memoriaConfianca?.componentes?.quantidadeNorm, 0)}</span>
             </dd>
           </div>
         </dl>
