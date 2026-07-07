@@ -51,7 +51,7 @@ export default function ProdutoIepTab({ produto }) {
   const scoreBase = Number(produto?.iep_score_base ?? 0);
   const coefConfianca = Number(produto?.iep_coef_confianca ?? 0.65);
   const lucro90d = Number(produto?.iep_lucro_90d ?? 0);
-  const lucroRefGrupo = Number(produto?.iep_lucro_ref_grupo ?? 0);
+  const lucroRefGlobal = Number(produto?.iep_lucro_ref_global ?? 0);
   const memoriaConfianca = produto?.iep_memoria_confianca || {
     pedidos: 0,
     semanas: 0,
@@ -96,7 +96,7 @@ export default function ProdutoIepTab({ produto }) {
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold text-foreground">Desempenho recente</h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Memória de cálculo do IEP com referência de grupo e coeficientes da amostra (janela 90 dias).
+              Memória de cálculo do IEP com referência global e coeficientes da amostra (janela 90 dias).
             </p>
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function ProdutoIepTab({ produto }) {
         </div>
         <dl className="grid gap-2 text-xs">
           <MemRow label="Lucro item (90d)" value={`R$ ${fmtNumber(lucro90d)}`} />
-          <MemRow label="Lucro referência do grupo" value={`R$ ${fmtNumber(lucroRefGrupo)}`} />
+          <MemRow label="Lucro referência global" value={`R$ ${fmtNumber(lucroRefGlobal)}`} />
           <MemRow label="Score base" value={fmtNumber(scoreBase, 0)} />
           <MemRow label="Coeficiente confiança" value={fmtNumber(coefConfianca)} />
           <MemRow label="IEP final" value={iepExibicao} strong />
@@ -163,7 +163,7 @@ export default function ProdutoIepTab({ produto }) {
           <MemRow label="Concentração no maior pedido" value={`${fmtNumber(memoriaConfianca?.maxPedidoSharePct)}%`} />
           <MemRow label="Movimento contextual (score)" value={fmtNumber(memoriaConfianca?.movimentoContextual, 0)} />
           <MemRow
-            label="Limites movimento do grupo (Q1/Q3)"
+            label="Limites movimento global (Q1/Q3)"
             value={`${fmtNumber(memoriaConfianca?.limitesMovimento?.low)} / ${fmtNumber(memoriaConfianca?.limitesMovimento?.high)}`}
           />
           <div className="grid gap-1 border border-border/40 rounded-md p-2 bg-secondary/20">

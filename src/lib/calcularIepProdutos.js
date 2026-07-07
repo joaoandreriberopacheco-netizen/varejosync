@@ -168,7 +168,7 @@ function isoWeekKey(rawDate) {
   const dayNum = utcDate.getUTCDay() || 7;
   utcDate.setUTCDate(utcDate.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil((((utcDate - yearStart) / 86400000) + 1) / 7);
+  const weekNo = Math.ceil((((utcDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   return `${utcDate.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
@@ -249,32 +249,18 @@ function buildMovimentoStatsBySku(produtos, pedidos90d, itensPorProduto) {
   return out;
 }
 
-function buildMovimentoContextoPorGrupo(produtos, movimentoBySku) {
-  const porGrupo = {};
-  for (const produto of produtos || []) {
-    const skuId = String(produto?.id || '');
-    if (!skuId) continue;
-    const key = grupoAbcdKey(produto);
-    const movimentos = Number(movimentoBySku?.[skuId]?.movimentoPedidos) || 0;
-    if (!porGrupo[key]) porGrupo[key] = [];
-    if (movimentos > 0) porGrupo[key].push(movimentos);
-  }
+function buildMovimentoContextoGlobal(movimentoBySku) {
+  const values = Object.values(movimentoBySku || {})
+    .map((entry) => Number(entry?.movimentoPedidos) || 0)
+    .filter((v) => v > 0);
 
-  const contexto = {};
-  for (const [key, values] of Object.entries(porGrupo)) {
-    if (!values.length) {
-      contexto[key] = { low: 0, high: 1 };
-      continue;
-    }
-    const q3Base = quantile(values, 0.75);
-    const trimmed = values.filter((value) => value <= q3Base);
-    const base = trimmed.length ? trimmed : values;
-    const low = quantile(base, 0.25);
-    const high = Math.max(low + 1, quantile(base, 0.75));
-    contexto[key] = { low, high };
-  }
-
-  return contexto;
+  if (!values.length) return { low: 0, high: 1 };
+  const q3Base = quantile(values, 0.75);
+  const trimmed = values.filter((value) => value <= q3Base);
+  const base = trimmed.length ? trimmed : values;
+  const low = quantile(base, 0.25);
+  const high = Math.max(low + 1, quantile(base, 0.75));
+  return { low, high };
 }
 
 function scoreMovimentoContextual(movimentos, contexto) {
@@ -397,30 +383,13 @@ function classificarCodigoComportamento({ scoreBase, scoreAjustado, confianca, m
   return 'NEU';
 }
 
-function buildLucroMaxContextoPorGrupo(produtos, metricasPorSku) {
-  const porGrupo = {};
-  for (const produto of produtos || []) {
-    const skuId = String(produto?.id || '');
-    if (!skuId) continue;
-    const key = grupoAbcdKey(produto);
-    const lucro = Math.max(0, Number(metricasPorSku?.[skuId]?.lucro) || 0);
-    if (lucro <= 0) continue;
-    if (!porGrupo[key]) porGrupo[key] = [];
-    porGrupo[key].push(lucro);
-  }
-
-  const contexto = {};
-  for (const [key, values] of Object.entries(porGrupo)) {
-    if (!values.length) {
-      contexto[key] = 0;
-      continue;
-    }
-    const q3Limite = quantile(values, 0.75);
-    const base = values.filter((value) => value <= q3Limite);
-    const usada = base.length ? base : values;
-    contexto[key] = Math.max(...usada);
-  }
-  return contexto;
+function buildLucroReferenciaGlobal(metricasPorSku) {
+  const values = Object.values(metricasPorSku || {})
+    .map((m) => Math.max(0, Number(m?.lucro) || 0))
+    .filter((v) => v > 0);
+  if (!values.length) return 0;
+  const p95 = quantile(values, 0.95);
+  return Math.max(p95, values[0] || 0);
 }
 
 /** Chave do grupo ABCD — reexportada de abcdCurvaOrganizacao (h1+h2 ou só h1). */
@@ -437,9 +406,9 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
   }
 
   const mapaAbcdGrupo = calcularMapaAbcdGrupo(lista, metricasPorSku);
-  const lucroMaxPorGrupo = buildLucroMaxContextoPorGrupo(lista, metricasPorSku);
+  const lucroRefGlobal = buildLucroReferenciaGlobal(metricasPorSku);
   const movimentoBySku = buildMovimentoStatsBySku(lista, pedidos, itensPorProduto);
-  const movimentoContextoByGrupo = buildMovimentoContextoPorGrupo(lista, movimentoBySku);
+  const movimentoContextoGlobal = buildMovimentoContextoGlobal(movimentoBySku);
 
   function classeAbcdProduto(produto) {
     return abcdClasseParaProduto(produto, mapaAbcdGrupo);
@@ -504,12 +473,7 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
     const sku = metricasPorSku[produto.id];
     const h1 = produto.campo_hierarquico_1 || 'unassigned';
     const classe = classeAbcdProduto(produto);
-    const groupKey = grupoAbcdKey(produto);
-    const scoreBase = normalizarScore0a100(
-      sku.lucro,
-      Number(lucroMaxPorGrupo[groupKey]) || 0,
-      sku.teveVenda,
-    );
+    const scoreBase = normalizarScore0a100(sku.lucro, lucroRefGlobal, sku.teveVenda);
     const movimentoStats = movimentoBySku[String(produto.id)] || {
       movimentoPedidos: 0,
       semanasAtivas: 0,
@@ -518,7 +482,7 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
       quantidadeVitrineTotal: 0,
       unidadeVitrine: produto?.unidade_vitrine || produto?.unidade_principal || 'UN',
     };
-    const contexto = movimentoContextoByGrupo[groupKey] || { low: 0, high: 1 };
+    const contexto = movimentoContextoGlobal || { low: 0, high: 1 };
     const memoriaConfianca = buildMemoriaConfianca(movimentoStats, contexto);
     const confianca = memoriaConfianca.indiceConfianca;
     const confiancaSimbolo = simboloConfiancaAmostra(confianca);
@@ -543,7 +507,7 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
       iep_quantidade_vitrine_90d: Math.round((Number(movimentoStats?.quantidadeVitrineTotal) || 0) * 100) / 100,
       iep_unidade_vitrine: movimentoStats?.unidadeVitrine || produto?.unidade_vitrine || produto?.unidade_principal || 'UN',
       iep_lucro_90d: Math.round((Number(sku?.lucro) || 0) * 100) / 100,
-      iep_lucro_ref_grupo: Math.round((Number(lucroMaxPorGrupo[groupKey]) || 0) * 100) / 100,
+      iep_lucro_ref_global: Math.round((Number(lucroRefGlobal) || 0) * 100) / 100,
       iep_coef_confianca: fatorConfianca,
       iep_memoria_confianca: memoriaConfianca,
       iep_score_nivel_1: mediaNivel1PorH1[h1] != null ? Math.round(mediaNivel1PorH1[h1]) : null,
@@ -569,7 +533,7 @@ const CAMPOS_ABCD_IEP_CATALOGO = [
   'iep_quantidade_vitrine_90d',
   'iep_unidade_vitrine',
   'iep_lucro_90d',
-  'iep_lucro_ref_grupo',
+  'iep_lucro_ref_global',
   'iep_coef_confianca',
   'iep_memoria_confianca',
   'iep_score_nivel_1',
