@@ -54,6 +54,14 @@ export async function generateRelatorioCatalogoIepXlsx(payload = {}) {
     { header: 'PERFIL', key: 'perfil', width: 10 },
     { header: 'LUCRO 90D (R$)', key: 'lucro_90d', width: 14 },
     { header: 'LUCRO REF GLOBAL (R$)', key: 'lucro_ref', width: 19 },
+    { header: 'LUCRO TOTAL GLOBAL 90D (R$)', key: 'lucro_total_global', width: 21 },
+    { header: 'PART LUCRO GLOBAL %', key: 'part_lucro_global_pct', width: 16 },
+    { header: 'LUCRO NORM', key: 'lucro_norm', width: 10 },
+    { header: 'PART NORM', key: 'part_norm', width: 10 },
+    { header: 'PESO LUCRO', key: 'peso_lucro', width: 10 },
+    { header: 'PESO PART', key: 'peso_part', width: 10 },
+    { header: 'CONTR LUCRO', key: 'contr_lucro', width: 11 },
+    { header: 'CONTR PART', key: 'contr_part', width: 11 },
     { header: 'SCORE BASE', key: 'score_base', width: 11 },
     { header: 'COEF CONFIANÇA', key: 'coef_conf', width: 14 },
     { header: 'CONF. ÍNDICE', key: 'conf_idx', width: 11 },
@@ -94,6 +102,10 @@ export async function generateRelatorioCatalogoIepXlsx(payload = {}) {
     const memoria = produto?.iep_memoria_confianca || {};
     const comp = memoria?.componentes || {};
     const limites = memoria?.limitesMovimento || {};
+    const memoriaIndice = produto?.iep_memoria_indice || {};
+    const ind = memoriaIndice?.indicadores || {};
+    const lucroIdx = ind?.lucroRelativo || {};
+    const partIdx = ind?.participacaoGlobal || {};
     ws.addRow({
       produto: safe(produto?.nome || '—'),
       abc: abcdText(produto?.abcd),
@@ -101,6 +113,16 @@ export async function generateRelatorioCatalogoIepXlsx(payload = {}) {
       perfil: perfilText(produto?.iep_codigo_comportamento),
       lucro_90d: Number.isFinite(Number(produto?.iep_lucro_90d)) ? Number(produto?.iep_lucro_90d) : null,
       lucro_ref: Number.isFinite(Number(produto?.iep_lucro_ref_global)) ? Number(produto?.iep_lucro_ref_global) : null,
+      lucro_total_global:
+        Number.isFinite(Number(produto?.iep_lucro_total_global_90d)) ? Number(produto?.iep_lucro_total_global_90d) : null,
+      part_lucro_global_pct:
+        Number.isFinite(Number(produto?.iep_participacao_lucro_pct)) ? Number(produto?.iep_participacao_lucro_pct) : null,
+      lucro_norm: Number.isFinite(Number(lucroIdx?.normalizado)) ? Number(lucroIdx?.normalizado) : null,
+      part_norm: Number.isFinite(Number(partIdx?.normalizado)) ? Number(partIdx?.normalizado) : null,
+      peso_lucro: Number.isFinite(Number(lucroIdx?.peso)) ? Number(lucroIdx?.peso) : null,
+      peso_part: Number.isFinite(Number(partIdx?.peso)) ? Number(partIdx?.peso) : null,
+      contr_lucro: Number.isFinite(Number(lucroIdx?.contribuicao)) ? Number(lucroIdx?.contribuicao) : null,
+      contr_part: Number.isFinite(Number(partIdx?.contribuicao)) ? Number(partIdx?.contribuicao) : null,
       score_base: Number.isFinite(Number(produto?.iep_score_base)) ? Math.round(Number(produto?.iep_score_base)) : null,
       coef_conf: Number.isFinite(Number(produto?.iep_coef_confianca)) ? Number(produto?.iep_coef_confianca) : null,
       conf_idx: Number.isFinite(Number(produto?.iep_confianca_indice)) ? Number(produto?.iep_confianca_indice) : null,
@@ -135,24 +157,32 @@ export async function generateRelatorioCatalogoIepXlsx(payload = {}) {
     row.getCell('D').alignment = { vertical: 'middle', horizontal: 'center' };
     row.getCell('E').alignment = { vertical: 'middle', horizontal: 'right' }; // lucro 90d
     row.getCell('F').alignment = { vertical: 'middle', horizontal: 'right' }; // lucro ref
-    row.getCell('G').alignment = { vertical: 'middle', horizontal: 'right' }; // score base
-    row.getCell('H').alignment = { vertical: 'middle', horizontal: 'right' }; // coef
-    row.getCell('I').alignment = { vertical: 'middle', horizontal: 'right' }; // conf idx
-    row.getCell('J').alignment = { vertical: 'middle', horizontal: 'center' }; // conf simb
-    row.getCell('K').alignment = { vertical: 'middle', horizontal: 'right' }; // qtd vitrine
-    row.getCell('L').alignment = { vertical: 'middle', horizontal: 'center' }; // un vitrine
-    row.getCell('M').alignment = { vertical: 'middle', horizontal: 'right' }; // pedidos
-    row.getCell('N').alignment = { vertical: 'middle', horizontal: 'right' }; // semanas
-    row.getCell('O').alignment = { vertical: 'middle', horizontal: 'right' }; // concentração
-    row.getCell('P').alignment = { vertical: 'middle', horizontal: 'right' }; // mov contextual
-    row.getCell('Q').alignment = { vertical: 'middle', horizontal: 'right' }; // q1
-    row.getCell('R').alignment = { vertical: 'middle', horizontal: 'right' }; // q3
-    row.getCell('S').alignment = { vertical: 'middle', horizontal: 'right' }; // comp ped
-    row.getCell('T').alignment = { vertical: 'middle', horizontal: 'right' }; // comp sem
-    row.getCell('U').alignment = { vertical: 'middle', horizontal: 'right' }; // comp mov
-    row.getCell('V').alignment = { vertical: 'middle', horizontal: 'right' }; // comp conc
-    row.getCell('W').alignment = { vertical: 'middle', horizontal: 'right' }; // comp qtd
-    row.getCell('X').alignment = { vertical: 'middle', horizontal: 'right' }; // n2
+    row.getCell('G').alignment = { vertical: 'middle', horizontal: 'right' }; // lucro total global
+    row.getCell('H').alignment = { vertical: 'middle', horizontal: 'right' }; // participação global
+    row.getCell('I').alignment = { vertical: 'middle', horizontal: 'right' }; // lucro norm
+    row.getCell('J').alignment = { vertical: 'middle', horizontal: 'right' }; // part norm
+    row.getCell('K').alignment = { vertical: 'middle', horizontal: 'right' }; // peso lucro
+    row.getCell('L').alignment = { vertical: 'middle', horizontal: 'right' }; // peso part
+    row.getCell('M').alignment = { vertical: 'middle', horizontal: 'right' }; // contrib lucro
+    row.getCell('N').alignment = { vertical: 'middle', horizontal: 'right' }; // contrib part
+    row.getCell('O').alignment = { vertical: 'middle', horizontal: 'right' }; // score base
+    row.getCell('P').alignment = { vertical: 'middle', horizontal: 'right' }; // coef
+    row.getCell('Q').alignment = { vertical: 'middle', horizontal: 'right' }; // conf idx
+    row.getCell('R').alignment = { vertical: 'middle', horizontal: 'center' }; // conf simb
+    row.getCell('S').alignment = { vertical: 'middle', horizontal: 'right' }; // qtd vitrine
+    row.getCell('T').alignment = { vertical: 'middle', horizontal: 'center' }; // un vitrine
+    row.getCell('U').alignment = { vertical: 'middle', horizontal: 'right' }; // pedidos
+    row.getCell('V').alignment = { vertical: 'middle', horizontal: 'right' }; // semanas
+    row.getCell('W').alignment = { vertical: 'middle', horizontal: 'right' }; // concentração
+    row.getCell('X').alignment = { vertical: 'middle', horizontal: 'right' }; // mov contextual
+    row.getCell('Y').alignment = { vertical: 'middle', horizontal: 'right' }; // q1
+    row.getCell('Z').alignment = { vertical: 'middle', horizontal: 'right' }; // q3
+    row.getCell('AA').alignment = { vertical: 'middle', horizontal: 'right' }; // comp ped
+    row.getCell('AB').alignment = { vertical: 'middle', horizontal: 'right' }; // comp sem
+    row.getCell('AC').alignment = { vertical: 'middle', horizontal: 'right' }; // comp mov
+    row.getCell('AD').alignment = { vertical: 'middle', horizontal: 'right' }; // comp conc
+    row.getCell('AE').alignment = { vertical: 'middle', horizontal: 'right' }; // comp qtd
+    row.getCell('AF').alignment = { vertical: 'middle', horizontal: 'right' }; // n2
   }
 
   const buffer = await wb.xlsx.writeBuffer();

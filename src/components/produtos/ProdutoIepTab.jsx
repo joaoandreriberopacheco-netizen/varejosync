@@ -45,6 +45,12 @@ function MemRow({ label, value, strong = false }) {
   );
 }
 
+function fmtPct(value, max = 3) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return `${n.toLocaleString('pt-BR', { maximumFractionDigits: max })}%`;
+}
+
 export default function ProdutoIepTab({ produto }) {
   const classe = String(produto?.abcd || produto?.iep_classe || '').toUpperCase() || null;
   const score = Number(produto?.iep_score) || 0;
@@ -52,6 +58,14 @@ export default function ProdutoIepTab({ produto }) {
   const coefConfianca = Number(produto?.iep_coef_confianca ?? 0.65);
   const lucro90d = Number(produto?.iep_lucro_90d ?? 0);
   const lucroRefGlobal = Number(produto?.iep_lucro_ref_global ?? 0);
+  const lucroTotalGlobal = Number(produto?.iep_lucro_total_global_90d ?? 0);
+  const memoriaIndice = produto?.iep_memoria_indice || {
+    indicadores: {
+      lucroRelativo: { valorEncontrado: 0, referenciaGlobal: 0, normalizado: 0, peso: 0.7, contribuicao: 0, unidade: 'R$' },
+      participacaoGlobal: { valorEncontrado: 0, referenciaGlobal: 5, normalizado: 0, peso: 0.3, contribuicao: 0, unidade: '%' },
+    },
+    resultado: { scoreBase: scoreBase || 0, lucroTotalGlobal: lucroTotalGlobal || 0 },
+  };
   const memoriaConfianca = produto?.iep_memoria_confianca || {
     pedidos: 0,
     semanas: 0,
@@ -96,7 +110,7 @@ export default function ProdutoIepTab({ produto }) {
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold text-foreground">Desempenho recente</h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Memória de cálculo do IEP com referência global e coeficientes da amostra (janela 90 dias).
+              Laudo do IEP em uma página: valor do item, referência global, normalização, peso e contribuição.
             </p>
           </div>
         </div>
@@ -143,11 +157,44 @@ export default function ProdutoIepTab({ produto }) {
         </div>
         <dl className="grid gap-2 text-xs">
           <MemRow label="Lucro item (90d)" value={`R$ ${fmtNumber(lucro90d)}`} />
+          <MemRow label="Lucro total global (90d)" value={`R$ ${fmtNumber(lucroTotalGlobal)}`} />
           <MemRow label="Lucro referência global" value={`R$ ${fmtNumber(lucroRefGlobal)}`} />
           <MemRow label="Score base" value={fmtNumber(scoreBase, 0)} />
           <MemRow label="Coeficiente confiança" value={fmtNumber(coefConfianca)} />
           <MemRow label="IEP final" value={iepExibicao} strong />
         </dl>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-xs border border-border/40 rounded-md overflow-hidden">
+            <thead className="bg-secondary/40">
+              <tr>
+                <th className="text-left px-2 py-1.5">Indicador</th>
+                <th className="text-right px-2 py-1.5">Valor item</th>
+                <th className="text-right px-2 py-1.5">Ref. global</th>
+                <th className="text-right px-2 py-1.5">Normalizado</th>
+                <th className="text-right px-2 py-1.5">Peso</th>
+                <th className="text-right px-2 py-1.5">Contrib.</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/30">
+              <tr>
+                <td className="px-2 py-1.5">Lucro relativo</td>
+                <td className="px-2 py-1.5 text-right">R$ {fmtNumber(memoriaIndice?.indicadores?.lucroRelativo?.valorEncontrado)}</td>
+                <td className="px-2 py-1.5 text-right">R$ {fmtNumber(memoriaIndice?.indicadores?.lucroRelativo?.referenciaGlobal)}</td>
+                <td className="px-2 py-1.5 text-right">{fmtNumber(memoriaIndice?.indicadores?.lucroRelativo?.normalizado, 0)}</td>
+                <td className="px-2 py-1.5 text-right">{fmtPct((Number(memoriaIndice?.indicadores?.lucroRelativo?.peso) || 0) * 100, 1)}</td>
+                <td className="px-2 py-1.5 text-right">{fmtNumber(memoriaIndice?.indicadores?.lucroRelativo?.contribuicao, 0)}</td>
+              </tr>
+              <tr>
+                <td className="px-2 py-1.5">Participação no lucro global</td>
+                <td className="px-2 py-1.5 text-right">{fmtPct(memoriaIndice?.indicadores?.participacaoGlobal?.valorEncontrado)}</td>
+                <td className="px-2 py-1.5 text-right">{fmtPct(memoriaIndice?.indicadores?.participacaoGlobal?.referenciaGlobal, 1)}</td>
+                <td className="px-2 py-1.5 text-right">{fmtNumber(memoriaIndice?.indicadores?.participacaoGlobal?.normalizado, 0)}</td>
+                <td className="px-2 py-1.5 text-right">{fmtPct((Number(memoriaIndice?.indicadores?.participacaoGlobal?.peso) || 0) * 100, 1)}</td>
+                <td className="px-2 py-1.5 text-right">{fmtNumber(memoriaIndice?.indicadores?.participacaoGlobal?.contribuicao, 0)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className={P38_SECTION}>

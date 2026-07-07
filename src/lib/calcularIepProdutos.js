@@ -42,6 +42,10 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+const PESO_LUCRO_RELATIVO = 0.7;
+const PESO_PARTICIPACAO_GLOBAL = 0.3;
+const REF_PARTICIPACAO_GLOBAL_PCT = 5;
+
 function hierarchyKey(parts) {
   return parts.filter(Boolean).join('\x00');
 }
@@ -158,6 +162,68 @@ function normalizarScore0a100(lucro, lucroMax, teveVenda) {
   if (lucroMax <= 0) return lucro > 0 ? 50 : 1;
   const raw = (Math.max(0, lucro) / lucroMax) * 100;
   return Math.round(Math.max(1, Math.min(100, raw)));
+}
+
+function buildMemoriaIndiceBase({ lucro, teveVenda, lucroRefGlobal, lucroTotalGlobal }) {
+  if (!teveVenda) {
+    return {
+      indicadores: {
+        lucroRelativo: {
+          valorEncontrado: 0,
+          referenciaGlobal: Math.round((Number(lucroRefGlobal) || 0) * 100) / 100,
+          normalizado: 0,
+          peso: PESO_LUCRO_RELATIVO,
+          contribuicao: 0,
+          unidade: 'R$',
+        },
+        participacaoGlobal: {
+          valorEncontrado: 0,
+          referenciaGlobal: REF_PARTICIPACAO_GLOBAL_PCT,
+          normalizado: 0,
+          peso: PESO_PARTICIPACAO_GLOBAL,
+          contribuicao: 0,
+          unidade: '%',
+        },
+      },
+      resultado: {
+        scoreBase: null,
+        lucroTotalGlobal: Math.round((Number(lucroTotalGlobal) || 0) * 100) / 100,
+      },
+    };
+  }
+
+  const lucroPositivo = Math.max(0, Number(lucro) || 0);
+  const lucroRelativoNorm = normalizarScore0a100(lucroPositivo, lucroRefGlobal, true) || 0;
+  const participacaoPct = lucroTotalGlobal > 0 ? (lucroPositivo / lucroTotalGlobal) * 100 : 0;
+  const participacaoNorm = Math.round(clamp((participacaoPct / REF_PARTICIPACAO_GLOBAL_PCT) * 100, 0, 100));
+  const contribLucro = Math.round(lucroRelativoNorm * PESO_LUCRO_RELATIVO);
+  const contribParticipacao = Math.round(participacaoNorm * PESO_PARTICIPACAO_GLOBAL);
+  const scoreBase = Math.round(clamp(contribLucro + contribParticipacao, 1, 100));
+
+  return {
+    indicadores: {
+      lucroRelativo: {
+        valorEncontrado: Math.round(lucroPositivo * 100) / 100,
+        referenciaGlobal: Math.round((Number(lucroRefGlobal) || 0) * 100) / 100,
+        normalizado: lucroRelativoNorm,
+        peso: PESO_LUCRO_RELATIVO,
+        contribuicao: contribLucro,
+        unidade: 'R$',
+      },
+      participacaoGlobal: {
+        valorEncontrado: Math.round(participacaoPct * 1000) / 1000,
+        referenciaGlobal: REF_PARTICIPACAO_GLOBAL_PCT,
+        normalizado: participacaoNorm,
+        peso: PESO_PARTICIPACAO_GLOBAL,
+        contribuicao: contribParticipacao,
+        unidade: '%',
+      },
+    },
+    resultado: {
+      scoreBase,
+      lucroTotalGlobal: Math.round((Number(lucroTotalGlobal) || 0) * 100) / 100,
+    },
+  };
 }
 
 function isoWeekKey(rawDate) {
@@ -383,13 +449,14 @@ function classificarCodigoComportamento({ scoreBase, scoreAjustado, confianca, m
   return 'NEU';
 }
 
-function buildLucroReferenciaGlobal(metricasPorSku) {
+function buildLucroContextoGlobal(metricasPorSku) {
   const values = Object.values(metricasPorSku || {})
     .map((m) => Math.max(0, Number(m?.lucro) || 0))
     .filter((v) => v > 0);
-  if (!values.length) return 0;
+  if (!values.length) return { ref: 0, total: 0 };
+  const total = values.reduce((acc, value) => acc + value, 0);
   const p95 = quantile(values, 0.95);
-  return Math.max(p95, values[0] || 0);
+  return { ref: Math.max(p95, values[0] || 0), total };
 }
 
 /** Chave do grupo ABCD — reexportada de abcdCurvaOrganizacao (h1+h2 ou só h1). */
@@ -406,7 +473,7 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
   }
 
   const mapaAbcdGrupo = calcularMapaAbcdGrupo(lista, metricasPorSku);
-  const lucroRefGlobal = buildLucroReferenciaGlobal(metricasPorSku);
+  const { ref: lucroRefGlobal, total: lucroTotalGlobal } = buildLucroContextoGlobal(metricasPorSku);
   const movimentoBySku = buildMovimentoStatsBySku(lista, pedidos, itensPorProduto);
   const movimentoContextoGlobal = buildMovimentoContextoGlobal(movimentoBySku);
 
@@ -473,7 +540,13 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
     const sku = metricasPorSku[produto.id];
     const h1 = produto.campo_hierarquico_1 || 'unassigned';
     const classe = classeAbcdProduto(produto);
-    const scoreBase = normalizarScore0a100(sku.lucro, lucroRefGlobal, sku.teveVenda);
+    const memoriaIndice = buildMemoriaIndiceBase({
+      lucro: sku.lucro,
+      teveVenda: sku.teveVenda,
+      lucroRefGlobal,
+      lucroTotalGlobal,
+    });
+    const scoreBase = memoriaIndice?.resultado?.scoreBase ?? null;
     const movimentoStats = movimentoBySku[String(produto.id)] || {
       movimentoPedidos: 0,
       semanasAtivas: 0,
@@ -508,7 +581,10 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
       iep_unidade_vitrine: movimentoStats?.unidadeVitrine || produto?.unidade_vitrine || produto?.unidade_principal || 'UN',
       iep_lucro_90d: Math.round((Number(sku?.lucro) || 0) * 100) / 100,
       iep_lucro_ref_global: Math.round((Number(lucroRefGlobal) || 0) * 100) / 100,
+      iep_lucro_total_global_90d: Math.round((Number(lucroTotalGlobal) || 0) * 100) / 100,
+      iep_participacao_lucro_pct: Math.round((Number(memoriaIndice?.indicadores?.participacaoGlobal?.valorEncontrado) || 0) * 1000) / 1000,
       iep_coef_confianca: fatorConfianca,
+      iep_memoria_indice: memoriaIndice,
       iep_memoria_confianca: memoriaConfianca,
       iep_score_nivel_1: mediaNivel1PorH1[h1] != null ? Math.round(mediaNivel1PorH1[h1]) : null,
       iep_score_nivel_2: rollupNivel(produto, 2),
@@ -534,7 +610,10 @@ const CAMPOS_ABCD_IEP_CATALOGO = [
   'iep_unidade_vitrine',
   'iep_lucro_90d',
   'iep_lucro_ref_global',
+  'iep_lucro_total_global_90d',
+  'iep_participacao_lucro_pct',
   'iep_coef_confianca',
+  'iep_memoria_indice',
   'iep_memoria_confianca',
   'iep_score_nivel_1',
   'iep_score_nivel_2',
