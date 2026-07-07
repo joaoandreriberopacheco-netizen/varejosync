@@ -8,7 +8,7 @@ import {
 
 const PEDIDO_IDS_CHUNK = 40;
 const PEDIDO_GET_CHUNK = 10;
-const TIPOS_VENDA_PDV = ['PDV', 'PDV Supermercado', 'PDV Autosserviço'];
+const TIPOS_VENDA_PDV = ['PDV', 'PDV Supermercado', 'PDV Autosserviço', 'Pedido'];
 
 function normalizeItemVenda(it) {
   return {
