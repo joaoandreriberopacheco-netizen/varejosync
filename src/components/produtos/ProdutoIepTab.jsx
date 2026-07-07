@@ -39,13 +39,28 @@ function ScoreTile({ label, value, hint }) {
 export default function ProdutoIepTab({ produto }) {
   const classe = String(produto?.abcd || produto?.iep_classe || '').toUpperCase() || null;
   const score = Number(produto?.iep_score) || 0;
-  const scoreBase = Number(produto?.iep_score_base);
-  const coefConfianca = Number(produto?.iep_coef_confianca);
-  const lucro90d = Number(produto?.iep_lucro_90d);
-  const lucroRefGrupo = Number(produto?.iep_lucro_ref_grupo);
-  const memoriaConfianca = produto?.iep_memoria_confianca || {};
+  const scoreBase = Number(produto?.iep_score_base ?? 0);
+  const coefConfianca = Number(produto?.iep_coef_confianca ?? 0.65);
+  const lucro90d = Number(produto?.iep_lucro_90d ?? 0);
+  const lucroRefGrupo = Number(produto?.iep_lucro_ref_grupo ?? 0);
+  const memoriaConfianca = produto?.iep_memoria_confianca || {
+    pedidos: 0,
+    semanas: 0,
+    quantidadeVitrine: 0,
+    unidadeVitrine: produto?.iep_unidade_vitrine || produto?.unidade_vitrine || produto?.unidade_principal || 'UN',
+    maxPedidoSharePct: 0,
+    movimentoContextual: 0,
+    limitesMovimento: { low: 0, high: 0 },
+    componentes: {
+      pedidosNorm: 0,
+      semanasNorm: 0,
+      movimentoContextual: 0,
+      concentracaoNorm: 0,
+      quantidadeNorm: 0,
+    },
+  };
   const confiancaSimbolo = String(produto?.iep_confianca_simbolo || '').trim();
-  const confiancaIndice = Number(produto?.iep_confianca_indice);
+  const confiancaIndice = Number(produto?.iep_confianca_indice ?? 0);
   const iepExibicao = score > 0 ? `${score}${confiancaSimbolo}` : '—';
   const codigoComportamento = String(produto?.iep_codigo_comportamento || '').toUpperCase().trim();
   const temDados = produtoTemMetricasIep(produto);
@@ -53,8 +68,14 @@ export default function ProdutoIepTab({ produto }) {
   const h1 = produto?.campo_hierarquico_1;
   const h2 = produto?.campo_hierarquico_2;
   const grupoLabel = [h1, h2].filter(Boolean).join(' · ') || 'Sem subtipo (nível 2)';
-  const qtdVitrine = Number(produto?.iep_quantidade_vitrine_90d);
-  const unVitrine = String(produto?.iep_unidade_vitrine || '').trim();
+  const qtdVitrine = Number(produto?.iep_quantidade_vitrine_90d ?? memoriaConfianca?.quantidadeVitrine ?? 0);
+  const unVitrine = String(
+    produto?.iep_unidade_vitrine ||
+      memoriaConfianca?.unidadeVitrine ||
+      produto?.unidade_vitrine ||
+      produto?.unidade_principal ||
+      'UN',
+  ).trim();
 
   return (
     <div className="space-y-5 max-w-2xl">
