@@ -33,7 +33,7 @@ export default function OrcamentosRecentesSheet({ isOpen, onClose, currentUser, 
     const itensCarrinho = (orcamento.itens || []).map(item => ({
       produto_id: item.produto_id,
       produto_nome: item.produto_nome,
-      codigo_interno: item.codigo_interno || '001',
+      codigo_interno: item.codigo_interno || '',
       quantidade: item.quantidade,
       unidade_medida: item.unidade_medida || 'UN',
       fator_conversao: item.fator_conversao || 1,

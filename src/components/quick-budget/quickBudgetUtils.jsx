@@ -1,15 +1,18 @@
 import React from 'react';
 import { getPrecoPisoCustoUnidade, getPrecoUnitarioNaUnidade, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
 import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
+import { normalizeProductCodeForSearch } from '@/lib/productCode';
 
 export function formatCurrency(value) {
   return `R$ ${(Number(value) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function getProductSearchText(produto) {
+  const codigoInternoRaw = normalizeProductCodeForSearch(produto?.codigo_interno);
   return [
     produto.nome,
     produto.codigo_interno,
+    codigoInternoRaw,
     produto.codigo_barras,
     produto.campo_hierarquico_1,
     produto.campo_hierarquico_2,

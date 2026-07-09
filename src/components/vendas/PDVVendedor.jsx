@@ -39,6 +39,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
 import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit } from '@/lib/productUnits';
 import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
+import { productCodesMatch } from '@/lib/productCode';
 
 export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
   const navigate = useNavigate();
@@ -263,7 +264,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
           const itensCarrinho = normalizeCartItems(rascunho.itens.map(item => ({
             produto_id: item.produto_id,
             produto_nome: item.produto_nome,
-            codigo_interno: item.codigo_interno || '001',
+            codigo_interno: item.codigo_interno || '',
             quantidade: item.quantidade,
             unidade_medida: item.unidade_medida || 'UN',
             fator_conversao: item.fator_conversao || 1,
@@ -608,7 +609,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       setCarrinho([...carrinho, {
         produto_id: produtoSelecionado.id,
         produto_nome: produtoSelecionado.nome,
-        codigo_interno: produtoSelecionado.codigo_interno || '001',
+        codigo_interno: produtoSelecionado.codigo_interno || '',
         quantidade: quantidade,
         unidade_medida: unidadeSelecionada,
         fator_conversao: fatorConversao,
@@ -982,7 +983,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
       const itensCarrinho = normalizeCartItems(rascunhoEncontrado.itens.map(item => ({
         produto_id: item.produto_id,
         produto_nome: item.produto_nome,
-        codigo_interno: item.codigo_interno || '001',
+        codigo_interno: item.codigo_interno || '',
         quantidade: item.quantidade,
         unidade_medida: item.unidade_medida || 'UN',
         fator_conversao: item.fator_conversao || 1,
@@ -1900,7 +1901,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
           setBuscaProduto(code);
           setShowBarcodeScanner(false);
           const produto = produtos.find((p) =>
-          p.codigo_barras === code || p.codigo_interno === code
+          p.codigo_barras === code || productCodesMatch(p.codigo_interno, code)
           );
           if (produto) {
             handleSelecionarProduto(produto);

@@ -1,4 +1,5 @@
 import { parseSearchTerms } from '@/lib/searchTokens';
+import { normalizeProductCodeForSearch } from '@/lib/productCode';
 
 export function getProdutoLabel(produto) {
   if (!produto) return '';
@@ -27,9 +28,11 @@ export function normalizeProductSearchText(value) {
 }
 
 export function getProductSearchText(produto) {
+  const codigoInternoRaw = normalizeProductCodeForSearch(produto?.codigo_interno);
   return normalizeProductSearchText([
     produto?.nome,
     produto?.codigo_interno,
+    codigoInternoRaw,
     produto?.codigo_barras,
     produto?.campo_hierarquico_1,
     produto?.campo_hierarquico_2,

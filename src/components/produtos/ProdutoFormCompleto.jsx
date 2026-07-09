@@ -39,6 +39,7 @@ import { syncIsComercialOnAlternativas } from '@/components/produtos/massa/embal
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { useBottomNavScrollVisibility } from '@/hooks/useBottomNavScrollVisibility';
+import { formatProductCode, generateRandomProductCode } from '@/lib/productCode';
 
 const P38_FORM_ROOT = 'flex flex-col h-full overflow-hidden font-din-1451 bg-background dark:bg-[#1f1d22]';
 const P38_FORM_HEADER = 'flex-none border-b border-border/40 dark:border-white/10 bg-card dark:bg-[#2d333b]';
@@ -144,6 +145,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
     return {
       ...produtoData,
+      codigo_interno: formatProductCode(produtoData?.codigo_interno || ''),
       tags: Array.isArray(produtoData?.tags) ? produtoData.tags : [],
       unidades_alternativas: altsComIsComercial,
       tipo: produtoData?.tipo || 'Produto',
@@ -779,10 +781,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
       if (!produto?.id && !codigoInterno) {
         try {
           const todosProdutos = await base44.entities.Produto.list();
-          const ultimoNumero = (todosProdutos || [])
-            .map(p => parseInt(p.codigo_interno, 10) || 0)
-            .reduce((max, num) => Math.max(max, num), 0);
-          codigoInterno = String(ultimoNumero + 1).padStart(6, '0');
+          codigoInterno = generateRandomProductCode((todosProdutos || []).map((p) => p.codigo_interno));
         } catch (listErr) {
           console.error('[ProdutoFormCompleto] Falha ao listar produtos para código interno:', listErr);
           toastSaveBlocked(
@@ -906,7 +905,7 @@ export default function ProdutoFormCompleto({ produto, onSave, onClose, produtoS
 
       const produtoData = {
         ...formData,
-        codigo_interno: codigoInterno,
+        codigo_interno: formatProductCode(codigoInterno),
         nome: formData.nome?.toUpperCase(),
         marca: formData.marca?.toUpperCase(),
         categoria_nome: categoria?.nome?.toUpperCase() || '',

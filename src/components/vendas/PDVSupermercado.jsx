@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUnsavedChangesWarning } from '@/components/utils/useUnsavedChangesWarning';
 import { calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit, getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
+import { productCodesMatch } from '@/lib/productCode';
 
 export default function PDVSupermercado() {
   const [carrinho, setCarrinho] = useState([]);
@@ -688,7 +689,7 @@ export default function PDVSupermercado() {
           setBuscaProduto(code);
           setShowBarcodeScanner(false);
           const produto = produtos.find(p => 
-            p.codigo_barras === code || p.codigo_interno === code
+            p.codigo_barras === code || productCodesMatch(p.codigo_interno, code)
           );
           if (produto) {
             handleSelecionarProduto(produto);
