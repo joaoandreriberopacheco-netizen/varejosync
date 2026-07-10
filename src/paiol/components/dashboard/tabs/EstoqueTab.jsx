@@ -103,6 +103,19 @@ function getMonthBuckets() {
   return months;
 }
 
+function getSupplyMonthBuckets() {
+  const now = new Date();
+  return [2, 1, 0].map((offset) => {
+    const monthDate = subMonths(now, offset);
+    return {
+      key: format(monthDate, 'yyyy-MM'),
+      label: format(monthDate, 'MMM/yy', { locale: ptBR }).toUpperCase(),
+      start: startOfMonth(monthDate),
+      end: endOfMonth(monthDate),
+    };
+  });
+}
+
 function formatShort(value) {
   if (!Number.isFinite(value) || value === 0) return 'R$ 0';
   if (Math.abs(value) >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)}M`;
@@ -180,6 +193,7 @@ export default function EstoqueTab() {
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const monthBuckets = useMemo(() => getMonthBuckets(), []);
+  const supplyMonthBuckets = useMemo(() => getSupplyMonthBuckets(), []);
 
   useEffect(() => {
     let mounted = true;
@@ -196,6 +210,9 @@ export default function EstoqueTab() {
 
         const nivelEstoqueStartDate = monthBuckets[0]?.start || startDate;
 
+        const supplyStartISO = format(supplyMonthBuckets[0]?.start || startDate, 'yyyy-MM-dd');
+        const supplyEndISO = format(supplyMonthBuckets[supplyMonthBuckets.length - 1]?.end || endDate, 'yyyy-MM-dd');
+
         const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra] = await Promise.all([
           base44.entities.Produto.filter({}, '-created_date', 5000),
           base44.entities.MovimentacaoEstoque.list('-created_date', 50000),
@@ -203,18 +220,12 @@ export default function EstoqueTab() {
             {
               tipo: 'Despesa',
               is_custo_mercadoria: true,
-              data_pagamento: { $gte: startISO, $lte: endISO },
+              data_pagamento: { $gte: supplyStartISO, $lte: supplyEndISO },
             },
             '-data_pagamento',
-            8000
+            20000
           ),
-          base44.entities.PedidoVenda.filter(
-            {
-              created_date: { $gte: startISO, $lte: endISO },
-            },
-            '-created_date',
-            8000
-          ),
+          base44.entities.PedidoVenda.filter({ tipo: 'PDV' }, '-created_date', 20000),
           base44.entities.PedidoCompra.filter({}, '-created_date', 5000),
         ]);
 
@@ -292,25 +303,47 @@ export default function EstoqueTab() {
           };
         });
 
-        const cmvEfetivo = lancamentosLista.reduce((sum, lancamento) => {
-          if (normalizeStatus(lancamento.status) === 'cancelado') return sum;
-          const valor = Number(lancamento.valor || 0);
-          return sum + valor;
-        }, 0);
+        const custoProdutoMap = new Map(
+          produtosLista.map((produto) => [produto.id, Number(produto.preco_custo_calculado || produto.valor_compra || 0)])
+        );
 
-        const cmvVendido = pedidosVendaLista.reduce((sumPedidos, pedido) => {
-          if (!pedidoVendaContaNoCMV(pedido)) return sumPedidos;
-          const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
-          const totalPedido = itens.reduce((sumItens, item) => {
-            const quantidade = Number(item.quantidade_base || item.quantidade || 0);
-            const custoUnitario = Number(item.custo_unitario_momento || 0);
-            return sumItens + quantidade * custoUnitario;
+        const supplyByMonth = supplyMonthBuckets.map((bucket) => {
+          const cmvEfetivo = lancamentosLista.reduce((sum, lancamento) => {
+            if (normalizeStatus(lancamento.status) === 'cancelado') return sum;
+            const dataPagamento = parseDate(lancamento.data_pagamento);
+            if (!dataPagamento || isBefore(dataPagamento, bucket.start) || isAfter(dataPagamento, bucket.end)) {
+              return sum;
+            }
+            return sum + Number(lancamento.valor || 0);
           }, 0);
-          return sumPedidos + totalPedido;
-        }, 0);
 
-        const supplyRatioPercent = cmvVendido > 0 ? (cmvEfetivo / cmvVendido) * 100 : 0;
-        const supplyStatus = getSupplyStatus(supplyRatioPercent);
+          const cmvVendido = pedidosVendaLista.reduce((sumPedidos, pedido) => {
+            if (!pedidoVendaContaNoCMV(pedido)) return sumPedidos;
+            const saleDate = parseDate(pedido.created_date);
+            if (!saleDate || isBefore(saleDate, bucket.start) || isAfter(saleDate, bucket.end)) {
+              return sumPedidos;
+            }
+            const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
+            const totalPedido = itens.reduce((sumItens, item) => {
+              const quantidade = Number(item.quantidade_base || item.quantidade || 0);
+              const custoFallback = Number(custoProdutoMap.get(item.produto_id) || 0);
+              const custoUnitario = Number(item.custo_unitario_momento || custoFallback || 0);
+              return sumItens + quantidade * custoUnitario;
+            }, 0);
+            return sumPedidos + totalPedido;
+          }, 0);
+
+          const ratioPercent = cmvVendido > 0 ? (cmvEfetivo / cmvVendido) * 100 : 0;
+          return {
+            key: bucket.key,
+            label: bucket.label,
+            cmvEfetivo,
+            cmvVendido,
+            ratioPercent,
+            diff: cmvEfetivo - cmvVendido,
+            status: getSupplyStatus(ratioPercent),
+          };
+        });
         const transitoFinanceiroAprovado = pedidosCompraLista.reduce((sum, pedido) => {
           if (!pedidoCompraAprovadoNaoConcluido(pedido)) return sum;
           const percentualPendente = percentualPendentePedidoCompra(pedido);
@@ -335,10 +368,7 @@ export default function EstoqueTab() {
         if (mounted) {
           setMetrics({
             nivelEstoqueSeries,
-            cmvEfetivo,
-            cmvVendido,
-            supplyRatioPercent,
-            supplyStatus,
+            supplyByMonth,
             qualityDistribution,
             estoqueFisico,
             transitoFinanceiroAprovado,
@@ -357,7 +387,7 @@ export default function EstoqueTab() {
     return () => {
       mounted = false;
     };
-  }, [monthBuckets]);
+  }, [monthBuckets, supplyMonthBuckets]);
 
   if (isLoading) {
     return (
@@ -394,22 +424,6 @@ export default function EstoqueTab() {
       </Card>
     );
   }
-
-  const supplyColor =
-    metrics.supplyStatus === 'high'
-      ? SUPPLY_RING_COLORS.high
-      : metrics.supplyStatus === 'low'
-        ? SUPPLY_RING_COLORS.low
-        : SUPPLY_RING_COLORS.healthy;
-
-  const supplyRingData = [
-    { name: 'Razão', value: Math.min(Math.max(metrics.supplyRatioPercent, 0), 150), color: supplyColor },
-    {
-      name: 'Restante',
-      value: Math.max(150 - Math.min(Math.max(metrics.supplyRatioPercent, 0), 150), 0),
-      color: SUPPLY_RING_COLORS.muted,
-    },
-  ];
 
   const locationData = [
     { label: 'Físico', valor: metrics.estoqueFisico, color: LOCATION_COLORS.fisico },
@@ -451,57 +465,77 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm bg-card">
+        <Card className="border-0 shadow-sm bg-card xl:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Gauge className="w-4 h-4 text-[#14b8a6]" />
-              Razão de Abastecimento
+              Razão de Abastecimento (3 meses)
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              CMV efetivo (despesas pagas) / custo da mercadoria vendida. 100% = equilíbrio.
+              CMV efetivo pago / CMV vendido no mês atual e dois meses anteriores.
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-[220px_1fr] gap-3 items-center">
-              <div className="h-[220px] relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={supplyRingData}
-                      innerRadius={62}
-                      outerRadius={88}
-                      dataKey="value"
-                      startAngle={90}
-                      endAngle={-270}
-                      strokeWidth={0}
-                    >
-                      {supplyRingData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-3xl font-bold text-foreground">{metrics.supplyRatioPercent.toFixed(1)}%</span>
-                  <span className="text-[11px] text-muted-foreground">BASE 100%</span>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="rounded-lg bg-muted/40 p-3">
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wide">CMV Vendido (100%)</p>
-                  <p className="text-base font-semibold text-foreground tabular-nums">{BRL.format(metrics.cmvVendido)}</p>
-                </div>
-                <div className="rounded-lg bg-muted/40 p-3">
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wide">CMV Efetivo Pago</p>
-                  <p className="text-base font-semibold text-foreground tabular-nums">{BRL.format(metrics.cmvEfetivo)}</p>
-                </div>
-                <div className="rounded-lg bg-muted/40 p-3">
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Diferença</p>
-                  <p className="text-base font-semibold text-foreground tabular-nums">
-                    {BRL.format(metrics.cmvEfetivo - metrics.cmvVendido)}
-                  </p>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {metrics.supplyByMonth.map((monthSupply) => {
+                const supplyColor =
+                  monthSupply.status === 'high'
+                    ? SUPPLY_RING_COLORS.high
+                    : monthSupply.status === 'low'
+                      ? SUPPLY_RING_COLORS.low
+                      : SUPPLY_RING_COLORS.healthy;
+                const supplyRingData = [
+                  { name: 'Razão', value: Math.min(Math.max(monthSupply.ratioPercent, 0), 150), color: supplyColor },
+                  {
+                    name: 'Restante',
+                    value: Math.max(150 - Math.min(Math.max(monthSupply.ratioPercent, 0), 150), 0),
+                    color: SUPPLY_RING_COLORS.muted,
+                  },
+                ];
+
+                return (
+                  <div key={monthSupply.key} className="rounded-xl border border-border/60 p-3">
+                    <p className="text-xs font-semibold text-muted-foreground tracking-wide mb-2">{monthSupply.label}</p>
+                    <div className="h-[170px] relative">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={supplyRingData}
+                            innerRadius={44}
+                            outerRadius={64}
+                            dataKey="value"
+                            startAngle={90}
+                            endAngle={-270}
+                            strokeWidth={0}
+                          >
+                            {supplyRingData.map((entry) => (
+                              <Cell key={entry.name} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-2xl font-bold text-foreground">{monthSupply.ratioPercent.toFixed(1)}%</span>
+                        <span className="text-[10px] text-muted-foreground">BASE 100%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 mt-1">
+                      <div className="rounded-md bg-muted/40 p-2.5">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">CMV Vendido</p>
+                        <p className="text-sm font-semibold text-foreground tabular-nums">{BRL.format(monthSupply.cmvVendido)}</p>
+                      </div>
+                      <div className="rounded-md bg-muted/40 p-2.5">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">CMV Efetivo Pago</p>
+                        <p className="text-sm font-semibold text-foreground tabular-nums">{BRL.format(monthSupply.cmvEfetivo)}</p>
+                      </div>
+                      <div className="rounded-md bg-muted/40 p-2.5">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Diferença</p>
+                        <p className="text-sm font-semibold text-foreground tabular-nums">{BRL.format(monthSupply.diff)}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
