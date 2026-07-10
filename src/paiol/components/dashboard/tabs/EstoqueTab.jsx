@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { subMonths, startOfMonth, endOfMonth, format, isAfter } from 'date-fns';
+import { subMonths, startOfMonth, endOfMonth, format, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,15 +85,20 @@ function parseDate(value) {
 
 function getMonthBuckets() {
   const now = new Date();
+  const reconciliationStart = new Date('2026-04-01T00:00:00');
+  const defaultStart = startOfMonth(subMonths(now, 5));
+  const rangeStart = isBefore(defaultStart, reconciliationStart) ? reconciliationStart : defaultStart;
+
   const months = [];
-  for (let i = 5; i >= 0; i -= 1) {
-    const monthDate = subMonths(now, i);
+  let monthDate = startOfMonth(rangeStart);
+  while (!isAfter(monthDate, now)) {
     months.push({
       key: format(monthDate, 'yyyy-MM'),
       label: format(monthDate, 'MMM/yy', { locale: ptBR }).toUpperCase(),
       start: startOfMonth(monthDate),
       end: endOfMonth(monthDate),
     });
+    monthDate = startOfMonth(new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1));
   }
   return months;
 }
@@ -148,7 +153,7 @@ function percentualPendentePedidoCompra(pedido = {}) {
 
 function movimentoContaNoNivelEstoque(movimento = {}) {
   const motivo = normalizeStatus(movimento.motivo);
-  return motivo === 'compra' || motivo === 'venda';
+  return motivo === 'compra' || motivo === 'venda' || motivo === 'consumo interno';
 }
 
 function getMovimentoDate(movimento = {}) {
@@ -167,10 +172,23 @@ function getMovimentoImpactoValor(movimento = {}) {
   const tipo = normalizeStatus(movimento.tipo);
 
   if (motivo === 'compra') return Math.abs(valor);
-  if (motivo === 'venda') return -Math.abs(valor);
+  if (motivo === 'venda' || motivo === 'consumo interno') return -Math.abs(valor);
 
   if (tipo === 'entrada') return Math.abs(valor);
   if (tipo === 'saída' || tipo === 'saida') return -Math.abs(valor);
+  return 0;
+}
+
+function getMovimentoDeltaQuantidade(movimento = {}) {
+  if (!movimentoContaNoNivelEstoque(movimento)) return 0;
+  const quantidade = Number(movimento.quantidade || 0);
+  const motivo = normalizeStatus(movimento.motivo);
+  const tipo = normalizeStatus(movimento.tipo);
+
+  if (motivo === 'compra') return Math.abs(quantidade);
+  if (motivo === 'venda' || motivo === 'consumo interno') return -Math.abs(quantidade);
+  if (tipo === 'entrada') return Math.abs(quantidade);
+  if (tipo === 'saída' || tipo === 'saida') return -Math.abs(quantidade);
   return 0;
 }
 
@@ -193,15 +211,15 @@ export default function EstoqueTab() {
         const startISO = format(startDate, 'yyyy-MM-dd');
         const endISO = format(endDate, 'yyyy-MM-dd');
 
-        const nivelEstoqueCutoffDate = endOfMonth(monthBuckets[0]?.start || startDate);
-        const nivelEstoqueCutoffISO = format(nivelEstoqueCutoffDate, "yyyy-MM-dd'T'00:00:00.000xxx");
+        const nivelEstoqueStartDate = monthBuckets[0]?.start || startDate;
+        const nivelEstoqueStartISO = format(nivelEstoqueStartDate, 'yyyy-MM-dd');
 
         const [produtos, movimentacoesEstoque, lancamentosFinanceiros, pedidosVenda, pedidosCompra] = await Promise.all([
           base44.entities.Produto.filter({}, '-created_date', 5000),
           base44.entities.MovimentacaoEstoque.filter(
-            { created_date: { $gte: nivelEstoqueCutoffISO } },
+            { created_date: { $gte: nivelEstoqueStartISO } },
             '-created_date',
-            12000
+            50000
           ),
           base44.entities.LancamentoFinanceiro.filter(
             {
@@ -248,21 +266,43 @@ export default function EstoqueTab() {
           }
         });
 
+        const skuBase = new Map(
+          produtosLista.map((produto) => [
+            produto.id,
+            {
+              estoqueAtual: Number(produto.estoque_atual || 0),
+              custoAtual: Number(produto.preco_custo_calculado || produto.valor_compra || 0),
+            },
+          ])
+        );
+
         const movimentosCompraVenda = movimentacoesEstoqueLista
           .map((movimento) => ({
+            skuId: movimento.produto_id,
             date: getMovimentoDate(movimento),
+            deltaQuantidade: getMovimentoDeltaQuantidade(movimento),
             impactoValor: getMovimentoImpactoValor(movimento),
           }))
-          .filter((movimento) => movimento.date && movimento.impactoValor !== 0);
+          .filter((movimento) => movimento.skuId && movimento.date && movimento.impactoValor !== 0);
 
         const nivelEstoqueSeries = monthBuckets.map((bucket) => {
           const monthEnd = bucket.end;
-          const netChangeAfterMonthEnd = movimentosCompraVenda.reduce((sum, movimento) => {
-            if (!isAfter(movimento.date, monthEnd)) return sum;
-            return sum + movimento.impactoValor;
-          }, 0);
+          const deltaAfterMonthBySku = new Map();
 
-          const monthValue = estoqueFisico - netChangeAfterMonthEnd;
+          movimentosCompraVenda.forEach((movimento) => {
+            if (!isAfter(movimento.date, monthEnd)) return;
+            const current = deltaAfterMonthBySku.get(movimento.skuId) || 0;
+            deltaAfterMonthBySku.set(movimento.skuId, current + movimento.deltaQuantidade);
+          });
+
+          let monthValue = 0;
+          skuBase.forEach((skuData, skuId) => {
+            const deltaAfterMonth = deltaAfterMonthBySku.get(skuId) || 0;
+            const estoqueNoFimDoMes = skuData.estoqueAtual - deltaAfterMonth;
+            const estoqueGerencial = Math.max(0, estoqueNoFimDoMes);
+            monthValue += estoqueGerencial * skuData.custoAtual;
+          });
+
           return {
             periodo: bucket.label,
             valor: monthValue,
@@ -400,10 +440,10 @@ export default function EstoqueTab() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Package className="w-4 h-4 text-[#0f766e]" />
-              Nível de Estoque (Últimos 6 Meses)
+              Nível de Estoque (Base Hoje)
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Estoque atual a custo, retroagindo por compra/venda (sem ajustes).
+              Estoque atual por SKU, retroagindo compra/venda/consumo interno.
             </p>
           </CardHeader>
           <CardContent>
