@@ -22,6 +22,13 @@ Guidance for AI agents working in this repository (**varejosync** / P38 ERP — 
 
 There is **no** `test` script; E2E is manual / migration checklists under `docs/migration/`.
 
+### User preference — no video artifacts by default
+
+- Do **not** record videos or take screenshots unless the user explicitly asks for them.
+- Do **not** use `computerUse` by default; prefer terminal-based validation (lint/typecheck/build/log checks).
+- If UI validation is required and cannot be done from terminal, ask before creating any video/screenshot artifact.
+- If the user wants to skip testing entirely, they can use `/no-test`.
+
 ### Starting the dev server
 
 Use a **tmux** session so the server survives backgrounding:
