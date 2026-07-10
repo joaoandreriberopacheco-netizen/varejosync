@@ -28,12 +28,13 @@ const PERCENT = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 1,
 });
 
-const QUALITY_ORDER = ['A', 'B', 'C', 'D'];
+const QUALITY_ORDER = ['A', 'B', 'C', 'D', 'SEM_CURVA'];
 const QUALITY_LABELS = {
   A: 'Curva A',
   B: 'Curva B',
   C: 'Curva C',
   D: 'Curva D',
+  SEM_CURVA: 'Sem Curva',
 };
 
 const QUALITY_COLORS = {
@@ -41,6 +42,7 @@ const QUALITY_COLORS = {
   B: '#14b8a6',
   C: '#f59e0b',
   D: '#ef4444',
+  SEM_CURVA: '#64748b',
 };
 
 const SUPPLY_RING_COLORS = {
@@ -77,6 +79,7 @@ const qualityToneClasses = {
   B: 'bg-teal-500',
   C: 'bg-amber-500',
   D: 'bg-red-500',
+  SEM_CURVA: 'bg-slate-500',
 };
 
 function parseDate(value) {
@@ -261,18 +264,22 @@ export default function EstoqueTab() {
           B: 0,
           C: 0,
           D: 0,
+          SEM_CURVA: 0,
         };
 
         let estoqueFisico = 0;
         produtosLista.forEach((produto) => {
           const custoUnitario = Number(produto.preco_custo_calculado || produto.valor_compra || 0);
           const estoqueAtual = Number(produto.estoque_atual || 0);
-          const valorEstoque = estoqueAtual * custoUnitario;
+          const estoqueGerencial = Math.max(0, estoqueAtual);
+          const valorEstoque = estoqueGerencial * custoUnitario;
           estoqueFisico += valorEstoque;
 
-          const curva = String(produto.abcd || '').trim().toUpperCase();
+          const curva = String(produto.abcd || produto.iep_classe || '').trim().toUpperCase();
           if (QUALITY_ORDER.includes(curva)) {
             qualityAccumulator[curva] += valorEstoque;
+          } else {
+            qualityAccumulator.SEM_CURVA += valorEstoque;
           }
         });
 
@@ -596,7 +603,7 @@ export default function EstoqueTab() {
                       flexGrow: Math.max(bucket.share, 0.08),
                     }}
                   >
-                    {bucket.key}
+                    {bucket.key === 'SEM_CURVA' ? 'SC' : bucket.key}
                   </div>
                 ))}
               </div>
