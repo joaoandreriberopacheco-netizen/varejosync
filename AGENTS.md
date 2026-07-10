@@ -26,6 +26,7 @@ There is **no** `test` script; E2E is manual / migration checklists under `docs/
 
 - Do **not** record videos or take screenshots unless the user explicitly asks for them.
 - Do **not** use `computerUse` by default; prefer terminal-based validation (lint/typecheck/build/log checks).
+- For this repo, treat `localhost` UI walkthroughs as low-value for Base44 validation (hosted backend flow), so avoid manual GUI/video evidence unless explicitly requested.
 - If UI validation is required and cannot be done from terminal, ask before creating any video/screenshot artifact.
 - If the user wants to skip testing entirely, they can use `/no-test`.
 
