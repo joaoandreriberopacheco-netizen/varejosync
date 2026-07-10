@@ -157,7 +157,7 @@ function movimentoContaNoNivelEstoque(movimento = {}) {
 }
 
 function getMovimentoDate(movimento = {}) {
-  const raw = movimento.data_movimento || movimento.created_date;
+  const raw = movimento.data_movimento || movimento.created_date || movimento.data;
   const parsed = parseDate(raw);
   return parsed;
 }
@@ -195,15 +195,10 @@ export default function EstoqueTab() {
         const endISO = format(endDate, 'yyyy-MM-dd');
 
         const nivelEstoqueStartDate = monthBuckets[0]?.start || startDate;
-        const nivelEstoqueStartISO = format(nivelEstoqueStartDate, 'yyyy-MM-dd');
 
-        const [produtos, movimentacoesEstoque, lancamentosFinanceiros, pedidosVenda, pedidosCompra] = await Promise.all([
+        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra] = await Promise.all([
           base44.entities.Produto.filter({}, '-created_date', 5000),
-          base44.entities.MovimentacaoEstoque.filter(
-            { created_date: { $gte: nivelEstoqueStartISO } },
-            '-created_date',
-            50000
-          ),
+          base44.entities.MovimentacaoEstoque.list('-created_date', 50000),
           base44.entities.LancamentoFinanceiro.filter(
             {
               tipo: 'Despesa',
@@ -224,7 +219,13 @@ export default function EstoqueTab() {
         ]);
 
         const produtosLista = Array.isArray(produtos) ? produtos : [];
-        const movimentacoesEstoqueLista = Array.isArray(movimentacoesEstoque) ? movimentacoesEstoque : [];
+        const movimentacoesEstoqueLista = Array.isArray(movimentacoesEstoqueRaw)
+          ? movimentacoesEstoqueRaw.filter((movimento) => {
+            const date = getMovimentoDate(movimento);
+            if (!date) return false;
+            return !isBefore(date, nivelEstoqueStartDate);
+          })
+          : [];
         const lancamentosLista = Array.isArray(lancamentosFinanceiros) ? lancamentosFinanceiros : [];
         const pedidosVendaLista = Array.isArray(pedidosVenda) ? pedidosVenda : [];
         const pedidosCompraLista = Array.isArray(pedidosCompra) ? pedidosCompra : [];
