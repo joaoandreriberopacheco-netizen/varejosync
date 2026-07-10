@@ -162,23 +162,6 @@ function getMovimentoDate(movimento = {}) {
   return parsed;
 }
 
-function getMovimentoImpactoValor(movimento = {}) {
-  if (!movimentoContaNoNivelEstoque(movimento)) return 0;
-
-  const quantidade = Number(movimento.quantidade || 0);
-  const custoUnitario = Number(movimento.custo_unitario || 0);
-  const valor = quantidade * custoUnitario;
-  const motivo = normalizeStatus(movimento.motivo);
-  const tipo = normalizeStatus(movimento.tipo);
-
-  if (motivo === 'compra') return Math.abs(valor);
-  if (motivo === 'venda' || motivo === 'consumo interno') return -Math.abs(valor);
-
-  if (tipo === 'entrada') return Math.abs(valor);
-  if (tipo === 'saída' || tipo === 'saida') return -Math.abs(valor);
-  return 0;
-}
-
 function getMovimentoDeltaQuantidade(movimento = {}) {
   if (!movimentoContaNoNivelEstoque(movimento)) return 0;
   const quantidade = Number(movimento.quantidade || 0);
@@ -281,9 +264,8 @@ export default function EstoqueTab() {
             skuId: movimento.produto_id,
             date: getMovimentoDate(movimento),
             deltaQuantidade: getMovimentoDeltaQuantidade(movimento),
-            impactoValor: getMovimentoImpactoValor(movimento),
           }))
-          .filter((movimento) => movimento.skuId && movimento.date && movimento.impactoValor !== 0);
+          .filter((movimento) => movimento.skuId && movimento.date && movimento.deltaQuantidade !== 0);
 
         const nivelEstoqueSeries = monthBuckets.map((bucket) => {
           const monthEnd = bucket.end;
