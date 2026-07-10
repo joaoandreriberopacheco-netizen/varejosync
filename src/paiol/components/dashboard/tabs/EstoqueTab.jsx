@@ -146,6 +146,34 @@ function percentualPendentePedidoCompra(pedido = {}) {
   return Math.max(0, pendente);
 }
 
+function movimentoContaNoNivelEstoque(movimento = {}) {
+  const motivo = normalizeStatus(movimento.motivo);
+  return motivo === 'compra' || motivo === 'venda';
+}
+
+function getMovimentoDate(movimento = {}) {
+  const raw = movimento.data_movimento || movimento.created_date;
+  const parsed = parseDate(raw);
+  return parsed;
+}
+
+function getMovimentoImpactoValor(movimento = {}) {
+  if (!movimentoContaNoNivelEstoque(movimento)) return 0;
+
+  const quantidade = Number(movimento.quantidade || 0);
+  const custoUnitario = Number(movimento.custo_unitario || 0);
+  const valor = quantidade * custoUnitario;
+  const motivo = normalizeStatus(movimento.motivo);
+  const tipo = normalizeStatus(movimento.tipo);
+
+  if (motivo === 'compra') return Math.abs(valor);
+  if (motivo === 'venda') return -Math.abs(valor);
+
+  if (tipo === 'entrada') return Math.abs(valor);
+  if (tipo === 'saída' || tipo === 'saida') return -Math.abs(valor);
+  return 0;
+}
+
 export default function EstoqueTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -165,9 +193,16 @@ export default function EstoqueTab() {
         const startISO = format(startDate, 'yyyy-MM-dd');
         const endISO = format(endDate, 'yyyy-MM-dd');
 
-        const [produtos, estoqueDiario, lancamentosFinanceiros, pedidosVenda, pedidosCompra] = await Promise.all([
+        const nivelEstoqueCutoffDate = endOfMonth(monthBuckets[0]?.start || startDate);
+        const nivelEstoqueCutoffISO = format(nivelEstoqueCutoffDate, "yyyy-MM-dd'T'00:00:00.000xxx");
+
+        const [produtos, movimentacoesEstoque, lancamentosFinanceiros, pedidosVenda, pedidosCompra] = await Promise.all([
           base44.entities.Produto.filter({}, '-created_date', 5000),
-          base44.entities.EstoqueDiario.filter({ data: { $gte: startISO, $lte: endISO } }, '-data', 12000),
+          base44.entities.MovimentacaoEstoque.filter(
+            { created_date: { $gte: nivelEstoqueCutoffISO } },
+            '-created_date',
+            12000
+          ),
           base44.entities.LancamentoFinanceiro.filter(
             {
               tipo: 'Despesa',
@@ -188,17 +223,10 @@ export default function EstoqueTab() {
         ]);
 
         const produtosLista = Array.isArray(produtos) ? produtos : [];
-        const estoqueDiarioLista = Array.isArray(estoqueDiario) ? estoqueDiario : [];
+        const movimentacoesEstoqueLista = Array.isArray(movimentacoesEstoque) ? movimentacoesEstoque : [];
         const lancamentosLista = Array.isArray(lancamentosFinanceiros) ? lancamentosFinanceiros : [];
         const pedidosVendaLista = Array.isArray(pedidosVenda) ? pedidosVenda : [];
         const pedidosCompraLista = Array.isArray(pedidosCompra) ? pedidosCompra : [];
-
-        const custoPorProduto = new Map(
-          produtosLista.map((produto) => [
-            produto.id,
-            Number(produto.preco_custo_calculado || produto.valor_compra || 0),
-          ])
-        );
 
         const qualityAccumulator = {
           A: 0,
@@ -220,29 +248,21 @@ export default function EstoqueTab() {
           }
         });
 
-        const latestSnapshotByMonthAndProduct = new Map();
-        estoqueDiarioLista.forEach((snapshot) => {
-          const monthKey = String(snapshot.data || '').slice(0, 7);
-          const produtoId = snapshot.produto_id;
-          if (!monthKey || !produtoId) return;
-          const mapKey = `${monthKey}::${produtoId}`;
-          const snapshotDate = parseDate(snapshot.data);
-          const previous = latestSnapshotByMonthAndProduct.get(mapKey);
-          const previousDate = previous ? parseDate(previous.data) : null;
-
-          if (!previous || (snapshotDate && previousDate && isAfter(snapshotDate, previousDate))) {
-            latestSnapshotByMonthAndProduct.set(mapKey, snapshot);
-          }
-        });
+        const movimentosCompraVenda = movimentacoesEstoqueLista
+          .map((movimento) => ({
+            date: getMovimentoDate(movimento),
+            impactoValor: getMovimentoImpactoValor(movimento),
+          }))
+          .filter((movimento) => movimento.date && movimento.impactoValor !== 0);
 
         const nivelEstoqueSeries = monthBuckets.map((bucket) => {
-          let monthValue = 0;
-          latestSnapshotByMonthAndProduct.forEach((snapshot, key) => {
-            if (!key.startsWith(`${bucket.key}::`)) return;
-            const custoUnitario = Number(custoPorProduto.get(snapshot.produto_id) || 0);
-            const saldo = Number(snapshot.saldo_final_dia || 0);
-            monthValue += saldo * custoUnitario;
-          });
+          const monthEnd = bucket.end;
+          const netChangeAfterMonthEnd = movimentosCompraVenda.reduce((sum, movimento) => {
+            if (!isAfter(movimento.date, monthEnd)) return sum;
+            return sum + movimento.impactoValor;
+          }, 0);
+
+          const monthValue = estoqueFisico - netChangeAfterMonthEnd;
           return {
             periodo: bucket.label,
             valor: monthValue,
@@ -383,7 +403,7 @@ export default function EstoqueTab() {
               Nível de Estoque (Últimos 6 Meses)
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Valor do estoque a custo por mês, usando snapshots diários.
+              Estoque atual a custo, retroagindo por compra/venda (sem ajustes).
             </p>
           </CardHeader>
           <CardContent>
