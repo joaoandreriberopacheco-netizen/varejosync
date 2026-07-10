@@ -45,8 +45,11 @@ const QUALITY_COLORS = {
 
 const SUPPLY_RING_COLORS = {
   healthy: '#14b8a6',
+  healthyDark: '#0f766e',
   high: '#f59e0b',
+  highDark: '#b45309',
   low: '#ef4444',
+  lowDark: '#b91c1c',
   muted: '#e5e7eb',
 };
 
@@ -128,6 +131,18 @@ function getSupplyStatus(percentage) {
   if (percentage > 105) return 'high';
   if (percentage < 95) return 'low';
   return 'healthy';
+}
+
+function getSupplyColorByStatus(status) {
+  if (status === 'high') return SUPPLY_RING_COLORS.high;
+  if (status === 'low') return SUPPLY_RING_COLORS.low;
+  return SUPPLY_RING_COLORS.healthy;
+}
+
+function getSupplyOverflowColorByStatus(status) {
+  if (status === 'high') return SUPPLY_RING_COLORS.highDark;
+  if (status === 'low') return SUPPLY_RING_COLORS.lowDark;
+  return SUPPLY_RING_COLORS.healthyDark;
 }
 
 function normalizeStatus(value) {
@@ -478,19 +493,23 @@ export default function EstoqueTab() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {metrics.supplyByMonth.map((monthSupply) => {
-                const supplyColor =
-                  monthSupply.status === 'high'
-                    ? SUPPLY_RING_COLORS.high
-                    : monthSupply.status === 'low'
-                      ? SUPPLY_RING_COLORS.low
-                      : SUPPLY_RING_COLORS.healthy;
-                const supplyRingData = [
-                  { name: 'Razão', value: Math.min(Math.max(monthSupply.ratioPercent, 0), 150), color: supplyColor },
+                const supplyColor = getSupplyColorByStatus(monthSupply.status);
+                const overflowColor = getSupplyOverflowColorByStatus(monthSupply.status);
+                const ratioPercent = Math.max(monthSupply.ratioPercent, 0);
+                const primaryFill = Math.min(ratioPercent, 100);
+                const overflowFill = Math.min(Math.max(ratioPercent - 100, 0), 100);
+                const primaryRingData = [
+                  { name: 'Razão', value: primaryFill, color: supplyColor },
                   {
                     name: 'Restante',
-                    value: Math.max(150 - Math.min(Math.max(monthSupply.ratioPercent, 0), 150), 0),
+                    value: Math.max(100 - primaryFill, 0),
                     color: SUPPLY_RING_COLORS.muted,
                   },
+                ];
+                const hasOverflow = overflowFill > 0;
+                const overflowRingData = [
+                  { name: 'Excedente', value: overflowFill, color: overflowColor },
+                  { name: 'ExcedenteRestante', value: Math.max(100 - overflowFill, 0), color: 'transparent' },
                 ];
 
                 return (
@@ -500,7 +519,7 @@ export default function EstoqueTab() {
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={supplyRingData}
+                            data={primaryRingData}
                             innerRadius={44}
                             outerRadius={64}
                             dataKey="value"
@@ -508,10 +527,25 @@ export default function EstoqueTab() {
                             endAngle={-270}
                             strokeWidth={0}
                           >
-                            {supplyRingData.map((entry) => (
+                            {primaryRingData.map((entry) => (
                               <Cell key={entry.name} fill={entry.color} />
                             ))}
                           </Pie>
+                          {hasOverflow ? (
+                            <Pie
+                              data={overflowRingData}
+                              innerRadius={36}
+                              outerRadius={43}
+                              dataKey="value"
+                              startAngle={90}
+                              endAngle={-270}
+                              strokeWidth={0}
+                            >
+                              {overflowRingData.map((entry) => (
+                                <Cell key={entry.name} fill={entry.color} />
+                              ))}
+                            </Pie>
+                          ) : null}
                         </PieChart>
                       </ResponsiveContainer>
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
