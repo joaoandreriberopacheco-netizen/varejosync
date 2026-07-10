@@ -55,6 +55,20 @@ const LOCATION_COLORS = {
   transito: '#3b82f6',
 };
 
+const PEDIDO_VENDA_STATUSES_CMV = new Set([
+  'financeiro ok',
+  'em separação',
+  'em separacao',
+  'em rota de entrega',
+  'pedido concluído',
+  'pedido concluido',
+]);
+
+const PEDIDO_COMPRA_APPROVED_STATUSES = new Set([
+  'aprovado financeiramente',
+  'aprovado',
+]);
+
 const qualityToneClasses = {
   A: 'bg-teal-700',
   B: 'bg-teal-500',
@@ -96,6 +110,40 @@ function getSupplyStatus(percentage) {
   if (percentage > 105) return 'high';
   if (percentage < 95) return 'low';
   return 'healthy';
+}
+
+function normalizeStatus(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function pedidoVendaContaNoCMV(pedido = {}) {
+  const status = normalizeStatus(pedido.status);
+  const tipo = normalizeStatus(pedido.tipo);
+  if (status === 'cancelado') return false;
+  if (tipo === 'orçamento' || tipo === 'orcamento') return false;
+  if (PEDIDO_VENDA_STATUSES_CMV.has(status)) return true;
+  return status !== 'orçamento' && status !== 'orcamento' && status !== 'aguardando caixa';
+}
+
+function pedidoCompraAprovadoNaoConcluido(pedido = {}) {
+  const statusAprovacao = normalizeStatus(pedido.status_aprovacao_financeira || pedido.status);
+  const aprovado = PEDIDO_COMPRA_APPROVED_STATUSES.has(statusAprovacao);
+  if (!aprovado) return false;
+
+  const statusRecebimento = normalizeStatus(pedido.status_recebimento_geral);
+  const statusPedido = normalizeStatus(pedido.status);
+  const concluidoRecebimento =
+    statusRecebimento.startsWith('concluído') || statusRecebimento.startsWith('concluido');
+  const concluidoPedido = statusPedido === 'concluído' || statusPedido === 'concluido';
+
+  return !concluidoRecebimento && !concluidoPedido;
+}
+
+function percentualPendentePedidoCompra(pedido = {}) {
+  const percentualEmbarcado = Number(pedido.percentual_valor_embarcado);
+  if (!Number.isFinite(percentualEmbarcado)) return 1;
+  const pendente = 1 - Math.min(Math.max(percentualEmbarcado, 0), 100) / 100;
+  return Math.max(0, pendente);
 }
 
 export default function EstoqueTab() {
@@ -202,12 +250,13 @@ export default function EstoqueTab() {
         });
 
         const cmvEfetivo = lancamentosLista.reduce((sum, lancamento) => {
+          if (normalizeStatus(lancamento.status) === 'cancelado') return sum;
           const valor = Number(lancamento.valor || 0);
           return sum + valor;
         }, 0);
 
         const cmvVendido = pedidosVendaLista.reduce((sumPedidos, pedido) => {
-          if (String(pedido.status || '').trim().toLowerCase() === 'cancelado') return sumPedidos;
+          if (!pedidoVendaContaNoCMV(pedido)) return sumPedidos;
           const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
           const totalPedido = itens.reduce((sumItens, item) => {
             const quantidade = Number(item.quantidade_base || item.quantidade || 0);
@@ -220,17 +269,9 @@ export default function EstoqueTab() {
         const supplyRatioPercent = cmvVendido > 0 ? (cmvEfetivo / cmvVendido) * 100 : 0;
         const supplyStatus = getSupplyStatus(supplyRatioPercent);
         const transitoFinanceiroAprovado = pedidosCompraLista.reduce((sum, pedido) => {
-          const statusAprovacao = String(pedido.status_aprovacao_financeira || pedido.status || '').toLowerCase();
-          const isAprovado = statusAprovacao.includes('aprovado');
-          const statusRecebimento = String(pedido.status_recebimento_geral || '').toLowerCase();
-          const isConcluido =
-            statusRecebimento.startsWith('concluído') ||
-            statusRecebimento.startsWith('concluido') ||
-            String(pedido.status || '').toLowerCase() === 'concluído' ||
-            String(pedido.status || '').toLowerCase() === 'concluido';
-
-          if (!isAprovado || isConcluido) return sum;
-          return sum + Number(pedido.valor_total || 0);
+          if (!pedidoCompraAprovadoNaoConcluido(pedido)) return sum;
+          const percentualPendente = percentualPendentePedidoCompra(pedido);
+          return sum + Number(pedido.valor_total || 0) * percentualPendente;
         }, 0);
 
         const totalLocalizacao = estoqueFisico + transitoFinanceiroAprovado;
