@@ -185,6 +185,7 @@ export default function TabelasPrecoManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tabelaSelecionada, setTabelaSelecionada] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [descontoPlanejado, setDescontoPlanejado] = useState('');
   const [formData, setFormData] = useState({
     nome_tabela: '',
     fator_ajuste: 1,
@@ -193,6 +194,38 @@ export default function TabelasPrecoManager() {
     ativo: true
   });
   const { toast } = useToast();
+
+  const calcularFatorSemCorrosao = (descontoPct) => {
+    const desconto = Number(descontoPct) || 0;
+    if (desconto <= 0 || desconto >= 100) return 1;
+    return 1 / (1 - (desconto / 100));
+  };
+
+  const calcularDescontoCompativel = (fator) => {
+    const mult = Number(fator) || 1;
+    if (mult <= 1) return 0;
+    return (1 - (1 / mult)) * 100;
+  };
+
+  const handleFatorChange = (rawValue) => {
+    const fator = parseFloat(rawValue);
+    const fatorSeguro = Number.isFinite(fator) && fator > 0 ? fator : 1;
+    setFormData((prev) => ({ ...prev, fator_ajuste: fatorSeguro }));
+    if (fatorSeguro > 1) {
+      setDescontoPlanejado(calcularDescontoCompativel(fatorSeguro).toFixed(2));
+    } else {
+      setDescontoPlanejado('');
+    }
+  };
+
+  const handleDescontoPlanejadoChange = (rawValue) => {
+    setDescontoPlanejado(rawValue);
+    const desconto = parseFloat(rawValue);
+    if (!Number.isFinite(desconto)) return;
+    const descontoLimitado = Math.min(Math.max(desconto, 0), 99.99);
+    const fator = calcularFatorSemCorrosao(descontoLimitado);
+    setFormData((prev) => ({ ...prev, fator_ajuste: fator }));
+  };
 
   useEffect(() => { loadTabelas(); }, []);
 
@@ -237,6 +270,9 @@ export default function TabelasPrecoManager() {
       is_default: tabela.is_default || false,
       ativo: tabela.ativo
     });
+    setDescontoPlanejado(
+      tabela.fator_ajuste > 1 ? calcularDescontoCompativel(tabela.fator_ajuste).toFixed(2) : ''
+    );
     setIsDialogOpen(true);
   };
 
@@ -253,6 +289,7 @@ export default function TabelasPrecoManager() {
   const resetForm = () => {
     setTabelaSelecionada(null);
     setFormData({ nome_tabela: '', fator_ajuste: 1, percentual_desconto_maximo: 0, is_default: false, ativo: true });
+    setDescontoPlanejado('');
   };
 
   const calcularPercentual = (fator) => ((fator - 1) * 100).toFixed(1);
@@ -422,7 +459,7 @@ export default function TabelasPrecoManager() {
               <Input
                 type="number" step="0.01"
                 value={formData.fator_ajuste}
-                onChange={e => setFormData({ ...formData, fator_ajuste: parseFloat(e.target.value) || 1 })}
+                onChange={e => handleFatorChange(e.target.value)}
                 className="bg-muted/50 border-0 shadow-sm h-9 text-sm"
               />
               <p className="text-[11px] text-muted-foreground">
@@ -431,6 +468,28 @@ export default function TabelasPrecoManager() {
               {formData.fator_ajuste && (
                 <p className="text-xs font-medium text-muted-foreground">
                   Resultado: {parseFloat(calcularPercentual(formData.fator_ajuste)) > 0 ? '+' : ''}{calcularPercentual(formData.fator_ajuste)}% sobre o preço base
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground font-medium">Desconto planejado para negociação (%)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                max="99.99"
+                value={descontoPlanejado}
+                onChange={e => handleDescontoPlanejadoChange(e.target.value)}
+                placeholder="Ex: 10"
+                className="bg-muted/50 border-0 shadow-sm h-9 text-sm"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Ao informar esse desconto, o fator é calculado para manter o preço base após aplicar o desconto.
+              </p>
+              {Number.isFinite(parseFloat(descontoPlanejado)) && parseFloat(descontoPlanejado) > 0 && (
+                <p className="text-xs font-medium text-muted-foreground">
+                  Exemplo base R$ 100,00 → tabela R$ {(100 * (formData.fator_ajuste || 1)).toFixed(2)} → com {parseFloat(descontoPlanejado).toFixed(2)}%: R$ {((100 * (formData.fator_ajuste || 1)) * (1 - (parseFloat(descontoPlanejado) / 100))).toFixed(2)}
                 </p>
               )}
             </div>

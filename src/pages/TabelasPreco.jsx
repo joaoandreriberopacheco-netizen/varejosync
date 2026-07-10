@@ -121,6 +121,42 @@ function TabelaPrecoForm({ tabela, onSave, onClose }) {
     fator_ajuste: 1,
     ativo: true
   });
+  const [descontoPlanejado, setDescontoPlanejado] = useState('');
+
+  useEffect(() => {
+    if (!tabela || (tabela.fator_ajuste || 1) <= 1) {
+      setDescontoPlanejado('');
+      return;
+    }
+    const desconto = (1 - (1 / (tabela.fator_ajuste || 1))) * 100;
+    setDescontoPlanejado(roundToTwoDecimals(desconto).toFixed(2));
+  }, [tabela]);
+
+  const calcularFatorSemCorrosao = (descontoPct) => {
+    const desconto = Number(descontoPct) || 0;
+    if (desconto <= 0 || desconto >= 100) return 1;
+    return 1 / (1 - (desconto / 100));
+  };
+
+  const handleFatorChange = (rawValue) => {
+    const fator = parseFloat(rawValue);
+    const fatorSeguro = Number.isFinite(fator) && fator > 0 ? fator : 1;
+    setFormData(prev => ({ ...prev, fator_ajuste: fatorSeguro }));
+    if (fatorSeguro > 1) {
+      const desconto = (1 - (1 / fatorSeguro)) * 100;
+      setDescontoPlanejado(roundToTwoDecimals(desconto).toFixed(2));
+    } else {
+      setDescontoPlanejado('');
+    }
+  };
+
+  const handleDescontoPlanejadoChange = (rawValue) => {
+    setDescontoPlanejado(rawValue);
+    const desconto = parseFloat(rawValue);
+    if (!Number.isFinite(desconto)) return;
+    const descontoLimitado = Math.min(Math.max(desconto, 0), 99.99);
+    setFormData(prev => ({ ...prev, fator_ajuste: calcularFatorSemCorrosao(descontoLimitado) }));
+  };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -155,7 +191,7 @@ function TabelaPrecoForm({ tabela, onSave, onClose }) {
             type="number"
             step="0.01"
             value={formData.fator_ajuste}
-            onChange={e => handleChange('fator_ajuste', parseFloat(e.target.value))}
+            onChange={e => handleFatorChange(e.target.value)}
             required
           />
           <p className="text-sm text-muted-foreground mt-1">
@@ -164,6 +200,27 @@ function TabelaPrecoForm({ tabela, onSave, onClose }) {
           <p className="text-xs text-muted-foreground">
             Exemplo: 1.1 = +10% | 0.9 = -10% | 1.0 = Preço padrão
           </p>
+        </div>
+
+        <div>
+          <Label>Desconto planejado para negociação (%)</Label>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            max="99.99"
+            value={descontoPlanejado}
+            onChange={e => handleDescontoPlanejadoChange(e.target.value)}
+            placeholder="Ex: 10"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Este campo calcula automaticamente o fator para manter o preço base após o desconto.
+          </p>
+          {Number.isFinite(parseFloat(descontoPlanejado)) && parseFloat(descontoPlanejado) > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Exemplo base R$ 100,00 → tabela R$ {formatCurrency(100 * (formData.fator_ajuste || 1))} → com desconto: R$ {formatCurrency((100 * (formData.fator_ajuste || 1)) * (1 - (parseFloat(descontoPlanejado) / 100)))}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
