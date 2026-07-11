@@ -749,7 +749,16 @@ export default function EstoqueTab() {
     );
   }
 
-  const qualityMap = Object.fromEntries(metrics.qualityDistribution.map((bucket) => [bucket.key, bucket]));
+  const totalQualidade = metrics.qualityDistribution.reduce((sum, bucket) => sum + Number(bucket.valor || 0), 0);
+  const qualityHalfDonutData = metrics.qualityDistribution.map((bucket) => ({
+    name: bucket.label,
+    value: Number(bucket.valor || 0),
+    color: bucket.color,
+  }));
+  const locationHalfDonutData = [
+    { name: 'Físico', value: Number(metrics.estoqueFisico || 0), color: LOCATION_COLORS.fisico },
+    { name: 'Em trânsito', value: Number(metrics.transitoFinanceiroAprovado || 0), color: LOCATION_COLORS.transito },
+  ];
 
   return (
     <div className="space-y-3">
@@ -870,118 +879,73 @@ export default function EstoqueTab() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {QUALITY_ORDER.map((key) => {
-          const bucket = qualityMap[key] || {
-            label: `Curva ${key}`,
-            valor: 0,
-            share: 0,
-            color: QUALITY_COLORS[key],
-            percentText: '0%',
-          };
-          return (
-            <Card key={key} className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-              <CardHeader className="pb-0.5">
-                <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
-                  <Layers className="w-4 h-4" style={{ color: bucket.color }} />
-                  {bucket.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-1">
-                <p className="text-base font-semibold text-foreground tabular-nums">{BRL.format(bucket.valor)}</p>
-                <p className="text-xs text-muted-foreground">{bucket.percentText}</p>
-                <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{ width: `${Math.max(4, bucket.share * 100)}%`, backgroundColor: bucket.color }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
         <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-          <CardHeader className="pb-0.5">
+          <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
-              <Truck className="w-4 h-4" style={{ color: LOCATION_COLORS.fisico }} />
-              Estoque Físico
+              <Layers className="w-4 h-4 text-lime-400" />
+              Qualidade do Estoque
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <p className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(metrics.estoqueFisico)}</p>
-            <p className="text-xs text-muted-foreground">
-              {metrics.totalLocalizacao > 0
-                ? PERCENT.format(metrics.estoqueFisico / metrics.totalLocalizacao)
-                : PERCENT.format(0)}
-            </p>
-            <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden">
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${metrics.totalLocalizacao > 0 ? (metrics.estoqueFisico / metrics.totalLocalizacao) * 100 : 0}%`,
-                  backgroundColor: LOCATION_COLORS.fisico,
-                }}
-              />
+            <div className="h-[180px] relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={qualityHalfDonutData}
+                    dataKey="value"
+                    startAngle={180}
+                    endAngle={0}
+                    innerRadius={56}
+                    outerRadius={84}
+                    strokeWidth={0}
+                  >
+                    {qualityHalfDonutData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-5">
+                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(totalQualidade)}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-          <CardHeader className="pb-0.5">
+          <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
-              <Truck className="w-4 h-4" style={{ color: LOCATION_COLORS.transito }} />
-              Em Trânsito
+              <Truck className="w-4 h-4 text-[#7f1d1d]" />
+              Localização do Estoque
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <p className="text-lg font-semibold text-foreground tabular-nums">
-              {BRL.format(metrics.transitoFinanceiroAprovado)}
-            </p>
-            <p className="text-xs text-muted-foreground">Total: {BRL.format(metrics.totalLocalizacao)}</p>
-            <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden">
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width:
-                    metrics.totalLocalizacao > 0
-                      ? `${(metrics.transitoFinanceiroAprovado / metrics.totalLocalizacao) * 100}%`
-                      : '0%',
-                  backgroundColor: LOCATION_COLORS.transito,
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-          <CardHeader className="pb-0.5">
-            <CardTitle className="text-sm font-medium text-foreground">Total Posicionado</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-1">
-            <p className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(metrics.totalLocalizacao)}</p>
-            <p className="text-xs text-muted-foreground">Físico + Em trânsito</p>
-            <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden flex">
-              <div
-                style={{
-                  width:
-                    metrics.totalLocalizacao > 0
-                      ? `${(metrics.estoqueFisico / metrics.totalLocalizacao) * 100}%`
-                      : '0%',
-                  backgroundColor: LOCATION_COLORS.fisico,
-                }}
-              />
-              <div
-                style={{
-                  width:
-                    metrics.totalLocalizacao > 0
-                      ? `${(metrics.transitoFinanceiroAprovado / metrics.totalLocalizacao) * 100}%`
-                      : '0%',
-                  backgroundColor: LOCATION_COLORS.transito,
-                }}
-              />
+            <div className="h-[180px] relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={locationHalfDonutData}
+                    dataKey="value"
+                    startAngle={180}
+                    endAngle={0}
+                    innerRadius={56}
+                    outerRadius={84}
+                    strokeWidth={0}
+                  >
+                    {locationHalfDonutData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-5">
+                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-lg font-semibold text-foreground tabular-nums">
+                  {BRL.format(metrics.totalLocalizacao)}
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>
