@@ -23,6 +23,7 @@ import { AlertCircle, Gauge, Layers, Package, Truck } from 'lucide-react';
 import {
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
   Pie,
   PieChart,
@@ -748,14 +749,11 @@ export default function EstoqueTab() {
     );
   }
 
-  const locationData = [
-    { label: 'Físico', valor: metrics.estoqueFisico, color: LOCATION_COLORS.fisico },
-    { label: 'Em trânsito', valor: metrics.transitoFinanceiroAprovado, color: LOCATION_COLORS.transito },
-  ];
+  const qualityMap = Object.fromEntries(metrics.qualityDistribution.map((bucket) => [bucket.key, bucket]));
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
@@ -764,9 +762,10 @@ export default function EstoqueTab() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[230px]">
+            <div className="h-[260px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={metrics.nivelEstoqueSeries} barCategoryGap="24%">
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.18)" vertical={false} />
                   <XAxis
                     dataKey="periodo"
                     tick={{ fontSize: 11, fill: '#cbd5e1', fontWeight: 600 }}
@@ -875,108 +874,88 @@ export default function EstoqueTab() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        {QUALITY_ORDER.map((key) => {
+          const bucket = qualityMap[key] || {
+            label: `Curva ${key}`,
+            valor: 0,
+            share: 0,
+            color: QUALITY_COLORS[key],
+            percentText: '0%',
+          };
+          return (
+            <Card key={key} className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
+                  <Layers className="w-4 h-4" style={{ color: bucket.color }} />
+                  {bucket.label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(bucket.valor)}</p>
+                <p className="text-xs text-muted-foreground">{bucket.percentText}</p>
+                <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.max(4, bucket.share * 100)}%`, backgroundColor: bucket.color }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
 
         <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
-              <Layers className="w-4 h-4 text-lime-400" />
-              Qualidade do Estoque (Curva A/B/C/D)
+              <Truck className="w-4 h-4" style={{ color: LOCATION_COLORS.fisico }} />
+              Estoque Físico
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-[100px_1fr] gap-4 items-stretch min-h-[280px]">
-              <div className="rounded-xl border border-border/60 overflow-hidden flex flex-col">
-                {metrics.qualityDistribution.map((bucket) => (
-                  <div
-                    key={bucket.key}
-                    className="flex items-center justify-center text-[11px] font-semibold text-white"
-                    style={{
-                      backgroundColor: bucket.color,
-                      flexGrow: Math.max(bucket.share, 0.08),
-                    }}
-                  >
-                    {bucket.key}
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2">
-                {metrics.qualityDistribution.map((bucket) => (
-                  <div key={bucket.key} className="rounded-lg bg-muted/40 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="inline-block w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: bucket.color }}
-                        />
-                        <span className="text-sm text-foreground">{bucket.label}</span>
-                      </div>
-                      <span className="text-xs font-semibold text-foreground">{bucket.percentText}</span>
-                    </div>
-                    <p className="text-sm mt-1 font-semibold text-foreground tabular-nums">{BRL.format(bucket.valor)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-1 2xl:col-span-2 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
-              <Truck className="w-4 h-4 text-[#7f1d1d]" />
-              Localização do Estoque
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="h-[56px] w-full rounded-xl overflow-hidden bg-muted/30 flex">
-              {locationData.map((part) => (
-                <div
-                  key={part.label}
-                  style={{
-                    width:
-                      metrics.totalLocalizacao > 0
-                        ? `${(part.valor / metrics.totalLocalizacao) * 100}%`
-                        : '0%',
-                    backgroundColor: part.color,
-                  }}
-                />
-              ))}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div className="rounded-lg bg-muted/40 p-3">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Físico</p>
-                <p className="text-base font-semibold text-foreground tabular-nums">{BRL.format(metrics.estoqueFisico)}</p>
-              </div>
-              <div className="rounded-lg bg-muted/40 p-3">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Em trânsito</p>
-                <p className="text-base font-semibold text-foreground tabular-nums">
-                  {BRL.format(metrics.transitoFinanceiroAprovado)}
-                </p>
-              </div>
-            </div>
-            <div className="rounded-lg border border-border/60 p-3">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Total posicionado</p>
-              <p className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(metrics.totalLocalizacao)}</p>
+            <p className="text-xl font-semibold text-foreground tabular-nums">{BRL.format(metrics.estoqueFisico)}</p>
+            <p className="text-xs text-muted-foreground">
+              {metrics.totalLocalizacao > 0
+                ? PERCENT.format(metrics.estoqueFisico / metrics.totalLocalizacao)
+                : PERCENT.format(0)}
+            </p>
+            <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${metrics.totalLocalizacao > 0 ? (metrics.estoqueFisico / metrics.totalLocalizacao) * 100 : 0}%`,
+                  backgroundColor: LOCATION_COLORS.fisico,
+                }}
+              />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-foreground">KPIs de Estoque</CardTitle>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
+              <Truck className="w-4 h-4" style={{ color: LOCATION_COLORS.transito }} />
+              Em Trânsito
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="rounded-lg bg-muted/40 p-3">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Físico</p>
-              <p className="text-xl font-semibold text-foreground tabular-nums">{BRL.format(metrics.estoqueFisico)}</p>
-            </div>
-            <div className="rounded-lg bg-muted/40 p-3">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Em trânsito</p>
-              <p className="text-xl font-semibold text-foreground tabular-nums">{BRL.format(metrics.transitoFinanceiroAprovado)}</p>
-            </div>
-            <div className="rounded-lg bg-muted/40 p-3">
-              <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Total</p>
-              <p className="text-xl font-semibold text-foreground tabular-nums">{BRL.format(metrics.totalLocalizacao)}</p>
+          <CardContent>
+            <p className="text-xl font-semibold text-foreground tabular-nums">
+              {BRL.format(metrics.transitoFinanceiroAprovado)}
+            </p>
+            <p className="text-xs text-muted-foreground">Total: {BRL.format(metrics.totalLocalizacao)}</p>
+            <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width:
+                    metrics.totalLocalizacao > 0
+                      ? `${(metrics.transitoFinanceiroAprovado / metrics.totalLocalizacao) * 100}%`
+                      : '0%',
+                  backgroundColor: LOCATION_COLORS.transito,
+                }}
+              />
             </div>
           </CardContent>
         </Card>
