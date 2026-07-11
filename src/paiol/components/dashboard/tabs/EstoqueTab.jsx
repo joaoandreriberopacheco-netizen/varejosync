@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { subMonths, startOfMonth, endOfMonth, format, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
+import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
+import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
+import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, Gauge, Layers, Package, Truck } from 'lucide-react';
@@ -231,23 +234,28 @@ export default function EstoqueTab() {
         const supplyStartISO = format(supplyMonthBuckets[0]?.start || startDate, 'yyyy-MM-dd');
         const supplyEndISO = format(supplyMonthBuckets[supplyMonthBuckets.length - 1]?.end || endDate, 'yyyy-MM-dd');
 
-        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra] = await Promise.all([
-          base44.entities.Produto.filter({}, '-created_date', 5000),
-          base44.entities.MovimentacaoEstoque.list('-created_date', 50000),
-          base44.entities.LancamentoFinanceiro.filter(
-            {
-              tipo: 'Despesa',
-              is_custo_mercadoria: true,
-              data_pagamento: { $gte: supplyStartISO, $lte: supplyEndISO },
-            },
-            '-data_pagamento',
-            20000
-          ),
-          base44.entities.PedidoVenda.filter({ tipo: 'PDV' }, '-created_date', 20000),
-          base44.entities.PedidoCompra.filter({}, '-created_date', 5000),
-        ]);
+        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra, dadosVendaAbcd90d] =
+          await Promise.all([
+            base44.entities.Produto.filter({}, '-created_date', 5000),
+            base44.entities.MovimentacaoEstoque.list('-created_date', 50000),
+            base44.entities.LancamentoFinanceiro.filter(
+              {
+                tipo: 'Despesa',
+                is_custo_mercadoria: true,
+                data_pagamento: { $gte: supplyStartISO, $lte: supplyEndISO },
+              },
+              '-data_pagamento',
+              20000
+            ),
+            base44.entities.PedidoVenda.filter({ tipo: 'PDV' }, '-created_date', 20000),
+            base44.entities.PedidoCompra.filter({}, '-created_date', 5000),
+            fetchDadosVendaAbcd90d().catch(() => null),
+          ]);
 
         const produtosLista = Array.isArray(produtos) ? produtos : [];
+        const produtosComAbcdCatalogo = Array.isArray(dadosVendaAbcd90d?.pedidos90d)
+          ? enrichProdutosComIep(produtosLista, dadosVendaAbcd90d)
+          : produtosLista;
         const movimentacoesEstoqueLista = Array.isArray(movimentacoesEstoqueRaw)
           ? movimentacoesEstoqueRaw.filter((movimento) => {
             const date = getMovimentoDate(movimento);
@@ -268,14 +276,14 @@ export default function EstoqueTab() {
         };
 
         let estoqueFisico = 0;
-        produtosLista.forEach((produto) => {
+        produtosComAbcdCatalogo.forEach((produto) => {
           const custoUnitario = Number(produto.preco_custo_calculado || produto.valor_compra || 0);
           const estoqueAtual = Number(produto.estoque_atual || 0);
           const estoqueGerencial = Math.max(0, estoqueAtual);
           const valorEstoque = estoqueGerencial * custoUnitario;
           estoqueFisico += valorEstoque;
 
-          const curva = String(produto.abcd || produto.iep_classe || '').trim().toUpperCase();
+          const curva = resolveProdutoAbcdClasse(produto);
           if (QUALITY_ORDER.includes(curva)) {
             qualityAccumulator[curva] += valorEstoque;
           } else {
