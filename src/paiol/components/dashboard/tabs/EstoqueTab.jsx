@@ -53,28 +53,28 @@ const QUALITY_LABELS = {
 };
 
 const QUALITY_COLORS = {
-  A: '#a6c545',
-  B: '#8fa73c',
-  C: '#6f7b90',
-  D: '#8b4747',
+  A: '#abc85a',
+  B: '#94ad53',
+  C: '#7a8498',
+  D: '#9b5959',
 };
 
 const SUPPLY_RING_COLORS = {
-  healthy: '#a6c545',
-  healthyDark: '#7f9734',
-  high: '#8b4747',
-  highDark: '#6d3535',
-  low: '#8b4747',
-  lowDark: '#6d3535',
-  muted: '#384153',
+  healthy: '#abc85a',
+  healthyDark: '#89a246',
+  high: '#9b5959',
+  highDark: '#7e4848',
+  low: '#9b5959',
+  lowDark: '#7e4848',
+  muted: '#465267',
 };
 
 const LOCATION_COLORS = {
-  fisico: '#a6c545',
-  transito: '#697994',
+  fisico: '#abc85a',
+  transito: '#7082a3',
 };
 
-const STOCK_BAR_COLORS = ['#9fbe3f', '#97b63b', '#8dae38', '#84a535', '#7b9b32', '#73922f'];
+const STOCK_BAR_COLORS = ['#b5d061', '#aac459', '#9eb851', '#93ab48', '#879f41', '#7d933b'];
 
 const PEDIDO_VENDA_STATUSES_CMV = new Set([
   'financeiro ok',
@@ -766,7 +766,7 @@ export default function EstoqueTab() {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-        <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+        <Card className="border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] bg-gradient-to-br from-card via-card to-[#283242]">
           <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Package className="w-4 h-4 text-lime-400" />
@@ -777,16 +777,16 @@ export default function EstoqueTab() {
             <div className="h-[210px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={metrics.nivelEstoqueSeries} barCategoryGap="24%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.18)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.14)" vertical={false} />
                   <XAxis
                     dataKey="periodo"
-                    tick={{ fontSize: 11, fill: '#cbd5e1', fontWeight: 600 }}
+                    tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     tickFormatter={(value) => formatShort(value)}
-                    tick={{ fontSize: 11, fill: '#cbd5e1', fontWeight: 600 }}
+                    tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -794,10 +794,11 @@ export default function EstoqueTab() {
                     formatter={(value) => BRL.format(Number(value || 0))}
                     cursor={{ fill: 'rgba(132, 204, 22, 0.14)' }}
                     contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid rgba(148,163,184,0.35)',
-                      borderRadius: 10,
-                      color: '#e5e7eb',
+                      backgroundColor: '#1e2532',
+                      border: '1px solid rgba(148,163,184,0.28)',
+                      borderRadius: 12,
+                      color: '#edf2f7',
+                      boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
                     }}
                   />
                   <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={42}>
@@ -811,7 +812,7 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+        <Card className="border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] bg-gradient-to-br from-card via-card to-[#283242]">
           <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Gauge className="w-4 h-4 text-lime-400" />
@@ -841,7 +842,7 @@ export default function EstoqueTab() {
                 ];
 
                 return (
-                  <div key={monthSupply.key} className="rounded-xl border border-border/60 p-2">
+                  <div key={monthSupply.key} className="rounded-xl border border-slate-500/20 bg-[#1f2734]/55 p-2">
                     <p className="text-[10px] font-semibold text-muted-foreground tracking-wide mb-1">{monthSupply.label}</p>
                     <div className="h-[120px] relative">
                       <ResponsiveContainer width="100%" height="100%">
@@ -881,8 +882,8 @@ export default function EstoqueTab() {
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] text-muted-foreground">Vend: <span className="font-semibold text-foreground">{formatShort(monthSupply.cmvVendido)}</span></p>
-                      <p className="text-[10px] text-muted-foreground">Pago: <span className="font-semibold text-foreground">{formatShort(monthSupply.cmvEfetivo)}</span></p>
+                      <p className="text-[10px] text-muted-foreground">Vend: <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvVendido)}</span></p>
+                      <p className="text-[10px] text-muted-foreground">Pago: <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvEfetivo)}</span></p>
                     </div>
                   </div>
                 );
@@ -893,7 +894,7 @@ export default function EstoqueTab() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-        <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+        <Card className="border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] bg-gradient-to-br from-card via-card to-[#283242]">
           <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Layers className="w-4 h-4 text-lime-400" />
@@ -931,13 +932,13 @@ export default function EstoqueTab() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-5">
-                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-[11px] tracking-wide uppercase text-muted-foreground">Total</span>
                 <span className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(totalQualidade)}</span>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2">
               {qualityHalfDonutData.map((entry) => (
-                <div key={entry.name} className="rounded-md bg-muted/30 px-2 py-1">
+                <div key={entry.name} className="rounded-md border border-slate-500/20 bg-[#1f2734]/55 px-2 py-1">
                   <p className="text-[10px] text-muted-foreground">{entry.name}</p>
                   <p className="text-[11px] font-semibold text-foreground">{entry.percentText}</p>
                 </div>
@@ -946,7 +947,7 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+        <Card className="border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] bg-gradient-to-br from-card via-card to-[#283242]">
           <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Truck className="w-4 h-4 text-[#7f1d1d]" />
@@ -984,7 +985,7 @@ export default function EstoqueTab() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pt-5">
-                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-[11px] tracking-wide uppercase text-muted-foreground">Total</span>
                 <span className="text-lg font-semibold text-foreground tabular-nums">
                   {BRL.format(metrics.totalLocalizacao)}
                 </span>
@@ -992,7 +993,7 @@ export default function EstoqueTab() {
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2">
               {locationHalfDonutData.map((entry) => (
-                <div key={entry.name} className="rounded-md bg-muted/30 px-2 py-1">
+                <div key={entry.name} className="rounded-md border border-slate-500/20 bg-[#1f2734]/55 px-2 py-1">
                   <p className="text-[10px] text-muted-foreground">{entry.name}</p>
                   <p className="text-[11px] font-semibold text-foreground">{BRL.format(entry.value)}</p>
                 </div>
