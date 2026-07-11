@@ -6,8 +6,19 @@ import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro
 import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
+import {
+  FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
+  FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
+  passaFiltroVisibilidadePedidosCompra,
+} from '@/lib/filtroVisibilidadePedidosCompra';
+import {
+  calcValorItensPedidoCompra,
+  calcValorTotalPedidoCompra,
+  getTotalLinhaPedidoCompra,
+} from '@/lib/pedidoCompraFinanceiro';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { AlertCircle, Gauge, Layers, Package, Truck } from 'lucide-react';
 import {
   Bar,
@@ -82,6 +93,8 @@ const qualityToneClasses = {
   C: 'bg-amber-500',
   D: 'bg-red-500',
 };
+
+const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
 function parseDate(value) {
   if (!value) return null;
@@ -223,6 +236,164 @@ function calcularValorPendentePedidoCompra(pedido = {}, recebidosPorProdutoExter
 
   if (valorPendentePorItens > 0) return valorPendentePorItens;
   return Number(pedido.valor_total || 0) * percentualPendentePedidoCompra(pedido);
+}
+
+function isNecessidadeRenderizada(embarque = {}) {
+  if (!embarque) return false;
+  if (embarque?.tipo === 'Necessidade') return true;
+  return (
+    !!embarque?.observacoes &&
+    String(embarque.observacoes).includes('criado automaticamente para itens pendentes')
+  );
+}
+
+function hasLinkedItems(embarque = {}) {
+  const itens = embarque?.itens || embarque?.itens_embarcados || [];
+  return Array.isArray(itens) && itens.some((item) => (Number(item?.quantidade_embarcada) || 0) > 0);
+}
+
+function hasDespachoVinculado(embarque = {}) {
+  return !!(
+    embarque?.data_embarque ||
+    embarque?.eta ||
+    embarque?.transportadora_id ||
+    embarque?.transportadora_nome
+  );
+}
+
+function getQuantidadePendenteNecessidade(pedido = {}, embarque = {}) {
+  if (!isNecessidadeRenderizada(embarque)) return 0;
+
+  const itensNecessidade = embarque?.itens || embarque?.itens_embarcados || [];
+  const quantidadeDoEmbarque = itensNecessidade.reduce((acc, item) => {
+    return acc + (Number(item?.quantidade_embarcada) || Number(item?.quantidade_pedida) || 0);
+  }, 0);
+
+  if (quantidadeDoEmbarque > 0) return quantidadeDoEmbarque;
+
+  return (pedido.itens || []).reduce((acc, item) => {
+    const quantidade = Number(item.quantidade) || 0;
+    const quantidadeVinculada = Number(item.quantidade_vinculada) || 0;
+    return acc + Math.max(0, quantidade - quantidadeVinculada);
+  }, 0);
+}
+
+function getBorrowedStatus(pedido = {}, embarque = {}) {
+  if (!embarque) return pedido?.status || 'Rascunho';
+
+  const temDespachoVinculado = hasDespachoVinculado(embarque);
+  const statusRecebimento = embarque.status_recebimento;
+  const temItensAssociados = hasLinkedItems(embarque);
+  const quantidadePendente = getQuantidadePendenteNecessidade(pedido, embarque);
+  const ehNecessidade = isNecessidadeRenderizada(embarque);
+  const precisaPreenchimento = ehNecessidade && !temDespachoVinculado && quantidadePendente > 0;
+
+  if (
+    statusRecebimento === 'Recebido OK' ||
+    statusRecebimento === 'Com Divergência' ||
+    embarque.status === 'Concluído'
+  ) {
+    return 'Concluído';
+  }
+  if (statusRecebimento === 'Recebido Parcial') return 'Despachado';
+
+  if (ehNecessidade && !temDespachoVinculado) return 'Aguardando';
+
+  if (!ehNecessidade && !temDespachoVinculado) {
+    const saf = pedido?.status_aprovacao_financeira || '';
+    if (
+      pedido?.status === 'Aguardando Aprovação Financeira' ||
+      pedido?.status === 'Aguardando Liberação' ||
+      saf === 'Aguardando Aprovação Financeira'
+    ) {
+      return 'Aguardando Liberação Financeira';
+    }
+
+    if (pedidoLiberadoParaLogistica(pedido)) return 'Aprovado';
+    return 'Rascunho';
+  }
+
+  if (temDespachoVinculado || temItensAssociados) return 'Despachado';
+  if (precisaPreenchimento) return 'Aguardando';
+  return 'Rascunho';
+}
+
+function getDisplayValorEmbarque(pedido = {}, embarque = {}) {
+  const itensEmbarque = embarque?.itens || embarque?.itens_embarcados || [];
+  const valorItensPedido = calcValorItensPedidoCompra(pedido);
+  if (!itensEmbarque.length) return calcValorTotalPedidoCompra(pedido);
+
+  let valorEmbarqueItens = 0;
+  for (const itemEmb of itensEmbarque) {
+    const pedidoItem = (pedido.itens || []).find((pi) => pi.produto_id === itemEmb.produto_id);
+    if (!pedidoItem) continue;
+    const lineTotal = getTotalLinhaPedidoCompra(pedidoItem);
+    const qtyEmb =
+      Number(itemEmb.quantidade_embarcada) ||
+      Number(itemEmb.quantidade_pedida) ||
+      Number(itemEmb.quantidade) ||
+      0;
+    const qtyPed = Number(pedidoItem.quantidade) || 0;
+    if (qtyPed > 0 && lineTotal > 0) {
+      valorEmbarqueItens += (qtyEmb / qtyPed) * lineTotal;
+    } else if (lineTotal > 0) {
+      valorEmbarqueItens += lineTotal;
+    }
+  }
+
+  if (!valorItensPedido) return Number(valorEmbarqueItens.toFixed(2));
+
+  const frete = Number(pedido?.valor_frete) || 0;
+  const desconto = Number(pedido?.valor_desconto) || 0;
+  const proporcao = valorEmbarqueItens / valorItensPedido;
+  return Number((valorEmbarqueItens + proporcao * (frete - desconto)).toFixed(2));
+}
+
+function buildVirtualNecessidade(pedido = {}, embarquesDoPedido = []) {
+  const embarquesReais = (embarquesDoPedido || []).filter((embarque) => !isNecessidadeRenderizada(embarque));
+  const temDespachoReal = embarquesReais.some(
+    (embarque) => hasLinkedItems(embarque) && hasDespachoVinculado(embarque)
+  );
+  if (!temDespachoReal) return null;
+
+  const recebidosPorProduto = embarquesReais.reduce((acc, embarque) => {
+    (embarque?.itens || embarque?.itens_embarcados || []).forEach((item) => {
+      const produtoId = item.produto_id;
+      if (!produtoId) return;
+      acc[produtoId] =
+        (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || Number(item.quantidade_embarcada) || 0);
+    });
+    return acc;
+  }, {});
+
+  const itensPendentes = (pedido.itens || [])
+    .map((item) => {
+      const quantidadePedida = Number(item.quantidade) || 0;
+      const quantidadeRecebida = Number(recebidosPorProduto[item.produto_id]) || 0;
+      const quantidadePendente = Math.max(0, quantidadePedida - quantidadeRecebida);
+      if (!quantidadePendente) return null;
+      return {
+        produto_id: item.produto_id,
+        quantidade_pedida: quantidadePedida,
+        quantidade_embarcada: quantidadePendente,
+        quantidade_recebida: 0,
+      };
+    })
+    .filter(Boolean);
+
+  if (!itensPendentes.length) return null;
+
+  return {
+    id: `virtual-necessidade-${pedido.id}`,
+    pedido_compra_id: pedido.id,
+    tipo: 'Necessidade',
+    status: 'Pendente',
+    status_recebimento: 'Pendente',
+    observacoes: 'Embarque de necessidade criado automaticamente para itens pendentes.',
+    itens: itensPendentes,
+    itens_embarcados: itensPendentes,
+    created_date: new Date().toISOString(),
+  };
 }
 
 function movimentoContaNoNivelEstoque(movimento = {}) {
@@ -433,11 +604,81 @@ export default function EstoqueTab() {
             status: getSupplyStatus(ratioPercent),
           };
         });
-        const transitoFinanceiroAprovado = pedidosCompraLista.reduce((sum, pedido) => {
-          if (!pedidoCompraAprovadoNaoConcluido(pedido)) return sum;
-          const recebidosPorProduto = recebidosPorPedidoProduto[String(pedido.id)] || null;
-          return sum + calcularValorPendentePedidoCompra(pedido, recebidosPorProduto);
-        }, 0);
+        const embarquesPorPedido = embarquesCompraLista.reduce((acc, embarque) => {
+          const pedidoId = embarque?.pedido_compra_id;
+          if (!pedidoId) return acc;
+          if (!acc[pedidoId]) acc[pedidoId] = [];
+          acc[pedidoId].push(embarque);
+          return acc;
+        }, {});
+
+        const cardsDeEmbarque = pedidosCompraLista.flatMap((pedido) => {
+          const embarquesDoPedido = (embarquesPorPedido[pedido.id] || []).slice()
+            .sort((a, b) => new Date(a.created_date || 0) - new Date(b.created_date || 0));
+          const embarquesReais = embarquesDoPedido.filter((embarque) => !isNecessidadeRenderizada(embarque));
+          const embarquesNecessidade = embarquesDoPedido.filter((embarque) => isNecessidadeRenderizada(embarque));
+          const necessidadeVirtual =
+            embarquesNecessidade.length === 0 ? buildVirtualNecessidade(pedido, embarquesDoPedido) : null;
+
+          const embarquesRenderizados = embarquesDoPedido.length > 0
+            ? [...embarquesReais, ...embarquesNecessidade, ...(necessidadeVirtual ? [necessidadeVirtual] : [])]
+            : [
+                {
+                  id: `original-${pedido.id}`,
+                  pedido_compra_id: pedido.id,
+                  tipo: 'Original',
+                  status: 'Pendente',
+                  status_recebimento: 'Pendente',
+                  itens: [],
+                  itens_embarcados: [],
+                  observacoes: '',
+                  created_date: pedido.created_date,
+                },
+              ];
+
+          return embarquesRenderizados.map((embarque) => {
+            const ehNecessidade = isNecessidadeRenderizada(embarque);
+            return {
+              ...pedido,
+              _embarque: embarque,
+              _is_necessidade: ehNecessidade,
+              _display_status: getBorrowedStatus(pedido, embarque),
+              _display_valor:
+                hasLinkedItems(embarque) || ehNecessidade
+                  ? getDisplayValorEmbarque(pedido, embarque)
+                  : calcValorTotalPedidoCompra(pedido),
+            };
+          });
+        });
+
+        const filtradosPadrao = cardsDeEmbarque.filter((p) =>
+          passaFiltroVisibilidadePedidosCompra(p, {
+            somenteNaoConcluidos: FILTRO_COMPRAS_SOMENTE_NAO_CONCLUIDOS_DEFAULT,
+            ultimos30Dias: FILTRO_COMPRAS_ULTIMOS_30_DIAS_DEFAULT,
+            getDataPedido: (item) => item.data_emissao || (item.created_date ? toLocalDate(item.created_date) : ''),
+            isConcluido: (item) => item._display_status === 'Concluído',
+          })
+        );
+
+        const pedidosPagosPendentes = filtradosPadrao.filter((pedido) => {
+          const aprovadoFinanceiro = pedidoLiberadoParaLogistica(pedido) || pedido._display_status === 'Aprovado';
+          const ehNecessidade = !!pedido._is_necessidade || pedido._embarque?.tipo === 'Necessidade';
+          const aindaNaoRecebido = pedido._display_status !== 'Concluído';
+          const aindaNaoEhAguardandoPagamento =
+            ehNecessidade ||
+            ![
+              'Aguardando Aprovação Financeira',
+              'Aguardando Liberação Financeira',
+              'Aguardando Liberação',
+              'Aguardando',
+            ].includes(pedido._display_status);
+          return aprovadoFinanceiro && aindaNaoRecebido && aindaNaoEhAguardandoPagamento;
+        });
+
+        const transitoFinanceiroAprovado = pedidosPagosPendentes.reduce(
+          (acc, pedido) => acc + Number(pedido._display_valor || 0),
+          0
+        );
 
         const totalLocalizacao = estoqueFisico + transitoFinanceiroAprovado;
         const qualityTotal = QUALITY_ORDER.reduce((sum, key) => sum + qualityAccumulator[key], 0);
