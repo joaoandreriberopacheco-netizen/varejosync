@@ -182,11 +182,10 @@ function percentualPendentePedidoCompra(pedido = {}) {
   return Math.max(0, pendente);
 }
 
-function calcularValorPendentePedidoCompra(pedido = {}) {
+function calcularValorPendentePedidoCompra(pedido = {}, recebidosPorProdutoExterno = null) {
   const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
   const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
-
-  const recebidosPorProduto = embarques.reduce((acc, embarque) => {
+  const recebidosPorProduto = recebidosPorProdutoExterno || embarques.reduce((acc, embarque) => {
     const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
       ? embarque.itens_embarcados
       : Array.isArray(embarque.itens)
@@ -264,7 +263,7 @@ export default function EstoqueTab() {
         const supplyStartISO = format(supplyMonthBuckets[0]?.start || startDate, 'yyyy-MM-dd');
         const supplyEndISO = format(supplyMonthBuckets[supplyMonthBuckets.length - 1]?.end || endDate, 'yyyy-MM-dd');
 
-        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra, dadosVendaAbcd90d] =
+        const [produtos, movimentacoesEstoqueRaw, lancamentosFinanceiros, pedidosVenda, pedidosCompra, embarquesCompraRaw, dadosVendaAbcd90d] =
           await Promise.all([
             base44.entities.Produto.filter({}, '-created_date', 5000),
             base44.entities.MovimentacaoEstoque.list('-created_date', 50000),
@@ -279,6 +278,7 @@ export default function EstoqueTab() {
             ),
             base44.entities.PedidoVenda.filter({ tipo: 'PDV' }, '-created_date', 20000),
             base44.entities.PedidoCompra.filter({}, '-created_date', 5000),
+            base44.entities.Embarque.list('-created_date', 5000),
             fetchDadosVendaAbcd90d().catch(() => null),
           ]);
 
@@ -296,6 +296,27 @@ export default function EstoqueTab() {
         const lancamentosLista = Array.isArray(lancamentosFinanceiros) ? lancamentosFinanceiros : [];
         const pedidosVendaLista = Array.isArray(pedidosVenda) ? pedidosVenda : [];
         const pedidosCompraLista = Array.isArray(pedidosCompra) ? pedidosCompra : [];
+        const embarquesCompraLista = Array.isArray(embarquesCompraRaw) ? embarquesCompraRaw : [];
+
+        const recebidosPorPedidoProduto = embarquesCompraLista.reduce((acc, embarque) => {
+          const pedidoId = embarque?.pedido_compra_id;
+          if (!pedidoId) return acc;
+          const pedidoKey = String(pedidoId);
+          if (!acc[pedidoKey]) acc[pedidoKey] = {};
+          const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
+            ? embarque.itens_embarcados
+            : Array.isArray(embarque.itens)
+              ? embarque.itens
+              : [];
+          itensEmbarcados.forEach((item) => {
+            const produtoId = item?.produto_id;
+            if (!produtoId) return;
+            const produtoKey = String(produtoId);
+            acc[pedidoKey][produtoKey] =
+              (acc[pedidoKey][produtoKey] || 0) + (Number(item.quantidade_recebida) || 0);
+          });
+          return acc;
+        }, {});
 
         const qualityAccumulator = {
           A: 0,
@@ -403,7 +424,8 @@ export default function EstoqueTab() {
         });
         const transitoFinanceiroAprovado = pedidosCompraLista.reduce((sum, pedido) => {
           if (!pedidoCompraAprovadoNaoConcluido(pedido)) return sum;
-          return sum + calcularValorPendentePedidoCompra(pedido);
+          const recebidosPorProduto = recebidosPorPedidoProduto[String(pedido.id)] || null;
+          return sum + calcularValorPendentePedidoCompra(pedido, recebidosPorProduto);
         }, 0);
 
         const totalLocalizacao = estoqueFisico + transitoFinanceiroAprovado;
