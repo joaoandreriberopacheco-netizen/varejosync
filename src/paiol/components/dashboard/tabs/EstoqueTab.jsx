@@ -54,9 +54,9 @@ const QUALITY_LABELS = {
 
 const QUALITY_COLORS = {
   A: '#abc85a',
-  B: '#94ad53',
-  C: '#7a8498',
-  D: '#8a9574',
+  B: '#7f9850',
+  C: '#6f82a1',
+  D: '#8f6f63',
 };
 
 const SUPPLY_RING_COLORS = {
@@ -71,7 +71,7 @@ const SUPPLY_RING_COLORS = {
 
 const LOCATION_COLORS = {
   fisico: '#abc85a',
-  transito: '#b8c973',
+  transito: '#6f82a1',
 };
 
 const STOCK_BAR_COLORS = ['#b5d061', '#aac459', '#9eb851', '#93ab48', '#879f41', '#7d933b'];
@@ -766,7 +766,7 @@ export default function EstoqueTab() {
   ];
 
   return (
-    <div className="space-y-4 md:space-y-3">
+    <div className="space-y-3">
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
         <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
           <CardHeader className="pb-1">
@@ -776,7 +776,7 @@ export default function EstoqueTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[220px] md:h-[210px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}>
+            <div className={`h-[205px] md:h-[210px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={metrics.nivelEstoqueSeries} barCategoryGap="24%">
                   <defs>
@@ -831,7 +831,7 @@ export default function EstoqueTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {metrics.supplyByMonth.map((monthSupply) => {
                 const supplyColor = getSupplyColorByStatus(monthSupply.status);
                 const overflowColor = getSupplyOverflowColorByStatus(monthSupply.status);
@@ -853,15 +853,15 @@ export default function EstoqueTab() {
                 ];
 
                 return (
-                  <div key={monthSupply.key} className={`rounded-xl p-3 sm:p-2 ${INNER_SURFACE}`}>
+                  <div key={monthSupply.key} className={`rounded-xl p-2 ${INNER_SURFACE}`}>
                     <p className="text-[10px] font-semibold text-muted-foreground tracking-wide mb-1">{monthSupply.label}</p>
-                    <div className="h-[150px] sm:h-[120px] relative">
+                    <div className="h-[108px] sm:h-[120px] relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
                             data={primaryRingData}
-                            innerRadius={34}
-                            outerRadius={54}
+                            innerRadius={28}
+                            outerRadius={42}
                             dataKey="value"
                             startAngle={90}
                             endAngle={-270}
@@ -875,8 +875,8 @@ export default function EstoqueTab() {
                           {hasOverflow ? (
                             <Pie
                               data={overflowRingData}
-                              innerRadius={26}
-                              outerRadius={32}
+                              innerRadius={22}
+                              outerRadius={26}
                               dataKey="value"
                               startAngle={90}
                               endAngle={-270}
@@ -891,12 +891,12 @@ export default function EstoqueTab() {
                         </PieChart>
                       </ResponsiveContainer>
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-xl sm:text-lg font-bold text-foreground">{monthSupply.ratioPercent.toFixed(1)}%</span>
+                        <span className="text-base sm:text-lg font-bold text-foreground">{monthSupply.ratioPercent.toFixed(1)}%</span>
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[10px] text-muted-foreground">Vend: <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvVendido)}</span></p>
-                      <p className="text-[10px] text-muted-foreground">Pago: <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvEfetivo)}</span></p>
+                      <p className="text-[9px] text-muted-foreground">V: <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvVendido)}</span></p>
+                      <p className="text-[9px] text-muted-foreground">P: <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvEfetivo)}</span></p>
                     </div>
                   </div>
                 );
@@ -915,7 +915,7 @@ export default function EstoqueTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[190px] md:h-[180px] relative rounded-xl px-2 py-1 ${INNER_SURFACE}`}>
+            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${INNER_SURFACE}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -940,7 +940,7 @@ export default function EstoqueTab() {
                     strokeWidth={0}
                   >
                     {qualityHalfDonutData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
+                      <Cell key={entry.name} fill={entry.color} stroke="#2b3342" strokeWidth={2} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -950,7 +950,7 @@ export default function EstoqueTab() {
                 <span className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(totalQualidade)}</span>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-2 gap-2 mt-1.5">
               {qualityHalfDonutData.map((entry) => (
                 <div key={entry.name} className={`rounded-md px-2 py-1 ${INNER_SURFACE}`}>
                   <p className="text-[10px] text-muted-foreground">{entry.name}</p>
@@ -969,7 +969,7 @@ export default function EstoqueTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[190px] md:h-[180px] relative rounded-xl px-2 py-1 ${INNER_SURFACE}`}>
+            <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${INNER_SURFACE}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -994,7 +994,7 @@ export default function EstoqueTab() {
                     strokeWidth={0}
                   >
                     {locationHalfDonutData.map((entry) => (
-                      <Cell key={entry.name} fill={entry.color} />
+                      <Cell key={entry.name} fill={entry.color} stroke="#2b3342" strokeWidth={3} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -1006,7 +1006,7 @@ export default function EstoqueTab() {
                 </span>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-2 gap-2 mt-1.5">
               {locationHalfDonutData.map((entry) => (
                 <div key={entry.name} className={`rounded-md px-2 py-1 ${INNER_SURFACE}`}>
                   <p className="text-[10px] text-muted-foreground">{entry.name}</p>
