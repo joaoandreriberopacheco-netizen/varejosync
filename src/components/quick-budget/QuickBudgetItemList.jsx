@@ -21,6 +21,11 @@ export default function QuickBudgetItemList({ items, onUpdateItem, onRemoveItem 
               <p className="text-sm font-medium text-foreground break-words">{item.produto_nome}</p>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span>Estoque: {item.estoque_atual}</span>
+                {item.codigo_interno && (
+                  <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80">
+                    #{item.codigo_interno}
+                  </span>
+                )}
                 <span>Preço tabela: {formatCurrency(item.preco_cheio)}</span>
                 {item.preco_livre && (
                   <span className="text-muted-foreground">Piso custo: {formatCurrency(item.preco_minimo)}</span>

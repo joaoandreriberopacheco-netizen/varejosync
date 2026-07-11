@@ -942,7 +942,13 @@ export default function MobileProductSelector({
                             {product.nome}
                           </div>
                           <div className="text-sm text-muted-foreground mt-1">
-                            <span className="truncate block">{product.codigo_interno || 'S/ Cód'} • {formatCurrency(custoApresentacao)}</span>
+                            <span className="truncate block">
+                              <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80">
+                                #{product.codigo_interno || '—'}
+                              </span>
+                              <span className="mx-1">•</span>
+                              <span>{formatCurrency(custoApresentacao)}</span>
+                            </span>
                             {variasUnidades && (
                               <span className="mt-1 flex items-center gap-2 flex-wrap">
                                 <Boxes className="w-3.5 h-3.5 text-muted-foreground shrink-0" aria-hidden />

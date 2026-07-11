@@ -335,7 +335,11 @@ function BudgetContent({ onClose, isMobile }) {
                     <p className="text-sm font-semibold text-foreground">{selectedProduct.nome}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground dark:text-foreground/90">
                       <span>Estoque {fmtNumber(selectedProduct.estoque_atual)}</span>
-                      {selectedProduct.codigo_interno && <span>#{selectedProduct.codigo_interno}</span>}
+                      {selectedProduct.codigo_interno && (
+                        <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80 dark:text-foreground/70">
+                          #{selectedProduct.codigo_interno}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                       <span className="font-semibold text-foreground">{fmtCurrency(resolvePrice(selectedProduct, priceTable?.fator_ajuste || 1))}</span>

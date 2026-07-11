@@ -1286,7 +1286,12 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                             <Package className="w-4 h-4 text-muted-foreground" />
                           </div>
                       }
-                      <p className="text-sm font-medium text-foreground leading-snug flex-1 break-words">{item.produto_nome}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground leading-snug break-words">{item.produto_nome}</p>
+                        {item.codigo_interno ? (
+                          <p className="mt-0.5 text-[10px] text-muted-foreground/80 font-mono tracking-wide">#{item.codigo_interno}</p>
+                        ) : null}
+                      </div>
                       <button onClick={() => handleRemoveItem(item.item_key)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 flex items-center justify-center text-muted-foreground hover:text-red-500 flex-shrink-0 rounded-md hover:bg-red-50">
                         <X className="w-3.5 h-3.5" />
@@ -1757,7 +1762,12 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                         </div>
                     }
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-foreground dark:text-foreground leading-snug break-words">{item.produto_nome}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm text-foreground dark:text-foreground leading-snug break-words">{item.produto_nome}</p>
+                        {item.codigo_interno ? (
+                          <p className="mt-0.5 text-[10px] text-muted-foreground/80 font-mono tracking-wide">#{item.codigo_interno}</p>
+                        ) : null}
+                      </div>
                       {item.preco_livre ? (
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] text-amber-500 font-medium uppercase tracking-wide">Preço livre</span>

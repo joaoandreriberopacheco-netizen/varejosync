@@ -424,7 +424,9 @@ export default function PDVSupermercado() {
                       >
                         <div>
                           <p className="font-semibold text-foreground dark:text-foreground text-base leading-tight">{produto.nome}</p>
-                          <p className="text-xs text-muted-foreground dark:text-muted-foreground font-mono mt-1">#{produto.codigo_interno || 'N/A'}</p>
+                          <p className="text-[10px] text-muted-foreground/80 dark:text-muted-foreground font-mono tracking-wide mt-1">
+                            #{produto.codigo_interno || '—'}
+                          </p>
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-foreground dark:text-foreground">R$ {preco.toFixed(2)} / {unidade}</p>
@@ -501,7 +503,9 @@ export default function PDVSupermercado() {
                     <td className="p-3 font-medium">
                       <div className="flex flex-col">
                         <span>{item.produto_nome}</span>
-                        <span className="text-xs text-muted-foreground">{item.codigo_interno}</span>
+                        {item.codigo_interno ? (
+                          <span className="text-[10px] text-muted-foreground/80 font-mono tracking-wide">#{item.codigo_interno}</span>
+                        ) : null}
                       </div>
                     </td>
                     <td className="p-3 text-center">

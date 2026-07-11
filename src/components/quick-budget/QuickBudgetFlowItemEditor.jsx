@@ -55,7 +55,11 @@ export default function QuickBudgetFlowItemEditor({
           <p className="text-sm font-semibold text-foreground break-words">{selectedProduct.nome}</p>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>Estoque: {Number(selectedProduct.estoque_atual || 0)}</span>
-            {selectedProduct.codigo_interno && <span>#{selectedProduct.codigo_interno}</span>}
+            {selectedProduct.codigo_interno && (
+              <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80">
+                #{selectedProduct.codigo_interno}
+              </span>
+            )}
             {isFreePrice && <span className="text-emerald-600 dark:text-emerald-400">Preço livre</span>}
           </div>
           <div className="mt-2">

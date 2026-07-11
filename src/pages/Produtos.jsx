@@ -446,6 +446,7 @@ function ProdutosPageContent() {
 
   const handleBaixarTemplateUnificado = () => {
     const headers = [
+      "codigo_interno",
       "codigo_barras",
       "campo_hierarquico_1",
       "campo_hierarquico_2",
@@ -500,6 +501,7 @@ function ProdutosPageContent() {
     
     // Linha de exemplo
     const exemplo = [
+      "",
       "7891234567890",
       "Torneira",
       "Mesa",
@@ -573,6 +575,7 @@ function ProdutosPageContent() {
             items: {
               type: "object",
               properties: {
+                "codigo_interno": { type: "string" },
                 "codigo_barras": { type: "string" },
                 "campo_hierarquico_1": { type: "string" },
                 "campo_hierarquico_2": { type: "string" },

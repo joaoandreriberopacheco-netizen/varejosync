@@ -64,7 +64,7 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
           </div>
           {/* Código */}
           {p.codigo_interno && (
-            <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
+            <span className="text-[10px] text-muted-foreground/80 font-mono tracking-wide whitespace-nowrap">
               #{p.codigo_interno}
             </span>
           )}
