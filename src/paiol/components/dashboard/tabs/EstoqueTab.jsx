@@ -755,25 +755,27 @@ export default function EstoqueTab() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <Card className="xl:col-span-7 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+        <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Package className="w-4 h-4 text-lime-400" />
               Nível de Estoque (Base Hoje)
             </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Estoque atual por SKU, retroagindo compra/venda/consumo interno.
-            </p>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px]">
+            <div className="h-[230px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={metrics.nivelEstoqueSeries}>
-                  <XAxis dataKey="periodo" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <BarChart data={metrics.nivelEstoqueSeries} barCategoryGap="24%">
+                  <XAxis
+                    dataKey="periodo"
+                    tick={{ fontSize: 11, fill: '#cbd5e1', fontWeight: 600 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
                   <YAxis
                     tickFormatter={(value) => formatShort(value)}
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 11, fill: '#cbd5e1', fontWeight: 600 }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -781,22 +783,19 @@ export default function EstoqueTab() {
                     formatter={(value) => BRL.format(Number(value || 0))}
                     cursor={{ fill: 'rgba(132, 204, 22, 0.14)' }}
                   />
-                  <Bar dataKey="valor" fill="#84cc16" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="valor" fill="#84cc16" radius={[6, 6, 0, 0]} maxBarSize={42} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="xl:col-span-5 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+        <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Gauge className="w-4 h-4 text-lime-400" />
               Razão de Abastecimento (3 meses)
             </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              CMV efetivo pago / CMV vendido no mês atual e dois meses anteriores.
-            </p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -858,7 +857,6 @@ export default function EstoqueTab() {
                       </ResponsiveContainer>
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                         <span className="text-2xl font-bold text-foreground">{monthSupply.ratioPercent.toFixed(1)}%</span>
-                        <span className="text-[10px] text-muted-foreground">BASE 100%</span>
                       </div>
                     </div>
                     <div className="space-y-1.5 mt-1">
@@ -870,10 +868,6 @@ export default function EstoqueTab() {
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wide">CMV Efetivo Pago</p>
                         <p className="text-sm font-semibold text-foreground tabular-nums">{BRL.format(monthSupply.cmvEfetivo)}</p>
                       </div>
-                      <div className="rounded-md bg-muted/40 p-2.5">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Diferença</p>
-                        <p className="text-sm font-semibold text-foreground tabular-nums">{BRL.format(monthSupply.diff)}</p>
-                      </div>
                     </div>
                   </div>
                 );
@@ -882,15 +876,12 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className="xl:col-span-7 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+        <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Layers className="w-4 h-4 text-lime-400" />
               Qualidade do Estoque (Curva A/B/C/D)
             </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Distribuição do capital em estoque por curva, com base no valor de custo.
-            </p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-[100px_1fr] gap-4 items-stretch min-h-[280px]">
@@ -929,15 +920,12 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className="xl:col-span-5 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+        <Card className="lg:col-span-1 2xl:col-span-2 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Truck className="w-4 h-4 text-[#7f1d1d]" />
               Localização do Estoque
             </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Estoque físico vs compras com financeiro aprovado e ainda não concluídas.
-            </p>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="h-[56px] w-full rounded-xl overflow-hidden bg-muted/30 flex">
@@ -969,6 +957,26 @@ export default function EstoqueTab() {
             <div className="rounded-lg border border-border/60 p-3">
               <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Total posicionado</p>
               <p className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(metrics.totalLocalizacao)}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-foreground">KPIs de Estoque</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="rounded-lg bg-muted/40 p-3">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Físico</p>
+              <p className="text-xl font-semibold text-foreground tabular-nums">{BRL.format(metrics.estoqueFisico)}</p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-3">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Em trânsito</p>
+              <p className="text-xl font-semibold text-foreground tabular-nums">{BRL.format(metrics.transitoFinanceiroAprovado)}</p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-3">
+              <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Total</p>
+              <p className="text-xl font-semibold text-foreground tabular-nums">{BRL.format(metrics.totalLocalizacao)}</p>
             </div>
           </CardContent>
         </Card>
