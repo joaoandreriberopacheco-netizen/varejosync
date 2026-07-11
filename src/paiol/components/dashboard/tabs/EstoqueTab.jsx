@@ -809,7 +809,7 @@ export default function EstoqueTab() {
                       boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
                     }}
                   />
-                  <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={42}>
+                  <Bar dataKey="valor" radius={[8, 8, 0, 0]} maxBarSize={42}>
                     {metrics.nivelEstoqueSeries.map((entry, idx) => (
                       <Cell
                         key={`${entry.periodo}-${idx}`}
@@ -819,6 +819,13 @@ export default function EstoqueTab() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+            <div className="mt-2 flex items-center justify-between text-[10px] text-slate-300/80">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-[2px] w-5 rounded-full bg-[#9eb851]" />
+                tendência mensal
+              </span>
+              <span className="font-semibold text-slate-100">{formatShort(metrics.nivelEstoqueSeries.at(-1)?.valor || 0)}</span>
             </div>
           </CardContent>
         </Card>
@@ -895,8 +902,20 @@ export default function EstoqueTab() {
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-[9px] text-muted-foreground">V: <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvVendido)}</span></p>
-                      <p className="text-[9px] text-muted-foreground">P: <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvEfetivo)}</span></p>
+                      <p className="text-[9px] text-muted-foreground flex items-center justify-between gap-1.5">
+                        <span className="flex items-center gap-1.5">
+                          <span className="inline-block h-[2px] w-3 rounded-full bg-[#7a8498]" />
+                          vendido
+                        </span>
+                        <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvVendido)}</span>
+                      </p>
+                      <p className="text-[9px] text-muted-foreground flex items-center justify-between gap-1.5">
+                        <span className="flex items-center gap-1.5">
+                          <span className="inline-block h-[2px] w-3 rounded-full bg-[#abc85a]" />
+                          pago
+                        </span>
+                        <span className="font-semibold text-slate-100">{formatShort(monthSupply.cmvEfetivo)}</span>
+                      </p>
                     </div>
                   </div>
                 );
@@ -1028,8 +1047,18 @@ export default function EstoqueTab() {
             <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className="h-[180px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 flex items-center justify-center">
-              <span className="text-xs text-slate-400">Slot reservado</span>
+            <div className="h-[180px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 p-3">
+              <div className="h-2 w-24 rounded bg-slate-500/25 mb-3" />
+              <div className="grid grid-cols-5 gap-1 items-end h-16 mb-3">
+                {[30, 44, 26, 52, 36].map((h, idx) => (
+                  <div key={`ph-top-${idx}`} className="rounded-sm bg-slate-400/20" style={{ height: `${h}%` }} />
+                ))}
+              </div>
+              <div className="space-y-2">
+                <div className="h-1.5 rounded bg-slate-500/20 w-full" />
+                <div className="h-1.5 rounded bg-slate-500/20 w-4/5" />
+                <div className="h-1.5 rounded bg-slate-500/20 w-3/5" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1045,8 +1074,14 @@ export default function EstoqueTab() {
               <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
             </CardHeader>
             <CardContent className="pt-1">
-              <div className="h-[90px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 flex items-center justify-center">
-                <span className="text-xs text-slate-400">Slot reservado</span>
+              <div className="h-[90px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 p-2.5">
+                <div className="h-1.5 w-16 rounded bg-slate-500/25 mb-2" />
+                <div className="grid grid-cols-4 gap-1 items-end h-8 mb-2">
+                  {[40, 68, 52, 74].map((h, idx) => (
+                    <div key={`ph-bottom-${slot}-${idx}`} className="rounded-sm bg-slate-400/20" style={{ height: `${h}%` }} />
+                  ))}
+                </div>
+                <div className="h-1.5 rounded bg-slate-500/20 w-4/5" />
               </div>
             </CardContent>
           </Card>
