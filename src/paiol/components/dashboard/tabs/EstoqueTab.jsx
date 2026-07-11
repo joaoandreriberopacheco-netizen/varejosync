@@ -952,9 +952,12 @@ export default function EstoqueTab() {
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
               {qualityHalfDonutData.map((entry) => (
-                <div key={entry.name} className={`rounded-md px-2 py-1 ${INNER_SURFACE}`}>
-                  <p className="text-[10px] text-muted-foreground">{entry.name}</p>
-                  <p className="text-[11px] font-semibold text-foreground">{entry.percentText}</p>
+                <div key={entry.name} className="flex items-center justify-between rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-[2px] w-4 rounded-full" style={{ backgroundColor: entry.color }} />
+                    <span className="text-[10px] text-muted-foreground">{entry.name}</span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-foreground">{entry.percentText}</span>
                 </div>
               ))}
             </div>
@@ -1008,14 +1011,46 @@ export default function EstoqueTab() {
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
               {locationHalfDonutData.map((entry) => (
-                <div key={entry.name} className={`rounded-md px-2 py-1 ${INNER_SURFACE}`}>
-                  <p className="text-[10px] text-muted-foreground">{entry.name}</p>
-                  <p className="text-[11px] font-semibold text-foreground">{BRL.format(entry.value)}</p>
+                <div key={entry.name} className="flex items-center justify-between rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block h-[2px] w-4 rounded-full" style={{ backgroundColor: entry.color }} />
+                    <span className="text-[10px] text-muted-foreground">{entry.name}</span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-foreground">{BRL.format(entry.value)}</span>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
+
+        <Card className="border border-slate-500/20 border-dashed shadow-[0_10px_24px_rgba(0,0,0,0.2)] bg-[#252d3a]/55">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <div className="h-[180px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 flex items-center justify-center">
+              <span className="text-xs text-slate-400">Slot reservado</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
+        {[1, 2, 3].map((slot) => (
+          <Card
+            key={`empty-slot-${slot}`}
+            className="border border-slate-500/20 border-dashed shadow-[0_10px_24px_rgba(0,0,0,0.2)] bg-[#252d3a]/55"
+          >
+            <CardHeader className="pb-1">
+              <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-1">
+              <div className="h-[90px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 flex items-center justify-center">
+                <span className="text-xs text-slate-400">Slot reservado</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
