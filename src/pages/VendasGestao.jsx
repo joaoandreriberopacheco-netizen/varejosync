@@ -12,9 +12,10 @@ import VendasRelatorisFAB from '@/components/vendas/VendasRelatorisFAB';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import { P38MobileLine, P38MobileLineList, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket, Receipt } from 'lucide-react';
+import { Search, Edit, ShoppingCart, Eye, FileText, MoreHorizontal, RotateCcw, RefreshCw, CreditCard, Printer, SlidersHorizontal, Ban, Ticket, Receipt, UserRoundPen } from 'lucide-react';
 import DetalhesPedidoVenda from '@/components/vendas/DetalhesPedidoVenda';
 import AlterarPagamentoDialog from '@/components/vendas/AlterarPagamentoDialog';
+import AlterarClientePedidoDialog from '@/components/vendas/AlterarClientePedidoDialog';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 
@@ -68,6 +69,7 @@ function PedidoActionsMenu({
   onVerDetalhes,
   onEdit,
   onReimprimir,
+  onCorrigirCliente,
 }) {
   return (
     <DropdownMenu>
@@ -83,6 +85,9 @@ function PedidoActionsMenu({
         <DropdownMenuItem onClick={() => onEdit(pedido)}>
           <Edit className="w-4 h-4 mr-2" /> Editar
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onCorrigirCliente(pedido)}>
+          <UserRoundPen className="w-4 h-4 mr-2" /> Corrigir cliente
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onReimprimir(pedido)}>
           <Printer className="w-4 h-4 mr-2" /> Reimprimir
         </DropdownMenuItem>
@@ -91,7 +96,7 @@ function PedidoActionsMenu({
   );
 }
 
-function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, striped }) {
+function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente, striped }) {
   const tone = p38StatusTone(pedido.status);
 
   return (
@@ -116,13 +121,14 @@ function PedidoMobileLine({ pedido, onVerDetalhes, onEdit, onReimprimir, striped
           onVerDetalhes={onVerDetalhes}
           onEdit={onEdit}
           onReimprimir={onReimprimir}
+          onCorrigirCliente={onCorrigirCliente}
         />
       }
     />
   );
 }
 
-function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir }) {
+function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente }) {
   const parentRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: pedidos.length,
@@ -154,6 +160,7 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir }
                 onVerDetalhes={onVerDetalhes}
                 onEdit={onEdit}
                 onReimprimir={onReimprimir}
+                onCorrigirCliente={onCorrigirCliente}
               />
             </div>
           );
@@ -163,7 +170,7 @@ function VirtualizedPedidoCards({ pedidos, onVerDetalhes, onEdit, onReimprimir }
   );
 }
 
-function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir }) {
+function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir, onCorrigirCliente }) {
   const parentRef = useRef(null);
   const rowVirtualizer = useVirtualizer({
     count: pedidos.length,
@@ -213,6 +220,7 @@ function VirtualizedPedidosTable({ pedidos, onVerDetalhes, onEdit, onReimprimir 
                       onVerDetalhes={onVerDetalhes}
                       onEdit={onEdit}
                       onReimprimir={onReimprimir}
+                      onCorrigirCliente={onCorrigirCliente}
                     />
                   </TableCell>
                   <TableCell>
@@ -438,6 +446,8 @@ function VendasGestaoPage() {
   const [showDevolucao, setShowDevolucao] = useState(false); // unused, kept for safety
   const [showTroca, setShowTroca] = useState(false); // unused, kept for safety
   const [showAlterarPagamento, setShowAlterarPagamento] = useState(false);
+  const [showAlterarCliente, setShowAlterarCliente] = useState(false);
+  const [pedidoParaAlterarCliente, setPedidoParaAlterarCliente] = useState(null);
   const [showComprovante, setShowComprovante] = useState(false);
   const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
   const [showFiltros, setShowFiltros] = useState(false);
@@ -565,6 +575,11 @@ function VendasGestaoPage() {
   const handleReimprimir = (pedido) => {
     setPedidoParaImprimir(pedido);
     setShowComprovante(true);
+  };
+
+  const handleCorrigirCliente = (pedido) => {
+    setPedidoParaAlterarCliente(pedido);
+    setShowAlterarCliente(true);
   };
 
   const handleInutilizarRascunho = async (rascunho) => {
@@ -831,12 +846,14 @@ function VendasGestaoPage() {
               onVerDetalhes={handleVerDetalhes}
               onEdit={handleEdit}
               onReimprimir={handleReimprimir}
+              onCorrigirCliente={handleCorrigirCliente}
             />
             <VirtualizedPedidosTable
               pedidos={pedidosFiltrados}
               onVerDetalhes={handleVerDetalhes}
               onEdit={handleEdit}
               onReimprimir={handleReimprimir}
+              onCorrigirCliente={handleCorrigirCliente}
             />
 
 
@@ -876,6 +893,28 @@ function VendasGestaoPage() {
 
       {/* Dialogs de operações */}
       <AlterarPagamentoDialog open={showAlterarPagamento} onClose={() => setShowAlterarPagamento(false)} />
+      <AlterarClientePedidoDialog
+        open={showAlterarCliente}
+        pedido={pedidoParaAlterarCliente}
+        onClose={() => {
+          setShowAlterarCliente(false);
+          setPedidoParaAlterarCliente(null);
+        }}
+        onSuccess={(clienteAtualizado) => {
+          if (pedidoDetalhes?.id && pedidoParaAlterarCliente?.id === pedidoDetalhes.id) {
+            setPedidoDetalhes((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    cliente_id: clienteAtualizado.id,
+                    cliente_nome: clienteAtualizado.nome,
+                  }
+                : prev
+            );
+          }
+          loadPedidos();
+        }}
+      />
 
       {/* Dialog de Detalhes */}
       <DetalhesPedidoVenda
