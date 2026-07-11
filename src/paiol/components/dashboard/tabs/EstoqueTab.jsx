@@ -56,22 +56,22 @@ const QUALITY_COLORS = {
   A: '#abc85a',
   B: '#94ad53',
   C: '#7a8498',
-  D: '#9b5959',
+  D: '#8a9574',
 };
 
 const SUPPLY_RING_COLORS = {
   healthy: '#abc85a',
   healthyDark: '#89a246',
-  high: '#9b5959',
-  highDark: '#7e4848',
-  low: '#9b5959',
-  lowDark: '#7e4848',
+  high: '#9aad63',
+  highDark: '#7f8f53',
+  low: '#6f819e',
+  lowDark: '#5d6d86',
   muted: '#465267',
 };
 
 const LOCATION_COLORS = {
   fisico: '#abc85a',
-  transito: '#7082a3',
+  transito: '#b8c973',
 };
 
 const STOCK_BAR_COLORS = ['#b5d061', '#aac459', '#9eb851', '#93ab48', '#879f41', '#7d933b'];
@@ -964,7 +964,7 @@ export default function EstoqueTab() {
         <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
           <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <Truck className="w-4 h-4 text-[#7f1d1d]" />
+              <Truck className="w-4 h-4 text-[#b8c973]" />
               Localização do Estoque
             </CardTitle>
           </CardHeader>
