@@ -53,26 +53,28 @@ const QUALITY_LABELS = {
 };
 
 const QUALITY_COLORS = {
-  A: '#84cc16',
-  B: '#65a30d',
-  C: '#6b7280',
-  D: '#7f1d1d',
+  A: '#a6c545',
+  B: '#8fa73c',
+  C: '#6f7b90',
+  D: '#8b4747',
 };
 
 const SUPPLY_RING_COLORS = {
-  healthy: '#84cc16',
-  healthyDark: '#65a30d',
-  high: '#7f1d1d',
-  highDark: '#5b1515',
-  low: '#7f1d1d',
-  lowDark: '#5b1515',
-  muted: '#374151',
+  healthy: '#a6c545',
+  healthyDark: '#7f9734',
+  high: '#8b4747',
+  highDark: '#6d3535',
+  low: '#8b4747',
+  lowDark: '#6d3535',
+  muted: '#384153',
 };
 
 const LOCATION_COLORS = {
-  fisico: '#84cc16',
-  transito: '#7f1d1d',
+  fisico: '#a6c545',
+  transito: '#697994',
 };
+
+const STOCK_BAR_COLORS = ['#9fbe3f', '#97b63b', '#8dae38', '#84a535', '#7b9b32', '#73922f'];
 
 const PEDIDO_VENDA_STATUSES_CMV = new Set([
   'financeiro ok',
@@ -754,6 +756,7 @@ export default function EstoqueTab() {
     name: bucket.label,
     value: Number(bucket.valor || 0),
     color: bucket.color,
+    percentText: bucket.percentText,
   }));
   const locationHalfDonutData = [
     { name: 'Físico', value: Number(metrics.estoqueFisico || 0), color: LOCATION_COLORS.fisico },
@@ -790,8 +793,18 @@ export default function EstoqueTab() {
                   <Tooltip
                     formatter={(value) => BRL.format(Number(value || 0))}
                     cursor={{ fill: 'rgba(132, 204, 22, 0.14)' }}
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
+                      border: '1px solid rgba(148,163,184,0.35)',
+                      borderRadius: 10,
+                      color: '#e5e7eb',
+                    }}
                   />
-                  <Bar dataKey="valor" fill="#84cc16" radius={[6, 6, 0, 0]} maxBarSize={42} />
+                  <Bar dataKey="valor" radius={[6, 6, 0, 0]} maxBarSize={42}>
+                    {metrics.nivelEstoqueSeries.map((entry, idx) => (
+                      <Cell key={`${entry.periodo}-${idx}`} fill={STOCK_BAR_COLORS[idx % STOCK_BAR_COLORS.length]} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -892,6 +905,17 @@ export default function EstoqueTab() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
+                    data={[{ name: 'track', value: 100 }]}
+                    dataKey="value"
+                    startAngle={180}
+                    endAngle={0}
+                    innerRadius={56}
+                    outerRadius={84}
+                    strokeWidth={0}
+                  >
+                    <Cell fill="rgba(148,163,184,0.15)" />
+                  </Pie>
+                  <Pie
                     data={qualityHalfDonutData}
                     dataKey="value"
                     startAngle={180}
@@ -911,6 +935,14 @@ export default function EstoqueTab() {
                 <span className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(totalQualidade)}</span>
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {qualityHalfDonutData.map((entry) => (
+                <div key={entry.name} className="rounded-md bg-muted/30 px-2 py-1">
+                  <p className="text-[10px] text-muted-foreground">{entry.name}</p>
+                  <p className="text-[11px] font-semibold text-foreground">{entry.percentText}</p>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -925,6 +957,17 @@ export default function EstoqueTab() {
             <div className="h-[180px] relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
+                  <Pie
+                    data={[{ name: 'track', value: 100 }]}
+                    dataKey="value"
+                    startAngle={180}
+                    endAngle={0}
+                    innerRadius={56}
+                    outerRadius={84}
+                    strokeWidth={0}
+                  >
+                    <Cell fill="rgba(148,163,184,0.15)" />
+                  </Pie>
                   <Pie
                     data={locationHalfDonutData}
                     dataKey="value"
@@ -946,6 +989,14 @@ export default function EstoqueTab() {
                   {BRL.format(metrics.totalLocalizacao)}
                 </span>
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {locationHalfDonutData.map((entry) => (
+                <div key={entry.name} className="rounded-md bg-muted/30 px-2 py-1">
+                  <p className="text-[10px] text-muted-foreground">{entry.name}</p>
+                  <p className="text-[11px] font-semibold text-foreground">{BRL.format(entry.value)}</p>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
