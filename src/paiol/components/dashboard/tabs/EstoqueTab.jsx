@@ -182,6 +182,39 @@ function percentualPendentePedidoCompra(pedido = {}) {
   return Math.max(0, pendente);
 }
 
+function calcularValorPendentePedidoCompra(pedido = {}) {
+  const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
+  const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
+
+  const recebidosPorProduto = embarques.reduce((acc, embarque) => {
+    const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
+      ? embarque.itens_embarcados
+      : Array.isArray(embarque.itens)
+        ? embarque.itens
+        : [];
+    itensEmbarcados.forEach((item) => {
+      const produtoId = item.produto_id;
+      if (!produtoId) return;
+      acc[produtoId] = (acc[produtoId] || 0) + (Number(item.quantidade_recebida) || 0);
+    });
+    return acc;
+  }, {});
+
+  const valorPendentePorItens = itens.reduce((acc, item) => {
+    const produtoId = item.produto_id;
+    const quantidadeItem = Number(item.quantidade_base || item.quantidade || 0);
+    const quantidadeRecebida = produtoId ? Number(recebidosPorProduto[produtoId] || 0) : 0;
+    const quantidadePendente = Math.max(0, quantidadeItem - quantidadeRecebida);
+    const totalItem = Number(item.total || 0);
+    const custoViaTotal = quantidadeItem > 0 ? totalItem / quantidadeItem : 0;
+    const custoUnitario = Number(item.custo_final_unitario || item.custo_unitario || custoViaTotal || 0);
+    return acc + quantidadePendente * custoUnitario;
+  }, 0);
+
+  if (valorPendentePorItens > 0) return valorPendentePorItens;
+  return Number(pedido.valor_total || 0) * percentualPendentePedidoCompra(pedido);
+}
+
 function movimentoContaNoNivelEstoque(movimento = {}) {
   const motivo = normalizeStatus(movimento.motivo);
   return motivo === 'compra' || motivo === 'venda' || motivo === 'consumo interno';
@@ -370,8 +403,7 @@ export default function EstoqueTab() {
         });
         const transitoFinanceiroAprovado = pedidosCompraLista.reduce((sum, pedido) => {
           if (!pedidoCompraAprovadoNaoConcluido(pedido)) return sum;
-          const percentualPendente = percentualPendentePedidoCompra(pedido);
-          return sum + Number(pedido.valor_total || 0) * percentualPendente;
+          return sum + calcularValorPendentePedidoCompra(pedido);
         }, 0);
 
         const totalLocalizacao = estoqueFisico + transitoFinanceiroAprovado;
