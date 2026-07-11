@@ -52,25 +52,25 @@ const QUALITY_LABELS = {
 };
 
 const QUALITY_COLORS = {
-  A: '#0f766e',
-  B: '#14b8a6',
-  C: '#f59e0b',
-  D: '#ef4444',
+  A: '#84cc16',
+  B: '#65a30d',
+  C: '#6b7280',
+  D: '#7f1d1d',
 };
 
 const SUPPLY_RING_COLORS = {
-  healthy: '#14b8a6',
-  healthyDark: '#0f766e',
-  high: '#f59e0b',
-  highDark: '#b45309',
-  low: '#ef4444',
-  lowDark: '#b91c1c',
-  muted: '#e5e7eb',
+  healthy: '#84cc16',
+  healthyDark: '#65a30d',
+  high: '#7f1d1d',
+  highDark: '#5b1515',
+  low: '#7f1d1d',
+  lowDark: '#5b1515',
+  muted: '#374151',
 };
 
 const LOCATION_COLORS = {
-  fisico: '#0f766e',
-  transito: '#3b82f6',
+  fisico: '#84cc16',
+  transito: '#7f1d1d',
 };
 
 const PEDIDO_VENDA_STATUSES_CMV = new Set([
@@ -86,13 +86,6 @@ const PEDIDO_COMPRA_APPROVED_STATUSES = new Set([
   'aprovado financeiramente',
   'aprovado',
 ]);
-
-const qualityToneClasses = {
-  A: 'bg-teal-700',
-  B: 'bg-teal-500',
-  C: 'bg-amber-500',
-  D: 'bg-red-500',
-};
 
 const toLocalDate = (d) => toLocalDateKey(new Date(d));
 
@@ -766,7 +759,7 @@ export default function EstoqueTab() {
         <Card className="xl:col-span-7 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
-              <Package className="w-4 h-4 text-[#0f766e]" />
+              <Package className="w-4 h-4 text-lime-400" />
               Nível de Estoque (Base Hoje)
             </CardTitle>
             <p className="text-xs text-muted-foreground">
@@ -786,9 +779,9 @@ export default function EstoqueTab() {
                   />
                   <Tooltip
                     formatter={(value) => BRL.format(Number(value || 0))}
-                    cursor={{ fill: 'rgba(15, 118, 110, 0.08)' }}
+                    cursor={{ fill: 'rgba(132, 204, 22, 0.14)' }}
                   />
-                  <Bar dataKey="valor" fill="#0f766e" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="valor" fill="#84cc16" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -798,7 +791,7 @@ export default function EstoqueTab() {
         <Card className="xl:col-span-5 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
-              <Gauge className="w-4 h-4 text-[#14b8a6]" />
+              <Gauge className="w-4 h-4 text-lime-400" />
               Razão de Abastecimento (3 meses)
             </CardTitle>
             <p className="text-xs text-muted-foreground">
@@ -892,7 +885,7 @@ export default function EstoqueTab() {
         <Card className="xl:col-span-7 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
-              <Layers className="w-4 h-4 text-[#14b8a6]" />
+              <Layers className="w-4 h-4 text-lime-400" />
               Qualidade do Estoque (Curva A/B/C/D)
             </CardTitle>
             <p className="text-xs text-muted-foreground">
@@ -920,7 +913,10 @@ export default function EstoqueTab() {
                   <div key={bucket.key} className="rounded-lg bg-muted/40 p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className={`inline-block w-2.5 h-2.5 rounded-full ${qualityToneClasses[bucket.key]}`} />
+                        <span
+                          className="inline-block w-2.5 h-2.5 rounded-full"
+                          style={{ backgroundColor: bucket.color }}
+                        />
                         <span className="text-sm text-foreground">{bucket.label}</span>
                       </div>
                       <span className="text-xs font-semibold text-foreground">{bucket.percentText}</span>
@@ -936,7 +932,7 @@ export default function EstoqueTab() {
         <Card className="xl:col-span-5 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
-              <Truck className="w-4 h-4 text-[#3b82f6]" />
+              <Truck className="w-4 h-4 text-[#7f1d1d]" />
               Localização do Estoque
             </CardTitle>
             <p className="text-xs text-muted-foreground">
