@@ -762,8 +762,8 @@ export default function EstoqueTab() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <Card className="border-0 shadow-sm bg-card">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+        <Card className="xl:col-span-7 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Package className="w-4 h-4 text-[#0f766e]" />
@@ -795,7 +795,7 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm bg-card xl:col-span-2">
+        <Card className="xl:col-span-5 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Gauge className="w-4 h-4 text-[#14b8a6]" />
@@ -806,7 +806,7 @@ export default function EstoqueTab() {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {metrics.supplyByMonth.map((monthSupply) => {
                 const supplyColor = getSupplyColorByStatus(monthSupply.status);
                 const overflowColor = getSupplyOverflowColorByStatus(monthSupply.status);
@@ -889,7 +889,7 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm bg-card">
+        <Card className="xl:col-span-7 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Layers className="w-4 h-4 text-[#14b8a6]" />
@@ -933,7 +933,7 @@ export default function EstoqueTab() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm bg-card">
+        <Card className="xl:col-span-5 border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Truck className="w-4 h-4 text-[#3b82f6]" />
