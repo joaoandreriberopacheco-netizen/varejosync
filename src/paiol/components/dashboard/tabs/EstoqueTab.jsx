@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { subMonths, startOfMonth, endOfMonth, format, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
+import { pedidoLiberadoParaLogistica } from '@/lib/aprovarPedidoCompraFinanceiro';
 import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
@@ -162,9 +163,19 @@ function pedidoVendaContaNoCMV(pedido = {}) {
 }
 
 function pedidoCompraAprovadoNaoConcluido(pedido = {}) {
+  const statusDisplay = String(pedido.status || '').trim();
+  const ehAguardandoPagamento = [
+    'Aguardando Aprovação Financeira',
+    'Aguardando Liberação Financeira',
+    'Aguardando Liberação',
+    'Aguardando',
+  ].includes(statusDisplay);
+  if (ehAguardandoPagamento) return false;
+
   const statusAprovacao = normalizeStatus(pedido.status_aprovacao_financeira || pedido.status);
+  const aprovadoViaStatus = pedidoLiberadoParaLogistica(pedido);
   const aprovado = PEDIDO_COMPRA_APPROVED_STATUSES.has(statusAprovacao);
-  if (!aprovado) return false;
+  if (!aprovado && !aprovadoViaStatus) return false;
 
   const statusRecebimento = normalizeStatus(pedido.status_recebimento_geral);
   const statusPedido = normalizeStatus(pedido.status);
@@ -277,8 +288,8 @@ export default function EstoqueTab() {
               20000
             ),
             base44.entities.PedidoVenda.filter({ tipo: 'PDV' }, '-created_date', 20000),
-            base44.entities.PedidoCompra.filter({}, '-created_date', 5000),
-            base44.entities.Embarque.list('-created_date', 5000),
+            base44.entities.PedidoCompra.list('-created_date', 300),
+            base44.entities.Embarque.list('-created_date', 600),
             fetchDadosVendaAbcd90d().catch(() => null),
           ]);
 
