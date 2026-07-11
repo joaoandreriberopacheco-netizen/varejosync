@@ -752,17 +752,17 @@ export default function EstoqueTab() {
   const qualityMap = Object.fromEntries(metrics.qualityDistribution.map((bucket) => [bucket.key, bucket]));
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
         <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Package className="w-4 h-4 text-lime-400" />
               Nível de Estoque (Base Hoje)
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[260px]">
+          <CardContent className="pt-1">
+            <div className="h-[210px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={metrics.nivelEstoqueSeries} barCategoryGap="24%">
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.18)" vertical={false} />
@@ -790,14 +790,14 @@ export default function EstoqueTab() {
         </Card>
 
         <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Gauge className="w-4 h-4 text-lime-400" />
               Razão de Abastecimento (3 meses)
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <CardContent className="pt-1">
+            <div className="grid grid-cols-3 gap-2">
               {metrics.supplyByMonth.map((monthSupply) => {
                 const supplyColor = getSupplyColorByStatus(monthSupply.status);
                 const overflowColor = getSupplyOverflowColorByStatus(monthSupply.status);
@@ -819,15 +819,15 @@ export default function EstoqueTab() {
                 ];
 
                 return (
-                  <div key={monthSupply.key} className="rounded-xl border border-border/60 p-3">
-                    <p className="text-xs font-semibold text-muted-foreground tracking-wide mb-2">{monthSupply.label}</p>
-                    <div className="h-[170px] relative">
+                  <div key={monthSupply.key} className="rounded-xl border border-border/60 p-2">
+                    <p className="text-[10px] font-semibold text-muted-foreground tracking-wide mb-1">{monthSupply.label}</p>
+                    <div className="h-[120px] relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
                             data={primaryRingData}
-                            innerRadius={44}
-                            outerRadius={64}
+                            innerRadius={30}
+                            outerRadius={46}
                             dataKey="value"
                             startAngle={90}
                             endAngle={-270}
@@ -840,8 +840,8 @@ export default function EstoqueTab() {
                           {hasOverflow ? (
                             <Pie
                               data={overflowRingData}
-                              innerRadius={36}
-                              outerRadius={43}
+                              innerRadius={24}
+                              outerRadius={29}
                               dataKey="value"
                               startAngle={90}
                               endAngle={-270}
@@ -855,18 +855,12 @@ export default function EstoqueTab() {
                         </PieChart>
                       </ResponsiveContainer>
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-2xl font-bold text-foreground">{monthSupply.ratioPercent.toFixed(1)}%</span>
+                        <span className="text-lg font-bold text-foreground">{monthSupply.ratioPercent.toFixed(1)}%</span>
                       </div>
                     </div>
-                    <div className="space-y-1.5 mt-1">
-                      <div className="rounded-md bg-muted/40 p-2.5">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">CMV Vendido</p>
-                        <p className="text-sm font-semibold text-foreground tabular-nums">{BRL.format(monthSupply.cmvVendido)}</p>
-                      </div>
-                      <div className="rounded-md bg-muted/40 p-2.5">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">CMV Efetivo Pago</p>
-                        <p className="text-sm font-semibold text-foreground tabular-nums">{BRL.format(monthSupply.cmvEfetivo)}</p>
-                      </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-muted-foreground">Vend: <span className="font-semibold text-foreground">{formatShort(monthSupply.cmvVendido)}</span></p>
+                      <p className="text-[10px] text-muted-foreground">Pago: <span className="font-semibold text-foreground">{formatShort(monthSupply.cmvEfetivo)}</span></p>
                     </div>
                   </div>
                 );
@@ -876,7 +870,7 @@ export default function EstoqueTab() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {QUALITY_ORDER.map((key) => {
           const bucket = qualityMap[key] || {
             label: `Curva ${key}`,
@@ -887,14 +881,14 @@ export default function EstoqueTab() {
           };
           return (
             <Card key={key} className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-              <CardHeader className="pb-1">
+              <CardHeader className="pb-0.5">
                 <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
                   <Layers className="w-4 h-4" style={{ color: bucket.color }} />
                   {bucket.label}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(bucket.valor)}</p>
+              <CardContent className="pt-1">
+                <p className="text-base font-semibold text-foreground tabular-nums">{BRL.format(bucket.valor)}</p>
                 <p className="text-xs text-muted-foreground">{bucket.percentText}</p>
                 <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden">
                   <div
@@ -906,16 +900,18 @@ export default function EstoqueTab() {
             </Card>
           );
         })}
+      </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-          <CardHeader className="pb-1">
+          <CardHeader className="pb-0.5">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Truck className="w-4 h-4" style={{ color: LOCATION_COLORS.fisico }} />
               Estoque Físico
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-xl font-semibold text-foreground tabular-nums">{BRL.format(metrics.estoqueFisico)}</p>
+          <CardContent className="pt-1">
+            <p className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(metrics.estoqueFisico)}</p>
             <p className="text-xs text-muted-foreground">
               {metrics.totalLocalizacao > 0
                 ? PERCENT.format(metrics.estoqueFisico / metrics.totalLocalizacao)
@@ -934,20 +930,50 @@ export default function EstoqueTab() {
         </Card>
 
         <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
-          <CardHeader className="pb-1">
+          <CardHeader className="pb-0.5">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
               <Truck className="w-4 h-4" style={{ color: LOCATION_COLORS.transito }} />
               Em Trânsito
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-xl font-semibold text-foreground tabular-nums">
+          <CardContent className="pt-1">
+            <p className="text-lg font-semibold text-foreground tabular-nums">
               {BRL.format(metrics.transitoFinanceiroAprovado)}
             </p>
             <p className="text-xs text-muted-foreground">Total: {BRL.format(metrics.totalLocalizacao)}</p>
             <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden">
               <div
                 className="h-full rounded-full"
+                style={{
+                  width:
+                    metrics.totalLocalizacao > 0
+                      ? `${(metrics.transitoFinanceiroAprovado / metrics.totalLocalizacao) * 100}%`
+                      : '0%',
+                  backgroundColor: LOCATION_COLORS.transito,
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-border/60 shadow-sm bg-gradient-to-b from-card to-card/90">
+          <CardHeader className="pb-0.5">
+            <CardTitle className="text-sm font-medium text-foreground">Total Posicionado</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <p className="text-lg font-semibold text-foreground tabular-nums">{BRL.format(metrics.totalLocalizacao)}</p>
+            <p className="text-xs text-muted-foreground">Físico + Em trânsito</p>
+            <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden flex">
+              <div
+                style={{
+                  width:
+                    metrics.totalLocalizacao > 0
+                      ? `${(metrics.estoqueFisico / metrics.totalLocalizacao) * 100}%`
+                      : '0%',
+                  backgroundColor: LOCATION_COLORS.fisico,
+                }}
+              />
+              <div
                 style={{
                   width:
                     metrics.totalLocalizacao > 0
