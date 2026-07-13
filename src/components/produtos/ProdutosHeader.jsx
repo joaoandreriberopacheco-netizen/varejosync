@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, LayoutGrid, TrendingUp, Printer } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, Tags, LayoutGrid, TrendingUp } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
@@ -48,7 +48,7 @@ export default function ProdutosHeader({
   gerandoRelatorioVendasV2 = false,
   onGerarRelatorioIep,
   gerandoRelatorioIep = false,
-  onImprimirTagsCatalogo,
+  onOpenCatalogTagPrint,
   onOpenMassTag,
   onOpenMassCategory,
   onOpenMassMarkup,
@@ -82,6 +82,17 @@ export default function ProdutosHeader({
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0 min-w-0 max-w-[58vw] sm:max-w-none overflow-x-auto overscroll-x-contain">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 flex-shrink-0"
+              onClick={() => onOpenCatalogTagPrint?.()}
+              title="Etiquetas em PDF A4"
+              aria-label="Etiquetas em PDF A4"
+            >
+              <Tags className="h-4 w-4 p38-text-accent" />
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -149,12 +160,12 @@ export default function ProdutosHeader({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    window.setTimeout(() => onImprimirTagsCatalogo?.(), 0);
+                    window.setTimeout(() => onOpenCatalogTagPrint?.(), 0);
                   }}
                   className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
                 >
-                  <Printer className="w-4 h-4 mr-2 p38-text-accent" />
-                  Imprimir tags (4,3 x 4,8)
+                  <Tags className="w-4 h-4 mr-2 p38-text-accent" />
+                  Etiquetas em PDF A4
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
