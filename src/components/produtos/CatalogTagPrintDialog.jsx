@@ -95,7 +95,7 @@ export default function CatalogTagPrintDialog({
         <div className="grid gap-5 py-2 sm:grid-cols-[190px_1fr]">
           <div className="flex flex-col items-center gap-2">
             <div
-              className="relative flex w-[172px] flex-col rounded-[11px] border-2 border-dashed border-foreground/55 bg-white px-3 pb-3 pt-9 text-center text-slate-900 shadow-sm"
+              className="relative flex w-[172px] flex-col border-2 border-foreground/55 bg-white px-3 pb-3 pt-9 text-center text-slate-900 shadow-sm"
               style={{ aspectRatio: `${CATALOG_TAG_WIDTH_MM} / ${CATALOG_TAG_HEIGHT_MM}` }}
             >
               <span className="absolute left-1/2 top-2 h-3.5 w-3.5 -translate-x-1/2 rounded-full border border-dashed border-slate-500" />
@@ -134,7 +134,7 @@ export default function CatalogTagPrintDialog({
 
             <div className="flex items-start gap-2 rounded-xl bg-[#a4ce33]/10 p-3 text-xs text-foreground/80">
               <Scissors className="mt-0.5 h-4 w-4 flex-none text-[#4a5240] dark:text-[#a4ce33]" />
-              <span>As bordas marcam o corte e o círculo tracejado indica onde fazer o furo.</span>
+              <span>Sem espaço entre etiquetas: cada linha de corte é compartilhada. O círculo tracejado indica o furo.</span>
             </div>
 
             {filtersSummary ? (

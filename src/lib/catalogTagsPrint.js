@@ -3,14 +3,14 @@ import { jsPDF } from 'jspdf';
 export const CATALOG_TAG_WIDTH_MM = 43;
 export const CATALOG_TAG_HEIGHT_MM = 48;
 export const CATALOG_TAGS_PER_PAGE = 20;
+export const CATALOG_TAG_GAP_MM = 0;
 
 const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
 const COLUMNS = 4;
 const ROWS = 5;
-const GAP_MM = 4;
-const GRID_WIDTH_MM = COLUMNS * CATALOG_TAG_WIDTH_MM + (COLUMNS - 1) * GAP_MM;
-const GRID_HEIGHT_MM = ROWS * CATALOG_TAG_HEIGHT_MM + (ROWS - 1) * GAP_MM;
+const GRID_WIDTH_MM = COLUMNS * CATALOG_TAG_WIDTH_MM;
+const GRID_HEIGHT_MM = ROWS * CATALOG_TAG_HEIGHT_MM;
 const START_X_MM = (A4_WIDTH_MM - GRID_WIDTH_MM) / 2;
 const START_Y_MM = (A4_HEIGHT_MM - GRID_HEIGHT_MM) / 2;
 
@@ -60,10 +60,6 @@ function drawCatalogTag(doc, produto, x, y) {
   const code = normalizePdfText(getCatalogTagCode(produto) || 'SEM CÓDIGO');
   const centerX = x + CATALOG_TAG_WIDTH_MM / 2;
 
-  doc.setDrawColor(40, 40, 40);
-  doc.setLineWidth(0.25);
-  doc.roundedRect(x, y, CATALOG_TAG_WIDTH_MM, CATALOG_TAG_HEIGHT_MM, 2.8, 2.8, 'S');
-
   doc.setDrawColor(100, 100, 100);
   doc.setLineDashPattern([0.7, 0.7], 0);
   doc.circle(centerX, y + 5, 1.65, 'S');
@@ -98,6 +94,21 @@ function drawCatalogTag(doc, produto, x, y) {
   });
 }
 
+function drawCatalogTagCutLines(doc, x, y, row, column) {
+  const right = x + CATALOG_TAG_WIDTH_MM;
+  const bottom = y + CATALOG_TAG_HEIGHT_MM;
+
+  doc.setDrawColor(40, 40, 40);
+  doc.setLineWidth(0.25);
+
+  // Cada aresta é desenhada uma única vez: direita/baixo da célula atual,
+  // mais o topo da primeira linha e a esquerda da primeira coluna.
+  if (row === 0) doc.line(x, y, right, y);
+  if (column === 0) doc.line(x, y, x, bottom);
+  doc.line(right, y, right, bottom);
+  doc.line(x, bottom, right, bottom);
+}
+
 export function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {}) {
   if (!Array.isArray(products) || products.length === 0) {
     throw new Error('Nenhum produto para gerar etiquetas.');
@@ -124,8 +135,9 @@ export function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {
     const pageIndex = index % CATALOG_TAGS_PER_PAGE;
     const column = pageIndex % COLUMNS;
     const row = Math.floor(pageIndex / COLUMNS);
-    const x = START_X_MM + column * (CATALOG_TAG_WIDTH_MM + GAP_MM);
-    const y = START_Y_MM + row * (CATALOG_TAG_HEIGHT_MM + GAP_MM);
+    const x = START_X_MM + column * CATALOG_TAG_WIDTH_MM;
+    const y = START_Y_MM + row * CATALOG_TAG_HEIGHT_MM;
+    drawCatalogTagCutLines(doc, x, y, row, column);
     drawCatalogTag(doc, produto, x, y);
   });
 
