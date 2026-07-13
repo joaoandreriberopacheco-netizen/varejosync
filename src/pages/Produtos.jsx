@@ -39,6 +39,7 @@ import {
   getCatalogProdutoEntryFilters,
   collectCatalogVitrineUnits,
 } from '@/lib/filterProdutos';
+import { printCatalogTags } from '@/lib/catalogTagsPrint';
 import {
   CATALOG_SALES_WINDOW_LABELS,
   normalizeCatalogSalesWindow,
@@ -1318,6 +1319,36 @@ function ProdutosPageContent() {
     }
   }, [filteredProdutos, filters, categorias, fornecedores, queryClient, toast]);
 
+  const handleImprimirTagsCatalogo = useCallback(async () => {
+    if (!filteredProdutos.length) {
+      toast({
+        title: 'Nenhum produto para imprimir',
+        description: 'Ajuste os filtros e tente novamente.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const filtrosResumo = describeProdutoFilters(filters, { categorias, fornecedores });
+    try {
+      await printCatalogTags({
+        products: filteredProdutos,
+        filtrosResumo,
+      });
+      toast({
+        title: 'Layout de tags preparado',
+        description: `${filteredProdutos.length} item(ns) no formato 4,3 x 4,8 cm.`,
+      });
+    } catch (error) {
+      const msg = error?.message || String(error);
+      toast({
+        title: 'Erro ao imprimir tags',
+        description: msg.length > 220 ? `${msg.slice(0, 220)}…` : msg,
+        variant: 'destructive',
+      });
+    }
+  }, [filteredProdutos, filters, categorias, fornecedores, toast]);
+
   useEffect(() => {
     if (relatorioEstoqueAutoRef.current) return;
     const params = new URLSearchParams(window.location.search);
@@ -1385,6 +1416,7 @@ function ProdutosPageContent() {
     gerandoRelatorioVendasV2,
     onGerarRelatorioIep: handleGerarRelatorioIep,
     gerandoRelatorioIep,
+    onImprimirTagsCatalogo: handleImprimirTagsCatalogo,
     onOpenMassTag: () => setIsMassTagOpen(true),
     onOpenMassCategory: () => setIsMassCategoryOpen(true),
     onOpenMassMarkup: () => setIsMassMarkupOpen(true),

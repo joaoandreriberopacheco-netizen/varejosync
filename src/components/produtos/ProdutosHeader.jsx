@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, LayoutGrid, TrendingUp } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, LayoutGrid, TrendingUp, Printer } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
@@ -48,6 +48,7 @@ export default function ProdutosHeader({
   gerandoRelatorioVendasV2 = false,
   onGerarRelatorioIep,
   gerandoRelatorioIep = false,
+  onImprimirTagsCatalogo,
   onOpenMassTag,
   onOpenMassCategory,
   onOpenMassMarkup,
@@ -145,6 +146,15 @@ export default function ProdutosHeader({
                 >
                   <TrendingUp className="w-4 h-4 mr-2 p38-text-accent" />
                   Desempenho v2 (beta) — 30+60d
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    window.setTimeout(() => onImprimirTagsCatalogo?.(), 0);
+                  }}
+                  className="dark:text-foreground dark:hover:bg-primary/90 text-sm"
+                >
+                  <Printer className="w-4 h-4 mr-2 p38-text-accent" />
+                  Imprimir tags (4,3 x 4,8)
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
