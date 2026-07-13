@@ -5,6 +5,7 @@
  * Uso:
  *   npm run produto:codigo:backfill            # dry-run
  *   npm run produto:codigo:backfill -- --apply # aplica updates
+ *   npm run produto:codigo:aplicar             # atalho para aplicar
  */
 import { requireBase44Client } from './base44-env.mjs';
 import {
@@ -16,6 +17,8 @@ import {
 const args = new Set(process.argv.slice(2));
 const apply = args.has('--apply');
 const base44 = requireBase44Client();
+const PAGE_SIZE = 200;
+const UPDATE_LOG_EVERY = 25;
 
 function byCreatedDateAsc(a, b) {
   const da = new Date(a?.created_date || 0).getTime();
@@ -23,7 +26,23 @@ function byCreatedDateAsc(a, b) {
   return da - db;
 }
 
-const produtos = await base44.entities.Produto.list();
+async function listAllProdutos() {
+  const all = [];
+  let offset = 0;
+
+  while (true) {
+    // API Base44: list(sort, limit, offset)
+    const chunk = await base44.entities.Produto.list('-created_date', PAGE_SIZE, offset);
+    if (!Array.isArray(chunk) || chunk.length === 0) break;
+    all.push(...chunk);
+    if (chunk.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return all;
+}
+
+const produtos = await listAllProdutos();
 const ordered = [...(produtos || [])].sort(byCreatedDateAsc);
 
 const takenCodes = new Set(
@@ -63,6 +82,7 @@ console.log(
 
 if (!apply) {
   console.log('\nDry-run concluído. Para aplicar: npm run produto:codigo:backfill -- --apply');
+  console.log('Atalho: npm run produto:codigo:aplicar');
   process.exit(0);
 }
 
@@ -70,7 +90,7 @@ let done = 0;
 for (const item of updates) {
   await base44.entities.Produto.update(item.id, { codigo_interno: item.novo_codigo });
   done += 1;
-  if (done % 25 === 0 || done === updates.length) {
+  if (done % UPDATE_LOG_EVERY === 0 || done === updates.length) {
     console.log(`[produto:codigo:backfill] ${done}/${updates.length}`);
   }
 }
