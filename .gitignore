@@ -41,3 +41,4 @@ docs/reference-a29-erp/checkout/
 scripts/.cache/
 
 .env
+base44/.app.jsonc
