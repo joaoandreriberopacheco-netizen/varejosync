@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ecossistema A-29 + Essie — Visão e Plano</title>
+  <style>
+    @page { margin: 18mm 16mm; size: A4; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      color: #1a1a1a;
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      font-size: 20pt;
+      color: #4a5240;
+      border-bottom: 3px solid #a4ce33;
+      padding-bottom: 8px;
+      margin-top: 0;
+    }
+    h2 {
+      font-size: 13pt;
+      color: #4a5240;
+      margin-top: 22px;
+      page-break-after: avoid;
+    }
+    h3 { font-size: 11pt; margin-top: 14px; page-break-after: avoid; }
+    .meta {
+      font-size: 9pt;
+      color: #555;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 16px;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f4f6f0; color: #4a5240; font-weight: 600; }
+    tr:nth-child(even) td { background: #fafafa; }
+    pre.diagram {
+      background: #f8f9f6;
+      border: 1px solid #ddd;
+      border-left: 4px solid #4a5240;
+      padding: 12px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 8.5pt;
+      line-height: 1.35;
+      white-space: pre;
+      overflow-x: auto;
+      page-break-inside: avoid;
+    }
+    ul { margin: 8px 0; padding-left: 20px; }
+    li { margin: 4px 0; }
+    .tagline {
+      font-style: italic;
+      color: #4a5240;
+      margin: 8px 0;
+    }
+    .footer {
+      margin-top: 24px;
+      font-size: 8pt;
+      color: #888;
+      border-top: 1px solid #ddd;
+      padding-top: 8px;
+    }
+    .phase { margin: 6px 0; }
+    .check { color: #4a5240; }
+  </style>
+</head>
+<body>
+
+<h1>Ecossistema A-29 + Essie</h1>
+<p><strong>Visão estratégica e plano de modularização</strong></p>
+<div class="meta">
+  <strong>Autor:</strong> João André &nbsp;|&nbsp;
+  <strong>Data:</strong> julho de 2026 &nbsp;|&nbsp;
+  <strong>Repos:</strong> varejosync (P38) → a29-erp + Essie
+</div>
+
+<h2>1. Resumo dos objetivos</h2>
+<ol>
+  <li><strong>Agenda e rotina</strong> — Compromissos, contas vencendo e tarefas num só lugar (protótipo já no P38).</li>
+  <li><strong>Essie (S)</strong> — App separada: secretária inteligente (rotina, preparação, antecipação).</li>
+  <li><strong>Um núcleo, várias portas</strong> — Separar experiências sem separar a verdade dos dados.</li>
+  <li><strong>A-29</strong> — Vercel + Supabase como instrumento sem “tubos com vazamento”.</li>
+  <li><strong>Rotinas prontas</strong> — Workflows, reuniões com pauta, agentes por contexto (compras, financeiro…).</li>
+  <li><strong>Acções reais</strong> — WhatsApp, e-mail, automação (n8n); Cursor constrói, Essie opera.</li>
+</ol>
+
+<h2>2. O problema</h2>
+<table>
+  <tr><th>Sintoma</th><th>Causa</th></tr>
+  <tr><td>P38 funciona mas pesa</td><td>Um app para vendas, estoque, financeiro, logística</td></tr>
+  <tr><td>Querer “partir” módulos</td><td>Cada função precisa de interface focada</td></tr>
+  <tr><td>Tubos com vazamento</td><td>Apps separados sem base única</td></tr>
+  <tr><td>Cansaço diário</td><td>Reinventar o dia sem rotinas</td></tr>
+  <tr><td>Reuniões fracas</td><td>Chegar sem pauta</td></tr>
+</table>
+<p><strong>Solução:</strong> Supabase (uma verdade) + interfaces modulares + Essie (rotina e acção).</p>
+
+<h2>3. Papéis: P38, A-29 e Essie</h2>
+<pre class="diagram">┌─────────────────────────────────────────────────────────┐
+│  ESSIE — rotina, agenda, assistentes, acções          │
+└────────────────────────┬────────────────────────────────┘
+                         │
+┌────────────────────────┴────────────────────────────────┐
+│  A-29 — interfaces modulares (secção 5)                 │
+└────────────────────────┬────────────────────────────────┘
+                         │
+┌────────────────────────┴────────────────────────────────┐
+│  SUPABASE — base única (produtos, vendas, lançamentos…) │
+└─────────────────────────────────────────────────────────┘
+
+P38 = produção actual até corte Base44 → migração A-29</pre>
+
+<table>
+  <tr><th>Peça</th><th>Papel</th></tr>
+  <tr><td>P38</td><td>Operar hoje; protótipos; correções até corte</td></tr>
+  <tr><td>A-29</td><td>Núcleo: schema, APIs, módulos Vercel</td></tr>
+  <tr><td>Essie</td><td>Secretária: rotinas, reuniões, resumos, WhatsApp</td></tr>
+  <tr><td>Supabase</td><td>Fonte única de verdade</td></tr>
+</table>
+
+<h2>4. Essie — visão de produto</h2>
+<p><strong>Essie</strong> não é Monday nem ERP. É organização e execução da rotina.</p>
+<h3>Faz</h3>
+<ul>
+  <li>Resumo do dia; rotinas por função</li>
+  <li>Preparação de reuniões com pauta (agente)</li>
+  <li>Assistentes por módulo (ex.: compras → confirmar embarque)</li>
+  <li>Acções com aprovação (WhatsApp, e-mail, registo no A-29)</li>
+</ul>
+<h3>Não faz</h3>
+<ul>
+  <li>Substituir PDV, stock ou lançamentos oficiais</li>
+  <li>Duplicar dados do negócio</li>
+</ul>
+<h3>Integrações (fases)</h3>
+<ol>
+  <li>Supabase + e-mail + Google Calendar</li>
+  <li>n8n + WhatsApp (Zenvia ou Twilio)</li>
+  <li>Voz / chamadas (opcional)</li>
+</ol>
+
+<h2>5. Plano de separação — quatro módulos (A-29)</h2>
+<p>Quatro <strong>portas</strong> sobre a <strong>mesma base</strong>. Perfil define o que cada um vê.</p>
+
+<table>
+  <tr>
+    <th>Módulo</th>
+    <th>Nome</th>
+    <th>Quem usa</th>
+    <th>Foco</th>
+    <th>Não inclui</th>
+  </tr>
+  <tr>
+    <td><strong>A</strong></td>
+    <td>Frente de caixa</td>
+    <td>Caixa, vendedor</td>
+    <td>Vender, receber, cliente, produto, turno</td>
+    <td>Relatórios gerenciais, compras, config profunda</td>
+  </tr>
+  <tr>
+    <td><strong>B</strong></td>
+    <td>Supply</td>
+    <td>Compras, logística, depósito</td>
+    <td>Pedidos compra, cotações, embarque, recebimento, estoque operacional</td>
+    <td>DRE, conciliação, aprovação financeira estratégica</td>
+  </tr>
+  <tr>
+    <td><strong>C</strong></td>
+    <td>Financeiro operacional</td>
+    <td>Quem lança e paga no dia a dia</td>
+    <td><strong>Somente lançamentos</strong>: receitas, despesas, transferências, contas em aberto, fluxo</td>
+    <td>Relatórios gerenciais, orçamento, folha, parametrização</td>
+  </tr>
+  <tr>
+    <td><strong>D</strong></td>
+    <td>Gerencial completo</td>
+    <td>Sócios, gestão, contabilidade</td>
+    <td>Visão 360°: KPIs, margem, aprovações, cadastros, todos os relatórios</td>
+    <td>— (acesso total)</td>
+  </tr>
+</table>
+
+<pre class="diagram">                 ┌──────────────────┐
+                 │    SUPABASE      │
+                 └────────┬─────────┘
+      ┌──────────┬───────┼───────┬──────────┐
+      ▼          ▼       ▼       ▼          ▼
+  Frente     Supply   Financ.   Gerencial   Essie
+  de caixa            operac.   completo
+    (A)       (B)       (C)       (D)</pre>
+
+<h3>Regras anti-vazamento</h3>
+<ol>
+  <li>Nenhum módulo guarda cópia oficial de produto, pedido ou lançamento.</li>
+  <li>Escrita sempre no Supabase via APIs partilhadas (packages A-29).</li>
+  <li>Perfis + RLS definem módulo e acções.</li>
+  <li>Essie lê o mesmo banco; agenda em <code>agenda_item</code>.</li>
+  <li>Eventos entre módulos via base (venda → lançamento → stock), não sync manual.</li>
+</ol>
+
+<h3>Entidades por módulo</h3>
+<table>
+  <tr><th>Módulo</th><th>Domínios principais</th></tr>
+  <tr><td>A — Frente de caixa</td><td>pedido_venda, rascunho, turno_caixa, movimentos_caixa, produto (leitura), terceiro</td></tr>
+  <tr><td>B — Supply</td><td>pedido_compra, cotacao, movimentacao_estoque, conferencia, eventos_logisticos, embarque</td></tr>
+  <tr><td>C — Financ. operacional</td><td>lancamento_financeiro, contas_financeiras, movimentos_caixa, terceiro (leitura)</td></tr>
+  <tr><td>D — Gerencial</td><td>Todas + categorias, relatórios, perfis, parametrizações, aprovações</td></tr>
+  <tr><td>Essie</td><td>agenda_item + leitura cruzada (lançamentos, tarefas, pedidos compra)</td></tr>
+</table>
+
+<h2>6. Fases de implementação</h2>
+<div class="phase"><strong>Fase 0 — Hoje (P38):</strong> Agenda no menu; migration Supabase; P38 estável.</div>
+<div class="phase"><strong>Fase 1 — Fundação A-29:</strong> Supabase, auth, APIs partilhadas, deploy Vercel.</div>
+<div class="phase"><strong>Fase 2 — Módulo C:</strong> Financeiro operacional (só lançamentos) — primeira porta.</div>
+<div class="phase"><strong>Fase 3 — Módulo A:</strong> Frente de caixa / PDV dedicado.</div>
+<div class="phase"><strong>Fase 4 — Módulo B:</strong> Supply + rotinas Essie (embarque, WhatsApp).</div>
+<div class="phase"><strong>Fase 5 — Módulo D:</strong> Gerencial completo.</div>
+<div class="phase"><strong>Fase 6 — Essie:</strong> App separada; rotinas v1; n8n + WhatsApp.</div>
+<div class="phase"><strong>Fase 7 — Corte Base44:</strong> P38 manutenção; A-29 + Essie activos.</div>
+
+<h2>7. Perfis (exemplo)</h2>
+<table>
+  <tr><th>Perfil</th><th>Módulos</th><th>Essie</th></tr>
+  <tr><td>Caixa</td><td>A</td><td>Resumo turno</td></tr>
+  <tr><td>Comprador</td><td>B</td><td>Embarque, reunião compras</td></tr>
+  <tr><td>Financeiro operacional</td><td>C</td><td>Contas a vencer</td></tr>
+  <tr><td>Gerente / sócio</td><td>D (+ C opcional)</td><td>Resumo completo, KPIs</td></tr>
+  <tr><td>Administrador</td><td>D</td><td>Tudo + config</td></tr>
+</table>
+
+<h2>8. Critérios de sucesso</h2>
+<ul>
+  <li>Caixa não vê menus gerenciais.</li>
+  <li>Lançamento em C aparece em D — mesmo ID.</li>
+  <li>Venda em A baixa stock em B sem export.</li>
+  <li>Essie e módulo B usam os mesmos pedidos de compra.</li>
+  <li>Ninguém “abre o sistema gigante para procurar”.</li>
+</ul>
+
+<h2>9. Posicionamento</h2>
+<p class="tagline"><strong>A-29:</strong> Um negócio, uma base, a interface certa para cada função.</p>
+<p class="tagline"><strong>Essie:</strong> As rotinas do teu dia, ligadas ao teu negócio. Menos improviso, mais preparação.</p>
+
+<div class="footer">
+  Documento gerado a partir da conversa de planeamento P38 / A-29 / Essie — julho 2026.<br>
+  Markdown: docs/essie-ecossistema-a29-visao.md
+</div>
+
+</body>
+</html>
