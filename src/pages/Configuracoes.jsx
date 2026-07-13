@@ -18,6 +18,7 @@ import DadosEmpresaManager from '@/components/config/DadosEmpresaManager';
 import PerfisDeAcessoManager from '@/components/config/PerfisDeAcessoManager';
 import RecomecarDoZero from '@/components/config/RecomecarDoZero';
 import MetasEstoqueConfigTool from '@/components/config/MetasEstoqueConfigTool';
+import CodigoProdutoBackfillTool from '@/components/config/CodigoProdutoBackfillTool';
 import { useNavigate } from 'react-router-dom';
 import PersonalizacaoComprovanteManager from '@/components/config/PersonalizacaoComprovanteManager';
 import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
@@ -196,6 +197,7 @@ export default function ConfiguracoesPage() {
             </div>
 
             <MetasEstoqueConfigTool />
+            <CodigoProdutoBackfillTool />
 
             <RecomecarDoZero />
           </div>
