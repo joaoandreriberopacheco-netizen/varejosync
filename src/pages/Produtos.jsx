@@ -30,7 +30,6 @@ import ExcluirProdutoDialog from '../components/produtos/ExcluirProdutoDialog';
 import ProdutosHeader from '../components/produtos/ProdutosHeader';
 import ProdutosCommandBar from '../components/produtos/ProdutosCommandBar';
 import CatalogTagPrintDialog from '../components/produtos/CatalogTagPrintDialog';
-import ProdutosTreeByCategoryToggle from '../components/produtos/ProdutosTreeByCategoryToggle';
 import ProdutosPlanaTable from '../components/produtos/ProdutosPlanaTable';
 import { isCadastroIncompleto } from '../components/produtos/ProdutosHelpers';
 import {
