@@ -1,4 +1,29 @@
-# Depois de correr pack-from-varejosync.sh, não commitar segredos acidentalmente
+# Conteúdo gerado por npm run mirror:pack — não commitar cópia da UI
+*
+!.gitignore
+!README.md
+!INVENTARIO.md
+!SNAPSHOT.example.txt
+!pack-from-varejosync.sh
+!push-to-a29.sh
+!public/
+!public/.gitkeep
+!src/
+!src/.gitkeep
+!src/api/.gitkeep
+!src/assets/.gitkeep
+!src/components/.gitkeep
+!src/config/.gitkeep
+!src/entities/.gitkeep
+!src/features/.gitkeep
+!src/hooks/.gitkeep
+!src/integrations/.gitkeep
+!src/lib/.gitkeep
+!src/pages/.gitkeep
+!src/paiol/.gitkeep
+!src/styles/.gitkeep
+!src/utils/.gitkeep
+
+# Segredos acidentalmente copiados
 .env
 .env.*
-!.env.example

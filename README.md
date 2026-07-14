@@ -9,6 +9,17 @@
 
 Enquanto o negócio operar no Base44 com sync por Git, tratar **este** repositório como fonte da UI/funções que essa stack publica. Alinhar mudanças grandes com `docs/` no monorepo **a29-erp** quando tocarem migração Supabase ou política de dados.
 
+## Exportar UI para o a29-erp (`legacy/varejosync`)
+
+O monorepo **a29-erp** mantém um snapshot em `legacy/varejosync/`. Para actualizar a partir deste repo:
+
+```bash
+npm run mirror:pack
+npm run mirror:push -- ../a29-erp
+```
+
+Detalhes: [`mirror/README.md`](./mirror/README.md).
+
 ---
 
 *Título anterior: Base44 App.*

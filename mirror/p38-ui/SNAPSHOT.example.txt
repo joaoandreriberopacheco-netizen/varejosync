@@ -1,0 +1,6 @@
+# Registo do espelho P38 → A29 (preenchido localmente por npm run mirror:pack)
+data_espelho=
+varejosync_commit_sha=
+varejosync_branch=
+autor=
+notas=

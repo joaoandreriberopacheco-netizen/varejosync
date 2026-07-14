@@ -1,6 +1,8 @@
 # Inventário — o que copiar do varejosync para o espelho
 
-Marca cada bloco quando tiveres colado em `mirror/p38-ui/`.
+Geração automática: `npm run mirror:pack` (ou `./mirror/p38-ui/pack-from-varejosync.sh`).
+
+Marca cada bloco quando tiveres validado o espelho no a29-erp.
 
 ## Raiz do app (Vite)
 

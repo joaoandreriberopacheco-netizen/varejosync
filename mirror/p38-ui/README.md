@@ -4,26 +4,37 @@ Pasta de **exportação isolada**. Não faz parte do build do varejosync em prod
 
 ## Para que serve
 
-1. Colas aqui o espelho da UI (páginas, componentes, layout, estilos).
-2. Clonas ou copias esta pasta para o monorepo **a29-erp**:
+1. Geras aqui o espelho da UI (páginas, componentes, layout, integrações P38).
+2. Copias para o monorepo **a29-erp** em `legacy/varejosync/`.
+3. Validas no A29; não há sync automático entre repos.
 
-   ```
-   a29-erp/legacy/varejosync/
-   ```
+## Comandos (recomendado)
 
-3. Depois de validares no A29, **fechas as válvulas** entre os dois repos (sem sync automático).
+Na **raiz do varejosync**:
 
-## Estrutura esperada (quando estiver cheia)
+```bash
+npm run mirror:pack
+npm run mirror:push -- ../a29-erp
+```
+
+Equivalente em bash (atalhos nesta pasta):
+
+```bash
+./mirror/p38-ui/pack-from-varejosync.sh
+./mirror/p38-ui/push-to-a29.sh ../a29-erp
+```
+
+## Estrutura esperada (após `mirror:pack`)
 
 ```
 mirror/p38-ui/          →  a29-erp/legacy/varejosync/
 ├── src/
-│   ├── pages/          ← ecrãs (~86 ficheiros .jsx)
-│   ├── components/     ← UI por módulo
-│   ├── lib/            ← auth, helpers, query-client
+│   ├── pages/
+│   ├── components/
+│   ├── lib/
 │   ├── hooks/
 │   ├── api/
-│   ├── integrations/   ← camada P38 (p38/)
+│   ├── integrations/   ← camada P38 (importante para Supabase)
 │   ├── config/
 │   ├── entities/
 │   ├── features/
@@ -40,48 +51,19 @@ mirror/p38-ui/          →  a29-erp/legacy/varejosync/
 ├── package.json
 ├── vite.config.js
 ├── tailwind.config.js
-├── postcss.config.js
-├── components.json
-└── jsconfig.json
+└── SNAPSHOT.txt        ← commit SHA de origem
 ```
 
 Ver lista completa em [`INVENTARIO.md`](./INVENTARIO.md).
 
-## Como colar (no teu PC)
+## Windows (PowerShell)
 
-### Opção A — Script automático (a partir da raiz do varejosync)
-
-```bash
-./mirror/p38-ui/pack-from-varejosync.sh
+```powershell
+npm run mirror:pack
+npm run mirror:push -- "C:\caminho\para\a29-erp"
 ```
 
-Copia os ficheiros listados no inventário para dentro de `mirror/p38-ui/`.
-
-### Opção B — Manual
-
-Abre [`INVENTARIO.md`](./INVENTARIO.md) e copia pasta a pasta do varejosync para `mirror/p38-ui/`.
-
-**Não copies:** `node_modules/`, `.git/`, `dist/`, `build/`, `.env*`, `base44/`.
-
-## Como levar para o a29-erp
-
-```bash
-# 1. Clonar o a29-erp (se ainda não tiveres)
-git clone https://github.com/joaoandreriberopacheco-netizen/a29-erp.git
-cd a29-erp
-
-# 2. Espelhar o conteúdo desta pasta
-rsync -av --delete \
-  --exclude node_modules --exclude .git --exclude dist --exclude .env* \
-  /caminho/para/varejosync/mirror/p38-ui/ legacy/varejosync/
-
-# 3. Configurar e testar
-npm install
-# .env conforme README do a29-erp
-npm run dev
-```
-
-No Windows (PowerShell), equivalente:
+Ou robocopy manual após o pack:
 
 ```powershell
 $src = "C:\caminho\para\varejosync\mirror\p38-ui"
@@ -89,10 +71,10 @@ $dst = "C:\caminho\para\a29-erp\legacy\varejosync"
 robocopy $src $dst /MIR /E /XD node_modules .git dist build /XF .env .env.local
 ```
 
+## O que não copiar
+
+`base44/` (funções Base44), `node_modules/`, `.env*`, `dist/`, `build/`, `mirror/`.
+
 ## Registo do snapshot
 
-Quando terminares o espelho, preenche [`SNAPSHOT.txt`](./SNAPSHOT.txt) com a data e o commit SHA do varejosync de origem.
-
-## Branch Git
-
-Este scaffold vive na branch `cursor/p38-ui-mirror-scaffold-b9fd` (não em `main`).
+Após `npm run mirror:pack`, o ficheiro `SNAPSHOT.txt` (local, não versionado) regista data, commit e branch do varejosync de origem. Modelo: [`SNAPSHOT.example.txt`](./SNAPSHOT.example.txt).
