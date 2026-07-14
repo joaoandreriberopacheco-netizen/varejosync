@@ -38,7 +38,8 @@
     "p38:color-fix-pdv": "node scripts/p38-color-audit.mjs --fix --include-pdv",
     "p38:token-migrate": "node scripts/p38-token-migrate.mjs src",
     "mirror:pack": "node scripts/mirror-pack.mjs",
-    "mirror:push": "node scripts/mirror-push-a29.mjs"
+    "mirror:push": "node scripts/mirror-push-a29.mjs",
+    "mirror:sync": "node scripts/mirror-sync.mjs"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.38",

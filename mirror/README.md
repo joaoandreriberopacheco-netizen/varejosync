@@ -5,15 +5,23 @@ Pasta de **exportação** do código VarejoSync para o monorepo **a29-erp**. Nã
 ## Fluxo (2 passos)
 
 ```bash
-# 1. Na raiz do varejosync — gera mirror/p38-ui/ com a UI actual
-npm run mirror:pack
+# Tudo num comando (pack + push, mantém paleta A29 por defeito)
+npm run mirror:sync -- ../a29-erp
 
-# 2. Copia para o monorepo (ajusta o caminho)
+# Ou em dois passos:
+npm run mirror:pack
 npm run mirror:push -- ../a29-erp
-# ou: A29_ERP_PATH=../a29-erp npm run mirror:push
 ```
 
+Por defeito o **push preserva a paleta do A29** (`tailwind.config.js`, `globals.css`, `index.css`, `p38-identity.css`) e actualiza páginas, componentes e layout com as últimas mudanças do VarejoSync.
+
+Para sobrescrever também as cores: `npm run mirror:push -- ../a29-erp --no-preserve-theme`
+
 Destino no a29-erp: **`legacy/varejosync/`** (snapshot da UI Vite + integrações P38).
+
+## Sync automático (GitHub Actions)
+
+Com secrets `A29_ERP_GIT_URL` e `A29_ERP_DEPLOY_TOKEN` no varejosync: **Actions → Sync mirror to a29-erp → Run workflow**.
 
 ## O que vai no espelho
 

@@ -50,6 +50,17 @@ export const MIRROR_UI_ROOT_DIRS = ['public'];
 /** Destino relativo no monorepo a29-erp */
 export const A29_LEGACY_REL = 'legacy/varejosync';
 
+/**
+ * Ficheiros de tema/paleta do A29 — mantidos no destino com --preserve-theme (defeito).
+ * UI (páginas, componentes, layout) actualiza-se; cores/tokens do A29 ficam.
+ */
+export const A29_THEME_PRESERVE_PATHS = [
+  'tailwind.config.js',
+  'src/globals.css',
+  'src/index.css',
+  'src/styles/p38-identity.css',
+];
+
 /** Nunca copiar para o espelho */
 export const MIRROR_EXCLUDE_NAMES = new Set([
   'node_modules',
