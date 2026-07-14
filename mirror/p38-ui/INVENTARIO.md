@@ -72,4 +72,5 @@ Marca cada bloco quando tiveres validado o espelho no a29-erp.
 - [ ] CSS (`globals.css`, `index.css`, `styles/`)
 - [ ] `public/`
 - [ ] `VAREJO_UI_SYNC.stamp` visível em `legacy/varejosync/` no A29
+- [ ] `mirrorpass` com uma palavra em `legacy/varejosync/mirrorpass`
 - [ ] `SNAPSHOT.txt` preenchido (local no varejosync)

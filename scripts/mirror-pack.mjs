@@ -66,7 +66,7 @@ const branch = git('git branch --show-current') || 'unknown';
 const author = git('git config user.name') || 'unknown';
 const date = new Date().toISOString();
 
-const { stampPath, exportId, keyword } = writeMirrorExportStamp(DEST);
+const { stampPath, passPath, exportId, keyword, mirrorPass } = writeMirrorExportStamp(DEST);
 
 const snapshot = `# Registo do espelho P38 → A29
 data_espelho=${date}
@@ -75,14 +75,16 @@ varejosync_branch=${branch}
 autor=${author}
 export_keyword=${keyword}
 export_id=${exportId}
+mirrorpass=${mirrorPass}
 notas=Gerado por npm run mirror:pack (scripts/mirror-pack.mjs)
 `;
 
 writeFileSync(join(DEST, 'SNAPSHOT.txt'), snapshot, 'utf8');
 console.log('');
-console.log(`Carimbo:  ${relative(ROOT, stampPath)}`);
-console.log(`          keyword=${keyword}  export_id=${exportId}`);
-console.log(`Snapshot: ${relative(ROOT, join(DEST, 'SNAPSHOT.txt'))} (${sha})`);
+console.log(`Carimbo:    ${relative(ROOT, stampPath)}`);
+console.log(`Mirrorpass: ${relative(ROOT, passPath)} → ${mirrorPass}`);
+console.log(`            keyword=${keyword}  export_id=${exportId}`);
+console.log(`Snapshot:   ${relative(ROOT, join(DEST, 'SNAPSHOT.txt'))} (${sha})`);
 console.log('');
 console.log('Próximo passo: npm run mirror:push -- /caminho/para/a29-erp');
 console.log('  (ou define A29_ERP_PATH no ambiente)');

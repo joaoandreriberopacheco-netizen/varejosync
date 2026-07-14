@@ -2,7 +2,11 @@ import { execSync } from 'child_process';
 import { writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { MIRROR_EXPORT_KEYWORD, MIRROR_EXPORT_STAMP_FILE } from './mirror-manifest.mjs';
+import {
+  MIRROR_EXPORT_KEYWORD,
+  MIRROR_EXPORT_STAMP_FILE,
+  MIRROR_PASS_FILE,
+} from './mirror-manifest.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -13,6 +17,12 @@ function git(cmd) {
   } catch {
     return '';
   }
+}
+
+/** Uma só palavra: mirror + commit curto (muda a cada export). */
+export function buildMirrorPassWord(shaShort) {
+  const sha = String(shaShort || 'unknown').replace(/[^a-zA-Z0-9]/g, '');
+  return `mirror${sha}`;
 }
 
 /**
@@ -26,6 +36,7 @@ export function writeMirrorExportStamp(destDir) {
   const remote = git('git config --get remote.origin.url') || 'unknown';
   const exportedAt = new Date().toISOString();
   const exportId = `${MIRROR_EXPORT_KEYWORD}-${exportedAt.slice(0, 10).replace(/-/g, '')}-${shaShort}`;
+  const mirrorPass = buildMirrorPassWord(shaShort);
 
   const lines = [
     '# Carimbo de export VarejoSync → A29',
@@ -34,6 +45,7 @@ export function writeMirrorExportStamp(destDir) {
     '',
     `keyword=${MIRROR_EXPORT_KEYWORD}`,
     `export_id=${exportId}`,
+    `mirrorpass=${mirrorPass}`,
     `exported_at=${exportedAt}`,
     `varejosync_remote=${remote}`,
     `varejosync_commit=${shaShort}`,
@@ -42,10 +54,21 @@ export function writeMirrorExportStamp(destDir) {
     `exported_by=${author}`,
     `export_tool=npm run mirror:pack`,
     `audit_hint=grep -r "${MIRROR_EXPORT_KEYWORD}" legacy/varejosync/`,
+    `mirrorpass_file=legacy/varejosync/${MIRROR_PASS_FILE}`,
   ];
 
   const stampPath = join(destDir, MIRROR_EXPORT_STAMP_FILE);
   writeFileSync(stampPath, `${lines.join('\n')}\n`, 'utf8');
 
-  return { stampPath, exportId, shaShort, keyword: MIRROR_EXPORT_KEYWORD };
+  const passPath = join(destDir, MIRROR_PASS_FILE);
+  writeFileSync(passPath, `${mirrorPass}\n`, 'utf8');
+
+  return {
+    stampPath,
+    passPath,
+    exportId,
+    shaShort,
+    keyword: MIRROR_EXPORT_KEYWORD,
+    mirrorPass,
+  };
 }

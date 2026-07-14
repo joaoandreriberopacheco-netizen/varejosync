@@ -86,6 +86,8 @@ grep VAREJO_UI_SYNC legacy/varejosync/VAREJO_UI_SYNC.stamp
 
 Palavra-chave: **`VAREJO_UI_SYNC`** — `export_id` identifica cada actualização.
 
+**Senha (uma palavra):** ficheiro **`mirrorpass`** na mesma pasta — ex. `mirrorf24e329e`. Pergunta ao agente no a29: *"qual a mirrorpass?"*
+
 ## Registo do snapshot
 
 Após `npm run mirror:pack`, o ficheiro `SNAPSHOT.txt` (local, não versionado) regista data, commit e branch do varejosync de origem. Modelo: [`SNAPSHOT.example.txt`](./SNAPSHOT.example.txt).

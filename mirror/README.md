@@ -37,6 +37,17 @@ cat legacy/varejosync/VAREJO_UI_SYNC.stamp
 
 O ficheiro inclui `export_id` (único por export), commit do varejosync, data e branch.
 
+## mirrorpass (senha de uma palavra)
+
+Ficheiro **`legacy/varejosync/mirrorpass`** — uma só palavra (ex. `mirrorf24e329e`).  
+O agente Cursor no **a29-erp** pode ler este ficheiro quando perguntares *"qual a mirrorpass?"* ou *"chegou o espelho?"*.
+
+```bash
+cat legacy/varejosync/mirrorpass
+```
+
+Snippet para colar no `AGENTS.md` do a29: [`docs/reference-a29-erp/MIRRORPASS_AGENT.md`](../docs/reference-a29-erp/MIRRORPASS_AGENT.md).
+
 ## Sync automático (GitHub Actions)
 
 Com secrets `A29_ERP_GIT_URL` e `A29_ERP_DEPLOY_TOKEN` no varejosync: **Actions → Sync mirror to a29-erp → Run workflow**.

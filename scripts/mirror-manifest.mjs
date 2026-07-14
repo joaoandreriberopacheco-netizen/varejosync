@@ -10,6 +10,12 @@ export const MIRROR_EXPORT_KEYWORD = 'VAREJO_UI_SYNC';
 /** Ficheiro-carimbo na raiz do espelho (legacy/varejosync no A29) */
 export const MIRROR_EXPORT_STAMP_FILE = 'VAREJO_UI_SYNC.stamp';
 
+/**
+ * Senha de uma palavra — o agente Cursor no a29-erp lê legacy/varejosync/mirrorpass
+ * para confirmar se o último export do VarejoSync chegou.
+ */
+export const MIRROR_PASS_FILE = 'mirrorpass';
+
 /** Ficheiros na raiz do app Vite */
 export const MIRROR_UI_ROOT_FILES = [
   'index.html',
