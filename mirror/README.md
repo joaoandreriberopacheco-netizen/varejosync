@@ -39,12 +39,18 @@ O ficheiro inclui `export_id` (único por export), commit do varejosync, data e 
 
 ## mirrorpass (senha de uma palavra)
 
-Ficheiro **`legacy/varejosync/mirrorpass`** — uma só palavra (ex. `mirrorf24e329e`).  
-O agente Cursor no **a29-erp** pode ler este ficheiro quando perguntares *"qual a mirrorpass?"* ou *"chegou o espelho?"*.
+Ficheiro **`legacy/varejosync/mirrorpass`** — uma só palavra (ex. `mirrorf24e329e`).
+
+**É sempre a mais recente:** só existe um ficheiro; cada `mirror:sync` substitui o anterior. Não há lista de senhas antigas no A29.
+
+Para data e commit de origem, vê também `legacy/varejosync/VAREJO_UI_SYNC.stamp` (`exported_at`, `export_id`).
 
 ```bash
 cat legacy/varejosync/mirrorpass
+cat legacy/varejosync/VAREJO_UI_SYNC.stamp
 ```
+
+O agente no **a29-erp** responde a *"qual a mirrorpass?"* ou *"qual é a última?"* lendo estes ficheiros.
 
 Snippet para colar no `AGENTS.md` do a29: [`docs/reference-a29-erp/MIRRORPASS_AGENT.md`](../docs/reference-a29-erp/MIRRORPASS_AGENT.md).
 

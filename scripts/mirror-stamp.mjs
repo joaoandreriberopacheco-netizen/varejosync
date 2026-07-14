@@ -55,6 +55,7 @@ export function writeMirrorExportStamp(destDir) {
     `export_tool=npm run mirror:pack`,
     `audit_hint=grep -r "${MIRROR_EXPORT_KEYWORD}" legacy/varejosync/`,
     `mirrorpass_file=legacy/varejosync/${MIRROR_PASS_FILE}`,
+    `mirrorpass_note=unico ficheiro; cada sync substitui — sempre o export mais recente`,
   ];
 
   const stampPath = join(destDir, MIRROR_EXPORT_STAMP_FILE);

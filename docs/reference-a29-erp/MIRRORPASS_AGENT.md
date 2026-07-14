@@ -1,24 +1,64 @@
 # mirrorpass — snippet para o agente Cursor no **a29-erp**
 
-Copia o bloco abaixo para o `AGENTS.md` ou uma regra `.cursor/rules/` do repositório **a29-erp**.
+Copia o bloco da secção **「Regra para colar no AGENTS.md」** para o `AGENTS.md` ou `.cursor/rules/mirrorpass-a29.mdc` do repositório **a29-erp**.
 
 ---
 
-## Verificar export do VarejoSync (mirrorpass)
+## Sempre a mais recente?
 
-Quando o utilizador perguntar se **chegaram os ficheiros novos** do VarejoSync, qual é a **mirrorpass**, **senha do espelho**, ou se o **sync UI** foi aplicado:
+**Sim.** Existe **um único** ficheiro:
 
-1. Lê o ficheiro **`legacy/varejosync/mirrorpass`** (uma só palavra, sem extensão).
-2. Responde com essa palavra e, se útil, o `export_id` em `legacy/varejosync/VAREJO_UI_SYNC.stamp`.
-3. Se `mirrorpass` **não existir** ou estiver vazio → o último export **ainda não chegou**; pedir para correr no varejosync: `npm run mirror:sync -- <caminho-a29-erp>`.
+```
+legacy/varejosync/mirrorpass
+```
 
-Exemplo de pergunta do utilizador: *"Qual a mirrorpass?"* / *"Chegou o espelho do varejo?"*
+Cada `npm run mirror:sync` no varejosync **substitui** esse ficheiro. Não há histórico de senhas antigas no A29 — o que está no disco **é sempre a última mirrorpass**.
 
-**Não** inventar a senha — só a que está no ficheiro.
+Para saber **quando** foi o último export (data, commit de origem), lê também:
+
+```
+legacy/varejosync/VAREJO_UI_SYNC.stamp
+```
+
+Campos úteis: `exported_at`, `varejosync_commit`, `export_id`, `mirrorpass` (deve coincidir com o ficheiro `mirrorpass`).
+
+---
+
+## Regra para colar no AGENTS.md (a29-erp)
+
+```markdown
+### mirrorpass — verificar sync do VarejoSync
+
+Quando o utilizador perguntar pela **mirrorpass**, **senha do espelho**, se **chegaram ficheiros novos** do VarejoSync, ou **qual é a última mirrorpass**:
+
+1. Lê **`legacy/varejosync/mirrorpass`** — uma só palavra (ex. `mirrorf24e329e`).
+   - Este ficheiro é **único** e é **sempre o mais recente** (cada sync substitui o anterior).
+2. Lê **`legacy/varejosync/VAREJO_UI_SYNC.stamp`** para data e origem:
+   - `exported_at` — quando entrou no A29
+   - `varejosync_commit` — commit do varejosync de origem
+   - `export_id` — identificador completo do export
+   - confirma que `mirrorpass=` no stamp coincide com o ficheiro `mirrorpass`
+3. Responde em linguagem simples, por exemplo:
+   - *"A mirrorpass actual é `mirrorf24e329e`, exportada em 2026-07-14, commit varejosync f24e329e."*
+4. Se `mirrorpass` **não existir** ou estiver vazio → o sync **ainda não chegou**; pedir `npm run mirror:sync` no repo varejosync.
+
+**Não** inventar senha nem adivinhar exports antigos — só o que está nestes dois ficheiros.
+```
+
+---
+
+## Perguntas típicas do utilizador
+
+| Pergunta | O que fazer |
+|----------|-------------|
+| *Qual a mirrorpass?* | Ler `mirrorpass` e responder a palavra. |
+| *Qual é a última mirrorpass?* | Igual — só existe uma; é a do ficheiro actual. |
+| *Chegou o espelho do varejo?* | Se `mirrorpass` existe → sim; indicar palavra + `exported_at` do stamp. |
+| *Quando foi o último sync?* | `exported_at` em `VAREJO_UI_SYNC.stamp`. |
 
 ---
 
 ## Origem (varejosync)
 
-Gerado automaticamente por `npm run mirror:pack` / `npm run mirror:sync` no repo **varejosync**.  
+Gerado por `npm run mirror:pack` / `npm run mirror:sync`.  
 Formato da palavra: `mirror` + commit curto (ex. `mirrorf24e329e`).

@@ -86,7 +86,11 @@ grep VAREJO_UI_SYNC legacy/varejosync/VAREJO_UI_SYNC.stamp
 
 Palavra-chave: **`VAREJO_UI_SYNC`** — `export_id` identifica cada actualização.
 
-**Senha (uma palavra):** ficheiro **`mirrorpass`** na mesma pasta — ex. `mirrorf24e329e`. Pergunta ao agente no a29: *"qual a mirrorpass?"*
+**Senha (uma palavra):** ficheiro **`mirrorpass`** — ex. `mirrorf24e329e`.  
+**Sempre a última:** só há um `mirrorpass`; cada sync substitui o anterior.  
+Para *quando* foi o export: `exported_at` em `VAREJO_UI_SYNC.stamp`.
+
+Pergunta ao agente no a29: *"qual a mirrorpass?"* / *"qual é a última?"*
 
 ## Registo do snapshot
 

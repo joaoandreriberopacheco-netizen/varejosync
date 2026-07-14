@@ -5,6 +5,7 @@
 keyword=VAREJO_UI_SYNC
 export_id=VAREJO_UI_SYNC-YYYYMMDD-abc1234
 mirrorpass=mirrorabc1234
+mirrorpass_note=unico ficheiro; cada sync substitui — sempre o export mais recente
 exported_at=
 varejosync_remote=
 varejosync_commit=
