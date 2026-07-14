@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { P38MobileLineList, P38MobileLine } from '@/components/ui/p38-mobile-line';
 
 export default function ResumoPrevisualizacao({ data }) {
   const { alterados = [], erros = [], linhasIgnoradasSemMudanca = 0 } = data;

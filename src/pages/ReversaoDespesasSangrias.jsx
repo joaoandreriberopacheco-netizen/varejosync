@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { ArrowLeft, Trash2, AlertCircle, RefreshCw, Minus, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { P38MobileLineList, P38MobileLine, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function ReversaoDespesasSangrias() {
   const navigate = useNavigate();

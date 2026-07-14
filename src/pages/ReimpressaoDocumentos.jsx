@@ -6,6 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  P38MobileLineList,
+  P38MobileLine,
+  P38StatusLabel,
+  p38StatusTone,
+  p38AccentKeyFromTone,
+} from '@/components/ui/p38-mobile-line';
 import ComprovantePreVenda from '@/components/vendas/ComprovantePreVenda';
 import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 

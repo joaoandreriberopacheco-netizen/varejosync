@@ -6,6 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  P38MobileLineList,
+  P38MobileLine,
+  P38StatusLabel,
+  p38StatusTone,
+  p38AccentKeyFromTone,
+} from '@/components/ui/p38-mobile-line';
 import { 
   Package, 
   Truck, 

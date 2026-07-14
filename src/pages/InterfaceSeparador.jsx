@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { P38MobileLineList, P38MobileLine, P38StatusLabel } from '@/components/ui/p38-mobile-line';
 import { 
   QrCode, 
   CheckCircle, 
