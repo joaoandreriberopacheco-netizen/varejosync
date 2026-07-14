@@ -47,6 +47,8 @@ Quando o utilizador perguntar pela **mirrorpass**, **senha do espelho**, se **ch
 
 1. Lê **`legacy/varejosync/mirrorpass`** — uma só palavra (ex. `mirrorf24e329e`).
    - Este ficheiro é **único** e é **sempre o mais recente** (cada sync substitui o anterior).
+   - Se não existir, lê **`legacy/varejosync/MIRROR_PASS.leia-me.txt`** — confirma que o sync ainda não chegou.
+   - **Não** confundir com senha do **Modo Flare** (`features/modo-flare`).
 2. Lê **`legacy/varejosync/VAREJO_UI_SYNC.stamp`** para data e origem:
    - `exported_at` — quando entrou no A29
    - `varejosync_commit` — commit do varejosync de origem
