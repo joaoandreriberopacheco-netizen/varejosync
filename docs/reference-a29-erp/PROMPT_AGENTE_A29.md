@@ -1,6 +1,8 @@
 # Prompt — colar no agente Cursor do **a29-erp** (uma vez)
 
-Copia o bloco abaixo **inteiro** no chat do agente do repositório **a29-erp**.  
+O varejosync é **privado** — usa `gh` ou clone, não raw.githubusercontent.com.
+
+Copia o bloco abaixo **inteiro** no chat do agente do **a29-erp**.  
 Depois podes só perguntar *"qual a mirrorpass?"*.
 
 ---
@@ -8,27 +10,35 @@ Depois podes só perguntar *"qual a mirrorpass?"*.
 ## Prompt (copiar tudo dentro do bloco)
 
 ```
-Tarefa única: preparar mirrorpass do VarejoSync no A29.
+Tarefa única: instalar mirrorpass do VarejoSync no A29.
 
-1) Baixa os carimbos publicados no varejosync (branch main):
-   https://raw.githubusercontent.com/joaoandreriberopacheco-netizen/varejosync/main/mirror/live/mirrorpass
-   https://raw.githubusercontent.com/joaoandreriberopacheco-netizen/varejosync/main/mirror/live/VAREJO_UI_SYNC.stamp
-   https://raw.githubusercontent.com/joaoandreriberopacheco-netizen/varejosync/main/mirror/live/MIRROR_PASS.leia-me.txt
+1) Obter os carimbos do repo privado varejosync (branch main), pasta mirror/live/:
+   - mirrorpass
+   - VAREJO_UI_SYNC.stamp
+   - MIRROR_PASS.leia-me.txt
 
-2) Grava em legacy/varejosync/ (cria a pasta se não existir):
-   - legacy/varejosync/mirrorpass
-   - legacy/varejosync/VAREJO_UI_SYNC.stamp
-   - legacy/varejosync/MIRROR_PASS.leia-me.txt
+   Opção A — se tens varejosync ao lado do a29-erp no disco:
+     copiar de ../varejosync/mirror/live/ para legacy/varejosync/
 
-3) Adiciona ao AGENTS.md (ou .cursor/rules/mirrorpass-a29.mdc) a regra:
-   - Quando perguntarem mirrorpass / senha do espelho / chegou o varejo: ler legacy/varejosync/mirrorpass (sempre a mais recente; uma só palavra).
+   Opção B — com GitHub CLI autenticado:
+     gh api repos/joaoandreriberopacheco-netizen/varejosync/contents/mirror/live/mirrorpass?ref=main --jq '.content' | base64 -d > legacy/varejosync/mirrorpass
+     (repetir para VAREJO_UI_SYNC.stamp e MIRROR_PASS.leia-me.txt)
+
+   Opção C — clone raso temporário:
+     git clone --depth 1 --branch main https://github.com/joaoandreriberopacheco-netizen/varejosync.git /tmp/varejosync-mirror
+     cp /tmp/varejosync-mirror/mirror/live/mirrorpass /tmp/varejosync-mirror/mirror/live/VAREJO_UI_SYNC.stamp /tmp/varejosync-mirror/mirror/live/MIRROR_PASS.leia-me.txt legacy/varejosync/
+
+2) Garantir que existem em legacy/varejosync/ (criar pasta se faltar).
+
+3) Adicionar ao AGENTS.md (ou .cursor/rules/mirrorpass-a29.mdc):
+   - Perguntas mirrorpass / senha do espelho / chegou o varejo → ler legacy/varejosync/mirrorpass (uma palavra; sempre a mais recente).
    - NÃO confundir com Modo Flare (features/modo-flare).
    - Se mirrorpass não existir → sync ainda não chegou.
 
 4) Commit: chore(legacy): mirrorpass do varejosync + regra agente
-   Push para main (ou abre PR draft).
+   Push (ou PR draft).
 
-5) Responde com a mirrorpass que gravaste e o exported_at do stamp.
+5) Responde: a mirrorpass gravada + exported_at do stamp.
 ```
 
 ---
@@ -38,4 +48,8 @@ Tarefa única: preparar mirrorpass do VarejoSync no A29.
 - *"Qual a mirrorpass?"*
 - *"Chegou o espelho do varejo?"*
 
-O agente lê `legacy/varejosync/mirrorpass`.
+---
+
+## Senha publicada agora no varejosync main
+
+Ver `mirror/live/mirrorpass` no repo varejosync (após merge em main).
