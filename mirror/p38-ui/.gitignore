@@ -4,6 +4,7 @@
 !README.md
 !INVENTARIO.md
 !SNAPSHOT.example.txt
+!VAREJO_UI_SYNC.stamp.example
 !pack-from-varejosync.sh
 !push-to-a29.sh
 !public/

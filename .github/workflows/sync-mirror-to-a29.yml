@@ -59,6 +59,7 @@ jobs:
           fi
           SHA=$(git -C "$GITHUB_WORKSPACE" rev-parse --short HEAD)
           BRANCH="sync/varejosync-ui-${SHA}"
+          STAMP=$(grep '^export_id=' legacy/varejosync/VAREJO_UI_SYNC.stamp 2>/dev/null | cut -d= -f2- || echo "VAREJO_UI_SYNC-${SHA}")
           REPO_PATH="${A29_ERP_GIT_URL#https://github.com/}"
           REPO_PATH="${REPO_PATH%.git}"
           git checkout -b "$BRANCH"

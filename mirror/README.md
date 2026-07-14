@@ -19,6 +19,24 @@ Para sobrescrever também as cores: `npm run mirror:push -- ../a29-erp --no-pres
 
 Destino no a29-erp: **`legacy/varejosync/`** (snapshot da UI Vite + integrações P38).
 
+## Carimbo de auditoria (palavra-chave)
+
+Cada `mirror:pack` gera **`VAREJO_UI_SYNC.stamp`** na raiz do espelho. No A29 fica em:
+
+```
+a29-erp/legacy/varejosync/VAREJO_UI_SYNC.stamp
+```
+
+Palavra-chave para procurar: **`VAREJO_UI_SYNC`**
+
+```bash
+# No monorepo a29-erp
+grep -r "VAREJO_UI_SYNC" legacy/varejosync/
+cat legacy/varejosync/VAREJO_UI_SYNC.stamp
+```
+
+O ficheiro inclui `export_id` (único por export), commit do varejosync, data e branch.
+
 ## Sync automático (GitHub Actions)
 
 Com secrets `A29_ERP_GIT_URL` e `A29_ERP_DEPLOY_TOKEN` no varejosync: **Actions → Sync mirror to a29-erp → Run workflow**.
@@ -43,7 +61,8 @@ mirror/
     ├── pack-from-varejosync.sh
     ├── push-to-a29.sh
     ├── INVENTARIO.md
-    └── SNAPSHOT.example.txt  ← modelo; o pack gera SNAPSHOT.txt local (não versionado)
+    ├── VAREJO_UI_SYNC.stamp.example  ← modelo do carimbo (o pack gera .stamp no A29)
+    └── SNAPSHOT.example.txt
 ```
 
 ## Notas

@@ -15,6 +15,7 @@ import {
   MIRROR_UI_SRC_DIRS,
   MIRROR_UI_SRC_FILES,
 } from './mirror-manifest.mjs';
+import { writeMirrorExportStamp } from './mirror-stamp.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -65,16 +66,22 @@ const branch = git('git branch --show-current') || 'unknown';
 const author = git('git config user.name') || 'unknown';
 const date = new Date().toISOString();
 
+const { stampPath, exportId, keyword } = writeMirrorExportStamp(DEST);
+
 const snapshot = `# Registo do espelho P38 → A29
 data_espelho=${date}
 varejosync_commit_sha=${sha}
 varejosync_branch=${branch}
 autor=${author}
+export_keyword=${keyword}
+export_id=${exportId}
 notas=Gerado por npm run mirror:pack (scripts/mirror-pack.mjs)
 `;
 
 writeFileSync(join(DEST, 'SNAPSHOT.txt'), snapshot, 'utf8');
 console.log('');
+console.log(`Carimbo:  ${relative(ROOT, stampPath)}`);
+console.log(`          keyword=${keyword}  export_id=${exportId}`);
 console.log(`Snapshot: ${relative(ROOT, join(DEST, 'SNAPSHOT.txt'))} (${sha})`);
 console.log('');
 console.log('Próximo passo: npm run mirror:push -- /caminho/para/a29-erp');

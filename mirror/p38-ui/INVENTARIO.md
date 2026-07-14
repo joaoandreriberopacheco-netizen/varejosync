@@ -71,4 +71,5 @@ Marca cada bloco quando tiveres validado o espelho no a29-erp.
 - [ ] `App.jsx`, `Layout.jsx`, `main.jsx`, `pages.config.js`
 - [ ] CSS (`globals.css`, `index.css`, `styles/`)
 - [ ] `public/`
-- [ ] `SNAPSHOT.txt` preenchido
+- [ ] `VAREJO_UI_SYNC.stamp` visível em `legacy/varejosync/` no A29
+- [ ] `SNAPSHOT.txt` preenchido (local no varejosync)

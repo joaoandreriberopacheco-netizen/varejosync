@@ -1,0 +1,14 @@
+# Carimbo de export VarejoSync → A29 (modelo — o pack gera VAREJO_UI_SYNC.stamp)
+# Procura no a29-erp: legacy/varejosync/VAREJO_UI_SYNC.stamp
+# Palavra-chave (grep): VAREJO_UI_SYNC
+
+keyword=VAREJO_UI_SYNC
+export_id=VAREJO_UI_SYNC-YYYYMMDD-abc1234
+exported_at=
+varejosync_remote=
+varejosync_commit=
+varejosync_commit_full=
+varejosync_branch=
+exported_by=
+export_tool=npm run mirror:pack
+audit_hint=grep -r "VAREJO_UI_SYNC" legacy/varejosync/

@@ -75,6 +75,17 @@ robocopy $src $dst /MIR /E /XD node_modules .git dist build /XF .env .env.local
 
 `base44/` (funções Base44), `node_modules/`, `.env*`, `dist/`, `build/`, `mirror/`.
 
+## Carimbo de auditoria
+
+Após `mirror:pack` / `mirror:sync`, verifica no **a29-erp**:
+
+```bash
+cat legacy/varejosync/VAREJO_UI_SYNC.stamp
+grep VAREJO_UI_SYNC legacy/varejosync/VAREJO_UI_SYNC.stamp
+```
+
+Palavra-chave: **`VAREJO_UI_SYNC`** — `export_id` identifica cada actualização.
+
 ## Registo do snapshot
 
 Após `npm run mirror:pack`, o ficheiro `SNAPSHOT.txt` (local, não versionado) regista data, commit e branch do varejosync de origem. Modelo: [`SNAPSHOT.example.txt`](./SNAPSHOT.example.txt).

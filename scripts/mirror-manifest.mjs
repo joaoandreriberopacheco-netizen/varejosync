@@ -4,6 +4,12 @@
  */
 export const MIRROR_UI_DEST = 'mirror/p38-ui';
 
+/** Palavra-chave para grep/auditoria no A29 */
+export const MIRROR_EXPORT_KEYWORD = 'VAREJO_UI_SYNC';
+
+/** Ficheiro-carimbo na raiz do espelho (legacy/varejosync no A29) */
+export const MIRROR_EXPORT_STAMP_FILE = 'VAREJO_UI_SYNC.stamp';
+
 /** Ficheiros na raiz do app Vite */
 export const MIRROR_UI_ROOT_FILES = [
   'index.html',
