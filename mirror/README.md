@@ -74,13 +74,22 @@ Lista completa: [`p38-ui/INVENTARIO.md`](./p38-ui/INVENTARIO.md).
 ```
 mirror/
 ├── README.md           ← este ficheiro
-└── p38-ui/             ← espelho gerado (scaffold versionado; conteúdo gerado localmente)
-    ├── pack-from-varejosync.sh
-    ├── push-to-a29.sh
-    ├── INVENTARIO.md
-    ├── VAREJO_UI_SYNC.stamp.example  ← modelo do carimbo (o pack gera .stamp no A29)
-    └── SNAPSHOT.example.txt
+├── live/               ← carimbos (mirrorpass, stamp)
+├── legacy/             ← PACOTE COMPLETO → colar em a29-erp/legacy/varejosync/
+└── p38-ui/             ← espelho UI antigo (scaffold; preferir legacy/)
 ```
+
+## Pacote completo (`mirror/legacy/`)
+
+Para sync **manual** com o A29 (substituir `legacy/varejosync/`):
+
+```bash
+npm run mirror:pack-legacy    # copia + valida funções + build:raw verde
+```
+
+Depois copia `mirror/legacy/` → `a29-erp/legacy/varejosync/`.
+
+## Estrutura (p38-ui — legado)
 
 ## Notas
 
