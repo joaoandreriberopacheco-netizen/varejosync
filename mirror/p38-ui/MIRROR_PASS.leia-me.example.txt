@@ -1,0 +1,14 @@
+MIRROR_PASS / mirrorpass — sync UI VarejoSync → A29
+================================================
+
+NÃO é a senha do Modo Flare (features/modo-flare).
+É o carimbo do export npm run mirror:sync do repo varejosync.
+
+Ficheiros (modelo — o pack gera versões actuais):
+  legacy/varejosync/mirrorpass
+  legacy/varejosync/VAREJO_UI_SYNC.stamp
+  legacy/varejosync/MIRROR_PASS.leia-me.txt
+
+Senha (exemplo): mirrorabc1234
+
+grep: mirrorpass | MIRROR_PASS | VAREJO_UI_SYNC

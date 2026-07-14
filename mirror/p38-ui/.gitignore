@@ -6,6 +6,7 @@
 !SNAPSHOT.example.txt
 !VAREJO_UI_SYNC.stamp.example
 !mirrorpass.example
+!MIRROR_PASS.leia-me.example.txt
 !pack-from-varejosync.sh
 !push-to-a29.sh
 !public/

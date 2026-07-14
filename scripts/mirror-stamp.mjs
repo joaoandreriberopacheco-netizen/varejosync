@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import {
   MIRROR_EXPORT_KEYWORD,
   MIRROR_EXPORT_STAMP_FILE,
+  MIRROR_PASS_AGENT_FILE,
   MIRROR_PASS_FILE,
 } from './mirror-manifest.mjs';
 

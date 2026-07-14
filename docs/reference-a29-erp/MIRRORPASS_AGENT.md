@@ -4,6 +4,20 @@ Copia o bloco da secção **「Regra para colar no AGENTS.md」** para o `AGENTS
 
 ---
 
+## Porque o agente do A29 não encontrou?
+
+O **mirrorpass só existe no A29 depois** de correres `npm run mirror:sync` no varejosync.  
+Até lá, o agente do a29-erp **não tem o que ler** — por isso disse que não existe.
+
+**Não confundir** com a *senha do Modo Flare* (`features/modo-flare`) — é outra coisa (password de equipa na app).
+
+Depois do sync, o agente encontra:
+- `legacy/varejosync/mirrorpass`
+- `legacy/varejosync/MIRROR_PASS.leia-me.txt` (instruções para grep)
+- `legacy/varejosync/VAREJO_UI_SYNC.stamp`
+
+---
+
 ## Sempre a mais recente?
 
 **Sim.** Existe **um único** ficheiro:

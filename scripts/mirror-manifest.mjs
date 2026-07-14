@@ -16,6 +16,12 @@ export const MIRROR_EXPORT_STAMP_FILE = 'VAREJO_UI_SYNC.stamp';
  */
 export const MIRROR_PASS_FILE = 'mirrorpass';
 
+/**
+ * Ficheiro de ajuda para o agente grep no a29 (não confundir com Modo Flare).
+ * Gerado em cada mirror:pack — vai para legacy/varejosync/.
+ */
+export const MIRROR_PASS_AGENT_FILE = 'MIRROR_PASS.leia-me.txt';
+
 /** Ficheiros na raiz do app Vite */
 export const MIRROR_UI_ROOT_FILES = [
   'index.html',

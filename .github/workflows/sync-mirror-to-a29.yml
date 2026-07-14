@@ -64,6 +64,6 @@ jobs:
           REPO_PATH="${REPO_PATH%.git}"
           git checkout -b "$BRANCH"
           git add legacy/varejosync
-          git commit -m "chore(legacy): sync varejosync UI snapshot (${SHA})"
+          git commit -m "chore(legacy): sync varejosync UI (${STAMP})"
           git push "https://x-access-token:${A29_ERP_DEPLOY_TOKEN}@github.com/${REPO_PATH}.git" "$BRANCH"
           echo "Branch criada: $BRANCH — abre PR no a29-erp para rever e fundir."
