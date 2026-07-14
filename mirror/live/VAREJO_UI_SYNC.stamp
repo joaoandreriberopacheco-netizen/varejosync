@@ -1,0 +1,17 @@
+# Carimbo de export VarejoSync → A29
+# Procura no a29-erp: legacy/varejosync/VAREJO_UI_SYNC.stamp
+# Palavra-chave (grep): VAREJO_UI_SYNC
+
+keyword=VAREJO_UI_SYNC
+export_id=VAREJO_UI_SYNC-20260714-32eaa8d3
+mirrorpass=mirror32eaa8d3
+exported_at=2026-07-14T01:35:34.079Z
+varejosync_remote=https://github.com/joaoandreriberopacheco-netizen/varejosync
+varejosync_commit=32eaa8d3
+varejosync_commit_full=32eaa8d3b0de43534bda1f4a9a68714803b88742
+varejosync_branch=cursor/legacy-mirror-ready-f73b
+exported_by=Cursor Agent
+export_tool=npm run mirror:pack
+audit_hint=grep -r "VAREJO_UI_SYNC" legacy/varejosync/
+mirrorpass_file=legacy/varejosync/mirrorpass
+mirrorpass_note=unico ficheiro; cada sync substitui — sempre o export mais recente

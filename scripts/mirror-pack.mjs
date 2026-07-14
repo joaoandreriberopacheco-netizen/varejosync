@@ -83,6 +83,7 @@ writeFileSync(join(DEST, 'SNAPSHOT.txt'), snapshot, 'utf8');
 console.log('');
 console.log(`Carimbo:    ${relative(ROOT, stampPath)}`);
 console.log(`Mirrorpass: ${relative(ROOT, passPath)} → ${mirrorPass}`);
+console.log(`Live:       ${relative(ROOT, join(ROOT, 'mirror/live/mirrorpass'))} (commitar no Git)`);
 console.log(`            keyword=${keyword}  export_id=${exportId}`);
 console.log(`Snapshot:   ${relative(ROOT, join(DEST, 'SNAPSHOT.txt'))} (${sha})`);
 console.log('');

@@ -4,6 +4,12 @@
  */
 export const MIRROR_UI_DEST = 'mirror/p38-ui';
 
+/**
+ * Carimbos versionados no Git — o agente A29 pode puxar daqui
+ * (raw GitHub) se ainda não correu mirror:sync local.
+ */
+export const MIRROR_LIVE_DIR = 'mirror/live';
+
 /** Palavra-chave para grep/auditoria no A29 */
 export const MIRROR_EXPORT_KEYWORD = 'VAREJO_UI_SYNC';
 
