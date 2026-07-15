@@ -400,63 +400,84 @@ export default function VendasTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className="grid grid-cols-[140px,1fr] gap-3 rounded-xl p-2.5 bg-[#313a4a]/65 border border-slate-400/10">
-              <div className="h-[130px] relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={metrics.lucroKpi.ringData}
-                      innerRadius={32}
-                      outerRadius={50}
-                      dataKey="value"
-                      startAngle={90}
-                      endAngle={-270}
-                      strokeWidth={0}
-                      cornerRadius={2}
-                    >
-                      {metrics.lucroKpi.ringData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    {metrics.lucroKpi.ringOverflow > 0 ? (
+            <div className="rounded-xl p-2.5 bg-[#313a4a]/65 border border-slate-400/10 space-y-2.5">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                Fórmula: Venda - descontos - custo calculado
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-[150px,1fr] gap-2.5 items-center">
+                <div className="h-[140px] relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
                       <Pie
-                        data={metrics.lucroKpi.ringOverflowData}
-                        innerRadius={24}
-                        outerRadius={28}
+                        data={metrics.lucroKpi.ringData}
+                        innerRadius={36}
+                        outerRadius={56}
                         dataKey="value"
                         startAngle={90}
                         endAngle={-270}
                         strokeWidth={0}
                         cornerRadius={2}
                       >
-                        {metrics.lucroKpi.ringOverflowData.map((entry) => (
+                        {metrics.lucroKpi.ringData.map((entry) => (
                           <Cell key={entry.name} fill={entry.color} />
                         ))}
                       </Pie>
-                    ) : null}
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Atual/Ant</span>
-                  <span className="text-base font-bold text-foreground">{metrics.lucroKpi.ratioPercent.toFixed(1)}%</span>
+                      {metrics.lucroKpi.ringOverflow > 0 ? (
+                        <Pie
+                          data={metrics.lucroKpi.ringOverflowData}
+                          innerRadius={28}
+                          outerRadius={32}
+                          dataKey="value"
+                          startAngle={90}
+                          endAngle={-270}
+                          strokeWidth={0}
+                          cornerRadius={2}
+                        >
+                          {metrics.lucroKpi.ringOverflowData.map((entry) => (
+                            <Cell key={entry.name} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      ) : null}
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Atual/Ant</span>
+                    <span className="text-lg font-bold text-foreground">{metrics.lucroKpi.ratioPercent.toFixed(1)}%</span>
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-1.5">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                  Fórmula: Venda - descontos - custo calculado
-                </p>
-                <div className="rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
-                  <p className="text-[10px] text-muted-foreground">{metrics.lucroKpi.currentMonthLabel}</p>
-                  <p className="text-sm font-semibold text-slate-100">{formatShort(metrics.lucroKpi.currentProfit)}</p>
-                </div>
-                <div className="rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
-                  <p className="text-[10px] text-muted-foreground">{metrics.lucroKpi.previousMonthLabel}</p>
-                  <p className="text-sm font-semibold text-slate-100">{formatShort(metrics.lucroKpi.previousProfit)}</p>
-                </div>
-                <div className="text-[10px] text-muted-foreground grid grid-cols-3 gap-1">
-                  <span>Venda: {formatShort(metrics.lucroKpi.currentSalesNet)}</span>
-                  <span>Desc: {formatShort(metrics.lucroKpi.currentDiscounts)}</span>
-                  <span>Custo: {formatShort(metrics.lucroKpi.currentCost)}</span>
+
+                <div className="space-y-1.5">
+                  <div className="rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] text-muted-foreground uppercase">{metrics.lucroKpi.currentMonthLabel}</p>
+                      <span className="text-[10px] text-lime-300/90 uppercase">Atual</span>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-100">{formatShort(metrics.lucroKpi.currentProfit)}</p>
+                  </div>
+
+                  <div className="rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[10px] text-muted-foreground uppercase">{metrics.lucroKpi.previousMonthLabel}</p>
+                      <span className="text-[10px] text-blue-300/90 uppercase">Anterior</span>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-100">{formatShort(metrics.lucroKpi.previousProfit)}</p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                    <div className="rounded-md px-1.5 py-1 bg-[#1f2734]/50 border border-slate-500/10">
+                      <p className="text-muted-foreground uppercase">Venda</p>
+                      <p className="text-slate-100 font-medium">{formatShort(metrics.lucroKpi.currentSalesNet)}</p>
+                    </div>
+                    <div className="rounded-md px-1.5 py-1 bg-[#1f2734]/50 border border-slate-500/10">
+                      <p className="text-muted-foreground uppercase">Desc</p>
+                      <p className="text-slate-100 font-medium">{formatShort(metrics.lucroKpi.currentDiscounts)}</p>
+                    </div>
+                    <div className="rounded-md px-1.5 py-1 bg-[#1f2734]/50 border border-slate-500/10">
+                      <p className="text-muted-foreground uppercase">Custo</p>
+                      <p className="text-slate-100 font-medium">{formatShort(metrics.lucroKpi.currentCost)}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
