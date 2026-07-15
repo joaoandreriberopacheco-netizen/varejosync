@@ -22,6 +22,7 @@ import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroL
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import FolhaPrevisaoResumo from '@/components/folha-previsao/FolhaPrevisaoResumo';
 import FolhaPrevisaoLista from '@/components/folha-previsao/FolhaPrevisaoLista';
+import FolhaPrevisaoFiltros from '@/components/folha-previsao/FolhaPrevisaoFiltros';
 import FolhaPrevisaoModeloRow from '@/components/folha-previsao/FolhaPrevisaoModeloRow';
 import FolhaPessoaDialog from '@/components/folha-previsao/FolhaPessoaDialog';
 import FolhaPrevisaoMovimentoDialog from '@/components/folha-previsao/FolhaPrevisaoMovimentoDialog';
@@ -40,6 +41,7 @@ import {
   TIPO_VINCULO_LABELS,
   filtrarCompetenciasPorTipo,
   agruparCompetenciasPorTipo,
+  filtrarCompetenciasPrevisao,
   formatCicloFolhaCompetencia,
   FOLHA_DIA_VENCIMENTO,
   montarCompetenciasVisao,
@@ -102,6 +104,9 @@ export default function FolhaPrevisaoPage() {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [filtroVinculo, setFiltroVinculo] = useState('todos');
+  const [filtroBusca, setFiltroBusca] = useState('');
+  const [filtroCentro, setFiltroCentro] = useState('__todos__');
+  const [agruparPorCentroCusto, setAgruparPorCentroCusto] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
   const [draggingModeloId, setDraggingModeloId] = useState('');
@@ -155,17 +160,30 @@ export default function FolhaPrevisaoPage() {
     () => filtrarCompetenciasPorTipo(competenciasVisao, modelosMap, filtroVinculo === 'todos' ? null : filtroVinculo),
     [competenciasVisao, modelosMap, filtroVinculo],
   );
+
+  const competenciasExibidas = useMemo(
+    () =>
+      filtrarCompetenciasPrevisao(competenciasFiltradas, modelosMap, {
+        busca: filtroBusca,
+        centro: filtroCentro,
+      }),
+    [competenciasFiltradas, modelosMap, filtroBusca, filtroCentro],
+  );
+
   const qtdPlanejamento = useMemo(
-    () => competenciasFiltradas.filter((c) => isCompetenciaPlanejamento(c)).length,
-    [competenciasFiltradas],
+    () => competenciasExibidas.filter((c) => isCompetenciaPlanejamento(c)).length,
+    [competenciasExibidas],
   );
   const hasCompetenciasPersistidas = competencias.length > 0;
   const mesFuturo = isCompetenciaFutura(competenciaMes);
   const grupos = useMemo(
-    () => agruparCompetenciasPorTipo(competenciasFiltradas, modelosMap),
-    [competenciasFiltradas, modelosMap],
+    () => agruparCompetenciasPorTipo(competenciasExibidas, modelosMap),
+    [competenciasExibidas, modelosMap],
   );
-  const totaisGrupo = useMemo(() => calcularTotaisGrupo(competenciasFiltradas, modelosMap), [competenciasFiltradas, modelosMap]);
+  const totaisGrupo = useMemo(
+    () => calcularTotaisGrupo(competenciasExibidas, modelosMap),
+    [competenciasExibidas, modelosMap],
+  );
   const contaPadrao = contas.find((c) => c.ativo !== false) || contas[0];
   const selectedModelo = selectedComp ? modelosMap[selectedComp.colaborador_id] : null;
 
@@ -524,22 +542,38 @@ export default function FolhaPrevisaoPage() {
 
           <FiltroVinculoChips value={filtroVinculo} onChange={setFiltroVinculo} />
 
+          <FolhaPrevisaoFiltros
+            busca={filtroBusca}
+            onBuscaChange={setFiltroBusca}
+            centro={filtroCentro}
+            onCentroChange={setFiltroCentro}
+            centrosRegistrados={centrosRegistrados}
+            agruparPorCentro={agruparPorCentroCusto}
+            onAgruparPorCentroChange={setAgruparPorCentroCusto}
+          />
+
           <FinanceiroListaEstado
             loading={loadingComp || loadingModelos}
-            vazio={!loadingComp && !loadingModelos && competenciasFiltradas.length === 0}
-            vazioMensagem={`Nenhuma pessoa cadastrada para ${formatCompetenciaLabel(competenciaMes)}${filtroVinculo !== 'todos' ? ` (${TIPO_VINCULO_LABELS[filtroVinculo]})` : ''}. Cadastre na aba Pessoas.`}
+            vazio={!loadingComp && !loadingModelos && competenciasExibidas.length === 0}
+            vazioMensagem={
+              filtroBusca || filtroCentro !== '__todos__'
+                ? 'Nenhuma pessoa encontrada com estes filtros.'
+                : `Nenhuma pessoa cadastrada para ${formatCompetenciaLabel(competenciaMes)}${filtroVinculo !== 'todos' ? ` (${TIPO_VINCULO_LABELS[filtroVinculo]})` : ''}. Cadastre na aba Pessoas.`
+            }
             vazioIcon={Users}
           >
             <FolhaPrevisaoLista
-              competencias={competenciasFiltradas}
+              competencias={competenciasExibidas}
               grupos={grupos}
               modelosMap={modelosMap}
               filtroVinculo={filtroVinculo}
+              agruparPorCentro={agruparPorCentroCusto}
+              centrosRegistrados={centrosRegistrados}
               onOpen={setSelectedComp}
             />
           </FinanceiroListaEstado>
 
-          {!loadingComp && !loadingModelos && competenciasFiltradas.length === 0 && (
+          {!loadingComp && !loadingModelos && competenciasExibidas.length === 0 && !filtroBusca && filtroCentro === '__todos__' && (
             <div className="flex justify-center -mt-6 pb-4 gap-2">
               <Button variant="outline" onClick={() => setPessoaDialog({})}>Cadastrar pessoa</Button>
             </div>

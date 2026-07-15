@@ -688,11 +688,95 @@ export function agruparCompetenciasPorTipo(competencias, modelosMap) {
     if (tipo === TIPO_VINCULO.SOCIO) socios.push(c);
     else funcionarios.push(c);
   }
-  return { funcionarios, socios };
+  return {
+    funcionarios: ordenarCompetenciasPorNome(funcionarios, modelosMap),
+    socios: ordenarCompetenciasPorNome(socios, modelosMap),
+  };
 }
 
 function ordenarTextoPtBr(a, b) {
   return String(a || '').localeCompare(String(b || ''), 'pt-BR', { sensitivity: 'base' });
+}
+
+export function nomeColaboradorCompetencia(competencia, modelosMap = {}) {
+  return (
+    competencia?.colaborador_nome ||
+    modelosMap[competencia?.colaborador_id]?.colaborador_nome ||
+    modelosMap[competencia?.colaborador_id]?.nome ||
+    ''
+  );
+}
+
+export function centroCustoCompetencia(competencia, modelosMap = {}) {
+  const modelo = modelosMap[competencia?.colaborador_id];
+  return String(modelo?.centro_custo || competencia?.centro_custo || '').trim();
+}
+
+export function ordenarCompetenciasPorNome(competencias, modelosMap = {}) {
+  return [...(competencias || [])].sort((a, b) =>
+    ordenarTextoPtBr(nomeColaboradorCompetencia(a, modelosMap), nomeColaboradorCompetencia(b, modelosMap)),
+  );
+}
+
+const CHAVE_SEM_CENTRO_CUSTO = '__sem__';
+
+export function labelCentroCustoFolha(chave, nomeCentro = '') {
+  if (chave === CHAVE_SEM_CENTRO_CUSTO || !String(nomeCentro || chave || '').trim()) {
+    return 'Sem centro de custo';
+  }
+  return String(nomeCentro || chave).trim();
+}
+
+/** Agrupa competências por centro de custo (ordem alfabética; sem centro por último). */
+export function agruparCompetenciasPorCentroCusto(competencias, modelosMap, centrosRegistrados = []) {
+  const mapa = new Map();
+
+  for (const c of competencias || []) {
+    const centro = centroCustoCompetencia(c, modelosMap);
+    const chave = centro ? centro : CHAVE_SEM_CENTRO_CUSTO;
+    if (!mapa.has(chave)) mapa.set(chave, []);
+    mapa.get(chave).push(c);
+  }
+
+  const centrosOrdenados = [...new Set((centrosRegistrados || []).map((n) => String(n || '').trim()).filter(Boolean))].sort(
+    ordenarTextoPtBr,
+  );
+  const chavesExtras = [...mapa.keys()].filter((chave) => chave !== CHAVE_SEM_CENTRO_CUSTO && !centrosOrdenados.includes(chave));
+  chavesExtras.sort(ordenarTextoPtBr);
+
+  const chaves = [...centrosOrdenados.filter((c) => mapa.has(c)), ...chavesExtras];
+  if (mapa.has(CHAVE_SEM_CENTRO_CUSTO)) chaves.push(CHAVE_SEM_CENTRO_CUSTO);
+
+  return chaves
+    .map((chave) => {
+      const label = labelCentroCustoFolha(chave, chave === CHAVE_SEM_CENTRO_CUSTO ? '' : chave);
+      const items = ordenarCompetenciasPorNome(mapa.get(chave), modelosMap);
+      return { chave, label, items };
+    })
+    .filter((grupo) => grupo.items.length > 0);
+}
+
+/** Filtros da programação do mês — nome e centro de custo. */
+export function filtrarCompetenciasPrevisao(competencias, modelosMap, { busca = '', centro = '' } = {}) {
+  let lista = competencias || [];
+  const termo = String(busca || '').trim().toLocaleLowerCase('pt-BR');
+
+  if (termo) {
+    lista = lista.filter((c) =>
+      nomeColaboradorCompetencia(c, modelosMap).toLocaleLowerCase('pt-BR').includes(termo),
+    );
+  }
+
+  const filtroCentro = String(centro || '').trim();
+  if (filtroCentro && filtroCentro !== '__todos__') {
+    lista = lista.filter((c) => {
+      const cc = centroCustoCompetencia(c, modelosMap);
+      if (filtroCentro === CHAVE_SEM_CENTRO_CUSTO) return !cc;
+      return cc.toLocaleLowerCase('pt-BR') === filtroCentro.toLocaleLowerCase('pt-BR');
+    });
+  }
+
+  return ordenarCompetenciasPorNome(lista, modelosMap);
 }
 
 export function ordenarPessoasFolhaPorCentroENome(lista = [], colaboradoresMap = {}) {
