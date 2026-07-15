@@ -13,6 +13,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import {
+  CLASSIFICACAO_DESPESA_FOLHA,
+  CLASSIFICACAO_DESPESA_FOLHA_LABELS,
   DECIMO_PADRAO,
   FOLHA_DIA_VENCIMENTO,
   RETIRADA_FREQUENCIA_LABELS,
@@ -199,7 +201,7 @@ export default function FolhaPessoaDialog({
           ) : (
             <>
               <div>
-                <Label>Quem?</Label>
+                <Label>Como selecionar a pessoa?</Label>
                 <Select value={modoPessoa} onValueChange={setModoPessoa}>
                   <SelectTrigger className="mt-1.5">
                     <SelectValue />
@@ -263,6 +265,40 @@ export default function FolhaPessoaDialog({
               )}
             </>
           )}
+
+          <div className="rounded-lg ring-1 ring-border/40 p-3 space-y-3">
+            <Label className="font-medium">Classificação de custo</Label>
+            <div>
+              <Label>Centro de custo</Label>
+              <Input
+                className="mt-1.5"
+                value={form.centro_custo || ''}
+                onChange={(e) => setForm({ ...form, centro_custo: e.target.value })}
+                placeholder="Ex: Loja, Casa, Manutenção"
+                disabled={desligado}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Use para separar despesas por operação (loja, casa, manutenção etc.).
+              </p>
+            </div>
+            <div>
+              <Label>Tipo de despesa</Label>
+              <Select
+                value={form.classificacao_despesa || CLASSIFICACAO_DESPESA_FOLHA.DIRETA}
+                onValueChange={(v) => setForm({ ...form, classificacao_despesa: v })}
+                disabled={desligado}
+              >
+                <SelectTrigger className="mt-1.5">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(CLASSIFICACAO_DESPESA_FOLHA_LABELS).map(([k, label]) => (
+                    <SelectItem key={k} value={k}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           {ehSocio ? (
             <div className="rounded-lg ring-1 ring-border/40 p-3 space-y-3">
