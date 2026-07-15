@@ -76,9 +76,21 @@ export default function FolhaPrevisaoProjecao({ modelos, competenciaInicio }) {
           acc.decimo += l.decimo || 0;
           acc.ferias += l.ferias || 0;
           acc.retiradasSocio += l.retiradasSocio || 0;
+          acc.adicionalFeriasEstimado += l.adicionalFeriasEstimado || 0;
+          acc.custoSocios += l.custoSocios || 0;
+          acc.custoFuncionarios += l.custoFuncionarios || 0;
           return acc;
         },
-        { liquido: 0, custoTotal: 0, decimo: 0, ferias: 0, retiradasSocio: 0 },
+        {
+          liquido: 0,
+          custoTotal: 0,
+          decimo: 0,
+          ferias: 0,
+          retiradasSocio: 0,
+          adicionalFeriasEstimado: 0,
+          custoSocios: 0,
+          custoFuncionarios: 0,
+        },
       ),
     [linhas],
   );
@@ -87,23 +99,18 @@ export default function FolhaPrevisaoProjecao({ modelos, competenciaInicio }) {
   const mediaMensal = totais.custoTotal / Math.max(linhas.length, 1);
   const competenciaAtual = competenciaInicio;
 
-  const chips = [];
-  if (totais.decimo > 0) {
-    chips.push(
-      <FinanceiroSummaryChip key="decimo">13º {formatFinanceiroValor(totais.decimo)}</FinanceiroSummaryChip>,
-    );
-  }
-  if (totais.ferias > 0) {
-    chips.push(
-      <FinanceiroSummaryChip key="ferias">Férias {formatFinanceiroValor(totais.ferias)}</FinanceiroSummaryChip>,
-    );
-  }
-  if (totais.retiradasSocio > 0) {
-    chips.push(
-      <FinanceiroSummaryChip key="socios">Sócios {formatFinanceiroValor(totais.retiradasSocio)}</FinanceiroSummaryChip>,
-    );
-  }
-
+  const chips = [
+    <FinanceiroSummaryChip key="funcionarios">
+      Funcionários {formatFinanceiroValor(totais.custoFuncionarios)}
+    </FinanceiroSummaryChip>,
+    <FinanceiroSummaryChip key="socios-total">
+      Sócios {formatFinanceiroValor(totais.custoSocios)}
+    </FinanceiroSummaryChip>,
+    <FinanceiroSummaryChip key="decimo">13º {formatFinanceiroValor(totais.decimo)}</FinanceiroSummaryChip>,
+    <FinanceiroSummaryChip key="ferias-adicional">
+      1/3 férias {formatFinanceiroValor(totais.adicionalFeriasEstimado)}
+    </FinanceiroSummaryChip>,
+  ];
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
@@ -138,7 +145,7 @@ export default function FolhaPrevisaoProjecao({ modelos, competenciaInicio }) {
         <FinanceiroListaMeta
           total={linhas.length}
           totalLabel="meses projetados"
-          summaryChips={chips.length ? chips : null}
+          summaryChips={chips}
         />
       </div>
 

@@ -532,6 +532,9 @@ export function calcularProjecaoCaixa(modelos, meses = 12, competenciaInicio = n
     let decimo = 0;
     let ferias = 0;
     let retiradasSocio = 0;
+    let custoSocios = 0;
+    let custoFuncionarios = 0;
+    let adicionalFeriasEstimado = 0;
     let ativos = 0;
 
     for (const modelo of modelosVinculados) {
@@ -548,9 +551,26 @@ export function calcularProjecaoCaixa(modelos, meses = 12, competenciaInicio = n
       decimo += t.totalDecimo;
       ferias += t.totalFerias;
       retiradasSocio += t.totalRetiradaSocio;
+      adicionalFeriasEstimado += t.totalFerias / 3;
+      if ((modelo?.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === TIPO_VINCULO.SOCIO) {
+        custoSocios += t.custoTotalEmpresa;
+      } else {
+        custoFuncionarios += t.custoTotalEmpresa;
+      }
     }
 
-    linhas.push({ competencia, liquido, custoTotal, decimo, ferias, retiradasSocio, ativos });
+    linhas.push({
+      competencia,
+      liquido,
+      custoTotal,
+      decimo,
+      ferias,
+      retiradasSocio,
+      adicionalFeriasEstimado,
+      custoSocios,
+      custoFuncionarios,
+      ativos,
+    });
   }
   return linhas;
 }
@@ -651,4 +671,28 @@ export function agruparCompetenciasPorTipo(competencias, modelosMap) {
     else funcionarios.push(c);
   }
   return { funcionarios, socios };
+}
+
+function ordenarTextoPtBr(a, b) {
+  return String(a || '').localeCompare(String(b || ''), 'pt-BR', { sensitivity: 'base' });
+}
+
+export function ordenarPessoasFolhaPorCentroENome(lista = [], colaboradoresMap = {}) {
+  return [...(lista || [])].sort((a, b) => {
+    const centroA = String(a?.centro_custo || '').trim();
+    const centroB = String(b?.centro_custo || '').trim();
+    const temCentroA = centroA.length > 0;
+    const temCentroB = centroB.length > 0;
+
+    if (temCentroA && !temCentroB) return -1;
+    if (!temCentroA && temCentroB) return 1;
+    if (centroA && centroB) {
+      const byCentro = ordenarTextoPtBr(centroA, centroB);
+      if (byCentro !== 0) return byCentro;
+    }
+
+    const nomeA = colaboradoresMap[a?.colaborador_id]?.nome || a?.colaborador_nome || a?.nome || '';
+    const nomeB = colaboradoresMap[b?.colaborador_id]?.nome || b?.colaborador_nome || b?.nome || '';
+    return ordenarTextoPtBr(nomeA, nomeB);
+  });
 }
