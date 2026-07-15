@@ -391,7 +391,7 @@ export default function VendasTab() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
         <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
           <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
@@ -501,6 +501,51 @@ export default function VendasTab() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="border border-slate-500/20 border-dashed shadow-[0_10px_24px_rgba(0,0,0,0.2)] bg-[#252d3a]/55">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <div className="h-[180px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 p-3">
+              <div className="h-2 w-24 rounded bg-slate-500/25 mb-3" />
+              <div className="grid grid-cols-5 gap-1 items-end h-16 mb-3">
+                {[30, 44, 26, 52, 36].map((h, idx) => (
+                  <div key={`placeholder-top-${idx}`} className="rounded-sm bg-slate-400/20" style={{ height: `${h}%` }} />
+                ))}
+              </div>
+              <div className="space-y-2">
+                <div className="h-1.5 rounded bg-slate-500/20 w-full" />
+                <div className="h-1.5 rounded bg-slate-500/20 w-4/5" />
+                <div className="h-1.5 rounded bg-slate-500/20 w-3/5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
+        {[1, 2, 3].map((slot) => (
+          <Card
+            key={`empty-slot-${slot}`}
+            className="border border-slate-500/20 border-dashed shadow-[0_10px_24px_rgba(0,0,0,0.2)] bg-[#252d3a]/55"
+          >
+            <CardHeader className="pb-1">
+              <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-1">
+              <div className="h-[90px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 p-2.5">
+                <div className="h-1.5 w-16 rounded bg-slate-500/25 mb-2" />
+                <div className="grid grid-cols-4 gap-1 items-end h-8 mb-2">
+                  {[40, 68, 52, 74].map((h, idx) => (
+                    <div key={`placeholder-bottom-${slot}-${idx}`} className="rounded-sm bg-slate-400/20" style={{ height: `${h}%` }} />
+                  ))}
+                </div>
+                <div className="h-1.5 rounded bg-slate-500/20 w-4/5" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
