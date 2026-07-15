@@ -208,6 +208,42 @@ export async function abrirCompetenciasDoMes(competencia) {
   return { criados, pulados };
 }
 
+/** Desfaz abertura do mês: remove competências sem movimentos e não fechadas. */
+export async function desfazerAberturaCompetenciasDoMes(competencia) {
+  const competencias = await base44.entities.FolhaPrevisaoCompetencia.filter({ competencia });
+  const removidas = [];
+  const bloqueadas = [];
+
+  for (const comp of competencias || []) {
+    if (comp.status === 'fechado') {
+      bloqueadas.push({
+        id: comp.id,
+        colaborador_nome: comp.colaborador_nome,
+        motivo: 'fechada',
+      });
+      continue;
+    }
+
+    if ((comp.movimentos || []).length > 0) {
+      bloqueadas.push({
+        id: comp.id,
+        colaborador_nome: comp.colaborador_nome,
+        motivo: 'com_movimentos',
+      });
+      continue;
+    }
+
+    await base44.entities.FolhaPrevisaoCompetencia.delete(comp.id);
+    removidas.push(comp);
+  }
+
+  return {
+    total: (competencias || []).length,
+    removidas,
+    bloqueadas,
+  };
+}
+
 export async function adicionarMovimento(competenciaId, movimento) {
   const comp = await base44.entities.FolhaPrevisaoCompetencia.get(competenciaId);
   if (competenciaEstaFechada(comp)) {

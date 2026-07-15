@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  RotateCcw,
   Users,
   CalendarClock,
   TrendingUp,
@@ -43,6 +44,7 @@ import {
 } from '@/lib/folhaPrevisaoCalculos';
 import {
   abrirCompetenciasDoMes,
+  desfazerAberturaCompetenciasDoMes,
   adicionarMovimento,
   criarColaboradorParaFolha,
   listarColaboradoresAtivos,
@@ -130,6 +132,7 @@ export default function FolhaPrevisaoPage() {
     () => competenciasFiltradas.filter((c) => isCompetenciaPlanejamento(c)).length,
     [competenciasFiltradas],
   );
+  const hasCompetenciasPersistidas = competencias.length > 0;
   const mesFuturo = isCompetenciaFutura(competenciaMes);
   const grupos = useMemo(
     () => agruparCompetenciasPorTipo(competenciasFiltradas, modelosMap),
@@ -189,6 +192,39 @@ export default function FolhaPrevisaoPage() {
         : 'Nenhuma pessoa cadastrada na folha.';
       const extra = pulados.length ? ` ${pulados.length} ignorado(s) (já desligados).` : '';
       toast({ title: 'Mês aberto', description: msg + extra });
+    } catch (e) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDesfazerAbrirMes = async () => {
+    if (!window.confirm(`Desfazer abertura de ${formatCompetenciaLabel(competenciaMes)}?\n\nIsso remove da base apenas quem está sem movimentos e não está com mês fechado.`)) return;
+    setSaving(true);
+    try {
+      const { total, removidas, bloqueadas } = await desfazerAberturaCompetenciasDoMes(competenciaMes);
+      if (selectedComp && removidas.some((r) => r.id === selectedComp.id)) {
+        setSelectedComp(null);
+      }
+      invalidate();
+
+      if (!total) {
+        toast({ title: 'Nada para desfazer', description: 'Este mês ainda não foi aberto.' });
+        return;
+      }
+
+      const bloqueadasFechadas = bloqueadas.filter((b) => b.motivo === 'fechada').length;
+      const bloqueadasMov = bloqueadas.filter((b) => b.motivo === 'com_movimentos').length;
+      const partes = [];
+      if (removidas.length) partes.push(`${removidas.length} removida(s)`);
+      if (bloqueadasFechadas) partes.push(`${bloqueadasFechadas} fechada(s) preservada(s)`);
+      if (bloqueadasMov) partes.push(`${bloqueadasMov} com movimento(s) preservada(s)`);
+
+      toast({
+        title: 'Abertura desfeita',
+        description: partes.join(' · ') || 'Nenhuma competência pôde ser removida.',
+      });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
@@ -363,10 +399,21 @@ export default function FolhaPrevisaoPage() {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <Button className="gap-2" onClick={handleAbrirMes} disabled={saving}>
-              <Users className="h-4 w-4" />
-              Abrir mês
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={handleDesfazerAbrirMes}
+                disabled={saving || !hasCompetenciasPersistidas}
+              >
+                <RotateCcw className="h-4 w-4" />
+                Desfazer abrir mês
+              </Button>
+              <Button className="gap-2" onClick={handleAbrirMes} disabled={saving}>
+                <Users className="h-4 w-4" />
+                Abrir mês
+              </Button>
+            </div>
           </div>
 
           <FolhaPrevisaoResumo
