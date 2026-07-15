@@ -1,0 +1,24 @@
+{
+  "name": "FolhaCentroCusto",
+  "type": "object",
+  "description": "Centro de custo da folha de pessoas — cadastrado pelo FAB na tela Folha",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do centro (ex: Loja, Casa, Manutenção)"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o centro está ativo para classificação"
+    },
+    "ordem": {
+      "type": "number",
+      "default": 0,
+      "description": "Ordem de exibição nas bolinhas de arrastar"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

@@ -77,6 +77,20 @@
       "default": 50,
       "description": "Percentual do salário base por parcela"
     },
+    "centro_custo": {
+      "type": "string",
+      "description": "Centro de custo (nome cadastrado em FolhaCentroCusto)"
+    },
+    "custo_direto": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o custo é direto do negócio"
+    },
+    "classificacao_despesa": {
+      "type": "string",
+      "enum": ["direta", "indireta"],
+      "default": "direta"
+    },
     "ferias_programadas": {
       "type": "array",
       "description": "Férias previstas por competência",

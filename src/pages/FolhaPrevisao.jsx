@@ -138,9 +138,10 @@ export default function FolhaPrevisaoPage() {
     queryFn: () => base44.entities.ContasFinanceiras.list(),
   });
 
-  const { data: centrosCustoFinanceiros = [] } = useQuery({
+  const { data: centrosCustoFinanceiros = [], refetch: refetchCentros } = useQuery({
     queryKey: ['folha-previsao', 'centros-custo-financeiros'],
     queryFn: listarCentrosCustoFinanceiros,
+    staleTime: 0,
   });
 
   const modelosMap = useMemo(() => mapaModelosPorColaborador(modelos), [modelos]);
@@ -323,14 +324,22 @@ export default function FolhaPrevisaoPage() {
     }
     setSaving(true);
     try {
-      await adicionarCentroCustoFinanceiro(nome);
+      const novos = await adicionarCentroCustoFinanceiro(nome);
+      queryClient.setQueryData(['folha-previsao', 'centros-custo-financeiros'], novos);
       invalidate();
       setNovoCentroCusto('');
       setCentroDialogOpen(false);
       setFabOpen(false);
       toast({ title: 'Centro de custo criado', description: nome });
     } catch (e) {
-      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+      const msg = String(e?.message || e || '');
+      toast({
+        title: 'Erro ao criar centro',
+        description: /entity|schema|not found/i.test(msg)
+          ? 'Publique a entidade FolhaCentroCusto no painel Base44 (arquivo base44/entities/FolhaCentroCusto.jsonc) e tente de novo.'
+          : msg,
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
@@ -622,6 +631,7 @@ export default function FolhaPrevisaoPage() {
                             onDragStart={(e) => {
                               e.dataTransfer.setData('text/plain', m.id);
                               setDraggingModeloId(m.id);
+                              void refetchCentros();
                             }}
                             onDragEnd={() => {
                               setDraggingModeloId('');

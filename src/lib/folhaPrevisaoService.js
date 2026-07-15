@@ -31,48 +31,149 @@ export async function listarColaboradoresAtivos() {
   return (todos || []).filter((c) => c.ativo !== false);
 }
 
-export async function listarCentrosCustoFinanceiros() {
+function normalizarNomeCentro(nome) {
+  return String(nome || '').trim();
+}
+
+function ordenarNomesCentro(nomes) {
+  return [...new Set((nomes || []).map(normalizarNomeCentro).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }),
+  );
+}
+
+function isEntityNotRegistered(err) {
+  if (!err) return false;
+  const msg = String(err?.message || err || '').toLowerCase();
+  const status = err?.status || err?.response?.status;
+  if (status === 404) return true;
+  if (status === 400 && /entity|schema|not\s*found|unknown/.test(msg)) return true;
+  if (/\bentity\b.*not\s*found/.test(msg)) return true;
+  if (/unknown\s*entity/.test(msg)) return true;
+  if (/no\s*such\s*entity/.test(msg)) return true;
+  return false;
+}
+
+function folhaCentroCustoDisponivel() {
+  const ref = base44?.entities?.FolhaCentroCusto;
+  return Boolean(ref && typeof ref.list === 'function');
+}
+
+async function listarCentrosCustoLegadoDadosEmpresa() {
   const dados = await base44.entities.DadosEmpresa.list();
   const empresa = dados?.[0] || null;
   const lista = Array.isArray(empresa?.centros_custo_financeiros)
     ? empresa.centros_custo_financeiros
     : [];
-  return lista
-    .map((item) => String(item || '').trim())
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  return ordenarNomesCentro(lista);
 }
 
-export async function adicionarCentroCustoFinanceiro(nome) {
-  const nomeLimpo = String(nome || '').trim();
-  if (!nomeLimpo) throw new Error('Informe o nome do centro de custo.');
+async function listarCentrosCustoEntidade() {
+  if (!folhaCentroCustoDisponivel()) return null;
+  try {
+    const rows = await base44.entities.FolhaCentroCusto.list('-ordem', '-created_date');
+    const nomes = (rows || [])
+      .filter((row) => row?.ativo !== false)
+      .map((row) => normalizarNomeCentro(row?.nome))
+      .filter(Boolean);
+    return ordenarNomesCentro(nomes);
+  } catch (err) {
+    if (isEntityNotRegistered(err)) return null;
+    throw err;
+  }
+}
 
+async function migrarCentrosLegadoParaEntidade(legado = []) {
+  if (!folhaCentroCustoDisponivel() || !legado.length) return;
+  try {
+    const atuais = await base44.entities.FolhaCentroCusto.list();
+    const existentes = new Set(
+      (atuais || []).map((row) => normalizarNomeCentro(row?.nome).toLocaleLowerCase('pt-BR')),
+    );
+    let ordem = (atuais || []).length;
+    for (const nome of legado) {
+      const chave = nome.toLocaleLowerCase('pt-BR');
+      if (existentes.has(chave)) continue;
+      await base44.entities.FolhaCentroCusto.create({
+        nome,
+        ativo: true,
+        ordem,
+      });
+      existentes.add(chave);
+      ordem += 1;
+    }
+  } catch (err) {
+    if (!isEntityNotRegistered(err)) throw err;
+  }
+}
+
+export async function listarCentrosCustoFinanceiros() {
+  const daEntidade = await listarCentrosCustoEntidade();
+  if (daEntidade?.length) return daEntidade;
+
+  const legado = await listarCentrosCustoLegadoDadosEmpresa();
+  if (legado.length) {
+    await migrarCentrosLegadoParaEntidade(legado);
+    const migrados = await listarCentrosCustoEntidade();
+    if (migrados?.length) return migrados;
+    return legado;
+  }
+
+  return daEntidade || [];
+}
+
+async function adicionarCentroCustoEntidade(nomeLimpo) {
+  if (!folhaCentroCustoDisponivel()) return null;
+  try {
+    const atuais = await base44.entities.FolhaCentroCusto.list();
+    const dup = (atuais || []).find(
+      (row) => normalizarNomeCentro(row?.nome).toLocaleLowerCase('pt-BR') === nomeLimpo.toLocaleLowerCase('pt-BR'),
+    );
+    if (!dup) {
+      await base44.entities.FolhaCentroCusto.create({
+        nome: nomeLimpo,
+        ativo: true,
+        ordem: (atuais || []).length,
+      });
+    }
+    return listarCentrosCustoFinanceiros();
+  } catch (err) {
+    if (isEntityNotRegistered(err)) return null;
+    throw err;
+  }
+}
+
+async function adicionarCentroCustoLegadoDadosEmpresa(nomeLimpo) {
   const dados = await base44.entities.DadosEmpresa.list();
   const empresa = dados?.[0] || null;
   const atuais = Array.isArray(empresa?.centros_custo_financeiros)
     ? empresa.centros_custo_financeiros
     : [];
 
-  const normalizado = [...atuais, nomeLimpo]
-    .map((item) => String(item || '').trim())
-    .filter(Boolean);
-  const unicos = Array.from(
-    new Map(normalizado.map((item) => [item.toLocaleLowerCase('pt-BR'), item])).values(),
-  ).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  const unicos = ordenarNomesCentro([...atuais, nomeLimpo]);
 
   if (empresa?.id) {
     await base44.entities.DadosEmpresa.update(empresa.id, {
-      ...empresa,
       centros_custo_financeiros: unicos,
     });
   } else {
     await base44.entities.DadosEmpresa.create({
+      razao_social: 'Empresa',
       nome_fantasia: 'Configuração ERP',
       centros_custo_financeiros: unicos,
     });
   }
 
   return unicos;
+}
+
+export async function adicionarCentroCustoFinanceiro(nome) {
+  const nomeLimpo = normalizarNomeCentro(nome);
+  if (!nomeLimpo) throw new Error('Informe o nome do centro de custo.');
+
+  const viaEntidade = await adicionarCentroCustoEntidade(nomeLimpo);
+  if (viaEntidade) return viaEntidade;
+
+  return adicionarCentroCustoLegadoDadosEmpresa(nomeLimpo);
 }
 
 /** Cria colaborador mínimo para cadastro na folha (quando a pessoa ainda não existe no sistema). */
