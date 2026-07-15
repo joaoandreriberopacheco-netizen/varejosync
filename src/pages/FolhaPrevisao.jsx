@@ -3,6 +3,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   ChevronLeft,
   ChevronRight,
@@ -48,12 +57,15 @@ import {
   adicionarMovimento,
   criarColaboradorParaFolha,
   listarColaboradoresAtivos,
+  listarCentrosCustoFinanceiros,
+  adicionarCentroCustoFinanceiro,
   listarCompetencias,
   listarModelos,
   reativarNaFolha,
   registrarDesligamento,
   removerMovimento,
   salvarCadastroPessoaFolha,
+  atualizarCentroCustoPessoaFolha,
   sincronizarLancamentoFinanceiro,
   sincronizarFechamentoCompetencias,
 } from '@/lib/folhaPrevisaoService';
@@ -95,6 +107,11 @@ export default function FolhaPrevisaoPage() {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [filtroVinculo, setFiltroVinculo] = useState('todos');
+  const [fabOpen, setFabOpen] = useState(false);
+  const [centroDialogOpen, setCentroDialogOpen] = useState(false);
+  const [novoCentroCusto, setNovoCentroCusto] = useState('');
+  const [draggingModeloId, setDraggingModeloId] = useState('');
+  const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
 
   const { data: competencias = [], isLoading: loadingComp } = useQuery({
     queryKey: ['folha-previsao', 'competencias', competenciaMes],
@@ -117,6 +134,11 @@ export default function FolhaPrevisaoPage() {
   const { data: contas = [] } = useQuery({
     queryKey: ['folha-previsao', 'contas'],
     queryFn: () => base44.entities.ContasFinanceiras.list(),
+  });
+
+  const { data: centrosCustoFinanceiros = [] } = useQuery({
+    queryKey: ['folha-previsao', 'centros-custo-financeiros'],
+    queryFn: listarCentrosCustoFinanceiros,
   });
 
   const modelosMap = useMemo(() => mapaModelosPorColaborador(modelos), [modelos]);
@@ -171,6 +193,27 @@ export default function FolhaPrevisaoPage() {
     ),
     [pessoasCadastradas, filtroVinculo, colaboradoresMap],
   );
+
+  const centrosCustoSugestoes = useMemo(() => {
+    const fromPessoas = pessoasCadastradas
+      .map((p) => String(p?.centro_custo || '').trim())
+      .filter(Boolean);
+    const unicos = Array.from(
+      new Set([...(centrosCustoFinanceiros || []), ...fromPessoas].map((v) => String(v || '').trim()).filter(Boolean)),
+    );
+    return unicos.sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  }, [pessoasCadastradas, centrosCustoFinanceiros]);
+
+  const pessoasPorCentro = useMemo(() => {
+    const mapa = {};
+    for (const pessoa of pessoasFiltradas) {
+      const centro = String(pessoa.centro_custo || '').trim();
+      const chave = centro || '__sem__';
+      if (!mapa[chave]) mapa[chave] = [];
+      mapa[chave].push(pessoa);
+    }
+    return mapa;
+  }, [pessoasFiltradas]);
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['folha-previsao'] });
@@ -250,12 +293,56 @@ export default function FolhaPrevisaoPage() {
         pessoaDialog?.id || null,
       );
       invalidate();
+      setFabOpen(false);
       setPessoaDialog(null);
       toast({ title: 'Pessoa salva', description: 'Ela já entra na programação e na projeção.' });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAdicionarCentroCusto = async () => {
+    const nome = String(novoCentroCusto || '').trim();
+    if (!nome) {
+      toast({ title: 'Informe o nome do centro de custo', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    try {
+      await adicionarCentroCustoFinanceiro(nome);
+      invalidate();
+      setNovoCentroCusto('');
+      setCentroDialogOpen(false);
+      setFabOpen(false);
+      toast({ title: 'Centro de custo criado', description: nome });
+    } catch (e) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleMoverPessoaCentro = async (modelo, centroDestino) => {
+    if (!modelo?.id) return;
+    const centroAtual = String(modelo.centro_custo || '').trim();
+    const destino = String(centroDestino || '').trim();
+    if (centroAtual === destino) return;
+    setSaving(true);
+    try {
+      await atualizarCentroCustoPessoaFolha(modelo.id, destino);
+      invalidate();
+      toast({
+        title: 'Centro de custo atualizado',
+        description: `${modelo.colaborador_nome || modelo.nome} → ${destino || 'Sem centro de custo'}`,
+      });
+    } catch (e) {
+      toast({ title: 'Erro ao mover pessoa', description: e.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+      setDropCentroAtual('__none__');
+      setDraggingModeloId('');
     }
   };
 
@@ -462,35 +549,87 @@ export default function FolhaPrevisaoPage() {
         </TabsContent>
 
         <TabsContent value="pessoas" className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-start justify-between gap-2">
             <p className="text-xs text-muted-foreground max-w-xl leading-relaxed">
-              Cadastre cada pessoa uma vez: escolha vínculo, centro de custo e se a despesa é direta ou indireta. Ela entra automaticamente na programação.
+              Organize pessoas por centro de custo e arraste entre cartões para reclassificar rapidamente.
+              O botão <strong>+</strong> flutuante abre cadastro de pessoa e criação de centro de custo.
             </p>
-            <Button className="gap-2 shrink-0 w-full sm:w-auto" onClick={() => setPessoaDialog({})}>
-              <Plus className="h-4 w-4" /> Cadastrar pessoa
-            </Button>
           </div>
 
           <FiltroVinculoChips value={filtroVinculo} onChange={setFiltroVinculo} />
 
           <FinanceiroListaEstado
             loading={loadingModelos}
-            vazio={!loadingModelos && pessoasFiltradas.length === 0}
+            vazio={!loadingModelos && pessoasFiltradas.length === 0 && centrosCustoSugestoes.length === 0}
             vazioMensagem="Nenhuma pessoa cadastrada na folha."
             vazioIcon={Users}
           >
-            <P38MobileLineList className="block md:!block rounded-lg overflow-hidden">
-              {pessoasFiltradas.map((m, idx) => (
-                <FolhaPrevisaoModeloRow
-                  key={m.id}
-                  modelo={m}
-                  colaborador={colaboradoresMap[m.colaborador_id]}
-                  onEdit={setPessoaDialog}
-                  onDelete={handleDeletePessoa}
-                  striped={idx % 2 === 1}
-                />
-              ))}
-            </P38MobileLineList>
+            <div className="space-y-3">
+              {[...centrosCustoSugestoes, '__sem__'].map((centro) => {
+                const chave = centro || '__sem__';
+                const pessoas = pessoasPorCentro[chave] || [];
+                const centroLabel = chave === '__sem__' ? 'Sem centro de custo' : centro;
+                return (
+                  <div
+                    key={chave}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (draggingModeloId) setDropCentroAtual(chave);
+                    }}
+                    onDragLeave={() => setDropCentroAtual((v) => (v === chave ? '__none__' : v))}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const modeloId = e.dataTransfer.getData('text/plain');
+                      const modelo = pessoasFiltradas.find((p) => p.id === modeloId);
+                      if (modelo) void handleMoverPessoaCentro(modelo, chave === '__sem__' ? '' : centro);
+                    }}
+                    className={cn(
+                      'rounded-xl border border-border/60 bg-card/40',
+                      dropCentroAtual === chave && draggingModeloId
+                        ? 'ring-2 ring-primary/50 border-primary/50'
+                        : '',
+                    )}
+                  >
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">{centroLabel}</p>
+                        <p className="text-[11px] text-muted-foreground">{pessoas.length} pessoa(s)</p>
+                      </div>
+                    </div>
+                    {pessoas.length > 0 ? (
+                      <P38MobileLineList className="block md:!block rounded-none overflow-hidden">
+                        {pessoas.map((m, idx) => (
+                          <div
+                            key={m.id}
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('text/plain', m.id);
+                              setDraggingModeloId(m.id);
+                            }}
+                            onDragEnd={() => {
+                              setDraggingModeloId('');
+                              setDropCentroAtual('__none__');
+                            }}
+                          >
+                            <FolhaPrevisaoModeloRow
+                              modelo={m}
+                              colaborador={colaboradoresMap[m.colaborador_id]}
+                              onEdit={setPessoaDialog}
+                              onDelete={handleDeletePessoa}
+                              striped={idx % 2 === 1}
+                            />
+                          </div>
+                        ))}
+                      </P38MobileLineList>
+                    ) : (
+                      <div className="px-3 py-3 text-xs text-muted-foreground">
+                        Arraste uma pessoa para este centro.
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </FinanceiroListaEstado>
 
           {!loadingModelos && pessoasFiltradas.length === 0 && (
@@ -519,11 +658,32 @@ export default function FolhaPrevisaoPage() {
         onClose={() => setPessoaDialog(null)}
         cadastro={pessoaDialog?.id ? pessoaDialog : null}
         colaboradoresDisponiveis={colaboradoresDisponiveis}
+        centrosCustoSugestoes={centrosCustoSugestoes}
         onSave={handleSavePessoa}
         onDesligar={setDesligamentoModelo}
         onReativar={handleReativar}
         saving={saving}
       />
+
+      <Dialog open={centroDialogOpen} onOpenChange={setCentroDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Novo centro de custo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Nome do centro</Label>
+            <Input
+              value={novoCentroCusto}
+              onChange={(e) => setNovoCentroCusto(e.target.value)}
+              placeholder="Ex: Loja Centro, Casa, Manutenção"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCentroDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAdicionarCentroCusto} disabled={saving}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <FolhaPrevisaoDesligamentoDialog
         open={Boolean(desligamentoModelo)}
@@ -539,6 +699,36 @@ export default function FolhaPrevisaoPage() {
         onSave={handleAddMovimento}
         saving={saving}
       />
+
+      <div className="fixed right-4 bottom-20 md:bottom-6 z-40">
+        {fabOpen && (
+          <div className="mb-2 flex flex-col items-end gap-2">
+            <Button
+              size="sm"
+              className="rounded-full shadow-lg"
+              onClick={() => setPessoaDialog({})}
+            >
+              Cadastrar pessoa
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="rounded-full shadow-lg"
+              onClick={() => setCentroDialogOpen(true)}
+            >
+              Novo centro de custo
+            </Button>
+          </div>
+        )}
+        <Button
+          size="icon"
+          className="h-14 w-14 rounded-full shadow-xl"
+          onClick={() => setFabOpen((v) => !v)}
+          aria-label="Abrir ações de cadastro"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      </div>
     </div>
   );
 }

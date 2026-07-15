@@ -31,6 +31,50 @@ export async function listarColaboradoresAtivos() {
   return (todos || []).filter((c) => c.ativo !== false);
 }
 
+export async function listarCentrosCustoFinanceiros() {
+  const dados = await base44.entities.DadosEmpresa.list();
+  const empresa = dados?.[0] || null;
+  const lista = Array.isArray(empresa?.centros_custo_financeiros)
+    ? empresa.centros_custo_financeiros
+    : [];
+  return lista
+    .map((item) => String(item || '').trim())
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+}
+
+export async function adicionarCentroCustoFinanceiro(nome) {
+  const nomeLimpo = String(nome || '').trim();
+  if (!nomeLimpo) throw new Error('Informe o nome do centro de custo.');
+
+  const dados = await base44.entities.DadosEmpresa.list();
+  const empresa = dados?.[0] || null;
+  const atuais = Array.isArray(empresa?.centros_custo_financeiros)
+    ? empresa.centros_custo_financeiros
+    : [];
+
+  const normalizado = [...atuais, nomeLimpo]
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+  const unicos = Array.from(
+    new Map(normalizado.map((item) => [item.toLocaleLowerCase('pt-BR'), item])).values(),
+  ).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+
+  if (empresa?.id) {
+    await base44.entities.DadosEmpresa.update(empresa.id, {
+      ...empresa,
+      centros_custo_financeiros: unicos,
+    });
+  } else {
+    await base44.entities.DadosEmpresa.create({
+      nome_fantasia: 'Configuração ERP',
+      centros_custo_financeiros: unicos,
+    });
+  }
+
+  return unicos;
+}
+
 /** Cria colaborador mínimo para cadastro na folha (quando a pessoa ainda não existe no sistema). */
 export async function criarColaboradorParaFolha({ nome, email }) {
   const nomeNorm = String(nome || '').trim();
@@ -61,6 +105,16 @@ export async function salvarCadastroPessoaFolha(payload, modeloId = null) {
 
   const body = {
     ...payload,
+    custo_direto:
+      typeof payload.custo_direto === 'boolean'
+        ? payload.custo_direto
+        : payload.classificacao_despesa !== 'indireta',
+    classificacao_despesa:
+      (typeof payload.custo_direto === 'boolean'
+        ? payload.custo_direto
+        : payload.classificacao_despesa !== 'indireta')
+        ? 'direta'
+        : 'indireta',
     nome: payload.colaborador_nome || payload.nome,
     colaborador_nome: payload.colaborador_nome || payload.nome,
     dia_vencimento: FOLHA_DIA_VENCIMENTO,
@@ -71,6 +125,18 @@ export async function salvarCadastroPessoaFolha(payload, modeloId = null) {
     return base44.entities.FolhaPrevisaoModelo.update(modeloId, body);
   }
   return base44.entities.FolhaPrevisaoModelo.create(body);
+}
+
+export async function atualizarCentroCustoPessoaFolha(modeloId, centroCusto, custoDireto = null) {
+  if (!modeloId) throw new Error('Modelo da folha não informado.');
+  const payload = {
+    centro_custo: String(centroCusto || '').trim(),
+  };
+  if (typeof custoDireto === 'boolean') {
+    payload.custo_direto = custoDireto;
+    payload.classificacao_despesa = custoDireto ? 'direta' : 'indireta';
+  }
+  return base44.entities.FolhaPrevisaoModelo.update(modeloId, payload);
 }
 
 export function resolverModeloColaborador(modelos, colaboradorId) {
@@ -318,6 +384,11 @@ export async function sincronizarLancamentoFinanceiro(competencia, opcoes = {}) 
     conta_financeira_id: contaFinanceiraId,
     categoria_id: categoriaId || '',
     categoria: categoriaNome || (modelo?.tipo_vinculo === 'socio' ? 'Retirada sócio' : 'Salários'),
+    centro_custo: String(modelo?.centro_custo || '').trim() || '',
+    custo_direto:
+      typeof modelo?.custo_direto === 'boolean'
+        ? modelo.custo_direto
+        : modelo?.classificacao_despesa !== 'indireta',
     tags: [
       'conta_pagar',
       'folha_previsao',

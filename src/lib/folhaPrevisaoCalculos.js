@@ -636,6 +636,12 @@ export function criarRubricasPadrao(tipoVinculo = TIPO_VINCULO.FUNCIONARIO) {
 export function criarModeloComDefaults(extra = {}) {
   const tipo = extra.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO;
   const socio = tipo === TIPO_VINCULO.SOCIO;
+  const custoDiretoExtra =
+    typeof extra.custo_direto === 'boolean'
+      ? extra.custo_direto
+      : extra.classificacao_despesa === CLASSIFICACAO_DESPESA_FOLHA.INDIRETA
+        ? false
+        : true;
   return {
     dia_vencimento: FOLHA_DIA_VENCIMENTO,
     ativo: true,
@@ -646,7 +652,10 @@ export function criarModeloComDefaults(extra = {}) {
     ...DECIMO_PADRAO,
     decimo_terceiro_ativo: socio ? false : true,
     centro_custo: '',
-    classificacao_despesa: CLASSIFICACAO_DESPESA_FOLHA.DIRETA,
+    custo_direto: custoDiretoExtra,
+    classificacao_despesa: custoDiretoExtra
+      ? CLASSIFICACAO_DESPESA_FOLHA.DIRETA
+      : CLASSIFICACAO_DESPESA_FOLHA.INDIRETA,
     ferias_programadas: [],
     rubricas: criarRubricasPadrao(tipo),
     ...extra,

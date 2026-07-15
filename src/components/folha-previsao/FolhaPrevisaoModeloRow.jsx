@@ -25,8 +25,13 @@ export default function FolhaPrevisaoModeloRow({
   const salarioBase = extrairSalarioBase(modelo);
   const retiradaFixa = Number(modelo.retirada_valor_fixo) || 0;
   const nome = colaborador?.nome || modelo.colaborador_nome || modelo.nome || 'Pessoa';
-  const classificacaoDespesa =
-    modelo.classificacao_despesa || CLASSIFICACAO_DESPESA_FOLHA.DIRETA;
+  const custoDireto =
+    typeof modelo.custo_direto === 'boolean'
+      ? modelo.custo_direto
+      : modelo.classificacao_despesa !== CLASSIFICACAO_DESPESA_FOLHA.INDIRETA;
+  const classificacaoDespesa = custoDireto
+    ? CLASSIFICACAO_DESPESA_FOLHA.DIRETA
+    : CLASSIFICACAO_DESPESA_FOLHA.INDIRETA;
   const centroCusto = String(modelo.centro_custo || '').trim();
 
   const resumoPrincipal =

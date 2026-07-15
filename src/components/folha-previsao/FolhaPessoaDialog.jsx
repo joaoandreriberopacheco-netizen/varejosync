@@ -13,9 +13,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import {
-  CLASSIFICACAO_DESPESA_FOLHA,
-  CLASSIFICACAO_DESPESA_FOLHA_LABELS,
-  DECIMO_PADRAO,
   FOLHA_DIA_VENCIMENTO,
   RETIRADA_FREQUENCIA_LABELS,
   SITUACAO_FOLHA,
@@ -72,6 +69,7 @@ export default function FolhaPessoaDialog({
   onClose,
   cadastro,
   colaboradoresDisponiveis = [],
+  centrosCustoSugestoes = [],
   onSave,
   onDesligar,
   onReativar,
@@ -201,18 +199,27 @@ export default function FolhaPessoaDialog({
           ) : (
             <>
               <div>
-                <Label>Como selecionar a pessoa?</Label>
-                <Select value={modoPessoa} onValueChange={setModoPessoa}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colaboradoresDisponiveis.length > 0 && (
-                      <SelectItem value="existente">Já cadastrado no sistema</SelectItem>
-                    )}
-                    <SelectItem value="nova">Cadastrar nome agora</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Como você quer adicionar?</Label>
+                <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {colaboradoresDisponiveis.length > 0 && (
+                    <Button
+                      type="button"
+                      variant={modoPessoa === 'existente' ? 'default' : 'outline'}
+                      className="justify-start h-10"
+                      onClick={() => setModoPessoa('existente')}
+                    >
+                      Usar pessoa já cadastrada
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant={modoPessoa === 'nova' ? 'default' : 'outline'}
+                    className="justify-start h-10"
+                    onClick={() => setModoPessoa('nova')}
+                  >
+                    Cadastrar nova pessoa
+                  </Button>
+                </div>
               </div>
 
               {modoPessoa === 'existente' ? (
@@ -275,28 +282,48 @@ export default function FolhaPessoaDialog({
                 value={form.centro_custo || ''}
                 onChange={(e) => setForm({ ...form, centro_custo: e.target.value })}
                 placeholder="Ex: Loja, Casa, Manutenção"
+                list="centros-custo-sugestoes"
                 disabled={desligado}
               />
+              {centrosCustoSugestoes.length > 0 && (
+                <datalist id="centros-custo-sugestoes">
+                  {centrosCustoSugestoes.map((item) => (
+                    <option key={item} value={item} />
+                  ))}
+                </datalist>
+              )}
               <p className="text-[10px] text-muted-foreground mt-1">
                 Use para separar despesas por operação (loja, casa, manutenção etc.).
               </p>
             </div>
             <div>
-              <Label>Tipo de despesa</Label>
-              <Select
-                value={form.classificacao_despesa || CLASSIFICACAO_DESPESA_FOLHA.DIRETA}
-                onValueChange={(v) => setForm({ ...form, classificacao_despesa: v })}
-                disabled={desligado}
-              >
-                <SelectTrigger className="mt-1.5">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(CLASSIFICACAO_DESPESA_FOLHA_LABELS).map(([k, label]) => (
-                    <SelectItem key={k} value={k}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-start gap-2 rounded-lg border border-border/60 px-3 py-2.5">
+                <Checkbox
+                  id="custo-direto"
+                  checked={
+                    typeof form.custo_direto === 'boolean'
+                      ? form.custo_direto
+                      : form.classificacao_despesa !== 'indireta'
+                  }
+                  onCheckedChange={(checked) => {
+                    const custoDireto = Boolean(checked);
+                    setForm({
+                      ...form,
+                      custo_direto: custoDireto,
+                      classificacao_despesa: custoDireto ? 'direta' : 'indireta',
+                    });
+                  }}
+                  disabled={desligado}
+                />
+                <div>
+                  <Label htmlFor="custo-direto" className="font-medium">
+                    Custo direto do negócio
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Ativo por padrão. Desative para marcar como custo indireto/apoio.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
