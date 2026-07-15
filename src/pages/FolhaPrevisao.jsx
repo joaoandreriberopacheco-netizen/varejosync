@@ -6,13 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   ChevronLeft,
   ChevronRight,
   Plus,
@@ -36,6 +29,7 @@ import FolhaPrevisaoDetalheDrawer from '@/components/folha-previsao/FolhaPrevisa
 import FolhaPrevisaoDesligamentoDialog from '@/components/folha-previsao/FolhaPrevisaoDesligamentoDialog';
 import FolhaPrevisaoProjecao from '@/components/folha-previsao/FolhaPrevisaoProjecao';
 import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
+import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
 import {
   calcularTotaisGrupo,
   formatCompetenciaLabel,
@@ -59,8 +53,7 @@ import {
   adicionarMovimento,
   criarColaboradorParaFolha,
   listarColaboradoresAtivos,
-  listarCentrosCustoFinanceiros,
-  adicionarCentroCustoFinanceiro,
+  listarCentrosCustoRegistros,
   listarCompetencias,
   listarModelos,
   reativarNaFolha,
@@ -111,7 +104,6 @@ export default function FolhaPrevisaoPage() {
   const [filtroVinculo, setFiltroVinculo] = useState('todos');
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
-  const [novoCentroCusto, setNovoCentroCusto] = useState('');
   const [draggingModeloId, setDraggingModeloId] = useState('');
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
 
@@ -138,11 +130,21 @@ export default function FolhaPrevisaoPage() {
     queryFn: () => base44.entities.ContasFinanceiras.list(),
   });
 
-  const { data: centrosCustoFinanceiros = [], refetch: refetchCentros } = useQuery({
-    queryKey: ['folha-previsao', 'centros-custo-financeiros'],
-    queryFn: listarCentrosCustoFinanceiros,
+  const { data: centrosCustoRegistros = [], refetch: refetchCentros } = useQuery({
+    queryKey: ['folha-previsao', 'centros-custo-registros'],
+    queryFn: listarCentrosCustoRegistros,
     staleTime: 0,
   });
+
+  const centrosRegistrados = useMemo(
+    () =>
+      [...(centrosCustoRegistros || [])]
+        .filter((row) => row?.ativo !== false)
+        .map((row) => String(row?.nome || '').trim())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })),
+    [centrosCustoRegistros],
+  );
 
   const modelosMap = useMemo(() => mapaModelosPorColaborador(modelos), [modelos]);
   const competenciasVisao = useMemo(
@@ -197,15 +199,6 @@ export default function FolhaPrevisaoPage() {
     [pessoasCadastradas, filtroVinculo, colaboradoresMap],
   );
 
-  const centrosRegistrados = useMemo(
-    () =>
-      [...(centrosCustoFinanceiros || [])]
-        .map((v) => String(v || '').trim())
-        .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })),
-    [centrosCustoFinanceiros],
-  );
-
   const centrosRegistradosSet = useMemo(
     () => new Set(centrosRegistrados.map((c) => c.toLocaleLowerCase('pt-BR'))),
     [centrosRegistrados],
@@ -231,6 +224,17 @@ export default function FolhaPrevisaoPage() {
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['folha-previsao'] });
   }, [queryClient]);
+
+  const invalidateCentros = useCallback(
+    (lista) => {
+      if (lista) {
+        queryClient.setQueryData(['folha-previsao', 'centros-custo-registros'], lista);
+      }
+      void refetchCentros();
+      invalidate();
+    },
+    [queryClient, refetchCentros, invalidate],
+  );
 
   const handleAbrirMes = async () => {
     const colaboradorAlvo = isCompetenciaPlanejamento(selectedComp) ? selectedComp.colaborador_id : null;
@@ -316,33 +320,9 @@ export default function FolhaPrevisaoPage() {
     }
   };
 
-  const handleAdicionarCentroCusto = async () => {
-    const nome = String(novoCentroCusto || '').trim();
-    if (!nome) {
-      toast({ title: 'Informe o nome do centro de custo', variant: 'destructive' });
-      return;
-    }
-    setSaving(true);
-    try {
-      const novos = await adicionarCentroCustoFinanceiro(nome);
-      queryClient.setQueryData(['folha-previsao', 'centros-custo-financeiros'], novos);
-      invalidate();
-      setNovoCentroCusto('');
-      setCentroDialogOpen(false);
-      setFabOpen(false);
-      toast({ title: 'Centro de custo criado', description: nome });
-    } catch (e) {
-      const msg = String(e?.message || e || '');
-      toast({
-        title: 'Erro ao criar centro',
-        description: /entity|schema|not found/i.test(msg)
-          ? 'Publique a entidade FolhaCentroCusto no painel Base44 (arquivo base44/entities/FolhaCentroCusto.jsonc) e tente de novo.'
-          : msg,
-        variant: 'destructive',
-      });
-    } finally {
-      setSaving(false);
-    }
+  const handleAbrirCentrosCusto = () => {
+    setFabOpen(false);
+    setCentroDialogOpen(true);
   };
 
   const handleMoverPessoaCentro = async (modelo, centroDestino) => {
@@ -692,25 +672,11 @@ export default function FolhaPrevisaoPage() {
         saving={saving}
       />
 
-      <Dialog open={centroDialogOpen} onOpenChange={setCentroDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Novo centro de custo</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label>Nome do centro</Label>
-            <Input
-              value={novoCentroCusto}
-              onChange={(e) => setNovoCentroCusto(e.target.value)}
-              placeholder="Ex: Loja Centro, Casa, Manutenção"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCentroDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleAdicionarCentroCusto} disabled={saving}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <FolhaCentrosCustoDialog
+        open={centroDialogOpen}
+        onClose={() => setCentroDialogOpen(false)}
+        onChanged={invalidateCentros}
+      />
 
       <FolhaPrevisaoDesligamentoDialog
         open={Boolean(desligamentoModelo)}
@@ -756,9 +722,9 @@ export default function FolhaPrevisaoPage() {
               size="sm"
               variant="secondary"
               className="rounded-full shadow-lg"
-              onClick={() => setCentroDialogOpen(true)}
+              onClick={handleAbrirCentrosCusto}
             >
-              Novo centro de custo
+              Centros de custo
             </Button>
           </div>
         )}

@@ -41,6 +41,17 @@ function ordenarNomesCentro(nomes) {
   );
 }
 
+function ordenarCentrosRegistros(rows) {
+  return [...(rows || [])].sort((a, b) => {
+    const ordemA = Number(a?.ordem) || 0;
+    const ordemB = Number(b?.ordem) || 0;
+    if (ordemA !== ordemB) return ordemA - ordemB;
+    return normalizarNomeCentro(a?.nome).localeCompare(normalizarNomeCentro(b?.nome), 'pt-BR', {
+      sensitivity: 'base',
+    });
+  });
+}
+
 function isEntityNotRegistered(err) {
   if (!err) return false;
   const msg = String(err?.message || err || '').toLowerCase();
@@ -67,19 +78,50 @@ async function listarCentrosCustoLegadoDadosEmpresa() {
   return ordenarNomesCentro(lista);
 }
 
-async function listarCentrosCustoEntidade() {
+async function listarCentrosCustoRegistrosEntidade() {
   if (!folhaCentroCustoDisponivel()) return null;
   try {
-    const rows = await base44.entities.FolhaCentroCusto.list('-ordem', '-created_date');
-    const nomes = (rows || [])
-      .filter((row) => row?.ativo !== false)
-      .map((row) => normalizarNomeCentro(row?.nome))
-      .filter(Boolean);
-    return ordenarNomesCentro(nomes);
+    const rows = await base44.entities.FolhaCentroCusto.list();
+    return ordenarCentrosRegistros(rows);
   } catch (err) {
     if (isEntityNotRegistered(err)) return null;
     throw err;
   }
+}
+
+function registrosLegadoParaPseudo(legado = []) {
+  return legado.map((nome, idx) => ({
+    id: `legado:${nome}`,
+    nome,
+    ativo: true,
+    ordem: idx,
+    _legado: true,
+  }));
+}
+
+export async function listarCentrosCustoRegistros() {
+  const daEntidade = await listarCentrosCustoRegistrosEntidade();
+  if (daEntidade?.length) return daEntidade;
+
+  const legado = await listarCentrosCustoLegadoDadosEmpresa();
+  if (legado.length) {
+    await migrarCentrosLegadoParaEntidade(legado);
+    const migrados = await listarCentrosCustoRegistrosEntidade();
+    if (migrados?.length) return migrados;
+    return registrosLegadoParaPseudo(legado);
+  }
+
+  return daEntidade || [];
+}
+
+async function listarCentrosCustoEntidade() {
+  const registros = await listarCentrosCustoRegistrosEntidade();
+  if (!registros?.length) return registros;
+  const nomes = registros
+    .filter((row) => row?.ativo !== false)
+    .map((row) => normalizarNomeCentro(row?.nome))
+    .filter(Boolean);
+  return ordenarNomesCentro(nomes);
 }
 
 async function migrarCentrosLegadoParaEntidade(legado = []) {
@@ -121,35 +163,10 @@ export async function listarCentrosCustoFinanceiros() {
   return daEntidade || [];
 }
 
-async function adicionarCentroCustoEntidade(nomeLimpo) {
-  if (!folhaCentroCustoDisponivel()) return null;
-  try {
-    const atuais = await base44.entities.FolhaCentroCusto.list();
-    const dup = (atuais || []).find(
-      (row) => normalizarNomeCentro(row?.nome).toLocaleLowerCase('pt-BR') === nomeLimpo.toLocaleLowerCase('pt-BR'),
-    );
-    if (!dup) {
-      await base44.entities.FolhaCentroCusto.create({
-        nome: nomeLimpo,
-        ativo: true,
-        ordem: (atuais || []).length,
-      });
-    }
-    return listarCentrosCustoFinanceiros();
-  } catch (err) {
-    if (isEntityNotRegistered(err)) return null;
-    throw err;
-  }
-}
 
-async function adicionarCentroCustoLegadoDadosEmpresa(nomeLimpo) {
+async function gravarCentrosLegadoDadosEmpresa(unicos) {
   const dados = await base44.entities.DadosEmpresa.list();
   const empresa = dados?.[0] || null;
-  const atuais = Array.isArray(empresa?.centros_custo_financeiros)
-    ? empresa.centros_custo_financeiros
-    : [];
-
-  const unicos = ordenarNomesCentro([...atuais, nomeLimpo]);
 
   if (empresa?.id) {
     await base44.entities.DadosEmpresa.update(empresa.id, {
@@ -162,18 +179,92 @@ async function adicionarCentroCustoLegadoDadosEmpresa(nomeLimpo) {
       centros_custo_financeiros: unicos,
     });
   }
+}
 
+async function adicionarCentroCustoLegadoDadosEmpresa(nomeLimpo) {
+  const atuais = await listarCentrosCustoLegadoDadosEmpresa();
+  const unicos = ordenarNomesCentro([...atuais, nomeLimpo]);
+  await gravarCentrosLegadoDadosEmpresa(unicos);
   return unicos;
 }
 
 export async function adicionarCentroCustoFinanceiro(nome) {
+  await salvarCentroCustoRegistro({ nome });
+  return listarCentrosCustoFinanceiros();
+}
+
+export async function salvarCentroCustoRegistro({ id = null, nome, ativo = true, ordem }) {
   const nomeLimpo = normalizarNomeCentro(nome);
   if (!nomeLimpo) throw new Error('Informe o nome do centro de custo.');
 
-  const viaEntidade = await adicionarCentroCustoEntidade(nomeLimpo);
-  if (viaEntidade) return viaEntidade;
+  if (folhaCentroCustoDisponivel()) {
+    try {
+      const todos = (await listarCentrosCustoRegistrosEntidade()) || [];
+      const dup = todos.find(
+        (row) =>
+          row.id !== id &&
+          normalizarNomeCentro(row?.nome).toLocaleLowerCase('pt-BR') ===
+            nomeLimpo.toLocaleLowerCase('pt-BR'),
+      );
+      if (dup) throw new Error('Já existe um centro com este nome.');
 
-  return adicionarCentroCustoLegadoDadosEmpresa(nomeLimpo);
+      if (id && !String(id).startsWith('legado:')) {
+        await base44.entities.FolhaCentroCusto.update(id, {
+          nome: nomeLimpo,
+          ativo: ativo !== false,
+          ...(typeof ordem === 'number' ? { ordem } : {}),
+        });
+      } else {
+        await base44.entities.FolhaCentroCusto.create({
+          nome: nomeLimpo,
+          ativo: ativo !== false,
+          ordem: typeof ordem === 'number' ? ordem : todos.length,
+        });
+      }
+      return listarCentrosCustoRegistros();
+    } catch (err) {
+      if (!isEntityNotRegistered(err)) throw err;
+    }
+  }
+
+  const legado = await listarCentrosCustoLegadoDadosEmpresa();
+  if (id && String(id).startsWith('legado:')) {
+    const antigo = String(id).slice('legado:'.length);
+    const substituido = legado.map((item) =>
+      item.toLocaleLowerCase('pt-BR') === antigo.toLocaleLowerCase('pt-BR') ? nomeLimpo : item,
+    );
+    await gravarCentrosLegadoDadosEmpresa(ordenarNomesCentro(substituido));
+    return registrosLegadoParaPseudo(await listarCentrosCustoLegadoDadosEmpresa());
+  }
+
+  if (id) {
+    throw new Error('Não foi possível atualizar este centro. Publique FolhaCentroCusto no Base44.');
+  }
+
+  await adicionarCentroCustoLegadoDadosEmpresa(nomeLimpo);
+  return registrosLegadoParaPseudo(await listarCentrosCustoLegadoDadosEmpresa());
+}
+
+export async function excluirCentroCustoRegistro(id) {
+  if (!id) return listarCentrosCustoRegistros();
+
+  if (!String(id).startsWith('legado:') && folhaCentroCustoDisponivel()) {
+    try {
+      await base44.entities.FolhaCentroCusto.delete(id);
+      return listarCentrosCustoRegistros();
+    } catch (err) {
+      if (!isEntityNotRegistered(err)) throw err;
+    }
+  }
+
+  const legado = await listarCentrosCustoLegadoDadosEmpresa();
+  const alvo = String(id).startsWith('legado:') ? String(id).slice('legado:'.length) : null;
+  if (!alvo) throw new Error('Não foi possível excluir este centro.');
+  const filtrado = legado.filter(
+    (item) => item.toLocaleLowerCase('pt-BR') !== alvo.toLocaleLowerCase('pt-BR'),
+  );
+  await gravarCentrosLegadoDadosEmpresa(filtrado);
+  return registrosLegadoParaPseudo(filtrado);
 }
 
 /** Cria colaborador mínimo para cadastro na folha (quando a pessoa ainda não existe no sistema). */
