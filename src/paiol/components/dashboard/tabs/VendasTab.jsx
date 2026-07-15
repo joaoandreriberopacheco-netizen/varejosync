@@ -49,6 +49,14 @@ const RING_COLORS = {
 
 const SALES_BAR_COLORS = ['#c3dd74', '#b6d05f', '#a9c24d', '#9cb53f', '#90a835', '#7f9531'];
 const MONTH_LINES = ['#abc85a', '#6f82a1', '#f59e0b', '#f97316'];
+const MONTH_HIGHLIGHT_COLORS = {
+  default: '#6f82a1',
+  current: '#abc85a',
+  older1: '#93a5be',
+  older2: '#f59e0b',
+  older3: '#f97316',
+};
+const MONTH_MUTED_COLOR = '#536178';
 
 const NORMALIZED_EXCLUDED_STATUSES = new Set(['cancelado']);
 const NORMALIZED_EXCLUDED_TYPES = new Set(['orçamento', 'orcamento']);
@@ -158,6 +166,8 @@ export default function VendasTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState(null);
+  const [selectedMonthKey, setSelectedMonthKey] = useState(null);
+  const [hoverMonthKey, setHoverMonthKey] = useState(null);
   const monthBuckets6 = useMemo(() => getMonthBuckets(6), []);
   const monthBuckets4 = useMemo(() => getMonthBuckets(4), []);
 
@@ -233,7 +243,10 @@ export default function VendasTab() {
 
         const dailyComparisonData = Array.from({ length: 31 }, (_, idx) => {
           const day = idx + 1;
-          const row = { dia: `D${day}` };
+          const row = {
+            diaNumero: day,
+            diaLabel: `D${String(day).padStart(2, '0')}`,
+          };
           monthBuckets4.forEach((bucket) => {
             row[bucket.key] = day <= bucket.daysInMonth ? Number(salesByMonthDay[bucket.key]?.[day] || 0) : null;
           });
@@ -285,6 +298,8 @@ export default function VendasTab() {
         };
 
         if (mounted) {
+          const currentMonthBucket = monthBuckets4[monthBuckets4.length - 1];
+          setSelectedMonthKey(currentMonthBucket?.key || null);
           setMetrics({
             monthBuckets4,
             dailyComparisonData,
@@ -343,6 +358,48 @@ export default function VendasTab() {
     );
   }
 
+  const currentMonthKey = metrics.monthBuckets4[metrics.monthBuckets4.length - 1]?.key || null;
+  const focusedMonthKey = hoverMonthKey || selectedMonthKey || currentMonthKey;
+
+  const monthStyleMap = metrics.monthBuckets4.reduce((acc, bucket, idx) => {
+    const isCurrent = bucket.key === currentMonthKey;
+    const isFocused = bucket.key === focusedMonthKey;
+    const focusOnCurrent = focusedMonthKey === currentMonthKey;
+    const isPrevious1 = idx === metrics.monthBuckets4.length - 2;
+    const isPrevious2 = idx === metrics.monthBuckets4.length - 3;
+
+    let stroke = MONTH_MUTED_COLOR;
+    let strokeWidth = 1.5;
+    let opacity = 0.45;
+
+    if (isFocused) {
+      if (isCurrent) stroke = MONTH_HIGHLIGHT_COLORS.current;
+      else if (isPrevious1) stroke = MONTH_HIGHLIGHT_COLORS.older1;
+      else if (isPrevious2) stroke = MONTH_HIGHLIGHT_COLORS.older2;
+      else stroke = MONTH_HIGHLIGHT_COLORS.older3;
+      strokeWidth = 2.8;
+      opacity = 1;
+    } else if (isCurrent && !focusOnCurrent) {
+      stroke = MONTH_HIGHLIGHT_COLORS.current;
+      strokeWidth = 2.2;
+      opacity = 0.55;
+    }
+
+    acc[bucket.key] = { stroke, strokeWidth, opacity, isFocused };
+    return acc;
+  }, {});
+
+  const dayTooltipLabel = (label) => {
+    const day = Number(label || 0);
+    return `Dia ${String(day).padStart(2, '0')}`;
+  };
+
+  const tooltipValueFormatter = (value, dataKey) => {
+    const month = metrics.monthBuckets4.find((bucket) => bucket.key === dataKey);
+    const amount = Number(value || 0);
+    return [BRL.format(amount), month?.shortLabel || String(dataKey)];
+  };
+
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-3">
@@ -358,17 +415,28 @@ export default function VendasTab() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={metrics.dailyComparisonData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.14)" vertical={false} />
-                  <XAxis dataKey="dia" tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <XAxis
+                    dataKey="diaNumero"
+                    tickFormatter={(value) => `D${String(value).padStart(2, '0')}`}
+                    tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval={1}
+                  />
                   <YAxis tickFormatter={(value) => formatShort(value)} tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    formatter={(value) => BRL.format(Number(value || 0))}
+                    labelFormatter={dayTooltipLabel}
+                    formatter={tooltipValueFormatter}
+                    cursor={{ stroke: 'rgba(148,163,184,0.65)', strokeDasharray: '4 4', strokeWidth: 1 }}
                     contentStyle={{
-                      backgroundColor: '#1e2532',
-                      border: '1px solid rgba(148,163,184,0.28)',
-                      borderRadius: 12,
+                      backgroundColor: 'rgba(3,7,18,0.95)',
+                      border: '1px solid rgba(148,163,184,0.35)',
+                      borderRadius: 10,
                       color: '#edf2f7',
-                      boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
+                      boxShadow: '0 12px 26px rgba(0,0,0,0.45)',
                     }}
+                    labelStyle={{ color: '#e2e8f0', fontWeight: 700 }}
+                    itemStyle={{ color: '#cbd5e1' }}
                   />
                   {metrics.monthBuckets4.map((bucket, idx) => (
                     <Line
@@ -376,8 +444,9 @@ export default function VendasTab() {
                       type="monotone"
                       dataKey={bucket.key}
                       name={bucket.shortLabel}
-                      stroke={MONTH_LINES[idx % MONTH_LINES.length]}
-                      strokeWidth={2}
+                      stroke={monthStyleMap[bucket.key]?.stroke || MONTH_LINES[idx % MONTH_LINES.length]}
+                      strokeWidth={monthStyleMap[bucket.key]?.strokeWidth || 2}
+                      opacity={monthStyleMap[bucket.key]?.opacity || 0.5}
                       dot={false}
                       connectNulls={false}
                     />
@@ -387,15 +456,26 @@ export default function VendasTab() {
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
               {metrics.monthBuckets4.map((bucket, idx) => (
-                <div
+                <button
+                  type="button"
                   key={bucket.key}
-                  className="flex items-center justify-between rounded-md px-2 py-1 bg-[#1f2734]/55 border border-slate-500/15"
+                  onMouseEnter={() => setHoverMonthKey(bucket.key)}
+                  onMouseLeave={() => setHoverMonthKey(null)}
+                  onClick={() => setSelectedMonthKey(bucket.key)}
+                  className={`flex items-center justify-between rounded-md px-2 py-1 border transition ${
+                    monthStyleMap[bucket.key]?.isFocused
+                      ? 'bg-[#1f2734]/80 border-slate-300/25'
+                      : 'bg-[#1f2734]/45 border-slate-500/15 hover:bg-[#1f2734]/65'
+                  }`}
                 >
                   <div className="flex items-center gap-1.5">
-                    <span className="inline-block h-[2px] w-4 rounded-full" style={{ backgroundColor: MONTH_LINES[idx % MONTH_LINES.length] }} />
+                    <span
+                      className="inline-block h-[2px] w-4 rounded-full"
+                      style={{ backgroundColor: monthStyleMap[bucket.key]?.stroke || MONTH_LINES[idx % MONTH_LINES.length] }}
+                    />
                     <span className="text-[10px] text-muted-foreground">{bucket.shortLabel}</span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </CardContent>
