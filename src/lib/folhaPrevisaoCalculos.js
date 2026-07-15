@@ -546,16 +546,25 @@ export function calcularProjecaoCaixa(modelos, meses = 12, competenciaInicio = n
         movimentos: [],
       };
       const t = calcularTotaisCompetencia(fakeComp, modelo);
+      const ehFuncionario =
+        (modelo?.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === TIPO_VINCULO.FUNCIONARIO;
+      const salarioBaseFuncionario = ehFuncionario ? extrairSalarioBase(modelo) : 0;
+      // Provisão mensal do 1/3 adicional de férias: (salário / 3) / 12 = salário / 36.
+      const provisaoTercoFeriasMensal = salarioBaseFuncionario > 0
+        ? salarioBaseFuncionario / 36
+        : 0;
+      const custoTotalComProvisao = t.custoTotalEmpresa + provisaoTercoFeriasMensal;
+
       liquido += t.liquido;
-      custoTotal += t.custoTotalEmpresa;
+      custoTotal += custoTotalComProvisao;
       decimo += t.totalDecimo;
       ferias += t.totalFerias;
       retiradasSocio += t.totalRetiradaSocio;
-      adicionalFeriasEstimado += t.totalFerias / 3;
+      adicionalFeriasEstimado += provisaoTercoFeriasMensal;
       if ((modelo?.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === TIPO_VINCULO.SOCIO) {
-        custoSocios += t.custoTotalEmpresa;
+        custoSocios += custoTotalComProvisao;
       } else {
-        custoFuncionarios += t.custoTotalEmpresa;
+        custoFuncionarios += custoTotalComProvisao;
       }
     }
 

@@ -108,13 +108,13 @@ export default function FolhaPrevisaoProjecao({ modelos, competenciaInicio }) {
     </FinanceiroSummaryChip>,
     <FinanceiroSummaryChip key="decimo">13º {formatFinanceiroValor(totais.decimo)}</FinanceiroSummaryChip>,
     <FinanceiroSummaryChip key="ferias-adicional">
-      1/3 férias {formatFinanceiroValor(totais.adicionalFeriasEstimado)}
+      1/3 férias (prov.) {formatFinanceiroValor(totais.adicionalFeriasEstimado)}
     </FinanceiroSummaryChip>,
   ];
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Projeção de caixa para os próximos 12 meses — salários, 13º, férias e encargos. Desligados saem dos meses seguintes.
+        Projeção de caixa para os próximos 12 meses — salários, 13º, férias, 1/3 adicional de férias e encargos. Desligados saem dos meses seguintes.
       </p>
 
       <div className={cn(P38_KPI_SHELL, 'space-y-2')}>
