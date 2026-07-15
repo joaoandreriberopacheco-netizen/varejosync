@@ -8,6 +8,8 @@ import {
   isAfter,
   getDate,
   parseISO,
+  parse,
+  isValid,
   getDaysInMonth,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -53,8 +55,22 @@ const NORMALIZED_EXCLUDED_TYPES = new Set(['orçamento', 'orcamento']);
 
 function parseDate(value) {
   if (!value) return null;
-  const parsed = typeof value === 'string' ? parseISO(value) : new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+
+  if (typeof value === 'string') {
+    const isoParsed = parseISO(value);
+    if (isValid(isoParsed)) return isoParsed;
+
+    const ptBrParsed = parse(value, 'dd/MM/yyyy', new Date());
+    if (isValid(ptBrParsed)) return ptBrParsed;
+
+    const nativeParsed = new Date(value);
+    if (isValid(nativeParsed)) return nativeParsed;
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (!isValid(parsed)) return null;
   return parsed;
 }
 
@@ -86,11 +102,26 @@ function formatShort(value) {
 
 function extractSaleGrossAmount(sale = {}) {
   const itemTotal = Array.isArray(sale.itens)
-    ? sale.itens.reduce((sum, item) => sum + Number(item?.total || 0), 0)
+    ? sale.itens.reduce((sum, item) => {
+      const lineTotal = Number(
+        item?.total ??
+        item?.valor_total ??
+        item?.subtotal ??
+        item?.valor_subtotal ??
+        0
+      );
+      return sum + lineTotal;
+    }, 0)
     : 0;
   if (itemTotal > 0) return itemTotal;
 
-  const valorTotal = Number(sale.valor_total || 0);
+  const valorTotal = Number(
+    sale.valor_total ??
+    sale.total ??
+    sale.total_geral ??
+    sale.total_final ??
+    0
+  );
   const valorDesconto = Number(sale.valor_desconto || 0);
   return valorTotal + valorDesconto;
 }
@@ -102,9 +133,25 @@ function extractSaleCostAmount(sale = {}, productCostMap = new Map()) {
       item.quantidade_base ?? (Number(item.quantidade || 0) * Number(item.fator_conversao || 1))
     ) || Number(item.quantidade || 0) || 0;
     const fallbackCost = Number(productCostMap.get(item.produto_id) || 0);
-    const unitCost = Number(item.custo_unitario_momento || fallbackCost || 0);
+    const unitCost = Number(
+      item.custo_unitario_momento ??
+      item.custo_unitario ??
+      item.custo_calculado ??
+      fallbackCost ??
+      0
+    );
     return sum + quantidadeBase * unitCost;
   }, 0);
+}
+
+function getSaleDate(sale = {}) {
+  return (
+    parseDate(sale.data_venda) ||
+    parseDate(sale.data_emissao) ||
+    parseDate(sale.data_fechamento) ||
+    parseDate(sale.created_date) ||
+    parseDate(sale.updated_date)
+  );
 }
 
 export default function VendasTab() {
@@ -124,11 +171,9 @@ export default function VendasTab() {
       try {
         const startDate = monthBuckets6[0]?.start || startOfMonth(subMonths(new Date(), 5));
         const endDate = monthBuckets6[monthBuckets6.length - 1]?.end || endOfMonth(new Date());
-        const startISO = format(startDate, 'yyyy-MM-dd');
-        const endISO = format(endDate, 'yyyy-MM-dd');
-
         const [pedidosVendaRaw, produtosRaw] = await Promise.all([
-          base44.entities.PedidoVenda.filter({ created_date: { $gte: startISO, $lte: endISO } }, '-created_date', 30000),
+          // Evita depender de um único campo de data no backend; filtra localmente depois.
+          base44.entities.PedidoVenda.list('-created_date', 30000),
           base44.entities.Produto.filter({}, '-created_date', 10000),
         ]);
 
@@ -147,9 +192,9 @@ export default function VendasTab() {
           const type = normalizeText(sale.tipo);
           if (NORMALIZED_EXCLUDED_STATUSES.has(status)) return false;
           if (NORMALIZED_EXCLUDED_TYPES.has(type)) return false;
-          const createdDate = parseDate(sale.created_date);
-          if (!createdDate) return false;
-          return !isBefore(createdDate, startDate) && !isAfter(createdDate, endDate);
+          const saleDate = getSaleDate(sale);
+          if (!saleDate) return false;
+          return !isBefore(saleDate, startDate) && !isAfter(saleDate, endDate);
         });
 
         const salesByMonthDay = {};
@@ -166,12 +211,12 @@ export default function VendasTab() {
         });
 
         validSales.forEach((sale) => {
-          const createdDate = parseDate(sale.created_date);
-          if (!createdDate) return;
-          const monthKey = format(createdDate, 'yyyy-MM');
+          const saleDate = getSaleDate(sale);
+          if (!saleDate) return;
+          const monthKey = format(saleDate, 'yyyy-MM');
           if (!monthlyTotals[monthKey]) return;
 
-          const day = getDate(createdDate);
+          const day = getDate(saleDate);
           const grossAmount = extractSaleGrossAmount(sale);
           const discountAmount = Number(sale.valor_desconto || 0);
           const netAmount = grossAmount - discountAmount;
