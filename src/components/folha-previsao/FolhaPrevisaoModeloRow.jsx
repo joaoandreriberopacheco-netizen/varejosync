@@ -3,7 +3,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatCurrency, extrairSalarioBase } from '@/lib/folhaPrevisaoCalculos';
+import {
+  CLASSIFICACAO_DESPESA_FOLHA,
+  CLASSIFICACAO_DESPESA_FOLHA_LABELS,
+  formatCurrency,
+  extrairSalarioBase,
+} from '@/lib/folhaPrevisaoCalculos';
 
 export default function FolhaPrevisaoModeloRow({
   modelo,
@@ -15,27 +20,41 @@ export default function FolhaPrevisaoModeloRow({
   const salarioBase = extrairSalarioBase(modelo);
   const retiradaFixa = Number(modelo.retirada_valor_fixo) || 0;
   const nome = colaborador?.nome || modelo.colaborador_nome || modelo.nome || 'Pessoa';
+  const classificacaoDespesa =
+    modelo.classificacao_despesa || CLASSIFICACAO_DESPESA_FOLHA.DIRETA;
+  const centroCusto = String(modelo.centro_custo || '').trim();
 
   return (
     <div
       className={cn(
-        'flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-b-0',
-        'hover:bg-slate-50/80 transition-colors',
+        'flex items-center gap-3 px-4 py-3 border-b border-border/50 last:border-b-0',
+        'hover:bg-muted/40 transition-colors',
       )}
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-slate-900 truncate">{nome}</span>
+          <span className="font-medium text-foreground truncate">{nome}</span>
           <Badge
             variant="outline"
             className={cn(
               'text-[10px] shrink-0',
               tipo === 'socio'
-                ? 'border-violet-200 text-violet-700 bg-violet-50'
-                : 'border-blue-200 text-blue-700 bg-blue-50',
+                ? 'border-violet-300/70 text-violet-700 bg-violet-100/70 dark:border-violet-700/70 dark:text-violet-200 dark:bg-violet-900/30'
+                : 'border-blue-300/70 text-blue-700 bg-blue-100/70 dark:border-blue-700/70 dark:text-blue-200 dark:bg-blue-900/30',
             )}
           >
             {tipo === 'socio' ? 'Sócio' : 'Funcionário'}
+          </Badge>
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-[10px] shrink-0',
+              classificacaoDespesa === CLASSIFICACAO_DESPESA_FOLHA.DIRETA
+                ? 'border-emerald-300/70 text-emerald-700 bg-emerald-100/70 dark:border-emerald-700/70 dark:text-emerald-200 dark:bg-emerald-900/30'
+                : 'border-amber-300/70 text-amber-700 bg-amber-100/70 dark:border-amber-700/70 dark:text-amber-200 dark:bg-amber-900/30',
+            )}
+          >
+            {classificacaoDespesa === CLASSIFICACAO_DESPESA_FOLHA.DIRETA ? 'Despesa direta' : 'Despesa indireta'}
           </Badge>
           {!modelo.ativo && (
             <Badge variant="secondary" className="text-[10px]">
@@ -43,12 +62,15 @@ export default function FolhaPrevisaoModeloRow({
             </Badge>
           )}
         </div>
-        <p className="text-xs text-slate-500 mt-0.5 truncate">
+        <p className="text-xs text-muted-foreground mt-0.5 truncate">
           {tipo === 'socio'
             ? `Retirada fixa ${formatCurrency(retiradaFixa)}/mês`
             : `Salário ${formatCurrency(salarioBase)}/mês`}
           {modelo.decimo_terceiro_ativo ? ' · 13º' : ''}
           {(modelo.ferias_programadas || []).length > 0 ? ' · Férias' : ''}
+        </p>
+        <p className="text-xs text-muted-foreground/90 mt-0.5 truncate">
+          Centro de custo: {centroCusto || 'Não informado'} · {CLASSIFICACAO_DESPESA_FOLHA_LABELS[classificacaoDespesa]}
         </p>
       </div>
 
