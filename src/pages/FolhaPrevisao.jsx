@@ -37,6 +37,7 @@ import {
   formatCicloFolhaCompetencia,
   FOLHA_DIA_VENCIMENTO,
   montarCompetenciasVisao,
+  ordenarPessoasFolhaPorCentroENome,
   isCompetenciaFutura,
   isCompetenciaPlanejamento,
 } from '@/lib/folhaPrevisaoCalculos';
@@ -159,10 +160,13 @@ export default function FolhaPrevisaoPage() {
   );
 
   const pessoasFiltradas = useMemo(
-    () => pessoasCadastradas.filter(
-      (m) => filtroVinculo === 'todos' || (m.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === filtroVinculo,
+    () => ordenarPessoasFolhaPorCentroENome(
+      pessoasCadastradas.filter(
+        (m) => filtroVinculo === 'todos' || (m.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO) === filtroVinculo,
+      ),
+      colaboradoresMap,
     ),
-    [pessoasCadastradas, filtroVinculo],
+    [pessoasCadastradas, filtroVinculo, colaboradoresMap],
   );
 
   const invalidate = useCallback(() => {
