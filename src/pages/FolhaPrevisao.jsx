@@ -410,7 +410,7 @@ export default function FolhaPrevisaoPage() {
         <TabsContent value="pessoas" className="mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground max-w-xl">
-              Cadastre cada pessoa uma vez: escolha se é funcionário ou sócio e informe salário ou retirada. Ela entra automaticamente na programação.
+              Cadastre cada pessoa uma vez: escolha vínculo, centro de custo e se a despesa é direta ou indireta. Ela entra automaticamente na programação.
             </p>
             <Button className="gap-2 shrink-0" onClick={() => setPessoaDialog({})}>
               <Plus className="h-4 w-4" /> Cadastrar pessoa

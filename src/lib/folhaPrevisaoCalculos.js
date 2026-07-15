@@ -63,6 +63,16 @@ export const TIPO_VINCULO_LABELS = {
   socio: 'Sócio',
 };
 
+export const CLASSIFICACAO_DESPESA_FOLHA = {
+  DIRETA: 'direta',
+  INDIRETA: 'indireta',
+};
+
+export const CLASSIFICACAO_DESPESA_FOLHA_LABELS = {
+  direta: 'Direta do negócio',
+  indireta: 'Indireta / apoio',
+};
+
 export const RETIRADA_FREQUENCIA = {
   SEMANAL: 'semanal',
   MENSAL: 'mensal',
@@ -615,6 +625,8 @@ export function criarModeloComDefaults(extra = {}) {
     retirada_valor_fixo: 0,
     ...DECIMO_PADRAO,
     decimo_terceiro_ativo: socio ? false : true,
+    centro_custo: '',
+    classificacao_despesa: CLASSIFICACAO_DESPESA_FOLHA.DIRETA,
     ferias_programadas: [],
     rubricas: criarRubricasPadrao(tipo),
     ...extra,
