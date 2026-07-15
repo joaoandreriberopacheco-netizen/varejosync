@@ -94,9 +94,29 @@
     },
     "centros_custo_financeiros": {
       "type": "array",
-      "description": "Legado — centros de custo da folha (preferir entidade FolhaCentroCusto)",
+      "description": "Nomes dos centros de custo ativos na folha (espelho para compatibilidade)",
       "items": {
         "type": "string"
+      }
+    },
+    "folha_centros_custo": {
+      "type": "array",
+      "description": "Centros de custo da folha — cadastro pela tela Folha",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string"
+          },
+          "ativo": {
+            "type": "boolean",
+            "default": true
+          },
+          "ordem": {
+            "type": "number",
+            "default": 0
+          }
+        }
       }
     }
   },

@@ -81,12 +81,9 @@ export default function FolhaCentrosCustoDialog({ open, onClose, onChanged }) {
         description: nome,
       });
     } catch (e) {
-      const msg = String(e?.message || e || '');
       toast({
         title: 'Erro ao salvar centro',
-        description: /entity|schema|not found/i.test(msg)
-          ? 'Publique a entidade FolhaCentroCusto no painel Base44 e tente de novo.'
-          : msg,
+        description: e.message,
         variant: 'destructive',
       });
     } finally {
