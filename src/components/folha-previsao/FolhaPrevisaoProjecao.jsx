@@ -10,6 +10,7 @@ import { FinanceiroKpiItem, FinanceiroKpiStrip } from '@/components/financeiro/f
 import { P38_KPI_SHELL } from '@/components/financeiro/fluxo/financeiroP38';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import { cn } from '@/lib/utils';
+import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import {
   formatCompetenciaLabel,
   calcularProjecaoCaixa,
@@ -113,9 +114,15 @@ export default function FolhaPrevisaoProjecao({ modelos, competenciaInicio }) {
   ];
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        Projeção de caixa para os próximos 12 meses — salários, 13º, férias, 1/3 adicional de férias e encargos. Desligados saem dos meses seguintes.
-      </p>
+      <div className="flex items-center justify-end">
+        <P38HelpPopover label="Ajuda: projeção 12 meses" side="bottom" align="end">
+          <p className="font-medium text-foreground">Projeção de caixa (12 meses)</p>
+          <p className="text-muted-foreground">
+            Estimativa com salários, 13º, férias, 1/3 adicional de férias e encargos.
+          </p>
+          <p className="text-muted-foreground">Desligados saem automaticamente dos meses seguintes.</p>
+        </P38HelpPopover>
+      </div>
 
       <div className={cn(P38_KPI_SHELL, 'space-y-2')}>
         <FinanceiroKpiStrip layout="inline">

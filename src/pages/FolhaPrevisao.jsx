@@ -21,6 +21,7 @@ import {
   CalendarClock,
   TrendingUp,
 } from 'lucide-react';
+import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { P38_CHIP_ACTIVE, P38_CHIP_INACTIVE, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
@@ -450,11 +451,18 @@ export default function FolhaPrevisaoPage() {
 
   return (
     <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
-      <div className="pb-3 border-b border-border/40">
-        <h1 className="text-xl font-medium text-foreground mb-0.5">Folha</h1>
-        <p className="text-xs text-muted-foreground">
-          Previsão de custos com pessoas. A folha fecha no último dia de cada mês e o pagamento vence no dia {FOLHA_DIA_VENCIMENTO} do mês seguinte. Meses futuros aparecem em modo planejamento, mesmo antes de abrir.
-        </p>
+      <div className="flex items-center gap-1.5 pb-3 border-b border-border/40">
+        <h1 className="text-xl font-medium text-foreground">Folha</h1>
+        <P38HelpPopover label="Ajuda: visão geral da folha" side="bottom" align="start">
+          <p className="font-medium text-foreground">Como funciona a folha</p>
+          <p className="text-muted-foreground">
+            Previsão de custos com pessoas. A folha fecha no último dia de cada mês e o pagamento vence no dia{' '}
+            {FOLHA_DIA_VENCIMENTO} do mês seguinte.
+          </p>
+          <p className="text-muted-foreground">
+            Meses futuros aparecem em modo planejamento, mesmo antes de abrir o mês.
+          </p>
+        </P38HelpPopover>
       </div>
 
       <Tabs defaultValue="previsao" className="w-full mt-4">
@@ -549,14 +557,18 @@ export default function FolhaPrevisaoPage() {
         </TabsContent>
 
         <TabsContent value="pessoas" className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <p className="text-xs text-muted-foreground max-w-xl leading-relaxed">
-              Organize pessoas por centro de custo e arraste entre cartões para reclassificar rapidamente.
-              O botão <strong>+</strong> flutuante abre cadastro de pessoa e criação de centro de custo.
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <FiltroVinculoChips value={filtroVinculo} onChange={setFiltroVinculo} />
+            <P38HelpPopover label="Ajuda: aba Pessoas" side="bottom" align="end">
+              <p className="font-medium text-foreground">Organização por centro de custo</p>
+              <p className="text-muted-foreground">
+                Arraste cartões entre centros para reclassificar rapidamente.
+              </p>
+              <p className="text-muted-foreground">
+                O botão <strong className="text-foreground">+</strong> flutuante abre cadastro de pessoa e criação de centro de custo.
+              </p>
+            </P38HelpPopover>
           </div>
-
-          <FiltroVinculoChips value={filtroVinculo} onChange={setFiltroVinculo} />
 
           <FinanceiroListaEstado
             loading={loadingModelos}
