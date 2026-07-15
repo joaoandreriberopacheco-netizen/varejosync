@@ -426,13 +426,14 @@ export default function FolhaPrevisaoPage() {
             vazioIcon={Users}
           >
             <P38MobileLineList className="block md:!block rounded-lg">
-              {pessoasFiltradas.map((m) => (
+              {pessoasFiltradas.map((m, idx) => (
                 <FolhaPrevisaoModeloRow
                   key={m.id}
                   modelo={m}
                   colaborador={colaboradoresMap[m.colaborador_id]}
                   onEdit={setPessoaDialog}
                   onDelete={handleDeletePessoa}
+                  striped={idx % 2 === 1}
                 />
               ))}
             </P38MobileLineList>
