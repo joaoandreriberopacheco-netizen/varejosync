@@ -42,9 +42,9 @@ export default function FolhaPrevisaoModeloRow({
     <>
       <span>{tipo === 'socio' ? 'Sócio' : 'Funcionário'}</span>
       <P38StatusLabel tone={classificacaoDespesa === CLASSIFICACAO_DESPESA_FOLHA.DIRETA ? 'success' : 'warning'}>
-        {classificacaoDespesa === CLASSIFICACAO_DESPESA_FOLHA.DIRETA ? 'Despesa direta' : 'Despesa indireta'}
+        {classificacaoDespesa === CLASSIFICACAO_DESPESA_FOLHA.DIRETA ? 'Direta' : 'Indireta'}
       </P38StatusLabel>
-      <span>Centro {centroCusto || 'não informado'}</span>
+      <span>CC {centroCusto || 'não informado'}</span>
       {!modelo.ativo && <P38StatusLabel tone="muted">Inativo</P38StatusLabel>}
     </>
   );
@@ -56,26 +56,26 @@ export default function FolhaPrevisaoModeloRow({
       accent={p38AccentKeyFromTone(classificacaoDespesa === CLASSIFICACAO_DESPESA_FOLHA.DIRETA ? 'danger' : 'muted')}
       className={cn(
         '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base',
-        'max-md:!py-3.5 max-md:min-h-[58px]',
+        'max-md:!py-3 max-md:min-h-[56px] [&>div:last-child]:max-w-[44%] sm:[&>div:last-child]:max-w-[42%]',
       )}
       title={<span className="truncate">{nome}</span>}
       subtitle={`${resumoPrincipal}${extras.length ? ` · ${extras.join(' · ')}` : ''}`}
       meta={meta}
-      value={formatCurrency(tipo === 'socio' ? retiradaFixa : salarioBase)}
+      value={<span className="hidden sm:inline">{formatCurrency(tipo === 'socio' ? retiradaFixa : salarioBase)}</span>}
       valueSub={
-        <span className="text-muted-foreground">
+        <span className="text-muted-foreground hidden sm:inline">
           {CLASSIFICACAO_DESPESA_FOLHA_LABELS[classificacaoDespesa]}
         </span>
       }
       trailing={
         <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit?.(modelo)}>
+          <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => onEdit?.(modelo)}>
             <Pencil className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-500/10"
+            className="h-7 w-7 sm:h-8 sm:w-8 text-red-600 hover:text-red-700 hover:bg-red-500/10"
             onClick={() => onDelete?.(modelo)}
           >
             <Trash2 className="w-4 h-4" />

@@ -371,45 +371,48 @@ export default function FolhaPrevisaoPage() {
       </div>
 
       <Tabs defaultValue="previsao" className="w-full mt-4">
-        <TabsList className={cn('w-full h-auto flex-wrap p-1.5 rounded-xl', P38_FIELD_SURFACE)}>
-          <TabsTrigger value="previsao" className="flex-1 gap-2 rounded-lg py-2.5 min-h-[44px] min-w-[120px]">
+        <TabsList className={cn('w-full h-auto p-1 rounded-xl flex-nowrap overflow-x-auto md:overflow-visible md:flex-wrap', P38_FIELD_SURFACE)}>
+          <TabsTrigger value="previsao" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]">
             <CalendarClock className="w-4 h-4" />
+            <span className="text-xs md:hidden">Mês</span>
             <span className="hidden md:inline text-sm">Previsão do mês</span>
           </TabsTrigger>
-          <TabsTrigger value="projecao" className="flex-1 gap-2 rounded-lg py-2.5 min-h-[44px] min-w-[120px]">
+          <TabsTrigger value="projecao" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]">
             <TrendingUp className="w-4 h-4" />
+            <span className="text-xs md:hidden">12m</span>
             <span className="hidden md:inline text-sm">Projeção 12 meses</span>
           </TabsTrigger>
-          <TabsTrigger value="pessoas" className="flex-1 gap-2 rounded-lg py-2.5 min-h-[44px] min-w-[120px]">
+          <TabsTrigger value="pessoas" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[100px] md:min-w-[120px]">
             <Users className="w-4 h-4" />
+            <span className="text-xs md:hidden">Pessoas</span>
             <span className="hidden md:inline text-sm">Pessoas</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="previsao" className="mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className={cn('flex items-center gap-1 rounded-xl px-1', P38_FIELD_SURFACE)}>
+            <div className={cn('w-full sm:w-auto flex items-center justify-between gap-1 rounded-xl px-1', P38_FIELD_SURFACE)}>
               <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, -1))}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="min-w-[100px] text-center text-sm font-semibold uppercase tracking-wide">
+              <span className="flex-1 min-w-[100px] text-center text-sm font-semibold uppercase tracking-wide">
                 {formatCompetenciaLabel(competenciaMes)}
               </span>
               <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, 1))}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="w-full sm:w-auto flex items-center gap-2">
               <Button
                 variant="outline"
-                className="gap-2"
+                className="gap-2 flex-1 sm:flex-none"
                 onClick={handleDesfazerAbrirMes}
                 disabled={saving || !hasCompetenciasPersistidas}
               >
                 <RotateCcw className="h-4 w-4" />
                 Desfazer abrir mês
               </Button>
-              <Button className="gap-2" onClick={handleAbrirMes} disabled={saving}>
+              <Button className="gap-2 flex-1 sm:flex-none" onClick={handleAbrirMes} disabled={saving}>
                 <Users className="h-4 w-4" />
                 Abrir mês
               </Button>
@@ -460,10 +463,10 @@ export default function FolhaPrevisaoPage() {
 
         <TabsContent value="pessoas" className="mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs text-muted-foreground max-w-xl">
+            <p className="text-xs text-muted-foreground max-w-xl leading-relaxed">
               Cadastre cada pessoa uma vez: escolha vínculo, centro de custo e se a despesa é direta ou indireta. Ela entra automaticamente na programação.
             </p>
-            <Button className="gap-2 shrink-0" onClick={() => setPessoaDialog({})}>
+            <Button className="gap-2 shrink-0 w-full sm:w-auto" onClick={() => setPessoaDialog({})}>
               <Plus className="h-4 w-4" /> Cadastrar pessoa
             </Button>
           </div>
@@ -476,7 +479,7 @@ export default function FolhaPrevisaoPage() {
             vazioMensagem="Nenhuma pessoa cadastrada na folha."
             vazioIcon={Users}
           >
-            <P38MobileLineList className="block md:!block rounded-lg">
+            <P38MobileLineList className="block md:!block rounded-lg overflow-hidden">
               {pessoasFiltradas.map((m, idx) => (
                 <FolhaPrevisaoModeloRow
                   key={m.id}
