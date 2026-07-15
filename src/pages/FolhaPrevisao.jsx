@@ -35,6 +35,7 @@ import FolhaPrevisaoMovimentoDialog from '@/components/folha-previsao/FolhaPrevi
 import FolhaPrevisaoDetalheDrawer from '@/components/folha-previsao/FolhaPrevisaoDetalheDrawer';
 import FolhaPrevisaoDesligamentoDialog from '@/components/folha-previsao/FolhaPrevisaoDesligamentoDialog';
 import FolhaPrevisaoProjecao from '@/components/folha-previsao/FolhaPrevisaoProjecao';
+import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
 import {
   calcularTotaisGrupo,
   formatCompetenciaLabel,
@@ -195,26 +196,36 @@ export default function FolhaPrevisaoPage() {
     [pessoasCadastradas, filtroVinculo, colaboradoresMap],
   );
 
-  const centrosCustoSugestoes = useMemo(() => {
-    const fromPessoas = pessoasCadastradas
-      .map((p) => String(p?.centro_custo || '').trim())
-      .filter(Boolean);
-    const unicos = Array.from(
-      new Set([...(centrosCustoFinanceiros || []), ...fromPessoas].map((v) => String(v || '').trim()).filter(Boolean)),
-    );
-    return unicos.sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
-  }, [pessoasCadastradas, centrosCustoFinanceiros]);
+  const centrosRegistrados = useMemo(
+    () =>
+      [...(centrosCustoFinanceiros || [])]
+        .map((v) => String(v || '').trim())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })),
+    [centrosCustoFinanceiros],
+  );
+
+  const centrosRegistradosSet = useMemo(
+    () => new Set(centrosRegistrados.map((c) => c.toLocaleLowerCase('pt-BR'))),
+    [centrosRegistrados],
+  );
 
   const pessoasPorCentro = useMemo(() => {
     const mapa = {};
     for (const pessoa of pessoasFiltradas) {
       const centro = String(pessoa.centro_custo || '').trim();
-      const chave = centro || '__sem__';
+      const chave =
+        centro && centrosRegistradosSet.has(centro.toLocaleLowerCase('pt-BR')) ? centro : '__sem__';
       if (!mapa[chave]) mapa[chave] = [];
       mapa[chave].push(pessoa);
     }
     return mapa;
-  }, [pessoasFiltradas]);
+  }, [pessoasFiltradas, centrosRegistradosSet]);
+
+  const pessoaArrastando = useMemo(
+    () => pessoasFiltradas.find((p) => p.id === draggingModeloId) || null,
+    [pessoasFiltradas, draggingModeloId],
+  );
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['folha-previsao'] });
@@ -556,22 +567,22 @@ export default function FolhaPrevisaoPage() {
             <P38HelpPopover label="Ajuda: aba Pessoas" side="bottom" align="end">
               <p className="font-medium text-foreground">Organização por centro de custo</p>
               <p className="text-muted-foreground">
-                Arraste cartões entre centros para reclassificar rapidamente.
+                Cadastre centros pelo botão <strong className="text-foreground">+</strong>, depois arraste a pessoa para a bolinha do centro desejado.
               </p>
               <p className="text-muted-foreground">
-                O botão <strong className="text-foreground">+</strong> flutuante abre cadastro de pessoa e criação de centro de custo.
+                No formulário, o centro de custo é escolhido na lista — não digite um nome novo.
               </p>
             </P38HelpPopover>
           </div>
 
           <FinanceiroListaEstado
             loading={loadingModelos}
-            vazio={!loadingModelos && pessoasFiltradas.length === 0 && centrosCustoSugestoes.length === 0}
+            vazio={!loadingModelos && pessoasFiltradas.length === 0}
             vazioMensagem="Nenhuma pessoa cadastrada na folha."
             vazioIcon={Users}
           >
             <div className="space-y-3">
-              {[...centrosCustoSugestoes, '__sem__'].map((centro) => {
+              {[...centrosRegistrados, '__sem__'].map((centro) => {
                 const chave = centro || '__sem__';
                 const pessoas = pessoasPorCentro[chave] || [];
                 const centroLabel = chave === '__sem__' ? 'Sem centro de custo' : centro;
@@ -664,7 +675,7 @@ export default function FolhaPrevisaoPage() {
         onClose={() => setPessoaDialog(null)}
         cadastro={pessoaDialog?.id ? pessoaDialog : null}
         colaboradoresDisponiveis={colaboradoresDisponiveis}
-        centrosCustoSugestoes={centrosCustoSugestoes}
+        centrosCustoRegistrados={centrosRegistrados}
         onSave={handleSavePessoa}
         onDesligar={setDesligamentoModelo}
         onReativar={handleReativar}
@@ -704,6 +715,21 @@ export default function FolhaPrevisaoPage() {
         onClose={() => setMovimentoOpen(false)}
         onSave={handleAddMovimento}
         saving={saving}
+      />
+
+      <FolhaCentroCustoDragOverlay
+        open={Boolean(draggingModeloId)}
+        centros={centrosRegistrados}
+        pessoaNome={pessoaArrastando?.colaborador_nome || pessoaArrastando?.nome}
+        dropCentroAtual={dropCentroAtual}
+        onHoverCentro={setDropCentroAtual}
+        onLeaveCentro={(chave) => setDropCentroAtual((v) => (v === chave ? '__none__' : v))}
+        onDropCentro={(centroNome) => {
+          if (!pessoaArrastando) return;
+          void handleMoverPessoaCentro(pessoaArrastando, centroNome);
+          setDraggingModeloId('');
+          setDropCentroAtual('__none__');
+        }}
       />
 
       <div className="fixed right-4 bottom-20 md:bottom-6 z-40">

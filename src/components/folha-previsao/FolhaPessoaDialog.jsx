@@ -81,7 +81,7 @@ export default function FolhaPessoaDialog({
   onClose,
   cadastro,
   colaboradoresDisponiveis = [],
-  centrosCustoSugestoes = [],
+  centrosCustoRegistrados = [],
   onSave,
   onDesligar,
   onReativar,
@@ -301,23 +301,53 @@ export default function FolhaPessoaDialog({
             <div>
               <LabelComAjuda label="Centro de custo" ajudaLabel="Ajuda: centro de custo">
                 <p className="text-muted-foreground">
-                  Separe despesas por operação — loja, casa, manutenção etc.
+                  Escolha um centro cadastrado pelo botão <strong className="text-foreground">+</strong> na tela principal.
+                </p>
+                <p className="text-muted-foreground">
+                  Para criar um centro novo, use &quot;Novo centro de custo&quot; no menu do +.
                 </p>
               </LabelComAjuda>
-              <Input
-                className="mt-1.5"
-                value={form.centro_custo || ''}
-                onChange={(e) => setForm({ ...form, centro_custo: e.target.value })}
-                placeholder="Ex: Loja, Casa, Manutenção"
-                list="centros-custo-sugestoes"
-                disabled={desligado}
-              />
-              {centrosCustoSugestoes.length > 0 && (
-                <datalist id="centros-custo-sugestoes">
-                  {centrosCustoSugestoes.map((item) => (
-                    <option key={item} value={item} />
-                  ))}
-                </datalist>
+              {centrosCustoRegistrados.length === 0 ? (
+                <p className="mt-1.5 text-xs text-muted-foreground rounded-lg border border-dashed border-border/60 px-3 py-2">
+                  Nenhum centro cadastrado. Use o botão <strong className="text-foreground">+</strong> → Novo centro de custo.
+                </p>
+              ) : (
+                <Select
+                  value={
+                    form.centro_custo &&
+                    centrosCustoRegistrados.some(
+                      (c) => c.toLocaleLowerCase('pt-BR') === form.centro_custo.toLocaleLowerCase('pt-BR'),
+                    )
+                      ? centrosCustoRegistrados.find(
+                          (c) => c.toLocaleLowerCase('pt-BR') === form.centro_custo.toLocaleLowerCase('pt-BR'),
+                        )
+                      : '__none__'
+                  }
+                  onValueChange={(v) =>
+                    setForm({ ...form, centro_custo: v === '__none__' ? '' : v })
+                  }
+                  disabled={desligado}
+                >
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue placeholder="Selecione…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sem centro de custo</SelectItem>
+                    {centrosCustoRegistrados.map((item) => (
+                      <SelectItem key={item} value={item}>
+                        {item}
+                      </SelectItem>
+                    ))}
+                    {form.centro_custo &&
+                      !centrosCustoRegistrados.some(
+                        (c) => c.toLocaleLowerCase('pt-BR') === form.centro_custo.toLocaleLowerCase('pt-BR'),
+                      ) && (
+                        <SelectItem value={form.centro_custo} disabled>
+                          {form.centro_custo} (não cadastrado — escolha outro)
+                        </SelectItem>
+                      )}
+                  </SelectContent>
+                </Select>
               )}
             </div>
             <div>
