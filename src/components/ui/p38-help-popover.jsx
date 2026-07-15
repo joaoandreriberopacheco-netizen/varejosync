@@ -13,19 +13,24 @@ export function P38HelpPopover({
   iconClassName,
   side = 'bottom',
   align = 'start',
+  size = 'default',
 }) {
+  const sizeClass = size === 'sm' ? 'h-6 w-6' : 'h-8 w-8';
+  const iconSizeClass = size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4';
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
           type="button"
           className={cn(
-            'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground/75 transition-colors hover:bg-muted/80 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            'inline-flex shrink-0 items-center justify-center rounded-full text-muted-foreground/75 transition-colors hover:bg-muted/80 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            sizeClass,
             className,
           )}
           aria-label={label}
         >
-          <HelpCircle className={cn('h-4 w-4', iconClassName)} />
+          <HelpCircle className={cn(iconSizeClass, iconClassName)} />
         </button>
       </PopoverTrigger>
       <PopoverContent

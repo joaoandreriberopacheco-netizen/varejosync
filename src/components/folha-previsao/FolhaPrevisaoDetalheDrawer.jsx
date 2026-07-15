@@ -3,6 +3,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, Link2 } from 'lucide-react';
+import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import {
   calcularTotaisCompetencia,
   formatCurrency,
@@ -72,7 +73,17 @@ export default function FolhaPrevisaoDetalheDrawer({
           <DrawerTitle className="flex flex-wrap items-center gap-2">
             <span>{competencia.colaborador_nome}</span>
             <Badge variant="outline">{competencia.competencia}</Badge>
-            {statusEfetivo === 'planejamento' && <Badge variant="secondary">Planejamento</Badge>}
+            {statusEfetivo === 'planejamento' && (
+              <span className="inline-flex items-center gap-0.5">
+                <Badge variant="secondary">Planejamento</Badge>
+                <P38HelpPopover label="Ajuda: modo planejamento" side="bottom" align="start" size="sm">
+                  <p className="font-medium text-foreground">Modo planejamento</p>
+                  <p className="text-muted-foreground">
+                    Valores estimados a partir do cadastro. Abra o mês para registrar vales, movimentos e enviar ao financeiro.
+                  </p>
+                </P38HelpPopover>
+              </span>
+            )}
             {statusEfetivo === 'fechado' && <Badge>Fechada</Badge>}
             {statusEfetivo === 'rascunho' && <Badge variant="outline">Em aberto</Badge>}
             {competencia.situacao_mes === 'ultimo_mes' && (
@@ -86,11 +97,6 @@ export default function FolhaPrevisaoDetalheDrawer({
             {formatCicloFolhaCompetencia(competencia.competencia)}
             {modelo?.data_desligamento && ` · Saiu em ${formatDataBr(modelo.data_desligamento)}`}
           </p>
-          {planejamento && (
-            <p className="text-xs text-cyan-800 dark:text-cyan-300 mt-1 rounded-lg bg-cyan-500/10 px-3 py-2">
-              Modo planejamento — valores estimados a partir do cadastro. Abra o mês para registrar vales, movimentos e enviar ao financeiro.
-            </p>
-          )}
           {fechada && (
             <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
               Folha fechada — movimentos não podem mais ser alterados neste mês.

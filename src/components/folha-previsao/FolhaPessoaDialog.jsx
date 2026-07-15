@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronDown, Plus, Trash2 } from 'lucide-react';
+import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import {
   FOLHA_DIA_VENCIMENTO,
   RETIRADA_FREQUENCIA_LABELS,
@@ -25,6 +26,17 @@ import {
   formatDataBr,
   gerarIdInterno,
 } from '@/lib/folhaPrevisaoCalculos';
+
+function LabelComAjuda({ label, ajudaLabel, children }) {
+  return (
+    <div className="flex items-center gap-1">
+      <Label>{label}</Label>
+      <P38HelpPopover label={ajudaLabel} side="top" align="start" size="sm">
+        {children}
+      </P38HelpPopover>
+    </div>
+  );
+}
 
 function FeriasRow({ ferias, onChange, onRemove }) {
   return (
@@ -135,7 +147,7 @@ export default function FolhaPessoaDialog({
   };
 
   const podeSalvar =
-    (editando && form.colaborador_id) ||
+    (editando && form.colaborador_id && String(form.colaborador_nome || form.nome || '').trim()) ||
     (modoPessoa === 'existente' && form.colaborador_id) ||
     (modoPessoa === 'nova' && novoNome.trim());
 
@@ -149,15 +161,21 @@ export default function FolhaPessoaDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editando ? 'Editar pessoa' : 'Cadastrar na folha'}</DialogTitle>
+          <div className="flex items-center gap-1.5">
+            <DialogTitle>{editando ? 'Editar pessoa' : 'Cadastrar na folha'}</DialogTitle>
+            <P38HelpPopover label="Ajuda: cadastro na folha" side="bottom" align="start" size="sm">
+              <p className="font-medium text-foreground">Cadastro único</p>
+              <p className="text-muted-foreground">
+                Cadastre a pessoa uma vez — ela entra automaticamente na programação e na projeção de caixa.
+              </p>
+              <p className="text-muted-foreground">
+                Pagamento dia {FOLHA_DIA_VENCIMENTO} do mês seguinte; folha fecha no último dia do mês.
+              </p>
+            </P38HelpPopover>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4">
-          <p className="text-xs text-muted-foreground rounded-lg bg-muted/40 px-3 py-2">
-            Cadastre a pessoa uma vez — ela entra automaticamente na programação e na projeção de caixa.
-            Pagamento dia {FOLHA_DIA_VENCIMENTO} do mês seguinte; folha fecha no último dia do mês.
-          </p>
-
           {desligado && (
             <div className="rounded-lg bg-red-50 dark:bg-red-950/30 px-3 py-2 text-sm text-red-800 dark:text-red-300">
               Saiu em {formatDataBr(form.data_desligamento)}.
@@ -193,38 +211,41 @@ export default function FolhaPessoaDialog({
 
           {editando ? (
             <div>
-              <Label>Pessoa</Label>
-              <p className="mt-1.5 text-sm font-medium">{form.colaborador_nome || form.nome}</p>
+              <Label>Nome</Label>
+              <Input
+                className="mt-1.5"
+                value={form.colaborador_nome || form.nome || ''}
+                onChange={(e) => {
+                  const nome = e.target.value;
+                  setForm({ ...form, colaborador_nome: nome, nome });
+                }}
+                placeholder="Nome da pessoa"
+                disabled={desligado}
+              />
             </div>
           ) : (
             <>
-              <div>
-                <Label>Como você quer adicionar?</Label>
-                <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {colaboradoresDisponiveis.length > 0 && (
-                    <Button
-                      type="button"
-                      variant={modoPessoa === 'existente' ? 'default' : 'outline'}
-                      className="justify-start h-10"
-                      onClick={() => setModoPessoa('existente')}
-                    >
-                      Usar pessoa já cadastrada
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    variant={modoPessoa === 'nova' ? 'default' : 'outline'}
-                    className="justify-start h-10"
-                    onClick={() => setModoPessoa('nova')}
+              {colaboradoresDisponiveis.length > 0 && (
+                <div>
+                  <Label>Origem</Label>
+                  <Select
+                    value={modoPessoa}
+                    onValueChange={setModoPessoa}
                   >
-                    Cadastrar nova pessoa
-                  </Button>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="existente">Pessoa já cadastrada</SelectItem>
+                      <SelectItem value="nova">Nova pessoa</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
+              )}
 
               {modoPessoa === 'existente' ? (
                 <div>
-                  <Label>Selecione a pessoa</Label>
+                  <Label>Pessoa</Label>
                   <Select
                     value={form.colaborador_id || '__none__'}
                     onValueChange={(v) => {
@@ -259,13 +280,15 @@ export default function FolhaPessoaDialog({
                     />
                   </div>
                   <div>
-                    <Label>E-mail (opcional)</Label>
+                    <LabelComAjuda label="E-mail" ajudaLabel="Ajuda: e-mail">
+                      <p className="text-muted-foreground">Opcional. Usado apenas para cadastro no sistema.</p>
+                    </LabelComAjuda>
                     <Input
                       className="mt-1.5"
                       type="email"
                       value={novoEmail}
                       onChange={(e) => setNovoEmail(e.target.value)}
-                      placeholder="Para cadastro no sistema"
+                      placeholder="opcional"
                     />
                   </div>
                 </div>
@@ -276,7 +299,11 @@ export default function FolhaPessoaDialog({
           <div className="rounded-lg ring-1 ring-border/40 p-3 space-y-3">
             <Label className="font-medium">Classificação de custo</Label>
             <div>
-              <Label>Centro de custo</Label>
+              <LabelComAjuda label="Centro de custo" ajudaLabel="Ajuda: centro de custo">
+                <p className="text-muted-foreground">
+                  Separe despesas por operação — loja, casa, manutenção etc.
+                </p>
+              </LabelComAjuda>
               <Input
                 className="mt-1.5"
                 value={form.centro_custo || ''}
@@ -292,12 +319,9 @@ export default function FolhaPessoaDialog({
                   ))}
                 </datalist>
               )}
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Use para separar despesas por operação (loja, casa, manutenção etc.).
-              </p>
             </div>
             <div>
-              <div className="flex items-start gap-2 rounded-lg border border-border/60 px-3 py-2.5">
+              <div className="flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2.5">
                 <Checkbox
                   id="custo-direto"
                   checked={
@@ -315,13 +339,15 @@ export default function FolhaPessoaDialog({
                   }}
                   disabled={desligado}
                 />
-                <div>
+                <div className="flex min-w-0 flex-1 items-center gap-1">
                   <Label htmlFor="custo-direto" className="font-medium">
                     Custo direto do negócio
                   </Label>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                    Ativo por padrão. Desative para marcar como custo indireto/apoio.
-                  </p>
+                  <P38HelpPopover label="Ajuda: custo direto" side="top" align="start" size="sm">
+                    <p className="text-muted-foreground">
+                      Ativo por padrão. Desative para marcar como custo indireto ou de apoio.
+                    </p>
+                  </P38HelpPopover>
                 </div>
               </div>
             </div>
@@ -372,9 +398,14 @@ export default function FolhaPessoaDialog({
                 onChange={(e) => setSalarioBase(parseFloat(e.target.value) || 0)}
                 disabled={desligado}
               />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                INSS, FGTS e encargos padrão entram na projeção automaticamente.
-              </p>
+              <div className="mt-1 flex items-center gap-1">
+                <span className="text-[10px] text-muted-foreground">Encargos na projeção</span>
+                <P38HelpPopover label="Ajuda: encargos" side="top" align="start" size="sm">
+                  <p className="text-muted-foreground">
+                    INSS, FGTS e encargos padrão entram na projeção automaticamente.
+                  </p>
+                </P38HelpPopover>
+              </div>
             </div>
           )}
 

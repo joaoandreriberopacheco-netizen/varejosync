@@ -90,17 +90,43 @@ export async function criarColaboradorParaFolha({ nome, email }) {
   });
 }
 
+/** Sincroniza nome no cadastro de colaborador e competências abertas. */
+async function sincronizarNomeColaboradorFolha(colaboradorId, nomeNovo) {
+  const nome = String(nomeNovo || '').trim();
+  if (!colaboradorId || !nome) return;
+
+  try {
+    await base44.entities.Colaborador.update(colaboradorId, { nome });
+  } catch {
+    /* cadastro legado pode não permitir update — segue com modelo/competências */
+  }
+
+  const competencias = await base44.entities.FolhaPrevisaoCompetencia.filter({
+    colaborador_id: colaboradorId,
+  });
+  for (const comp of competencias || []) {
+    if (comp.colaborador_nome !== nome) {
+      await base44.entities.FolhaPrevisaoCompetencia.update(comp.id, { colaborador_nome: nome });
+    }
+  }
+}
+
 /** Uma pessoa = um cadastro na folha; alimenta a programação automaticamente. */
 export async function salvarCadastroPessoaFolha(payload, modeloId = null) {
   if (!payload?.colaborador_id) {
     throw new Error('Selecione ou cadastre a pessoa.');
   }
+  const nomeFinal = String(payload.colaborador_nome || payload.nome || '').trim();
+  if (!nomeFinal) {
+    throw new Error('Informe o nome da pessoa.');
+  }
+
   const existentes = await listarModelos();
   const dup = existentes.find(
     (m) => m.colaborador_id === payload.colaborador_id && m.id !== modeloId,
   );
   if (dup) {
-    throw new Error(`${payload.colaborador_nome || 'Esta pessoa'} já está cadastrada na folha.`);
+    throw new Error(`${nomeFinal} já está cadastrada na folha.`);
   }
 
   const body = {
@@ -115,16 +141,20 @@ export async function salvarCadastroPessoaFolha(payload, modeloId = null) {
         : payload.classificacao_despesa !== 'indireta')
         ? 'direta'
         : 'indireta',
-    nome: payload.colaborador_nome || payload.nome,
-    colaborador_nome: payload.colaborador_nome || payload.nome,
+    nome: nomeFinal,
+    colaborador_nome: nomeFinal,
     dia_vencimento: FOLHA_DIA_VENCIMENTO,
     ativo: payload.ativo !== false,
   };
 
+  let modelo;
   if (modeloId) {
-    return base44.entities.FolhaPrevisaoModelo.update(modeloId, body);
+    modelo = await base44.entities.FolhaPrevisaoModelo.update(modeloId, body);
+    await sincronizarNomeColaboradorFolha(payload.colaborador_id, nomeFinal);
+  } else {
+    modelo = await base44.entities.FolhaPrevisaoModelo.create(body);
   }
-  return base44.entities.FolhaPrevisaoModelo.create(body);
+  return modelo;
 }
 
 export async function atualizarCentroCustoPessoaFolha(modeloId, centroCusto, custoDireto = null) {

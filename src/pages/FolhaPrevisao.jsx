@@ -518,15 +518,9 @@ export default function FolhaPrevisaoPage() {
             totais={totaisGrupo}
             count={totaisGrupo.count}
             countPlanejamento={qtdPlanejamento}
+            mesFuturo={mesFuturo}
             competenciaLabel={`${formatCompetenciaLabel(competenciaMes)} · ${formatCicloFolhaCompetencia(competenciaMes)}`}
           />
-
-          {(mesFuturo || qtdPlanejamento > 0) && (
-            <p className="text-xs text-cyan-900 dark:text-cyan-200 rounded-lg border border-cyan-500/25 bg-cyan-500/10 px-3 py-2.5">
-              Modo planejamento: você já vê a previsão com base nas pessoas cadastradas.
-              {mesFuturo ? ' Este mês ainda não precisa estar aberto para consultar os valores.' : ' Abra o mês quando quiser registrar vales e movimentos.'}
-            </p>
-          )}
 
           <FiltroVinculoChips value={filtroVinculo} onChange={setFiltroVinculo} />
 

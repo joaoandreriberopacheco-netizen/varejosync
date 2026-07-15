@@ -3,16 +3,41 @@ import FinanceiroResumoBar from '@/components/financeiro/fluxo/FinanceiroResumoB
 import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/financeiro/fluxo/FinanceiroListaMeta';
 import { P38_KPI_SHELL } from '@/components/financeiro/fluxo/financeiroP38';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import { cn } from '@/lib/utils';
 
-export default function FolhaPrevisaoResumo({ totais, count, competenciaLabel, countPlanejamento = 0 }) {
+export default function FolhaPrevisaoResumo({
+  totais,
+  count,
+  competenciaLabel,
+  countPlanejamento = 0,
+  mesFuturo = false,
+}) {
   const chips = [];
 
   if (countPlanejamento > 0) {
     chips.push(
-      <FinanceiroSummaryChip key="plan" className="text-cyan-800 dark:text-cyan-300">
-        {countPlanejamento} em planejamento
-      </FinanceiroSummaryChip>,
+      <span key="plan" className="inline-flex items-center gap-0.5">
+        <FinanceiroSummaryChip className="text-cyan-800 dark:text-cyan-300">
+          {countPlanejamento} em planejamento
+        </FinanceiroSummaryChip>
+        <P38HelpPopover
+          label="Ajuda: modo planejamento"
+          side="bottom"
+          align="end"
+          size="sm"
+        >
+          <p className="font-medium text-foreground">Modo planejamento</p>
+          <p className="text-muted-foreground">
+            Você já vê a previsão com base nas pessoas cadastradas, mesmo antes de abrir o mês.
+          </p>
+          <p className="text-muted-foreground">
+            {mesFuturo
+              ? 'Este mês ainda não precisa estar aberto para consultar os valores.'
+              : 'Abra o mês quando quiser registrar vales e movimentos.'}
+          </p>
+        </P38HelpPopover>
+      </span>,
     );
   }
   if (totais?.totalValesPendentes > 0) {
