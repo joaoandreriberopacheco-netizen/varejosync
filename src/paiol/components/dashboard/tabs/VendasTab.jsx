@@ -168,8 +168,19 @@ export default function VendasTab() {
   const [metrics, setMetrics] = useState(null);
   const [selectedMonthKey, setSelectedMonthKey] = useState(null);
   const [hoverMonthKey, setHoverMonthKey] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 640;
+  });
   const monthBuckets6 = useMemo(() => getMonthBuckets(6), []);
   const monthBuckets4 = useMemo(() => getMonthBuckets(4), []);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -371,6 +382,7 @@ export default function VendasTab() {
     let stroke = MONTH_MUTED_COLOR;
     let strokeWidth = 1.5;
     let opacity = 0.45;
+    let strokeDasharray = '4 4';
 
     if (isFocused) {
       if (isCurrent) stroke = MONTH_HIGHLIGHT_COLORS.current;
@@ -379,13 +391,17 @@ export default function VendasTab() {
       else stroke = MONTH_HIGHLIGHT_COLORS.older3;
       strokeWidth = 2.8;
       opacity = 1;
+      strokeDasharray = isCurrent ? '' : isPrevious1 ? '8 4' : isPrevious2 ? '3 3' : '10 5';
     } else if (isCurrent && !focusOnCurrent) {
       stroke = MONTH_HIGHLIGHT_COLORS.current;
       strokeWidth = 2.2;
       opacity = 0.55;
+      strokeDasharray = '';
+    } else {
+      strokeDasharray = isPrevious1 ? '8 4' : isPrevious2 ? '3 3' : '10 5';
     }
 
-    acc[bucket.key] = { stroke, strokeWidth, opacity, isFocused };
+    acc[bucket.key] = { stroke, strokeWidth, opacity, isFocused, strokeDasharray };
     return acc;
   }, {});
 
@@ -421,7 +437,7 @@ export default function VendasTab() {
                     tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
                     axisLine={false}
                     tickLine={false}
-                    interval={1}
+                    interval={isMobile ? 2 : 1}
                   />
                   <YAxis tickFormatter={(value) => formatShort(value)} tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <Tooltip
@@ -447,6 +463,7 @@ export default function VendasTab() {
                       stroke={monthStyleMap[bucket.key]?.stroke || MONTH_LINES[idx % MONTH_LINES.length]}
                       strokeWidth={monthStyleMap[bucket.key]?.strokeWidth || 2}
                       opacity={monthStyleMap[bucket.key]?.opacity || 0.5}
+                      strokeDasharray={monthStyleMap[bucket.key]?.strokeDasharray || ''}
                       dot={false}
                       connectNulls={false}
                     />
@@ -462,7 +479,7 @@ export default function VendasTab() {
                   onMouseEnter={() => setHoverMonthKey(bucket.key)}
                   onMouseLeave={() => setHoverMonthKey(null)}
                   onClick={() => setSelectedMonthKey(bucket.key)}
-                  className={`flex items-center justify-between rounded-md px-2 py-1 border transition ${
+                  className={`flex items-center justify-between rounded-md px-2 py-1 border min-h-11 transition ${
                     monthStyleMap[bucket.key]?.isFocused
                       ? 'bg-[#1f2734]/80 border-slate-300/25'
                       : 'bg-[#1f2734]/45 border-slate-500/15 hover:bg-[#1f2734]/65'

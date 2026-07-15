@@ -422,8 +422,19 @@ export default function EstoqueTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 640;
+  });
   const monthBuckets = useMemo(() => getMonthBuckets(), []);
   const supplyMonthBuckets = useMemo(() => getSupplyMonthBuckets(), []);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 640);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -791,6 +802,7 @@ export default function EstoqueTab() {
                     tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
                     axisLine={false}
                     tickLine={false}
+                    interval={isMobile ? 1 : 0}
                   />
                   <YAxis
                     tickFormatter={(value) => formatShort(value)}
@@ -838,7 +850,7 @@ export default function EstoqueTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {metrics.supplyByMonth.map((monthSupply) => {
                 const supplyColor = getSupplyColorByStatus(monthSupply.status);
                 const overflowColor = getSupplyOverflowColorByStatus(monthSupply.status);
@@ -860,7 +872,7 @@ export default function EstoqueTab() {
                 ];
 
                 return (
-                  <div key={monthSupply.key} className={`rounded-xl p-2 ${INNER_SURFACE}`}>
+                  <div key={monthSupply.key} className={`rounded-xl p-2 min-h-44 sm:min-h-0 ${INNER_SURFACE}`}>
                     <p className="text-[10px] font-semibold text-muted-foreground tracking-wide mb-1">{monthSupply.label}</p>
                     <div className="h-[108px] sm:h-[120px] relative">
                       <ResponsiveContainer width="100%" height="100%">
