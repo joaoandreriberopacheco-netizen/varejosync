@@ -116,6 +116,26 @@ export default function ImportadorPedidoCompra({
     return produtos.find((produto) => produto.id === item.produto_id_match) || null;
   };
 
+  const handleProdutoCriadoNoImportador = (novoProduto, itemIndex) => {
+    if (!novoProduto?.id) return;
+    setProdutos((prev) => {
+      if (prev.some((produto) => produto.id === novoProduto.id)) return prev;
+      return [...prev, novoProduto];
+    });
+    if (typeof itemIndex === 'number') {
+      setItems((prev) => prev.map((item, currentIndex) => (
+        currentIndex === itemIndex
+          ? {
+              ...item,
+              produto_id_match: novoProduto.id,
+              selected_product_id: novoProduto.id,
+              ignored: false,
+            }
+          : item
+      )));
+    }
+  };
+
   const getFilteredProducts = (index) => {
     const query = (productSearch[index] || '').trim().toLowerCase();
     if (!query) {
@@ -667,6 +687,7 @@ Retorne JSON:
                         setItems={setItems}
                         setProductSearch={setProductSearch}
                         productSearch={productSearch}
+                        onProductCreated={(novoProduto) => handleProdutoCriadoNoImportador(novoProduto, index)}
                       />
                       {item.selected_product_id && item.selected_product_id !== 'create_new' && (() => {
                         const p = produtos.find((x) => x.id === item.selected_product_id);
