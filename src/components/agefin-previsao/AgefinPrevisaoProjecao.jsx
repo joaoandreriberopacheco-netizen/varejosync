@@ -16,8 +16,8 @@ export default function AgefinPrevisaoProjecao({ modelos, competenciaInicio, lan
         <p className="text-xs uppercase tracking-wide text-muted-foreground">Total 12 meses</p>
         <p className="text-2xl font-semibold tabular-nums">{formatFinanceiroValor(totalAno)}</p>
         <p className="text-sm text-muted-foreground mt-1">
-          Cada mês usa o valor do mês anterior (real ou estimado). A partir de{' '}
-          {formatCompetenciaLabel(competenciaInicio)}.
+          O valor de {formatCompetenciaLabel(competenciaInicio)} vale para esse mês e todos os seguintes.
+          Se editar o mês atual, a projeção de agosto em diante espelha esse valor.
         </p>
       </div>
 

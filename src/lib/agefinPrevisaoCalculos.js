@@ -385,22 +385,20 @@ export function mapaValoresReaisPorGrupoMes(lancamentos) {
 }
 
 /**
- * Projeção de 12 meses: cada mês seguinte herda o valor do mês anterior.
- * — Se existir lançamento real no mês, usa esse valor e repassa adiante.
- * — Senão, repete o último valor conhecido (mês anterior ou cadastro).
+ * Projeção de 12 meses: o mês inicial (ex.: julho, mês em que você trabalha) define o valor;
+ * todos os meses seguintes na projeção espelham esse valor por conta.
+ * — Valor do mês inicial: lançamento real (editado) ou cadastro da conta fixa.
  */
 export function calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos = []) {
   const reais = mapaValoresReaisPorGrupoMes(lancamentos);
-  /** grupo_lancamento_id → último valor usado na projeção */
-  const carry = {};
 
-  const mesAnterior = shiftCompetencia(competenciaInicio, -1);
+  /** Valor âncora por série = mês inicial da projeção (competenciaInicio). */
+  const anchorPorGrupo = {};
   for (const m of modelos || []) {
     const gid = m.grupo_lancamento_id;
     if (!gid) continue;
-    const vAnt = reais[`${gid}:${mesAnterior}`];
-    const vCad = Number(m.valor_previsto) || 0;
-    carry[gid] = vAnt ?? vCad;
+    const real = reais[`${gid}:${competenciaInicio}`];
+    anchorPorGrupo[gid] = real ?? (Number(m.valor_previsto) || 0);
   }
 
   const meses = [];
@@ -411,16 +409,9 @@ export function calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos =
     for (const m of modelos || []) {
       if (!serieEstaAtivaNaCompetencia(m, comp)) continue;
       const gid = m.grupo_lancamento_id;
-      const realMes = gid ? reais[`${gid}:${comp}`] : undefined;
-      let valor;
-      if (realMes != null && realMes > 0) {
-        valor = realMes;
-      } else if (gid && carry[gid] != null) {
-        valor = carry[gid];
-      } else {
-        valor = Number(m.valor_previsto) || 0;
-      }
-      if (gid) carry[gid] = valor;
+      const valor = gid
+        ? (anchorPorGrupo[gid] ?? Number(m.valor_previsto) || 0)
+        : Number(m.valor_previsto) || 0;
       total += valor;
       count += 1;
     }
