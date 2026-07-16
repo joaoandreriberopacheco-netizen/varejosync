@@ -4,6 +4,7 @@
 
 import { calcTotalItemCompraPedido } from '@/lib/productUnits';
 import { isLancamentoPago } from '@/lib/lancamentoFinanceiroStatus';
+import { dataHoje, formatarLogTime } from '@/components/utils/dateUtils';
 
 const roundToTwoDecimals = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
@@ -76,4 +77,57 @@ export async function cancelarLancamentosNaoPagosPedidoCompra(base44, pedidoId, 
   );
 
   return { cancelados: alvos.length };
+}
+
+/**
+ * Gera lançamento de ajuste quando um pedido com parcelas pagas muda de valor.
+ * Diferenca > 0: despesa (conta a pagar). Diferenca < 0: receita (conta a receber).
+ */
+export async function criarLancamentoAjustePedidoCompra(base44, {
+  pedido = {},
+  diferenca = 0,
+  valorAnterior = 0,
+  valorNovo = 0,
+  motivo = '',
+  responsavel = '',
+} = {}) {
+  const diff = roundToTwoDecimals(diferenca);
+  if (!pedido?.id || Math.abs(diff) < 0.01) return null;
+
+  const contaPagar = diff > 0;
+  const valorAjuste = Math.abs(diff);
+  const numeroPedido = pedido.numero || pedido.id;
+  const tipo = contaPagar ? 'Despesa' : 'Receita';
+  const descricao = contaPagar
+    ? `Ajuste de Pedido (diferença a pagar) - ${numeroPedido}`
+    : `Ajuste de Pedido (diferença a receber) - ${numeroPedido}`;
+  const observacoesBase = [
+    '[Ajuste automático por edição de pedido com pagamento já realizado]',
+    `Valor anterior: R$ ${Number(valorAnterior || 0).toFixed(2)}`,
+    `Valor novo: R$ ${Number(valorNovo || 0).toFixed(2)}`,
+    `Diferença: ${contaPagar ? '+' : '-'}R$ ${valorAjuste.toFixed(2)}`,
+    motivo ? `Motivo: ${motivo}` : '',
+    responsavel ? `Responsável: ${responsavel}` : '',
+    `Data: ${formatarLogTime()}`,
+  ].filter(Boolean).join('\n');
+
+  return base44.entities.LancamentoFinanceiro.create({
+    tipo,
+    descricao,
+    valor: valorAjuste,
+    valor_liquido: valorAjuste,
+    status: 'Em Aberto',
+    categoria: 'Ajuste de Pedido de Compra',
+    tags: [contaPagar ? 'conta_pagar' : 'conta_receber', 'ajuste_pedido_compra'],
+    terceiro_id: pedido.fornecedor_id || '',
+    terceiro_nome: pedido.fornecedor_nome || '',
+    data_vencimento: dataHoje(),
+    referencia_id: pedido.id,
+    referencia_tipo: 'PedidoCompra',
+    referencia_numero: numeroPedido,
+    pedido_compra_vinculado_id: pedido.id,
+    pedido_compra_vinculado_numero: numeroPedido,
+    is_custo_mercadoria: !!contaPagar,
+    observacoes: observacoesBase,
+  });
 }

@@ -9,7 +9,6 @@ import {
   calcValorTotalPedidoCompra,
   cancelarLancamentosNaoPagosPedidoCompra,
   listarLancamentosPedidoCompra,
-  temLancamentoPagoParaPedido,
 } from '@/lib/pedidoCompraFinanceiro';
 
 export function pedidoAguardandoAprovacaoFinanceira(pedido = {}) {
@@ -165,13 +164,6 @@ export async function rejeitarPedidoCompraFinanceiro({ base44, pedido, motivo, a
 
 export async function liberarEdicaoPedidoCompraFinanceiro({ base44, pedido, authData = {} }) {
   if (!pedido?.id) throw new Error('Pedido não encontrado.');
-
-  const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
-  if (temLancamentoPagoParaPedido(lancs)) {
-    throw new Error(
-      'Existem parcelas já pagas neste pedido. Ajuste ou estorne no financeiro antes de liberar a edição.'
-    );
-  }
 
   const nota = `| Liberar edição | Ref: ${authData.operationCode || authData.codigoOperacao || ''} | ${format(new Date(), 'dd/MM/yyyy HH:mm')}`;
   await cancelarLancamentosNaoPagosPedidoCompra(base44, pedido.id, nota);
