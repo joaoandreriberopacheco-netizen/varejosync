@@ -410,11 +410,11 @@ export default function VendasTab() {
     return `Dia ${String(day).padStart(2, '0')}`;
   };
 
-  const tooltipValueFormatter = (value, dataKey) => {
-    const month = metrics.monthBuckets4.find((bucket) => bucket.key === dataKey);
-    const amount = Number(value || 0);
-    return [BRL.format(amount), month?.shortLabel || String(dataKey)];
-  };
+  const focusedMonthLabel = metrics.monthBuckets4.find((bucket) => bucket.key === focusedMonthKey)?.shortLabel || '';
+  const dailyFocusedData = metrics.dailyComparisonData.map((row) => ({
+    ...row,
+    valor: Number(row[focusedMonthKey] || 0),
+  }));
 
   return (
     <div className="space-y-3">
@@ -429,7 +429,7 @@ export default function VendasTab() {
           <CardContent className="pt-1">
             <div className={`h-[230px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={metrics.dailyComparisonData}>
+                <BarChart data={dailyFocusedData} barCategoryGap="26%">
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.14)" vertical={false} />
                   <XAxis
                     dataKey="diaNumero"
@@ -442,8 +442,8 @@ export default function VendasTab() {
                   <YAxis tickFormatter={(value) => formatShort(value)} tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <Tooltip
                     labelFormatter={dayTooltipLabel}
-                    formatter={tooltipValueFormatter}
-                    cursor={{ stroke: 'rgba(148,163,184,0.65)', strokeDasharray: '4 4', strokeWidth: 1 }}
+                    formatter={(value) => [BRL.format(Number(value || 0)), focusedMonthLabel]}
+                    cursor={{ fill: 'rgba(148,163,184,0.16)' }}
                     contentStyle={{
                       backgroundColor: 'rgba(3,7,18,0.95)',
                       border: '1px solid rgba(148,163,184,0.35)',
@@ -454,21 +454,8 @@ export default function VendasTab() {
                     labelStyle={{ color: '#e2e8f0', fontWeight: 700 }}
                     itemStyle={{ color: '#cbd5e1' }}
                   />
-                  {metrics.monthBuckets4.map((bucket, idx) => (
-                    <Line
-                      key={bucket.key}
-                      type="monotone"
-                      dataKey={bucket.key}
-                      name={bucket.shortLabel}
-                      stroke={monthStyleMap[bucket.key]?.stroke || MONTH_LINES[idx % MONTH_LINES.length]}
-                      strokeWidth={monthStyleMap[bucket.key]?.strokeWidth || 2}
-                      opacity={monthStyleMap[bucket.key]?.opacity || 0.5}
-                      strokeDasharray={monthStyleMap[bucket.key]?.strokeDasharray || ''}
-                      dot={false}
-                      connectNulls={false}
-                    />
-                  ))}
-                </LineChart>
+                  <Bar dataKey="valor" radius={[4, 4, 0, 0]} maxBarSize={16} fill={monthStyleMap[focusedMonthKey]?.stroke || MONTH_HIGHLIGHT_COLORS.current} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
