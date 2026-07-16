@@ -1,7 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
@@ -12,8 +11,7 @@ export default function AgefinPrevisaoFiltros({
   centro,
   onCentroChange,
   centrosRegistrados = [],
-  agruparPorCentro,
-  onAgruparPorCentroChange,
+  organizer,
   className,
 }) {
   return (
@@ -44,15 +42,7 @@ export default function AgefinPrevisaoFiltros({
         </SelectContent>
       </Select>
 
-      <label
-        className={cn(
-          'flex min-w-0 cursor-pointer items-center justify-between gap-2 rounded-xl border border-border/40 px-2.5 py-2 sm:ml-auto sm:w-auto',
-          P38_FIELD_SURFACE,
-        )}
-      >
-        <span className="text-xs text-muted-foreground whitespace-nowrap">Agrupar por centro</span>
-        <Switch checked={agruparPorCentro} onCheckedChange={onAgruparPorCentroChange} />
-      </label>
+      {organizer ? <div className="flex shrink-0 items-center sm:ml-auto">{organizer}</div> : null}
     </div>
   );
 }

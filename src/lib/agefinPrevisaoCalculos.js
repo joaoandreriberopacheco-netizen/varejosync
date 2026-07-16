@@ -3,7 +3,7 @@
  */
 
 import { tagsOrigemBoleto } from '@/lib/agefinLancamentosRecorrencia';
-import { lancamentoPago, lancamentoCancelado } from '@/lib/agefinConsultaFilters';
+import { lancamentoPago, lancamentoCancelado, lancamentoVencidoOuAtrasado } from '@/lib/agefinConsultaFilters';
 
 export const SITUACAO_SERIE = {
   ATIVA: 'ativa',
@@ -213,6 +213,97 @@ export function filtrarCompetenciasPrevisao(competencias, { busca = '', centro =
     if (centro === '__sem__') return !cc;
     return cc.toLocaleLowerCase('pt-BR') === centro.toLocaleLowerCase('pt-BR');
   });
+}
+
+export function dataVencimentoCompetencia(comp, modelo) {
+  const lf = comp?._lancamento;
+  if (lf?.data_vencimento) return String(lf.data_vencimento).slice(0, 10);
+  const dia = Number(modelo?.dia_vencimento ?? comp?.dia_vencimento) || 10;
+  return dataVencimentoNaCompetencia(comp?.competencia, dia);
+}
+
+function compararCompetenciasPorVencimento(a, b, modelosMap, sortOrder = 'asc') {
+  const da = dataVencimentoCompetencia(a, modelosMap[a.serie_id]) || '9999-12-31';
+  const db = dataVencimentoCompetencia(b, modelosMap[b.serie_id]) || '9999-12-31';
+  const cmp = da.localeCompare(db);
+  if (cmp !== 0) return sortOrder === 'asc' ? cmp : -cmp;
+  const nomeCmp = (a.serie_nome || '').localeCompare(b.serie_nome || '', 'pt-BR', { sensitivity: 'base' });
+  return sortOrder === 'asc' ? nomeCmp : -nomeCmp;
+}
+
+/** Ordena por vencimento (padrão: asc = mais antigo primeiro). */
+export function ordenarCompetenciasPrevisao(competencias, sortOrder = 'asc', modelosMap = {}) {
+  return [...(competencias || [])].sort((a, b) => compararCompetenciasPorVencimento(a, b, modelosMap, sortOrder));
+}
+
+function bucketStatusCompetencia(comp, hojeIso = dataHojeIso()) {
+  const lf = comp?._lancamento;
+  const status = statusCompetenciaEfetivo(comp, hojeIso);
+  if (status === 'planejamento') return { key: 'planejamento', label: 'Planejamento', order: 0 };
+  if (status === 'fechado' || lancamentoPago(lf)) return { key: 'pago', label: 'Pagos / fechados', order: 1 };
+  if (status === 'cancelado' || lancamentoCancelado(lf)) return { key: 'cancelado', label: 'Cancelados', order: 2 };
+  const venc = dataVencimentoCompetencia(comp);
+  if (venc && venc < hojeIso && !lancamentoPago(lf)) {
+    return { key: 'vencido', label: 'Vencidos', order: 3 };
+  }
+  return { key: 'aberto', label: 'Em aberto', order: 4 };
+}
+
+/**
+ * Agrupa competências para exibição (consulta AGEFIN).
+ * groupBy: vencimento | favorecido | categoria | status | centro_custo
+ */
+export function agruparCompetenciasPrevisao(competencias, groupBy = 'vencimento', sortOrder = 'asc', modelosMap = {}) {
+  const ordenadas = ordenarCompetenciasPrevisao(competencias, sortOrder, modelosMap);
+  const hoje = dataHojeIso();
+
+  const metaFor = (comp) => {
+    const modelo = modelosMap[comp.serie_id];
+    if (groupBy === 'vencimento') {
+      const d = dataVencimentoCompetencia(comp, modelo) || 'sem-data';
+      const label =
+        d === 'sem-data' ? 'Sem data' : d === hoje ? 'Hoje' : formatDataBr(d);
+      return { key: `v:${d}`, label, orderValue: d === 'sem-data' ? '9999-12-31' : d };
+    }
+    if (groupBy === 'favorecido') {
+      const nome = (comp.terceiro_nome || modelo?.terceiro_nome || '').trim() || 'Sem favorecido';
+      return { key: `f:${nome}`, label: nome, orderValue: nome.toLowerCase() };
+    }
+    if (groupBy === 'categoria') {
+      const cat = (comp.categoria_nome || modelo?.categoria_nome || '').trim() || 'Sem categoria';
+      return { key: `c:${cat}`, label: cat, orderValue: cat.toLowerCase() };
+    }
+    if (groupBy === 'centro_custo') {
+      const cc = (comp.centro_custo || modelo?.centro_custo || '').trim() || 'Sem centro de custo';
+      return { key: `cc:${cc}`, label: cc, orderValue: cc.toLowerCase() };
+    }
+    const b = bucketStatusCompetencia(comp, hoje);
+    return { key: `s:${b.key}`, label: b.label, orderValue: String(b.order).padStart(2, '0') };
+  };
+
+  const map = {};
+  for (const comp of ordenadas) {
+    const m = metaFor(comp);
+    if (!map[m.key]) map[m.key] = { key: m.key, label: m.label, orderValue: m.orderValue, items: [] };
+    map[m.key].items.push(comp);
+  }
+
+  const compareGroups = (a, b) => {
+    if (groupBy === 'status') {
+      const ia = Number(a.orderValue);
+      const ib = Number(b.orderValue);
+      return sortOrder === 'asc' ? ia - ib : ib - ia;
+    }
+    const cmp = String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR', { sensitivity: 'base' });
+    return sortOrder === 'asc' ? cmp : -cmp;
+  };
+
+  return Object.values(map)
+    .sort(compareGroups)
+    .map((g) => ({
+      ...g,
+      items: ordenarCompetenciasPrevisao(g.items, sortOrder, modelosMap),
+    }));
 }
 
 export function agruparCompetenciasPorCentroCusto(competencias, centrosRegistrados = []) {

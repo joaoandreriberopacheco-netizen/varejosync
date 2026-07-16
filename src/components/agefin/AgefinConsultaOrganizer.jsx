@@ -27,8 +27,17 @@ const OPTIONS_RECORRENTES = [
   { value: 'situacao', label: 'Situação', icon: Wallet },
 ];
 
+const OPTIONS_PREVISAO = [
+  { value: 'vencimento', label: 'Data de vencimento', icon: CalendarDays },
+  { value: 'favorecido', label: 'Favorecido', icon: Building2 },
+  { value: 'status', label: 'Status', icon: Wallet },
+  { value: 'categoria', label: 'Categoria', icon: Tag },
+  { value: 'centro_custo', label: 'Centro de custo', icon: Layers },
+];
+
 const VARIANT_MAP = {
   consulta: OPTIONS_CONSULTA,
+  previsao: OPTIONS_PREVISAO,
   boleto: OPTIONS_BOLETO,
   recorrentes: OPTIONS_RECORRENTES,
 };
@@ -43,6 +52,15 @@ export default function AgefinConsultaOrganizer({
   const OPTIONS = VARIANT_MAP[variant] || VARIANT_MAP.consulta;
   const current = OPTIONS.find((option) => option.value === groupBy) || OPTIONS[0];
   const CurrentIcon = current.icon;
+
+  const sortTitle =
+    groupBy === 'vencimento'
+      ? sortOrder === 'asc'
+        ? 'Vencimento: mais antigo primeiro'
+        : 'Vencimento: mais recente primeiro'
+      : sortOrder === 'desc'
+        ? 'Ordem: mais recente / Z–A'
+        : 'Ordem: mais antigo / A–Z';
 
   return (
     <div className="flex items-center gap-2">
@@ -77,7 +95,7 @@ export default function AgefinConsultaOrganizer({
         type="button"
         onClick={onSortOrderToggle}
         className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted shadow-sm transition hover:shadow-md dark:bg-muted text-foreground/90"
-        title={sortOrder === 'desc' ? 'Ordem: mais recente / Z–A' : 'Ordem: mais antigo / A–Z'}
+        title={sortTitle}
       >
         <ArrowDownUp className={`h-4 w-4 transition-transform ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
       </button>

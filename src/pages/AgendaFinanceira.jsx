@@ -27,6 +27,7 @@ import AgefinPrevisaoProjecao from '@/components/agefin-previsao/AgefinPrevisaoP
 import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
 import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
+import AgefinConsultaOrganizer from '@/components/agefin/AgefinConsultaOrganizer';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   calcularTotaisGrupo,
@@ -37,6 +38,7 @@ import {
   montarCompetenciasVisao,
   shiftCompetencia,
   filtrarCompetenciasPrevisao,
+  agruparCompetenciasPrevisao,
   ordenarSeriesPorCentroENome,
   isCompetenciaFutura,
   isCompetenciaPlanejamento,
@@ -65,7 +67,8 @@ export default function AgendaFinanceiraPage() {
   const [syncing, setSyncing] = useState(false);
   const [filtroBusca, setFiltroBusca] = useState('');
   const [filtroCentro, setFiltroCentro] = useState('__todos__');
-  const [agruparPorCentroCusto, setAgruparPorCentroCusto] = useState(false);
+  const [groupBy, setGroupBy] = useState('vencimento');
+  const [sortOrder, setSortOrder] = useState('asc');
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
   const [draggingSerieId, setDraggingSerieId] = useState('');
@@ -115,6 +118,11 @@ export default function AgendaFinanceiraPage() {
   const competenciasExibidas = useMemo(
     () => filtrarCompetenciasPrevisao(competenciasVisao, { busca: filtroBusca, centro: filtroCentro }),
     [competenciasVisao, filtroBusca, filtroCentro],
+  );
+
+  const gruposExibicao = useMemo(
+    () => agruparCompetenciasPrevisao(competenciasExibidas, groupBy, sortOrder, modelosMap),
+    [competenciasExibidas, groupBy, sortOrder, modelosMap],
   );
 
   const qtdPlanejamento = useMemo(
@@ -410,8 +418,15 @@ export default function AgendaFinanceiraPage() {
             centro={filtroCentro}
             onCentroChange={setFiltroCentro}
             centrosRegistrados={centrosRegistrados}
-            agruparPorCentro={agruparPorCentroCusto}
-            onAgruparPorCentroChange={setAgruparPorCentroCusto}
+            organizer={
+              <AgefinConsultaOrganizer
+                variant="previsao"
+                groupBy={groupBy}
+                sortOrder={sortOrder}
+                onGroupByChange={setGroupBy}
+                onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+              />
+            }
           />
 
           <FinanceiroListaEstado
@@ -425,10 +440,9 @@ export default function AgendaFinanceiraPage() {
             vazioIcon={Repeat2}
           >
             <AgefinPrevisaoLista
+              grupos={gruposExibicao}
               competencias={competenciasExibidas}
               modelosMap={modelosMap}
-              agruparPorCentro={agruparPorCentroCusto}
-              centrosRegistrados={centrosRegistrados}
               onOpen={setSelectedComp}
             />
           </FinanceiroListaEstado>
