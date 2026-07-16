@@ -55,6 +55,7 @@ import {
   sincronizarFechamentoCompetencias,
   sincronizarLancamentoFinanceiro,
   atualizarCentroCustoSerie,
+  atualizarCompetenciaManual,
 } from '@/lib/agefinPrevisaoService';
 
 export default function PlanejamentoFinanceiroPage() {
@@ -74,6 +75,7 @@ export default function PlanejamentoFinanceiroPage() {
   const [draggingSerieId, setDraggingSerieId] = useState('');
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
   const [showImportador, setShowImportador] = useState(false);
+  const [salvandoManual, setSalvandoManual] = useState(false);
 
   const { data: lancamentosMes = [], isLoading: loadingLanc } = useQuery({
     queryKey: ['agefin-previsao', 'lancamentos', competenciaMes],
@@ -296,6 +298,30 @@ export default function PlanejamentoFinanceiroPage() {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleSalvarManual = async ({ valor, dataVencimento, diaVencimento }) => {
+    if (!selectedComp) return;
+    setSalvandoManual(true);
+    try {
+      await atualizarCompetenciaManual({
+        competencia: selectedComp,
+        modelo: selectedModelo,
+        valor,
+        dataVencimento,
+        diaVencimento,
+      });
+      invalidate();
+      const lancs = await listarLancamentosCompetencia(competenciaMes);
+      const visao = montarCompetenciasVisao(competenciaMes, modelos, lancs);
+      const atualizada = visao.find((c) => c.serie_id === selectedComp.serie_id);
+      if (atualizada) setSelectedComp(atualizada);
+      toast({ title: 'Valor e vencimento guardados' });
+    } catch (e) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setSalvandoManual(false);
     }
   };
 
@@ -566,7 +592,7 @@ export default function PlanejamentoFinanceiroPage() {
                 setShowImportador(true);
               }}
             >
-              Importar boleto
+              Importar conta (PDF)
             </Button>
             <Button
               size="sm"
@@ -598,7 +624,9 @@ export default function PlanejamentoFinanceiroPage() {
         syncing={syncing}
         onAbrirMes={handleAbrirSerieNoMes}
         abrindoMes={saving}
-        onImportarBoleto={() => setShowImportador(true)}
+        onVincularBoleto={() => setShowImportador(true)}
+        onSalvarManual={handleSalvarManual}
+        salvandoManual={salvandoManual}
       />
 
       <AgefinSerieDialog
@@ -628,10 +656,19 @@ export default function PlanejamentoFinanceiroPage() {
       <Dialog open={showImportador} onOpenChange={setShowImportador}>
         <DialogContent className="flex min-h-0 max-h-[92vh] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-xl">
           <div className="shrink-0 border-b border-border/40 p-5">
-            <h2 className="text-lg font-semibold text-foreground">Importar conta (boleto)</h2>
+            <h2 className="text-lg font-semibold text-foreground">
+              {selectedComp?.lancamento_id ? 'Vincular boleto (PDF)' : 'Importar conta (PDF)'}
+            </h2>
           </div>
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <AgefinImportador
+              modoAtualizacao={Boolean(selectedComp?.lancamento_id)}
+              lancamentoFinanceiroId={selectedComp?.lancamento_id || undefined}
+              dadosContaExistente={
+                selectedComp
+                  ? { descricao: selectedComp.serie_nome, terceiro_nome: selectedComp.terceiro_nome }
+                  : undefined
+              }
               onSuccess={() => {
                 invalidate();
                 setShowImportador(false);

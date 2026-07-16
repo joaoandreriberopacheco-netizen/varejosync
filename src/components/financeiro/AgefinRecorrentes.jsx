@@ -324,7 +324,7 @@ export default function AgefinRecorrentes() {
       <div className="rounded-[28px] bg-card p-4 shadow-sm dark:bg-card dark:ring-1 dark:ring-border">
         <div className="mb-3 rounded-2xl bg-muted/40 px-3 py-2 dark:bg-muted/40">
           <p className="text-[11px] leading-4 text-muted-foreground dark:text-muted-foreground">
-            Toque num cartão para importar o PDF do boleto, rever dados e guardar; em seguida volta à lista para a conta seguinte. Contorno verde-lima no ícone = conta como boleto e lançamento marcado com PDF nesse mês; contorno verde-oliva no ícone = pago; check verde ao lado do título quando pago.
+            Toque num cartão para editar valor/vencimento ou vincular o PDF do boleto (só anexo). Contorno verde-lima no ícone = boleto anexado nesse mês; contorno verde-oliva = pago; check verde ao lado do título quando pago.
           </p>
         </div>
         <div className="flex items-center justify-between gap-3">
@@ -495,7 +495,7 @@ export default function AgefinRecorrentes() {
         <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-card/95 p-0 shadow-xl backdrop-blur-xl dark:bg-card/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
           <DialogHeader className="shrink-0 border-b border-border/40 px-5 pb-3 pt-5 dark:border-border/40">
             <DialogTitle className="text-foreground">
-              {importAlvo ? `Atualizar boleto · ${importAlvo.recorrente?.nome_despesa || 'Recorrente'}` : 'Atualizar boleto'}
+              {importAlvo ? `Vincular boleto · ${importAlvo.recorrente?.nome_despesa || 'Recorrente'}` : 'Vincular boleto'}
             </DialogTitle>
           </DialogHeader>
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden overscroll-none">
