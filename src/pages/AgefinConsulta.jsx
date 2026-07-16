@@ -77,12 +77,12 @@ function KpiCard({ label, value, tone = 'default' }) {
   }[tone] || Wallet;
 
   return (
-    <div className={`min-w-0 rounded-[22px] px-3 py-2 shadow-sm md:px-4 md:py-3 ${toneMap[tone]}`}>
+    <div className={`min-w-0 rounded-[18px] px-2.5 py-2 shadow-sm md:rounded-[20px] md:px-3 md:py-2.5 ${toneMap[tone]}`}>
       <div className="flex items-center justify-between gap-3">
         <p className={`text-[10px] uppercase tracking-[0.16em] truncate ${labelToneMap[tone]}`}>{label}</p>
         <Icon className={`w-3.5 h-3.5 shrink-0 ${iconToneMap[tone]}`} />
       </div>
-      <p className="mt-1 text-sm md:text-base font-semibold font-glacial truncate">{value}</p>
+      <p className="mt-0.5 text-sm md:text-[15px] font-semibold font-glacial truncate">{value}</p>
     </div>
   );
 }
@@ -766,35 +766,26 @@ export default function AgefinConsulta() {
   };
 
   return (
-    <div className={`min-h-screen p-3 md:p-6 ${modoSelecao ? 'pb-40' : 'pb-24'} ${brandSurface.pageScreen}`}>
-      <div className="mx-auto max-w-5xl space-y-3 md:space-y-4">
-        <div className={`rounded-[24px] p-4 md:rounded-[28px] md:p-5 ${brandSurface.card}`}>
-          <div className="flex items-start justify-between gap-3">
+    <div className={`min-h-screen p-2.5 md:p-4 ${modoSelecao ? 'pb-36' : 'pb-20'} ${brandSurface.pageScreen}`}>
+      <div className="mx-auto max-w-5xl space-y-2 md:space-y-3">
+        <div className={`rounded-[20px] p-3 md:rounded-[24px] md:p-4 ${brandSurface.card}`}>
+          <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-[0.18em]">Consulta financeira</p>
-              <h1 className="text-2xl md:text-3xl font-semibold text-foreground font-glacial">Agefin</h1>
-              <p className="hidden md:block text-sm text-muted-foreground mt-1">
-                Contas do mês por vencimento (padrão). Agrupe pelo ícone; toque em &quot;Somar&quot; para escolher contas e ver o total.
-              </p>
-              <div className="mt-2 md:mt-3 flex items-center justify-between gap-3 rounded-2xl bg-muted/50/60 px-3 py-2 md:max-w-sm">
-                <div className="min-w-0 hidden md:block">
-                  <p className="text-xs font-medium text-foreground">CMV na lista</p>
-                  <p className="text-[11px] text-muted-foreground">Desligue para ocultar sem abrir filtros</p>
-                </div>
-                <div className="ml-auto flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-full bg-muted md:hidden"
-                    onClick={() => window.alert('CMV na lista: desligue para ocultar custos de mercadoria sem abrir filtros.')}
-                    aria-label="Ajuda sobre CMV na lista"
-                    title="Ajuda"
-                  >
-                    <CircleHelp className="w-4 h-4 text-muted-foreground" />
-                  </Button>
-                  <CmvQuickToggle checked={mostrarCmvRapido} onChange={setMostrarCmvRapido} />
-                </div>
+              <div className="mt-0.5 flex items-center gap-2">
+                <h1 className="text-xl leading-none md:text-2xl font-semibold text-foreground font-glacial">Agefin</h1>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-full bg-muted"
+                  onClick={() => window.alert('CMV na lista: desligue para ocultar custos de mercadoria sem abrir filtros.')}
+                  aria-label="Ajuda sobre CMV na lista"
+                  title="Ajuda"
+                >
+                  <CircleHelp className="w-4 h-4 text-muted-foreground" />
+                </Button>
+                <CmvQuickToggle checked={mostrarCmvRapido} onChange={setMostrarCmvRapido} />
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
@@ -816,7 +807,7 @@ export default function AgefinConsulta() {
               </Button>
               <Drawer>
                 <DrawerTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-2xl bg-muted">
+                  <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-2xl bg-muted">
                     <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                     {hasActiveFilters && (
                       <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 ring-2 ring-white dark:ring-border/40" aria-hidden />
@@ -884,21 +875,21 @@ export default function AgefinConsulta() {
                   </DrawerFooter>
                 </DrawerContent>
               </Drawer>
-              <Button onClick={imprimirRelatorio} variant="ghost" size="icon" className="h-10 w-10 rounded-2xl bg-muted">
+              <Button onClick={imprimirRelatorio} variant="ghost" size="icon" className="h-9 w-9 rounded-2xl bg-muted">
                 <Printer className="w-4 h-4 text-muted-foreground" />
               </Button>
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} variant="ghost" size="sm" className="rounded-full h-10 w-10 p-0">
+          <div className="mt-2.5 flex items-center justify-between gap-2">
+            <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0 md:h-9 md:w-9">
               <ChevronLeft className="w-5 h-5" />
             </Button>
             <div className="text-center min-w-0">
               <p className="text-sm font-semibold text-foreground capitalize">{formatMonth(currentMonth)}</p>
-              <p className="text-xs text-muted-foreground mt-1">Período civil do mês · {monthData.length} conta{monthData.length !== 1 ? 's' : ''} a pagar</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Período civil · {monthData.length} conta{monthData.length !== 1 ? 's' : ''}</p>
             </div>
-            <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} variant="ghost" size="sm" className="rounded-full h-10 w-10 p-0">
+            <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0 md:h-9 md:w-9">
               <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
@@ -922,7 +913,7 @@ export default function AgefinConsulta() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+        <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4 md:gap-2">
           <KpiCard label="Total (filtro)" value={formatCurrency(kpis.totalValue)} />
           <KpiCard label="Pago" value={formatCurrency(kpis.paidValue)} tone="success" />
           <KpiCard label="Não pago" value={formatCurrency(kpis.unpaidValue)} tone="muted" />
