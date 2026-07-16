@@ -15,6 +15,105 @@ export const SITUACAO_SERIE_LABELS = {
   encerrada: 'Encerrada',
 };
 
+export const FREQUENCIA_SERIE = {
+  SEMANAL: 'Semanal',
+  MENSAL: 'Mensal',
+  BIMESTRAL: 'Bimestral',
+  TRIMESTRAL: 'Trimestral',
+  SEMESTRAL: 'Semestral',
+  ANUAL: 'Anual',
+};
+
+export const FREQUENCIAS_SERIE_OPCOES = [
+  FREQUENCIA_SERIE.MENSAL,
+  FREQUENCIA_SERIE.BIMESTRAL,
+  FREQUENCIA_SERIE.TRIMESTRAL,
+  FREQUENCIA_SERIE.SEMESTRAL,
+  FREQUENCIA_SERIE.ANUAL,
+];
+
+export const MESES_VENCIMENTO_LABELS = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
+
+export const GRUPO_ORGANIZACAO_SERIE = {
+  PERIODICA: 'periodica',
+  ANUAL: 'anual',
+};
+
+/** Agrupamento na aba Contas fixas: periódicas vs anuais. */
+export function grupoOrganizacaoSerie(modelo) {
+  const f = modelo?.frequencia || FREQUENCIA_SERIE.MENSAL;
+  return f === FREQUENCIA_SERIE.ANUAL ? GRUPO_ORGANIZACAO_SERIE.ANUAL : GRUPO_ORGANIZACAO_SERIE.PERIODICA;
+}
+
+export function labelFrequenciaSerie(modelo) {
+  const f = modelo?.frequencia || FREQUENCIA_SERIE.MENSAL;
+  return f;
+}
+
+export function labelValorSerie(modelo) {
+  const f = modelo?.frequencia || FREQUENCIA_SERIE.MENSAL;
+  const v = formatCurrency(modelo?.valor_previsto);
+  if (f === FREQUENCIA_SERIE.ANUAL) return `${v}/ano`;
+  if (f === FREQUENCIA_SERIE.MENSAL) return `${v}/mês`;
+  return `${v} · ${f}`;
+}
+
+export function mesCompetenciaNum(competencia) {
+  return parseInt(String(competencia).slice(5, 7), 10);
+}
+
+/**
+ * Define em quais meses a conta fixa entra na previsão / projeção.
+ * mes_vencimento (1–12) é o mês âncora (ex.: IPTU em março; bimestral a partir de jan).
+ */
+export function serieDeveAparecerNaCompetencia(modelo, competencia) {
+  if (!serieEstaAtivaNaCompetencia(modelo, competencia)) return false;
+  const f = modelo.frequencia || FREQUENCIA_SERIE.MENSAL;
+  const mesRef = Number(modelo.mes_vencimento) || 1;
+  const mes = mesCompetenciaNum(competencia);
+  const offset = (mes - mesRef + 12) % 12;
+
+  switch (f) {
+    case FREQUENCIA_SERIE.ANUAL:
+      return mes === mesRef;
+    case FREQUENCIA_SERIE.SEMESTRAL:
+      return offset % 6 === 0;
+    case FREQUENCIA_SERIE.TRIMESTRAL:
+      return offset % 3 === 0;
+    case FREQUENCIA_SERIE.BIMESTRAL:
+      return offset % 2 === 0;
+    case FREQUENCIA_SERIE.SEMANAL:
+    case FREQUENCIA_SERIE.MENSAL:
+    default:
+      return true;
+  }
+}
+
+/** Agrupa séries ativas por tipo (periódica/anual) e centro de custo. */
+export function agruparSeriesPorTipoECentro(series, centrosRegistrados = []) {
+  const centrosSet = new Set(
+    (centrosRegistrados || []).map((c) => String(c).toLocaleLowerCase('pt-BR')),
+  );
+  const out = {
+    [GRUPO_ORGANIZACAO_SERIE.PERIODICA]: {},
+    [GRUPO_ORGANIZACAO_SERIE.ANUAL]: {},
+  };
+
+  for (const serie of series || []) {
+    const tipo = grupoOrganizacaoSerie(serie);
+    const centro = String(serie.centro_custo || '').trim();
+    const chave =
+      centro && centrosSet.has(centro.toLocaleLowerCase('pt-BR')) ? centro : '__sem__';
+    if (!out[tipo][chave]) out[tipo][chave] = [];
+    out[tipo][chave].push(serie);
+  }
+
+  return out;
+}
+
 export function gerarGrupoLancamentoId() {
   return `grp-agefin-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -179,7 +278,7 @@ export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes 
   }
 
   for (const modelo of modelos || []) {
-    if (!serieEstaAtivaNaCompetencia(modelo, competenciaMes)) continue;
+    if (!serieDeveAparecerNaCompetencia(modelo, competenciaMes)) continue;
     const lf = modelo.grupo_lancamento_id ? lfByGrupo[modelo.grupo_lancamento_id] : null;
     if (lf) {
       bySerie[modelo.id] = competenciaFromLancamento(lf, modelo, competenciaMes);
@@ -397,6 +496,7 @@ export function calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos =
   for (const m of modelos || []) {
     const gid = m.grupo_lancamento_id;
     if (!gid) continue;
+    if (!serieDeveAparecerNaCompetencia(m, competenciaInicio)) continue;
     const real = reais[`${gid}:${competenciaInicio}`];
     anchorPorGrupo[gid] = real ?? (Number(m.valor_previsto) || 0);
   }
@@ -407,7 +507,7 @@ export function calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos =
     let total = 0;
     let count = 0;
     for (const m of modelos || []) {
-      if (!serieEstaAtivaNaCompetencia(m, comp)) continue;
+      if (!serieDeveAparecerNaCompetencia(m, comp)) continue;
       const gid = m.grupo_lancamento_id;
       const valor = gid
         ? (anchorPorGrupo[gid] ?? (Number(m.valor_previsto) || 0))
@@ -433,7 +533,8 @@ export function criarSerieComDefaults(partial = {}) {
     centro_custo: partial.centro_custo || '',
     valor_previsto: Number(partial.valor_previsto) || 0,
     dia_vencimento: Number(partial.dia_vencimento) || 10,
-    frequencia: partial.frequencia || 'Mensal',
+    frequencia: partial.frequencia || FREQUENCIA_SERIE.MENSAL,
+    mes_vencimento: Number(partial.mes_vencimento) || new Date().getMonth() + 1,
     grupo_lancamento_id: partial.grupo_lancamento_id || gerarGrupoLancamentoId(),
     ativo: partial.ativo !== false,
     situacao: partial.situacao || SITUACAO_SERIE.ATIVA,

@@ -10,6 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  FREQUENCIA_SERIE,
+  FREQUENCIAS_SERIE_OPCOES,
+  MESES_VENCIMENTO_LABELS,
+} from '@/lib/agefinPrevisaoCalculos';
 
 export default function AgefinSerieDialog({
   open,
@@ -26,6 +31,8 @@ export default function AgefinSerieDialog({
     centro_custo: '',
     valor_previsto: 0,
     dia_vencimento: 10,
+    frequencia: FREQUENCIA_SERIE.MENSAL,
+    mes_vencimento: new Date().getMonth() + 1,
     observacoes: '',
   });
 
@@ -38,10 +45,14 @@ export default function AgefinSerieDialog({
         centro_custo: serie?.centro_custo || '',
         valor_previsto: Number(serie?.valor_previsto) || 0,
         dia_vencimento: Number(serie?.dia_vencimento) || 10,
+        frequencia: serie?.frequencia || FREQUENCIA_SERIE.MENSAL,
+        mes_vencimento: Number(serie?.mes_vencimento) || new Date().getMonth() + 1,
         observacoes: serie?.observacoes || '',
       });
     }
   }, [open, serie]);
+
+  const precisaMesReferencia = form.frequencia !== FREQUENCIA_SERIE.MENSAL;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -50,12 +61,13 @@ export default function AgefinSerieDialog({
       ...form,
       valor_previsto: parseFloat(form.valor_previsto) || 0,
       dia_vencimento: parseInt(form.dia_vencimento, 10) || 10,
+      mes_vencimento: parseInt(form.mes_vencimento, 10) || 1,
     });
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
-      <DialogContent className="max-w-md rounded-2xl">
+      <DialogContent className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{serie?.id ? 'Editar conta fixa' : 'Nova conta fixa'}</DialogTitle>
         </DialogHeader>
@@ -85,6 +97,53 @@ export default function AgefinSerieDialog({
               placeholder="Energia, Telefone…"
             />
           </div>
+          <div>
+            <Label>Periodicidade</Label>
+            <Select
+              value={form.frequencia}
+              onValueChange={(v) => setForm((f) => ({ ...f, frequencia: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FREQUENCIAS_SERIE_OPCOES.map((f) => (
+                  <SelectItem key={f} value={f}>
+                    {f}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {form.frequencia === FREQUENCIA_SERIE.ANUAL
+                ? 'Conta anual — aparece só no mês de vencimento escolhido.'
+                : form.frequencia === FREQUENCIA_SERIE.MENSAL
+                  ? 'Conta mensal — aparece em todos os meses.'
+                  : `Conta ${form.frequencia.toLowerCase()} — a partir do mês de referência.`}
+            </p>
+          </div>
+          {precisaMesReferencia && (
+            <div>
+              <Label>
+                {form.frequencia === FREQUENCIA_SERIE.ANUAL ? 'Mês do vencimento' : 'Mês de referência'}
+              </Label>
+              <Select
+                value={String(form.mes_vencimento)}
+                onValueChange={(v) => setForm((f) => ({ ...f, mes_vencimento: parseInt(v, 10) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MESES_VENCIMENTO_LABELS.map((nome, idx) => (
+                    <SelectItem key={nome} value={String(idx + 1)}>
+                      {nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label>Centro de custo</Label>
             <Select

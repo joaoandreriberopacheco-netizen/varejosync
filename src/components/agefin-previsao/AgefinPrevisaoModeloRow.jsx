@@ -6,7 +6,7 @@ import {
   P38StatusLabel,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
-import { formatCurrency, SITUACAO_SERIE } from '@/lib/agefinPrevisaoCalculos';
+import { SITUACAO_SERIE, labelFrequenciaSerie, labelValorSerie } from '@/lib/agefinPrevisaoCalculos';
 
 export default function AgefinPrevisaoModeloRow({ modelo, onEdit, onDelete, striped = false }) {
   const encerrada = (modelo.situacao || '') === SITUACAO_SERIE.ENCERRADA || modelo.ativo === false;
@@ -16,6 +16,7 @@ export default function AgefinPrevisaoModeloRow({ modelo, onEdit, onDelete, stri
     <>
       {modelo.terceiro_nome && <span>{modelo.terceiro_nome}</span>}
       <span>CC {centroCusto || 'não informado'}</span>
+      <span>{labelFrequenciaSerie(modelo)}</span>
       <span>Vence dia {modelo.dia_vencimento || 10}</span>
       {encerrada && <P38StatusLabel tone="muted">Encerrada</P38StatusLabel>}
     </>
@@ -28,7 +29,7 @@ export default function AgefinPrevisaoModeloRow({ modelo, onEdit, onDelete, stri
       accent={p38AccentKeyFromTone(encerrada ? 'muted' : 'danger')}
       className="max-md:!py-3.5"
       title={modelo.nome}
-      subtitle={`${formatCurrency(modelo.valor_previsto)}/mês`}
+      subtitle={labelValorSerie(modelo)}
       meta={meta}
       value={
         <div className="flex items-center gap-1">

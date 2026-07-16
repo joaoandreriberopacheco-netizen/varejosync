@@ -12,6 +12,7 @@ import {
   criarSerieComDefaults,
   dataVencimentoNaCompetencia,
   gerarGrupoLancamentoId,
+  serieDeveAparecerNaCompetencia,
   serieEstaAtivaNaCompetencia,
 } from '@/lib/agefinPrevisaoCalculos';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
@@ -112,6 +113,7 @@ export async function sincronizarModelosDesdeLancamentos() {
         categoria_nome: rep.categoria || '',
         valor_previsto: Number(rep.valor) || 0,
         dia_vencimento: Number((rep.data_vencimento || '').slice(8, 10)) || 10,
+        mes_vencimento: Number((rep.data_vencimento || '').slice(5, 7)) || new Date().getMonth() + 1,
         frequencia: rep.frequencia_recorrencia || 'Mensal',
         grupo_lancamento_id: gid,
         ativo: true,
@@ -176,7 +178,7 @@ export async function abrirCompetenciasDoMes(competencia) {
   const pulados = [];
 
   for (const modelo of modelos) {
-    if (!serieEstaAtivaNaCompetencia(modelo, competencia)) {
+    if (!serieDeveAparecerNaCompetencia(modelo, competencia)) {
       pulados.push(modelo.nome);
       continue;
     }

@@ -16,12 +16,12 @@ import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { P38_CHIP_INACTIVE, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroListaShared';
-import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import AgefinPrevisaoResumo from '@/components/agefin-previsao/AgefinPrevisaoResumo';
 import AgefinPrevisaoLista from '@/components/agefin-previsao/AgefinPrevisaoLista';
 import AgefinPrevisaoFiltros from '@/components/agefin-previsao/AgefinPrevisaoFiltros';
 import AgefinPrevisaoModeloRow from '@/components/agefin-previsao/AgefinPrevisaoModeloRow';
 import AgefinSerieDialog from '@/components/agefin-previsao/AgefinSerieDialog';
+import AgefinContasFixasGrupos from '@/components/agefin-previsao/AgefinContasFixasGrupos';
 import AgefinPrevisaoDetalheDrawer from '@/components/agefin-previsao/AgefinPrevisaoDetalheDrawer';
 import AgefinPrevisaoProjecao from '@/components/agefin-previsao/AgefinPrevisaoProjecao';
 import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
@@ -42,6 +42,7 @@ import {
   ordenarSeriesPorCentroENome,
   isCompetenciaFutura,
   isCompetenciaPlanejamento,
+  agruparSeriesPorTipoECentro,
 } from '@/lib/agefinPrevisaoCalculos';
 import {
   abrirCompetenciasDoMes,
@@ -152,22 +153,10 @@ export default function PlanejamentoFinanceiroPage() {
     [modelos],
   );
 
-  const centrosRegistradosSet = useMemo(
-    () => new Set(centrosRegistrados.map((c) => c.toLocaleLowerCase('pt-BR'))),
-    [centrosRegistrados],
+  const agrupamentoContas = useMemo(
+    () => agruparSeriesPorTipoECentro(seriesAtivas, centrosRegistrados),
+    [seriesAtivas, centrosRegistrados],
   );
-
-  const seriesPorCentro = useMemo(() => {
-    const mapa = {};
-    for (const serie of seriesAtivas) {
-      const centro = String(serie.centro_custo || '').trim();
-      const chave =
-        centro && centrosRegistradosSet.has(centro.toLocaleLowerCase('pt-BR')) ? centro : '__sem__';
-      if (!mapa[chave]) mapa[chave] = [];
-      mapa[chave].push(serie);
-    }
-    return mapa;
-  }, [seriesAtivas, centrosRegistradosSet]);
 
   const serieArrastando = useMemo(
     () => seriesAtivas.find((s) => s.id === draggingSerieId) || null,
@@ -499,10 +488,13 @@ export default function PlanejamentoFinanceiroPage() {
         <TabsContent value="contas" className="mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-end gap-2">
             <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="end">
-              <p className="font-medium text-foreground">Organização por centro de custo</p>
+              <p className="font-medium text-foreground">Dois grupos: periódicas e anuais</p>
               <p className="text-muted-foreground">
-                Cadastre centros pelo botão <strong className="text-foreground">+</strong>, depois arraste a conta para o
-                centro desejado.
+                Dentro de cada grupo, organize por <strong className="text-foreground">centro de custo</strong> —
+                cadastre centros pelo <strong className="text-foreground">+</strong> e arraste a conta.
+              </p>
+              <p className="text-muted-foreground mt-2">
+                Na periodicidade do cadastro, escolha Mensal, Bimestral, Trimestral, Semestral ou Anual.
               </p>
             </P38HelpPopover>
           </div>
@@ -513,68 +505,28 @@ export default function PlanejamentoFinanceiroPage() {
             vazioMensagem="Nenhuma conta fixa cadastrada."
             vazioIcon={Repeat2}
           >
-            <div className="space-y-3">
-              {[...centrosRegistrados, '__sem__'].map((centro) => {
-                const chave = centro || '__sem__';
-                const series = seriesPorCentro[chave] || [];
-                const centroLabel = chave === '__sem__' ? 'Sem centro de custo' : centro;
-                return (
-                  <div
-                    key={chave}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      if (draggingSerieId) setDropCentroAtual(chave);
-                    }}
-                    onDragLeave={() => setDropCentroAtual((v) => (v === chave ? '__none__' : v))}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const serieId = e.dataTransfer.getData('text/plain');
-                      const serie = seriesAtivas.find((s) => s.id === serieId);
-                      if (serie) void handleMoverSerieCentro(serie, chave === '__sem__' ? '' : centro);
-                    }}
-                    className={cn(
-                      'rounded-xl border border-border/60 bg-card/40',
-                      dropCentroAtual === chave && draggingSerieId ? 'ring-2 ring-primary/50 border-primary/50' : '',
-                    )}
-                  >
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">{centroLabel}</p>
-                        <p className="text-[11px] text-muted-foreground">{series.length} conta(s)</p>
-                      </div>
-                    </div>
-                    {series.length > 0 ? (
-                      <P38MobileLineList className="block md:!block rounded-none overflow-hidden">
-                        {series.map((s, idx) => (
-                          <div
-                            key={s.id}
-                            draggable
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData('text/plain', s.id);
-                              setDraggingSerieId(s.id);
-                              void refetchCentros();
-                            }}
-                            onDragEnd={() => {
-                              setDraggingSerieId('');
-                              setDropCentroAtual('__none__');
-                            }}
-                          >
-                            <AgefinPrevisaoModeloRow
-                              modelo={s}
-                              striped={idx % 2 === 1}
-                              onEdit={setSerieDialog}
-                              onDelete={handleDeleteSerie}
-                            />
-                          </div>
-                        ))}
-                      </P38MobileLineList>
-                    ) : (
-                      <p className="px-3 py-4 text-xs text-muted-foreground">Arraste uma conta para este centro.</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <AgefinContasFixasGrupos
+              agrupamento={agrupamentoContas}
+              centrosRegistrados={centrosRegistrados}
+              draggingSerieId={draggingSerieId}
+              dropCentroAtual={dropCentroAtual}
+              onDragStart={(id) => {
+                setDraggingSerieId(id);
+                void refetchCentros();
+              }}
+              onDragEnd={() => {
+                setDraggingSerieId('');
+                setDropCentroAtual('__none__');
+              }}
+              onHoverCentro={setDropCentroAtual}
+              onLeaveCentro={() => setDropCentroAtual('__none__')}
+              onDropCentro={(serieId, centro) => {
+                const serie = seriesAtivas.find((s) => s.id === serieId);
+                if (serie) void handleMoverSerieCentro(serie, centro);
+              }}
+              onEdit={setSerieDialog}
+              onDelete={handleDeleteSerie}
+            />
           </FinanceiroListaEstado>
         </TabsContent>
       </Tabs>
