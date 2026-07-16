@@ -410,8 +410,8 @@ export function calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos =
       if (!serieEstaAtivaNaCompetencia(m, comp)) continue;
       const gid = m.grupo_lancamento_id;
       const valor = gid
-        ? (anchorPorGrupo[gid] ?? Number(m.valor_previsto) || 0)
-        : Number(m.valor_previsto) || 0;
+        ? (anchorPorGrupo[gid] ?? (Number(m.valor_previsto) || 0))
+        : (Number(m.valor_previsto) || 0);
       total += valor;
       count += 1;
     }
