@@ -5,8 +5,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { agora, formatarLogTime } from '@/components/utils/dateUtils';
 import {
   cancelarLancamentosNaoPagosPedidoCompra,
-  listarLancamentosPedidoCompra,
-  temLancamentoPagoParaPedido,
 } from '@/lib/pedidoCompraFinanceiro';
 
 export default function SolicitarEdicaoPDV({ pedido, currentUser, isAdmin, isOpen, onClose, onSuccess }) {
@@ -45,16 +43,6 @@ export default function SolicitarEdicaoPDV({ pedido, currentUser, isAdmin, isOpe
     if (!motivo.trim()) return;
     setLoading(true);
     try {
-      const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
-      if (temLancamentoPagoParaPedido(lancs)) {
-        toast({
-          title: 'Não é possível reabrir',
-          description: 'Há parcelas pagas neste pedido. Alinhe com o financeiro antes de reabrir.',
-          variant: 'destructive',
-        });
-        setLoading(false);
-        return;
-      }
       const nota = `| Reabrir admin | ${formatarLogTime()} | Motivo: ${motivo}`;
       await cancelarLancamentosNaoPagosPedidoCompra(base44, pedido.id, nota);
       await base44.entities.PedidoCompra.update(pedido.id, {

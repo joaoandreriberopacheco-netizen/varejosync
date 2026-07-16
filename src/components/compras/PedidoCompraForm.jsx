@@ -42,7 +42,13 @@ import PainelCentralFinanceiroPedido from './PainelCentralFinanceiroPedido.jsx';
 import PedidoCompraLogisticaTab from './PedidoCompraLogisticaTab.jsx';
 import AbaRecepção from './AbaRecepção.jsx';
 import { filterEmbarquesVisiveisParaPedido } from './embarqueFilters';
-import { cancelarLancamentosNaoPagosPedidoCompra, listarLancamentosPedidoCompra, temLancamentoPagoParaPedido } from '@/lib/pedidoCompraFinanceiro';
+import {
+  calcValorTotalPedidoCompra,
+  cancelarLancamentosNaoPagosPedidoCompra,
+  criarLancamentoAjustePedidoCompra,
+  listarLancamentosPedidoCompra,
+  temLancamentoPagoParaPedido,
+} from '@/lib/pedidoCompraFinanceiro';
 import {
   pickDefaultPurchaseUnit,
   normalizePurchaseItemToCommercial,
@@ -142,6 +148,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
   const autoImporterHandledRef = useRef(false);
   const pendingAnexoImportRef = useRef(null);
   const anexoImportUploadedRef = useRef(false);
+  const valorTotalBaseEdicaoRef = useRef(calcValorTotalPedidoCompra(pedido || {}));
   const [pedidoLogistica, setPedidoLogistica] = useState(pedido);
   const [abaPedidoDesktop, setAbaPedidoDesktop] = useState(abaInicial);
   const [lancamentosRefreshKey, setLancamentosRefreshKey] = useState(0);
@@ -250,6 +257,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
 
   useEffect(() => {
     setPedidoLogistica(pedido || null);
+    valorTotalBaseEdicaoRef.current = calcValorTotalPedidoCompra(pedido || {});
   }, [pedido]);
 
   const handleImporterLaunchPdfPickerConsumed = useCallback(() => {
@@ -793,15 +801,6 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
 
   const handleReopenForEdit = async (authData) => {
     try {
-      const lancs = await listarLancamentosPedidoCompra(base44, pedido.id);
-      if (temLancamentoPagoParaPedido(lancs)) {
-        toast({
-          title: 'Não é possível reabrir',
-          description: 'Há parcelas já pagas neste pedido. Regularize no financeiro antes de reabrir.',
-          variant: 'destructive',
-        });
-        return;
-      }
       const refNote = `| Ref: ${authData.operationCode} | ${formatarLogTime()}`;
       await cancelarLancamentosNaoPagosPedidoCompra(base44, pedido.id, refNote);
       const authNote = `\n[Reaberto para Edição: ${authData.intervenienteName} | Ref: ${authData.operationCode} | ${formatarLogTime()}]`;
@@ -915,6 +914,30 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       const statusAnterior = pedido?.status || 'Rascunho';
       // Com auth imediata (sem modal PIN), o status do formData pode ainda ser o anterior — saveOptions.status vem do FAB "Financeiro".
       const statusNovo = saveOptions.status ?? formData.status;
+      const valorAnterior = roundToTwoDecimals(valorTotalBaseEdicaoRef.current || 0);
+      const diferencaValor = roundToTwoDecimals(valorTotal - valorAnterior);
+      const pedidoTemValorAlterado = Math.abs(diferencaValor) >= 0.01;
+      let gerarAjusteFinanceiro = false;
+
+      if (pedido?.id && pedidoTemValorAlterado) {
+        const lancsExistentes = await listarLancamentosPedidoCompra(base44, pedido.id);
+        if (temLancamentoPagoParaPedido(lancsExistentes)) {
+          const valorAbs = Math.abs(diferencaValor);
+          const direcao = diferencaValor > 0 ? 'a pagar' : 'a receber';
+          const confirmouAjuste = window.confirm(
+            `Este pedido já tem parcelas pagas.\n\n` +
+            `Valor anterior: R$ ${valorAnterior.toFixed(2)}\n` +
+            `Novo valor: R$ ${roundToTwoDecimals(valorTotal).toFixed(2)}\n` +
+            `Diferença ${direcao}: R$ ${valorAbs.toFixed(2)}\n\n` +
+            `Deseja salvar e gerar automaticamente a conta ${direcao}?`
+          );
+          if (!confirmouAjuste) {
+            setIsSaving(false);
+            return;
+          }
+          gerarAjusteFinanceiro = true;
+        }
+      }
 
       const dataToSave = { 
         ...formData,
@@ -927,6 +950,31 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       // Salvar pedido primeiro
       const pedidoSalvo = await onSave(dataToSave);
       const pedidoId = pedidoSalvo?.id || pedido?.id;
+
+      if (pedidoId && gerarAjusteFinanceiro) {
+        const motivoAjuste = formData.solicitacao_edicao_motivo || pedido?.solicitacao_edicao_motivo || '';
+        const responsavelAjuste = authData.intervenienteName || currentUser?.full_name || currentUser?.email || '';
+        await criarLancamentoAjustePedidoCompra(base44, {
+          pedido: {
+            id: pedidoId,
+            numero: pedidoSalvo?.numero || pedido?.numero,
+            fornecedor_id: formData.fornecedor_id,
+            fornecedor_nome: formData.fornecedor_nome,
+          },
+          diferenca: diferencaValor,
+          valorAnterior,
+          valorNovo: valorTotal,
+          motivo: motivoAjuste,
+          responsavel: responsavelAjuste,
+        });
+        toast({
+          title: 'Ajuste financeiro criado',
+          description:
+            diferencaValor > 0
+              ? 'Diferença registrada como conta a pagar.'
+              : 'Diferença registrada como conta a receber.',
+        });
+      }
 
       if (pedidoId && pendingAnexoImportRef.current) {
         await enviarAnexoImportacaoPendente(
@@ -1111,6 +1159,7 @@ export default function PedidoCompraForm({ pedido, onSave, onClose, onPedidoRefr
       }
 
       clearDraft();
+      valorTotalBaseEdicaoRef.current = roundToTwoDecimals(valorTotal);
       if (mudouParaAguardando && reenvioFinanceiroBloqueado) {
         // Pedido revertido no servidor; evitar toast de sucesso enganoso
       } else if (mudouParaAguardando && pedidoId) {
