@@ -139,7 +139,7 @@ export default function BoletoRecorrentePicker({ onSelectCard, onVoltar }) {
             <ChevronLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground">Atualizar boleto</p>
+            <p className="text-sm font-medium text-foreground">Vincular boleto</p>
             <p className="text-xs text-muted-foreground">Mude o mês, filtre e toque no card certo</p>
           </div>
         </div>

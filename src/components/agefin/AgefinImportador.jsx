@@ -154,6 +154,8 @@ export default function AgefinImportador({
   contaPrevistaId = null,
   lancamentoFinanceiroId = null,
   modoAtualizacao = false,
+  /** Só vincula o PDF — não altera valor nem vencimento (padrão em modoAtualizacao). */
+  somenteAnexo = modoAtualizacao,
   /** Ficheiro j? escolhido (ex.: partilha Web) ??? inicia leitura autom?tica */
   initialFile = null,
   /** Tipo escolhido na Torre de controle (ex.: Boleto, Comprovante) */
@@ -180,6 +182,24 @@ export default function AgefinImportador({
     if (!selectedFile) return false;
     setLoading(true);
     setError(null);
+
+    if (somenteAnexo && modoAtualizacao) {
+      try {
+        const f = await normalizarArquivoParaImportBoleto(selectedFile);
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: f });
+        setFile({ original: f, url: file_url, name: f.name });
+        setExtractedData({ somenteAnexo: true });
+        return true;
+      } catch (err) {
+        const primeiro = String(err?.message || err || '').split('\n')[0].slice(0, 140);
+        setError(primeiro ? `Não foi possível enviar o ficheiro: ${primeiro}` : 'Não foi possível enviar o ficheiro.');
+        console.error('AgefinImportador vincular anexo:', err);
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    }
+
     let arquivoEnviado = null;
     try {
       const f = await normalizarArquivoParaImportBoleto(selectedFile);
@@ -354,7 +374,7 @@ ${blocoTextoLocal}`,
     } finally {
       setLoading(false);
     }
-  }, [modoAtualizacao, fluxoLoopAtualizadorRecorrente, dadosContaExistente]);
+  }, [modoAtualizacao, fluxoLoopAtualizadorRecorrente, dadosContaExistente, somenteAnexo]);
 
   useEffect(() => {
     if (fluxoLoopAtualizadorRecorrente && modoAtualizacao) {
@@ -430,7 +450,59 @@ ${blocoTextoLocal}`,
   };
 
   const handleConfirm = async () => {
-    if (!extractedData || !contaFinanceiraId) return;
+    if (!extractedData) return;
+
+    if (modoAtualizacao && somenteAnexo) {
+      if (!lancamentoFinanceiroId && !contaPrevistaId) {
+        setError('Conta alvo não encontrada.');
+        return;
+      }
+      setLoading(true);
+      setError(null);
+      try {
+        await marcarLancamentosComoImportadosPorBoletoPdf(base44, {
+          contaPrevistaId,
+          lancamentoFinanceiroId,
+          atualizarValores: false,
+          contextoMatch: 'somente_anexo',
+          boletoFingerprint: file?.url ? `anexo:${hashDjb2(file.url)}` : null,
+        });
+        if (contaPrevistaId && file?.url) {
+          await base44.entities.ContaPrevista.update(contaPrevistaId, {
+            status: 'Boleto Anexado',
+            boleto_url: file.url,
+          });
+        }
+        if (lancamentoFinanceiroId && file?.original) {
+          try {
+            await uploadAnexoParaLancamentoFinanceiro(base44, {
+              file: file.original,
+              lancamentoId: lancamentoFinanceiroId,
+              descricao: dadosContaExistente?.descricao || file.name || 'Boleto',
+              tipoDocumento: tipoDocumentoAnexo,
+              origem: 'importador_agefin_pdf',
+            });
+          } catch (anexoErr) {
+            console.error('Anexo PDF (vincular boleto):', anexoErr);
+          }
+        }
+        setSuccessState({
+          descricao: dadosContaExistente?.descricao || file?.name || 'Boleto vinculado',
+          somenteAnexo: true,
+        });
+        if (!fluxoLoopAtualizadorRecorrente) {
+          onSuccess?.(null, { somenteAnexo: true });
+        }
+      } catch (err) {
+        setError('Erro ao vincular boleto. Tente novamente.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    if (!contaFinanceiraId) return;
     if (!fluxoLoopAtualizadorRecorrente && !selectedNatureza) return;
 
     setLoading(true);
@@ -603,6 +675,7 @@ ${blocoTextoLocal}`,
           grupoLancamentoId: recorrenteFinal?.id,
           dataVencimento: extractedData.data_vencimento,
           valor: extractedData.valor,
+          atualizarValores: !somenteAnexo,
           permitirFallbackGrupo: false,
           contextoMatch,
           boletoFingerprint,
@@ -746,7 +819,13 @@ ${blocoTextoLocal}`,
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">Sucesso</p>
-              <h3 className="mt-2 font-glacial text-2xl font-semibold text-foreground">{modoAtualizacao ? 'Boleto atualizado com sucesso' : 'Conta a pagar criada com sucesso'}</h3>
+              <h3 className="mt-2 font-glacial text-2xl font-semibold text-foreground">
+                {successState.somenteAnexo || somenteAnexo
+                  ? 'Boleto vinculado com sucesso'
+                  : modoAtualizacao
+                    ? 'Boleto atualizado com sucesso'
+                    : 'Conta a pagar criada com sucesso'}
+              </h3>
               <p className="mt-2 text-sm text-muted-foreground">{successState.descricao}</p>
             </div>
           </div>
@@ -754,11 +833,23 @@ ${blocoTextoLocal}`,
           <div className="rounded-[24px] bg-muted/40 p-4 dark:bg-background">
             <div className="flex items-center gap-3">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <p className="text-sm text-foreground/90">{modoAtualizacao ? 'O novo boleto substituiu o anterior nesta conta.' : 'A conta j? foi enviada para o Contas a Pagar.'}</p>
+              <p className="text-sm text-foreground/90">
+                {successState.somenteAnexo || somenteAnexo
+                  ? 'O documento foi anexado à conta. Valor e vencimento continuam como você definiu.'
+                  : modoAtualizacao
+                    ? 'O novo boleto substituiu o anterior nesta conta.'
+                    : 'A conta já foi enviada para o Contas a Pagar.'}
+              </p>
             </div>
             <div className="mt-3 flex items-center gap-3">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <p className="text-sm text-foreground/90">{modoAtualizacao ? 'Os dados foram relidos e o status foi atualizado automaticamente.' : 'Ela tamb?m j? pode aparecer no AGEFIN quando for recorrente.'}</p>
+              <p className="text-sm text-foreground/90">
+                {successState.somenteAnexo || somenteAnexo
+                  ? 'Abra a conta para conferir o anexo ou editar valor e vencimento à mão.'
+                  : modoAtualizacao
+                    ? 'Os dados foram relidos e o status foi atualizado automaticamente.'
+                    : 'Ela também já pode aparecer no AGEFIN quando for recorrente.'}
+              </p>
             </div>
             {fluxoLoopAtualizadorRecorrente && (
               <p className="mt-4 text-center text-sm text-muted-foreground">A regressar ao atualizador para escolher outra conta???</p>
@@ -803,9 +894,17 @@ ${blocoTextoLocal}`,
         <div className="rounded-[28px] bg-card/95 p-5 shadow-sm dark:bg-muted">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">Importar conta</p>
-              <h2 className="mt-2 font-glacial text-2xl font-semibold text-foreground">Leitura autom?tica</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Envie boleto, guia, DAR, PDF ou imagem para pr?-preencher a conta.</p>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                {somenteAnexo && modoAtualizacao ? 'Vincular boleto' : 'Importar conta'}
+              </p>
+              <h2 className="mt-2 font-glacial text-2xl font-semibold text-foreground">
+                {somenteAnexo && modoAtualizacao ? 'Anexar PDF' : 'Leitura automática'}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {somenteAnexo && modoAtualizacao
+                  ? 'O boleto fica só como anexo. Valor e vencimento você edita manualmente na conta.'
+                  : 'Envie boleto, guia, DAR, PDF ou imagem para pré-preencher a conta.'}
+              </p>
             </div>
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted">
               <Sparkles className="h-5 w-5 text-muted-foreground" />
@@ -886,6 +985,55 @@ ${blocoTextoLocal}`,
             </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (extractedData?.somenteAnexo) {
+    return (
+      <div className="flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2">
+          <div className="rounded-[28px] bg-card p-5 shadow-sm dark:bg-muted">
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
+                <FileCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-foreground">Documento pronto para vincular</p>
+                <p className="mt-1 truncate text-sm text-muted-foreground">{file?.name}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  O valor e o vencimento não serão alterados. Edite-os manualmente na ficha da conta, se precisar.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={resetState}
+                className="flex h-9 w-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          {error && (
+            <div className="mt-4 rounded-3xl bg-red-50 p-4 shadow-sm dark:bg-red-900/20">
+              <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
+            </div>
+          )}
+        </div>
+        <div className="sticky bottom-0 z-10 shrink-0 border-t border-white/5 bg-muted/40/95 px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:bg-muted/95 md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="outline" onClick={resetState} className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirm}
+              disabled={loading || !file?.original}
+              className="h-14 rounded-2xl bg-muted text-base font-semibold text-foreground"
+            >
+              {loading ? 'Vinculando...' : 'Vincular boleto'}
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }

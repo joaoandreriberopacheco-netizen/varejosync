@@ -7,7 +7,8 @@ import { getContaDoMes, getMonthKey, useRecorrentesBoletoData } from '@/hooks/us
 import { brandSurface } from '@/lib/brandSurfaces';
 
 /**
- * Tela dedicada à receção do PDF do boleto e atualização do lançamento recorrente (conta a pagar).
+ * Tela dedicada a vincular o PDF do boleto ao lançamento recorrente (conta a pagar).
+ * O valor e o vencimento são editados manualmente na conta; o PDF é só anexo.
  * Query: grupo = grupo_lancamento_id, mes = YYYY-MM
  */
 export default function AtualizarBoletoRecorrente() {
@@ -69,7 +70,7 @@ export default function AtualizarBoletoRecorrente() {
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-base font-semibold text-foreground">Atualizar boleto</h1>
+          <h1 className="truncate text-base font-semibold text-foreground">Vincular boleto</h1>
           {loading ? (
             <p className={`mt-0.5 flex items-center gap-2 text-xs ${brandSurface.textLabel}`}>
               <Loader2 className="h-3 w-3 animate-spin" /> Carregando…

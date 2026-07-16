@@ -296,3 +296,35 @@ export async function reativarSerie(serieId) {
 export function podeEditarCompetencia(comp) {
   return comp && !competenciaEstaFechada(comp) && !comp._modoPlanejamento;
 }
+
+/**
+ * Atualiza valor e vencimento manualmente (sem ler o boleto).
+ * — Com lançamento: grava no LancamentoFinanceiro.
+ * — Em planejamento: grava no modelo (cadastro da série).
+ */
+export async function atualizarCompetenciaManual({ competencia, modelo, valor, dataVencimento, diaVencimento }) {
+  const valorNum = Number(valor) || 0;
+  if (valorNum <= 0) throw new Error('Informe um valor maior que zero.');
+
+  if (competencia?.lancamento_id) {
+    const lf = await base44.entities.LancamentoFinanceiro.get(competencia.lancamento_id);
+    const tags = new Set([...(lf?.tags || []), 'conta_pagar']);
+    tags.delete(TAG_LF_GERADO_AUTO);
+    const ven = (dataVencimento || '').slice(0, 10) || lf?.data_vencimento;
+    return base44.entities.LancamentoFinanceiro.update(competencia.lancamento_id, {
+      valor: valorNum,
+      valor_liquido: valorNum,
+      data_vencimento: ven,
+      tags: [...tags],
+    });
+  }
+
+  if (!modelo?.id) throw new Error('Abra o mês antes de editar o valor desta conta.');
+
+  const dia = Number(diaVencimento) || Number(modelo.dia_vencimento) || 10;
+  return salvarSerie({
+    ...modelo,
+    valor_previsto: valorNum,
+    dia_vencimento: dia,
+  });
+}

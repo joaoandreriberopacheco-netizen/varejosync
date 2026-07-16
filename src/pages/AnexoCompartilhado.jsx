@@ -796,7 +796,7 @@ export default function AnexoCompartilhado() {
                 <ArrowLeft className="h-4 w-4" />
               </button>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">Atualizar boleto</p>
+                <p className="truncate text-sm font-medium text-foreground">Vincular boleto</p>
                 <p className="truncate text-xs text-muted-foreground">{contaMesBoletoAlvo.descricao || 'Conta selecionada'}</p>
               </div>
             </div>

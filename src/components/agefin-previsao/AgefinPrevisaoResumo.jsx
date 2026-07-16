@@ -29,7 +29,7 @@ export default function AgefinPrevisaoResumo({
           <p className="text-muted-foreground">
             {mesFuturo
               ? 'Este mês ainda não precisa estar aberto para consultar os valores.'
-              : 'Abra o mês quando quiser gerar as contas e importar boletos.'}
+              : 'Abra o mês quando quiser gerar as contas; depois edite valor e vencimento à mão e vincule o boleto se quiser.'}
           </p>
         </P38HelpPopover>
       </span>,

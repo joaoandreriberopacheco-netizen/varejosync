@@ -80,9 +80,9 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
             <div className="rounded-2xl bg-card p-3 shadow-sm space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs text-muted-foreground">Status do boleto</p>
+                  <p className="text-xs text-muted-foreground">Boleto anexo</p>
                   <p className="mt-1 text-sm font-medium text-foreground">
-                    {!hasBoleto ? 'Sem boleto anexado' : boletoVencido ? 'Boleto vencido' : 'Boleto válido'}
+                    {!hasBoleto ? 'Sem boleto anexado' : boletoVencido ? 'Boleto vencido (conferir vencimento)' : 'Boleto anexado'}
                   </p>
                 </div>
                 <Button
@@ -91,11 +91,11 @@ export default function AgefinDetalheDrawer({ open, onClose, recorrente, contaMe
                   className="h-10 rounded-2xl bg-background px-3 text-sm font-medium text-white hover:bg-primary dark:bg-muted dark:text-foreground dark:hover:bg-card"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  {hasBoleto ? 'Atualizar' : 'Importar'}
+                  {hasBoleto ? 'Trocar anexo' : 'Vincular PDF'}
                 </Button>
               </div>
               {boletoVencido && (
-                <p className="text-xs text-red-600 dark:text-red-200">Esse boleto venceu e o valor pode estar desatualizado. Importe um novo boleto para atualizar.</p>
+                <p className="text-xs text-red-600 dark:text-red-200">O vencimento pode estar desatualizado. Edite valor e data manualmente na conta.</p>
               )}
             </div>
           </div>

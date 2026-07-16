@@ -336,6 +336,8 @@ export async function marcarLancamentosComoImportadosPorBoletoPdf(
     grupoLancamentoId,
     dataVencimento,
     valor,
+    /** Quando false (padrão), só marca tag de boleto — não altera valor nem vencimento. */
+    atualizarValores = false,
     permitirFallbackGrupo = false,
     contextoMatch = null,
     boletoFingerprint = null,
@@ -350,8 +352,8 @@ export async function marcarLancamentosComoImportadosPorBoletoPdf(
     if (!tags.has('conta_pagar')) tags.add('conta_pagar');
     await base44.entities.LancamentoFinanceiro.update(l.id, {
       tags: [...tags],
-      ...(valor != null ? { valor, valor_liquido: valor } : {}),
-      ...(dataVencimento ? { data_vencimento: dataVencimento } : {}),
+      ...(atualizarValores && valor != null ? { valor, valor_liquido: valor } : {}),
+      ...(atualizarValores && dataVencimento ? { data_vencimento: dataVencimento } : {}),
       ...((contextoMatch || boletoFingerprint)
         ? {
             observacoes: [

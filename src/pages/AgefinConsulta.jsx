@@ -996,7 +996,15 @@ export default function AgefinConsulta() {
         </div>
       )}
 
-      <AgefinConsultaDrawer open={Boolean(selectedConta)} onClose={() => setSelectedConta(null)} conta={selectedConta} />
+      <AgefinConsultaDrawer
+        open={Boolean(selectedConta)}
+        onClose={() => setSelectedConta(null)}
+        conta={selectedConta}
+        onSaved={(updated) => {
+          setSelectedConta(updated);
+          loadContas();
+        }}
+      />
     </div>
   );
 }
