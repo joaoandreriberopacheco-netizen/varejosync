@@ -1,7 +1,7 @@
 import {
   Monitor, Banknote, TrendingUp, Package, DollarSign, ShoppingCart,
   Ship, LayoutDashboard, Users, QrCode, Tag, Settings, Upload, MonitorCheck,
-  Tablet, ClipboardPenLine, ReceiptText, Percent, BarChart3,
+  Tablet, ClipboardPenLine, ReceiptText, Percent, BarChart3, CalendarClock,
 } from 'lucide-react';
 
 /**
@@ -128,8 +128,15 @@ export const ALL_QUICK_ACTIONS = [
     id: 'agefin_consulta',
     icon: ReceiptText,
     label: 'AGEFIN',
-    page: 'AgendaFinanceira',
+    page: 'AgefinConsulta',
     permissaoCheck: (p) => p?.financeiro?.acesso || p?.dashboard?.acesso,
+  },
+  {
+    id: 'planejamento_financeiro',
+    icon: CalendarClock,
+    label: 'Planejamento',
+    page: 'PlanejamentoFinanceiro',
+    permissaoCheck: (p) => p?.financeiro?.acesso,
   },
   {
     id: 'consumo_interno',

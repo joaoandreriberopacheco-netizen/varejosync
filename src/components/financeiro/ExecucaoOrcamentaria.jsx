@@ -24,7 +24,7 @@ import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'luci
 import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import CorteDiarioDialog from './corte-diario/CorteDiarioDialog';
 import FolhaPrevisaoPage from '@/pages/FolhaPrevisao';
-import AgendaFinanceiraPage from '@/pages/AgendaFinanceira';
+import PlanejamentoFinanceiroPage from '@/pages/PlanejamentoFinanceiro';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
@@ -113,7 +113,7 @@ export default function ExecucaoOrcamentaria() {
     contasSel: [],
   });
   const [corteDiarioInitial, setCorteDiarioInitial] = useState(null);
-  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'agefin' | 'folha'
+  const [aba, setAba] = useState('fluxo'); // 'fluxo' | 'caixas' | 'planejamento' | 'folha'
   const [showImportadorAgefin, setShowImportadorAgefin] = useState(false);
   const [mostrarProgramadas, setMostrarProgramadas] = useState(
     () => lerPreferenciasFluxoUnificado().mostrarProgramadas,
@@ -140,8 +140,12 @@ export default function ExecucaoOrcamentaria() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const abaParam = params.get('aba');
-    if (abaParam === 'agefin' || abaParam === 'folha') {
-      setAba(abaParam);
+    if (abaParam === 'folha') {
+      setAba('folha');
+    } else if (abaParam === 'planejamento' || abaParam === 'agefin') {
+      setAba('planejamento');
+    }
+    if (abaParam === 'folha' || abaParam === 'planejamento' || abaParam === 'agefin') {
       params.delete('aba');
       const next = params.toString();
       window.history.replaceState({}, '', next ? `${window.location.pathname}?${next}` : window.location.pathname);
@@ -606,7 +610,7 @@ export default function ExecucaoOrcamentaria() {
   }, [buildGruposComFiltros, contasAtivas.length]);
 
   const caixasAtiva = aba === 'caixas';
-  const agefinAtiva = aba === 'agefin';
+  const planejamentoAtiva = aba === 'planejamento';
   const folhaAtiva = aba === 'folha';
   const financeiroShared = useMemo(
     () => ({
@@ -624,7 +628,7 @@ export default function ExecucaoOrcamentaria() {
     { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
     { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Caixas' },
     { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
-    { value: 'agefin', label: 'AGEFIN', shortLabel: 'AGEFIN' },
+    { value: 'planejamento', label: 'Planejamento', shortLabel: 'Plan.' },
   ];
 
   const handleToggleProgramadas = useCallback((next) => {
@@ -675,7 +679,7 @@ export default function ExecucaoOrcamentaria() {
           </div>
 
           {caixasAtiva && <GestaoContasKpis />}
-          {agefinAtiva && <AgendaFinanceiraPage />}
+          {planejamentoAtiva && <PlanejamentoFinanceiroPage />}
         </div>
       </div>
 
@@ -932,7 +936,7 @@ export default function ExecucaoOrcamentaria() {
 
       {folhaAtiva && <FolhaPrevisaoPage />}
 
-      {agefinAtiva && (
+      {planejamentoAtiva && (
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
           <DialogContent className="flex h-[100dvh] min-h-0 w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-card/95 p-0 shadow-xl backdrop-blur-xl dark:bg-card/95 md:h-auto md:max-h-[92vh] md:w-[min(42rem,calc(100vw-2rem))] md:max-w-2xl md:rounded-3xl">
             <DialogHeader className="shrink-0 px-5 pt-5 pb-3 border-b border-border/40">

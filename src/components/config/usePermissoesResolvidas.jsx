@@ -24,7 +24,7 @@ import {
   DollarSign, BookOpen, Settings, ShoppingCart, Warehouse, Truck, ClipboardPenLine,
   Users, TrendingDown, Lightbulb, FileText, PackageSearch, Ship,
   ScanLine, ClipboardList, Tags, Upload, CheckSquare, Search, Activity,
-  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2
+  ArrowLeftRight, CreditCard, Clock, Wallet, ReceiptText, AlertCircle, Repeat2, CalendarClock
 } from 'lucide-react';
 
 export { resolverPermissoes };
@@ -312,8 +312,14 @@ export const ALL_MENU_ITEMS = [
       },
       {
         name: 'AGEFIN',
-        page: 'AgendaFinanceira',
+        page: 'AgefinConsulta',
         icon: Repeat2,
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
+      },
+      {
+        name: 'Planejamento',
+        page: 'PlanejamentoFinanceiro',
+        icon: CalendarClock,
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {

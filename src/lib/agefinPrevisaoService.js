@@ -148,7 +148,7 @@ function payloadLancamentoAuto(modelo, competencia) {
     categoria_id: modelo.categoria_id || undefined,
     referencia_tipo: 'AgefinSerie',
     referencia_id: modelo.id,
-    observacoes: `Competência ${competencia} — aberta pela AGEFIN.`,
+    observacoes: `Competência ${competencia} — aberta pelo planejamento financeiro.`,
     tags: ['conta_pagar', 'recorrente', TAG_LF_GERADO_AUTO, 'agefin_previsao'],
     is_recorrente: true,
     frequencia_recorrencia: modelo.frequencia || 'Mensal',
