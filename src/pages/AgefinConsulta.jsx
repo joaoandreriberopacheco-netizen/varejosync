@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal, X, Layers, Anchor, Check, Calculator, Copy } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, CircleHelp, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal, X, Layers, Anchor, Check, Calculator, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
@@ -773,15 +773,28 @@ export default function AgefinConsulta() {
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-[0.18em]">Consulta financeira</p>
               <h1 className="text-2xl md:text-3xl font-semibold text-foreground font-glacial">Agefin</h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="hidden md:block text-sm text-muted-foreground mt-1">
                 Contas do mês por vencimento (padrão). Agrupe pelo ícone; toque em &quot;Somar&quot; para escolher contas e ver o total.
               </p>
-              <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-muted/50/60 px-3 py-2 md:max-w-sm">
-                <div className="min-w-0">
+              <div className="mt-2 md:mt-3 flex items-center justify-between gap-3 rounded-2xl bg-muted/50/60 px-3 py-2 md:max-w-sm">
+                <div className="min-w-0 hidden md:block">
                   <p className="text-xs font-medium text-foreground">CMV na lista</p>
                   <p className="text-[11px] text-muted-foreground">Desligue para ocultar sem abrir filtros</p>
                 </div>
-                <CmvQuickToggle checked={mostrarCmvRapido} onChange={setMostrarCmvRapido} />
+                <div className="ml-auto flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-muted md:hidden"
+                    onClick={() => window.alert('CMV na lista: desligue para ocultar custos de mercadoria sem abrir filtros.')}
+                    aria-label="Ajuda sobre CMV na lista"
+                    title="Ajuda"
+                  >
+                    <CircleHelp className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                  <CmvQuickToggle checked={mostrarCmvRapido} onChange={setMostrarCmvRapido} />
+                </div>
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
