@@ -24,6 +24,7 @@ import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'luci
 import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import CorteDiarioDialog from './corte-diario/CorteDiarioDialog';
 import FolhaPrevisaoPage from '@/pages/FolhaPrevisao';
+import AgendaFinanceiraPage from '@/pages/AgendaFinanceira';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
@@ -38,7 +39,6 @@ import {
   GestaoContasKpis,
   GestaoContasPane,
 } from './GestaoContasFinanceiras';
-import AgefinRecorrentes from './AgefinRecorrentes';
 import AgefinImportador from '../agefin/AgefinImportador';
 import ConciliacaoBancaria from './ConciliacaoBancaria';
 import PagamentoLoteDialog from './PagamentoLoteDialog';
@@ -624,7 +624,7 @@ export default function ExecucaoOrcamentaria() {
     { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
     { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Caixas' },
     { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
-    { value: 'agefin', label: 'Atualizar boletos', shortLabel: 'Boletos' },
+    { value: 'agefin', label: 'AGFIM', shortLabel: 'AGFIM' },
   ];
 
   const handleToggleProgramadas = useCallback((next) => {
@@ -675,7 +675,7 @@ export default function ExecucaoOrcamentaria() {
           </div>
 
           {caixasAtiva && <GestaoContasKpis />}
-          {agefinAtiva && <AgefinRecorrentes />}
+          {agefinAtiva && <AgendaFinanceiraPage />}
         </div>
       </div>
 

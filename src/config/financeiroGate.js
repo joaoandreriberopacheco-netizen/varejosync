@@ -16,6 +16,7 @@ export const FINANCEIRO_PROTECTED_PAGES = new Set([
   'AtualizarBoletoRecorrente',
   'ReversaoDespesasSangrias',
   'FolhaPrevisao',
+  'AgendaFinanceira',
 ]);
 
 export const FINANCEIRO_UNLOCK_TTL_MS = 15 * 60 * 1000;
