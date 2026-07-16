@@ -1,5 +1,5 @@
 -- 015_agefin_serie.sql
--- AGFIM: programação de contas fixas (espelho folha_previsao).
+-- AGEFIN (Agenda Financeira): programação de contas fixas (espelho folha_previsao).
 
 create table if not exists public.agefin_serie_modelo (
   id          text primary key,

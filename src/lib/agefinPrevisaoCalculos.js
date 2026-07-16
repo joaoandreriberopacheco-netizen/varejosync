@@ -1,5 +1,5 @@
 /**
- * AGFIM — motor de programação de contas fixas (espelho da Folha de previsão).
+ * AGEFIN (Agenda Financeira) — motor de programação de contas fixas (espelho da Folha de previsão).
  */
 
 import { tagsOrigemBoleto } from '@/lib/agefinLancamentosRecorrencia';

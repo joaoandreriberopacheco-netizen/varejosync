@@ -311,7 +311,7 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
-        name: 'AGFIM',
+        name: 'AGEFIN',
         page: 'AgendaFinanceira',
         icon: Repeat2,
         permissaoCheck: (p) => p?.financeiro?.acesso === true

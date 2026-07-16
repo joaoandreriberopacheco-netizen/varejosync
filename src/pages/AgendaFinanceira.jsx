@@ -311,18 +311,21 @@ export default function AgendaFinanceiraPage() {
 
   return (
     <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
-      <div className="flex items-center gap-1.5 pb-3 border-b border-border/40">
-        <h1 className="text-xl font-medium text-foreground">AGFIM</h1>
-        <P38HelpPopover label="Ajuda: agenda financeira" side="bottom" align="start">
-          <p className="font-medium text-foreground">Agenda financeira (contas fixas)</p>
-          <p className="text-muted-foreground">
-            Energia, telefone, internet e outras despesas que repetem todo mês. Cadastre uma vez — entra na
-            programação e na projeção de caixa.
-          </p>
-          <p className="text-muted-foreground">
-            Meses futuros aparecem em modo planejamento, mesmo antes de abrir o mês.
-          </p>
-        </P38HelpPopover>
+      <div className="pb-3 border-b border-border/40">
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-xl font-medium text-foreground">AGEFIN</h1>
+          <P38HelpPopover label="Ajuda: agenda financeira" side="bottom" align="start">
+            <p className="font-medium text-foreground">Agenda financeira (contas fixas)</p>
+            <p className="text-muted-foreground">
+              Energia, telefone, internet e outras despesas que repetem todo mês. Cadastre uma vez — entra na
+              programação e na projeção de caixa.
+            </p>
+            <p className="text-muted-foreground">
+              Meses futuros aparecem em modo planejamento, mesmo antes de abrir o mês.
+            </p>
+          </P38HelpPopover>
+        </div>
+        <p className="text-sm text-muted-foreground mt-0.5">Agenda Financeira</p>
       </div>
 
       <Tabs defaultValue="previsao" className="w-full mt-4">

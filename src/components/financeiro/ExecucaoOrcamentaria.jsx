@@ -624,7 +624,7 @@ export default function ExecucaoOrcamentaria() {
     { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
     { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Caixas' },
     { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
-    { value: 'agefin', label: 'AGFIM', shortLabel: 'AGFIM' },
+    { value: 'agefin', label: 'AGEFIN', shortLabel: 'AGEFIN' },
   ];
 
   const handleToggleProgramadas = useCallback((next) => {
