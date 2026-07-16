@@ -4,10 +4,10 @@ import { P38_KPI_SHELL } from '@/components/financeiro/fluxo/financeiroP38';
 import { cn } from '@/lib/utils';
 import { calcularProjecaoAgefin, formatCompetenciaLabel } from '@/lib/agefinPrevisaoCalculos';
 
-export default function AgefinPrevisaoProjecao({ modelos, competenciaInicio }) {
+export default function AgefinPrevisaoProjecao({ modelos, competenciaInicio, lancamentos = [] }) {
   const { meses, totalAno } = useMemo(
-    () => calcularProjecaoAgefin(modelos, competenciaInicio),
-    [modelos, competenciaInicio],
+    () => calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos),
+    [modelos, competenciaInicio, lancamentos],
   );
 
   return (
@@ -16,7 +16,8 @@ export default function AgefinPrevisaoProjecao({ modelos, competenciaInicio }) {
         <p className="text-xs uppercase tracking-wide text-muted-foreground">Total 12 meses</p>
         <p className="text-2xl font-semibold tabular-nums">{formatFinanceiroValor(totalAno)}</p>
         <p className="text-sm text-muted-foreground mt-1">
-          Soma das contas fixas ativas a partir de {formatCompetenciaLabel(competenciaInicio)}.
+          Cada mês usa o valor do mês anterior (real ou estimado). A partir de{' '}
+          {formatCompetenciaLabel(competenciaInicio)}.
         </p>
       </div>
 

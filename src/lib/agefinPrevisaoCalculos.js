@@ -371,8 +371,38 @@ export function ordenarSeriesPorCentroENome(series) {
   });
 }
 
-/** Projeção de 12 meses a partir das séries ativas. */
-export function calcularProjecaoAgefin(modelos, competenciaInicio) {
+/** Mapa grupo_lancamento_id:YYYY-MM → valor real do lançamento. */
+export function mapaValoresReaisPorGrupoMes(lancamentos) {
+  const map = {};
+  for (const lf of lancamentos || []) {
+    const gid = lf.grupo_lancamento_id;
+    const mes = (lf.data_vencimento || '').slice(0, 7);
+    if (!gid || !mes) continue;
+    const v = Number(lf.valor);
+    if (Number.isFinite(v) && v > 0) map[`${gid}:${mes}`] = v;
+  }
+  return map;
+}
+
+/**
+ * Projeção de 12 meses: cada mês seguinte herda o valor do mês anterior.
+ * — Se existir lançamento real no mês, usa esse valor e repassa adiante.
+ * — Senão, repete o último valor conhecido (mês anterior ou cadastro).
+ */
+export function calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos = []) {
+  const reais = mapaValoresReaisPorGrupoMes(lancamentos);
+  /** grupo_lancamento_id → último valor usado na projeção */
+  const carry = {};
+
+  const mesAnterior = shiftCompetencia(competenciaInicio, -1);
+  for (const m of modelos || []) {
+    const gid = m.grupo_lancamento_id;
+    if (!gid) continue;
+    const vAnt = reais[`${gid}:${mesAnterior}`];
+    const vCad = Number(m.valor_previsto) || 0;
+    carry[gid] = vAnt ?? vCad;
+  }
+
   const meses = [];
   let comp = competenciaInicio;
   for (let i = 0; i < 12; i += 1) {
@@ -380,7 +410,18 @@ export function calcularProjecaoAgefin(modelos, competenciaInicio) {
     let count = 0;
     for (const m of modelos || []) {
       if (!serieEstaAtivaNaCompetencia(m, comp)) continue;
-      total += Number(m.valor_previsto) || 0;
+      const gid = m.grupo_lancamento_id;
+      const realMes = gid ? reais[`${gid}:${comp}`] : undefined;
+      let valor;
+      if (realMes != null && realMes > 0) {
+        valor = realMes;
+      } else if (gid && carry[gid] != null) {
+        valor = carry[gid];
+      } else {
+        valor = Number(m.valor_previsto) || 0;
+      }
+      if (gid) carry[gid] = valor;
+      total += valor;
       count += 1;
     }
     meses.push({ competencia: comp, total, count });

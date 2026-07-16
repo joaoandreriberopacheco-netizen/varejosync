@@ -49,6 +49,7 @@ import {
   listarCentrosCustoRegistros,
   listarContasFinanceiras,
   listarLancamentosCompetencia,
+  listarLancamentosRecorrentes,
   listarModelos,
   removerSerie,
   salvarSerie,
@@ -76,6 +77,11 @@ export default function PlanejamentoFinanceiroPage() {
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
   const [showImportador, setShowImportador] = useState(false);
   const [salvandoManual, setSalvandoManual] = useState(false);
+
+  const { data: lancamentosRecorrentes = [] } = useQuery({
+    queryKey: ['agefin-previsao', 'lancamentos-recorrentes'],
+    queryFn: listarLancamentosRecorrentes,
+  });
 
   const { data: lancamentosMes = [], isLoading: loadingLanc } = useQuery({
     queryKey: ['agefin-previsao', 'lancamentos', competenciaMes],
@@ -483,7 +489,11 @@ export default function PlanejamentoFinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="projecao" className="mt-4">
-          <AgefinPrevisaoProjecao modelos={modelos} competenciaInicio={competenciaMes} />
+          <AgefinPrevisaoProjecao
+            modelos={modelos}
+            competenciaInicio={competenciaMes}
+            lancamentos={lancamentosRecorrentes}
+          />
         </TabsContent>
 
         <TabsContent value="contas" className="mt-4 space-y-3">

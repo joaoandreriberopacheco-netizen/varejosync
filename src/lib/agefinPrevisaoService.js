@@ -131,6 +131,12 @@ export async function listarLancamentosCompetencia(competencia) {
   });
 }
 
+/** Lançamentos recorrentes (conta a pagar) para alimentar a projeção de 12 meses. */
+export async function listarLancamentosRecorrentes() {
+  const lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
+  return (lancamentos || []).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
+}
+
 function payloadLancamentoAuto(modelo, competencia) {
   const dataVencimento = dataVencimentoNaCompetencia(competencia, modelo.dia_vencimento);
   const valor = Number(modelo.valor_previsto) || 0;
