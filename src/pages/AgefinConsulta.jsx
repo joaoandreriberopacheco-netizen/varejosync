@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, CircleHelp, Printer, Paperclip, Wallet, CircleSlash, SlidersHorizontal, X, Layers, Anchor, Check, Calculator, Copy } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, CheckCircle2, CircleAlert, Printer, Paperclip, Wallet, CircleSlash, X, Layers, Anchor, Check, Calculator, Copy, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
@@ -768,150 +768,151 @@ export default function AgefinConsulta() {
   return (
     <div className={`min-h-screen p-2.5 md:p-4 ${modoSelecao ? 'pb-36' : 'pb-20'} ${brandSurface.pageScreen}`}>
       <div className="mx-auto max-w-5xl space-y-2 md:space-y-3">
-        <div className={`rounded-[20px] p-3 md:rounded-[24px] md:p-4 ${brandSurface.card}`}>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-[0.18em]">Consulta financeira</p>
-              <div className="mt-0.5 flex items-center gap-2">
-                <h1 className="text-xl leading-none md:text-2xl font-semibold text-foreground font-glacial">Agefin</h1>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 rounded-full bg-muted"
-                  onClick={() => window.alert('CMV na lista: desligue para ocultar custos de mercadoria sem abrir filtros.')}
-                  aria-label="Ajuda sobre CMV na lista"
-                  title="Ajuda"
-                >
-                  <CircleHelp className="w-4 h-4 text-muted-foreground" />
-                </Button>
-                <CmvQuickToggle checked={mostrarCmvRapido} onChange={setMostrarCmvRapido} />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <AgefinConsultaOrganizer
-                groupBy={groupBy}
-                sortOrder={sortOrder}
-                onGroupByChange={setGroupBy}
-                onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setModoSelecao((v) => !v)}
-                className={`h-10 gap-1.5 rounded-2xl px-3 text-xs font-medium ${modoSelecao ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100' : 'bg-muted text-foreground/90'}`}
-              >
-                <Calculator className="h-4 w-4" />
-                {modoSelecao ? 'Somando' : 'Somar'}
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.16em]">Consulta financeira</p>
+            <h1 className="mt-0.5 text-xl leading-none md:text-2xl font-semibold text-foreground font-glacial">Agefin</h1>
+          </div>
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-xl bg-muted">
+                <Menu className="w-4 h-4 text-muted-foreground" />
+                {hasActiveFilters && (
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 ring-2 ring-white dark:ring-border/40" aria-hidden />
+                )}
               </Button>
-              <Drawer>
-                <DrawerTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-2xl bg-muted">
-                    <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
-                    {hasActiveFilters && (
-                      <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 ring-2 ring-white dark:ring-border/40" aria-hidden />
-                    )}
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent className="border-0 rounded-t-[32px] bg-card px-4 pb-6">
-                  <DrawerHeader className="px-0 text-left">
-                    <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
-                    <DrawerDescription className="text-sm text-muted-foreground">
-                      Ajuste a lista do mês selecionado. Toque fora ou arraste para fechar.
-                    </DrawerDescription>
-                  </DrawerHeader>
-                  <div className="space-y-5 px-0 max-h-[65vh] overflow-y-auto">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">Pagamento</p>
-                      <div className="flex flex-wrap gap-2">
-                        <FilterChip active={pagamentoFilter === 'todos'} onClick={() => setPagamentoFilter('todos')}>Todos</FilterChip>
-                        <FilterChip active={pagamentoFilter === 'pagos'} onClick={() => setPagamentoFilter('pagos')} tone="success">Pagos</FilterChip>
-                        <FilterChip active={pagamentoFilter === 'nao_pagos'} onClick={() => setPagamentoFilter('nao_pagos')}>Não pagos</FilterChip>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">Prazo (vencimento)</p>
-                      <div className="flex flex-wrap gap-2">
-                        <FilterChip active={prazoFilter === 'todos'} onClick={() => setPrazoFilter('todos')}>Todos</FilterChip>
-                        <FilterChip active={prazoFilter === 'vencidas'} onClick={() => setPrazoFilter('vencidas')} tone="danger">Vencidas</FilterChip>
-                        <FilterChip active={prazoFilter === 'em_dia'} onClick={() => setPrazoFilter('em_dia')} tone="success">Em dia</FilterChip>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">Tipo</p>
-                      <div className="flex flex-wrap gap-2">
-                        <FilterChip active={cmvFilter === 'todos'} onClick={() => setCmvFilter('todos')}>Todos</FilterChip>
-                        <FilterChip active={cmvFilter === 'cmv'} onClick={() => setCmvFilter('cmv')}>CMV</FilterChip>
-                        <FilterChip active={cmvFilter === 'normal'} onClick={() => setCmvFilter('normal')}>Normal</FilterChip>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">Itinerário / fretes</p>
-                      <div className="flex flex-wrap gap-2">
-                        <FilterChip active={freteFilter === 'todos'} onClick={() => setFreteFilter('todos')}>Todos</FilterChip>
-                        <FilterChip active={freteFilter === 'fretes'} onClick={() => setFreteFilter('fretes')}>Fretes</FilterChip>
-                        <FilterChip active={freteFilter === 'sem_fretes'} onClick={() => setFreteFilter('sem_fretes')}>Sem fretes</FilterChip>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
-                        Fretes: lançamentos com referência ao evento logístico (aba Fretes do Itinerário Fluvial) ou tags frete / conta_frete.
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <p className="text-xs text-muted-foreground">Data inicial (opcional)</p>
-                        <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-2xl border-0 bg-muted h-12" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <p className="text-xs text-muted-foreground">Data final (opcional)</p>
-                        <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-2xl border-0 bg-muted h-12" />
-                      </div>
-                    </div>
-                  </div>
-                  <DrawerFooter className="px-0 pb-0 pt-5">
-                    <Button variant="ghost" onClick={limparFiltros} className="w-full rounded-2xl h-12 bg-muted">
-                      Limpar filtros
+            </DrawerTrigger>
+            <DrawerContent className="border-0 rounded-t-[32px] bg-card px-4 pb-6">
+              <DrawerHeader className="px-0 text-left">
+                <DrawerTitle className="font-glacial text-foreground">Menu AGEFIN</DrawerTitle>
+                <DrawerDescription className="text-sm text-muted-foreground">
+                  Organize, some, imprima e ajuste filtros.
+                </DrawerDescription>
+              </DrawerHeader>
+              <div className="space-y-5 px-0 max-h-[65vh] overflow-y-auto">
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Ações rápidas</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setModoSelecao((v) => !v)}
+                      className={`h-10 gap-1.5 rounded-2xl px-3 text-xs font-medium ${modoSelecao ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100' : 'bg-muted text-foreground/90'}`}
+                    >
+                      <Calculator className="h-4 w-4" />
+                      {modoSelecao ? 'Somando' : 'Somar'}
                     </Button>
-                  </DrawerFooter>
-                </DrawerContent>
-              </Drawer>
-              <Button onClick={imprimirRelatorio} variant="ghost" size="icon" className="h-9 w-9 rounded-2xl bg-muted">
-                <Printer className="w-4 h-4 text-muted-foreground" />
-              </Button>
-            </div>
-          </div>
+                    <Button onClick={imprimirRelatorio} variant="ghost" size="sm" className="h-10 rounded-2xl px-3 text-xs bg-muted">
+                      <Printer className="w-4 h-4 mr-1.5 text-muted-foreground" />
+                      Imprimir
+                    </Button>
+                  </div>
+                </div>
 
-          <div className="mt-2.5 flex items-center justify-between gap-2">
-            <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0 md:h-9 md:w-9">
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <div className="text-center min-w-0">
-              <p className="text-sm font-semibold text-foreground capitalize">{formatMonth(currentMonth)}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Período civil · {monthData.length} conta{monthData.length !== 1 ? 's' : ''}</p>
-            </div>
-            <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0 md:h-9 md:w-9">
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Organização</p>
+                  <AgefinConsultaOrganizer
+                    groupBy={groupBy}
+                    sortOrder={sortOrder}
+                    onGroupByChange={setGroupBy}
+                    onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+                  />
+                </div>
 
-          {hasActiveFilters && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-              <span className="rounded-full bg-muted px-2.5 py-1">Filtros ativos</span>
-              {pagamentoFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Pag.: {pagamentoFilter}</span>}
-              {prazoFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Prazo: {prazoFilter}</span>}
-              {cmvFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Tipo: {cmvFilter}</span>}
-              {freteFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Frete: {freteFilter}</span>}
-              {(dateFrom || dateTo) && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
-                  {dateFrom || '…'} → {dateTo || '…'}
-                  <button type="button" onClick={() => { setDateFrom(''); setDateTo(''); }} className="p-0.5 rounded-full hover:bg-muted dark:hover:bg-primary/90" aria-label="Limpar datas">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-            </div>
-          )}
+                <div className="flex items-center justify-between rounded-2xl bg-muted/50 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground">CMV na lista</p>
+                    <p className="text-[11px] text-muted-foreground">Desligue para ocultar sem abrir filtros</p>
+                  </div>
+                  <CmvQuickToggle checked={mostrarCmvRapido} onChange={setMostrarCmvRapido} />
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Pagamento</p>
+                  <div className="flex flex-wrap gap-2">
+                    <FilterChip active={pagamentoFilter === 'todos'} onClick={() => setPagamentoFilter('todos')}>Todos</FilterChip>
+                    <FilterChip active={pagamentoFilter === 'pagos'} onClick={() => setPagamentoFilter('pagos')} tone="success">Pagos</FilterChip>
+                    <FilterChip active={pagamentoFilter === 'nao_pagos'} onClick={() => setPagamentoFilter('nao_pagos')}>Não pagos</FilterChip>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Prazo (vencimento)</p>
+                  <div className="flex flex-wrap gap-2">
+                    <FilterChip active={prazoFilter === 'todos'} onClick={() => setPrazoFilter('todos')}>Todos</FilterChip>
+                    <FilterChip active={prazoFilter === 'vencidas'} onClick={() => setPrazoFilter('vencidas')} tone="danger">Vencidas</FilterChip>
+                    <FilterChip active={prazoFilter === 'em_dia'} onClick={() => setPrazoFilter('em_dia')} tone="success">Em dia</FilterChip>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Tipo</p>
+                  <div className="flex flex-wrap gap-2">
+                    <FilterChip active={cmvFilter === 'todos'} onClick={() => setCmvFilter('todos')}>Todos</FilterChip>
+                    <FilterChip active={cmvFilter === 'cmv'} onClick={() => setCmvFilter('cmv')}>CMV</FilterChip>
+                    <FilterChip active={cmvFilter === 'normal'} onClick={() => setCmvFilter('normal')}>Normal</FilterChip>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Itinerário / fretes</p>
+                  <div className="flex flex-wrap gap-2">
+                    <FilterChip active={freteFilter === 'todos'} onClick={() => setFreteFilter('todos')}>Todos</FilterChip>
+                    <FilterChip active={freteFilter === 'fretes'} onClick={() => setFreteFilter('fretes')}>Fretes</FilterChip>
+                    <FilterChip active={freteFilter === 'sem_fretes'} onClick={() => setFreteFilter('sem_fretes')}>Sem fretes</FilterChip>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+                    Fretes: lançamentos com referência ao evento logístico (aba Fretes do Itinerário Fluvial) ou tags frete / conta_frete.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground">Data inicial (opcional)</p>
+                    <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="rounded-2xl border-0 bg-muted h-12" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground">Data final (opcional)</p>
+                    <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="rounded-2xl border-0 bg-muted h-12" />
+                  </div>
+                </div>
+              </div>
+              <DrawerFooter className="px-0 pb-0 pt-5">
+                <Button variant="ghost" onClick={limparFiltros} className="w-full rounded-2xl h-12 bg-muted">
+                  Limpar filtros
+                </Button>
+              </DrawerFooter>
+            </DrawerContent>
+          </Drawer>
         </div>
+
+        <div className="flex items-center justify-between gap-2">
+          <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))} variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0 md:h-9 md:w-9">
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <div className="text-center min-w-0">
+            <p className="text-sm font-semibold text-foreground capitalize">{formatMonth(currentMonth)}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Período civil · {monthData.length} conta{monthData.length !== 1 ? 's' : ''}</p>
+          </div>
+          <Button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))} variant="ghost" size="sm" className="rounded-full h-8 w-8 p-0 md:h-9 md:w-9">
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+        </div>
+
+        {hasActiveFilters && (
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+            <span className="rounded-full bg-muted px-2.5 py-1">Filtros ativos</span>
+            {pagamentoFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Pag.: {pagamentoFilter}</span>}
+            {prazoFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Prazo: {prazoFilter}</span>}
+            {cmvFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Tipo: {cmvFilter}</span>}
+            {freteFilter !== 'todos' && <span className="rounded-full bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 text-blue-800 dark:text-blue-200">Frete: {freteFilter}</span>}
+            {(dateFrom || dateTo) && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+                {dateFrom || '…'} → {dateTo || '…'}
+                <button type="button" onClick={() => { setDateFrom(''); setDateTo(''); }} className="p-0.5 rounded-full hover:bg-muted dark:hover:bg-primary/90" aria-label="Limpar datas">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4 md:gap-2">
           <KpiCard label="Total (filtro)" value={formatCurrency(kpis.totalValue)} />
