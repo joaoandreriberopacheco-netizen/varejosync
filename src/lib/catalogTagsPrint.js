@@ -99,25 +99,48 @@ function drawCategoryMarginMarker(doc, marker) {
     .toUpperCase()
     .replace(/\s+/g, ' ')
     .trim();
-  const availableHeight = Math.max(8, yBottom - yTop - 2.4);
-  const labelMidY = (yTop + yBottom) / 2;
+  const glyphs = (normalizedLabel || 'SEM CATEGORIA').split('');
+  const availableHeight = Math.max(8, yBottom - yTop - 2.2);
+  const labelX = CATEGORY_LABEL_X_MM;
 
   doc.setDrawColor(74, 82, 64);
   doc.setLineWidth(0.18);
   doc.line(CATEGORY_MARKER_X_MM, yTop, CATEGORY_MARKER_X_MM, yBottom);
 
   doc.setFont('DIN1451', 'bold');
-  let fontSize = 6.6;
+  let fontSize = 6.4;
+  let step = 2.05;
+  const minFontSize = 4.0;
+  const minStep = 1.35;
+
+  const fitsGlyphs = (count) => count * step <= availableHeight;
+  const trimGlyphsToFit = () => {
+    if (fitsGlyphs(glyphs.length)) return glyphs;
+    const maxCount = Math.max(3, Math.floor(availableHeight / step));
+    const sliceSize = Math.max(0, maxCount - 1);
+    return [...glyphs.slice(0, sliceSize), '…'];
+  };
+
   doc.setFontSize(fontSize);
-  while (fontSize > 4.2 && doc.getTextWidth(normalizedLabel) > availableHeight) {
-    fontSize -= 0.2;
+  while (!fitsGlyphs(glyphs.length) && (fontSize > minFontSize || step > minStep)) {
+    if (fontSize > minFontSize) {
+      fontSize -= 0.2;
+    }
+    if (step > minStep) {
+      step -= 0.08;
+    }
     doc.setFontSize(fontSize);
   }
+
+  const drawableGlyphs = trimGlyphsToFit();
+  const textBlockHeight = drawableGlyphs.length * step;
+  const textStartY = yTop + (availableHeight - textBlockHeight) / 2 + step * 0.76;
+
   doc.setTextColor(74, 82, 64);
-  doc.text(normalizedLabel || 'SEM CATEGORIA', CATEGORY_LABEL_X_MM, labelMidY, {
-    align: 'center',
-    baseline: 'middle',
-    angle: 90,
+  drawableGlyphs.forEach((glyph, index) => {
+    doc.text(glyph === ' ' ? ' ' : String(glyph), labelX, textStartY + index * step, {
+      align: 'center',
+    });
   });
 }
 
