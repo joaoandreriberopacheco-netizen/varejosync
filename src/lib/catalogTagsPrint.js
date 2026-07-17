@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { registerJsPdfDin1451Fonts } from '@/lib/jspdfNotoFont';
 
 export const CATALOG_TAG_WIDTH_MM = 43;
 export const CATALOG_TAG_HEIGHT_MM = 48;
@@ -13,9 +14,8 @@ const GRID_WIDTH_MM = COLUMNS * CATALOG_TAG_WIDTH_MM;
 const GRID_HEIGHT_MM = ROWS * CATALOG_TAG_HEIGHT_MM;
 const START_X_MM = (A4_WIDTH_MM - GRID_WIDTH_MM) / 2;
 const START_Y_MM = (A4_HEIGHT_MM - GRID_HEIGHT_MM) / 2;
-const CATEGORY_MARKER_X_MM = START_X_MM - 2.8;
-const CATEGORY_LABEL_X_MM = 2.5;
-const CATEGORY_LABEL_MAX_WIDTH_MM = Math.max(8, START_X_MM - CATEGORY_LABEL_X_MM - 4.5);
+const CATEGORY_MARKER_X_MM = START_X_MM / 2;
+const CATEGORY_LABEL_X_MM = CATEGORY_MARKER_X_MM - 2.2;
 
 export const getCatalogTagCode = (produto) => {
   const codigo = produto?.codigo_interno || produto?.codigo_barras || '';
@@ -95,23 +95,29 @@ function buildPageCategoryMarkers(pageProducts = []) {
 function drawCategoryMarginMarker(doc, marker) {
   const yTop = START_Y_MM + marker.rowStart * CATALOG_TAG_HEIGHT_MM + 0.9;
   const yBottom = START_Y_MM + (marker.rowEnd + 1) * CATALOG_TAG_HEIGHT_MM - 0.9;
-  const label = normalizePdfText(marker.label || 'Sem categoria').toUpperCase();
+  const normalizedLabel = normalizePdfText(marker.label || 'Sem categoria')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+  const availableHeight = Math.max(8, yBottom - yTop - 2.4);
+  const labelMidY = (yTop + yBottom) / 2;
 
   doc.setDrawColor(74, 82, 64);
-  doc.setLineWidth(0.7);
+  doc.setLineWidth(0.18);
   doc.line(CATEGORY_MARKER_X_MM, yTop, CATEGORY_MARKER_X_MM, yBottom);
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
+  doc.setFont('DIN1451', 'bold');
+  let fontSize = 6.6;
+  doc.setFontSize(fontSize);
+  while (fontSize > 4.2 && doc.getTextWidth(normalizedLabel) > availableHeight) {
+    fontSize -= 0.2;
+    doc.setFontSize(fontSize);
+  }
   doc.setTextColor(74, 82, 64);
-  const labelLines = doc
-    .splitTextToSize(label, CATEGORY_LABEL_MAX_WIDTH_MM)
-    .slice(0, 3);
-  const labelStartY = Math.max(yTop + 1.8, yBottom - labelLines.length * 2.45 - 0.8);
-  labelLines.forEach((line, index) => {
-    doc.text(String(line), CATEGORY_LABEL_X_MM, labelStartY + index * 2.45, {
-      align: 'left',
-    });
+  doc.text(normalizedLabel || 'SEM CATEGORIA', CATEGORY_LABEL_X_MM, labelMidY, {
+    align: 'center',
+    baseline: 'middle',
+    angle: 90,
   });
 }
 
@@ -191,7 +197,7 @@ function drawCatalogTagCutLines(doc, x, y, row, column) {
   doc.line(x, bottom, right, bottom);
 }
 
-export function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {}) {
+export async function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {}) {
   if (!Array.isArray(products) || products.length === 0) {
     throw new Error('Nenhum produto para gerar etiquetas.');
   }
@@ -210,6 +216,8 @@ export function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {
     subject: normalizePdfText(filtrosResumo || 'Produtos filtrados do catálogo'),
     creator: 'P38 ERP',
   });
+
+  await registerJsPdfDin1451Fonts(doc);
 
   for (let pageStart = 0; pageStart < sortedProducts.length; pageStart += CATALOG_TAGS_PER_PAGE) {
     if (pageStart > 0) {
