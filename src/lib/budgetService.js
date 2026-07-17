@@ -97,41 +97,74 @@ async function deleteEntity(apiName, id) {
   }
 }
 
+function normalizarListaModelos(rows) {
+  return (rows || []).map(criarModeloComDefaults).filter((m) => m?.id);
+}
+
 async function lerModelosArmazenados() {
   const empresa = await obterRegistroDadosEmpresa(base44);
-  const empresaRows = lerArrayEmpresa(empresa, DADOS_EMPRESA_MODELOS_KEY);
-  const entityRows = (await tryListEntity('BudgetModelo')) ?? [];
-  const localRows = lerLocalStorage(LS_MODELOS_KEY);
+  const empresaRows = normalizarListaModelos(lerArrayEmpresa(empresa, DADOS_EMPRESA_MODELOS_KEY));
+  const localRows = normalizarListaModelos(lerLocalStorage(LS_MODELOS_KEY));
+  const entityRows = normalizarListaModelos((await tryListEntity('BudgetModelo')) ?? []);
+
+  // Fonte canônica: DadosEmpresa > localStorage > entidade (bootstrap inicial).
+  // Não faz union — union trazia de volta itens já excluídos de outra camada.
+  let canonical = [];
+  if (empresaRows.length) {
+    canonical = empresaRows;
+    salvarLocalStorage(LS_MODELOS_KEY, canonical);
+  } else if (localRows.length) {
+    canonical = localRows;
+  } else if (entityRows.length) {
+    canonical = entityRows;
+  }
+
   return {
     empresa,
-    merged: mesclarPorId(localRows, entityRows, empresaRows).map(criarModeloComDefaults),
+    empresaRows,
+    localRows,
+    entityRows,
+    merged: canonical,
   };
 }
 
 async function substituirModelosNaEntidade(modelos) {
-  try {
-    const api = base44.entities?.BudgetModelo;
-    if (!api?.list) return;
-    const existentes = (await api.list('-created_date')) || [];
-    const idsAtivos = new Set((modelos || []).map((m) => m.id));
-    for (const row of existentes) {
-      if (row?.id && !idsAtivos.has(row.id)) {
+  const api = base44.entities?.BudgetModelo;
+  if (!api?.list) return;
+  const idsAtivos = new Set((modelos || []).map((m) => m.id));
+  const existentes = normalizarListaModelos((await api.list('-created_date')) || []);
+
+  for (const row of existentes) {
+    if (row?.id && !idsAtivos.has(row.id)) {
+      try {
         await api.delete(row.id);
+      } catch (error) {
+        console.error('[budgets] Falha ao excluir BudgetModelo na entidade:', row.id, error);
+        throw new Error('Não foi possível remover o budget na base. Tente novamente.');
       }
     }
-    for (const m of modelos || []) {
-      await upsertEntity('BudgetModelo', m, criarModeloComDefaults);
-    }
-  } catch {
-    /* entidade opcional */
+  }
+
+  for (const m of modelos || []) {
+    await upsertEntity('BudgetModelo', m, criarModeloComDefaults);
   }
 }
 
 async function persistirModelos(modelos) {
-  const norm = (modelos || []).map(criarModeloComDefaults);
+  const norm = normalizarListaModelos(modelos);
+  try {
+    await atualizarDadosEmpresa(base44, { [DADOS_EMPRESA_MODELOS_KEY]: norm });
+  } catch (error) {
+    console.error('[budgets] Falha ao gravar em DadosEmpresa:', error);
+    throw new Error('Não foi possível salvar os budgets. Tente novamente.');
+  }
   salvarLocalStorage(LS_MODELOS_KEY, norm);
-  await atualizarDadosEmpresa(base44, { [DADOS_EMPRESA_MODELOS_KEY]: norm });
-  await substituirModelosNaEntidade(norm);
+  try {
+    await substituirModelosNaEntidade(norm);
+  } catch (error) {
+    console.error('[budgets] Falha ao espelhar BudgetModelo:', error);
+    // DadosEmpresa + local já estão corretos; não bloqueia a operação.
+  }
   return norm;
 }
 
@@ -199,13 +232,47 @@ export async function reativarModelo(modeloId) {
 export async function removerModelo(modeloId) {
   if (!modeloId) throw new Error('Budget inválido.');
   const { merged } = await lerModelosArmazenados();
+  if (!merged.some((m) => m.id === modeloId)) {
+    throw new Error('Budget não encontrado.');
+  }
   const next = merged.filter((m) => m.id !== modeloId);
-  await persistirModelos(next);
-  await deleteEntity('BudgetModelo', modeloId);
+  const gravados = await persistirModelos(next);
+  if (gravados.some((m) => m.id === modeloId)) {
+    throw new Error('O budget não foi removido. Tente novamente.');
+  }
 
   const comps = await lerCompetenciasArmazenadas();
   const compsNext = comps.filter((c) => c.budget_modelo_id !== modeloId);
   await persistirCompetencias(compsNext);
+  return gravados;
+}
+
+/** Remove duplicatas exatas (mesmo nome + categoria + centro), mantendo a primeira ocorrência. */
+export async function limparDuplicatasBudgets() {
+  const { merged } = await lerModelosArmazenados();
+  const vistos = new Map();
+  const unicos = [];
+  let removidos = 0;
+
+  for (const modelo of merged) {
+    const chave = [
+      String(modelo.nome || '').trim().toLocaleLowerCase('pt-BR'),
+      modelo.categoria_id || '',
+      String(modelo.centro_custo || '').trim().toLocaleLowerCase('pt-BR'),
+      modelo.modo_estimativa || '',
+      String(modelo.valor_entrada || ''),
+    ].join('|');
+    if (vistos.has(chave)) {
+      removidos += 1;
+      continue;
+    }
+    vistos.set(chave, true);
+    unicos.push(modelo);
+  }
+
+  if (removidos === 0) return { removidos: 0, total: merged.length };
+  const gravados = await persistirModelos(unicos);
+  return { removidos, total: gravados.length };
 }
 
 export async function listarCompetencias(competencia) {

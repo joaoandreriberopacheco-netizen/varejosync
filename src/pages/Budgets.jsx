@@ -47,6 +47,7 @@ import {
   listarCentrosCustoRegistros,
   inativarModelo,
   reativarModelo,
+  limparDuplicatasBudgets,
   obterLucroBrutoCompetencia,
 } from '@/lib/budgetService';
 import {
@@ -238,12 +239,16 @@ export default function BudgetsPage() {
     }
   };
 
-  const runAcaoModelo = async (modeloId, fn, successTitle) => {
+  const runAcaoModelo = async (modeloId, fn, successTitle, { atualizarLista } = {}) => {
     if (processandoModeloId || savingRef.current) return;
     setProcessandoModeloId(modeloId);
     try {
-      await fn();
-      invalidate();
+      const resultado = await fn();
+      if (typeof atualizarLista === 'function') {
+        queryClient.setQueryData(['budgets', 'modelos'], atualizarLista);
+      }
+      await queryClient.refetchQueries({ queryKey: ['budgets', 'modelos'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
       toast({ title: successTitle });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
@@ -269,7 +274,40 @@ export default function BudgetsPage() {
     ) {
       return;
     }
-    await runAcaoModelo(modelo.id, () => removerModelo(modelo.id), 'Budget excluído');
+    await runAcaoModelo(
+      modelo.id,
+      () => removerModelo(modelo.id),
+      'Budget excluído',
+      {
+        atualizarLista: (lista) => (lista || []).filter((m) => m.id !== modelo.id),
+      },
+    );
+  };
+
+  const handleLimparDuplicatas = async () => {
+    if (
+      !window.confirm(
+        'Remover budgets duplicados?\n\nMantém um de cada (mesmo nome, categoria e centro) e apaga as cópias.',
+      )
+    ) {
+      return;
+    }
+    setProcessandoModeloId('__limpar__');
+    try {
+      const resultado = await limparDuplicatasBudgets();
+      await queryClient.refetchQueries({ queryKey: ['budgets', 'modelos'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      toast({
+        title: resultado.removidos ? 'Duplicatas removidas' : 'Nenhuma duplicata',
+        description: resultado.removidos
+          ? `${resultado.removidos} cópia(s) removida(s). Restam ${resultado.total}.`
+          : 'Não há budgets repetidos para limpar.',
+      });
+    } catch (e) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setProcessandoModeloId('');
+    }
   };
 
   const handleSalvarAjuste = async ({ valorAjustado, motivoAjuste }) => {
@@ -366,7 +404,8 @@ export default function BudgetsPage() {
               className="w-full border-0 bg-transparent px-3 py-2.5 text-sm shadow-none focus:outline-none focus:ring-0"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 items-center justify-between">
+            <div className="flex gap-2">
             {['ativos', 'inativos', 'todos'].map((opt) => (
               <button
                 key={opt}
@@ -380,6 +419,19 @@ export default function BudgetsPage() {
                 {opt === 'ativos' ? 'Ativos' : opt === 'inativos' ? 'Inativos' : 'Todos'}
               </button>
             ))}
+            </div>
+            {modelos.length > 1 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-full h-8 text-xs"
+                disabled={Boolean(processandoModeloId)}
+                onClick={handleLimparDuplicatas}
+              >
+                {processandoModeloId === '__limpar__' ? 'Processando…' : 'Limpar duplicatas'}
+              </Button>
+            )}
           </div>
 
           <FinanceiroListaEstado
