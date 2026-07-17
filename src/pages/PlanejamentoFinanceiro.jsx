@@ -42,6 +42,7 @@ import {
 } from '@/lib/agefinPrevisaoCalculos';
 import {
   abrirCompetenciasDoMes,
+  abrirCompetenciaSerie,
   desfazerAberturaCompetenciasDoMes,
   listarCentrosCustoRegistros,
   listarContasFinanceiras,
@@ -82,6 +83,7 @@ export default function PlanejamentoFinanceiroPage() {
   const [draggingSerieId, setDraggingSerieId] = useState('');
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
   const [showImportador, setShowImportador] = useState(false);
+  const [importadorLancamentoId, setImportadorLancamentoId] = useState(null);
   const [salvandoManual, setSalvandoManual] = useState(false);
   const [parcelamentoDialog, setParcelamentoDialog] = useState(false);
   const [salvandoParcelamento, setSalvandoParcelamento] = useState(false);
@@ -447,18 +449,43 @@ export default function PlanejamentoFinanceiroPage() {
     if (!selectedComp || !selectedModelo) return;
     setSaving(true);
     try {
-      await abrirCompetenciasDoMes(competenciaMes);
+      await abrirCompetenciaSerie(selectedModelo, competenciaMes);
       invalidate();
       const lancs = await listarLancamentosCompetencia(competenciaMes);
       const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcelamentos);
-      const real = visao.find((c) => c.serie_id === selectedComp.serie_id);
-      if (real) setSelectedComp(real);
+      refreshSelectedComp(visao);
       toast({ title: 'Conta aberta no mês' });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleVincularBoleto = async () => {
+    if (!selectedComp) return;
+    setImportadorLancamentoId(null);
+
+    if (isCompetenciaPlanejamento(selectedComp) && !selectedComp.lancamento_id && selectedModelo) {
+      setSaving(true);
+      try {
+        const lf = await abrirCompetenciaSerie(selectedModelo, competenciaMes);
+        invalidate();
+        const lancs = await listarLancamentosCompetencia(competenciaMes);
+        const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcelamentos);
+        refreshSelectedComp(visao);
+        setImportadorLancamentoId(lf?.id || null);
+        setShowImportador(true);
+      } catch (e) {
+        toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+
+    setImportadorLancamentoId(selectedComp.lancamento_id || null);
+    setShowImportador(true);
   };
 
   return (
@@ -691,7 +718,7 @@ export default function PlanejamentoFinanceiroPage() {
         syncing={syncing}
         onAbrirMes={handleAbrirSerieNoMes}
         abrindoMes={saving}
-        onVincularBoleto={() => setShowImportador(true)}
+        onVincularBoleto={handleVincularBoleto}
         onSalvarManual={handleSalvarManual}
         salvandoManual={salvandoManual}
         onParcelar={podeParcelarConta ? () => setParcelamentoDialog(true) : undefined}
@@ -735,17 +762,22 @@ export default function PlanejamentoFinanceiroPage() {
         }}
       />
 
-      <Dialog open={showImportador} onOpenChange={setShowImportador}>
+      <Dialog
+        open={showImportador}
+        onOpenChange={(open) => {
+          setShowImportador(open);
+          if (!open) setImportadorLancamentoId(null);
+        }}
+      >
         <DialogContent className="flex min-h-0 max-h-[92vh] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-xl">
           <div className="shrink-0 border-b border-border/40 p-5">
-            <h2 className="text-lg font-semibold text-foreground">
-              {selectedComp?.lancamento_id ? 'Vincular boleto (PDF)' : 'Importar conta (PDF)'}
-            </h2>
+            <h2 className="text-lg font-semibold text-foreground">Anexar boleto (PDF)</h2>
           </div>
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <AgefinImportador
-              modoAtualizacao={Boolean(selectedComp?.lancamento_id)}
-              lancamentoFinanceiroId={selectedComp?.lancamento_id || undefined}
+              modoAtualizacao={Boolean(importadorLancamentoId || selectedComp?.lancamento_id)}
+              somenteAnexo
+              lancamentoFinanceiroId={importadorLancamentoId || selectedComp?.lancamento_id || undefined}
               dadosContaExistente={
                 selectedComp
                   ? { descricao: selectedComp.serie_nome, terceiro_nome: selectedComp.terceiro_nome }
@@ -754,6 +786,17 @@ export default function PlanejamentoFinanceiroPage() {
               onSuccess={() => {
                 invalidate();
                 setShowImportador(false);
+                setImportadorLancamentoId(null);
+                void (async () => {
+                  const lancs = await listarLancamentosCompetencia(competenciaMes);
+                  const visao = montarCompetenciasVisaoComParcelas(
+                    competenciaMes,
+                    modelos,
+                    lancs,
+                    parcelamentos,
+                  );
+                  refreshSelectedComp(visao);
+                })();
               }}
             />
           </div>
