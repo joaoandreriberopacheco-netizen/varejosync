@@ -449,6 +449,9 @@ export default function BudgetsPage() {
         centrosRegistrados={centrosRegistrados}
         onSave={handleSaveModelo}
         saving={saving}
+        onCategoriasChange={async () => {
+          await queryClient.invalidateQueries({ queryKey: ['budgets', 'categorias'] });
+        }}
       />
 
       <div className="fixed right-4 z-[55] bottom-[calc(var(--p38-bottom-nav-h,0px)+1rem)] lg:bottom-8 lg:right-8">

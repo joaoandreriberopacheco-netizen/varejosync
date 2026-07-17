@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import BudgetCategoriaSelect from '@/components/budget-previsao/BudgetCategoriaSelect';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import { cn } from '@/lib/utils';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
@@ -36,6 +37,7 @@ export default function BudgetModeloDialog({
   centrosRegistrados = [],
   onSave,
   saving,
+  onCategoriasChange,
 }) {
   const [form, setForm] = useState({
     nome: '',
@@ -96,12 +98,12 @@ export default function BudgetModeloDialog({
     }
   }, [form.modo_estimativa]);
 
-  const handleCategoria = (catId) => {
-    const cat = categorias.find((c) => c.id === catId);
+  const handleCategoria = (cat) => {
+    if (!cat?.id) return;
     setForm((f) => ({
       ...f,
-      categoria_id: catId,
-      categoria_nome: cat?.nome || '',
+      categoria_id: cat.id,
+      categoria_nome: cat.nome || '',
     }));
   };
 
@@ -138,18 +140,12 @@ export default function BudgetModeloDialog({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label>Categoria *</Label>
-              <Select value={form.categoria_id || ''} onValueChange={handleCategoria}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categorias.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <BudgetCategoriaSelect
+                categorias={categorias}
+                value={form.categoria_id || ''}
+                onValueChange={handleCategoria}
+                onCategoriasChange={onCategoriasChange}
+              />
             </div>
             <div>
               <Label>Centro de custo</Label>

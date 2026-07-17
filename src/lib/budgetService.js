@@ -207,3 +207,22 @@ export async function listarCategoriasDespesa() {
   const cats = await base44.entities.CategoriaFinanceira.list();
   return (cats || []).filter((c) => c.tipo === 'Despesa' && c.ativo !== false && c.ativa !== false);
 }
+
+export async function salvarCategoriaDespesa(partial = {}) {
+  const nome = String(partial.nome || '').trim();
+  if (!nome) throw new Error('Informe o nome da categoria.');
+
+  const body = {
+    nome,
+    tipo: 'Despesa',
+    ativo: partial.ativo !== false,
+    ativa: partial.ativo !== false,
+    cor: partial.cor || '#3B82F6',
+    orcamento_mensal: Number(partial.orcamento_mensal) || 0,
+  };
+
+  if (partial.id) {
+    return base44.entities.CategoriaFinanceira.update(partial.id, { ...partial, ...body });
+  }
+  return base44.entities.CategoriaFinanceira.create(body);
+}
