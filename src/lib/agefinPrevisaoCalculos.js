@@ -37,20 +37,29 @@ export const MESES_VENCIMENTO_LABELS = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
-export const GRUPO_ORGANIZACAO_SERIE = {
-  PERIODICA: 'periodica',
-  ANUAL: 'anual',
+export const ORDEM_FREQUENCIAS_CONTAS_FIXAS = [
+  FREQUENCIA_SERIE.MENSAL,
+  FREQUENCIA_SERIE.BIMESTRAL,
+  FREQUENCIA_SERIE.TRIMESTRAL,
+  FREQUENCIA_SERIE.SEMESTRAL,
+  FREQUENCIA_SERIE.ANUAL,
+];
+
+export const DESCRICAO_FREQUENCIA_SERIE = {
+  [FREQUENCIA_SERIE.MENSAL]: 'Recorrência mensal — aparece em todos os meses.',
+  [FREQUENCIA_SERIE.BIMESTRAL]: 'A cada 2 meses, a partir do mês de referência.',
+  [FREQUENCIA_SERIE.TRIMESTRAL]: 'A cada 3 meses, a partir do mês de referência.',
+  [FREQUENCIA_SERIE.SEMESTRAL]: 'A cada 6 meses, a partir do mês de referência.',
+  [FREQUENCIA_SERIE.ANUAL]: 'Uma vez por ano, no mês de vencimento escolhido.',
 };
 
-/** Agrupamento na aba Contas fixas: periódicas vs anuais. */
-export function grupoOrganizacaoSerie(modelo) {
-  const f = modelo?.frequencia || FREQUENCIA_SERIE.MENSAL;
-  return f === FREQUENCIA_SERIE.ANUAL ? GRUPO_ORGANIZACAO_SERIE.ANUAL : GRUPO_ORGANIZACAO_SERIE.PERIODICA;
+export function normalizarFrequenciaSerie(frequencia) {
+  const f = frequencia || FREQUENCIA_SERIE.MENSAL;
+  return ORDEM_FREQUENCIAS_CONTAS_FIXAS.includes(f) ? f : FREQUENCIA_SERIE.MENSAL;
 }
 
 export function labelFrequenciaSerie(modelo) {
-  const f = modelo?.frequencia || FREQUENCIA_SERIE.MENSAL;
-  return f;
+  return normalizarFrequenciaSerie(modelo?.frequencia);
 }
 
 export function labelValorSerie(modelo) {
@@ -92,23 +101,23 @@ export function serieDeveAparecerNaCompetencia(modelo, competencia) {
   }
 }
 
-/** Agrupa séries ativas por tipo (periódica/anual) e centro de custo. */
-export function agruparSeriesPorTipoECentro(series, centrosRegistrados = []) {
+/** Agrupa séries por recorrência (mensal → anual) e, dentro de cada uma, por centro de custo. */
+export function agruparSeriesPorFrequenciaECentro(series, centrosRegistrados = []) {
   const centrosSet = new Set(
     (centrosRegistrados || []).map((c) => String(c).toLocaleLowerCase('pt-BR')),
   );
-  const out = {
-    [GRUPO_ORGANIZACAO_SERIE.PERIODICA]: {},
-    [GRUPO_ORGANIZACAO_SERIE.ANUAL]: {},
-  };
+  const out = {};
+  for (const f of ORDEM_FREQUENCIAS_CONTAS_FIXAS) {
+    out[f] = {};
+  }
 
   for (const serie of series || []) {
-    const tipo = grupoOrganizacaoSerie(serie);
+    const freq = normalizarFrequenciaSerie(serie.frequencia);
     const centro = String(serie.centro_custo || '').trim();
     const chave =
       centro && centrosSet.has(centro.toLocaleLowerCase('pt-BR')) ? centro : '__sem__';
-    if (!out[tipo][chave]) out[tipo][chave] = [];
-    out[tipo][chave].push(serie);
+    if (!out[freq][chave]) out[freq][chave] = [];
+    out[freq][chave].push(serie);
   }
 
   return out;

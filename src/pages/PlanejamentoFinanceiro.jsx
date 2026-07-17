@@ -42,7 +42,7 @@ import {
   ordenarSeriesPorCentroENome,
   isCompetenciaFutura,
   isCompetenciaPlanejamento,
-  agruparSeriesPorTipoECentro,
+  agruparSeriesPorFrequenciaECentro,
 } from '@/lib/agefinPrevisaoCalculos';
 import {
   abrirCompetenciasDoMes,
@@ -154,7 +154,7 @@ export default function PlanejamentoFinanceiroPage() {
   );
 
   const agrupamentoContas = useMemo(
-    () => agruparSeriesPorTipoECentro(seriesAtivas, centrosRegistrados),
+    () => agruparSeriesPorFrequenciaECentro(seriesAtivas, centrosRegistrados),
     [seriesAtivas, centrosRegistrados],
   );
 
@@ -488,13 +488,15 @@ export default function PlanejamentoFinanceiroPage() {
         <TabsContent value="contas" className="mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-end gap-2">
             <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="end">
-              <p className="font-medium text-foreground">Dois grupos: periódicas e anuais</p>
+              <p className="font-medium text-foreground">Blocos por recorrência</p>
               <p className="text-muted-foreground">
-                Dentro de cada grupo, organize por <strong className="text-foreground">centro de custo</strong> —
-                cadastre centros pelo <strong className="text-foreground">+</strong> e arraste a conta.
+                As contas aparecem em blocos: <strong className="text-foreground">Mensal</strong>,{' '}
+                <strong className="text-foreground">Bimestral</strong>, <strong className="text-foreground">Trimestral</strong>,{' '}
+                <strong className="text-foreground">Semestral</strong> e <strong className="text-foreground">Anual</strong> — só
+                o bloco que tiver contas cadastradas.
               </p>
               <p className="text-muted-foreground mt-2">
-                Na periodicidade do cadastro, escolha Mensal, Bimestral, Trimestral, Semestral ou Anual.
+                Dentro de cada bloco, organize por centro de custo (arraste a conta para o centro).
               </p>
             </P38HelpPopover>
           </div>
