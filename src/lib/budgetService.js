@@ -6,6 +6,7 @@ import {
   filtrarLancamentosBudgetMes,
   lancamentoElegivelBudget,
 } from '@/lib/budgetCalculos';
+import { calcularLucroBrutoCompetencia } from '@/lib/relatorioMargemCalculos';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
 
 export { listarCentrosCustoRegistros };
@@ -206,6 +207,14 @@ export async function listarLancamentosDespesas(competencia) {
 export async function listarCategoriasDespesa() {
   const cats = await base44.entities.CategoriaFinanceira.list();
   return (cats || []).filter((c) => c.tipo === 'Despesa' && c.ativo !== false && c.ativa !== false);
+}
+
+export async function obterLucroBrutoCompetencia(competencia) {
+  const [sales, products] = await Promise.all([
+    base44.entities.PedidoVenda.filter({ tipo: 'PDV' }),
+    base44.entities.Produto.list(),
+  ]);
+  return calcularLucroBrutoCompetencia(sales, products, competencia);
 }
 
 export async function salvarCategoriaDespesa(partial = {}) {

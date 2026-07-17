@@ -28,7 +28,6 @@ import BudgetPlanoCompleto from '@/components/budget-previsao/BudgetPlanoComplet
 import {
   calcularTotaisBudgets,
   calcularRealizadoPorTag,
-  calcularReceitasRealizadasMes,
   filtrarVisoesBudget,
   formatCompetenciaLabel,
   getCompetenciaAtual,
@@ -46,6 +45,7 @@ import {
   listarLancamentosMes,
   listarCategoriasDespesa,
   listarCentrosCustoRegistros,
+  obterLucroBrutoCompetencia,
 } from '@/lib/budgetService';
 import {
   calcularTotaisGrupo as calcularTotaisGrupoFolha,
@@ -138,6 +138,12 @@ export default function BudgetsPage() {
     enabled: aba === 'plano',
   });
 
+  const { data: lucroBrutoMes } = useQuery({
+    queryKey: ['budgets', 'lucro-bruto', competenciaMes],
+    queryFn: () => obterLucroBrutoCompetencia(competenciaMes),
+    enabled: aba === 'plano',
+  });
+
   const { data: modelosAgefin = [] } = useQuery({
     queryKey: ['budgets', 'agefin-modelos'],
     queryFn: listarModelosAgefin,
@@ -201,10 +207,11 @@ export default function BudgetsPage() {
       totaisFixas,
       realizadoFolha: calcularRealizadoPorTag(lancamentosMes, competenciaMes, 'folha_previsao'),
       realizadoFixas: calcularRealizadoPorTag(lancamentosMes, competenciaMes, 'agefin_previsao'),
-      receitas: calcularReceitasRealizadasMes(lancamentosMes, competenciaMes),
+      lucroBruto: lucroBrutoMes?.lucro_bruto || 0,
+      margemDetalhe: lucroBrutoMes,
       totaisBudgets: totais,
     };
-  }, [aba, competenciaMes, modelosFolha, competenciasFolha, modelosAgefin, lancamentosAgefin, lancamentosMes, totais]);
+  }, [aba, competenciaMes, modelosFolha, competenciasFolha, modelosAgefin, lancamentosAgefin, lancamentosMes, totais, lucroBrutoMes]);
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['budgets'] });
@@ -427,7 +434,8 @@ export default function BudgetsPage() {
               totaisBudgets={totaisPlano.totaisBudgets}
               realizadoFixas={totaisPlano.realizadoFixas}
               realizadoFolha={totaisPlano.realizadoFolha}
-              receitasRealizadas={totaisPlano.receitas}
+              lucroBruto={totaisPlano.lucroBruto}
+              margemDetalhe={totaisPlano.margemDetalhe}
             />
           )}
         </TabsContent>

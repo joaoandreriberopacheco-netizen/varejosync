@@ -52,7 +52,7 @@ function CardPlanoMobile({ label, planejado, realizado, linkTo, destaque = false
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Realizado</p>
           <CelulaValor
             valor={realizado}
-            positivo={label === 'Resultado' ? Number(realizado) >= 0 : undefined}
+            positivo={label === 'Resultado' || label === 'Lucro bruto' ? Number(realizado) >= 0 : undefined}
             className="text-sm"
           />
         </div>
@@ -99,14 +99,16 @@ export default function BudgetPlanoCompleto({
   totaisBudgets,
   realizadoFixas,
   realizadoFolha,
-  receitasRealizadas,
+  lucroBruto = 0,
+  margemDetalhe,
 }) {
   const planejadoDespesas =
     (totaisFixas?.total || 0) + (totaisFolha?.custoTotalEmpresa || 0) + (totaisBudgets?.orcado || 0);
   const realizadoDespesas =
     (realizadoFixas || 0) + (realizadoFolha || 0) + (totaisBudgets?.realizado || 0);
   const diffDespesas = planejadoDespesas - realizadoDespesas;
-  const resultado = (Number(receitasRealizadas) || 0) - realizadoDespesas;
+  const lucro = Number(lucroBruto) || 0;
+  const resultado = lucro - realizadoDespesas;
 
   const compLabel = formatCompetenciaLabel(competencia);
 
@@ -145,6 +147,12 @@ export default function BudgetPlanoCompleto({
           <p className="text-muted-foreground">
             Junta contas fixas, folha e budgets. O realizado usa despesas pagas no Fluxo (e lançamentos de folha/fixas quando identificáveis).
           </p>
+          <p className="text-muted-foreground mt-2">
+            O <strong className="text-foreground">lucro bruto</strong> segue o mesmo cálculo do relatório de margem: vendas PDV do mês menos o custo da mercadoria (custo atual do cadastro).
+          </p>
+          <p className="text-muted-foreground mt-2">
+            <strong className="text-foreground">Resultado</strong> = lucro bruto − despesas operacionais pagas.
+          </p>
         </P38HelpPopover>
       </div>
 
@@ -165,10 +173,16 @@ export default function BudgetPlanoCompleto({
           destaque
         />
         <CardPlanoMobile
-          label="Receitas (fluxo)"
-          realizado={receitasRealizadas}
+          label="Lucro bruto"
+          realizado={lucro}
           somenteRealizado
         />
+        {margemDetalhe?.receita_liquida > 0 && (
+          <p className="text-[11px] text-muted-foreground px-1 -mt-1">
+            Receita líq. {formatFinanceiroValor(margemDetalhe.receita_liquida)} · CMV{' '}
+            {formatFinanceiroValor(margemDetalhe.custo_total)}
+          </p>
+        )}
         <CardPlanoMobile
           label="Resultado"
           realizado={resultado}
@@ -212,13 +226,21 @@ export default function BudgetPlanoCompleto({
               <td />
             </tr>
             <tr className="border-b border-border/40">
-              <td className="py-3 pr-2 text-sm">Receitas (fluxo)</td>
+              <td className="py-3 pr-2 text-sm">Lucro bruto</td>
               <td className="py-3 px-2 text-right text-sm text-muted-foreground">—</td>
               <td className="py-3 px-2 text-right text-sm">
-                <CelulaValor valor={receitasRealizadas} />
+                <CelulaValor valor={lucro} positivo={lucro >= 0} />
               </td>
               <td className="py-3 pl-2" colSpan={2} />
             </tr>
+            {margemDetalhe?.receita_liquida > 0 && (
+              <tr className="border-b border-border/20 text-[11px] text-muted-foreground">
+                <td className="py-1 pr-2 pl-4" colSpan={5}>
+                  Receita líq. {formatFinanceiroValor(margemDetalhe.receita_liquida)} · CMV{' '}
+                  {formatFinanceiroValor(margemDetalhe.custo_total)} (relatório de margem)
+                </td>
+              </tr>
+            )}
             <tr>
               <td className="py-3 pr-2 text-sm font-semibold">Resultado</td>
               <td className="py-3 px-2 text-right text-sm text-muted-foreground">—</td>
