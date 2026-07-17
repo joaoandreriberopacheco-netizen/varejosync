@@ -357,13 +357,21 @@ export default function PlanejamentoFinanceiroPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Contas fixas mensais — energia, telefone, internet…</p>
       </div>
 
-      <Tabs defaultValue="previsao" className="w-full mt-4">
+      <Tabs defaultValue="contas" className="w-full mt-4">
         <TabsList
           className={cn(
             'w-full h-auto p-1 rounded-xl flex-nowrap overflow-x-auto md:overflow-visible md:flex-wrap',
             P38_FIELD_SURFACE,
           )}
         >
+          <TabsTrigger
+            value="contas"
+            className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[100px] md:min-w-[120px]"
+          >
+            <Repeat2 className="w-4 h-4" />
+            <span className="text-xs md:hidden">Contas</span>
+            <span className="hidden md:inline text-sm">Contas fixas</span>
+          </TabsTrigger>
           <TabsTrigger
             value="previsao"
             className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]"
@@ -379,14 +387,6 @@ export default function PlanejamentoFinanceiroPage() {
             <TrendingUp className="w-4 h-4" />
             <span className="text-xs md:hidden">12m</span>
             <span className="hidden md:inline text-sm">Projeção 12 meses</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="contas"
-            className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[100px] md:min-w-[120px]"
-          >
-            <Repeat2 className="w-4 h-4" />
-            <span className="text-xs md:hidden">Contas</span>
-            <span className="hidden md:inline text-sm">Contas fixas</span>
           </TabsTrigger>
         </TabsList>
 
