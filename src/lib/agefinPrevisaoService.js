@@ -34,7 +34,12 @@ function empresaTemArmazenamentoSeries(empresa) {
 }
 
 function lerSeriesEmpresa(empresa) {
-  const raw = empresa?.[DADOS_EMPRESA_SERIES_KEY];
+  if (!empresa) return [];
+  const raw =
+    empresa[DADOS_EMPRESA_SERIES_KEY] ??
+    (empresa.dados && typeof empresa.dados === 'object'
+      ? empresa.dados[DADOS_EMPRESA_SERIES_KEY]
+      : undefined);
   return Array.isArray(raw) ? raw : [];
 }
 
@@ -52,14 +57,38 @@ function mesclarSeriesPorId(...listas) {
 
 async function lerTodasSeriesArmazenadas() {
   const empresa = await obterRegistroDadosEmpresa();
-  const empresaRows = empresaTemArmazenamentoSeries(empresa) ? lerSeriesEmpresa(empresa) : [];
+  const empresaRows = lerSeriesEmpresa(empresa);
   const entityRows = (await tryListEntitySeries()) ?? [];
+  const localRows = lerSeriesLocalStorage();
   return {
     empresa,
     empresaRows,
     entityRows,
-    merged: mesclarSeriesPorId(entityRows, empresaRows),
+    localRows,
+    merged: mesclarSeriesPorId(localRows, entityRows, empresaRows),
   };
+}
+
+const LS_SERIES_KEY = 'p38_agefin_series_modelo_v1';
+
+function lerSeriesLocalStorage() {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LS_SERIES_KEY);
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function salvarSeriesLocalStorage(series) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(LS_SERIES_KEY, JSON.stringify(series || []));
+  } catch {
+    /* quota / modo privado */
+  }
 }
 
 async function tryListEntitySeries() {
@@ -73,31 +102,43 @@ async function tryListEntitySeries() {
   }
 }
 
-async function upsertSerieEntidade(serie) {
+async function buscarSerieEntidade(serieId) {
   try {
     const api = base44.entities?.AgefinSerieModelo;
-    if (!api) return false;
-    const body = criarSerieComDefaults(serie);
-    let existente = [];
-    try {
-      existente = (await api.filter?.({ id: body.id })) || [];
-    } catch {
-      try {
-        const row = await api.get?.(body.id);
-        if (row?.id) existente = [row];
-      } catch {
-        /* nova série */
-      }
+    if (!api || !serieId) return null;
+    if (api.filter) {
+      const rows = await api.filter({ id: serieId });
+      if (rows?.[0]?.id) return criarSerieComDefaults(rows[0]);
     }
-    if (existente?.length) {
-      await api.update(body.id, body);
-    } else {
-      await api.create(body);
+    if (api.get) {
+      const row = await api.get(serieId);
+      if (row?.id) return criarSerieComDefaults(row);
     }
-    return true;
   } catch {
-    return false;
+    /* entidade opcional */
   }
+  return null;
+}
+
+async function upsertSerieEntidade(serie) {
+  const api = base44.entities?.AgefinSerieModelo;
+  if (!api?.create) return null;
+  const body = criarSerieComDefaults(serie);
+  let existente = [];
+  try {
+    existente = (await api.filter?.({ id: body.id })) || [];
+  } catch {
+    try {
+      const row = await api.get?.(body.id);
+      if (row?.id) existente = [row];
+    } catch {
+      /* nova série */
+    }
+  }
+  if (existente?.length) {
+    return criarSerieComDefaults(await api.update(body.id, body));
+  }
+  return criarSerieComDefaults(await api.create(body));
 }
 
 async function removerSerieEntidade(serieId) {
@@ -136,30 +177,48 @@ async function substituirSeriesNaEntidade(series) {
 
 async function persistirSeriesModelo(series) {
   const seriesNorm = (series || []).map((s) => criarSerieComDefaults(s));
-  await atualizarDadosEmpresa(base44, {
-    [DADOS_EMPRESA_SERIES_KEY]: seriesNorm,
-  });
-  await substituirSeriesNaEntidade(seriesNorm);
-  return seriesNorm;
+  salvarSeriesLocalStorage(seriesNorm);
+
+  let empresaAtualizada = null;
+  try {
+    empresaAtualizada = await atualizarDadosEmpresa(base44, {
+      [DADOS_EMPRESA_SERIES_KEY]: seriesNorm,
+    });
+  } catch (error) {
+    console.error('[agefin] Falha ao gravar em DadosEmpresa:', error);
+  }
+
+  try {
+    await substituirSeriesNaEntidade(seriesNorm);
+  } catch (error) {
+    console.error('[agefin] Falha ao espelhar em AgefinSerieModelo:', error);
+  }
+
+  return {
+    seriesNorm,
+    empresaRows: lerSeriesEmpresa(empresaAtualizada),
+  };
 }
 
-async function verificarSeriePersistida(serieId, tentativas = 3) {
+async function verificarSeriePersistida(serieId, tentativas = 5) {
   for (let i = 0; i < tentativas; i += 1) {
+    const fromEntity = await buscarSerieEntidade(serieId);
+    if (fromEntity) return fromEntity;
+
     const { merged } = await lerTodasSeriesArmazenadas();
     const found = merged.find((s) => s.id === serieId);
-    if (found) return found;
+    if (found) return criarSerieComDefaults(found);
+
     if (i < tentativas - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
   }
   return null;
 }
 
 async function obterSeriesParaEdicao() {
-  const { empresa, empresaRows, entityRows, merged } = await lerTodasSeriesArmazenadas();
-  if (empresaTemArmazenamentoSeries(empresa) || empresaRows.length) return merged;
-  if (entityRows.length) return entityRows;
-  return [];
+  const { merged } = await lerTodasSeriesArmazenadas();
+  return merged;
 }
 
 export async function listarModelos() {
@@ -188,16 +247,30 @@ export async function salvarSerie(payload) {
   if (idx >= 0) next[idx] = { ...next[idx], ...body };
   else next.push(body);
 
-  await persistirSeriesModelo(next);
-
-  const verificada = await verificarSeriePersistida(body.id);
-  if (!verificada) {
-    throw new Error(
-      'A conta não foi gravada na base. Atualize a página e tente salvar novamente.',
-    );
+  let entityRow = null;
+  try {
+    entityRow = await upsertSerieEntidade(body);
+  } catch (error) {
+    console.error('[agefin] AgefinSerieModelo indisponível:', error);
   }
 
-  return criarSerieComDefaults(verificada);
+  const { seriesNorm, empresaRows } = await persistirSeriesModelo(next);
+  const naRespostaEmpresa = empresaRows.find((s) => s.id === body.id);
+  if (naRespostaEmpresa) return criarSerieComDefaults(naRespostaEmpresa);
+  if (entityRow?.id) return entityRow;
+
+  const verificada = await verificarSeriePersistida(body.id);
+  if (verificada) return verificada;
+
+  const noLocal = seriesNorm.find((s) => s.id === body.id);
+  if (noLocal) {
+    console.warn('[agefin] Conta salva localmente; nuvem não confirmou ainda.');
+    return criarSerieComDefaults(noLocal);
+  }
+
+  throw new Error(
+    'Não foi possível gravar a conta. Verifique a conexão e tente novamente.',
+  );
 }
 
 export async function removerSerie(serieId) {
