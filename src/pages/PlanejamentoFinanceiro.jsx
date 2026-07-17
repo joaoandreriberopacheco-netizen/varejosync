@@ -249,7 +249,6 @@ export default function PlanejamentoFinanceiroPage() {
         }
         return [...old, saved];
       });
-      void queryClient.invalidateQueries({ queryKey: ['agefin-previsao', 'modelos'] });
       setSerieDialog(null);
       const freq = saved.frequencia || 'Mensal';
       toast({

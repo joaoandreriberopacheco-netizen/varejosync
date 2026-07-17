@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { atualizarDadosEmpresa } from '@/lib/dadosEmpresaMerge';
 import {
   calcularTotaisCompetencia,
   clonarRubricas,
@@ -100,17 +101,7 @@ async function persistirCentrosCustoEmpresa(registros) {
   );
 
   const empresa = await obterRegistroDadosEmpresa();
-  const payload = { folha_centros_custo, centros_custo_financeiros };
-
-  if (empresa?.id) {
-    await base44.entities.DadosEmpresa.update(empresa.id, payload);
-  } else {
-    await base44.entities.DadosEmpresa.create({
-      razao_social: 'Empresa',
-      nome_fantasia: 'Configuração ERP',
-      ...payload,
-    });
-  }
+  await atualizarDadosEmpresa(base44, { folha_centros_custo, centros_custo_financeiros });
 
   return ordenados.map((row, idx) => enrichCentroCustoRecord(row, idx)).filter(Boolean);
 }

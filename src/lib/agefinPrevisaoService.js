@@ -16,28 +16,17 @@ import {
   serieEstaAtivaNaCompetencia,
 } from '@/lib/agefinPrevisaoCalculos';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
+import {
+  atualizarDadosEmpresa,
+  obterRegistroDadosEmpresa as obterDadosEmpresa,
+} from '@/lib/dadosEmpresaMerge';
 
 export { listarCentrosCustoRegistros };
 
 const DADOS_EMPRESA_SERIES_KEY = 'agefin_series_modelo';
 
 async function obterRegistroDadosEmpresa() {
-  const dados = await base44.entities.DadosEmpresa.list();
-  return dados?.[0] || null;
-}
-
-function stripEmpresaMeta(empresa) {
-  if (!empresa) return {};
-  const {
-    id: _id,
-    created_date: _cd,
-    updated_date: _ud,
-    created_at: _ca,
-    updated_at: _ua,
-    created_by: _cb,
-    ...resto
-  } = empresa;
-  return resto;
+  return obterDadosEmpresa(base44);
 }
 
 function empresaTemArmazenamentoSeries(empresa) {
@@ -145,25 +134,25 @@ async function substituirSeriesNaEntidade(series) {
   }
 }
 
-async function persistirSeriesModelo(series, empresaExistente = null) {
-  const empresa = empresaExistente ?? (await obterRegistroDadosEmpresa());
-  const payload = {
-    ...stripEmpresaMeta(empresa),
-    [DADOS_EMPRESA_SERIES_KEY]: series || [],
-  };
+async function persistirSeriesModelo(series) {
+  const seriesNorm = (series || []).map((s) => criarSerieComDefaults(s));
+  await atualizarDadosEmpresa(base44, {
+    [DADOS_EMPRESA_SERIES_KEY]: seriesNorm,
+  });
+  await substituirSeriesNaEntidade(seriesNorm);
+  return seriesNorm;
+}
 
-  if (empresa?.id) {
-    await base44.entities.DadosEmpresa.update(empresa.id, payload);
-  } else {
-    await base44.entities.DadosEmpresa.create({
-      razao_social: 'Empresa',
-      nome_fantasia: 'Configuração ERP',
-      ...payload,
-    });
+async function verificarSeriePersistida(serieId, tentativas = 3) {
+  for (let i = 0; i < tentativas; i += 1) {
+    const { merged } = await lerTodasSeriesArmazenadas();
+    const found = merged.find((s) => s.id === serieId);
+    if (found) return found;
+    if (i < tentativas - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
   }
-
-  void substituirSeriesNaEntidade(series);
-  return series;
+  return null;
 }
 
 async function obterSeriesParaEdicao() {
@@ -174,22 +163,20 @@ async function obterSeriesParaEdicao() {
 }
 
 export async function listarModelos() {
-  const { empresa, empresaRows, entityRows, merged } = await lerTodasSeriesArmazenadas();
+  const { empresa, merged } = await lerTodasSeriesArmazenadas();
 
-  if (empresaTemArmazenamentoSeries(empresa) || empresaRows.length) {
-    if (merged.length && entityRows.length !== merged.length) {
-      void substituirSeriesNaEntidade(merged);
-    }
+  if (merged.length) {
     return merged;
   }
 
-  if (entityRows.length) return entityRows;
+  if (empresaTemArmazenamentoSeries(empresa)) {
+    return [];
+  }
 
   return sincronizarModelosDesdeLancamentos();
 }
 
 export async function salvarSerie(payload) {
-  const empresa = await obterRegistroDadosEmpresa();
   const series = await obterSeriesParaEdicao();
   const body = criarSerieComDefaults({
     ...payload,
@@ -201,28 +188,32 @@ export async function salvarSerie(payload) {
   if (idx >= 0) next[idx] = { ...next[idx], ...body };
   else next.push(body);
 
-  await upsertSerieEntidade(body);
-  await persistirSeriesModelo(next, empresa);
-  return body;
+  await persistirSeriesModelo(next);
+
+  const verificada = await verificarSeriePersistida(body.id);
+  if (!verificada) {
+    throw new Error(
+      'A conta não foi gravada na base. Atualize a página e tente salvar novamente.',
+    );
+  }
+
+  return criarSerieComDefaults(verificada);
 }
 
 export async function removerSerie(serieId) {
-  const empresa = await obterRegistroDadosEmpresa();
   const series = await obterSeriesParaEdicao();
   const next = series.filter((s) => s.id !== serieId);
   await removerSerieEntidade(serieId);
-  await persistirSeriesModelo(next, empresa);
+  await persistirSeriesModelo(next);
 }
 
 export async function atualizarCentroCustoSerie(serieId, centroCusto) {
-  const empresa = await obterRegistroDadosEmpresa();
   const series = await obterSeriesParaEdicao();
   const next = series.map((s) =>
     s.id === serieId ? { ...s, centro_custo: centroCusto || '' } : s,
   );
   const atualizada = next.find((s) => s.id === serieId);
-  if (atualizada) await upsertSerieEntidade(atualizada);
-  await persistirSeriesModelo(next, empresa);
+  await persistirSeriesModelo(next);
   return atualizada || null;
 }
 
