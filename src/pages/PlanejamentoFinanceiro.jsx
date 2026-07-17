@@ -3,10 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
-  ChevronLeft,
-  ChevronRight,
   Plus,
-  RotateCcw,
   Repeat2,
   CalendarClock,
   TrendingUp,
@@ -16,7 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { P38_CHIP_INACTIVE, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroListaShared';
-import AgefinPrevisaoResumo from '@/components/agefin-previsao/AgefinPrevisaoResumo';
+import AgefinPrevisaoCabecalho from '@/components/agefin-previsao/AgefinPrevisaoCabecalho';
 import AgefinPrevisaoLista from '@/components/agefin-previsao/AgefinPrevisaoLista';
 import AgefinPrevisaoFiltros from '@/components/agefin-previsao/AgefinPrevisaoFiltros';
 import AgefinPrevisaoModeloRow from '@/components/agefin-previsao/AgefinPrevisaoModeloRow';
@@ -413,46 +410,18 @@ export default function PlanejamentoFinanceiroPage() {
         </TabsList>
 
         <TabsContent value="previsao" className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div
-              className={cn(
-                'w-full sm:w-auto flex items-center justify-between gap-1 rounded-xl px-1',
-                P38_FIELD_SURFACE,
-              )}
-            >
-              <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, -1))}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="flex-1 min-w-[100px] text-center text-sm font-semibold uppercase tracking-wide">
-                {formatCompetenciaLabel(competenciaMes)}
-              </span>
-              <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, 1))}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="w-full sm:w-auto flex items-center gap-2">
-              <Button
-                variant="outline"
-                className="gap-2 flex-1 sm:flex-none"
-                onClick={handleDesfazerAbrirMes}
-                disabled={saving || !hasLancamentosMes}
-              >
-                <RotateCcw className="h-4 w-4" />
-                Desfazer abrir mês
-              </Button>
-              <Button className="gap-2 flex-1 sm:flex-none" onClick={handleAbrirMes} disabled={saving}>
-                <Repeat2 className="h-4 w-4" />
-                Abrir mês
-              </Button>
-            </div>
-          </div>
-
-          <AgefinPrevisaoResumo
+          <AgefinPrevisaoCabecalho
+            competenciaMes={competenciaMes}
+            onMesAnterior={() => setCompetenciaMes(shiftCompetencia(competenciaMes, -1))}
+            onMesProximo={() => setCompetenciaMes(shiftCompetencia(competenciaMes, 1))}
+            onAbrirMes={handleAbrirMes}
+            onDesfazerAbrirMes={handleDesfazerAbrirMes}
+            saving={saving}
+            hasLancamentosMes={hasLancamentosMes}
+            mesFuturo={mesFuturo}
             totais={totaisGrupo}
             count={totaisGrupo.count}
             countPlanejamento={qtdPlanejamento}
-            mesFuturo={mesFuturo}
-            competenciaLabel={formatCompetenciaLabel(competenciaMes)}
           />
 
           <AgefinPrevisaoFiltros
