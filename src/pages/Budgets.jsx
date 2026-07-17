@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -45,6 +45,8 @@ import {
   listarLancamentosMes,
   listarCategoriasDespesa,
   listarCentrosCustoRegistros,
+  inativarModelo,
+  reativarModelo,
   obterLucroBrutoCompetencia,
 } from '@/lib/budgetService';
 import {
@@ -71,6 +73,8 @@ export default function BudgetsPage() {
   const [selectedVisao, setSelectedVisao] = useState(null);
   const [modeloDialog, setModeloDialog] = useState(null);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [processandoModeloId, setProcessandoModeloId] = useState('');
   const [salvandoAjuste, setSalvandoAjuste] = useState(false);
   const [filtroBusca, setFiltroBusca] = useState('');
   const [filtroCentro, setFiltroCentro] = useState('__todos__');
@@ -218,6 +222,8 @@ export default function BudgetsPage() {
   }, [queryClient]);
 
   const handleSaveModelo = async (payload) => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
       await salvarModelo(payload);
@@ -227,22 +233,43 @@ export default function BudgetsPage() {
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
 
-  const handleDeleteModelo = async (modelo) => {
-    if (!window.confirm(`Desativar o budget "${modelo.nome}"?\n\nO histórico permanece; ele deixa de aparecer no acompanhamento.`)) return;
-    setSaving(true);
+  const runAcaoModelo = async (modeloId, fn, successTitle) => {
+    if (processandoModeloId || savingRef.current) return;
+    setProcessandoModeloId(modeloId);
     try {
-      await salvarModelo({ ...modelo, ativo: false });
+      await fn();
       invalidate();
-      toast({ title: 'Budget desativado' });
+      toast({ title: successTitle });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
-      setSaving(false);
+      setProcessandoModeloId('');
     }
+  };
+
+  const handleInativarModelo = async (modelo) => {
+    if (!window.confirm(`Inativar o budget "${modelo.nome}"?\n\nEle sai do acompanhamento, mas permanece no cadastro.`)) return;
+    await runAcaoModelo(modelo.id, () => inativarModelo(modelo.id), 'Budget inativado');
+  };
+
+  const handleReativarModelo = async (modelo) => {
+    await runAcaoModelo(modelo.id, () => reativarModelo(modelo.id), 'Budget reativado');
+  };
+
+  const handleExcluirModelo = async (modelo) => {
+    if (
+      !window.confirm(
+        `Excluir em definitivo o budget "${modelo.nome}"?\n\nEsta ação não pode ser desfeita.`,
+      )
+    ) {
+      return;
+    }
+    await runAcaoModelo(modelo.id, () => removerModelo(modelo.id), 'Budget excluído');
   };
 
   const handleSalvarAjuste = async ({ valorAjustado, motivoAjuste }) => {
@@ -368,8 +395,11 @@ export default function BudgetsPage() {
                   modelo={m}
                   competencia={competenciaMes}
                   striped={idx % 2 === 1}
+                  processando={processandoModeloId === m.id}
                   onEdit={setModeloDialog}
-                  onDelete={handleDeleteModelo}
+                  onInativar={handleInativarModelo}
+                  onReativar={handleReativarModelo}
+                  onExcluir={handleExcluirModelo}
                 />
               ))}
             </P38MobileLineList>
@@ -483,12 +513,14 @@ export default function BudgetsPage() {
             size="icon"
             className="h-14 w-14 rounded-full shadow-lg"
             onClick={() => {
+              if (saving || processandoModeloId) return;
               if (aba === 'cadastro') {
                 setModeloDialog({});
               } else {
                 setFabOpen((v) => !v);
               }
             }}
+            disabled={saving || Boolean(processandoModeloId)}
             aria-label="Adicionar"
           >
             <Plus className="h-6 w-6" />

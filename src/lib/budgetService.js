@@ -108,13 +108,30 @@ async function lerModelosArmazenados() {
   };
 }
 
+async function substituirModelosNaEntidade(modelos) {
+  try {
+    const api = base44.entities?.BudgetModelo;
+    if (!api?.list) return;
+    const existentes = (await api.list('-created_date')) || [];
+    const idsAtivos = new Set((modelos || []).map((m) => m.id));
+    for (const row of existentes) {
+      if (row?.id && !idsAtivos.has(row.id)) {
+        await api.delete(row.id);
+      }
+    }
+    for (const m of modelos || []) {
+      await upsertEntity('BudgetModelo', m, criarModeloComDefaults);
+    }
+  } catch {
+    /* entidade opcional */
+  }
+}
+
 async function persistirModelos(modelos) {
   const norm = (modelos || []).map(criarModeloComDefaults);
   salvarLocalStorage(LS_MODELOS_KEY, norm);
   await atualizarDadosEmpresa(base44, { [DADOS_EMPRESA_MODELOS_KEY]: norm });
-  for (const m of norm) {
-    await upsertEntity('BudgetModelo', m, criarModeloComDefaults);
-  }
+  await substituirModelosNaEntidade(norm);
   return norm;
 }
 
@@ -153,6 +170,9 @@ export async function listarModelos() {
 }
 
 export async function salvarModelo(partial) {
+  if (!partial?.id) {
+    throw new Error('Budget sem identificador — feche e abra o formulário novamente.');
+  }
   const { merged } = await lerModelosArmazenados();
   const body = criarModeloComDefaults(partial);
   const idx = merged.findIndex((m) => m.id === body.id);
@@ -162,7 +182,22 @@ export async function salvarModelo(partial) {
   return (await persistirModelos(next)).find((m) => m.id === body.id);
 }
 
+export async function inativarModelo(modeloId) {
+  const { merged } = await lerModelosArmazenados();
+  const modelo = merged.find((m) => m.id === modeloId);
+  if (!modelo) throw new Error('Budget não encontrado.');
+  return salvarModelo({ ...modelo, ativo: false });
+}
+
+export async function reativarModelo(modeloId) {
+  const { merged } = await lerModelosArmazenados();
+  const modelo = merged.find((m) => m.id === modeloId);
+  if (!modelo) throw new Error('Budget não encontrado.');
+  return salvarModelo({ ...modelo, ativo: true });
+}
+
 export async function removerModelo(modeloId) {
+  if (!modeloId) throw new Error('Budget inválido.');
   const { merged } = await lerModelosArmazenados();
   const next = merged.filter((m) => m.id !== modeloId);
   await persistirModelos(next);
