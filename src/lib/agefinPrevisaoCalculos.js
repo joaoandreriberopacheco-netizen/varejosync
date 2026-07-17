@@ -586,8 +586,12 @@ export function calcularTotaisGrupo(competencias, modelosMap = {}) {
   const hoje = dataHojeIso();
 
   for (const c of competencias || []) {
+    if (c._fantasmaParcelamento || c._excluirDoTotal) continue;
     const modelo = modelosMap[c.serie_id];
-    const valor = valorEfetivoCompetencia(c, modelo);
+    const valor =
+      c._modoParcela && c.valor_previsto != null
+        ? Number(c.valor_previsto) || 0
+        : valorEfetivoCompetencia(c, modelo);
     total += valor;
     if (isCompetenciaPlanejamento(c)) {
       planejamento += 1;

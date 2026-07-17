@@ -20,6 +20,7 @@ import AgefinPrevisaoModeloRow from '@/components/agefin-previsao/AgefinPrevisao
 import AgefinSerieDialog from '@/components/agefin-previsao/AgefinSerieDialog';
 import AgefinContasFixasGrupos from '@/components/agefin-previsao/AgefinContasFixasGrupos';
 import AgefinPrevisaoDetalheDrawer from '@/components/agefin-previsao/AgefinPrevisaoDetalheDrawer';
+import AgefinParcelamentoDialog from '@/components/agefin-previsao/AgefinParcelamentoDialog';
 import AgefinPrevisaoProjecao from '@/components/agefin-previsao/AgefinPrevisaoProjecao';
 import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
 import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
@@ -31,7 +32,6 @@ import {
   formatCompetenciaLabel,
   getCompetenciaAtual,
   mapaModelosPorId,
-  montarCompetenciasVisao,
   shiftCompetencia,
   filtrarCompetenciasPrevisao,
   agruparCompetenciasPrevisao,
@@ -55,6 +55,13 @@ import {
   atualizarCentroCustoSerie,
   atualizarCompetenciaManual,
 } from '@/lib/agefinPrevisaoService';
+import {
+  criarParcelamento,
+  listarParcelamentos,
+  atualizarParcela,
+  removerParcelamento,
+} from '@/lib/agefinParcelamentoService';
+import { parcelamentoAfetaSerieNoMes, montarCompetenciasVisaoComParcelas } from '@/lib/agefinParcelamentoCalculos';
 
 export default function PlanejamentoFinanceiroPage() {
   const { toast } = useToast();
@@ -76,6 +83,9 @@ export default function PlanejamentoFinanceiroPage() {
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
   const [showImportador, setShowImportador] = useState(false);
   const [salvandoManual, setSalvandoManual] = useState(false);
+  const [parcelamentoDialog, setParcelamentoDialog] = useState(false);
+  const [salvandoParcelamento, setSalvandoParcelamento] = useState(false);
+  const [removendoParcelamento, setRemovendoParcelamento] = useState(false);
 
   const { data: lancamentosRecorrentes = [] } = useQuery({
     queryKey: ['agefin-previsao', 'lancamentos-recorrentes'],
@@ -93,6 +103,11 @@ export default function PlanejamentoFinanceiroPage() {
   const { data: modelos = [], isLoading: loadingModelos } = useQuery({
     queryKey: ['agefin-previsao', 'modelos'],
     queryFn: listarModelos,
+  });
+
+  const { data: parcelamentos = [] } = useQuery({
+    queryKey: ['agefin-previsao', 'parcelamentos'],
+    queryFn: listarParcelamentos,
   });
 
   const { data: contas = [] } = useQuery({
@@ -118,8 +133,8 @@ export default function PlanejamentoFinanceiroPage() {
 
   const modelosMap = useMemo(() => mapaModelosPorId(modelos), [modelos]);
   const competenciasVisao = useMemo(
-    () => montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes),
-    [competenciaMes, modelos, lancamentosMes],
+    () => montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancamentosMes, parcelamentos),
+    [competenciaMes, modelos, lancamentosMes, parcelamentos],
   );
 
   const competenciasExibidas = useMemo(
@@ -190,7 +205,7 @@ export default function PlanejamentoFinanceiroPage() {
       if (serieAlvo) {
         const lancs = await listarLancamentosCompetencia(competenciaMes);
         const modelo = modelosMap[serieAlvo];
-        const visao = montarCompetenciasVisao(competenciaMes, modelos, lancs);
+        const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcelamentos);
         const real = visao.find((c) => c.serie_id === serieAlvo);
         if (real) setSelectedComp(real);
         else if (modelo) setSelectedComp(visao.find((c) => c.serie_id === serieAlvo));
@@ -314,6 +329,97 @@ export default function PlanejamentoFinanceiroPage() {
     }
   };
 
+  const refreshSelectedComp = useCallback(
+    (visao) => {
+      if (!selectedComp) return;
+      if (selectedComp._modoParcela) {
+        const par = visao.find(
+          (c) =>
+            c._modoParcela &&
+            c._parcelamentoId === selectedComp._parcelamentoId &&
+            c._parcelaNumero === selectedComp._parcelaNumero,
+        );
+        if (par) setSelectedComp(par);
+        return;
+      }
+      if (selectedComp._fantasmaParcelamento) {
+        const ghost = visao.find(
+          (c) => c._fantasmaParcelamento && c.serie_id === selectedComp.serie_id,
+        );
+        if (ghost) setSelectedComp(ghost);
+        return;
+      }
+      const atualizada = visao.find((c) => c.serie_id === selectedComp.serie_id && !c._modoParcela);
+      if (atualizada) setSelectedComp(atualizada);
+    },
+    [selectedComp],
+  );
+
+  const handleCriarParcelamento = async (payload) => {
+    setSalvandoParcelamento(true);
+    try {
+      await criarParcelamento(payload);
+      await queryClient.invalidateQueries({ queryKey: ['agefin-previsao', 'parcelamentos'] });
+      setParcelamentoDialog(false);
+      const lancs = await listarLancamentosCompetencia(competenciaMes);
+      const parcs = await listarParcelamentos();
+      const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcs);
+      refreshSelectedComp(visao);
+      toast({
+        title: 'Conta parcelada',
+        description: `${payload.totalParcelas} parcelas criadas a partir de ${formatCompetenciaLabel(payload.competenciaOrigem)}.`,
+      });
+    } catch (e) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setSalvandoParcelamento(false);
+    }
+  };
+
+  const handleSalvarParcela = async ({ parcelamentoId, parcelaNumero, valor, dataVencimento, diaVencimento }) => {
+    if (!selectedComp) return;
+    setSalvandoManual(true);
+    try {
+      await atualizarParcela(parcelamentoId, parcelaNumero, {
+        valor,
+        dataVencimento,
+        diaVencimento,
+      });
+      await queryClient.invalidateQueries({ queryKey: ['agefin-previsao', 'parcelamentos'] });
+      const lancs = await listarLancamentosCompetencia(competenciaMes);
+      const parcs = await listarParcelamentos();
+      const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcs);
+      refreshSelectedComp(visao);
+      toast({ title: 'Parcela atualizada' });
+    } catch (e) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setSalvandoManual(false);
+    }
+  };
+
+  const handleRemoverParcelamento = async () => {
+    if (!selectedComp?._parcelamentoId) return;
+    if (!window.confirm('Desfazer parcelamento? As parcelas deixam de aparecer na previsão.')) return;
+    setRemovendoParcelamento(true);
+    try {
+      await removerParcelamento(selectedComp._parcelamentoId);
+      await queryClient.invalidateQueries({ queryKey: ['agefin-previsao', 'parcelamentos'] });
+      setSelectedComp(null);
+      toast({ title: 'Parcelamento removido' });
+    } catch (e) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    } finally {
+      setRemovendoParcelamento(false);
+    }
+  };
+
+  const podeParcelarConta =
+    selectedComp &&
+    !selectedComp._fantasmaParcelamento &&
+    !selectedComp._modoParcela &&
+    !parcelamentoAfetaSerieNoMes(parcelamentos, selectedComp.serie_id, competenciaMes);
+
   const handleSalvarManual = async ({ valor, dataVencimento, diaVencimento }) => {
     if (!selectedComp) return;
     setSalvandoManual(true);
@@ -327,9 +433,8 @@ export default function PlanejamentoFinanceiroPage() {
       });
       invalidate();
       const lancs = await listarLancamentosCompetencia(competenciaMes);
-      const visao = montarCompetenciasVisao(competenciaMes, modelos, lancs);
-      const atualizada = visao.find((c) => c.serie_id === selectedComp.serie_id);
-      if (atualizada) setSelectedComp(atualizada);
+      const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcelamentos);
+      refreshSelectedComp(visao);
       toast({ title: 'Valor e vencimento guardados' });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
@@ -345,7 +450,7 @@ export default function PlanejamentoFinanceiroPage() {
       await abrirCompetenciasDoMes(competenciaMes);
       invalidate();
       const lancs = await listarLancamentosCompetencia(competenciaMes);
-      const visao = montarCompetenciasVisao(competenciaMes, modelos, lancs);
+      const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcelamentos);
       const real = visao.find((c) => c.serie_id === selectedComp.serie_id);
       if (real) setSelectedComp(real);
       toast({ title: 'Conta aberta no mês' });
@@ -589,6 +694,21 @@ export default function PlanejamentoFinanceiroPage() {
         onVincularBoleto={() => setShowImportador(true)}
         onSalvarManual={handleSalvarManual}
         salvandoManual={salvandoManual}
+        onParcelar={podeParcelarConta ? () => setParcelamentoDialog(true) : undefined}
+        onSalvarParcela={handleSalvarParcela}
+        onRemoverParcelamento={
+          selectedComp?._modoParcela ? handleRemoverParcelamento : undefined
+        }
+        removendoParcelamento={removendoParcelamento}
+      />
+
+      <AgefinParcelamentoDialog
+        open={parcelamentoDialog}
+        onClose={() => setParcelamentoDialog(false)}
+        competencia={selectedComp}
+        modelo={selectedModelo}
+        onConfirm={handleCriarParcelamento}
+        saving={salvandoParcelamento}
       />
 
       <AgefinSerieDialog

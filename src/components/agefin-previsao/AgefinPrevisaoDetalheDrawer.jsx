@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Link2, FileText } from 'lucide-react';
+import { Link2, FileText, SplitSquareHorizontal } from 'lucide-react';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import {
   formatCurrency,
@@ -15,6 +15,7 @@ import {
   valorEfetivoCompetencia,
   dataVencimentoNaCompetencia,
 } from '@/lib/agefinPrevisaoCalculos';
+import { labelParcelaCurta } from '@/lib/agefinParcelamentoCalculos';
 
 function LinhaValor({ label, valor }) {
   return (
@@ -37,42 +38,70 @@ export default function AgefinPrevisaoDetalheDrawer({
   onVincularBoleto,
   onSalvarManual,
   salvandoManual,
+  onParcelar,
+  onSalvarParcela,
+  onRemoverParcelamento,
+  removendoParcelamento,
 }) {
   const [valorInput, setValorInput] = useState('');
   const [vencimentoInput, setVencimentoInput] = useState('');
 
+  const fantasma = Boolean(competencia?._fantasmaParcelamento);
+  const parcela = Boolean(competencia?._modoParcela);
+
   useEffect(() => {
     if (!competencia) return;
-    const valor = valorEfetivoCompetencia(competencia, modelo);
+    const valor =
+      parcela && competencia.valor_previsto != null
+        ? Number(competencia.valor_previsto) || 0
+        : valorEfetivoCompetencia(competencia, modelo);
     setValorInput(String(valor || ''));
     const dia = modelo?.dia_vencimento || competencia.dia_vencimento || 10;
-    const ven =
-      competencia.lancamento_id && competencia._lancamento?.data_vencimento
+    const ven = parcela
+      ? (competencia._parcelaDataVencimento ||
+          dataVencimentoNaCompetencia(competencia.competencia, dia))
+      : competencia.lancamento_id && competencia._lancamento?.data_vencimento
         ? (competencia._lancamento.data_vencimento || '').slice(0, 10)
         : dataVencimentoNaCompetencia(competencia.competencia, dia);
     setVencimentoInput(ven);
-  }, [competencia, modelo]);
+  }, [competencia, modelo, parcela]);
 
   if (!competencia) return null;
 
   const planejamento = isCompetenciaPlanejamento(competencia);
   const fechada = !planejamento && competenciaEstaFechada(competencia);
   const statusEfetivo = statusCompetenciaEfetivo(competencia);
-  const valor = valorEfetivoCompetencia(competencia, modelo);
+  const valor =
+    parcela && competencia.valor_previsto != null
+      ? Number(competencia.valor_previsto) || 0
+      : valorEfetivoCompetencia(competencia, modelo);
   const dia = modelo?.dia_vencimento || competencia.dia_vencimento || 10;
   const valorNumerico = parseFloat(valorInput) || 0;
   const valorMudou = Math.abs(valorNumerico - valor) > 0.009;
-  const venOriginal =
-    competencia.lancamento_id && competencia._lancamento?.data_vencimento
+  const venOriginal = parcela
+    ? (competencia._parcelaDataVencimento ||
+        dataVencimentoNaCompetencia(competencia.competencia, dia))
+    : competencia.lancamento_id && competencia._lancamento?.data_vencimento
       ? (competencia._lancamento.data_vencimento || '').slice(0, 10)
       : dataVencimentoNaCompetencia(competencia.competencia, dia);
   const vencimentoMudou = (vencimentoInput || '').slice(0, 10) !== venOriginal;
-  const podeEditar = !fechada;
+  const podeEditar = !fechada && !fantasma;
   const temAlteracao = podeEditar && valorNumerico > 0 && (valorMudou || vencimentoMudou);
   const tagFreq = tagFrequenciaSerie(modelo || competencia);
+  const parcelaLabel = labelParcelaCurta(competencia);
 
   const handleSalvar = () => {
     if (!temAlteracao || salvandoManual) return;
+    if (parcela && onSalvarParcela) {
+      onSalvarParcela({
+        parcelamentoId: competencia._parcelamentoId,
+        parcelaNumero: competencia._parcelaNumero,
+        valor: valorNumerico,
+        dataVencimento: vencimentoInput,
+        diaVencimento: Number((vencimentoInput || '').slice(8, 10)) || dia,
+      });
+      return;
+    }
     onSalvarManual?.({
       valor: valorNumerico,
       dataVencimento: vencimentoInput,
@@ -87,8 +116,10 @@ export default function AgefinPrevisaoDetalheDrawer({
           <DrawerTitle className="flex flex-wrap items-center gap-2">
             <span>{competencia.serie_nome}</span>
             <Badge variant="outline">{formatCompetenciaLabel(competencia.competencia)}</Badge>
+            {fantasma && <Badge variant="secondary">Parcelada</Badge>}
+            {parcela && parcelaLabel && <Badge variant="secondary">{parcelaLabel}</Badge>}
             {tagFreq && <Badge variant="secondary">{tagFreq}</Badge>}
-            {statusEfetivo === 'planejamento' && (
+            {statusEfetivo === 'planejamento' && !fantasma && (
               <span className="inline-flex items-center gap-0.5">
                 <Badge variant="secondary">Planejamento</Badge>
                 <P38HelpPopover label="Ajuda: modo planejamento" side="bottom" align="start" size="sm">
@@ -100,58 +131,77 @@ export default function AgefinPrevisaoDetalheDrawer({
               </span>
             )}
             {statusEfetivo === 'fechado' && <Badge>Fechada</Badge>}
-            {statusEfetivo === 'rascunho' && <Badge variant="outline">Em aberto</Badge>}
+            {statusEfetivo === 'rascunho' && !fantasma && <Badge variant="outline">Em aberto</Badge>}
           </DrawerTitle>
           <p className="text-xs text-muted-foreground">
-            {formatCicloAgefinCompetencia(competencia.competencia, dia)}
+            {parcela
+              ? parcelaLabel
+              : formatCicloAgefinCompetencia(competencia.competencia, dia)}
             {competencia.terceiro_nome && ` · ${competencia.terceiro_nome}`}
           </p>
         </DrawerHeader>
 
         <div className="overflow-y-auto px-4 pb-6">
-          <div className="rounded-xl bg-muted/40 p-3 mt-2 space-y-3">
-            {podeEditar ? (
-              <>
-                <div>
-                  <label className="text-xs text-muted-foreground">Valor</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={valorInput}
-                    onChange={(e) => setValorInput(e.target.value)}
-                    className="mt-1 h-11 w-full rounded-xl bg-card px-3 text-base font-semibold text-foreground outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Vencimento</label>
-                  <input
-                    type="date"
-                    value={vencimentoInput}
-                    onChange={(e) => setVencimentoInput(e.target.value)}
-                    className="mt-1 h-11 w-full rounded-xl bg-card px-3 text-sm text-foreground outline-none"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Digite valor e vencimento manualmente. O boleto (se houver) é só anexo de referência.
-                </p>
-                {temAlteracao && (
-                  <Button className="w-full" onClick={handleSalvar} disabled={salvandoManual}>
-                    {salvandoManual ? 'Guardando...' : 'Guardar valor e vencimento'}
-                  </Button>
-                )}
-              </>
-            ) : (
-              <>
-                <LinhaValor label="Valor previsto (cadastro)" valor={modelo?.valor_previsto || 0} />
-                {competencia.valor_real != null && competencia.valor_real !== modelo?.valor_previsto && (
-                  <LinhaValor label="Valor do lançamento" valor={competencia.valor_real} />
-                )}
-                <div className="my-1 border-t border-border/40" />
-                <LinhaValor label="Total do mês" valor={valor} />
-              </>
-            )}
-          </div>
+          {fantasma && (
+            <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 p-3 mt-2 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">Conta original (referência)</p>
+              <p className="mt-1">
+                Esta conta foi parcelada neste mês. O valor abaixo não entra na soma do mês — use as linhas de
+                parcela na lista.
+              </p>
+              <p className="mt-2 text-base font-semibold text-foreground tabular-nums line-through">
+                {formatCurrency(valor)}
+              </p>
+            </div>
+          )}
+
+          {!fantasma && (
+            <div className="rounded-xl bg-muted/40 p-3 mt-2 space-y-3">
+              {podeEditar ? (
+                <>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Valor</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={valorInput}
+                      onChange={(e) => setValorInput(e.target.value)}
+                      className="mt-1 h-11 w-full rounded-xl bg-card px-3 text-base font-semibold text-foreground outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Vencimento</label>
+                    <input
+                      type="date"
+                      value={vencimentoInput}
+                      onChange={(e) => setVencimentoInput(e.target.value)}
+                      className="mt-1 h-11 w-full rounded-xl bg-card px-3 text-sm text-foreground outline-none"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {parcela
+                      ? 'Ajuste valor e vencimento desta parcela.'
+                      : 'Digite valor e vencimento manualmente. O boleto (se houver) é só anexo de referência.'}
+                  </p>
+                  {temAlteracao && (
+                    <Button className="w-full" onClick={handleSalvar} disabled={salvandoManual}>
+                      {salvandoManual ? 'Guardando...' : 'Guardar valor e vencimento'}
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <LinhaValor label="Valor previsto (cadastro)" valor={modelo?.valor_previsto || 0} />
+                  {competencia.valor_real != null && competencia.valor_real !== modelo?.valor_previsto && (
+                    <LinhaValor label="Valor do lançamento" valor={competencia.valor_real} />
+                  )}
+                  <div className="my-1 border-t border-border/40" />
+                  <LinhaValor label="Total do mês" valor={valor} />
+                </>
+              )}
+            </div>
+          )}
 
           {modelo?.centro_custo && (
             <p className="mt-3 text-sm text-muted-foreground">
@@ -165,18 +215,34 @@ export default function AgefinPrevisaoDetalheDrawer({
           )}
 
           <div className="mt-6 flex flex-col gap-2">
-            {planejamento && (
+            {!fantasma && !parcela && podeEditar && onParcelar && (
+              <Button variant="outline" className="w-full gap-2" onClick={onParcelar}>
+                <SplitSquareHorizontal className="h-4 w-4" />
+                Parcelar esta conta
+              </Button>
+            )}
+            {parcela && onRemoverParcelamento && (
+              <Button
+                variant="outline"
+                className="w-full text-destructive"
+                onClick={onRemoverParcelamento}
+                disabled={removendoParcelamento}
+              >
+                {removendoParcelamento ? 'A remover...' : 'Desfazer parcelamento'}
+              </Button>
+            )}
+            {planejamento && !parcela && (
               <Button className="w-full gap-2" onClick={onAbrirMes} disabled={abrindoMes}>
                 Abrir esta conta no mês
               </Button>
             )}
-            {!planejamento && !fechada && onVincularBoleto && (
+            {!planejamento && !fechada && !parcela && onVincularBoleto && (
               <Button variant="outline" className="w-full gap-2" onClick={onVincularBoleto}>
                 <FileText className="h-4 w-4" />
                 Vincular boleto (PDF)
               </Button>
             )}
-            {!planejamento && !fechada && onSyncFinanceiro && (
+            {!planejamento && !fechada && !parcela && onSyncFinanceiro && (
               <Button variant="secondary" className="w-full gap-2" onClick={onSyncFinanceiro} disabled={syncing}>
                 <Link2 className="h-4 w-4" />
                 Enviar ao financeiro
