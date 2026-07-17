@@ -11,10 +11,12 @@ function chaveDrop(frequencia, centroKey) {
   return `${frequencia}::${centroKey}`;
 }
 
-function BlocoCentro({
+function BlocoGrupo({
   dropKey,
-  centroLabel,
+  grupoLabel,
+  sublabel,
   series,
+  draggable,
   draggingSerieId,
   dropCentroAtual,
   onDragOver,
@@ -27,18 +29,20 @@ function BlocoCentro({
 }) {
   return (
     <div
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
+      onDragOver={draggable ? onDragOver : undefined}
+      onDragLeave={draggable ? onDragLeave : undefined}
+      onDrop={draggable ? onDrop : undefined}
       className={cn(
         'rounded-xl border border-border/60 bg-card/40',
-        dropCentroAtual === dropKey && draggingSerieId ? 'ring-2 ring-primary/50 border-primary/50' : '',
+        draggable && dropCentroAtual === dropKey && draggingSerieId
+          ? 'ring-2 ring-primary/50 border-primary/50'
+          : '',
       )}
     >
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
         <div>
-          <p className="text-xs font-semibold text-foreground">{centroLabel}</p>
-          <p className="text-[11px] text-muted-foreground">{series.length} conta(s)</p>
+          <p className="text-xs font-semibold text-foreground">{grupoLabel}</p>
+          <p className="text-[11px] text-muted-foreground">{sublabel || `${series.length} conta(s)`}</p>
         </div>
       </div>
       {series.length > 0 ? (
@@ -46,12 +50,16 @@ function BlocoCentro({
           {series.map((s, idx) => (
             <div
               key={s.id}
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.setData('text/plain', s.id);
-                onDragStart(s.id);
-              }}
-              onDragEnd={onDragEnd}
+              draggable={draggable}
+              onDragStart={
+                draggable
+                  ? (e) => {
+                      e.dataTransfer.setData('text/plain', s.id);
+                      onDragStart(s.id);
+                    }
+                  : undefined
+              }
+              onDragEnd={draggable ? onDragEnd : undefined}
             >
               <AgefinPrevisaoModeloRow
                 modelo={s}
@@ -71,7 +79,7 @@ function BlocoCentro({
 
 export default function AgefinContasFixasGrupos({
   agrupamento,
-  centrosRegistrados,
+  groupBy = 'centro_custo',
   draggingSerieId,
   dropCentroAtual,
   onDragStart,
@@ -82,11 +90,11 @@ export default function AgefinContasFixasGrupos({
   onEdit,
   onDelete,
 }) {
-  const ordemCentros = [...centrosRegistrados, '__sem__'];
+  const permiteArrastar = groupBy === 'centro_custo';
 
   const secoesComContas = ORDEM_FREQUENCIAS_CONTAS_FIXAS.filter((freq) => {
-    const porCentro = agrupamento[freq] || {};
-    return ordemCentros.some((c) => (porCentro[c || '__sem__'] || []).length > 0);
+    const grupos = agrupamento[freq] || [];
+    return grupos.some((g) => (g.items || []).length > 0);
   });
 
   if (!secoesComContas.length) {
@@ -100,11 +108,8 @@ export default function AgefinContasFixasGrupos({
   return (
     <div className="space-y-6">
       {secoesComContas.map((frequencia) => {
-        const porCentro = agrupamento[frequencia] || {};
-        const totalSecao = ordemCentros.reduce(
-          (n, c) => n + (porCentro[c || '__sem__']?.length || 0),
-          0,
-        );
+        const grupos = (agrupamento[frequencia] || []).filter((g) => (g.items || []).length > 0);
+        const totalSecao = grupos.reduce((n, g) => n + (g.items?.length || 0), 0);
 
         return (
           <section key={frequencia} className="space-y-3">
@@ -117,19 +122,18 @@ export default function AgefinContasFixasGrupos({
             </div>
 
             <div className="space-y-3">
-              {ordemCentros.map((centro) => {
-                const chave = centro || '__sem__';
-                const series = porCentro[chave] || [];
-                if (!series.length) return null;
-                const centroLabel = chave === '__sem__' ? 'Sem centro de custo' : centro;
-                const dropKey = chaveDrop(frequencia, chave);
+              {grupos.map((grupo) => {
+                const centroKey = grupo.centroKey || grupo.key?.replace(/^cc:/, '') || '__sem__';
+                const dropKey = chaveDrop(frequencia, centroKey);
 
                 return (
-                  <BlocoCentro
-                    key={dropKey}
+                  <BlocoGrupo
+                    key={`${frequencia}::${grupo.key}`}
                     dropKey={dropKey}
-                    centroLabel={centroLabel}
-                    series={series}
+                    grupoLabel={grupo.label}
+                    sublabel={`${grupo.items.length} conta(s)`}
+                    series={grupo.items}
+                    draggable={permiteArrastar}
                     draggingSerieId={draggingSerieId}
                     dropCentroAtual={dropCentroAtual}
                     onDragOver={(e) => {
@@ -140,7 +144,7 @@ export default function AgefinContasFixasGrupos({
                     onDrop={(e) => {
                       e.preventDefault();
                       const serieId = e.dataTransfer.getData('text/plain');
-                      onDropCentro(serieId, chave === '__sem__' ? '' : centro);
+                      onDropCentro(serieId, centroKey === '__sem__' ? '' : centroKey);
                     }}
                     onDragStart={onDragStart}
                     onDragEnd={onDragEnd}

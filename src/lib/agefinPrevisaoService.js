@@ -26,9 +26,91 @@ async function obterRegistroDadosEmpresa() {
   return dados?.[0] || null;
 }
 
-async function persistirSeriesModelo(series) {
-  const empresa = await obterRegistroDadosEmpresa();
-  const payload = { [DADOS_EMPRESA_SERIES_KEY]: series || [] };
+function stripEmpresaMeta(empresa) {
+  if (!empresa) return {};
+  const {
+    id: _id,
+    created_date: _cd,
+    updated_date: _ud,
+    created_at: _ca,
+    updated_at: _ua,
+    created_by: _cb,
+    ...resto
+  } = empresa;
+  return resto;
+}
+
+function empresaTemArmazenamentoSeries(empresa) {
+  return empresa != null && DADOS_EMPRESA_SERIES_KEY in empresa;
+}
+
+function lerSeriesEmpresa(empresa) {
+  const raw = empresa?.[DADOS_EMPRESA_SERIES_KEY];
+  return Array.isArray(raw) ? raw : [];
+}
+
+async function tryListEntitySeries() {
+  try {
+    const api = base44.entities?.AgefinSerieModelo;
+    if (!api?.list) return null;
+    const rows = await api.list('-created_date');
+    return Array.isArray(rows) ? rows : null;
+  } catch {
+    return null;
+  }
+}
+
+async function upsertSerieEntidade(serie) {
+  try {
+    const api = base44.entities?.AgefinSerieModelo;
+    if (!api) return false;
+    const body = criarSerieComDefaults(serie);
+    let existente = [];
+    try {
+      existente = (await api.filter?.({ id: body.id })) || [];
+    } catch {
+      try {
+        const row = await api.get?.(body.id);
+        if (row?.id) existente = [row];
+      } catch {
+        /* nova série */
+      }
+    }
+    if (existente?.length) {
+      await api.update(body.id, body);
+    } else {
+      await api.create(body);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function removerSerieEntidade(serieId) {
+  try {
+    const api = base44.entities?.AgefinSerieModelo;
+    if (!api?.delete) return false;
+    await api.delete(serieId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function sincronizarSeriesParaEntidade(series) {
+  for (const serie of series || []) {
+    await upsertSerieEntidade(serie);
+  }
+}
+
+async function persistirSeriesModelo(series, empresaExistente = null) {
+  const empresa = empresaExistente ?? (await obterRegistroDadosEmpresa());
+  const payload = {
+    ...stripEmpresaMeta(empresa),
+    [DADOS_EMPRESA_SERIES_KEY]: series || [],
+  };
+
   if (empresa?.id) {
     await base44.entities.DadosEmpresa.update(empresa.id, payload);
   } else {
@@ -38,20 +120,40 @@ async function persistirSeriesModelo(series) {
       ...payload,
     });
   }
+
+  void sincronizarSeriesParaEntidade(series);
   return series;
 }
 
-export async function listarModelos() {
+async function obterSeriesParaEdicao() {
+  const entityRows = await tryListEntitySeries();
+  if (entityRows?.length) return entityRows;
+
   const empresa = await obterRegistroDadosEmpresa();
-  const series = Array.isArray(empresa?.[DADOS_EMPRESA_SERIES_KEY])
-    ? empresa[DADOS_EMPRESA_SERIES_KEY]
-    : [];
-  if (series.length) return series;
+  if (empresaTemArmazenamentoSeries(empresa)) {
+    return lerSeriesEmpresa(empresa);
+  }
+
+  return entityRows ?? [];
+}
+
+export async function listarModelos() {
+  const entityRows = await tryListEntitySeries();
+  if (entityRows?.length) return entityRows;
+
+  const empresa = await obterRegistroDadosEmpresa();
+  if (empresaTemArmazenamentoSeries(empresa)) {
+    const series = lerSeriesEmpresa(empresa);
+    if (series.length) void sincronizarSeriesParaEntidade(series);
+    return series;
+  }
+
   return sincronizarModelosDesdeLancamentos();
 }
 
 export async function salvarSerie(payload) {
-  const series = await listarModelos();
+  const empresa = await obterRegistroDadosEmpresa();
+  const series = await obterSeriesParaEdicao();
   const body = criarSerieComDefaults({
     ...payload,
     id: payload.id || undefined,
@@ -61,23 +163,30 @@ export async function salvarSerie(payload) {
   const next = [...series];
   if (idx >= 0) next[idx] = { ...next[idx], ...body };
   else next.push(body);
-  await persistirSeriesModelo(next);
+
+  await upsertSerieEntidade(body);
+  await persistirSeriesModelo(next, empresa);
   return body;
 }
 
 export async function removerSerie(serieId) {
-  const series = await listarModelos();
+  const empresa = await obterRegistroDadosEmpresa();
+  const series = await obterSeriesParaEdicao();
   const next = series.filter((s) => s.id !== serieId);
-  await persistirSeriesModelo(next);
+  await removerSerieEntidade(serieId);
+  await persistirSeriesModelo(next, empresa);
 }
 
 export async function atualizarCentroCustoSerie(serieId, centroCusto) {
-  const series = await listarModelos();
+  const empresa = await obterRegistroDadosEmpresa();
+  const series = await obterSeriesParaEdicao();
   const next = series.map((s) =>
     s.id === serieId ? { ...s, centro_custo: centroCusto || '' } : s,
   );
-  await persistirSeriesModelo(next);
-  return next.find((s) => s.id === serieId) || null;
+  const atualizada = next.find((s) => s.id === serieId);
+  if (atualizada) await upsertSerieEntidade(atualizada);
+  await persistirSeriesModelo(next, empresa);
+  return atualizada || null;
 }
 
 /** Importa séries a partir de grupos recorrentes já existentes no financeiro. */

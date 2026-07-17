@@ -123,6 +123,111 @@ export function agruparSeriesPorFrequenciaECentro(series, centrosRegistrados = [
   return out;
 }
 
+function metaGrupoSerieContasFixas(serie, groupBy, centrosSet) {
+  if (groupBy === 'dia_vencimento') {
+    const dia = Number(serie.dia_vencimento) || 10;
+    return {
+      key: `dia:${dia}`,
+      label: `Vence dia ${dia}`,
+      orderValue: String(dia).padStart(2, '0'),
+    };
+  }
+  if (groupBy === 'favorecido') {
+    const nome = (serie.terceiro_nome || '').trim() || 'Sem favorecido';
+    return { key: `fav:${nome}`, label: nome, orderValue: nome.toLowerCase() };
+  }
+  if (groupBy === 'categoria') {
+    const cat = (serie.categoria_nome || '').trim() || 'Sem categoria';
+    return { key: `cat:${cat}`, label: cat, orderValue: cat.toLowerCase() };
+  }
+  const centro = String(serie.centro_custo || '').trim();
+  const chave =
+    centro && centrosSet.has(centro.toLocaleLowerCase('pt-BR')) ? centro : '__sem__';
+  return {
+    key: `cc:${chave}`,
+    label: chave === '__sem__' ? 'Sem centro de custo' : centro,
+    orderValue: chave === '__sem__' ? 'zzz' : centro.toLowerCase(),
+    centroKey: chave,
+  };
+}
+
+function ordenarSeriesContasFixas(series, groupBy, sortOrder) {
+  const asc = sortOrder === 'asc';
+  return [...(series || [])].sort((a, b) => {
+    let cmp = 0;
+    if (groupBy === 'dia_vencimento') {
+      cmp = (Number(a.dia_vencimento) || 10) - (Number(b.dia_vencimento) || 10);
+      if (cmp === 0) cmp = (a.nome || '').localeCompare(b.nome || '', 'pt-BR');
+    } else if (groupBy === 'favorecido') {
+      cmp = (a.terceiro_nome || '').localeCompare(b.terceiro_nome || '', 'pt-BR', {
+        sensitivity: 'base',
+      });
+    } else if (groupBy === 'categoria') {
+      cmp = (a.categoria_nome || '').localeCompare(b.categoria_nome || '', 'pt-BR', {
+        sensitivity: 'base',
+      });
+    } else {
+      const ca = String(a.centro_custo || '').toLocaleLowerCase('pt-BR');
+      const cb = String(b.centro_custo || '').toLocaleLowerCase('pt-BR');
+      if (ca !== cb) {
+        if (!ca) cmp = 1;
+        else if (!cb) cmp = -1;
+        else cmp = ca.localeCompare(cb, 'pt-BR');
+      } else {
+        cmp = (a.nome || '').localeCompare(b.nome || '', 'pt-BR');
+      }
+    }
+    return asc ? cmp : -cmp;
+  });
+}
+
+/**
+ * Agrupa séries por recorrência e, dentro de cada bloco, por centro / dia / favorecido / categoria.
+ */
+export function agruparSeriesPorFrequenciaEGrupo(
+  series,
+  { centrosRegistrados = [], groupBy = 'centro_custo', sortOrder = 'asc' } = {},
+) {
+  const centrosSet = new Set(
+    (centrosRegistrados || []).map((c) => String(c).toLocaleLowerCase('pt-BR')),
+  );
+  const porFreq = {};
+  for (const f of ORDEM_FREQUENCIAS_CONTAS_FIXAS) porFreq[f] = [];
+
+  for (const serie of series || []) {
+    const freq = normalizarFrequenciaSerie(serie.frequencia);
+    porFreq[freq].push(serie);
+  }
+
+  const out = {};
+  for (const freq of ORDEM_FREQUENCIAS_CONTAS_FIXAS) {
+    const ordenadas = ordenarSeriesContasFixas(porFreq[freq], groupBy, sortOrder);
+    const map = new Map();
+    for (const serie of ordenadas) {
+      const meta = metaGrupoSerieContasFixas(serie, groupBy, centrosSet);
+      if (!map.has(meta.key)) {
+        map.set(meta.key, {
+          key: meta.key,
+          label: meta.label,
+          orderValue: meta.orderValue,
+          centroKey: meta.centroKey,
+          items: [],
+        });
+      }
+      map.get(meta.key).items.push(serie);
+    }
+    const grupos = [...map.values()].sort((a, b) => {
+      const cmp = String(a.orderValue).localeCompare(String(b.orderValue), 'pt-BR', {
+        sensitivity: 'base',
+      });
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+    out[freq] = grupos;
+  }
+
+  return out;
+}
+
 export function gerarGrupoLancamentoId() {
   return `grp-agefin-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }

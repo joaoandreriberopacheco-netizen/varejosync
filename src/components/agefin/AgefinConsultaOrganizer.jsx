@@ -35,9 +35,17 @@ const OPTIONS_PREVISAO = [
   { value: 'centro_custo', label: 'Centro de custo', icon: Layers },
 ];
 
+const OPTIONS_CONTAS_FIXAS = [
+  { value: 'centro_custo', label: 'Centro de custo', icon: Layers },
+  { value: 'dia_vencimento', label: 'Dia de vencimento', icon: CalendarDays },
+  { value: 'favorecido', label: 'Favorecido', icon: Building2 },
+  { value: 'categoria', label: 'Categoria', icon: Tag },
+];
+
 const VARIANT_MAP = {
   consulta: OPTIONS_CONSULTA,
   previsao: OPTIONS_PREVISAO,
+  contasFixas: OPTIONS_CONTAS_FIXAS,
   boleto: OPTIONS_BOLETO,
   recorrentes: OPTIONS_RECORRENTES,
 };
@@ -54,7 +62,7 @@ export default function AgefinConsultaOrganizer({
   const CurrentIcon = current.icon;
 
   const sortTitle =
-    groupBy === 'vencimento'
+    groupBy === 'vencimento' || groupBy === 'dia_vencimento'
       ? sortOrder === 'asc'
         ? 'Vencimento: mais antigo primeiro'
         : 'Vencimento: mais recente primeiro'

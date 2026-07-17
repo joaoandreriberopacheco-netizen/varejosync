@@ -42,7 +42,7 @@ import {
   ordenarSeriesPorCentroENome,
   isCompetenciaFutura,
   isCompetenciaPlanejamento,
-  agruparSeriesPorFrequenciaECentro,
+  agruparSeriesPorFrequenciaEGrupo,
 } from '@/lib/agefinPrevisaoCalculos';
 import {
   abrirCompetenciasDoMes,
@@ -72,6 +72,8 @@ export default function PlanejamentoFinanceiroPage() {
   const [filtroCentro, setFiltroCentro] = useState('__todos__');
   const [groupBy, setGroupBy] = useState('vencimento');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [groupByContas, setGroupByContas] = useState('dia_vencimento');
+  const [sortOrderContas, setSortOrderContas] = useState('asc');
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
   const [draggingSerieId, setDraggingSerieId] = useState('');
@@ -154,8 +156,13 @@ export default function PlanejamentoFinanceiroPage() {
   );
 
   const agrupamentoContas = useMemo(
-    () => agruparSeriesPorFrequenciaECentro(seriesAtivas, centrosRegistrados),
-    [seriesAtivas, centrosRegistrados],
+    () =>
+      agruparSeriesPorFrequenciaEGrupo(seriesAtivas, {
+        centrosRegistrados,
+        groupBy: groupByContas,
+        sortOrder: sortOrderContas,
+      }),
+    [seriesAtivas, centrosRegistrados, groupByContas, sortOrderContas],
   );
 
   const serieArrastando = useMemo(
@@ -236,10 +243,26 @@ export default function PlanejamentoFinanceiroPage() {
   const handleSaveSerie = async (payload) => {
     setSaving(true);
     try {
-      await salvarSerie(payload);
-      invalidate();
+      const saved = await salvarSerie(payload);
+      queryClient.setQueryData(['agefin-previsao', 'modelos'], (old = []) => {
+        const idx = old.findIndex((s) => s.id === saved.id);
+        if (idx >= 0) {
+          const next = [...old];
+          next[idx] = saved;
+          return next;
+        }
+        return [...old, saved];
+      });
+      void queryClient.invalidateQueries({ queryKey: ['agefin-previsao', 'modelos'] });
       setSerieDialog(null);
-      toast({ title: 'Conta salva', description: 'Ela já entra na programação e na projeção.' });
+      const freq = saved.frequencia || 'Mensal';
+      toast({
+        title: 'Conta salva',
+        description:
+          freq === 'Anual'
+            ? `Conta anual cadastrada — aparece no bloco Anual e no mês de vencimento.`
+            : 'Ela já entra na programação e na projeção.',
+      });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
@@ -486,8 +509,8 @@ export default function PlanejamentoFinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="contas" className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="end">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="start">
               <p className="font-medium text-foreground">Blocos por recorrência</p>
               <p className="text-muted-foreground">
                 As contas aparecem em blocos: <strong className="text-foreground">Mensal</strong>,{' '}
@@ -496,9 +519,17 @@ export default function PlanejamentoFinanceiroPage() {
                 o bloco que tiver contas cadastradas.
               </p>
               <p className="text-muted-foreground mt-2">
-                Dentro de cada bloco, organize por centro de custo (arraste a conta para o centro).
+                Use o organizador para agrupar por dia de vencimento (como na previsão do mês) ou por centro de custo.
+                Arrastar entre centros funciona no modo &quot;Centro de custo&quot;.
               </p>
             </P38HelpPopover>
+            <AgefinConsultaOrganizer
+              variant="contasFixas"
+              groupBy={groupByContas}
+              sortOrder={sortOrderContas}
+              onGroupByChange={setGroupByContas}
+              onSortOrderToggle={() => setSortOrderContas((o) => (o === 'asc' ? 'desc' : 'asc'))}
+            />
           </div>
 
           <FinanceiroListaEstado
@@ -509,7 +540,7 @@ export default function PlanejamentoFinanceiroPage() {
           >
             <AgefinContasFixasGrupos
               agrupamento={agrupamentoContas}
-              centrosRegistrados={centrosRegistrados}
+              groupBy={groupByContas}
               draggingSerieId={draggingSerieId}
               dropCentroAtual={dropCentroAtual}
               onDragStart={(id) => {
