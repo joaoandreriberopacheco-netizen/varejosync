@@ -24,8 +24,6 @@ import AgefinSerieDialog from '@/components/agefin-previsao/AgefinSerieDialog';
 import AgefinContasFixasGrupos from '@/components/agefin-previsao/AgefinContasFixasGrupos';
 import AgefinPrevisaoDetalheDrawer from '@/components/agefin-previsao/AgefinPrevisaoDetalheDrawer';
 import AgefinPrevisaoProjecao from '@/components/agefin-previsao/AgefinPrevisaoProjecao';
-import AgefinPrevisaoVisaoAnual from '@/components/agefin-previsao/AgefinPrevisaoVisaoAnual';
-import AgefinPrevisaoCadastroForaMes from '@/components/agefin-previsao/AgefinPrevisaoCadastroForaMes';
 import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
 import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
@@ -45,8 +43,6 @@ import {
   isCompetenciaFutura,
   isCompetenciaPlanejamento,
   agruparSeriesPorFrequenciaECentro,
-  listarCadastroForaDoMes,
-  montarResumoAnual,
 } from '@/lib/agefinPrevisaoCalculos';
 import {
   abrirCompetenciasDoMes,
@@ -74,7 +70,7 @@ export default function PlanejamentoFinanceiroPage() {
   const [syncing, setSyncing] = useState(false);
   const [filtroBusca, setFiltroBusca] = useState('');
   const [filtroCentro, setFiltroCentro] = useState('__todos__');
-  const [groupBy, setGroupBy] = useState('frequencia');
+  const [groupBy, setGroupBy] = useState('vencimento');
   const [sortOrder, setSortOrder] = useState('asc');
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
@@ -155,16 +151,6 @@ export default function PlanejamentoFinanceiroPage() {
   const seriesAtivas = useMemo(
     () => ordenarSeriesPorCentroENome(modelos.filter((m) => m.ativo !== false)),
     [modelos],
-  );
-
-  const cadastroForaDoMes = useMemo(
-    () => listarCadastroForaDoMes(competenciaMes, modelos),
-    [competenciaMes, modelos],
-  );
-
-  const resumoAnual = useMemo(
-    () => montarResumoAnual(competenciaMes, modelos, lancamentosRecorrentes),
-    [competenciaMes, modelos, lancamentosRecorrentes],
   );
 
   const agrupamentoContas = useMemo(
@@ -250,23 +236,10 @@ export default function PlanejamentoFinanceiroPage() {
   const handleSaveSerie = async (payload) => {
     setSaving(true);
     try {
-      const saved = await salvarSerie(payload);
-      queryClient.setQueryData(['agefin-previsao', 'modelos'], (old) => {
-        const list = Array.isArray(old) ? [...old] : [];
-        const idx = list.findIndex((s) => s.id === saved.id);
-        if (idx >= 0) {
-          list[idx] = saved;
-          return list;
-        }
-        return [...list, saved];
-      });
+      await salvarSerie(payload);
       invalidate();
       setSerieDialog(null);
-      toast({
-        title: 'Conta salva',
-        description:
-          'Na aba Contas fixas ela já aparece. Na Previsão do mês, entra quando vence naquele mês (mensais = todo mês).',
-      });
+      toast({ title: 'Conta salva', description: 'Ela já entra na programação e na projeção.' });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
@@ -381,9 +354,7 @@ export default function PlanejamentoFinanceiroPage() {
             </p>
           </P38HelpPopover>
         </div>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Contas fixas por recorrência — visualize o mês e o ano ao mesmo tempo.
-        </p>
+        <p className="text-sm text-muted-foreground mt-0.5">Contas fixas mensais — energia, telefone, internet…</p>
       </div>
 
       <Tabs defaultValue="previsao" className="w-full mt-4">
@@ -462,11 +433,6 @@ export default function PlanejamentoFinanceiroPage() {
             competenciaLabel={`${formatCompetenciaLabel(competenciaMes)} · ${formatCicloAgefinCompetencia(competenciaMes)}`}
           />
 
-          <AgefinPrevisaoVisaoAnual
-            meses={resumoAnual}
-            onSelecionarMes={setCompetenciaMes}
-          />
-
           <AgefinPrevisaoFiltros
             busca={filtroBusca}
             onBuscaChange={setFiltroBusca}
@@ -490,9 +456,7 @@ export default function PlanejamentoFinanceiroPage() {
             vazioMensagem={
               filtroBusca || filtroCentro !== '__todos__'
                 ? 'Nenhuma conta encontrada com estes filtros.'
-                : cadastroForaDoMes.length > 0
-                  ? `Nenhuma conta vence em ${formatCompetenciaLabel(competenciaMes)}. Veja o cadastro completo abaixo.`
-                  : `Nenhuma conta fixa para ${formatCompetenciaLabel(competenciaMes)}. Cadastre na aba Contas fixas.`
+                : `Nenhuma conta fixa para ${formatCompetenciaLabel(competenciaMes)}. Cadastre na aba Contas fixas.`
             }
             vazioIcon={Repeat2}
           >
@@ -503,13 +467,6 @@ export default function PlanejamentoFinanceiroPage() {
               onOpen={setSelectedComp}
             />
           </FinanceiroListaEstado>
-
-          <AgefinPrevisaoCadastroForaMes
-            competenciaMes={competenciaMes}
-            itens={cadastroForaDoMes}
-            onEdit={setSerieDialog}
-            onIrParaMes={setCompetenciaMes}
-          />
 
           {!loadingLanc && !loadingModelos && competenciasExibidas.length === 0 && !filtroBusca && filtroCentro === '__todos__' && (
             <div className="flex justify-center -mt-6 pb-4 gap-2">
@@ -529,11 +486,7 @@ export default function PlanejamentoFinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="contas" className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{seriesAtivas.length}</span> conta(s) no
-              cadastro — agrupadas por recorrência e centro de custo.
-            </p>
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="end">
               <p className="font-medium text-foreground">Blocos por recorrência</p>
               <p className="text-muted-foreground">

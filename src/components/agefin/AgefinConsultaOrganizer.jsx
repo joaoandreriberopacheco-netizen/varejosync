@@ -28,7 +28,6 @@ const OPTIONS_RECORRENTES = [
 ];
 
 const OPTIONS_PREVISAO = [
-  { value: 'frequencia', label: 'Recorrência', icon: Layers },
   { value: 'vencimento', label: 'Data de vencimento', icon: CalendarDays },
   { value: 'favorecido', label: 'Favorecido', icon: Building2 },
   { value: 'status', label: 'Status', icon: Wallet },
