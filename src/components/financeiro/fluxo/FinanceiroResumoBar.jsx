@@ -18,18 +18,23 @@ function ResumoSegment({ icon: Icon, value, valueClass, iconClass }) {
 }
 
 /** Coluna fixa — mobile balanço diário (ícone e valor sempre na mesma posição). */
-function ResumoGridCell({ icon: Icon, value, valueClass, iconClass }) {
+function ResumoGridCell({ icon: Icon, value, valueClass, iconClass, label }) {
   return (
-    <div className="flex min-w-0 flex-col items-center justify-start gap-1.5 px-0.5">
+    <div className="flex min-w-0 flex-col items-center justify-start gap-1 px-0.5">
       <Icon className={cn('h-3.5 w-3.5 shrink-0', iconClass ?? valueClass)} aria-hidden />
       <span
         className={cn(
-          'w-full truncate text-center text-[10px] font-semibold leading-tight tabular-nums',
+          'w-full truncate text-center text-[10px] font-semibold leading-tight tabular-nums sm:text-[11px]',
           valueClass,
         )}
       >
         {value}
       </span>
+      {label ? (
+        <span className="w-full truncate text-center text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -46,6 +51,7 @@ export default function FinanceiroResumoBar({
   saldoComSinal = false,
   periodoLabel,
   variant = 'default',
+  labels = {},
   className,
 }) {
   const variacaoVal = variacao ?? receitas - despesas;
@@ -86,11 +92,13 @@ export default function FinanceiroResumoBar({
             icon={TrendingUp}
             value={`+${formatKpiValor(receitas)}`}
             valueClass={posClass}
+            label={labels.receitas}
           />
           <ResumoGridCell
             icon={TrendingDown}
             value={`−${formatKpiValor(despesas)}`}
             valueClass={despesas > 0 ? negClass : 'text-muted-foreground/70'}
+            label={labels.despesas}
           />
           {saldoDisplay != null ? (
             <ResumoGridCell
@@ -98,6 +106,7 @@ export default function FinanceiroResumoBar({
               value={saldoDisplay}
               valueClass="text-foreground"
               iconClass="text-foreground/70"
+              label={labels.saldo}
             />
           ) : (
             <div aria-hidden />
