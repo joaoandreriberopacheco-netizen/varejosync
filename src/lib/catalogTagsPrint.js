@@ -24,6 +24,30 @@ export const getCatalogTagDescription = (produto) => {
   return String(descricao || '').trim();
 };
 
+const getCatalogTagCategory = (produto) => {
+  const categoria = produto?.categoria_nome || '';
+  return String(categoria || '').trim();
+};
+
+const collator = new Intl.Collator('pt-BR', {
+  sensitivity: 'base',
+  numeric: true,
+});
+
+export const sortCatalogTagProducts = (products = []) => {
+  if (!Array.isArray(products)) return [];
+
+  return [...products].sort((a, b) => {
+    const categoryCompare = collator.compare(getCatalogTagCategory(a), getCatalogTagCategory(b));
+    if (categoryCompare !== 0) return categoryCompare;
+
+    const descriptionCompare = collator.compare(getCatalogTagDescription(a), getCatalogTagDescription(b));
+    if (descriptionCompare !== 0) return descriptionCompare;
+
+    return collator.compare(getCatalogTagCode(a), getCatalogTagCode(b));
+  });
+};
+
 const normalizePdfText = (value) =>
   String(value ?? '')
     .normalize('NFC')
@@ -83,14 +107,13 @@ function drawCatalogTag(doc, produto, x, y) {
   doc.setLineWidth(0.15);
   doc.line(x + 6, y + 38, x + CATALOG_TAG_WIDTH_MM - 6, y + 38);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
   doc.setTextColor(55, 65, 81);
-  const codeText = `CÓD. ${code}`;
-  const codeLines = doc.splitTextToSize(codeText, CATALOG_TAG_WIDTH_MM - 7).slice(0, 2);
-  const codeStartY = codeLines.length > 1 ? y + 41.5 : y + 43;
+  const codeLines = doc.splitTextToSize(code, CATALOG_TAG_WIDTH_MM - 6).slice(0, 2);
+  const codeStartY = codeLines.length > 1 ? y + 41 : y + 43;
   codeLines.forEach((line, index) => {
-    doc.text(String(line), centerX, codeStartY + index * 3.2, { align: 'center' });
+    doc.text(String(line), centerX, codeStartY + index * 3.8, { align: 'center' });
   });
 }
 
@@ -114,6 +137,8 @@ export function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {
     throw new Error('Nenhum produto para gerar etiquetas.');
   }
 
+  const sortedProducts = sortCatalogTagProducts(products);
+
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -127,7 +152,7 @@ export function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {
     creator: 'P38 ERP',
   });
 
-  products.forEach((produto, index) => {
+  sortedProducts.forEach((produto, index) => {
     if (index > 0 && index % CATALOG_TAGS_PER_PAGE === 0) {
       doc.addPage('a4', 'portrait');
     }
