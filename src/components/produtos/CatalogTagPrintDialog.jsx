@@ -17,6 +17,7 @@ import {
   generateCatalogTagsPdf,
   getCatalogTagCode,
   getCatalogTagDescription,
+  sortCatalogTagProducts,
 } from '@/lib/catalogTagsPrint';
 import { shareOrDownloadBlob } from '@/lib/mobilePrintAndShare';
 
@@ -29,9 +30,10 @@ export default function CatalogTagPrintDialog({
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const productCount = products.length;
+  const sortedProducts = useMemo(() => sortCatalogTagProducts(products), [products]);
+  const productCount = sortedProducts.length;
   const pageCount = Math.ceil(productCount / CATALOG_TAGS_PER_PAGE);
-  const previewProduct = products[0];
+  const previewProduct = sortedProducts[0];
   const previewDescription = getCatalogTagDescription(previewProduct) || 'DESCRIÇÃO DO PRODUTO';
   const previewCode = getCatalogTagCode(previewProduct) || '000000';
 
@@ -45,8 +47,8 @@ export default function CatalogTagPrintDialog({
 
     setIsGenerating(true);
     try {
-      const blob = generateCatalogTagsPdf({
-        products,
+      const blob = await generateCatalogTagsPdf({
+        products: sortedProducts,
         filtrosResumo: filtersSummary,
       });
       const result = await shareOrDownloadBlob(
@@ -102,8 +104,8 @@ export default function CatalogTagPrintDialog({
               <div className="flex flex-1 flex-col justify-center">
                 <p className="line-clamp-4 text-sm font-bold leading-tight">{previewDescription}</p>
               </div>
-              <div className="border-t border-slate-200 pt-2 text-[11px] text-slate-600">
-                CÓD. {previewCode}
+              <div className="border-t border-slate-200 pt-2 text-sm font-semibold tracking-wide text-slate-700">
+                {previewCode}
               </div>
             </div>
             <span className="flex items-center gap-1 text-xs text-muted-foreground">

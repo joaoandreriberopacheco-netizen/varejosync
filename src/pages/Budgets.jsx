@@ -28,7 +28,6 @@ import BudgetPlanoCompleto from '@/components/budget-previsao/BudgetPlanoComplet
 import {
   calcularTotaisBudgets,
   calcularRealizadoPorTag,
-  calcularReceitasRealizadasMes,
   filtrarVisoesBudget,
   formatCompetenciaLabel,
   getCompetenciaAtual,
@@ -48,6 +47,7 @@ import {
   listarCentrosCustoRegistros,
   inativarModelo,
   reativarModelo,
+  obterLucroBrutoCompetencia,
 } from '@/lib/budgetService';
 import {
   calcularTotaisGrupo as calcularTotaisGrupoFolha,
@@ -83,7 +83,7 @@ export default function BudgetsPage() {
   const [filtroCadastroAtivo, setFiltroCadastroAtivo] = useState('ativos');
   const [fabOpen, setFabOpen] = useState(false);
 
-  const abaInicial = searchParams.get('aba') || 'acompanhamento';
+  const abaInicial = searchParams.get('aba') || 'cadastro';
   const [aba, setAba] = useState(abaInicial);
 
   useEffect(() => {
@@ -139,6 +139,12 @@ export default function BudgetsPage() {
   const { data: lancamentosAgefin = [] } = useQuery({
     queryKey: ['budgets', 'agefin-lanc', competenciaMes],
     queryFn: () => listarLancamentosCompetencia(competenciaMes),
+    enabled: aba === 'plano',
+  });
+
+  const { data: lucroBrutoMes } = useQuery({
+    queryKey: ['budgets', 'lucro-bruto', competenciaMes],
+    queryFn: () => obterLucroBrutoCompetencia(competenciaMes),
     enabled: aba === 'plano',
   });
 
@@ -205,10 +211,11 @@ export default function BudgetsPage() {
       totaisFixas,
       realizadoFolha: calcularRealizadoPorTag(lancamentosMes, competenciaMes, 'folha_previsao'),
       realizadoFixas: calcularRealizadoPorTag(lancamentosMes, competenciaMes, 'agefin_previsao'),
-      receitas: calcularReceitasRealizadasMes(lancamentosMes, competenciaMes),
+      lucroBruto: lucroBrutoMes?.lucro_bruto || 0,
+      margemDetalhe: lucroBrutoMes,
       totaisBudgets: totais,
     };
-  }, [aba, competenciaMes, modelosFolha, competenciasFolha, modelosAgefin, lancamentosAgefin, lancamentosMes, totais]);
+  }, [aba, competenciaMes, modelosFolha, competenciasFolha, modelosAgefin, lancamentosAgefin, lancamentosMes, totais, lucroBrutoMes]);
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['budgets'] });
@@ -290,7 +297,7 @@ export default function BudgetsPage() {
   const competenciaLabel = formatCompetenciaLabel(competenciaMes);
 
   return (
-    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
+    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background p-4 lg:p-6 pb-[calc(var(--p38-scroll-pad-below-nav)+5.5rem)] md:pb-6">
       <div className="flex items-center gap-1.5 pb-3 border-b border-border/40">
         <h1 className="text-xl font-medium text-foreground">Budgets</h1>
         <P38HelpPopover label="Ajuda: budgets" side="bottom" align="start">
@@ -317,62 +324,37 @@ export default function BudgetsPage() {
         }}
         className="w-full mt-4"
       >
-        <TabsList className={cn('w-full h-auto p-1 rounded-xl flex-nowrap overflow-x-auto md:overflow-visible md:flex-wrap', P38_FIELD_SURFACE)}>
-          <TabsTrigger value="acompanhamento" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]">
-            <CalendarClock className="w-4 h-4" />
-            <span className="text-xs md:hidden">Mês</span>
-            <span className="hidden md:inline text-sm">Acompanhamento</span>
-          </TabsTrigger>
-          <TabsTrigger value="cadastro" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]">
-            <LayoutList className="w-4 h-4" />
-            <span className="text-xs md:hidden">Lista</span>
+        <TabsList
+          className={cn(
+            'w-full h-auto p-1 rounded-xl grid grid-cols-3 gap-1 md:flex md:flex-wrap md:overflow-visible',
+            P38_FIELD_SURFACE,
+          )}
+        >
+          <TabsTrigger
+            value="cadastro"
+            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-2 md:flex-1 md:min-w-[120px]"
+          >
+            <LayoutList className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate md:hidden">Lista</span>
             <span className="hidden md:inline text-sm">Cadastro</span>
           </TabsTrigger>
-          <TabsTrigger value="plano" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]">
-            <PieChart className="w-4 h-4" />
-            <span className="text-xs md:hidden">Plano</span>
+          <TabsTrigger
+            value="acompanhamento"
+            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-2 md:flex-1 md:min-w-[120px]"
+          >
+            <CalendarClock className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate md:hidden">Mês</span>
+            <span className="hidden md:inline text-sm">Acompanhamento</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="plano"
+            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-2 md:flex-1 md:min-w-[120px]"
+          >
+            <PieChart className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate md:hidden">Plano</span>
             <span className="hidden md:inline text-sm">Plano completo</span>
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="acompanhamento" className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className={cn('w-full sm:w-auto flex items-center justify-between gap-1 rounded-xl px-1', P38_FIELD_SURFACE)}>
-              <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, -1))}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium px-2 tabular-nums">{competenciaLabel}</span>
-              <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, 1))}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <BudgetPrevisaoResumo totais={totais} competenciaLabel={competenciaLabel} />
-
-          <BudgetPrevisaoFiltros
-            busca={filtroBusca}
-            onBuscaChange={setFiltroBusca}
-            centro={filtroCentro}
-            onCentroChange={setFiltroCentro}
-            centrosRegistrados={centrosRegistrados}
-            situacao={filtroSituacao}
-            onSituacaoChange={setFiltroSituacao}
-          />
-
-          <FinanceiroListaEstado
-            loading={loadingModelos || loadingLanc}
-            vazio={!loadingModelos && visoesFiltradas.length === 0}
-            vazioMensagem={
-              modelos.filter((m) => m.ativo !== false).length === 0
-                ? 'Nenhum budget cadastrado. Crie o primeiro na aba Cadastro.'
-                : 'Nenhum budget encontrado com estes filtros.'
-            }
-            vazioIcon={Target}
-          >
-            <BudgetPrevisaoLista visoes={visoesFiltradas} onOpen={setSelectedVisao} />
-          </FinanceiroListaEstado>
-        </TabsContent>
 
         <TabsContent value="cadastro" className="mt-4 space-y-3">
           <div className={cn('relative rounded-xl', P38_FIELD_SURFACE)}>
@@ -424,6 +406,45 @@ export default function BudgetsPage() {
           </FinanceiroListaEstado>
         </TabsContent>
 
+        <TabsContent value="acompanhamento" className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className={cn('w-full sm:w-auto flex items-center justify-between gap-1 rounded-xl px-1', P38_FIELD_SURFACE)}>
+              <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, -1))}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium px-2 tabular-nums">{competenciaLabel}</span>
+              <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, 1))}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <BudgetPrevisaoResumo totais={totais} competenciaLabel={competenciaLabel} />
+
+          <BudgetPrevisaoFiltros
+            busca={filtroBusca}
+            onBuscaChange={setFiltroBusca}
+            centro={filtroCentro}
+            onCentroChange={setFiltroCentro}
+            centrosRegistrados={centrosRegistrados}
+            situacao={filtroSituacao}
+            onSituacaoChange={setFiltroSituacao}
+          />
+
+          <FinanceiroListaEstado
+            loading={loadingModelos || loadingLanc}
+            vazio={!loadingModelos && visoesFiltradas.length === 0}
+            vazioMensagem={
+              modelos.filter((m) => m.ativo !== false).length === 0
+                ? 'Nenhum budget cadastrado. Crie o primeiro na aba Lista.'
+                : 'Nenhum budget encontrado com estes filtros.'
+            }
+            vazioIcon={Target}
+          >
+            <BudgetPrevisaoLista visoes={visoesFiltradas} onOpen={setSelectedVisao} />
+          </FinanceiroListaEstado>
+        </TabsContent>
+
         <TabsContent value="plano" className="mt-4 space-y-3">
           <div className={cn('w-full sm:w-auto flex items-center justify-between gap-1 rounded-xl px-1 max-w-xs', P38_FIELD_SURFACE)}>
             <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, -1))}>
@@ -443,7 +464,8 @@ export default function BudgetsPage() {
               totaisBudgets={totaisPlano.totaisBudgets}
               realizadoFixas={totaisPlano.realizadoFixas}
               realizadoFolha={totaisPlano.realizadoFolha}
-              receitasRealizadas={totaisPlano.receitas}
+              lucroBruto={totaisPlano.lucroBruto}
+              margemDetalhe={totaisPlano.margemDetalhe}
             />
           )}
         </TabsContent>
@@ -465,12 +487,15 @@ export default function BudgetsPage() {
         centrosRegistrados={centrosRegistrados}
         onSave={handleSaveModelo}
         saving={saving}
+        onCategoriasChange={async () => {
+          await queryClient.invalidateQueries({ queryKey: ['budgets', 'categorias'] });
+        }}
       />
 
-      <div className="fixed bottom-[calc(var(--p38-scroll-pad-below-nav)+0.75rem)] right-4 z-40 md:bottom-6">
+      <div className="fixed right-4 z-[55] bottom-[calc(var(--p38-bottom-nav-h,0px)+1rem)] lg:bottom-8 lg:right-8">
         <div className="relative">
           {fabOpen && (
-            <div className="absolute bottom-14 right-0 mb-2 flex flex-col gap-2 items-end">
+            <div className="absolute bottom-16 right-0 mb-2 flex flex-col gap-2 items-end">
               <Button
                 size="sm"
                 className="rounded-full shadow-lg"

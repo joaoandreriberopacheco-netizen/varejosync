@@ -13,6 +13,7 @@ import {
   valorEfetivoCompetencia,
   SITUACAO_SERIE,
 } from '@/lib/agefinPrevisaoCalculos';
+import { labelParcelaCurta } from '@/lib/agefinParcelamentoCalculos';
 
 const LINE_TITLE_CLASS =
   '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base';
@@ -30,15 +31,23 @@ const ORIGEM_LABELS = {
 };
 
 export default function AgefinPrevisaoRow({ competencia, modelo, onClick, striped }) {
-  const valor = valorEfetivoCompetencia(competencia, modelo);
+  const fantasma = Boolean(competencia._fantasmaParcelamento);
+  const parcela = Boolean(competencia._modoParcela);
+  const valor =
+    parcela && competencia.valor_previsto != null
+      ? Number(competencia.valor_previsto) || 0
+      : valorEfetivoCompetencia(competencia, modelo);
   const statusEfetivo = statusCompetenciaEfetivo(competencia);
   const planejamento = isCompetenciaPlanejamento(competencia);
   const dia = modelo?.dia_vencimento || competencia.dia_vencimento || 10;
   const tagFreq = tagFrequenciaSerie(modelo || competencia);
+  const parcelaLabel = labelParcelaCurta(competencia);
 
   const meta = (
     <>
       {competencia.terceiro_nome && <span>{competencia.terceiro_nome}</span>}
+      {fantasma && <P38StatusLabel tone="muted">Parcelada</P38StatusLabel>}
+      {parcela && parcelaLabel && <P38StatusLabel tone="info">{parcelaLabel}</P38StatusLabel>}
       {tagFreq && <P38StatusLabel tone="muted">{tagFreq}</P38StatusLabel>}
       {planejamento ? (
         <P38StatusLabel tone="info">Planejamento</P38StatusLabel>
@@ -64,15 +73,25 @@ export default function AgefinPrevisaoRow({ competencia, modelo, onClick, stripe
       striped={striped}
       accent={p38AccentKeyFromTone(rowAccent(competencia, modelo))}
       onClick={() => onClick?.(competencia)}
-      className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] ${planejamento ? 'opacity-95' : ''}`}
-      title={competencia.serie_nome}
-      subtitle={formatCicloAgefinCompetencia(competencia.competencia, dia)}
+      className={`w-full text-left ${LINE_TITLE_CLASS} max-md:!py-3.5 max-md:min-h-[58px] ${planejamento ? 'opacity-95' : ''} ${fantasma ? 'opacity-70' : ''}`}
+      title={parcela ? `${competencia.serie_nome} — ${parcelaLabel}` : competencia.serie_nome}
+      subtitle={
+        parcela
+          ? parcelaLabel
+          : formatCicloAgefinCompetencia(competencia.competencia, dia)
+      }
       meta={meta}
       value={
-        <>
-          <span className="text-foreground/85">−</span>
-          {formatFinanceiroValor(valor)}
-        </>
+        fantasma ? (
+          <span className="text-muted-foreground line-through tabular-nums">
+            {formatFinanceiroValor(valor)}
+          </span>
+        ) : (
+          <>
+            <span className="text-foreground/85">−</span>
+            {formatFinanceiroValor(valor)}
+          </>
+        )
       }
     />
   );

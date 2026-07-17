@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { registerJsPdfDin1451Fonts } from '@/lib/jspdfNotoFont';
 
 export const CATALOG_TAG_WIDTH_MM = 43;
 export const CATALOG_TAG_HEIGHT_MM = 48;
@@ -13,6 +14,8 @@ const GRID_WIDTH_MM = COLUMNS * CATALOG_TAG_WIDTH_MM;
 const GRID_HEIGHT_MM = ROWS * CATALOG_TAG_HEIGHT_MM;
 const START_X_MM = (A4_WIDTH_MM - GRID_WIDTH_MM) / 2;
 const START_Y_MM = (A4_HEIGHT_MM - GRID_HEIGHT_MM) / 2;
+const CATEGORY_MARKER_X_MM = START_X_MM / 2;
+const CATEGORY_LABEL_X_MM = CATEGORY_MARKER_X_MM - 2.2;
 
 export const getCatalogTagCode = (produto) => {
   const codigo = produto?.codigo_interno || produto?.codigo_barras || '';
@@ -24,6 +27,30 @@ export const getCatalogTagDescription = (produto) => {
   return String(descricao || '').trim();
 };
 
+const getCatalogTagCategory = (produto) => {
+  const categoria = produto?.categoria_nome || '';
+  return String(categoria || '').trim();
+};
+
+const collator = new Intl.Collator('pt-BR', {
+  sensitivity: 'base',
+  numeric: true,
+});
+
+export const sortCatalogTagProducts = (products = []) => {
+  if (!Array.isArray(products)) return [];
+
+  return [...products].sort((a, b) => {
+    const categoryCompare = collator.compare(getCatalogTagCategory(a), getCatalogTagCategory(b));
+    if (categoryCompare !== 0) return categoryCompare;
+
+    const descriptionCompare = collator.compare(getCatalogTagDescription(a), getCatalogTagDescription(b));
+    if (descriptionCompare !== 0) return descriptionCompare;
+
+    return collator.compare(getCatalogTagCode(a), getCatalogTagCode(b));
+  });
+};
+
 const normalizePdfText = (value) =>
   String(value ?? '')
     .normalize('NFC')
@@ -31,6 +58,91 @@ const normalizePdfText = (value) =>
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/\u2026/g, '...');
+
+const categoryMarkerKey = (produto) => getCatalogTagCategory(produto).toLocaleLowerCase('pt-BR');
+
+function buildPageCategoryMarkers(pageProducts = []) {
+  if (!pageProducts.length) return [];
+
+  const markers = [];
+  let startSlot = 0;
+  let currentKey = categoryMarkerKey(pageProducts[0]);
+  let currentLabel = getCatalogTagCategory(pageProducts[0]) || 'Sem categoria';
+
+  for (let slot = 1; slot < pageProducts.length; slot += 1) {
+    const nextKey = categoryMarkerKey(pageProducts[slot]);
+    if (nextKey === currentKey) continue;
+
+    markers.push({
+      label: currentLabel,
+      rowStart: Math.floor(startSlot / COLUMNS),
+      rowEnd: Math.floor((slot - 1) / COLUMNS),
+    });
+    startSlot = slot;
+    currentKey = nextKey;
+    currentLabel = getCatalogTagCategory(pageProducts[slot]) || 'Sem categoria';
+  }
+
+  markers.push({
+    label: currentLabel,
+    rowStart: Math.floor(startSlot / COLUMNS),
+    rowEnd: Math.floor((pageProducts.length - 1) / COLUMNS),
+  });
+
+  return markers;
+}
+
+function drawCategoryMarginMarker(doc, marker) {
+  const yTop = START_Y_MM + marker.rowStart * CATALOG_TAG_HEIGHT_MM + 0.9;
+  const yBottom = START_Y_MM + (marker.rowEnd + 1) * CATALOG_TAG_HEIGHT_MM - 0.9;
+  const normalizedLabel = normalizePdfText(marker.label || 'Sem categoria')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+  const glyphs = (normalizedLabel || 'SEM CATEGORIA').split('');
+  const availableHeight = Math.max(8, yBottom - yTop - 2.2);
+  const labelX = CATEGORY_LABEL_X_MM;
+
+  doc.setDrawColor(74, 82, 64);
+  doc.setLineWidth(0.18);
+  doc.line(CATEGORY_MARKER_X_MM, yTop, CATEGORY_MARKER_X_MM, yBottom);
+
+  doc.setFont('DIN1451', 'bold');
+  let fontSize = 6.4;
+  let step = 2.05;
+  const minFontSize = 4.0;
+  const minStep = 1.35;
+
+  const fitsGlyphs = (count) => count * step <= availableHeight;
+  const trimGlyphsToFit = () => {
+    if (fitsGlyphs(glyphs.length)) return glyphs;
+    const maxCount = Math.max(3, Math.floor(availableHeight / step));
+    const sliceSize = Math.max(0, maxCount - 1);
+    return [...glyphs.slice(0, sliceSize), '…'];
+  };
+
+  doc.setFontSize(fontSize);
+  while (!fitsGlyphs(glyphs.length) && (fontSize > minFontSize || step > minStep)) {
+    if (fontSize > minFontSize) {
+      fontSize -= 0.2;
+    }
+    if (step > minStep) {
+      step -= 0.08;
+    }
+    doc.setFontSize(fontSize);
+  }
+
+  const drawableGlyphs = trimGlyphsToFit();
+  const textBlockHeight = drawableGlyphs.length * step;
+  const textStartY = yTop + (availableHeight - textBlockHeight) / 2 + step * 0.76;
+
+  doc.setTextColor(74, 82, 64);
+  drawableGlyphs.forEach((glyph, index) => {
+    doc.text(glyph === ' ' ? ' ' : String(glyph), labelX, textStartY + index * step, {
+      align: 'center',
+    });
+  });
+}
 
 function fitDescription(doc, description, maxWidth) {
   let fontSize = 10.5;
@@ -83,14 +195,13 @@ function drawCatalogTag(doc, produto, x, y) {
   doc.setLineWidth(0.15);
   doc.line(x + 6, y + 38, x + CATALOG_TAG_WIDTH_MM - 6, y + 38);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
   doc.setTextColor(55, 65, 81);
-  const codeText = `CÓD. ${code}`;
-  const codeLines = doc.splitTextToSize(codeText, CATALOG_TAG_WIDTH_MM - 7).slice(0, 2);
-  const codeStartY = codeLines.length > 1 ? y + 41.5 : y + 43;
+  const codeLines = doc.splitTextToSize(code, CATALOG_TAG_WIDTH_MM - 6).slice(0, 2);
+  const codeStartY = codeLines.length > 1 ? y + 41 : y + 43;
   codeLines.forEach((line, index) => {
-    doc.text(String(line), centerX, codeStartY + index * 3.2, { align: 'center' });
+    doc.text(String(line), centerX, codeStartY + index * 3.8, { align: 'center' });
   });
 }
 
@@ -109,10 +220,12 @@ function drawCatalogTagCutLines(doc, x, y, row, column) {
   doc.line(x, bottom, right, bottom);
 }
 
-export function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {}) {
+export async function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {}) {
   if (!Array.isArray(products) || products.length === 0) {
     throw new Error('Nenhum produto para gerar etiquetas.');
   }
+
+  const sortedProducts = sortCatalogTagProducts(products);
 
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -127,19 +240,26 @@ export function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {
     creator: 'P38 ERP',
   });
 
-  products.forEach((produto, index) => {
-    if (index > 0 && index % CATALOG_TAGS_PER_PAGE === 0) {
+  await registerJsPdfDin1451Fonts(doc);
+
+  for (let pageStart = 0; pageStart < sortedProducts.length; pageStart += CATALOG_TAGS_PER_PAGE) {
+    if (pageStart > 0) {
       doc.addPage('a4', 'portrait');
     }
 
-    const pageIndex = index % CATALOG_TAGS_PER_PAGE;
-    const column = pageIndex % COLUMNS;
-    const row = Math.floor(pageIndex / COLUMNS);
-    const x = START_X_MM + column * CATALOG_TAG_WIDTH_MM;
-    const y = START_Y_MM + row * CATALOG_TAG_HEIGHT_MM;
-    drawCatalogTagCutLines(doc, x, y, row, column);
-    drawCatalogTag(doc, produto, x, y);
-  });
+    const pageProducts = sortedProducts.slice(pageStart, pageStart + CATALOG_TAGS_PER_PAGE);
+    const pageMarkers = buildPageCategoryMarkers(pageProducts);
+    pageMarkers.forEach((marker) => drawCategoryMarginMarker(doc, marker));
+
+    pageProducts.forEach((produto, pageIndex) => {
+      const column = pageIndex % COLUMNS;
+      const row = Math.floor(pageIndex / COLUMNS);
+      const x = START_X_MM + column * CATALOG_TAG_WIDTH_MM;
+      const y = START_Y_MM + row * CATALOG_TAG_HEIGHT_MM;
+      drawCatalogTagCutLines(doc, x, y, row, column);
+      drawCatalogTag(doc, produto, x, y);
+    });
+  }
 
   return doc.output('blob');
 }
