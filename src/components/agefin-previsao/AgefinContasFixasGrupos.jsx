@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { FinanceiroGrupo } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import AgefinPrevisaoModeloRow from '@/components/agefin-previsao/AgefinPrevisaoModeloRow';
 import {
   DESCRICAO_FREQUENCIA_SERIE,
@@ -9,6 +10,10 @@ import {
 
 function chaveDrop(frequencia, centroKey) {
   return `${frequencia}::${centroKey}`;
+}
+
+function totalValorSeries(series) {
+  return (series || []).reduce((s, item) => s + (Number(item.valor_previsto) || 0), 0);
 }
 
 function BlocoGrupo({
@@ -106,22 +111,26 @@ export default function AgefinContasFixasGrupos({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {secoesComContas.map((frequencia) => {
         const grupos = (agrupamento[frequencia] || []).filter((g) => (g.items || []).length > 0);
         const totalSecao = grupos.reduce((n, g) => n + (g.items?.length || 0), 0);
+        const totalValor = grupos.reduce((n, g) => n + totalValorSeries(g.items), 0);
 
         return (
-          <section key={frequencia} className="space-y-3">
-            <div className="rounded-xl bg-muted/30 px-3 py-2.5 border border-border/40">
-              <p className="text-sm font-semibold text-foreground">Recorrência {frequencia}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+          <FinanceiroGrupo
+            key={frequencia}
+            label={`Recorrência ${frequencia} (${totalSecao})`}
+            labelClassName="text-xs font-semibold normal-case tracking-normal text-foreground"
+            despesas={totalValor}
+            liquido={-totalValor}
+            card
+            defaultOpen
+          >
+            <div className="space-y-3 px-1 pb-1">
+              <p className="text-[11px] text-muted-foreground -mt-1">
                 {DESCRICAO_FREQUENCIA_SERIE[frequencia]}
               </p>
-              <p className="text-[11px] text-muted-foreground mt-1">{totalSecao} conta(s)</p>
-            </div>
-
-            <div className="space-y-3">
               {grupos.map((grupo) => {
                 const centroKey = grupo.centroKey || grupo.key?.replace(/^cc:/, '') || '__sem__';
                 const dropKey = chaveDrop(frequencia, centroKey);
@@ -154,7 +163,7 @@ export default function AgefinContasFixasGrupos({
                 );
               })}
             </div>
-          </section>
+          </FinanceiroGrupo>
         );
       })}
     </div>

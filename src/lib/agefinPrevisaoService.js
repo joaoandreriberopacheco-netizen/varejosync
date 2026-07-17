@@ -49,6 +49,30 @@ function lerSeriesEmpresa(empresa) {
   return Array.isArray(raw) ? raw : [];
 }
 
+/** Une listas por id; listas posteriores sobrescrevem campos das anteriores. */
+function mesclarSeriesPorId(...listas) {
+  const map = new Map();
+  for (const lista of listas) {
+    for (const serie of lista || []) {
+      if (!serie?.id) continue;
+      map.set(serie.id, { ...map.get(serie.id), ...serie });
+    }
+  }
+  return [...map.values()];
+}
+
+async function lerTodasSeriesArmazenadas() {
+  const empresa = await obterRegistroDadosEmpresa();
+  const empresaRows = empresaTemArmazenamentoSeries(empresa) ? lerSeriesEmpresa(empresa) : [];
+  const entityRows = (await tryListEntitySeries()) ?? [];
+  return {
+    empresa,
+    empresaRows,
+    entityRows,
+    merged: mesclarSeriesPorId(entityRows, empresaRows),
+  };
+}
+
 async function tryListEntitySeries() {
   try {
     const api = base44.entities?.AgefinSerieModelo;
@@ -104,6 +128,23 @@ async function sincronizarSeriesParaEntidade(series) {
   }
 }
 
+async function substituirSeriesNaEntidade(series) {
+  try {
+    const api = base44.entities?.AgefinSerieModelo;
+    if (!api?.list) return;
+    const existentes = (await api.list('-created_date')) || [];
+    const idsAtivos = new Set((series || []).map((s) => s.id));
+    for (const row of existentes) {
+      if (row?.id && !idsAtivos.has(row.id)) {
+        await api.delete(row.id);
+      }
+    }
+    await sincronizarSeriesParaEntidade(series);
+  } catch {
+    /* entidade opcional */
+  }
+}
+
 async function persistirSeriesModelo(series, empresaExistente = null) {
   const empresa = empresaExistente ?? (await obterRegistroDadosEmpresa());
   const payload = {
@@ -121,32 +162,28 @@ async function persistirSeriesModelo(series, empresaExistente = null) {
     });
   }
 
-  void sincronizarSeriesParaEntidade(series);
+  void substituirSeriesNaEntidade(series);
   return series;
 }
 
 async function obterSeriesParaEdicao() {
-  const entityRows = await tryListEntitySeries();
-  if (entityRows?.length) return entityRows;
-
-  const empresa = await obterRegistroDadosEmpresa();
-  if (empresaTemArmazenamentoSeries(empresa)) {
-    return lerSeriesEmpresa(empresa);
-  }
-
-  return entityRows ?? [];
+  const { empresa, empresaRows, entityRows, merged } = await lerTodasSeriesArmazenadas();
+  if (empresaTemArmazenamentoSeries(empresa) || empresaRows.length) return merged;
+  if (entityRows.length) return entityRows;
+  return [];
 }
 
 export async function listarModelos() {
-  const entityRows = await tryListEntitySeries();
-  if (entityRows?.length) return entityRows;
+  const { empresa, empresaRows, entityRows, merged } = await lerTodasSeriesArmazenadas();
 
-  const empresa = await obterRegistroDadosEmpresa();
-  if (empresaTemArmazenamentoSeries(empresa)) {
-    const series = lerSeriesEmpresa(empresa);
-    if (series.length) void sincronizarSeriesParaEntidade(series);
-    return series;
+  if (empresaTemArmazenamentoSeries(empresa) || empresaRows.length) {
+    if (merged.length && entityRows.length !== merged.length) {
+      void substituirSeriesNaEntidade(merged);
+    }
+    return merged;
   }
+
+  if (entityRows.length) return entityRows;
 
   return sincronizarModelosDesdeLancamentos();
 }
