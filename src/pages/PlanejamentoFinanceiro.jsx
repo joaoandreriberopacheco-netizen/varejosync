@@ -697,7 +697,7 @@ export default function PlanejamentoFinanceiroPage() {
         onParcelar={podeParcelarConta ? () => setParcelamentoDialog(true) : undefined}
         onSalvarParcela={handleSalvarParcela}
         onRemoverParcelamento={
-          selectedComp?._modoParcela ? handleRemoverParcelamento : undefined
+          selectedComp?._parcelamentoId ? handleRemoverParcelamento : undefined
         }
         removendoParcelamento={removendoParcelamento}
       />

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Link2, FileText, SplitSquareHorizontal } from 'lucide-react';
+import { Link2, FileText, SplitSquareHorizontal, Undo2 } from 'lucide-react';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import {
   formatCurrency,
@@ -146,12 +146,24 @@ export default function AgefinPrevisaoDetalheDrawer({
             <div className="rounded-xl border border-dashed border-border/60 bg-muted/30 p-3 mt-2 text-sm text-muted-foreground">
               <p className="font-medium text-foreground">Conta original (referência)</p>
               <p className="mt-1">
-                Esta conta foi parcelada neste mês. O valor abaixo não entra na soma do mês — use as linhas de
-                parcela na lista.
+                Esta conta foi parcelada neste mês. O valor abaixo não entra na soma — as parcelas aparecem nas
+                linhas seguintes da lista.
               </p>
               <p className="mt-2 text-base font-semibold text-foreground tabular-nums line-through">
                 {formatCurrency(valor)}
               </p>
+              {onRemoverParcelamento && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full gap-2 text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={onRemoverParcelamento}
+                  disabled={removendoParcelamento}
+                >
+                  <Undo2 className="h-4 w-4" />
+                  {removendoParcelamento ? 'A desfazer...' : 'Desfazer parcelamento'}
+                </Button>
+              )}
             </div>
           )}
 
@@ -221,14 +233,15 @@ export default function AgefinPrevisaoDetalheDrawer({
                 Parcelar esta conta
               </Button>
             )}
-            {parcela && onRemoverParcelamento && (
+            {(parcela || fantasma) && onRemoverParcelamento && !fantasma && (
               <Button
                 variant="outline"
-                className="w-full text-destructive"
+                className="w-full gap-2 text-destructive border-destructive/30 hover:bg-destructive/10"
                 onClick={onRemoverParcelamento}
                 disabled={removendoParcelamento}
               >
-                {removendoParcelamento ? 'A remover...' : 'Desfazer parcelamento'}
+                <Undo2 className="h-4 w-4" />
+                {removendoParcelamento ? 'A desfazer...' : 'Desfazer parcelamento'}
               </Button>
             )}
             {planejamento && !parcela && (
