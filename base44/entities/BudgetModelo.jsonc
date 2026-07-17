@@ -1,0 +1,54 @@
+{
+  "name": "BudgetModelo",
+  "type": "object",
+  "description": "Modelo de budget (orçamento variável) — meta de gasto por categoria",
+  "properties": {
+    "nome": {
+      "type": "string",
+      "description": "Nome do budget (ex: Alimentação equipe)"
+    },
+    "categoria_id": {
+      "type": "string",
+      "description": "ID da CategoriaFinanceira (despesa)"
+    },
+    "categoria_nome": {
+      "type": "string",
+      "description": "Nome da categoria (cache)"
+    },
+    "centro_custo": {
+      "type": "string",
+      "description": "Centro de custo para organização (filtro na lista)"
+    },
+    "modo_estimativa": {
+      "type": "string",
+      "enum": ["por_dia", "por_semana", "por_ciclo", "por_mes"],
+      "default": "por_mes",
+      "description": "Como o valor de entrada é interpretado"
+    },
+    "valor_entrada": {
+      "type": "number",
+      "description": "Valor conforme o modo de estimativa"
+    },
+    "ciclo_dias": {
+      "type": "number",
+      "description": "Duração do ciclo em dias (modo por_ciclo)"
+    },
+    "usa_dias_uteis": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se true, conta só dias úteis (seg–sáb; domingo excluído)"
+    },
+    "ativo": {
+      "type": "boolean",
+      "default": true
+    },
+    "observacoes": {
+      "type": "string"
+    },
+    "ordem": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": ["nome", "modo_estimativa", "valor_entrada"]
+}

@@ -17,6 +17,7 @@ export const FINANCEIRO_PROTECTED_PAGES = new Set([
   'ReversaoDespesasSangrias',
   'FolhaPrevisao',
   'PlanejamentoFinanceiro',
+  'Budgets',
   'AgendaFinanceira',
 ]);
 

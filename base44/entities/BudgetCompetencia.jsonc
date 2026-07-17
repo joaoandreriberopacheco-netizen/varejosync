@@ -1,0 +1,24 @@
+{
+  "name": "BudgetCompetencia",
+  "type": "object",
+  "description": "Ajuste mensal opcional de um budget (sobrescreve o orçado calculado)",
+  "properties": {
+    "budget_modelo_id": {
+      "type": "string",
+      "description": "ID do BudgetModelo"
+    },
+    "competencia": {
+      "type": "string",
+      "description": "Mês YYYY-MM"
+    },
+    "valor_ajustado": {
+      "type": "number",
+      "description": "Orçado efetivo do mês (null = usar calculado)"
+    },
+    "motivo_ajuste": {
+      "type": "string",
+      "description": "Motivo do ajuste manual"
+    }
+  },
+  "required": ["budget_modelo_id", "competencia"]
+}

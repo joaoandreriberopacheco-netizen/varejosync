@@ -427,6 +427,8 @@ export const ENTITY_TO_TABLE = {
   FolhaPrevisaoCompetencia: { table: 'folha_previsao_competencia', mode: 'jsonb' },
   AgefinSerieModelo: { table: 'agefin_serie_modelo', mode: 'jsonb' },
   AgefinSerieCompetencia: { table: 'agefin_serie_competencia', mode: 'jsonb' },
+  BudgetModelo: { table: 'budget_modelo', mode: 'jsonb' },
+  BudgetCompetencia: { table: 'budget_competencia', mode: 'jsonb' },
   FolhaCentroCusto: { table: 'folha_centro_custo', mode: 'jsonb' },
   AgendaItem: { table: 'agenda_item', mode: 'jsonb' },
 };

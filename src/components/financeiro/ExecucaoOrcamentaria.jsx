@@ -25,6 +25,7 @@ import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import CorteDiarioDialog from './corte-diario/CorteDiarioDialog';
 import FolhaPrevisaoPage from '@/pages/FolhaPrevisao';
 import PlanejamentoFinanceiroPage from '@/pages/PlanejamentoFinanceiro';
+import BudgetsPage from '@/pages/Budgets';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';
 import LancamentoDetalheDialog from './LancamentoDetalheDialog';
@@ -142,10 +143,12 @@ export default function ExecucaoOrcamentaria() {
     const abaParam = params.get('aba');
     if (abaParam === 'folha') {
       setAba('folha');
+    } else if (abaParam === 'budgets') {
+      setAba('budgets');
     } else if (abaParam === 'planejamento' || abaParam === 'agefin') {
       setAba('planejamento');
     }
-    if (abaParam === 'folha' || abaParam === 'planejamento' || abaParam === 'agefin') {
+    if (abaParam === 'folha' || abaParam === 'budgets' || abaParam === 'planejamento' || abaParam === 'agefin') {
       params.delete('aba');
       const next = params.toString();
       window.history.replaceState({}, '', next ? `${window.location.pathname}?${next}` : window.location.pathname);
@@ -612,6 +615,7 @@ export default function ExecucaoOrcamentaria() {
   const caixasAtiva = aba === 'caixas';
   const planejamentoAtiva = aba === 'planejamento';
   const folhaAtiva = aba === 'folha';
+  const budgetsAtiva = aba === 'budgets';
   const financeiroShared = useMemo(
     () => ({
       lancs,
@@ -628,6 +632,7 @@ export default function ExecucaoOrcamentaria() {
     { value: 'fluxo', label: 'Fluxo de Caixa', shortLabel: 'Fluxo' },
     { value: 'caixas', label: 'Caixas e Bancos', shortLabel: 'Caixas' },
     { value: 'folha', label: 'Folha (previsão)', shortLabel: 'Folha' },
+    { value: 'budgets', label: 'Budgets', shortLabel: 'Bdg.' },
     { value: 'planejamento', label: 'Planejamento', shortLabel: 'Plan.' },
   ];
 
@@ -935,6 +940,8 @@ export default function ExecucaoOrcamentaria() {
       {caixasAtiva && <GestaoContasPane />}
 
       {folhaAtiva && <FolhaPrevisaoPage />}
+
+      {budgetsAtiva && <BudgetsPage />}
 
       {planejamentoAtiva && (
         <Dialog open={showImportadorAgefin} onOpenChange={setShowImportadorAgefin}>
