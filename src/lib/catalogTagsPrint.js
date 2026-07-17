@@ -99,24 +99,25 @@ function drawCategoryMarginMarker(doc, marker) {
     .toUpperCase()
     .replace(/\s+/g, ' ')
     .trim();
-  const glyphs = normalizedLabel.split('');
   const availableHeight = Math.max(8, yBottom - yTop - 2.4);
-  const glyphCount = Math.max(1, glyphs.length);
-  const step = Math.max(1.7, Math.min(2.45, availableHeight / glyphCount));
-  const textBlockHeight = glyphCount * step;
-  const textStartY = yTop + (yBottom - yTop - textBlockHeight) / 2 + step * 0.76;
+  const labelMidY = (yTop + yBottom) / 2;
 
   doc.setDrawColor(74, 82, 64);
   doc.setLineWidth(0.18);
   doc.line(CATEGORY_MARKER_X_MM, yTop, CATEGORY_MARKER_X_MM, yBottom);
 
   doc.setFont('DIN1451', 'bold');
-  doc.setFontSize(6.6);
+  let fontSize = 6.6;
+  doc.setFontSize(fontSize);
+  while (fontSize > 4.2 && doc.getTextWidth(normalizedLabel) > availableHeight) {
+    fontSize -= 0.2;
+    doc.setFontSize(fontSize);
+  }
   doc.setTextColor(74, 82, 64);
-  glyphs.forEach((glyph, index) => {
-    doc.text(glyph === ' ' ? ' ' : String(glyph), CATEGORY_LABEL_X_MM, textStartY + index * step, {
-      align: 'center',
-    });
+  doc.text(normalizedLabel || 'SEM CATEGORIA', CATEGORY_LABEL_X_MM, labelMidY, {
+    align: 'center',
+    baseline: 'middle',
+    angle: 90,
   });
 }
 
