@@ -2,7 +2,7 @@
  * Planejamento financeiro — motor de programação de contas fixas (espelho da Folha de previsão).
  */
 
-import { tagsOrigemBoleto } from '@/lib/agefinLancamentosRecorrencia';
+import { tagsOrigemBoleto, mesReferenciaLancamento } from '@/lib/agefinLancamentosRecorrencia';
 import { lancamentoPago, lancamentoCancelado, lancamentoVencidoOuAtrasado } from '@/lib/agefinConsultaFilters';
 
 export const SITUACAO_SERIE = {
@@ -301,6 +301,72 @@ export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes 
   );
 }
 
+/** Próximo mês (a partir de competencia) em que a série vence. */
+export function proximoMesVencimentoSerie(modelo, aPartirDeCompetencia) {
+  if (!modelo) return null;
+  let comp = aPartirDeCompetencia;
+  for (let i = 0; i < 24; i += 1) {
+    if (serieDeveAparecerNaCompetencia(modelo, comp)) return comp;
+    comp = shiftCompetencia(comp, 1);
+  }
+  return null;
+}
+
+/**
+ * Contas cadastradas que não vencem no mês selecionado (ex.: anual em outro mês).
+ * Não exige abrir o mês — só mostra que o cadastro existe e quando volta a vencer.
+ */
+export function listarCadastroForaDoMes(competenciaMes, modelos) {
+  const idsDoMes = new Set(
+    montarCompetenciasVisao(competenciaMes, modelos, [])
+      .map((c) => c.serie_id)
+      .filter(Boolean),
+  );
+
+  const fora = [];
+  for (const modelo of modelos || []) {
+    if (!serieEstaAtivaNaCompetencia(modelo, competenciaMes)) continue;
+    if (idsDoMes.has(modelo.id)) continue;
+    const proximo = proximoMesVencimentoSerie(modelo, competenciaMes);
+    fora.push({
+      modelo,
+      proximoMes: proximo,
+      labelProximo: proximo ? formatCompetenciaLabel(proximo) : '—',
+      frequencia: normalizarFrequenciaSerie(modelo.frequencia),
+    });
+  }
+
+  return fora.sort((a, b) => {
+    const ordA = ORDEM_FREQUENCIAS_CONTAS_FIXAS.indexOf(a.frequencia);
+    const ordB = ORDEM_FREQUENCIAS_CONTAS_FIXAS.indexOf(b.frequencia);
+    if (ordA !== ordB) return ordA - ordB;
+    return (a.modelo.nome || '').localeCompare(b.modelo.nome || '', 'pt-BR');
+  });
+}
+
+/** Resumo dos 12 meses do ano da competência selecionada (totais previstos por mês). */
+export function montarResumoAnual(competenciaMes, modelos, lancamentosTodos = []) {
+  const ano = String(competenciaMes).slice(0, 4);
+  const meses = [];
+  let comp = `${ano}-01`;
+  const modelosMap = mapaModelosPorId(modelos);
+
+  for (let i = 0; i < 12; i += 1) {
+    const lfs = (lancamentosTodos || []).filter((lf) => mesReferenciaLancamento(lf) === comp);
+    const comps = montarCompetenciasVisao(comp, modelos, lfs);
+    const totais = calcularTotaisGrupo(comps, modelosMap);
+    meses.push({
+      competencia: comp,
+      total: totais.total,
+      count: comps.length,
+      selecionado: comp === competenciaMes,
+    });
+    comp = shiftCompetencia(comp, 1);
+  }
+
+  return meses;
+}
+
 export function mapaModelosPorId(modelos) {
   const map = {};
   for (const m of modelos || []) {
@@ -385,6 +451,15 @@ export function agruparCompetenciasPrevisao(competencias, groupBy = 'vencimento'
       const cc = (comp.centro_custo || modelo?.centro_custo || '').trim() || 'Sem centro de custo';
       return { key: `cc:${cc}`, label: cc, orderValue: cc.toLowerCase() };
     }
+    if (groupBy === 'frequencia') {
+      const freq = normalizarFrequenciaSerie(modelo?.frequencia);
+      const ord = ORDEM_FREQUENCIAS_CONTAS_FIXAS.indexOf(freq);
+      return {
+        key: `freq:${freq}`,
+        label: `Recorrência ${freq}`,
+        orderValue: String(ord >= 0 ? ord : 99).padStart(2, '0'),
+      };
+    }
     const b = bucketStatusCompetencia(comp, hoje);
     return { key: `s:${b.key}`, label: b.label, orderValue: String(b.order).padStart(2, '0') };
   };
@@ -397,7 +472,7 @@ export function agruparCompetenciasPrevisao(competencias, groupBy = 'vencimento'
   }
 
   const compareGroups = (a, b) => {
-    if (groupBy === 'status') {
+    if (groupBy === 'status' || groupBy === 'frequencia') {
       const ia = Number(a.orderValue);
       const ib = Number(b.orderValue);
       return sortOrder === 'asc' ? ia - ib : ib - ia;
