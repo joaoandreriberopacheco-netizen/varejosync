@@ -4,6 +4,9 @@
  */
 export const QUICK_ACCESS_LAUNCHER_HIDDEN_PAGES = new Set([
   'TabelaPrecosConsulta',
+  'Budgets',
+  'PlanejamentoFinanceiro',
+  'FolhaPrevisao',
 ]);
 
 export function shouldShowQuickAccessLaunchers(pathname = '') {

@@ -263,7 +263,7 @@ export default function BudgetsPage() {
   const competenciaLabel = formatCompetenciaLabel(competenciaMes);
 
   return (
-    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
+    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background p-4 lg:p-6 pb-[calc(var(--p38-scroll-pad-below-nav)+5.5rem)] md:pb-6">
       <div className="flex items-center gap-1.5 pb-3 border-b border-border/40">
         <h1 className="text-xl font-medium text-foreground">Budgets</h1>
         <P38HelpPopover label="Ajuda: budgets" side="bottom" align="start">
@@ -290,20 +290,34 @@ export default function BudgetsPage() {
         }}
         className="w-full mt-4"
       >
-        <TabsList className={cn('w-full h-auto p-1 rounded-xl flex-nowrap overflow-x-auto md:overflow-visible md:flex-wrap', P38_FIELD_SURFACE)}>
-          <TabsTrigger value="acompanhamento" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]">
-            <CalendarClock className="w-4 h-4" />
-            <span className="text-xs md:hidden">Mês</span>
+        <TabsList
+          className={cn(
+            'w-full h-auto p-1 rounded-xl grid grid-cols-3 gap-1 md:flex md:flex-wrap md:overflow-visible',
+            P38_FIELD_SURFACE,
+          )}
+        >
+          <TabsTrigger
+            value="acompanhamento"
+            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-2 md:flex-1 md:min-w-[120px]"
+          >
+            <CalendarClock className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate md:hidden">Mês</span>
             <span className="hidden md:inline text-sm">Acompanhamento</span>
           </TabsTrigger>
-          <TabsTrigger value="cadastro" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]">
-            <LayoutList className="w-4 h-4" />
-            <span className="text-xs md:hidden">Lista</span>
+          <TabsTrigger
+            value="cadastro"
+            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-2 md:flex-1 md:min-w-[120px]"
+          >
+            <LayoutList className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate md:hidden">Lista</span>
             <span className="hidden md:inline text-sm">Cadastro</span>
           </TabsTrigger>
-          <TabsTrigger value="plano" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]">
-            <PieChart className="w-4 h-4" />
-            <span className="text-xs md:hidden">Plano</span>
+          <TabsTrigger
+            value="plano"
+            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-2 md:flex-1 md:min-w-[120px]"
+          >
+            <PieChart className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate md:hidden">Plano</span>
             <span className="hidden md:inline text-sm">Plano completo</span>
           </TabsTrigger>
         </TabsList>
@@ -437,10 +451,10 @@ export default function BudgetsPage() {
         saving={saving}
       />
 
-      <div className="fixed bottom-[calc(var(--p38-scroll-pad-below-nav)+0.75rem)] right-4 z-40 md:bottom-6">
+      <div className="fixed right-4 z-[55] bottom-[calc(var(--p38-bottom-nav-h,0px)+1rem)] lg:bottom-8 lg:right-8">
         <div className="relative">
           {fabOpen && (
-            <div className="absolute bottom-14 right-0 mb-2 flex flex-col gap-2 items-end">
+            <div className="absolute bottom-16 right-0 mb-2 flex flex-col gap-2 items-end">
               <Button
                 size="sm"
                 className="rounded-full shadow-lg"

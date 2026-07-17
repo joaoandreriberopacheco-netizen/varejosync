@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { formatCompetenciaLabel } from '@/lib/budgetCalculos';
 
-function CelulaValor({ valor, positivo }) {
+function CelulaValor({ valor, positivo, className }) {
   const n = Number(valor) || 0;
   const cls =
     positivo === true
@@ -14,7 +14,57 @@ function CelulaValor({ valor, positivo }) {
       : positivo === false
         ? 'text-red-700 dark:text-red-400'
         : '';
-  return <span className={cn('tabular-nums font-medium', cls)}>{formatFinanceiroValor(n)}</span>;
+  return (
+    <span className={cn('tabular-nums font-medium', cls, className)}>
+      {formatFinanceiroValor(n)}
+    </span>
+  );
+}
+
+function MetricaMobile({ label, valor, positivo }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <CelulaValor valor={valor} positivo={positivo} className="text-sm" />
+    </div>
+  );
+}
+
+function CardPlanoMobile({ label, planejado, realizado, linkTo, destaque = false, somenteRealizado = false }) {
+  const diff = (Number(planejado) || 0) - (Number(realizado) || 0);
+  return (
+    <div
+      className={cn(
+        'rounded-xl border border-border/40 p-3 space-y-2',
+        destaque ? 'bg-muted/25 border-border/60' : 'bg-card/40',
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className={cn('text-sm font-medium leading-snug', destaque && 'font-semibold')}>{label}</p>
+        {linkTo ? (
+          <Link to={linkTo} className="shrink-0 text-xs text-primary hover:underline">
+            Abrir
+          </Link>
+        ) : null}
+      </div>
+      {somenteRealizado ? (
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Realizado</p>
+          <CelulaValor
+            valor={realizado}
+            positivo={label === 'Resultado' ? Number(realizado) >= 0 : undefined}
+            className="text-sm"
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          <MetricaMobile label="Planejado" valor={planejado} />
+          <MetricaMobile label="Realizado" valor={realizado} />
+          <MetricaMobile label="Diferença" valor={diff} positivo={diff >= 0} />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function LinhaPlano({ label, planejado, realizado, linkTo }) {
@@ -88,9 +138,9 @@ export default function BudgetPlanoCompleto({
   );
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-1.5">
-        <h2 className="text-sm font-semibold">Plano financeiro — {compLabel}</h2>
+    <div className="space-y-3 pb-2">
+      <div className="flex items-center gap-1.5 pr-14 md:pr-0">
+        <h2 className="text-sm font-semibold leading-snug">Plano financeiro — {compLabel}</h2>
         <P38HelpPopover label="Ajuda: plano completo" size="sm">
           <p className="text-muted-foreground">
             Junta contas fixas, folha e budgets. O realizado usa despesas pagas no Fluxo (e lançamentos de folha/fixas quando identificáveis).
@@ -98,7 +148,36 @@ export default function BudgetPlanoCompleto({
         </P38HelpPopover>
       </div>
 
-      <div className={cn('overflow-x-auto rounded-xl', P38_FIELD_SURFACE)}>
+      <div className="space-y-2 md:hidden">
+        {rows.map((r) => (
+          <CardPlanoMobile
+            key={r.key}
+            label={r.label}
+            planejado={r.planejado}
+            realizado={r.realizado}
+            linkTo={r.link}
+          />
+        ))}
+        <CardPlanoMobile
+          label="Total despesas"
+          planejado={planejadoDespesas}
+          realizado={realizadoDespesas}
+          destaque
+        />
+        <CardPlanoMobile
+          label="Receitas (fluxo)"
+          realizado={receitasRealizadas}
+          somenteRealizado
+        />
+        <CardPlanoMobile
+          label="Resultado"
+          realizado={resultado}
+          destaque
+          somenteRealizado
+        />
+      </div>
+
+      <div className={cn('hidden md:block overflow-x-auto rounded-xl', P38_FIELD_SURFACE)}>
         <table className="w-full min-w-[520px] text-left">
           <thead>
             <tr className="border-b border-border/50 text-[11px] uppercase tracking-wide text-muted-foreground">
