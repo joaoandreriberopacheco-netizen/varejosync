@@ -68,6 +68,12 @@ Para o agente consultar **dados reais** (lançamentos, auditoria de fluxo, flare
 - **`npm run lint`** and **`npm run typecheck`** may report many pre-existing issues in `src/`; they still prove ESLint/TypeScript are installed.
 - **`npm run build`** is the reliable gate for “toolchain + bundle OK” (includes `verify:source-location`).
 
+### Testing preference (João André)
+
+- By user preference, **do not require video walkthrough artifacts** as default validation.
+- Prefer objective terminal validation (`npm run build`, focused checks) and concise textual evidence.
+- Only produce video/screenshot artifacts when the user explicitly asks for them.
+
 ### Repo context
 
 - Canonical **hosted** deploy path today: this repo → Base44 / Vercel legacy. Future canonical stack: **a29-erp** (Next.js + Supabase). See root `README.md` and `.cursor/rules/transicao-vercel-base44.mdc`.
