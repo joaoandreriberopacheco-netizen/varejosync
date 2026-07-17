@@ -36,7 +36,7 @@ function getFileContent(localPath) {
     {
       "name": "LancamentoFinanceiro",
       "description": "Lançamentos financeiros (receitas e despesas)",
-      "required": ["tipo", "descricao", "valor", "conta_financeira_id", "data_vencimento"],
+      "required": ["tipo", "descricao", "valor", "data_vencimento"],
       "relations": [
         { "field": "terceiro_id", "references": "Terceiro.id" },
         { "field": "forma_pagamento_id", "references": "FormasDePagamento.id" },
@@ -65,7 +65,7 @@ function getFileContent(localPath) {
         { "name": "categoria", "type": "string", "pg_type": "TEXT", "cache": true },
         { "name": "categoria_id", "type": "string", "pg_type": "TEXT" },
         { "name": "tags", "type": "array<string>", "pg_type": "TEXT[]" },
-        { "name": "conta_financeira_id", "type": "string", "pg_type": "TEXT NOT NULL" },
+        { "name": "conta_financeira_id", "type": "string", "pg_type": "TEXT" },
         { "name": "conta_financeira_nome", "type": "string", "pg_type": "TEXT", "cache": true },
         { "name": "turno_caixa_id", "type": "string", "pg_type": "TEXT" },
         { "name": "referencia_id", "type": "string", "pg_type": "TEXT" },

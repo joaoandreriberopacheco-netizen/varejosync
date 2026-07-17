@@ -208,7 +208,6 @@
     "tipo",
     "descricao",
     "valor",
-    "conta_financeira_id",
     "data_vencimento"
   ]
 }
