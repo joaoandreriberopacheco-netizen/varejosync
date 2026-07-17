@@ -54,12 +54,21 @@ export const DESCRICAO_FREQUENCIA_SERIE = {
 };
 
 export function normalizarFrequenciaSerie(frequencia) {
-  const f = frequencia || FREQUENCIA_SERIE.MENSAL;
-  return ORDEM_FREQUENCIAS_CONTAS_FIXAS.includes(f) ? f : FREQUENCIA_SERIE.MENSAL;
+  const f = String(frequencia || FREQUENCIA_SERIE.MENSAL).trim();
+  const found = ORDEM_FREQUENCIAS_CONTAS_FIXAS.find(
+    (item) => item.toLowerCase() === f.toLowerCase(),
+  );
+  return found || FREQUENCIA_SERIE.MENSAL;
 }
 
 export function labelFrequenciaSerie(modelo) {
   return normalizarFrequenciaSerie(modelo?.frequencia);
+}
+
+export function tagFrequenciaSerie(modelo) {
+  const f = labelFrequenciaSerie(modelo);
+  if (f === FREQUENCIA_SERIE.MENSAL) return '';
+  return f.toUpperCase();
 }
 
 export function labelValorSerie(modelo) {
@@ -80,8 +89,8 @@ export function mesCompetenciaNum(competencia) {
  */
 export function serieDeveAparecerNaCompetencia(modelo, competencia) {
   if (!serieEstaAtivaNaCompetencia(modelo, competencia)) return false;
-  const f = modelo.frequencia || FREQUENCIA_SERIE.MENSAL;
-  const mesRef = Number(modelo.mes_vencimento) || 1;
+  const f = normalizarFrequenciaSerie(modelo.frequencia);
+  const mesRef = Math.min(12, Math.max(1, Number(modelo.mes_vencimento) || 1));
   const mes = mesCompetenciaNum(competencia);
   const offset = (mes - mesRef + 12) % 12;
 
@@ -236,11 +245,35 @@ export function gerarSerieId() {
   return `serie-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+export const MESES_COMPETENCIA_LABEL = [
+  'JANEIRO',
+  'FEVEREIRO',
+  'MARÇO',
+  'ABRIL',
+  'MAIO',
+  'JUNHO',
+  'JULHO',
+  'AGOSTO',
+  'SETEMBRO',
+  'OUTUBRO',
+  'NOVEMBRO',
+  'DEZEMBRO',
+];
+
 export function formatCompetenciaLabel(competencia) {
-  if (!competencia || !/^\d{4}-\d{2}$/.test(competencia)) return competencia || '';
-  const [y, m] = competencia.split('-');
-  const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  return `${meses[Number(m) - 1]}/${y}`;
+  if (!competencia) return '';
+  const raw = String(competencia).trim();
+  const isoMes = /^\d{4}-\d{2}$/.test(raw)
+    ? raw
+    : /^\d{4}-\d{2}-\d{2}$/.test(raw)
+      ? raw.slice(0, 7)
+      : '';
+  if (!isoMes) return raw;
+  const [y, m] = isoMes.split('-');
+  const mesIdx = Number(m) - 1;
+  const nomeMes = MESES_COMPETENCIA_LABEL[mesIdx];
+  if (!nomeMes) return raw;
+  return `${nomeMes}/${y}`;
 }
 
 export function formatDataBr(data) {
@@ -288,10 +321,11 @@ export function dataVencimentoNaCompetencia(competencia, diaVencimento = 10) {
 }
 
 export function formatCicloAgefinCompetencia(competencia, diaVencimento = 10) {
-  const fim = ultimoDiaCompetencia(competencia);
   const venc = dataVencimentoNaCompetencia(competencia, diaVencimento);
-  if (!fim || !venc) return '';
-  return `Competência ${formatDataBr(fim)} · Vence ${formatDataBr(venc)}`;
+  const periodo = formatCompetenciaLabel(competencia);
+  if (!periodo) return '';
+  if (!venc) return periodo;
+  return `${periodo} · Vence ${formatDataBr(venc)}`;
 }
 
 export function formatCurrency(value) {
@@ -346,6 +380,8 @@ export function criarCompetenciaPlanejada(modelo, competencia) {
     categoria_nome: modelo.categoria_nome,
     centro_custo: modelo.centro_custo,
     competencia,
+    frequencia: normalizarFrequenciaSerie(modelo.frequencia),
+    mes_vencimento: Math.min(12, Math.max(1, Number(modelo.mes_vencimento) || 1)),
     dia_vencimento: dia,
     valor_previsto: Number(modelo.valor_previsto) || 0,
     valor_real: null,
@@ -368,6 +404,8 @@ export function competenciaFromLancamento(lf, modelo, competencia) {
     categoria_nome: lf.categoria || modelo?.categoria_nome,
     centro_custo: modelo?.centro_custo,
     competencia,
+    frequencia: normalizarFrequenciaSerie(modelo?.frequencia || lf.frequencia_recorrencia),
+    mes_vencimento: Math.min(12, Math.max(1, Number(modelo?.mes_vencimento) || 1)),
     dia_vencimento: dia,
     valor_previsto: Number(modelo?.valor_previsto) || Number(lf.valor) || 0,
     valor_real: Number(lf.valor) || 0,
@@ -391,7 +429,7 @@ export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes 
     if (gid) lfByGrupo[gid] = lf;
   }
 
-  for (const modelo of modelos || []) {
+  for (const modelo of (modelos || []).filter((m) => m?.ativo !== false)) {
     if (!serieDeveAparecerNaCompetencia(modelo, competenciaMes)) continue;
     const lf = modelo.grupo_lancamento_id ? lfByGrupo[modelo.grupo_lancamento_id] : null;
     if (lf) {
@@ -637,6 +675,7 @@ export function calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos =
 }
 
 export function criarSerieComDefaults(partial = {}) {
+  const frequencia = normalizarFrequenciaSerie(partial.frequencia || FREQUENCIA_SERIE.MENSAL);
   return {
     id: partial.id || gerarSerieId(),
     nome: partial.nome || '',
@@ -647,8 +686,8 @@ export function criarSerieComDefaults(partial = {}) {
     centro_custo: partial.centro_custo || '',
     valor_previsto: Number(partial.valor_previsto) || 0,
     dia_vencimento: Number(partial.dia_vencimento) || 10,
-    frequencia: partial.frequencia || FREQUENCIA_SERIE.MENSAL,
-    mes_vencimento: Number(partial.mes_vencimento) || new Date().getMonth() + 1,
+    frequencia,
+    mes_vencimento: Math.min(12, Math.max(1, Number(partial.mes_vencimento) || new Date().getMonth() + 1)),
     grupo_lancamento_id: partial.grupo_lancamento_id || gerarGrupoLancamentoId(),
     ativo: partial.ativo !== false,
     situacao: partial.situacao || SITUACAO_SERIE.ATIVA,

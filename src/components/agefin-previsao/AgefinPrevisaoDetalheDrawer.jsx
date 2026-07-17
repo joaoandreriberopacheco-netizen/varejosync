@@ -7,7 +7,9 @@ import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import {
   formatCurrency,
   formatCicloAgefinCompetencia,
+  formatCompetenciaLabel,
   statusCompetenciaEfetivo,
+  tagFrequenciaSerie,
   competenciaEstaFechada,
   isCompetenciaPlanejamento,
   valorEfetivoCompetencia,
@@ -67,6 +69,7 @@ export default function AgefinPrevisaoDetalheDrawer({
   const vencimentoMudou = (vencimentoInput || '').slice(0, 10) !== venOriginal;
   const podeEditar = !fechada;
   const temAlteracao = podeEditar && valorNumerico > 0 && (valorMudou || vencimentoMudou);
+  const tagFreq = tagFrequenciaSerie(modelo || competencia);
 
   const handleSalvar = () => {
     if (!temAlteracao || salvandoManual) return;
@@ -83,7 +86,8 @@ export default function AgefinPrevisaoDetalheDrawer({
         <DrawerHeader className="border-b border-border/40 pb-3">
           <DrawerTitle className="flex flex-wrap items-center gap-2">
             <span>{competencia.serie_nome}</span>
-            <Badge variant="outline">{competencia.competencia}</Badge>
+            <Badge variant="outline">{formatCompetenciaLabel(competencia.competencia)}</Badge>
+            {tagFreq && <Badge variant="secondary">{tagFreq}</Badge>}
             {statusEfetivo === 'planejamento' && (
               <span className="inline-flex items-center gap-0.5">
                 <Badge variant="secondary">Planejamento</Badge>

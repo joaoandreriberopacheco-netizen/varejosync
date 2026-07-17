@@ -32,7 +32,6 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   calcularTotaisGrupo,
   formatCompetenciaLabel,
-  formatCicloAgefinCompetencia,
   getCompetenciaAtual,
   mapaModelosPorId,
   montarCompetenciasVisao,
@@ -453,7 +452,7 @@ export default function PlanejamentoFinanceiroPage() {
             count={totaisGrupo.count}
             countPlanejamento={qtdPlanejamento}
             mesFuturo={mesFuturo}
-            competenciaLabel={`${formatCompetenciaLabel(competenciaMes)} · ${formatCicloAgefinCompetencia(competenciaMes)}`}
+            competenciaLabel={formatCompetenciaLabel(competenciaMes)}
           />
 
           <AgefinPrevisaoFiltros

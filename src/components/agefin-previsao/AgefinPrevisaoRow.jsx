@@ -9,6 +9,7 @@ import {
   formatCicloAgefinCompetencia,
   isCompetenciaPlanejamento,
   statusCompetenciaEfetivo,
+  tagFrequenciaSerie,
   valorEfetivoCompetencia,
   SITUACAO_SERIE,
 } from '@/lib/agefinPrevisaoCalculos';
@@ -33,10 +34,12 @@ export default function AgefinPrevisaoRow({ competencia, modelo, onClick, stripe
   const statusEfetivo = statusCompetenciaEfetivo(competencia);
   const planejamento = isCompetenciaPlanejamento(competencia);
   const dia = modelo?.dia_vencimento || competencia.dia_vencimento || 10;
+  const tagFreq = tagFrequenciaSerie(modelo || competencia);
 
   const meta = (
     <>
       {competencia.terceiro_nome && <span>{competencia.terceiro_nome}</span>}
+      {tagFreq && <P38StatusLabel tone="muted">{tagFreq}</P38StatusLabel>}
       {planejamento ? (
         <P38StatusLabel tone="info">Planejamento</P38StatusLabel>
       ) : (

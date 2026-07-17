@@ -268,7 +268,7 @@ function payloadLancamentoAuto(modelo, competencia) {
     observacoes: `Competência ${competencia} — aberta pelo planejamento financeiro.`,
     tags: ['conta_pagar', 'recorrente', TAG_LF_GERADO_AUTO, 'agefin_previsao'],
     is_recorrente: true,
-    frequencia_recorrencia: modelo.frequencia || 'Mensal',
+    frequencia_recorrencia: normalizarFrequenciaSerie(modelo.frequencia),
     grupo_lancamento_id: modelo.grupo_lancamento_id,
   };
 }
