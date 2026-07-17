@@ -47,7 +47,7 @@ export default function CatalogTagPrintDialog({
 
     setIsGenerating(true);
     try {
-      const blob = generateCatalogTagsPdf({
+      const blob = await generateCatalogTagsPdf({
         products: sortedProducts,
         filtrosResumo: filtersSummary,
       });
