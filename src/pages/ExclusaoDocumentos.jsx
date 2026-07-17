@@ -11,6 +11,7 @@ import { P38MobileLine, P38MobileLineList, p38AccentKeyFromTone } from '@/compon
 const TIPOS = [
   { value: 'PedidoVenda', label: 'Pedido de Venda', icon: ShoppingCart, cor: 'emerald' },
   { value: 'PedidoCompra', label: 'Pedido de Compra', icon: Package, cor: 'blue' },
+  { value: 'ConsumoInterno', label: 'Consumo Interno', icon: ShoppingCart, cor: 'amber' },
   { value: 'LancamentoFinanceiro', label: 'Lançamento Financeiro', icon: DollarSign, cor: 'purple' },
   { value: 'MovimentacaoEstoque', label: 'Movimentação de Estoque', icon: FileText, cor: 'amber' },
   { value: 'MovimentosCaixaReforco', label: 'Reforço de Caixa', icon: Plus, cor: 'emerald' },
@@ -46,6 +47,15 @@ async function buscarFilhos(tipo, doc) {
     ]);
     lancamentos.forEach(l => filhos.push({ tipo: 'LancamentoFinanceiro', label: `Lançamento: ${l.descricao}`, id: l.id }));
     movEst.forEach(m => filhos.push({ tipo: 'MovimentacaoEstoque', label: `Mov. Estoque: ${m.produto_nome}`, id: m.id }));
+  }
+
+  if (tipo === 'ConsumoInterno') {
+    const [movEst, anexos] = await Promise.all([
+      base44.entities.MovimentacaoEstoque.filter({ referencia_tipo: 'ConsumoInterno', referencia_id: doc.id }),
+      base44.entities.AnexoDocumento.filter({ referencia_tipo: 'Outro', referencia_id: doc.id }),
+    ]);
+    movEst.forEach((m) => filhos.push({ tipo: 'MovimentacaoEstoque', label: `Mov. Estoque: ${m.produto_nome}`, id: m.id }));
+    anexos.forEach((a) => filhos.push({ tipo: 'AnexoDocumento', label: `Anexo: ${a.nome_arquivo || a.descricao || a.id?.slice(0, 8)}`, id: a.id }));
   }
 
   if (tipo === 'Embarque') {
@@ -107,6 +117,7 @@ export default function ExclusaoDocumentosPage() {
 
       if (tipoSelecionado === 'PedidoVenda') docs = await base44.entities.PedidoVenda.list();
       else if (tipoSelecionado === 'PedidoCompra') docs = await base44.entities.PedidoCompra.list();
+      else if (tipoSelecionado === 'ConsumoInterno') docs = await base44.entities.ConsumoInterno.list();
       else if (tipoSelecionado === 'LancamentoFinanceiro') docs = await base44.entities.LancamentoFinanceiro.list();
       else if (tipoSelecionado === 'MovimentacaoEstoque') docs = await base44.entities.MovimentacaoEstoque.list();
       else if (tipoSelecionado === 'MovimentosCaixaReforco') docs = (await base44.entities.MovimentosCaixa.list()).filter(d => d.tipo === 'Reforço');
