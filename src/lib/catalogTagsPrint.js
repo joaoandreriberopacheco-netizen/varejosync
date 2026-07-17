@@ -13,6 +13,9 @@ const GRID_WIDTH_MM = COLUMNS * CATALOG_TAG_WIDTH_MM;
 const GRID_HEIGHT_MM = ROWS * CATALOG_TAG_HEIGHT_MM;
 const START_X_MM = (A4_WIDTH_MM - GRID_WIDTH_MM) / 2;
 const START_Y_MM = (A4_HEIGHT_MM - GRID_HEIGHT_MM) / 2;
+const CATEGORY_MARKER_X_MM = START_X_MM - 2.8;
+const CATEGORY_LABEL_X_MM = 2.5;
+const CATEGORY_LABEL_MAX_WIDTH_MM = Math.max(8, START_X_MM - CATEGORY_LABEL_X_MM - 4.5);
 
 export const getCatalogTagCode = (produto) => {
   const codigo = produto?.codigo_interno || produto?.codigo_barras || '';
@@ -55,6 +58,62 @@ const normalizePdfText = (value) =>
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/\u2026/g, '...');
+
+const categoryMarkerKey = (produto) => getCatalogTagCategory(produto).toLocaleLowerCase('pt-BR');
+
+function buildPageCategoryMarkers(pageProducts = []) {
+  if (!pageProducts.length) return [];
+
+  const markers = [];
+  let startSlot = 0;
+  let currentKey = categoryMarkerKey(pageProducts[0]);
+  let currentLabel = getCatalogTagCategory(pageProducts[0]) || 'Sem categoria';
+
+  for (let slot = 1; slot < pageProducts.length; slot += 1) {
+    const nextKey = categoryMarkerKey(pageProducts[slot]);
+    if (nextKey === currentKey) continue;
+
+    markers.push({
+      label: currentLabel,
+      rowStart: Math.floor(startSlot / COLUMNS),
+      rowEnd: Math.floor((slot - 1) / COLUMNS),
+    });
+    startSlot = slot;
+    currentKey = nextKey;
+    currentLabel = getCatalogTagCategory(pageProducts[slot]) || 'Sem categoria';
+  }
+
+  markers.push({
+    label: currentLabel,
+    rowStart: Math.floor(startSlot / COLUMNS),
+    rowEnd: Math.floor((pageProducts.length - 1) / COLUMNS),
+  });
+
+  return markers;
+}
+
+function drawCategoryMarginMarker(doc, marker) {
+  const yTop = START_Y_MM + marker.rowStart * CATALOG_TAG_HEIGHT_MM + 0.9;
+  const yBottom = START_Y_MM + (marker.rowEnd + 1) * CATALOG_TAG_HEIGHT_MM - 0.9;
+  const label = normalizePdfText(marker.label || 'Sem categoria').toUpperCase();
+
+  doc.setDrawColor(74, 82, 64);
+  doc.setLineWidth(0.7);
+  doc.line(CATEGORY_MARKER_X_MM, yTop, CATEGORY_MARKER_X_MM, yBottom);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(74, 82, 64);
+  const labelLines = doc
+    .splitTextToSize(label, CATEGORY_LABEL_MAX_WIDTH_MM)
+    .slice(0, 3);
+  const labelStartY = Math.max(yTop + 1.8, yBottom - labelLines.length * 2.45 - 0.8);
+  labelLines.forEach((line, index) => {
+    doc.text(String(line), CATEGORY_LABEL_X_MM, labelStartY + index * 2.45, {
+      align: 'left',
+    });
+  });
+}
 
 function fitDescription(doc, description, maxWidth) {
   let fontSize = 10.5;
@@ -152,19 +211,24 @@ export function generateCatalogTagsPdf({ products = [], filtrosResumo = '' } = {
     creator: 'P38 ERP',
   });
 
-  sortedProducts.forEach((produto, index) => {
-    if (index > 0 && index % CATALOG_TAGS_PER_PAGE === 0) {
+  for (let pageStart = 0; pageStart < sortedProducts.length; pageStart += CATALOG_TAGS_PER_PAGE) {
+    if (pageStart > 0) {
       doc.addPage('a4', 'portrait');
     }
 
-    const pageIndex = index % CATALOG_TAGS_PER_PAGE;
-    const column = pageIndex % COLUMNS;
-    const row = Math.floor(pageIndex / COLUMNS);
-    const x = START_X_MM + column * CATALOG_TAG_WIDTH_MM;
-    const y = START_Y_MM + row * CATALOG_TAG_HEIGHT_MM;
-    drawCatalogTagCutLines(doc, x, y, row, column);
-    drawCatalogTag(doc, produto, x, y);
-  });
+    const pageProducts = sortedProducts.slice(pageStart, pageStart + CATALOG_TAGS_PER_PAGE);
+    const pageMarkers = buildPageCategoryMarkers(pageProducts);
+    pageMarkers.forEach((marker) => drawCategoryMarginMarker(doc, marker));
+
+    pageProducts.forEach((produto, pageIndex) => {
+      const column = pageIndex % COLUMNS;
+      const row = Math.floor(pageIndex / COLUMNS);
+      const x = START_X_MM + column * CATALOG_TAG_WIDTH_MM;
+      const y = START_Y_MM + row * CATALOG_TAG_HEIGHT_MM;
+      drawCatalogTagCutLines(doc, x, y, row, column);
+      drawCatalogTag(doc, produto, x, y);
+    });
+  }
 
   return doc.output('blob');
 }
