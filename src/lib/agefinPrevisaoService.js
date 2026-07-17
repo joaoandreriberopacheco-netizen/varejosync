@@ -406,6 +406,17 @@ export async function abrirCompetenciasDoMes(competencia) {
   return { criados, pulados };
 }
 
+/** Abre só uma conta fixa no mês (sem abrir as demais). */
+export async function abrirCompetenciaSerie(modelo, competencia) {
+  if (!modelo?.id) throw new Error('Conta não encontrada.');
+  if (!serieDeveAparecerNaCompetencia(modelo, competencia)) {
+    throw new Error('Esta conta não entra neste mês.');
+  }
+  const existente = await buscarLancamentoMes(modelo, competencia);
+  if (existente) return existente;
+  return base44.entities.LancamentoFinanceiro.create(payloadLancamentoAuto(modelo, competencia));
+}
+
 export async function desfazerAberturaCompetenciasDoMes(competencia) {
   const modelos = await listarModelos();
   const removidas = [];

@@ -195,7 +195,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                     {parcela
                       ? 'Ajuste valor e vencimento desta parcela.'
                       : planejamento
-                        ? 'Ajuste valor e vencimento antes de abrir o mês. Toque em Salvar para gravar no cadastro.'
+                        ? 'Ajuste valor e vencimento antes de abrir o mês. Salvar grava no cadastro; Anexar guarda o PDF como referência.'
                         : 'Digite valor e vencimento manualmente. O boleto (se houver) é só anexo de referência.'}
                   </p>
                 </>
@@ -261,10 +261,15 @@ export default function AgefinPrevisaoDetalheDrawer({
                 {abrindoMes ? 'Abrindo…' : 'Abrir esta conta no mês'}
               </Button>
             )}
-            {!planejamento && !fechada && !parcela && onVincularBoleto && (
-              <Button variant="outline" className="w-full gap-2" onClick={onVincularBoleto}>
+            {!fechada && !parcela && onVincularBoleto && (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={onVincularBoleto}
+                disabled={abrindoMes}
+              >
                 <FileText className="h-4 w-4" />
-                Vincular boleto (PDF)
+                {abrindoMes ? 'A preparar anexo…' : 'Anexar boleto (PDF)'}
               </Button>
             )}
             {!planejamento && !fechada && !parcela && onSyncFinanceiro && (
