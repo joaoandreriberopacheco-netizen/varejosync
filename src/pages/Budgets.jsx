@@ -19,7 +19,7 @@ import { P38_CHIP_INACTIVE, P38_FIELD_SURFACE } from '@/components/financeiro/fl
 import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import BudgetPrevisaoResumo from '@/components/budget-previsao/BudgetPrevisaoResumo';
-import BudgetPrevisaoLista from '@/components/budget-previsao/BudgetPrevisaoLista';
+import BudgetAcompanhamentoTabela from '@/components/budget-previsao/BudgetAcompanhamentoTabela';
 import BudgetPrevisaoFiltros from '@/components/budget-previsao/BudgetPrevisaoFiltros';
 import BudgetPrevisaoDetalheDrawer from '@/components/budget-previsao/BudgetPrevisaoDetalheDrawer';
 import BudgetModeloRow from '@/components/budget-previsao/BudgetModeloRow';
@@ -493,7 +493,11 @@ export default function BudgetsPage() {
             }
             vazioIcon={Target}
           >
-            <BudgetPrevisaoLista visoes={visoesFiltradas} onOpen={setSelectedVisao} />
+            <BudgetAcompanhamentoTabela
+              visoes={visoesFiltradas}
+              totais={totais}
+              onOpen={setSelectedVisao}
+            />
           </FinanceiroListaEstado>
         </TabsContent>
 
