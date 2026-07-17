@@ -194,13 +194,10 @@ export default function AgefinPrevisaoDetalheDrawer({
                   <p className="text-xs text-muted-foreground">
                     {parcela
                       ? 'Ajuste valor e vencimento desta parcela.'
-                      : 'Digite valor e vencimento manualmente. O boleto (se houver) é só anexo de referência.'}
+                      : planejamento
+                        ? 'Ajuste valor e vencimento antes de abrir o mês. Toque em Salvar para gravar no cadastro.'
+                        : 'Digite valor e vencimento manualmente. O boleto (se houver) é só anexo de referência.'}
                   </p>
-                  {temAlteracao && (
-                    <Button className="w-full" onClick={handleSalvar} disabled={salvandoManual}>
-                      {salvandoManual ? 'Guardando...' : 'Guardar valor e vencimento'}
-                    </Button>
-                  )}
                 </>
               ) : (
                 <>
@@ -227,6 +224,16 @@ export default function AgefinPrevisaoDetalheDrawer({
           )}
 
           <div className="mt-6 flex flex-col gap-2">
+            {!fantasma && podeEditar && (onSalvarManual || (parcela && onSalvarParcela)) && (
+              <Button
+                className="w-full"
+                variant={temAlteracao ? 'default' : 'outline'}
+                onClick={handleSalvar}
+                disabled={!temAlteracao || salvandoManual || valorNumerico <= 0}
+              >
+                {salvandoManual ? 'Salvando…' : 'Salvar'}
+              </Button>
+            )}
             {!fantasma && !parcela && podeEditar && onParcelar && (
               <Button variant="outline" className="w-full gap-2" onClick={onParcelar}>
                 <SplitSquareHorizontal className="h-4 w-4" />
@@ -244,9 +251,14 @@ export default function AgefinPrevisaoDetalheDrawer({
                 {removendoParcelamento ? 'A desfazer...' : 'Desfazer parcelamento'}
               </Button>
             )}
-            {planejamento && !parcela && (
-              <Button className="w-full gap-2" onClick={onAbrirMes} disabled={abrindoMes}>
-                Abrir esta conta no mês
+            {planejamento && !parcela && onAbrirMes && (
+              <Button
+                variant="secondary"
+                className="w-full gap-2"
+                onClick={onAbrirMes}
+                disabled={abrindoMes}
+              >
+                {abrindoMes ? 'Abrindo…' : 'Abrir esta conta no mês'}
               </Button>
             )}
             {!planejamento && !fechada && !parcela && onVincularBoleto && (
