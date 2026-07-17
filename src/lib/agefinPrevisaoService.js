@@ -12,6 +12,7 @@ import {
   criarSerieComDefaults,
   dataVencimentoNaCompetencia,
   gerarGrupoLancamentoId,
+  normalizarFrequenciaSerie,
   serieDeveAparecerNaCompetencia,
   serieEstaAtivaNaCompetencia,
 } from '@/lib/agefinPrevisaoCalculos';
