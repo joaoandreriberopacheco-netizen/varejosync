@@ -79,7 +79,7 @@ export default function BudgetsPage() {
   const [filtroCadastroAtivo, setFiltroCadastroAtivo] = useState('ativos');
   const [fabOpen, setFabOpen] = useState(false);
 
-  const abaInicial = searchParams.get('aba') || 'acompanhamento';
+  const abaInicial = searchParams.get('aba') || 'cadastro';
   const [aba, setAba] = useState(abaInicial);
 
   useEffect(() => {
@@ -297,20 +297,20 @@ export default function BudgetsPage() {
           )}
         >
           <TabsTrigger
-            value="acompanhamento"
-            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-2 md:flex-1 md:min-w-[120px]"
-          >
-            <CalendarClock className="w-4 h-4 shrink-0" />
-            <span className="text-xs truncate md:hidden">Mês</span>
-            <span className="hidden md:inline text-sm">Acompanhamento</span>
-          </TabsTrigger>
-          <TabsTrigger
             value="cadastro"
             className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-2 md:flex-1 md:min-w-[120px]"
           >
             <LayoutList className="w-4 h-4 shrink-0" />
             <span className="text-xs truncate md:hidden">Lista</span>
             <span className="hidden md:inline text-sm">Cadastro</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="acompanhamento"
+            className="gap-1.5 rounded-lg py-2 min-h-[40px] min-w-0 px-2 md:flex-1 md:min-w-[120px]"
+          >
+            <CalendarClock className="w-4 h-4 shrink-0" />
+            <span className="text-xs truncate md:hidden">Mês</span>
+            <span className="hidden md:inline text-sm">Acompanhamento</span>
           </TabsTrigger>
           <TabsTrigger
             value="plano"
@@ -321,45 +321,6 @@ export default function BudgetsPage() {
             <span className="hidden md:inline text-sm">Plano completo</span>
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="acompanhamento" className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className={cn('w-full sm:w-auto flex items-center justify-between gap-1 rounded-xl px-1', P38_FIELD_SURFACE)}>
-              <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, -1))}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium px-2 tabular-nums">{competenciaLabel}</span>
-              <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, 1))}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <BudgetPrevisaoResumo totais={totais} competenciaLabel={competenciaLabel} />
-
-          <BudgetPrevisaoFiltros
-            busca={filtroBusca}
-            onBuscaChange={setFiltroBusca}
-            centro={filtroCentro}
-            onCentroChange={setFiltroCentro}
-            centrosRegistrados={centrosRegistrados}
-            situacao={filtroSituacao}
-            onSituacaoChange={setFiltroSituacao}
-          />
-
-          <FinanceiroListaEstado
-            loading={loadingModelos || loadingLanc}
-            vazio={!loadingModelos && visoesFiltradas.length === 0}
-            vazioMensagem={
-              modelos.filter((m) => m.ativo !== false).length === 0
-                ? 'Nenhum budget cadastrado. Crie o primeiro na aba Cadastro.'
-                : 'Nenhum budget encontrado com estes filtros.'
-            }
-            vazioIcon={Target}
-          >
-            <BudgetPrevisaoLista visoes={visoesFiltradas} onOpen={setSelectedVisao} />
-          </FinanceiroListaEstado>
-        </TabsContent>
 
         <TabsContent value="cadastro" className="mt-4 space-y-3">
           <div className={cn('relative rounded-xl', P38_FIELD_SURFACE)}>
@@ -405,6 +366,45 @@ export default function BudgetsPage() {
                 />
               ))}
             </P38MobileLineList>
+          </FinanceiroListaEstado>
+        </TabsContent>
+
+        <TabsContent value="acompanhamento" className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className={cn('w-full sm:w-auto flex items-center justify-between gap-1 rounded-xl px-1', P38_FIELD_SURFACE)}>
+              <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, -1))}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium px-2 tabular-nums">{competenciaLabel}</span>
+              <Button variant="ghost" size="icon" onClick={() => setCompetenciaMes(shiftCompetencia(competenciaMes, 1))}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          <BudgetPrevisaoResumo totais={totais} competenciaLabel={competenciaLabel} />
+
+          <BudgetPrevisaoFiltros
+            busca={filtroBusca}
+            onBuscaChange={setFiltroBusca}
+            centro={filtroCentro}
+            onCentroChange={setFiltroCentro}
+            centrosRegistrados={centrosRegistrados}
+            situacao={filtroSituacao}
+            onSituacaoChange={setFiltroSituacao}
+          />
+
+          <FinanceiroListaEstado
+            loading={loadingModelos || loadingLanc}
+            vazio={!loadingModelos && visoesFiltradas.length === 0}
+            vazioMensagem={
+              modelos.filter((m) => m.ativo !== false).length === 0
+                ? 'Nenhum budget cadastrado. Crie o primeiro na aba Lista.'
+                : 'Nenhum budget encontrado com estes filtros.'
+            }
+            vazioIcon={Target}
+          >
+            <BudgetPrevisaoLista visoes={visoesFiltradas} onOpen={setSelectedVisao} />
           </FinanceiroListaEstado>
         </TabsContent>
 
