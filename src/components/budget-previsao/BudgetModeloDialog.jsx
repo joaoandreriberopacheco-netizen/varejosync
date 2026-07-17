@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import {
   shiftCompetencia,
   diasCalendarioMes,
   diasUteisMes,
+  gerarIdInterno,
 } from '@/lib/budgetCalculos';
 
 export default function BudgetModeloDialog({
@@ -37,6 +38,18 @@ export default function BudgetModeloDialog({
   onSave,
   saving,
 }) {
+  const draftIdRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) {
+      draftIdRef.current = null;
+      return;
+    }
+    if (!modelo?.id) {
+      draftIdRef.current = draftIdRef.current || gerarIdInterno('bdg-mod');
+    }
+  }, [open, modelo?.id]);
+
   const [form, setForm] = useState({
     nome: '',
     categoria_id: '',
@@ -107,9 +120,13 @@ export default function BudgetModeloDialog({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (saving) return;
+    const id = modelo?.id || draftIdRef.current;
+    if (!id) return;
     onSave?.({
       ...modelo,
       ...form,
+      id,
       valor_entrada: parseFloat(form.valor_entrada) || 0,
       ciclo_dias: parseInt(form.ciclo_dias, 10) || 0,
     });
@@ -119,12 +136,13 @@ export default function BudgetModeloDialog({
   const diasUteis = diasUteisMes(competenciaAtual);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
+    <Dialog open={open} onOpenChange={(v) => !saving && !v && onClose?.()}>
       <DialogContent className="max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{modelo?.id ? 'Editar budget' : 'Novo budget'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <fieldset disabled={saving} className="space-y-4 disabled:opacity-70">
           <div>
             <Label>Nome *</Label>
             <Input
@@ -279,13 +297,14 @@ export default function BudgetModeloDialog({
             <span className="text-sm">Budget ativo</span>
             <Switch checked={form.ativo} onCheckedChange={(v) => setForm((f) => ({ ...f, ativo: v }))} />
           </label>
+          </fieldset>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onClose?.()}>
+            <Button type="button" variant="outline" onClick={() => onClose?.()} disabled={saving}>
               Cancelar
             </Button>
             <Button type="submit" disabled={saving || !form.nome.trim() || !form.categoria_id}>
-              {saving ? 'Salvando…' : 'Salvar'}
+              {saving ? 'Processando…' : 'Salvar'}
             </Button>
           </DialogFooter>
         </form>
