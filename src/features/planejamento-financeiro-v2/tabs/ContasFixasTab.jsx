@@ -48,16 +48,18 @@ export default function ContasFixasTab({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="start">
-          <p className="font-medium text-foreground">Blocos por recorrência</p>
+          <p className="font-medium text-foreground">Cadastro de templates recorrentes</p>
           <p className="text-muted-foreground">
-            As contas aparecem em blocos: <strong className="text-foreground">Mensal</strong>,{' '}
-            <strong className="text-foreground">Bimestral</strong>, <strong className="text-foreground">Trimestral</strong>,{' '}
-            <strong className="text-foreground">Semestral</strong> e <strong className="text-foreground">Anual</strong> — só
-            o bloco que tiver contas cadastradas.
+            Aqui cadastra-se o <strong className="text-foreground">modelo</strong> das contas que se renovam:
+            energia, telefone, aluguel, etc. — com frequência mensal, bimestral, trimestral, semestral ou anual.
           </p>
           <p className="text-muted-foreground mt-2">
-            Use o organizador para agrupar por dia de vencimento ou por centro de custo. Arrastar entre centros funciona no
-            modo &quot;Centro de custo&quot;.
+            Fretes e despesas avulsas <strong className="text-foreground">não entram aqui</strong>; aparecem na
+            AGEFIN Consulta conforme o vencimento de cada lançamento no financeiro.
+          </p>
+          <p className="text-muted-foreground mt-2">
+            Ao salvar um template, o sistema cria ou atualiza os lançamentos em aberto no financeiro — é essa
+            base que a AGEFIN lê.
           </p>
         </P38HelpPopover>
         <AgefinConsultaOrganizer
@@ -72,7 +74,7 @@ export default function ContasFixasTab({
       <FinanceiroListaEstado
         loading={loading}
         vazio={!loading && seriesAtivas.length === 0}
-        vazioMensagem="Nenhuma conta fixa cadastrada."
+        vazioMensagem="Nenhum template de conta recorrente cadastrado."
         vazioIcon={Repeat2}
       >
         <AgefinContasFixasGrupos

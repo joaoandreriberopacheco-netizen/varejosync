@@ -29,7 +29,7 @@ import {
   listarLancamentosRecorrentesCache,
   listarLancamentosVencimentoCompetenciaCache,
 } from '@/lib/lancamentoFinanceiroCache';
-import { filtrarLancamentosPlanejamento, grupoLancamentosPareceContaFixa } from '@/lib/agefinConsultaData';
+import { filtrarLancamentosPlanejamento, grupoLancamentosTemFrequenciaRenovavel, lancamentoEntraEmContasFixas } from '@/lib/agefinConsultaData';
 import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
 
 export { listarCentrosCustoRegistros };
@@ -427,7 +427,7 @@ export async function listarModelos() {
   return filtrarSeriesContasFixasValidas(merged, lancamentos, chavesExcluidas);
 }
 
-/** Remove séries importadas que eram fretes/avulsos já persistidas por engano. */
+/** Remove séries importadas que eram fretes/avulsos ou sem recorrência renovável. */
 function filtrarSeriesContasFixasValidas(series, lancamentos = [], chavesExcluidas = new Set()) {
   const porGrupo = new Map();
   for (const lf of lancamentos || []) {
@@ -439,12 +439,11 @@ function filtrarSeriesContasFixasValidas(series, lancamentos = [], chavesExcluid
 
   return (series || []).filter((s) => {
     if (serieEstaExcluida(s, chavesExcluidas)) return false;
-    const ehImportada =
-      String(s.id).startsWith('serie-import-') || String(s.id).startsWith('serie-agefin-');
-    if (!ehImportada) return s.ativo !== false;
+    const cadastroManual = !String(s.id).startsWith('serie-import-') && !String(s.id).startsWith('serie-agefin-');
+    if (cadastroManual) return s.ativo !== false;
     if (!s.grupo_lancamento_id) return false;
     const rows = porGrupo.get(s.grupo_lancamento_id) || [];
-    return grupoLancamentosPareceContaFixa(rows);
+    return grupoLancamentosTemFrequenciaRenovavel(rows);
   });
 }
 
@@ -602,7 +601,7 @@ function chaveGrupoSerie(lf) {
 function derivarSeriesDeLancamentos(lancamentos = []) {
   const byGrupo = new Map();
   for (const lf of lancamentos || []) {
-    if (!filtrarLancamentosPlanejamento([lf]).length) continue;
+    if (!lancamentoEntraEmContasFixas(lf)) continue;
     const gid = chaveGrupoSerie(lf);
     if (!byGrupo.has(gid)) byGrupo.set(gid, []);
     byGrupo.get(gid).push(lf);
@@ -610,7 +609,7 @@ function derivarSeriesDeLancamentos(lancamentos = []) {
 
   const series = [];
   for (const [gid, rows] of byGrupo) {
-    if (!grupoLancamentosPareceContaFixa(rows)) continue;
+    if (!grupoLancamentosTemFrequenciaRenovavel(rows)) continue;
     const sorted = [...rows].sort((a, b) =>
       (b.data_vencimento || '').localeCompare(a.data_vencimento || ''),
     );

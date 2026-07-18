@@ -1,6 +1,11 @@
 /**
- * Regras de leitura partilhadas com a página AGEFIN Consulta.
- * Fonte de verdade operacional: LancamentoFinanceiro (tag conta_pagar).
+ * Regras de leitura partilhadas entre AGEFIN Consulta e Planejamento financeiro.
+ * Fonte operacional: LancamentoFinanceiro (tag conta_pagar).
+ *
+ * Modelo de negócio:
+ * - AGEFIN Consulta: todas as contas a pagar por vencimento (inclui fretes).
+ * - Aba Contas fixas: cadastro de templates que renovam (mensal, bimestral, anual…).
+ * - Previsão do mês: pauta do mês a partir dos templates + lançamentos gerados (sem fretes).
  */
 import {
   lancamentoCancelado,
@@ -12,7 +17,6 @@ import {
 } from '@/lib/agefinConsultaFilters';
 import {
   lancamentoRecorrenteContaPagarParaListaBoleto,
-  mesReferenciaLancamento,
 } from '@/lib/agefinLancamentosRecorrencia';
 
 /** Mesmo critério da lista principal em AgefinConsulta.jsx */
@@ -39,19 +43,30 @@ export function lancamentoEntraNoPlanejamento(lf) {
 }
 
 /**
- * Cadastro de contas fixas: recorrentes explícitas ou mesmo grupo em 2+ meses.
- * Exclui fretes avulsos e lançamentos únicos com tag conta_pagar.
+ * Template de conta fixa: só séries com recorrência explícita no financeiro.
+ * Não infere recorrência por “apareceu em 2 meses” — isso misturava fretes/avulsos.
  */
 export function grupoLancamentosPareceContaFixa(rows = []) {
   if (!rows.length) return false;
   if (rows.some(lancamentoEhFreteItinerario)) return false;
-  if (rows.some(lancamentoRecorrenteContaPagarParaListaBoleto)) return true;
-  const meses = new Set(rows.map((l) => mesReferenciaLancamento(l)).filter(Boolean));
-  return meses.size >= 2;
+  return rows.some(lancamentoRecorrenteContaPagarParaListaBoleto);
 }
 
+/** Pelo menos um lançamento do grupo tem frequência ≠ Único (template renovável). */
+export function grupoLancamentosTemFrequenciaRenovavel(rows = []) {
+  if (!grupoLancamentosPareceContaFixa(rows)) return false;
+  return rows.some((lf) => {
+    const f = lf?.frequencia_recorrencia;
+    return f && f !== 'Único';
+  });
+}
+
+/** Lançamento que pode alimentar importação de template na aba Contas fixas. */
 export function lancamentoEntraEmContasFixas(lf) {
-  return lancamentoEntraNoPlanejamento(lf) && lancamentoRecorrenteContaPagarParaListaBoleto(lf);
+  if (!lancamentoEntraNoPlanejamento(lf)) return false;
+  if (!lancamentoRecorrenteContaPagarParaListaBoleto(lf)) return false;
+  const f = lf?.frequencia_recorrencia;
+  return Boolean(f && f !== 'Único');
 }
 
 export function filtrarLancamentosPautaAgefin(lancamentos = []) {

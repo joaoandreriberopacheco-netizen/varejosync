@@ -66,20 +66,24 @@ export default function PlanejamentoFinanceiroV2Page() {
         <div className="flex items-center gap-1.5">
           <h1 className="text-xl font-medium text-foreground">Planejamento financeiro (v2)</h1>
           <P38HelpPopover label="Ajuda: planejamento financeiro" side="bottom" align="start">
-            <p className="font-medium text-foreground">Editor da mesma base da AGEFIN</p>
+            <p className="font-medium text-foreground">Três papéis distintos</p>
             <p className="text-muted-foreground">
-              O Planejamento lê e grava nos mesmos lançamentos financeiros que alimentam a AGEFIN Consulta
-              (contas com tag <strong className="text-foreground">conta_pagar</strong>). É um editor inteligente:
-              cadastra a recorrência, abre o mês, ajusta valor/vencimento e projeta os próximos meses.
+              <strong className="text-foreground">AGEFIN Consulta</strong> lê todas as contas a pagar por
+              vencimento no financeiro — incluindo fretes e outras despesas avulsas.
             </p>
-            <p className="text-muted-foreground">
-              Ao salvar ou remover uma conta, a alteração vai para o financeiro (LancamentoFinanceiro) — a
-              mesma base que a AGEFIN Consulta lê. Remover cancela os lançamentos em aberto do grupo.
+            <p className="text-muted-foreground mt-2">
+              <strong className="text-foreground">Contas fixas</strong> é o cadastro de templates: contas que
+              renovam mensalmente, bimestralmente, anualmente, etc. Ao salvar, o sistema gera/atualiza os
+              lançamentos no financeiro (a mesma base que a AGEFIN lê).
+            </p>
+            <p className="text-muted-foreground mt-2">
+              <strong className="text-foreground">Previsão do mês</strong> mostra a pauta da competência a
+              partir desses templates e dos lançamentos já abertos — sem fretes (estes ficam só na AGEFIN).
             </p>
           </P38HelpPopover>
         </div>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Mesma base da AGEFIN — cadastro, previsão e projeção de contas fixas
+          Templates de contas recorrentes — a AGEFIN lê toda a pauta (incluindo fretes) por vencimento
         </p>
       </div>
 
