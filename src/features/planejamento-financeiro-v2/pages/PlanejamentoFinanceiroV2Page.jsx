@@ -72,9 +72,10 @@ export default function PlanejamentoFinanceiroV2Page() {
               vencimento no financeiro — incluindo fretes e outras despesas avulsas.
             </p>
             <p className="text-muted-foreground mt-2">
-              <strong className="text-foreground">Contas fixas</strong> é o cadastro de templates: contas que
-              renovam mensalmente, bimestralmente, anualmente, etc. Ao salvar, o sistema gera/atualiza os
-              lançamentos no financeiro (a mesma base que a AGEFIN lê).
+              <strong className="text-foreground">Contas fixas</strong> lista os lançamentos{' '}
+              <strong className="text-foreground">recorrentes</strong> do financeiro (chave:{' '}
+              <strong className="text-foreground">grupo_lancamento_id</strong>). Ao salvar, cria ou
+              atualiza esse lançamento recorrente — a mesma base que a AGEFIN lê por vencimento.
             </p>
             <p className="text-muted-foreground mt-2">
               <strong className="text-foreground">Previsão do mês</strong> mostra a pauta da competência a
@@ -83,7 +84,7 @@ export default function PlanejamentoFinanceiroV2Page() {
           </P38HelpPopover>
         </div>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Templates de contas recorrentes — a AGEFIN lê toda a pauta (incluindo fretes) por vencimento
+          Chave: lançamento recorrente no financeiro — a AGEFIN lê toda a pauta por vencimento
         </p>
       </div>
 

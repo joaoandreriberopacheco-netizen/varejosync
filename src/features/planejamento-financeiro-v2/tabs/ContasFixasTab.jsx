@@ -48,18 +48,14 @@ export default function ContasFixasTab({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="start">
-          <p className="font-medium text-foreground">Cadastro de templates recorrentes</p>
+          <p className="font-medium text-foreground">Lançamento recorrente = chave</p>
           <p className="text-muted-foreground">
-            Aqui cadastra-se o <strong className="text-foreground">modelo</strong> das contas que se renovam:
-            energia, telefone, aluguel, etc. — com frequência mensal, bimestral, trimestral, semestral ou anual.
+            Cada conta fixa é um <strong className="text-foreground">grupo de lançamentos recorrentes</strong>{' '}
+            no financeiro (energia, telefone, aluguel…). A frequência — mensal, bimestral, anual — vem do
+            próprio lançamento.
           </p>
           <p className="text-muted-foreground mt-2">
-            Fretes e despesas avulsas <strong className="text-foreground">não entram aqui</strong>; aparecem na
-            AGEFIN Consulta conforme o vencimento de cada lançamento no financeiro.
-          </p>
-          <p className="text-muted-foreground mt-2">
-            Ao salvar um template, o sistema cria ou atualiza os lançamentos em aberto no financeiro — é essa
-            base que a AGEFIN lê.
+            Fretes e despesas avulsas não entram aqui; aparecem na AGEFIN Consulta conforme o vencimento.
           </p>
         </P38HelpPopover>
         <AgefinConsultaOrganizer

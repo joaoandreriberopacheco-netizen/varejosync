@@ -4,7 +4,7 @@
  *
  * Modelo de negócio:
  * - AGEFIN Consulta: todas as contas a pagar por vencimento (inclui fretes).
- * - Aba Contas fixas: cadastro de templates que renovam (mensal, bimestral, anual…).
+ * - Aba Contas fixas: chave = LancamentoFinanceiro recorrente (grupo_lancamento_id).
  * - Previsão do mês: pauta do mês a partir dos templates + lançamentos gerados (sem fretes).
  */
 import {
@@ -61,12 +61,9 @@ export function grupoLancamentosTemFrequenciaRenovavel(rows = []) {
   });
 }
 
-/** Lançamento que pode alimentar importação de template na aba Contas fixas. */
+/** Lançamento recorrente elegível para a aba Contas fixas (chave = grupo no financeiro). */
 export function lancamentoEntraEmContasFixas(lf) {
-  if (!lancamentoEntraNoPlanejamento(lf)) return false;
-  if (!lancamentoRecorrenteContaPagarParaListaBoleto(lf)) return false;
-  const f = lf?.frequencia_recorrencia;
-  return Boolean(f && f !== 'Único');
+  return lancamentoEntraNoPlanejamento(lf) && lancamentoRecorrenteContaPagarParaListaBoleto(lf);
 }
 
 export function filtrarLancamentosPautaAgefin(lancamentos = []) {

@@ -29,7 +29,11 @@ import {
   listarLancamentosRecorrentesCache,
   listarLancamentosVencimentoCompetenciaCache,
 } from '@/lib/lancamentoFinanceiroCache';
-import { filtrarLancamentosPlanejamento, grupoLancamentosTemFrequenciaRenovavel, lancamentoEntraEmContasFixas } from '@/lib/agefinConsultaData';
+import {
+  filtrarLancamentosPlanejamento,
+  grupoLancamentosPareceContaFixa,
+  lancamentoEntraEmContasFixas,
+} from '@/lib/agefinConsultaData';
 import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
 
 export { listarCentrosCustoRegistros };
@@ -150,9 +154,106 @@ function mesclarSeriesPorId(...listas) {
 }
 
 function prioridadeSerieId(id = '') {
+  if (String(id).startsWith('serie-lf-')) return 10;
   if (String(id).startsWith('serie-recuperada-')) return 1;
   if (String(id).startsWith('serie-import-') || String(id).startsWith('serie-agefin-')) return 2;
-  return 10;
+  return 5;
+}
+
+/** ID estável da série — derivado do grupo recorrente no LancamentoFinanceiro. */
+export function serieIdFromGrupoLancamento(grupoId) {
+  if (!grupoId) return undefined;
+  return `serie-lf-${grupoId}`;
+}
+
+function agruparLancamentosPorGrupo(lancamentos = []) {
+  const map = new Map();
+  for (const lf of lancamentos || []) {
+    const gid = lf?.grupo_lancamento_id;
+    if (!gid) continue;
+    if (!map.has(gid)) map.set(gid, []);
+    map.get(gid).push(lf);
+  }
+  return map;
+}
+
+function frequenciaDoGrupoLancamentos(rows = []) {
+  const rep =
+    rows.find(lancamentoRecorrenteContaPagarParaListaBoleto) ||
+    rows.find((lf) => lf?.frequencia_recorrencia && lf.frequencia_recorrencia !== 'Único') ||
+    rows[0];
+  const f = rep?.frequencia_recorrencia;
+  if (f && f !== 'Único') return f;
+  return 'Mensal';
+}
+
+/** Deriva o template da aba Contas fixas a partir de um grupo de lançamentos recorrentes. */
+function derivarSerieDoGrupoLancamentos(grupoId, rows = []) {
+  if (!grupoId || !grupoLancamentosPareceContaFixa(rows)) return null;
+
+  const sorted = [...rows].sort((a, b) =>
+    (b.data_vencimento || '').localeCompare(a.data_vencimento || ''),
+  );
+  const rep =
+    sorted.find(lancamentoRecorrenteContaPagarParaListaBoleto) ||
+    sorted.find((lf) => !lancamentoCancelado(lf)) ||
+    sorted[0];
+  if (!rep) return null;
+
+  const abertos = rows.filter((lf) => !lancamentoPago(lf) && !lancamentoCancelado(lf));
+
+  return criarSerieComDefaults({
+    id: serieIdFromGrupoLancamento(grupoId),
+    nome: rep.descricao || rep.terceiro_nome || 'Conta recorrente',
+    terceiro_nome: rep.terceiro_nome || '',
+    terceiro_id: rep.terceiro_id || '',
+    categoria_id: rep.categoria_id || '',
+    categoria_nome: rep.categoria || '',
+    valor_previsto: Number(rep.valor) || 0,
+    dia_vencimento: Number((rep.data_vencimento || '').slice(8, 10)) || 10,
+    mes_vencimento: Number((rep.data_vencimento || '').slice(5, 7)) || new Date().getMonth() + 1,
+    frequencia: frequenciaDoGrupoLancamentos(rows),
+    grupo_lancamento_id: grupoId,
+    ativo: abertos.length > 0,
+  });
+}
+
+/** DadosEmpresa guarda só metadados de UI (centro de custo, encerramento); o LF é a fonte. */
+function aplicarOverlaySerie(serie, overlay) {
+  if (!overlay || !serie) return serie;
+  return criarSerieComDefaults({
+    ...serie,
+    centro_custo: overlay.centro_custo || serie.centro_custo,
+    observacoes: overlay.observacoes || serie.observacoes,
+    situacao: overlay.situacao || serie.situacao,
+    data_encerramento: overlay.data_encerramento || serie.data_encerramento,
+    ativo: overlay.ativo === false ? false : serie.ativo,
+  });
+}
+
+function indexarOverlaysSeries(overlays = []) {
+  const byGrupo = new Map();
+  const byId = new Map();
+  for (const row of overlays || []) {
+    if (row?.grupo_lancamento_id) byGrupo.set(row.grupo_lancamento_id, row);
+    if (row?.id) byId.set(row.id, row);
+  }
+  return { byGrupo, byId };
+}
+
+function overlayParaSerie(serie, { byGrupo, byId }) {
+  return (
+    (serie.grupo_lancamento_id ? byGrupo.get(serie.grupo_lancamento_id) : null) ||
+    byId.get(serie.id) ||
+    null
+  );
+}
+
+function serieRascunhoSemLancamento(overlay, gruposLf) {
+  if (!overlay || overlay.ativo === false) return false;
+  const gid = overlay.grupo_lancamento_id;
+  if (gid && gruposLf.has(gid)) return false;
+  return Boolean((overlay.nome || '').trim() || gid);
 }
 
 /** Evita duplicatas do mesmo grupo (import/recuperação vs cadastro manual). */
@@ -416,35 +517,32 @@ export async function listarModelos() {
     console.warn('[agefin] Falha ao migrar contas fixas do cache local:', error);
   }
 
-  const [naNuvem, lancamentos, chavesExcluidas] = await Promise.all([
+  const [recorrentes, overlaysNuvem, chavesExcluidas] = await Promise.all([
+    listarLancamentosRecorrentes(),
     lerSeriesNaNuvem(),
-    listarContasPagarAgefinCache(),
     lerChavesSeriesExcluidas(),
   ]);
-  const importados = filtrarSeriesNaoExcluidas(derivarSeriesDeLancamentos(lancamentos), chavesExcluidas);
-  const naNuvemFiltrado = filtrarSeriesNaoExcluidas(naNuvem, chavesExcluidas);
-  const merged = deduplicarSeriesPorGrupo(mesclarSeriesPorId(naNuvemFiltrado, importados));
-  return filtrarSeriesContasFixasValidas(merged, lancamentos, chavesExcluidas);
-}
 
-/** Remove séries importadas que eram fretes/avulsos ou sem recorrência renovável. */
-function filtrarSeriesContasFixasValidas(series, lancamentos = [], chavesExcluidas = new Set()) {
-  const porGrupo = new Map();
-  for (const lf of lancamentos || []) {
-    const gid = lf?.grupo_lancamento_id;
-    if (!gid) continue;
-    if (!porGrupo.has(gid)) porGrupo.set(gid, []);
-    porGrupo.get(gid).push(lf);
+  const porGrupo = agruparLancamentosPorGrupo(
+    (recorrentes || []).filter((lf) => lancamentoEntraEmContasFixas(lf)),
+  );
+  const overlays = indexarOverlaysSeries(overlaysNuvem);
+  const series = [];
+
+  for (const [grupoId, rows] of porGrupo) {
+    const base = derivarSerieDoGrupoLancamentos(grupoId, rows);
+    if (!base || serieEstaExcluida(base, chavesExcluidas)) continue;
+    series.push(aplicarOverlaySerie(base, overlayParaSerie(base, overlays)));
   }
 
-  return (series || []).filter((s) => {
-    if (serieEstaExcluida(s, chavesExcluidas)) return false;
-    const cadastroManual = !String(s.id).startsWith('serie-import-') && !String(s.id).startsWith('serie-agefin-');
-    if (cadastroManual) return s.ativo !== false;
-    if (!s.grupo_lancamento_id) return false;
-    const rows = porGrupo.get(s.grupo_lancamento_id) || [];
-    return grupoLancamentosTemFrequenciaRenovavel(rows);
-  });
+  const gruposLf = new Set(porGrupo.keys());
+  for (const overlay of overlaysNuvem || []) {
+    if (serieEstaExcluida(overlay, chavesExcluidas)) continue;
+    if (!serieRascunhoSemLancamento(overlay, gruposLf)) continue;
+    series.push(criarSerieComDefaults(overlay));
+  }
+
+  return deduplicarSeriesPorGrupo(filtrarSeriesNaoExcluidas(series, chavesExcluidas));
 }
 
 function tagsSerieFinanceiro(tags = []) {
@@ -489,7 +587,7 @@ async function sincronizarSerieNoFinanceiro(modelo) {
       data_vencimento: ven,
       categoria: modelo.categoria_nome || lf.categoria,
       categoria_id: modelo.categoria_id || lf.categoria_id,
-      referencia_id: modelo.id,
+      referencia_id: serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id,
       is_recorrente: true,
       frequencia_recorrencia: normalizarFrequenciaSerie(modelo.frequencia),
       tags: tagsSerieFinanceiro(lf.tags),
@@ -533,13 +631,16 @@ export async function salvarSerie(payload) {
   const existente = payload.id
     ? (await obterSeriesParaEdicao()).find((s) => s.id === payload.id)
     : null;
+  const grupoId =
+    payload.grupo_lancamento_id || existente?.grupo_lancamento_id || gerarGrupoLancamentoId();
   const body = criarSerieComDefaults({
     ...(existente || {}),
     ...payload,
-    id: payload.id || undefined,
-    grupo_lancamento_id:
-      payload.grupo_lancamento_id || existente?.grupo_lancamento_id || gerarGrupoLancamentoId(),
+    id: serieIdFromGrupoLancamento(grupoId) || payload.id || existente?.id || undefined,
+    grupo_lancamento_id: grupoId,
   });
+
+  await sincronizarSerieNoFinanceiro(body);
 
   let entityRow = null;
   try {
@@ -548,19 +649,23 @@ export async function salvarSerie(payload) {
     console.error('[agefin] AgefinSerieModelo indisponível:', error);
   }
 
-  const { seriesNorm, empresaRows } = await persistirSeriesModelo([body]);
-  await desmarcarSerieExcluida(body);
-  await sincronizarSerieNoFinanceiro(body);
-  const naRespostaEmpresa = empresaRows.find((s) => s.id === body.id);
-  if (naRespostaEmpresa) return criarSerieComDefaults(naRespostaEmpresa);
+  try {
+    const { empresaRows } = await persistirSeriesModelo([body]);
+    await desmarcarSerieExcluida(body);
+    const naRespostaEmpresa = empresaRows.find(
+      (s) => s.id === body.id || s.grupo_lancamento_id === body.grupo_lancamento_id,
+    );
+    if (naRespostaEmpresa) return criarSerieComDefaults(naRespostaEmpresa);
+  } catch (error) {
+    console.warn('[agefin] Falha ao gravar overlay (centro de custo, etc.):', error);
+  }
+
   if (entityRow?.id) return entityRow;
 
   const verificada = await verificarSeriePersistida(body.id);
   if (verificada) return verificada;
 
-  throw new Error(
-    'Não foi possível gravar a conta na base de dados. Verifique a conexão e tente novamente.',
-  );
+  return body;
 }
 
 export async function removerSerie(serieId, serieMeta = null) {
@@ -591,59 +696,22 @@ export async function atualizarCentroCustoSerie(serieId, centroCusto) {
   return atualizada;
 }
 
-function chaveGrupoSerie(lf) {
-  if (lf?.grupo_lancamento_id) return String(lf.grupo_lancamento_id);
-  const nome = String(lf?.descricao || lf?.terceiro_nome || 'conta').trim().toLowerCase();
-  const terceiro = String(lf?.terceiro_nome || '').trim().toLowerCase();
-  return `avulso-${nome}-${terceiro}`;
-}
-
 function derivarSeriesDeLancamentos(lancamentos = []) {
-  const byGrupo = new Map();
-  for (const lf of lancamentos || []) {
-    if (!lancamentoEntraEmContasFixas(lf)) continue;
-    const gid = chaveGrupoSerie(lf);
-    if (!byGrupo.has(gid)) byGrupo.set(gid, []);
-    byGrupo.get(gid).push(lf);
-  }
-
+  const porGrupo = agruparLancamentosPorGrupo(
+    (lancamentos || []).filter((lf) => lancamentoEntraEmContasFixas(lf)),
+  );
   const series = [];
-  for (const [gid, rows] of byGrupo) {
-    if (!grupoLancamentosTemFrequenciaRenovavel(rows)) continue;
-    const sorted = [...rows].sort((a, b) =>
-      (b.data_vencimento || '').localeCompare(a.data_vencimento || ''),
-    );
-    const rep = sorted[0];
-    const serieId = gid.startsWith('avulso-') ? `serie-agefin-${gid}` : `serie-import-${gid}`;
-    series.push(
-      criarSerieComDefaults({
-        id: serieId,
-        nome: rep.descricao || rep.terceiro_nome || 'Conta recorrente',
-        terceiro_nome: rep.terceiro_nome || '',
-        terceiro_id: rep.terceiro_id || '',
-        categoria_id: rep.categoria_id || '',
-        categoria_nome: rep.categoria || '',
-        valor_previsto: Number(rep.valor) || 0,
-        dia_vencimento: Number((rep.data_vencimento || '').slice(8, 10)) || 10,
-        mes_vencimento: Number((rep.data_vencimento || '').slice(5, 7)) || new Date().getMonth() + 1,
-        frequencia: rep.frequencia_recorrencia || 'Mensal',
-        grupo_lancamento_id: rep.grupo_lancamento_id || (gid.startsWith('avulso-') ? undefined : gid),
-        ativo: true,
-      }),
-    );
+  for (const [grupoId, rows] of porGrupo) {
+    const serie = derivarSerieDoGrupoLancamentos(grupoId, rows);
+    if (serie) series.push(serie);
   }
   return series;
 }
 
-/** Importa séries a partir das contas a pagar já existentes no financeiro (fonte AGEFIN). */
+/** Recarrega a lista a partir dos LancamentoFinanceiro recorrentes (sem duplicar na nuvem). */
 export async function sincronizarModelosDesdeLancamentos() {
-  const [lancamentos, chavesExcluidas] = await Promise.all([
-    listarContasPagarAgefinCache(),
-    lerChavesSeriesExcluidas(),
-  ]);
-  const series = filtrarSeriesNaoExcluidas(derivarSeriesDeLancamentos(lancamentos), chavesExcluidas);
-  if (series.length) await persistirSeriesModelo(series, { modo: 'merge' });
-  return series;
+  invalidarCacheLancamentosFinanceiros();
+  return listarModelos();
 }
 
 export async function listarLancamentosCompetencia(competencia) {
@@ -686,7 +754,7 @@ function payloadLancamentoAuto(modelo, competencia) {
     categoria: modelo.categoria_nome || undefined,
     categoria_id: modelo.categoria_id || undefined,
     referencia_tipo: 'Manual',
-    referencia_id: modelo.id,
+    referencia_id: serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id,
     observacoes: `Competência ${competencia} — aberta pelo planejamento financeiro. Conta financeira será definida na execução.`,
     tags: ['conta_pagar', 'recorrente', TAG_LF_GERADO_AUTO, 'agefin_previsao', 'conta_a_definir'],
     is_recorrente: true,
