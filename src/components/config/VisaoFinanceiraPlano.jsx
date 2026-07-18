@@ -157,32 +157,32 @@ export default function VisaoFinanceiraPlano() {
     queryFn: listarModelosBudget,
   });
 
-  const { data: competenciasFolha = [] } = useQuery({
+  const { data: competenciasFolha = [], isLoading: loadingCompetenciasFolha } = useQuery({
     queryKey: ['visao-financeira', 'folha-competencias', competencia],
     queryFn: () => listarCompetenciasFolha(competencia),
   });
 
-  const { data: competenciasBudget = [] } = useQuery({
+  const { data: competenciasBudget = [], isLoading: loadingCompetenciasBudget } = useQuery({
     queryKey: ['visao-financeira', 'budget-competencias', competencia],
     queryFn: () => listarCompetenciasBudget(competencia),
   });
 
-  const { data: lancamentosAgefin = [] } = useQuery({
+  const { data: lancamentosAgefin = [], isLoading: loadingLancamentosAgefin } = useQuery({
     queryKey: ['visao-financeira', 'agefin-lancamentos', competencia],
     queryFn: () => listarLancamentosCompetencia(competencia),
   });
 
-  const { data: lancamentosMes = [] } = useQuery({
+  const { data: lancamentosMes = [], isLoading: loadingLancamentosMes } = useQuery({
     queryKey: ['visao-financeira', 'lancamentos-mes', competencia],
     queryFn: () => listarLancamentosMes(competencia),
   });
 
-  const { data: lancamentosVencimento = [] } = useQuery({
+  const { data: lancamentosVencimento = [], isLoading: loadingLancamentosVencimento } = useQuery({
     queryKey: ['visao-financeira', 'lancamentos-vencimento', competencia],
     queryFn: () => listarLancamentosVencimentoMes(competencia),
   });
 
-  const { data: lucroBrutoMes } = useQuery({
+  const { data: lucroBrutoMes, isLoading: loadingLucroBruto } = useQuery({
     queryKey: ['visao-financeira', 'lucro-bruto', competencia],
     queryFn: () => obterLucroBrutoCompetencia(competencia),
   });
@@ -216,7 +216,16 @@ export default function VisaoFinanceiraPlano() {
     ],
   );
 
-  const loading = loadingAgefin || loadingFolha || loadingBudget;
+  const loading =
+    loadingAgefin ||
+    loadingFolha ||
+    loadingBudget ||
+    loadingCompetenciasFolha ||
+    loadingCompetenciasBudget ||
+    loadingLancamentosAgefin ||
+    loadingLancamentosMes ||
+    loadingLancamentosVencimento ||
+    loadingLucroBruto;
   const { resumo } = plano;
   const compLabel = formatCompetenciaLabel(competencia);
 
