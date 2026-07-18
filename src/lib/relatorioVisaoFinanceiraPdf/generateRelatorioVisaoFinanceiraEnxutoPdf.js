@@ -8,6 +8,14 @@ const COLOR = {
   lightLine: [210, 210, 210],
 };
 
+const FONT = {
+  itemTitle: 9.5,
+  itemDetail: 8,
+  itemValue: 9.5,
+  grupo: 10,
+  resumo: 8.8,
+};
+
 const safe = (value) => normalizePdfText(value);
 const number = (value) => Number(value) || 0;
 const moeda = (value) =>
@@ -86,13 +94,14 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   };
 
   const drawResumoLinha = (label, value, { prefix = '', bold = false } = {}) => {
-    ensureSpace(5);
-    setFont(bold ? 'bold' : 'normal', 8.5, bold ? COLOR.black : COLOR.muted);
+    ensureSpace(5.5);
+    setFont(bold ? 'bold' : 'normal', FONT.resumo, bold ? COLOR.black : COLOR.muted);
     doc.text(safe(label), margin + 2, y);
-    setFont(bold ? 'bold' : 'normal', 8.8, COLOR.black);
+    setFont(bold ? 'bold' : 'normal', FONT.resumo + 0.2, COLOR.black);
     doc.text(safe(`${prefix}${moeda(value)}`), right, y, { align: 'right' });
-    y += 4;
-    rule(y - 1.5, COLOR.lightLine, 0.06, margin + 2, right);
+    y += 4.2;
+    rule(y, COLOR.lightLine, 0.06, margin + 2, right);
+    y += 1.8;
   };
 
   const drawSecao = (titulo) => {
@@ -102,66 +111,122 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     y += 4;
   };
 
-  const drawItemLinha = (item, { indent = 13, modoVencimento = false, mostrarDetalhe = true } = {}) => {
-    const nomeX = margin + indent;
-    const valueW = 40;
-    const descW = contentW - (nomeX - margin) - valueW - 3;
+  const buildItemLayout = (item, descW, { modoVencimento = false, mostrarDetalhe = true } = {}) => {
     const titulo = modoVencimento ? tituloItemVencimento(item) : item.nome || 'Sem descricao';
-    const detalhe = mostrarDetalhe ? [item.detalhe, itemObservacao(item)].filter(Boolean).join(' | ') : itemObservacao(item);
+    const detalhe = mostrarDetalhe
+      ? [item.detalhe, itemObservacao(item)].filter(Boolean).join(' · ')
+      : itemObservacao(item);
 
-    setFont('normal', 8.2);
+    setFont('normal', FONT.itemTitle);
     const nomeLines = doc.splitTextToSize(safe(titulo), descW);
-    setFont('normal', 7.2, COLOR.muted);
+    setFont('normal', FONT.itemDetail, COLOR.muted);
     const detalheLines = detalhe ? doc.splitTextToSize(safe(detalhe), descW) : [];
-    const lineHeight = 3.2;
-    const rowHeight = Math.max(5.5, nomeLines.length * lineHeight + detalheLines.length * 2.8 + 1);
-    ensureSpace(rowHeight + 1.5);
 
-    setFont('normal', 8.2);
-    nomeLines.forEach((line, index) => doc.text(line, nomeX, y + index * lineHeight));
-    setFont('bold', 8.4);
-    doc.text(moeda(item.valor), right, y, { align: 'right' });
+    const titleLH = 3.9;
+    const detailLH = 3.5;
+    const titleBlock = nomeLines.length * titleLH;
+    const detailBlock = detalheLines.length ? detalheLines.length * detailLH + 0.8 : 0;
+    const height = Math.max(7, titleBlock + detailBlock + 2.2);
 
-    if (detalheLines.length) {
-      const detalheY = y + nomeLines.length * lineHeight;
-      setFont('normal', 7.2, COLOR.muted);
-      detalheLines.forEach((line, index) => doc.text(line, nomeX, detalheY + index * 2.8));
+    return { titulo, detalhe, nomeLines, detalheLines, titleLH, detailLH, height };
+  };
+
+  const drawItemLinhaAt = (item, x, width, startY, options = {}) => {
+    const valueW = Math.min(24, width * 0.34);
+    const descW = Math.max(18, width - valueW - 2);
+    const layout = buildItemLayout(item, descW, options);
+
+    setFont('normal', FONT.itemTitle);
+    layout.nomeLines.forEach((line, index) => {
+      doc.text(line, x, startY + index * layout.titleLH);
+    });
+
+    setFont('bold', FONT.itemValue);
+    doc.text(moeda(item.valor), x + width, startY, { align: 'right' });
+
+    if (layout.detalheLines.length) {
+      const detalheY = startY + layout.nomeLines.length * layout.titleLH + 0.7;
+      setFont('normal', FONT.itemDetail, COLOR.muted);
+      layout.detalheLines.forEach((line, index) => {
+        doc.text(line, x, detalheY + index * layout.detailLH);
+      });
     }
 
-    if (item.valorSecundario != null && mostrarDetalhe) {
-      setFont('normal', 6.9, COLOR.muted);
+    if (item.valorSecundario != null && options.mostrarDetalhe !== false) {
+      setFont('normal', 7.8, COLOR.muted);
       doc.text(
         safe(`${item.valorSecundarioLabel || 'Complemento'}: ${moeda(item.valorSecundario)}`),
-        right,
-        y + 3.2,
+        x + width,
+        startY + layout.titleLH + 0.5,
         { align: 'right' },
       );
     }
 
-    y += rowHeight;
-    rule(y - 1, COLOR.lightLine, 0.06, nomeX, right);
+    return layout.height;
+  };
+
+  const drawItemLinha = (item, options = {}) => {
+    const indent = options.indent ?? 2;
+    const nomeX = margin + indent;
+    const width = right - nomeX;
+    ensureSpace(12);
+    const rowTop = y;
+    const rowHeight = drawItemLinhaAt(item, nomeX, width, rowTop, options);
+    y = rowTop + rowHeight + 1.4;
+    rule(y, COLOR.lightLine, 0.06, nomeX, right);
+    y += 2.4;
+  };
+
+  const drawItensLista = (items, options = {}) => {
+    const list = items || [];
+    if (!list.length) return;
+
+    const useDuasColunas = list.length >= 4;
+    if (!useDuasColunas) {
+      for (const item of list) drawItemLinha(item, options);
+      return;
+    }
+
+    const colGap = 5;
+    const colW = (contentW - colGap) / 2;
+    const col1X = margin + 2;
+    const col2X = margin + 2 + colW + colGap;
+
+    for (let i = 0; i < list.length; i += 2) {
+      const left = list[i];
+      const rightItem = list[i + 1];
+      const valueW = Math.min(24, colW * 0.34);
+      const descW = Math.max(18, colW - valueW - 2);
+      const hLeft = buildItemLayout(left, descW, options).height;
+      const hRight = rightItem ? buildItemLayout(rightItem, descW, options).height : 0;
+      const rowHeight = Math.max(hLeft, hRight, 7);
+
+      ensureSpace(rowHeight + 5);
+      const rowTop = y;
+      drawItemLinhaAt(left, col1X, colW, rowTop, options);
+      if (rightItem) drawItemLinhaAt(rightItem, col2X, colW, rowTop, options);
+      y = rowTop + rowHeight + 1.4;
+      rule(y, COLOR.lightLine, 0.06, margin + 2, right);
+      y += 2.6;
+    }
   };
 
   const drawSubgrupo = (label, subtotal, indent = 2) => {
     ensureSpace(8);
-    setFont('bold', 8.2, COLOR.muted);
+    setFont('bold', 9, COLOR.muted);
     doc.text(safe(`> ${label}`), margin + indent, y);
     doc.text(moeda(subtotal), right, y, { align: 'right' });
-    y += 4;
+    y += 4.5;
   };
 
   const drawGrupoHeader = (grupo) => {
     ensureSpace(12);
-    setFont('bold', 9.5);
+    setFont('bold', FONT.grupo);
     doc.text(safe(String(grupo.label || '').toUpperCase()), margin, y);
     doc.text(moeda(grupo.subtotal), right, y, { align: 'right' });
-    y += 3;
+    y += 3.5;
     rule(y, COLOR.line, 0.12);
-    y += 4;
-  };
-
-  const drawItensLista = (items, options = {}) => {
-    for (const item of items || []) drawItemLinha(item, options);
+    y += 4.5;
   };
 
   const drawGrupoExplodido = (grupo) => {
@@ -411,8 +476,9 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
         setFont('normal', 6.8, COLOR.muted);
         doc.text('Vence neste mes', colNome, y + 3.2);
       }
-      y += Math.max(5.5, nomeLines.length * 3 + (item.venceNesteMes ? 3 : 0));
-      rule(y - 1, COLOR.lightLine, 0.06, colFreq, right);
+      y += Math.max(6, nomeLines.length * 3.2 + (item.venceNesteMes ? 3.2 : 0) + 1.4);
+      rule(y, COLOR.lightLine, 0.06, colFreq, right);
+      y += 2.4;
     }
 
     ensureSpace(10);
@@ -439,6 +505,6 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'visao_financeira_enxuto_a4_v2',
+    version: 'visao_financeira_enxuto_a4_v3',
   };
 }
