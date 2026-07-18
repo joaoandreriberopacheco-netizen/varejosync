@@ -24,9 +24,11 @@ import {
 import {
   invalidarCacheLancamentosFinanceiros,
   listarContasPagarAgefinCache,
+  listarLancamentosFinanceirosAgefinBruto,
   listarLancamentosVencimentoCompetenciaCache,
 } from '@/lib/lancamentoFinanceiroCache';
 import { filtrarLancamentosPlanejamento } from '@/lib/agefinConsultaData';
+import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
 
 export { listarCentrosCustoRegistros };
 
@@ -76,7 +78,7 @@ function mesclarSeriesPorId(...listas) {
 
 function prioridadeSerieId(id = '') {
   if (String(id).startsWith('serie-recuperada-')) return 1;
-  if (String(id).startsWith('serie-import-')) return 2;
+  if (String(id).startsWith('serie-import-') || String(id).startsWith('serie-agefin-')) return 2;
   return 10;
 }
 
@@ -349,19 +351,27 @@ export async function listarModelos() {
   const merged = deduplicarSeriesPorGrupo(mesclarSeriesPorId(naNuvem, importados));
 
   const chavesNuvem = new Set(
-    naNuvem.map((s) => s.grupo_lancamento_id || s.id).filter(Boolean),
+    naNuvem.flatMap((s) => [s.grupo_lancamento_id, s.id].filter(Boolean)),
   );
   const temNovos = importados.some((s) => {
-    const chave = s.grupo_lancamento_id || s.id;
-    return chave && !chavesNuvem.has(chave);
+    const chaves = [s.grupo_lancamento_id, s.id].filter(Boolean);
+    return chaves.some((chave) => !chavesNuvem.has(chave));
   });
 
-  if (temNovos) {
-    await persistirSeriesModelo(importados, { modo: 'merge' });
-    return deduplicarSeriesPorGrupo(mesclarSeriesPorId(await lerSeriesNaNuvem(), importados));
+  if (temNovos && importados.length) {
+    try {
+      await persistirSeriesModelo(importados, { modo: 'merge' });
+      const aposPersist = await lerSeriesNaNuvem();
+      const final = deduplicarSeriesPorGrupo(mesclarSeriesPorId(aposPersist, importados));
+      if (final.length) return final;
+    } catch (error) {
+      console.warn('[agefin] Falha ao persistir séries importadas da AGEFIN:', error);
+    }
   }
 
-  return merged.length ? merged : naNuvem;
+  if (merged.length) return merged;
+  if (importados.length) return importados;
+  return naNuvem;
 }
 
 export async function salvarSerie(payload) {
@@ -465,7 +475,20 @@ export async function sincronizarModelosDesdeLancamentos() {
 }
 
 export async function listarLancamentosCompetencia(competencia) {
-  const rows = await listarLancamentosVencimentoCompetenciaCache(competencia);
+  const limites = competenciaParaIntervalo(competencia);
+  let rows = await listarLancamentosVencimentoCompetenciaCache(competencia);
+
+  if (!rows?.length && limites) {
+    const from = limites.from.toISOString().slice(0, 10);
+    const to = limites.to.toISOString().slice(0, 10);
+    const prefix = String(competencia || '').slice(0, 7);
+    const todos = await listarLancamentosFinanceirosAgefinBruto();
+    rows = todos.filter((lf) => {
+      const venc = String(lf?.data_vencimento || '').slice(0, 10);
+      return venc >= from && venc <= to && String(lf?.data_vencimento || '').slice(0, 7) === prefix;
+    });
+  }
+
   return filtrarLancamentosPlanejamento(rows);
 }
 

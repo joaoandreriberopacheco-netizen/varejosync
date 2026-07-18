@@ -81,6 +81,15 @@ async function comCache(map, key, fetcher) {
   return promise;
 }
 
+/**
+ * Mesma carga bruta da AGEFIN Consulta (list + filtro no cliente).
+ * Evita filter server-side que pode falhar no Base44 e devolver [].
+ */
+export async function listarLancamentosFinanceirosAgefinBruto() {
+  const rows = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
+  return Array.isArray(rows) ? rows : [];
+}
+
 export function invalidarCacheLancamentosFinanceiros() {
   contasPagarAgefinCache = null;
   recorrentesCache = null;
@@ -100,12 +109,7 @@ export async function listarContasPagarAgefinCache({ force = false } = {}) {
   if (contasPagarAgefinCache?.promise) return contasPagarAgefinCache.promise;
 
   const promise = (async () => {
-    const desde = dataLimiteRecorrentes();
-    const rows = await base44.entities.LancamentoFinanceiro.filter(
-      { tipo: 'Despesa', data_vencimento: { $gte: desde } },
-      '-data_vencimento',
-      2000,
-    ).catch(() => []);
+    const rows = await listarLancamentosFinanceirosAgefinBruto();
     return filtrarLancamentosPlanejamento(rows);
   })()
     .then((rows) => {

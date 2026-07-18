@@ -31,7 +31,7 @@ export function useAgefinPrevisaoQueries({ abaAtiva, competenciaMes, precisaCont
     queryKey: agefinQueryKeys.modelos,
     queryFn: listarModelos,
     staleTime: STALE_MODELOS,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
   const centrosQuery = useQuery({
