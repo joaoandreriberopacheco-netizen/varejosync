@@ -23,6 +23,11 @@ function itemObservacao(item) {
   return '';
 }
 
+function tituloItemVencimento(item) {
+  if (item.dataVencimentoLabel) return `${item.dataVencimentoLabel} · ${item.nome || 'Sem descricao'}`;
+  return item.nome || 'Sem descricao';
+}
+
 /**
  * PDF A4 compacto inspirado no relatório enxuto de compras.
  * Consome os totais e agrupamentos já calculados pela Visão Financeira.
@@ -33,11 +38,16 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     resumo = {},
     margemDetalhe = {},
     grupos = [],
+    anexoNaoMensais = [],
+    opcoesExplodido = {},
     generatedAt = new Date().toLocaleString('pt-BR', {
       dateStyle: 'short',
       timeStyle: 'short',
     }),
   } = payload;
+
+  const agrupamentoFixas = opcoesExplodido.agrupamentoFixas || 'vencimento';
+  const provisoesExpandidas = opcoesExplodido.provisoesExpandidas || {};
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const font = await registerJsPdfDin1451Fonts(doc);
@@ -61,11 +71,11 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     doc.line(x0, atY, x1, atY);
   };
 
-  const addPage = () => {
+  const addPage = (titulo = 'CONTINUACAO') => {
     doc.addPage();
     y = 13;
     setFont('bold', 8, COLOR.muted);
-    doc.text(safe(`VISAO FINANCEIRA - ${competenciaLabel} - CONTINUACAO`), margin, y);
+    doc.text(safe(`VISAO FINANCEIRA - ${competenciaLabel} - ${titulo}`), margin, y);
     y += 4;
     rule(y, COLOR.lightLine, 0.08);
     y += 4;
@@ -74,20 +84,6 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   const ensureSpace = (height = 8) => {
     if (y + height > bottom) addPage();
   };
-
-  setFont('bold', 14);
-  doc.text('Relatorio Visao Financeira - ENXUTO', margin, y);
-  y += 5;
-  setFont('normal', 8, COLOR.muted);
-  doc.text('A4 compacto  |  planejamento, compromissos e capacidade de compra  |  DIN 1451', margin, y);
-  y += 4;
-  setFont('bold', 10);
-  doc.text(safe(`Competencia: ${competenciaLabel}`), margin, y);
-  setFont('normal', 8, COLOR.muted);
-  doc.text(safe(`Gerado em ${generatedAt}`), right, y, { align: 'right' });
-  y += 5;
-  rule(y);
-  y += 5;
 
   const drawResumoLinha = (label, value, { prefix = '', bold = false } = {}) => {
     ensureSpace(5);
@@ -106,6 +102,151 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     y += 4;
   };
 
+  const drawItemLinha = (item, { indent = 13, modoVencimento = false, mostrarDetalhe = true } = {}) => {
+    const nomeX = margin + indent;
+    const valueW = 40;
+    const descW = contentW - (nomeX - margin) - valueW - 3;
+    const titulo = modoVencimento ? tituloItemVencimento(item) : item.nome || 'Sem descricao';
+    const detalhe = mostrarDetalhe ? [item.detalhe, itemObservacao(item)].filter(Boolean).join(' | ') : itemObservacao(item);
+
+    setFont('normal', 8.2);
+    const nomeLines = doc.splitTextToSize(safe(titulo), descW);
+    setFont('normal', 7.2, COLOR.muted);
+    const detalheLines = detalhe ? doc.splitTextToSize(safe(detalhe), descW) : [];
+    const lineHeight = 3.2;
+    const rowHeight = Math.max(5.5, nomeLines.length * lineHeight + detalheLines.length * 2.8 + 1);
+    ensureSpace(rowHeight + 1.5);
+
+    setFont('normal', 8.2);
+    nomeLines.forEach((line, index) => doc.text(line, nomeX, y + index * lineHeight));
+    setFont('bold', 8.4);
+    doc.text(moeda(item.valor), right, y, { align: 'right' });
+
+    if (detalheLines.length) {
+      const detalheY = y + nomeLines.length * lineHeight;
+      setFont('normal', 7.2, COLOR.muted);
+      detalheLines.forEach((line, index) => doc.text(line, nomeX, detalheY + index * 2.8));
+    }
+
+    if (item.valorSecundario != null && mostrarDetalhe) {
+      setFont('normal', 6.9, COLOR.muted);
+      doc.text(
+        safe(`${item.valorSecundarioLabel || 'Complemento'}: ${moeda(item.valorSecundario)}`),
+        right,
+        y + 3.2,
+        { align: 'right' },
+      );
+    }
+
+    y += rowHeight;
+    rule(y - 1, COLOR.lightLine, 0.06, nomeX, right);
+  };
+
+  const drawSubgrupo = (label, subtotal, indent = 2) => {
+    ensureSpace(8);
+    setFont('bold', 8.2, COLOR.muted);
+    doc.text(safe(`> ${label}`), margin + indent, y);
+    doc.text(moeda(subtotal), right, y, { align: 'right' });
+    y += 4;
+  };
+
+  const drawGrupoHeader = (grupo) => {
+    ensureSpace(12);
+    setFont('bold', 9.5);
+    doc.text(safe(String(grupo.label || '').toUpperCase()), margin, y);
+    doc.text(moeda(grupo.subtotal), right, y, { align: 'right' });
+    y += 3;
+    rule(y, COLOR.line, 0.12);
+    y += 4;
+  };
+
+  const drawItensLista = (items, options = {}) => {
+    for (const item of items || []) drawItemLinha(item, options);
+  };
+
+  const drawGrupoExplodido = (grupo) => {
+    drawGrupoHeader(grupo);
+
+    if (grupo.layout === 'vencimento_ou_centro') {
+      if (agrupamentoFixas === 'centro_custo') {
+        for (const centro of grupo.porCentro || []) {
+          drawSubgrupo(centro.label, centro.subtotal);
+          drawItensLista(centro.items, { modoVencimento: true, mostrarDetalhe: false });
+          y += 1;
+        }
+      } else {
+        const items = (grupo.porVencimento || []).flatMap((bloco) => bloco.items);
+        drawItensLista(items, { modoVencimento: true, mostrarDetalhe: false });
+      }
+      y += 2;
+      return;
+    }
+
+    if (grupo.layout === 'provisoes_colapsaveis') {
+      for (const item of grupo.items || []) {
+        if (item.colapsavel) {
+          drawSubgrupo(item.nome, item.valor, 2);
+          if (provisoesExpandidas[item.id]) {
+            drawItensLista(item.filhos, { indent: 16, mostrarDetalhe: false });
+          }
+        } else {
+          drawItemLinha(item);
+        }
+      }
+      y += 2;
+      return;
+    }
+
+    if (grupo.layout === 'centro_categoria') {
+      for (const centro of grupo.porCentroCategoria || []) {
+        drawSubgrupo(centro.label, centro.subtotal);
+        for (const categoria of centro.categorias || []) {
+          drawSubgrupo(categoria.label, categoria.subtotal, 7);
+          drawItensLista(categoria.items, { indent: 13, mostrarDetalhe: false });
+          y += 1;
+        }
+        y += 1;
+      }
+      y += 2;
+      return;
+    }
+
+    if (grupo.layout === 'vencimento' || grupo.layout === 'lista') {
+      const items =
+        grupo.layout === 'vencimento'
+          ? (grupo.porVencimento || []).flatMap((bloco) => bloco.items)
+          : (grupo.lista || []).flatMap((bloco) => bloco.items);
+      drawItensLista(items, { modoVencimento: true, mostrarDetalhe: grupo.layout === 'lista' });
+      y += 2;
+      return;
+    }
+
+    for (const centro of grupo.centros || []) {
+      drawSubgrupo(centro.label, centro.subtotal);
+      for (const categoria of centro.categorias || []) {
+        drawSubgrupo(categoria.label, categoria.subtotal, 7);
+        drawItensLista(categoria.items, { indent: 13 });
+        y += 1;
+      }
+      y += 1;
+    }
+    y += 2;
+  };
+
+  setFont('bold', 14);
+  doc.text('Relatorio Visao Financeira - ENXUTO', margin, y);
+  y += 5;
+  setFont('normal', 8, COLOR.muted);
+  doc.text('A4 compacto  |  planejamento, compromissos e capacidade de compra  |  DIN 1451', margin, y);
+  y += 4;
+  setFont('bold', 10);
+  doc.text(safe(`Competencia: ${competenciaLabel}`), margin, y);
+  setFont('normal', 8, COLOR.muted);
+  doc.text(safe(`Gerado em ${generatedAt}`), right, y, { align: 'right' });
+  y += 5;
+  rule(y);
+  y += 5;
+
   setFont('bold', 9.5);
   doc.text('RESUMO', margin, y);
   y += 4;
@@ -122,7 +263,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   drawResumoLinha('Resultado operacional', resumo.resultadoOperacional, { prefix: '= ', bold: true });
 
   drawSecao('Provisoes mensais');
-  drawResumoLinha('Contas anuais (÷ 12)', resumo.anuaisDiluido, { prefix: '- ' });
+  drawResumoLinha('Contas nao mensais (provisao)', resumo.anuaisDiluido, { prefix: '- ' });
   drawResumoLinha('Provisoes de folha', resumo.provisoesFolha, { prefix: '- ' });
   drawResumoLinha('Total com provisoes', resumo.totalComProvisoes, { prefix: '- ', bold: true });
   drawResumoLinha('Resultado com provisoes', resumo.resultadoComProvisoes, { prefix: '= ', bold: true });
@@ -138,7 +279,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
       drawResumoLinha('Compromissos pontuais / parcelados', resumo.pontuais, { prefix: '- ' });
     }
     if (number(resumo.anuaisVencimentoMes) > 0) {
-      drawResumoLinha('Vencimentos anuais (integral)', resumo.anuaisVencimentoMes, { prefix: '- ' });
+      drawResumoLinha('Vencimentos nao mensais (integral)', resumo.anuaisVencimentoMes, { prefix: '- ' });
     }
     drawResumoLinha('Total desembolso', resumo.totalDesembolsoMes, { prefix: '- ', bold: true });
     drawResumoLinha('Saldo apos compromissos', resumo.resultadoDesembolso, { prefix: '= ', bold: true });
@@ -168,70 +309,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   y += 5;
 
   for (const grupo of grupos) {
-    ensureSpace(12);
-    setFont('bold', 9.5);
-    doc.text(safe(String(grupo.label || '').toUpperCase()), margin, y);
-    doc.text(moeda(grupo.subtotal), right, y, { align: 'right' });
-    y += 3;
-    rule(y, COLOR.line, 0.12);
-    y += 4;
-
-    for (const centro of grupo.centros || []) {
-      ensureSpace(10);
-      setFont('bold', 8.8);
-      doc.text(safe(`> ${centro.label}`), margin + 2, y);
-      doc.text(moeda(centro.subtotal), right, y, { align: 'right' });
-      y += 4;
-
-      for (const categoria of centro.categorias || []) {
-        ensureSpace(9);
-        setFont('bold', 8.2, COLOR.muted);
-        doc.text(safe(`> ${categoria.label}`), margin + 7, y);
-        doc.text(moeda(categoria.subtotal), right, y, { align: 'right' });
-        y += 4;
-
-        for (const item of categoria.items || []) {
-          const nomeX = margin + 13;
-          const valueW = 40;
-          const descW = contentW - (nomeX - margin) - valueW - 3;
-          setFont('normal', 8.2);
-          const nomeLines = doc.splitTextToSize(safe(item.nome || 'Sem descricao'), descW);
-          const detalhe = [item.detalhe, itemObservacao(item)].filter(Boolean).join(' | ');
-          setFont('normal', 7.2, COLOR.muted);
-          const detalheLines = detalhe ? doc.splitTextToSize(safe(detalhe), descW) : [];
-          const lineHeight = 3.2;
-          const rowHeight = Math.max(5.5, nomeLines.length * lineHeight + detalheLines.length * 2.8 + 1);
-          ensureSpace(rowHeight + 1.5);
-
-          setFont('normal', 8.2);
-          nomeLines.forEach((line, index) => doc.text(line, nomeX, y + index * lineHeight));
-          setFont('bold', 8.4);
-          doc.text(moeda(item.valor), right, y, { align: 'right' });
-
-          if (detalheLines.length) {
-            const detalheY = y + nomeLines.length * lineHeight;
-            setFont('normal', 7.2, COLOR.muted);
-            detalheLines.forEach((line, index) => doc.text(line, nomeX, detalheY + index * 2.8));
-          }
-
-          if (item.valorSecundario != null) {
-            setFont('normal', 6.9, COLOR.muted);
-            doc.text(
-              safe(`${item.valorSecundarioLabel || 'Complemento'}: ${moeda(item.valorSecundario)}`),
-              right,
-              y + 3.2,
-              { align: 'right' },
-            );
-          }
-
-          y += rowHeight;
-          rule(y - 1, COLOR.lightLine, 0.06, nomeX, right);
-        }
-        y += 1;
-      }
-      y += 1.5;
-    }
-    y += 3;
+    drawGrupoExplodido(grupo);
   }
 
   ensureSpace(27);
@@ -255,6 +333,53 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     y += 4;
   });
 
+  if (anexoNaoMensais.length > 0) {
+    addPage('ANEXO');
+    setFont('bold', 11);
+    doc.text('ANEXO - CONTAS NAO MENSAIS', margin, y);
+    y += 5;
+    setFont('normal', 8, COLOR.muted);
+    doc.text(
+      safe('Visao das contas anuais, bimestrais, trimestrais e semestrais com provisao mensal.'),
+      margin,
+      y,
+    );
+    y += 6;
+
+    const colFreq = margin + 2;
+    const colNome = margin + 28;
+    const colProv = right - 38;
+    const colParcela = right;
+
+    ensureSpace(8);
+    setFont('bold', 7.8, COLOR.muted);
+    doc.text('FREQ.', colFreq, y);
+    doc.text('CONTA', colNome, y);
+    doc.text('PROV./MES', colProv, y, { align: 'right' });
+    doc.text('PARCELA', colParcela, y, { align: 'right' });
+    y += 4;
+    rule(y, COLOR.line, 0.1);
+    y += 4;
+
+    for (const item of anexoNaoMensais) {
+      ensureSpace(7);
+      setFont('normal', 7.5, COLOR.muted);
+      doc.text(safe(item.frequencia || ''), colFreq, y);
+      setFont('normal', 8.2);
+      const nomeLines = doc.splitTextToSize(safe(item.nome || ''), colProv - colNome - 4);
+      nomeLines.forEach((line, index) => doc.text(line, colNome, y + index * 3));
+      doc.text(moeda(item.provisaoMensal), colProv, y, { align: 'right' });
+      setFont('normal', 7.5, COLOR.muted);
+      doc.text(moeda(item.valorParcela), colParcela, y, { align: 'right' });
+      if (item.venceNesteMes) {
+        setFont('normal', 6.8, COLOR.muted);
+        doc.text('Vence neste mes', colNome, y + 3.2);
+      }
+      y += Math.max(5.5, nomeLines.length * 3 + (item.venceNesteMes ? 3 : 0));
+      rule(y - 1, COLOR.lightLine, 0.06, colFreq, right);
+    }
+  }
+
   const pageCount = doc.internal.getNumberOfPages();
   for (let page = 1; page <= pageCount; page += 1) {
     doc.setPage(page);
@@ -265,6 +390,6 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'visao_financeira_enxuto_a4_v1',
+    version: 'visao_financeira_enxuto_a4_v2',
   };
 }

@@ -11,6 +11,8 @@ import {
   serieEstaAtivaNaCompetencia,
   valorEfetivoCompetencia,
   montarCompetenciasVisao as montarCompetenciasAgefin,
+  dataVencimentoCompetencia,
+  formatDataBr,
 } from '@/lib/agefinPrevisaoCalculos';
 import {
   calcularTotaisCompetencia,
@@ -36,12 +38,14 @@ import {
 
 const GRUPO = {
   FIXAS_RECORRENTES: 'fixas_recorrentes',
-  FIXAS_ANUAIS: 'fixas_anuais',
+  FIXAS_NAO_MENSAIS: 'fixas_nao_mensais',
   FOLHA: 'folha',
   FOLHA_PROVISOES: 'folha_provisoes',
   BUDGETS: 'budgets',
   PONTUAIS: 'pontuais',
 };
+
+const CATEGORIA_OCULTA = /^(importação pendente|importacao pendente)$/i;
 
 function linhaItem({
   id,
@@ -57,6 +61,11 @@ function linhaItem({
   categoria = '',
   entraNoTotal = true,
   coberturaBudget = '',
+  dataVencimento = '',
+  dataVencimentoLabel = '',
+  frequencia = '',
+  colapsavel = false,
+  filhos = [],
   raw = null,
 }) {
   return {
@@ -70,90 +79,108 @@ function linhaItem({
     link,
     destaque,
     centroCusto: String(centroCusto || '').trim(),
-    categoria: String(categoria || '').trim(),
+    categoria: limparCategoria(categoria),
     entraNoTotal,
     coberturaBudget,
+    dataVencimento: String(dataVencimento || '').slice(0, 10),
+    dataVencimentoLabel: dataVencimentoLabel || (dataVencimento ? formatDataBr(dataVencimento) : ''),
+    frequencia: String(frequencia || '').trim(),
+    colapsavel,
+    filhos: Array.isArray(filhos) ? filhos : [],
     raw,
   };
 }
 
-function ehContaAnual(modelo) {
-  return normalizarFrequenciaSerie(modelo?.frequencia) === FREQUENCIA_SERIE.ANUAL;
+function limparCategoria(categoria) {
+  const c = String(categoria || '').trim();
+  return CATEGORIA_OCULTA.test(c) ? '' : c;
 }
 
-function provisaoMensalAnual(valorAnual) {
-  return (Number(valorAnual) || 0) / 12;
+function ehFrequenciaMensal(frequencia) {
+  return normalizarFrequenciaSerie(frequencia) === FREQUENCIA_SERIE.MENSAL;
 }
 
-function provisaoMensal13(salarioBase) {
-  return (Number(salarioBase) || 0) / 12;
+function provisaoMensalPorFrequencia(valor, frequencia) {
+  const f = normalizarFrequenciaSerie(frequencia);
+  const v = Number(valor) || 0;
+  switch (f) {
+    case FREQUENCIA_SERIE.ANUAL:
+      return v / 12;
+    case FREQUENCIA_SERIE.SEMESTRAL:
+      return v / 6;
+    case FREQUENCIA_SERIE.TRIMESTRAL:
+      return v / 3;
+    case FREQUENCIA_SERIE.BIMESTRAL:
+      return v / 2;
+    default:
+      return v;
+  }
 }
 
-function provisaoMensalTercoFerias(salarioBase) {
-  return (Number(salarioBase) || 0) / 36;
+function labelValorParcela(frequencia) {
+  const f = normalizarFrequenciaSerie(frequencia);
+  if (f === FREQUENCIA_SERIE.ANUAL) return 'Valor anual';
+  return `Valor ${f.toLowerCase()}`;
 }
 
 function montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin) {
   const competencias = montarCompetenciasAgefin(competencia, modelosAgefin, lancamentosAgefin);
-  const competenciasMap = Object.fromEntries(
-    competencias.map((comp) => [comp.serie_id, comp]),
-  );
+  const competenciasMap = Object.fromEntries(competencias.map((comp) => [comp.serie_id, comp]));
 
   const recorrentes = [];
-  const anuais = [];
+  const naoMensais = [];
 
   for (const modelo of modelosAgefin || []) {
     if (!serieEstaAtivaNaCompetencia(modelo, competencia)) continue;
-    const anual = ehContaAnual(modelo);
-    if (!anual && !serieDeveAparecerNaCompetencia(modelo, competencia)) continue;
+
+    const frequencia = normalizarFrequenciaSerie(modelo.frequencia);
+    const mensal = ehFrequenciaMensal(frequencia);
+    if (mensal && !serieDeveAparecerNaCompetencia(modelo, competencia)) continue;
 
     const comp = competenciasMap[modelo.id];
-    const valor = comp ? valorEfetivoCompetencia(comp, modelo) : Number(modelo.valor_previsto) || 0;
+    const valorParcela = comp ? valorEfetivoCompetencia(comp, modelo) : Number(modelo.valor_previsto) || 0;
     const centroCusto = comp?.centro_custo || modelo.centro_custo || '';
-    const categoria = comp?.categoria_nome || modelo.categoria_nome || '';
-    const detalhe = [
-      comp?.terceiro_nome || modelo.terceiro_nome,
-      categoria,
-      centroCusto,
-      normalizarFrequenciaSerie(modelo.frequencia),
-    ]
-      .filter(Boolean)
-      .join(' · ');
+    const categoria = limparCategoria(comp?.categoria_nome || modelo.categoria_nome || '');
+    const dataVencimento = dataVencimentoCompetencia(comp, modelo);
+    const nome = comp?.serie_nome || modelo.nome;
+    const venceNesteMes = serieDeveAparecerNaCompetencia(modelo, competencia);
 
-    if (anual) {
-      const venceNesteMes = serieDeveAparecerNaCompetencia(modelo, competencia);
-      anuais.push(
-        linhaItem({
-          id: `anual-${modelo.id}`,
-          grupo: GRUPO.FIXAS_ANUAIS,
-          nome: comp?.serie_nome || modelo.nome,
-          detalhe,
-          valor: provisaoMensalAnual(valor),
-          valorSecundario: valor,
-          valorSecundarioLabel: venceNesteMes ? 'Vence neste mês' : 'Valor anual',
-          link: `/PlanejamentoFinanceiro?competencia=${competencia}`,
-          destaque: venceNesteMes,
-          centroCusto,
-          categoria,
-        }),
-      );
-    } else {
+    if (mensal) {
       recorrentes.push(
         linhaItem({
           id: `fixa-${modelo.id}`,
           grupo: GRUPO.FIXAS_RECORRENTES,
-          nome: comp?.serie_nome || modelo.nome,
-          detalhe,
-          valor,
+          nome,
+          detalhe: '',
+          valor: valorParcela,
           link: `/PlanejamentoFinanceiro?competencia=${competencia}`,
           centroCusto,
           categoria,
+          dataVencimento,
+        }),
+      );
+    } else {
+      naoMensais.push(
+        linhaItem({
+          id: `nao-mensal-${modelo.id}`,
+          grupo: GRUPO.FIXAS_NAO_MENSAIS,
+          nome,
+          detalhe: '',
+          valor: provisaoMensalPorFrequencia(valorParcela, frequencia),
+          valorSecundario: valorParcela,
+          valorSecundarioLabel: venceNesteMes ? 'Vence neste mês' : labelValorParcela(frequencia),
+          link: `/PlanejamentoFinanceiro?competencia=${competencia}`,
+          destaque: venceNesteMes,
+          centroCusto,
+          categoria,
+          frequencia,
+          dataVencimento,
         }),
       );
     }
   }
 
-  return { recorrentes, anuais };
+  return { recorrentes, naoMensais };
 }
 
 function montarLinhasFolha(competencia, modelosFolha, competenciasFolha) {
@@ -161,7 +188,7 @@ function montarLinhasFolha(competencia, modelosFolha, competenciasFolha) {
   const competencias = montarCompetenciasFolha(competencia, modelosFolha, competenciasFolha);
 
   const folha = [];
-  const provisoes = [];
+  const provisoesDetalhe = [];
 
   for (const comp of competencias) {
     const modelo = modelosMap[comp.colaborador_id];
@@ -178,7 +205,7 @@ function montarLinhasFolha(competencia, modelosFolha, competenciasFolha) {
         id: `folha-${comp.colaborador_id}`,
         grupo: GRUPO.FOLHA,
         nome: comp.colaborador_nome || modelo.colaborador_nome || modelo.nome,
-        detalhe: socio ? 'Sócio' : 'Funcionário',
+        detalhe: socio ? 'Sócio' : '',
         valor: totais.custoTotalEmpresa,
         link: `/FolhaPrevisao?competencia=${competencia}`,
         centroCusto,
@@ -187,13 +214,13 @@ function montarLinhasFolha(competencia, modelosFolha, competenciasFolha) {
     );
 
     if (!socio && modelo.decimo_terceiro_ativo !== false && salarioBase > 0) {
-      provisoes.push(
+      provisoesDetalhe.push(
         linhaItem({
           id: `prov-13-accrual-${comp.colaborador_id}`,
           grupo: GRUPO.FOLHA_PROVISOES,
-          nome: `${comp.colaborador_nome || modelo.nome} — provisão 13º`,
-          detalhe: 'Acumulação mensal (salário ÷ 12)',
-          valor: provisaoMensal13(salarioBase),
+          nome: comp.colaborador_nome || modelo.nome,
+          detalhe: '',
+          valor: provisaoMensalPorFrequencia(salarioBase, FREQUENCIA_SERIE.ANUAL),
           link: `/FolhaPrevisao?competencia=${competencia}`,
           centroCusto,
           categoria: '13º salário',
@@ -202,13 +229,13 @@ function montarLinhasFolha(competencia, modelosFolha, competenciasFolha) {
     }
 
     if (!socio && salarioBase > 0) {
-      provisoes.push(
+      provisoesDetalhe.push(
         linhaItem({
           id: `prov-ferias-terco-${comp.colaborador_id}`,
           grupo: GRUPO.FOLHA_PROVISOES,
-          nome: `${comp.colaborador_nome || modelo.nome} — provisão 1/3 férias`,
-          detalhe: 'Estimativa mensal (salário ÷ 36)',
-          valor: provisaoMensalTercoFerias(salarioBase),
+          nome: comp.colaborador_nome || modelo.nome,
+          detalhe: '',
+          valor: salarioBase / 36,
           link: `/FolhaPrevisao?competencia=${competencia}`,
           centroCusto,
           categoria: 'Férias',
@@ -219,7 +246,7 @@ function montarLinhasFolha(competencia, modelosFolha, competenciasFolha) {
     const eventos = calcularProvisoesEventos(comp, modelo);
     for (const ev of eventos) {
       if (ev.categoria === 'decimo_terceiro' || ev.categoria === 'ferias' || ev.categoria === 'rescisao') {
-        provisoes.push(
+        provisoesDetalhe.push(
           linhaItem({
             id: ev.id || `prov-evento-${comp.colaborador_id}-${ev.nome}`,
             grupo: GRUPO.FOLHA_PROVISOES,
@@ -242,7 +269,43 @@ function montarLinhasFolha(competencia, modelosFolha, competenciasFolha) {
     }
   }
 
-  return { folha, provisoes };
+  return { folha, provisoes: montarLinhasFolhaProvisoesResumo(provisoesDetalhe) };
+}
+
+function montarLinhasFolhaProvisoesResumo(provisoesDetalhe = []) {
+  const accrual13 = provisoesDetalhe.filter((item) => item.id.startsWith('prov-13-accrual-'));
+  const accrualFerias = provisoesDetalhe.filter((item) => item.id.startsWith('prov-ferias-terco-'));
+  const eventos = provisoesDetalhe.filter((item) => item.id.startsWith('prov-evento-'));
+
+  const resumo = [];
+
+  if (accrual13.length) {
+    resumo.push(
+      linhaItem({
+        id: 'prov-13-resumo',
+        grupo: GRUPO.FOLHA_PROVISOES,
+        nome: 'Provisão mensal de 13º',
+        valor: somaLinhas(accrual13),
+        colapsavel: true,
+        filhos: accrual13,
+      }),
+    );
+  }
+
+  if (accrualFerias.length) {
+    resumo.push(
+      linhaItem({
+        id: 'prov-ferias-resumo',
+        grupo: GRUPO.FOLHA_PROVISOES,
+        nome: 'Provisão mensal de férias',
+        valor: somaLinhas(accrualFerias),
+        colapsavel: true,
+        filhos: accrualFerias,
+      }),
+    );
+  }
+
+  return [...resumo, ...eventos];
 }
 
 function montarLinhasBudgets(competencia, modelos, competencias, lancamentos) {
@@ -252,7 +315,7 @@ function montarLinhasBudgets(competencia, modelos, competencias, lancamentos) {
       id: `budget-${v.modelo?.id}`,
       grupo: GRUPO.BUDGETS,
       nome: v.modelo?.nome || 'Budget',
-      detalhe: [v.modelo?.categoria_nome, v.modelo?.centro_custo].filter(Boolean).join(' · '),
+      detalhe: '',
       valor: v.orcado || 0,
       valorSecundario: v.realizado || 0,
       valorSecundarioLabel: 'Realizado',
@@ -322,18 +385,12 @@ function montarLinhasPontuais({
           : '';
       const status = lancamentoPago(lancamento) ? 'Pago' : 'Em aberto';
       const categoria =
-        String(lancamento.categoria || '').trim() ||
-        (frete ? 'Frete de mercadoria' : cmv ? 'Compra de mercadoria' : 'Sem categoria');
+        limparCategoria(lancamento.categoria) ||
+        (frete ? 'Frete de mercadoria' : cmv ? 'Compra de mercadoria' : '');
       const centroCusto = String(lancamento.centro_custo || '').trim();
       const coberturaBudget = budgetCobertura?.nome || '';
-      const detalhe = [
-        lancamento.terceiro_nome,
-        parcela,
-        status,
-        frete ? 'Frete' : '',
-        cmv ? 'CMV' : '',
-        coberturaBudget ? `Coberto pelo budget ${coberturaBudget}` : '',
-      ]
+      const dataVencimento = String(lancamento.data_vencimento || '').slice(0, 10);
+      const detalhe = [parcela, status, frete ? 'Frete' : '', cmv ? 'CMV' : '', coberturaBudget ? `Budget ${coberturaBudget}` : '']
         .filter(Boolean)
         .join(' · ');
 
@@ -343,20 +400,21 @@ function montarLinhasPontuais({
         nome: lancamento.descricao || lancamento.terceiro_nome || 'Conta pontual',
         detalhe,
         valor: valorLancamento(lancamento),
-        valorSecundario: null,
         link: `/AgefinConsulta?competencia=${competencia}`,
         destaque: frete,
         centroCusto,
         categoria,
-        // Budgets já representam o limite planejado; CMV já está refletido no lucro bruto.
+        dataVencimento,
         entraNoTotal: !budgetCobertura && !cmv,
         coberturaBudget,
         raw: lancamento,
       });
     })
-    .sort((a, b) =>
-      a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }),
-    );
+    .sort((a, b) => {
+      const cmpData = (a.dataVencimento || '9999-12-31').localeCompare(b.dataVencimento || '9999-12-31');
+      if (cmpData !== 0) return cmpData;
+      return compararNome(a.nome, b.nome);
+    });
 }
 
 function nomeGrupo(valor, fallback) {
@@ -405,6 +463,52 @@ export function agruparItensCentroCategoria(items = []) {
     }));
 }
 
+/** Centro de custo → itens (sem subnível de categoria). */
+export function agruparItensCentro(items = []) {
+  const centros = new Map();
+
+  for (const item of items) {
+    const centro = nomeGrupo(item.centroCusto, 'Sem centro de custo');
+    if (!centros.has(centro)) centros.set(centro, []);
+    centros.get(centro).push(item);
+  }
+
+  return [...centros.entries()]
+    .sort(([a], [b]) => {
+      if (a === 'Sem centro de custo') return 1;
+      if (b === 'Sem centro de custo') return -1;
+      return compararNome(a, b);
+    })
+    .map(([centro, linhas]) => ({
+      id: centro,
+      label: centro,
+      subtotal: somaLinhas(linhas),
+      items: [...linhas].sort((a, b) => {
+        const cmpData = (a.dataVencimento || '9999-12-31').localeCompare(b.dataVencimento || '9999-12-31');
+        if (cmpData !== 0) return cmpData;
+        return compararNome(a.nome, b.nome);
+      }),
+    }));
+}
+
+/** Lista plana ordenada por data de vencimento. */
+export function agruparItensPorVencimento(items = []) {
+  const ordenados = [...items].sort((a, b) => {
+    const cmpData = (a.dataVencimento || '9999-12-31').localeCompare(b.dataVencimento || '9999-12-31');
+    if (cmpData !== 0) return cmpData;
+    return compararNome(a.nome, b.nome);
+  });
+
+  return [
+    {
+      id: 'vencimento',
+      label: 'Por vencimento',
+      subtotal: somaLinhas(ordenados),
+      items: ordenados,
+    },
+  ];
+}
+
 function somaLinhas(linhas) {
   return (linhas || []).reduce((acc, l) => acc + (Number(l.valor) || 0), 0);
 }
@@ -416,16 +520,32 @@ function somaLinhasNoTotal(linhas) {
   );
 }
 
-function somaVencimentoAnual(linhas) {
+function somaVencimentoNaoMensal(linhas) {
   return (linhas || []).reduce(
     (acc, l) => acc + (l.valorSecundario != null && l.destaque ? Number(l.valorSecundario) || 0 : 0),
     0,
   );
 }
 
+function montarAnexoNaoMensais(itens = []) {
+  return [...itens]
+    .sort((a, b) => compararNome(a.nome, b.nome))
+    .map((item) => ({
+      id: item.id,
+      nome: item.nome,
+      frequencia: item.frequencia,
+      provisaoMensal: item.valor,
+      valorParcela: item.valorSecundario,
+      venceNesteMes: item.destaque,
+      dataVencimento: item.dataVencimento,
+      dataVencimentoLabel: item.dataVencimentoLabel,
+      centroCusto: item.centroCusto,
+    }));
+}
+
 const GRUPO_LABELS = {
   [GRUPO.FIXAS_RECORRENTES]: 'Contas fixas (recorrentes)',
-  [GRUPO.FIXAS_ANUAIS]: 'Contas anuais (provisão mensal)',
+  [GRUPO.FIXAS_NAO_MENSAIS]: 'Contas não mensais (provisão mensal)',
   [GRUPO.FOLHA]: 'Folha de pagamento',
   [GRUPO.FOLHA_PROVISOES]: 'Provisões de folha',
   [GRUPO.BUDGETS]: 'Budgets',
@@ -434,12 +554,48 @@ const GRUPO_LABELS = {
 
 const GRUPO_ORDEM = [
   GRUPO.FIXAS_RECORRENTES,
-  GRUPO.FIXAS_ANUAIS,
+  GRUPO.FIXAS_NAO_MENSAIS,
   GRUPO.FOLHA,
   GRUPO.FOLHA_PROVISOES,
   GRUPO.BUDGETS,
   GRUPO.PONTUAIS,
 ];
+
+function layoutGrupo(grupoId) {
+  switch (grupoId) {
+    case GRUPO.FIXAS_RECORRENTES:
+      return 'vencimento_ou_centro';
+    case GRUPO.FIXAS_NAO_MENSAIS:
+      return 'lista';
+    case GRUPO.FOLHA_PROVISOES:
+      return 'provisoes_colapsaveis';
+    case GRUPO.BUDGETS:
+      return 'centro_categoria';
+    case GRUPO.PONTUAIS:
+      return 'vencimento';
+    default:
+      return 'centro_categoria';
+  }
+}
+
+function montarAgrupamentosGrupo(grupoId, items = []) {
+  switch (layoutGrupo(grupoId)) {
+    case 'vencimento_ou_centro':
+      return {
+        porVencimento: agruparItensPorVencimento(items),
+        porCentro: agruparItensCentro(items),
+      };
+    case 'lista':
+      return { lista: agruparItensPorVencimento(items) };
+    case 'provisoes_colapsaveis':
+      return { lista: [{ id: 'provisoes', label: 'Provisões', subtotal: somaLinhas(items), items }] };
+    case 'vencimento':
+      return { porVencimento: agruparItensPorVencimento(items) };
+    case 'centro_categoria':
+    default:
+      return { porCentroCategoria: agruparItensCentroCategoria(items) };
+  }
+}
 
 /**
  * Monta visão consolidada analítica para uma competência.
@@ -457,7 +613,7 @@ export function montarPlanoFinanceiroConsolidado({
   lucroBruto = 0,
   margemDetalhe = null,
 }) {
-  const { recorrentes, anuais } = montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin);
+  const { recorrentes, naoMensais } = montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin);
   const { folha, provisoes } = montarLinhasFolha(competencia, modelosFolha, competenciasFolha);
   const budgets = montarLinhasBudgets(competencia, modelosBudget, competenciasBudget, lancamentosMes);
   const pontuais = montarLinhasPontuais({
@@ -470,8 +626,8 @@ export function montarPlanoFinanceiroConsolidado({
   });
 
   const subtotalFixasRecorrentes = somaLinhas(recorrentes);
-  const subtotalAnuaisDiluido = somaLinhas(anuais);
-  const subtotalAnuaisVencimento = somaVencimentoAnual(anuais);
+  const subtotalNaoMensaisDiluido = somaLinhas(naoMensais);
+  const subtotalNaoMensaisVencimento = somaVencimentoNaoMensal(naoMensais);
   const subtotalFolha = somaLinhas(folha);
   const subtotalProvisoes = somaLinhasNoTotal(provisoes);
   const subtotalBudgets = somaLinhas(budgets);
@@ -486,13 +642,13 @@ export function montarPlanoFinanceiroConsolidado({
 
   const totalOperacional =
     subtotalFixasRecorrentes + subtotalFolha + subtotalBudgets + subtotalPontuaisExtraPlano;
-  const totalProvisoesMensais = subtotalAnuaisDiluido + subtotalProvisoes;
+  const totalProvisoesMensais = subtotalNaoMensaisDiluido + subtotalProvisoes;
   const totalComProvisoes = totalOperacional + totalProvisoesMensais;
   const totalDesembolsoMes =
     subtotalFixasRecorrentes +
     subtotalFolha +
     subtotalPontuais +
-    subtotalAnuaisVencimento;
+    subtotalNaoMensaisVencimento;
 
   const visoesBudget = montarVisoesBudgets(
     modelosBudget,
@@ -510,30 +666,37 @@ export function montarPlanoFinanceiroConsolidado({
 
   const mapaItens = {
     [GRUPO.FIXAS_RECORRENTES]: recorrentes,
-    [GRUPO.FIXAS_ANUAIS]: anuais,
+    [GRUPO.FIXAS_NAO_MENSAIS]: naoMensais,
     [GRUPO.FOLHA]: folha,
     [GRUPO.FOLHA_PROVISOES]: provisoes,
     [GRUPO.BUDGETS]: budgets,
     [GRUPO.PONTUAIS]: pontuais,
   };
 
-  const grupos = GRUPO_ORDEM.filter((g) => (mapaItens[g] || []).length > 0).map((g) => ({
-    id: g,
-    label: GRUPO_LABELS[g],
-    items: mapaItens[g],
-    subtotal: somaLinhas(mapaItens[g]),
-    subtotalNoTotal: somaLinhasNoTotal(mapaItens[g]),
-    separadoDoTotal: g === GRUPO.FIXAS_ANUAIS || g === GRUPO.FOLHA_PROVISOES,
-    centros: agruparItensCentroCategoria(mapaItens[g]),
-  }));
+  const grupos = GRUPO_ORDEM.filter((g) => (mapaItens[g] || []).length > 0).map((g) => {
+    const agrupamentos = montarAgrupamentosGrupo(g, mapaItens[g]);
+    return {
+      id: g,
+      label: GRUPO_LABELS[g],
+      layout: layoutGrupo(g),
+      items: mapaItens[g],
+      subtotal: somaLinhas(mapaItens[g]),
+      subtotalNoTotal: somaLinhasNoTotal(mapaItens[g]),
+      separadoDoTotal:
+        g === GRUPO.FIXAS_NAO_MENSAIS || g === GRUPO.FOLHA_PROVISOES,
+      ...agrupamentos,
+      centros: agrupamentos.porCentroCategoria || agrupamentos.porCentro || [],
+    };
+  });
 
   return {
     competencia,
     grupos,
+    anexoNaoMensais: montarAnexoNaoMensais(naoMensais),
     resumo: {
       fixasRecorrentes: subtotalFixasRecorrentes,
-      anuaisDiluido: subtotalAnuaisDiluido,
-      anuaisVencimentoMes: subtotalAnuaisVencimento,
+      anuaisDiluido: subtotalNaoMensaisDiluido,
+      anuaisVencimentoMes: subtotalNaoMensaisVencimento,
       folha: subtotalFolha,
       provisoesFolha: subtotalProvisoes,
       budgets: subtotalBudgets,

@@ -68,7 +68,12 @@ function LinhaResumo({ label, valor, tipo = 'normal', sublabel, destaque = false
   );
 }
 
-function ItemPlanoLine({ item, striped }) {
+function ItemPlanoLine({
+  item,
+  striped,
+  modo = 'padrao',
+  mostrarCentro = false,
+}) {
   const accent = item.destaque
     ? 'warning'
     : item.coberturaBudget
@@ -76,6 +81,7 @@ function ItemPlanoLine({ item, striped }) {
       : item.entraNoTotal === false
         ? 'muted'
         : 'default';
+
   const meta = (
     <>
       {item.coberturaBudget ? (
@@ -85,8 +91,22 @@ function ItemPlanoLine({ item, striped }) {
         <P38StatusLabel tone="muted">Não soma novamente</P38StatusLabel>
       ) : null}
       {item.destaque ? <P38StatusLabel tone="warning">Compromisso do mês</P38StatusLabel> : null}
+      {mostrarCentro && item.centroCusto ? (
+        <P38StatusLabel tone="muted">{item.centroCusto}</P38StatusLabel>
+      ) : null}
     </>
   );
+
+  const title =
+    modo === 'vencimento' && item.dataVencimentoLabel
+      ? `${item.dataVencimentoLabel} · ${item.nome}`
+      : item.nome;
+
+  const subtitle =
+    modo === 'vencimento'
+      ? ''
+      : item.detalhe ||
+        (item.valorSecundario != null ? `${item.valorSecundarioLabel}: ${formatFinanceiroValor(item.valorSecundario)}` : '');
 
   return (
     <P38MobileLine
@@ -96,8 +116,8 @@ function ItemPlanoLine({ item, striped }) {
       striped={striped}
       accent={accent}
       className="w-full text-left max-md:!py-3.5 max-md:min-h-[58px]"
-      title={item.nome}
-      subtitle={item.detalhe}
+      title={title}
+      subtitle={subtitle}
       meta={meta}
       value={
         <>
@@ -106,7 +126,7 @@ function ItemPlanoLine({ item, striped }) {
         </>
       }
       valueSub={
-        item.valorSecundario != null
+        modo !== 'vencimento' && item.valorSecundario != null
           ? `${item.valorSecundarioLabel}: ${formatFinanceiroValor(item.valorSecundario)}`
           : null
       }
@@ -115,11 +135,35 @@ function ItemPlanoLine({ item, striped }) {
   );
 }
 
+function ListaItensPlano({ items, modo = 'padrao', mostrarCentro = false }) {
+  return items.map((item, index) => (
+    <ItemPlanoLine
+      key={item.id}
+      item={item}
+      striped={index % 2 === 1}
+      modo={modo}
+      mostrarCentro={mostrarCentro}
+    />
+  ));
+}
+
+function GrupoCentroPlano({ centro, modo, mostrarCentro = true }) {
+  return (
+    <FinanceiroGrupo
+      label={centro.label}
+      despesas={centro.subtotal}
+      liquido={-centro.subtotal}
+      defaultOpen
+    >
+      <ListaItensPlano items={centro.items} modo={modo} mostrarCentro={mostrarCentro} />
+    </FinanceiroGrupo>
+  );
+}
+
 function GrupoCategoriaPlano({ categoria }) {
   return (
     <FinanceiroGrupo
-      label={`${categoria.label} (${categoria.items.length})`}
-      labelClassName="text-[10px] font-medium normal-case tracking-normal text-muted-foreground"
+      label={categoria.label}
       despesas={categoria.subtotal}
       liquido={-categoria.subtotal}
       defaultOpen
@@ -131,7 +175,7 @@ function GrupoCategoriaPlano({ categoria }) {
   );
 }
 
-function GrupoCentroPlano({ centro }) {
+function GrupoCentroCategoriaPlano({ centro }) {
   return (
     <FinanceiroGrupo
       label={centro.label}
@@ -148,7 +192,116 @@ function GrupoCentroPlano({ centro }) {
   );
 }
 
-function SecaoCamadaExplodida({ grupo }) {
+function ItemProvisaoColapsavel({ item }) {
+  return (
+    <FinanceiroGrupo
+      label={item.nome}
+      despesas={item.valor}
+      liquido={-item.valor}
+      defaultOpen={false}
+    >
+      {item.filhos?.map((filho, index) => (
+        <ItemPlanoLine
+          key={filho.id}
+          item={filho}
+          striped={index % 2 === 1}
+          mostrarCentro
+        />
+      ))}
+    </FinanceiroGrupo>
+  );
+}
+
+function ToggleAgrupamentoFixas({ valor, onChange }) {
+  return (
+    <div className={cn('inline-flex rounded-lg p-0.5', P38_FIELD_SURFACE)}>
+      <button
+        type="button"
+        onClick={() => onChange('vencimento')}
+        className={cn(
+          'px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors',
+          valor === 'vencimento' ? 'bg-background shadow-sm text-foreground' : P38_CHIP_INACTIVE,
+        )}
+      >
+        Por vencimento
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange('centro_custo')}
+        className={cn(
+          'px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors',
+          valor === 'centro_custo' ? 'bg-background shadow-sm text-foreground' : P38_CHIP_INACTIVE,
+        )}
+      >
+        Por centro de custo
+      </button>
+    </div>
+  );
+}
+
+function ConteudoCamadaExplodida({ grupo, agrupamentoFixas }) {
+  if (grupo.layout === 'vencimento_ou_centro') {
+    const blocos =
+      agrupamentoFixas === 'centro_custo' ? grupo.porCentro || [] : grupo.porVencimento || [];
+    const modo = agrupamentoFixas === 'centro_custo' ? 'centro' : 'vencimento';
+
+    return (
+      <div className="space-y-2 px-1 pb-1">
+        {blocos.map((bloco) =>
+          modo === 'centro' ? (
+            <GrupoCentroPlano key={bloco.id} centro={bloco} modo="vencimento" mostrarCentro={false} />
+          ) : (
+            <ListaItensPlano key={bloco.id} items={bloco.items} modo="vencimento" />
+          ),
+        )}
+      </div>
+    );
+  }
+
+  if (grupo.layout === 'provisoes_colapsaveis') {
+    return (
+      <div className="space-y-2 px-1 pb-1">
+        {grupo.items.map((item) =>
+          item.colapsavel ? (
+            <ItemProvisaoColapsavel key={item.id} item={item} />
+          ) : (
+            <ItemPlanoLine key={item.id} item={item} />
+          ),
+        )}
+      </div>
+    );
+  }
+
+  if (grupo.layout === 'centro_categoria') {
+    return (
+      <div className="space-y-2 px-1 pb-1">
+        {(grupo.porCentroCategoria || []).map((centro) => (
+          <GrupoCentroCategoriaPlano key={centro.id} centro={centro} />
+        ))}
+      </div>
+    );
+  }
+
+  if (grupo.layout === 'vencimento') {
+    return (
+      <div className="space-y-2 px-1 pb-1">
+        {(grupo.porVencimento || []).map((bloco) => (
+          <ListaItensPlano key={bloco.id} items={bloco.items} modo="vencimento" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 px-1 pb-1">
+      {(grupo.lista || []).flatMap((bloco) => bloco.items).map((item, index) => (
+        <ItemPlanoLine key={item.id} item={item} striped={index % 2 === 1} modo="vencimento" />
+      ))}
+    </div>
+  );
+}
+
+function SecaoCamadaExplodida({ grupo, agrupamentoFixas, onAgrupamentoFixas }) {
   return (
     <FinanceiroGrupo
       label={grupo.label}
@@ -156,21 +309,27 @@ function SecaoCamadaExplodida({ grupo }) {
       liquido={-grupo.subtotal}
       defaultOpen
     >
-      <div className="space-y-2 px-1 pb-1">
+      <div className="space-y-2">
+        {grupo.layout === 'vencimento_ou_centro' ? (
+          <div className="px-2 pt-1">
+            <ToggleAgrupamentoFixas valor={agrupamentoFixas} onChange={onAgrupamentoFixas} />
+          </div>
+        ) : null}
+
         {grupo.separadoDoTotal ? (
-          <p className="text-[11px] text-muted-foreground px-1">
+          <p className="text-[11px] text-muted-foreground px-2">
             Provisão ou evento à parte — não entra no total operacional
           </p>
         ) : null}
+
         {grupo.subtotalNoTotal !== grupo.subtotal && grupo.id === 'pontuais' ? (
-          <p className="text-[11px] text-muted-foreground px-1">
+          <p className="text-[11px] text-muted-foreground px-2">
             {formatFinanceiroValor(grupo.subtotalNoTotal)} somam ao operacional (itens cobertos por budget e CMV
             ficam só informativos)
           </p>
         ) : null}
-        {grupo.centros.map((centro) => (
-          <GrupoCentroPlano key={`${grupo.id}:${centro.id}`} centro={centro} />
-        ))}
+
+        <ConteudoCamadaExplodida grupo={grupo} agrupamentoFixas={agrupamentoFixas} />
       </div>
     </FinanceiroGrupo>
   );
@@ -227,10 +386,10 @@ function TabelaResumoPlano({ resumo, margemDetalhe }) {
             </td>
           </tr>
           <LinhaResumo
-            label="Contas anuais (÷ 12)"
+            label="Contas não mensais (provisão)"
             valor={resumo.anuaisDiluido}
             tipo="subtrai"
-            sublabel="Separado do operacional"
+            sublabel="Anuais, bimestrais, trimestrais e semestrais"
           />
           <LinhaResumo label="Provisões de folha" valor={resumo.provisoesFolha} tipo="subtrai" />
           <LinhaResumo label="Total com provisões" valor={resumo.totalComProvisoes} tipo="subtrai" destaque />
@@ -274,7 +433,7 @@ function TabelaResumoPlano({ resumo, margemDetalhe }) {
                 <LinhaResumo label="Compromissos pontuais / parcelados" valor={resumo.pontuais} tipo="subtrai" />
               ) : null}
               {resumo.anuaisVencimentoMes > 0 ? (
-                <LinhaResumo label="Vencimentos anuais (integral)" valor={resumo.anuaisVencimentoMes} tipo="subtrai" />
+                <LinhaResumo label="Vencimentos não mensais (integral)" valor={resumo.anuaisVencimentoMes} tipo="subtrai" />
               ) : null}
               <LinhaResumo label="Total desembolso" valor={resumo.totalDesembolsoMes} tipo="subtrai" destaque />
               <LinhaResumo
@@ -306,6 +465,7 @@ export default function VisaoFinanceiraPlano() {
       : 'resumo',
   );
   const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [agrupamentoFixas, setAgrupamentoFixas] = useState('vencimento');
 
   const { data: modelosAgefin = [], isLoading: loadingAgefin } = useQuery({
     queryKey: ['visao-financeira', 'agefin-modelos'],
@@ -405,6 +565,8 @@ export default function VisaoFinanceiraPlano() {
         resumo,
         margemDetalhe: plano.margemDetalhe,
         grupos: plano.grupos,
+        anexoNaoMensais: plano.anexoNaoMensais,
+        opcoesExplodido: { agrupamentoFixas },
       });
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -433,12 +595,11 @@ export default function VisaoFinanceiraPlano() {
             <h2 className="text-sm font-semibold text-foreground">Visão ampla do negócio</h2>
             <P38HelpPopover label="Ajuda: visão ampla" size="sm">
               <p className="text-muted-foreground">
-                Cada camada (fixas, folha, budgets, pontuais) aparece separada. Dentro de cada uma, os itens
-                agrupam por centro de custo e categoria.
+                Contas fixas mensais aparecem por vencimento (data, descrição e valor). Contas não mensais
+                entram como provisão mensal, com anexo no PDF.
               </p>
               <p className="text-muted-foreground mt-2">
-                O resumo segue o mesmo formato do plano geral em Budgets: uma lista de somas e subtrações, sem
-                painéis grandes.
+                Provisões de 13º e férias ficam resumidas — expanda para ver por colaborador.
               </p>
             </P38HelpPopover>
           </div>
@@ -521,7 +682,12 @@ export default function VisaoFinanceiraPlano() {
       ) : (
         <div className="space-y-3">
           {plano.grupos.map((grupo) => (
-            <SecaoCamadaExplodida key={grupo.id} grupo={grupo} />
+            <SecaoCamadaExplodida
+              key={grupo.id}
+              grupo={grupo}
+              agrupamentoFixas={agrupamentoFixas}
+              onAgrupamentoFixas={setAgrupamentoFixas}
+            />
           ))}
           <TabelaResumoPlano resumo={resumo} margemDetalhe={plano.margemDetalhe} />
         </div>
