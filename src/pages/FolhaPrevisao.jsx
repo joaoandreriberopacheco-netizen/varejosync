@@ -31,6 +31,7 @@ import FolhaPrevisaoDesligamentoDialog from '@/components/folha-previsao/FolhaPr
 import FolhaPrevisaoProjecao from '@/components/folha-previsao/FolhaPrevisaoProjecao';
 import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
 import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
+import FolhaPessoasPorCentroLista from '@/components/folha-previsao/FolhaPessoasPorCentroLista';
 import {
   calcularTotaisGrupo,
   formatCompetenciaLabel,
@@ -40,7 +41,6 @@ import {
   TIPO_VINCULO,
   TIPO_VINCULO_LABELS,
   filtrarCompetenciasPorTipo,
-  agruparCompetenciasPorTipo,
   filtrarCompetenciasPrevisao,
   formatCicloFolhaCompetencia,
   FOLHA_DIA_VENCIMENTO,
@@ -106,7 +106,6 @@ export default function FolhaPrevisaoPage() {
   const [filtroVinculo, setFiltroVinculo] = useState('todos');
   const [filtroBusca, setFiltroBusca] = useState('');
   const [filtroCentro, setFiltroCentro] = useState('__todos__');
-  const [agruparPorCentroCusto, setAgruparPorCentroCusto] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
   const [draggingModeloId, setDraggingModeloId] = useState('');
@@ -176,10 +175,6 @@ export default function FolhaPrevisaoPage() {
   );
   const hasCompetenciasPersistidas = competencias.length > 0;
   const mesFuturo = isCompetenciaFutura(competenciaMes);
-  const grupos = useMemo(
-    () => agruparCompetenciasPorTipo(competenciasExibidas, modelosMap),
-    [competenciasExibidas, modelosMap],
-  );
   const totaisGrupo = useMemo(
     () => calcularTotaisGrupo(competenciasExibidas, modelosMap),
     [competenciasExibidas, modelosMap],
@@ -548,8 +543,6 @@ export default function FolhaPrevisaoPage() {
             centro={filtroCentro}
             onCentroChange={setFiltroCentro}
             centrosRegistrados={centrosRegistrados}
-            agruparPorCentro={agruparPorCentroCusto}
-            onAgruparPorCentroChange={setAgruparPorCentroCusto}
           />
 
           <FinanceiroListaEstado
@@ -564,10 +557,7 @@ export default function FolhaPrevisaoPage() {
           >
             <FolhaPrevisaoLista
               competencias={competenciasExibidas}
-              grupos={grupos}
               modelosMap={modelosMap}
-              filtroVinculo={filtroVinculo}
-              agruparPorCentro={agruparPorCentroCusto}
               centrosRegistrados={centrosRegistrados}
               onOpen={setSelectedComp}
             />
@@ -630,11 +620,12 @@ export default function FolhaPrevisaoPage() {
                         : '',
                     )}
                   >
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">{centroLabel}</p>
-                        <p className="text-[11px] text-muted-foreground">{pessoas.length} pessoa(s)</p>
-                      </div>
+                    <div className="px-3 py-2 border-b border-border/50">
+                      <p className="text-sm font-semibold text-foreground print:text-black">{centroLabel}</p>
+                      <FolhaPessoasPorCentroLista
+                        pessoas={pessoas}
+                        colaboradoresMap={colaboradoresMap}
+                      />
                     </div>
                     {pessoas.length > 0 ? (
                       <P38MobileLineList className="block md:!block rounded-none overflow-hidden">
@@ -658,6 +649,7 @@ export default function FolhaPrevisaoPage() {
                               onEdit={setPessoaDialog}
                               onDelete={handleDeletePessoa}
                               striped={idx % 2 === 1}
+                              showTitle={false}
                             />
                           </div>
                         ))}

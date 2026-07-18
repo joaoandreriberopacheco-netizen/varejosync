@@ -20,6 +20,7 @@ export default function FolhaPrevisaoModeloRow({
   onEdit,
   onDelete,
   striped = false,
+  showTitle = true,
 }) {
   const tipo = modelo.tipo_vinculo || 'funcionario';
   const salarioBase = extrairSalarioBase(modelo);
@@ -63,9 +64,18 @@ export default function FolhaPrevisaoModeloRow({
         '[&>div>div:first-child]:text-[15px] [&>div>div:first-child]:font-semibold sm:[&>div>div:first-child]:text-base',
         'max-md:!py-3 max-md:min-h-[56px] [&>div:last-child]:max-w-[44%] sm:[&>div:last-child]:max-w-[42%]',
       )}
-      title={<span className="truncate">{nome}</span>}
+      title={showTitle ? <span className="truncate text-foreground print:text-black">{nome}</span> : null}
       subtitle={`${resumoPrincipal}${extras.length ? ` · ${extras.join(' · ')}` : ''}`}
-      meta={meta}
+      meta={
+        showTitle ? (
+          meta
+        ) : (
+          <>
+            <span className="text-foreground print:text-black">{resumoPrincipal}</span>
+            {extras.length > 0 && <span className="text-foreground/80 print:text-black/80">{extras.join(' · ')}</span>}
+          </>
+        )
+      }
       value={<span className="hidden sm:inline">{formatCurrency(tipo === 'socio' ? retiradaFixa : salarioBase)}</span>}
       valueSub={
         <span className="text-muted-foreground hidden sm:inline">

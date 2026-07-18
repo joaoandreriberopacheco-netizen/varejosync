@@ -1,7 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
@@ -12,8 +11,6 @@ export default function FolhaPrevisaoFiltros({
   centro,
   onCentroChange,
   centrosRegistrados = [],
-  agruparPorCentro,
-  onAgruparPorCentroChange,
   className,
 }) {
   return (
@@ -43,21 +40,6 @@ export default function FolhaPrevisaoFiltros({
           ))}
         </SelectContent>
       </Select>
-
-      <label
-        className={cn(
-          'flex min-w-0 cursor-pointer items-center justify-between gap-2 rounded-xl border border-border/40 px-2.5 py-2 sm:ml-auto sm:w-auto',
-          P38_FIELD_SURFACE,
-        )}
-      >
-        <span className="truncate text-[11px] font-medium text-muted-foreground">Por centro de custo</span>
-        <Switch
-          checked={Boolean(agruparPorCentro)}
-          onCheckedChange={onAgruparPorCentroChange}
-          aria-label="Agrupar por centro de custo"
-          className="shrink-0"
-        />
-      </label>
     </div>
   );
 }
