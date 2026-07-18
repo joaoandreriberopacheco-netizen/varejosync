@@ -37,8 +37,8 @@ function tituloItemVencimento(item) {
 }
 
 /**
- * PDF A4 compacto inspirado no relatório enxuto de compras.
- * Consome os totais e agrupamentos já calculados pela Visão Financeira.
+ * PDF A4 em duas colunas estilo jornal: preenche a 1ª coluna de cima a baixo,
+ * depois continua no topo da 2ª coluna na mesma página.
  */
 export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   const {
@@ -64,8 +64,18 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   const margin = 8;
   const contentW = pageW - margin * 2;
   const right = pageW - margin;
-  const bottom = pageH - 10;
-  let y = 13;
+  const pageBottom = pageH - 12;
+  const topY = 12;
+
+  const colGap = 5;
+  const colW = (contentW - colGap) / 2;
+  const colXs = [margin, margin + colW + colGap];
+  const centerX = colXs[0] + colW + colGap / 2;
+
+  let col = 0;
+  let y = topY;
+  let pageStartY = topY;
+  const colBottom = [topY, topY];
 
   const setFont = (style = 'normal', size = 9, color = COLOR.black) => {
     doc.setFont(font, style);
@@ -73,49 +83,106 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     doc.setTextColor(...color);
   };
 
-  const rule = (atY, color = COLOR.line, width = 0.12, x0 = margin, x1 = right) => {
+  const strokeH = (yPos, x0, x1, color = COLOR.lightLine, width = 0.07) => {
     doc.setDrawColor(...color);
     doc.setLineWidth(width);
-    doc.line(x0, atY, x1, atY);
+    doc.line(x0, yPos, x1, yPos);
   };
 
-  const ruleVertical = (x, y0, y1, color = COLOR.line, width = 0.14) => {
-    if (y1 <= y0) return;
+  const strokeV = (y0, y1, color = COLOR.line, width = 0.15) => {
+    if (y1 <= y0 + 1) return;
     doc.setDrawColor(...color);
     doc.setLineWidth(width);
-    doc.line(x, y0, x, y1);
+    doc.line(centerX, y0, centerX, y1);
   };
 
-  const addPage = (titulo = 'CONTINUACAO') => {
+  const syncColBottom = () => {
+    colBottom[col] = Math.max(colBottom[col], y);
+  };
+
+  const finalizePage = () => {
+    const lineEnd = Math.max(colBottom[0], colBottom[1]);
+    strokeV(pageStartY, lineEnd);
+  };
+
+  const newPage = (header) => {
+    finalizePage();
     doc.addPage();
-    y = 13;
-    setFont('bold', 8, COLOR.muted);
-    doc.text(safe(`VISAO FINANCEIRA - ${competenciaLabel} - ${titulo}`), margin, y);
-    y += 4;
-    rule(y, COLOR.lightLine, 0.08);
-    y += 4;
+    col = 0;
+    y = topY;
+    pageStartY = topY;
+    colBottom[0] = topY;
+    colBottom[1] = topY;
+    if (header) {
+      setFont('bold', 8, COLOR.muted);
+      doc.text(safe(header), colXs[0], y);
+      y += 3.8;
+      colBottom[0] = y;
+      strokeH(y - 1, colXs[0], colXs[0] + colW, COLOR.lightLine, 0.06);
+      y += 2;
+      colBottom[0] = y;
+    }
   };
 
-  const ensureSpace = (height = 8) => {
-    if (y + height > bottom) addPage();
+  const nextColumn = () => {
+    syncColBottom();
+    if (col === 0) {
+      col = 1;
+      y = pageStartY;
+    } else {
+      newPage(`VISAO FINANCEIRA - ${competenciaLabel} - CONTINUACAO`);
+    }
   };
 
-  const drawResumoLinha = (label, value, { prefix = '', bold = false } = {}) => {
-    ensureSpace(5.5);
-    setFont(bold ? 'bold' : 'normal', FONT.resumo, bold ? COLOR.black : COLOR.muted);
-    doc.text(safe(label), margin + 2, y);
-    setFont(bold ? 'bold' : 'normal', FONT.resumo + 0.2, COLOR.black);
-    doc.text(safe(`${prefix}${moeda(value)}`), right, y, { align: 'right' });
-    y += 4.2;
-    rule(y, COLOR.lightLine, 0.06, margin + 2, right);
-    y += 1.8;
+  const ensureSpace = (needed) => {
+    if (y + needed <= pageBottom) return;
+    nextColumn();
+    if (y + needed > pageBottom) {
+      newPage(`VISAO FINANCEIRA - ${competenciaLabel} - CONTINUACAO`);
+    }
   };
 
-  const drawSecao = (titulo) => {
-    ensureSpace(6);
-    setFont('bold', 8.5, COLOR.muted);
-    doc.text(safe(titulo.toUpperCase()), margin + 2, y);
-    y += 4;
+  const colX = () => colXs[col];
+  const colWidth = () => colW;
+
+  const advance = (dy) => {
+    y += dy;
+    syncColBottom();
+  };
+
+  const textBlock = (text, { style = 'normal', size = 9, color = COLOR.black, lineH = 4 } = {}) => {
+    setFont(style, size, color);
+    const lines = doc.splitTextToSize(safe(text), colWidth());
+    const height = Math.max(lineH, lines.length * lineH);
+    ensureSpace(height);
+    lines.forEach((line, index) => doc.text(line, colX(), y + index * lineH));
+    advance(height);
+    return height;
+  };
+
+  const textLineValor = (label, value, { prefix = '', bold = false, size = FONT.resumo } = {}) => {
+    const lineH = 4.2;
+    ensureSpace(lineH + 3);
+    const rowY = y;
+    setFont(bold ? 'bold' : 'normal', size, bold ? COLOR.black : COLOR.muted);
+    const labelLines = doc.splitTextToSize(safe(label), colWidth() * 0.58);
+    labelLines.forEach((line, index) => doc.text(line, colX(), rowY + index * lineH));
+    setFont(bold ? 'bold' : 'normal', size + 0.15, COLOR.black);
+    doc.text(safe(`${prefix}${value}`), colX() + colWidth(), rowY, { align: 'right' });
+    const blockH = Math.max(lineH, labelLines.length * lineH) + 1.6;
+    strokeH(rowY + blockH, colX(), colX() + colWidth());
+    advance(blockH + 1.4);
+  };
+
+  const sectionTitle = (title) => {
+    advance(2);
+    textBlock(title.toUpperCase(), { style: 'bold', size: 9.5, color: COLOR.muted, lineH: 4.2 });
+  };
+
+  const hRule = (color = COLOR.line, width = 0.14) => {
+    ensureSpace(3);
+    strokeH(y, colX(), colX() + colWidth(), color, width);
+    advance(3);
   };
 
   const buildItemLayout = (item, descW, { modoVencimento = false, mostrarDetalhe = true } = {}) => {
@@ -131,114 +198,64 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
 
     const titleLH = 4.2;
     const detailLH = 3.8;
-    const titleBlock = nomeLines.length * titleLH;
-    const detailBlock = detalheLines.length ? detalheLines.length * detailLH + 1 : 0;
-    const height = Math.max(8, titleBlock + detailBlock + 2.6);
+    const height = Math.max(
+      8,
+      nomeLines.length * titleLH + (detalheLines.length ? detalheLines.length * detailLH + 1.2 : 0) + 2.4,
+    );
 
-    return { titulo, detalhe, nomeLines, detalheLines, titleLH, detailLH, height };
+    return { nomeLines, detalheLines, titleLH, detailLH, height };
   };
 
-  const drawItemLinhaAt = (item, x, width, startY, options = {}) => {
-    const valueW = Math.min(24, width * 0.34);
-    const descW = Math.max(18, width - valueW - 2);
+  const drawItem = (item, options = {}) => {
+    const valueW = Math.min(24, colWidth() * 0.36);
+    const descW = Math.max(16, colWidth() - valueW - 1.5);
     const layout = buildItemLayout(item, descW, options);
+    ensureSpace(layout.height + 3);
 
+    const rowY = y;
     setFont('normal', FONT.itemTitle);
     layout.nomeLines.forEach((line, index) => {
-      doc.text(line, x, startY + index * layout.titleLH);
+      doc.text(line, colX(), rowY + index * layout.titleLH);
     });
 
     setFont('bold', FONT.itemValue);
-    doc.text(moeda(item.valor), x + width, startY, { align: 'right' });
+    doc.text(moeda(item.valor), colX() + colWidth(), rowY, { align: 'right' });
 
     if (layout.detalheLines.length) {
-      const detalheY = startY + layout.nomeLines.length * layout.titleLH + 0.7;
+      const detalheY = rowY + layout.nomeLines.length * layout.titleLH + 0.6;
       setFont('normal', FONT.itemDetail, COLOR.muted);
       layout.detalheLines.forEach((line, index) => {
-        doc.text(line, x, detalheY + index * layout.detailLH);
+        doc.text(line, colX(), detalheY + index * layout.detailLH);
       });
     }
 
-    if (item.valorSecundario != null && options.mostrarDetalhe !== false) {
-      setFont('normal', 7.8, COLOR.muted);
-      doc.text(
-        safe(`${item.valorSecundarioLabel || 'Complemento'}: ${moeda(item.valorSecundario)}`),
-        x + width,
-        startY + layout.titleLH + 0.5,
-        { align: 'right' },
-      );
-    }
-
-    return layout.height;
-  };
-
-  const drawItemLinha = (item, options = {}) => {
-    const indent = options.indent ?? 2;
-    const nomeX = margin + indent;
-    const width = right - nomeX;
-    ensureSpace(12);
-    const rowTop = y;
-    const rowHeight = drawItemLinhaAt(item, nomeX, width, rowTop, options);
-    y = rowTop + rowHeight + 1.4;
-    rule(y, COLOR.lightLine, 0.06, nomeX, right);
-    y += 2.4;
+    advance(layout.height + 0.8);
+    strokeH(y, colX(), colX() + colWidth());
+    advance(2.2);
   };
 
   const drawItensLista = (items, options = {}) => {
-    const list = items || [];
-    if (!list.length) return;
-
-    if (list.length === 1) {
-      drawItemLinha(list[0], options);
-      return;
-    }
-
-    const colGap = 6;
-    const colW = (contentW - colGap) / 2;
-    const col1X = margin + 2;
-    const col2X = margin + 2 + colW + colGap;
-    const centerX = col1X + colW + colGap / 2;
-
-    for (let i = 0; i < list.length; i += 2) {
-      const left = list[i];
-      const rightItem = list[i + 1];
-      const valueW = Math.min(26, colW * 0.36);
-      const descW = Math.max(18, colW - valueW - 2);
-      const hLeft = buildItemLayout(left, descW, options).height;
-      const hRight = rightItem ? buildItemLayout(rightItem, descW, options).height : 0;
-      const rowHeight = Math.max(hLeft, hRight, 8);
-
-      ensureSpace(rowHeight + 6);
-      const rowTop = y;
-      drawItemLinhaAt(left, col1X, colW, rowTop, options);
-      if (rightItem) drawItemLinhaAt(rightItem, col2X, colW, rowTop, options);
-
-      y = rowTop + rowHeight + 1.6;
-      ruleVertical(centerX, rowTop - 0.8, y + 0.4, COLOR.line, 0.16);
-      rule(y, COLOR.lightLine, 0.07, col1X, col2X + colW);
-      y += 3;
-    }
+    for (const item of items || []) drawItem(item, options);
   };
 
-  const drawSubgrupo = (label, subtotal, indent = 2) => {
-    ensureSpace(8);
-    setFont('bold', 9, COLOR.muted);
-    doc.text(safe(`> ${label}`), margin + indent, y);
-    doc.text(moeda(subtotal), right, y, { align: 'right' });
-    y += 4.5;
+  const drawSubgrupo = (label, subtotal) => {
+    ensureSpace(6);
+    setFont('bold', 9.2, COLOR.muted);
+    doc.text(safe(`> ${label}`), colX(), y);
+    doc.text(moeda(subtotal), colX() + colWidth(), y, { align: 'right' });
+    advance(4.8);
   };
 
   const drawGrupoHeader = (grupo) => {
-    ensureSpace(16);
-    rule(y, COLOR.line, 0.16);
-    y += 3.5;
+    ensureSpace(14);
+    strokeH(y, colX(), colX() + colWidth(), COLOR.line, 0.15);
+    advance(3);
     setFont('bold', FONT.grupo);
-    doc.text(safe(String(grupo.label || '').toUpperCase()), margin, y);
-    setFont('bold', FONT.grupo);
-    doc.text(moeda(grupo.subtotal), right, y, { align: 'right' });
-    y += 4.5;
-    rule(y, COLOR.line, 0.16);
-    y += 5;
+    doc.text(safe(String(grupo.label || '').toUpperCase()), colX(), y);
+    doc.text(moeda(grupo.subtotal), colX() + colWidth(), y, { align: 'right' });
+    advance(4.5);
+    strokeH(y, colX(), colX() + colWidth(), COLOR.line, 0.15);
+    advance(4);
   };
 
   const drawGrupoExplodido = (grupo) => {
@@ -249,28 +266,27 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
         for (const centro of grupo.porCentro || []) {
           drawSubgrupo(centro.label, centro.subtotal);
           drawItensLista(centro.items, { modoVencimento: true, mostrarDetalhe: false });
-          y += 1;
         }
       } else {
         const items = (grupo.porVencimento || []).flatMap((bloco) => bloco.items);
         drawItensLista(items, { modoVencimento: true, mostrarDetalhe: false });
       }
-      y += 2;
+      advance(2);
       return;
     }
 
     if (grupo.layout === 'provisoes_colapsaveis') {
       for (const item of grupo.items || []) {
         if (item.colapsavel) {
-          drawSubgrupo(item.nome, item.valor, 2);
+          drawSubgrupo(item.nome, item.valor);
           if (provisoesExpandidas[item.id]) {
-            drawItensLista(item.filhos, { indent: 16, mostrarDetalhe: false });
+            drawItensLista(item.filhos, { mostrarDetalhe: false });
           }
         } else {
-          drawItemLinha(item);
+          drawItem(item);
         }
       }
-      y += 2;
+      advance(2);
       return;
     }
 
@@ -278,147 +294,125 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
       for (const centro of grupo.porCentroCategoria || []) {
         drawSubgrupo(centro.label, centro.subtotal);
         for (const categoria of centro.categorias || []) {
-          drawSubgrupo(categoria.label, categoria.subtotal, 7);
-          drawItensLista(categoria.items, { indent: 13, mostrarDetalhe: false });
-          y += 1;
+          drawSubgrupo(categoria.label, categoria.subtotal);
+          drawItensLista(categoria.items, { mostrarDetalhe: false });
         }
-        y += 1;
       }
-      y += 2;
+      advance(2);
       return;
     }
 
     if (grupo.layout === 'vencimento' || grupo.layout === 'lista') {
       if (grupo.vazio) {
-        setFont('normal', 7.8, COLOR.muted);
-        doc.text(
-          safe(
-            grupo.id === 'fixas_nao_mensais'
-              ? 'Nenhuma conta anual/trimestral cadastrada no Planejamento Financeiro.'
-              : 'Nenhum boleto ocasional, frete ou compra com vencimento neste mes.',
-          ),
-          margin + 2,
-          y,
+        textBlock(
+          grupo.id === 'fixas_nao_mensais'
+            ? 'Nenhuma conta anual/trimestral cadastrada no Planejamento Financeiro.'
+            : 'Nenhum boleto ocasional, frete ou compra com vencimento neste mes.',
+          { size: 8.5, color: COLOR.muted, lineH: 3.8 },
         );
-        y += 5;
         return;
       }
       const items =
         grupo.layout === 'vencimento'
           ? (grupo.porVencimento || []).flatMap((bloco) => bloco.items)
           : (grupo.lista || []).flatMap((bloco) => bloco.items);
-      drawItensLista(items, { modoVencimento: true, mostrarDetalhe: false });
-      y += 2;
+      drawItensLista(items, {
+        modoVencimento: grupo.layout === 'vencimento',
+        mostrarDetalhe: grupo.layout !== 'vencimento',
+      });
+      advance(2);
       return;
     }
 
     for (const centro of grupo.centros || []) {
       drawSubgrupo(centro.label, centro.subtotal);
       for (const categoria of centro.categorias || []) {
-        drawSubgrupo(categoria.label, categoria.subtotal, 7);
-        drawItensLista(categoria.items, { indent: 13 });
-        y += 1;
+        drawSubgrupo(categoria.label, categoria.subtotal);
+        drawItensLista(categoria.items);
       }
-      y += 1;
     }
-    y += 2;
+    advance(2);
   };
 
-  setFont('bold', 14);
-  doc.text('Relatorio Visao Financeira - ENXUTO', margin, y);
-  y += 5;
-  setFont('normal', 8, COLOR.muted);
-  doc.text('A4 compacto  |  planejamento, compromissos e capacidade de compra  |  DIN 1451', margin, y);
-  y += 4;
-  setFont('bold', 10);
-  doc.text(safe(`Competencia: ${competenciaLabel}`), margin, y);
-  setFont('normal', 8, COLOR.muted);
-  doc.text(safe(`Gerado em ${generatedAt}`), right, y, { align: 'right' });
-  y += 5;
-  rule(y);
-  y += 5;
+  // —— Conteúdo (fluxo jornal desde o título) ——
+  textBlock('Relatorio Visao Financeira - ENXUTO', { style: 'bold', size: 14, lineH: 5.5 });
+  textBlock('A4 compacto  |  planejamento, compromissos e capacidade de compra  |  DIN 1451', {
+    size: 8.5,
+    color: COLOR.muted,
+    lineH: 3.6,
+  });
+  textBlock(`Competencia: ${competenciaLabel}`, { style: 'bold', size: 10.5, lineH: 4.5 });
+  textBlock(`Gerado em ${generatedAt}`, { size: 8.5, color: COLOR.muted, lineH: 3.6 });
+  hRule();
+  advance(1);
 
-  setFont('bold', 9.5);
-  doc.text('RESUMO', margin, y);
-  y += 4;
-  drawResumoLinha('Lucro bruto', resumo.lucroBruto, { prefix: '+ ', bold: true });
+  textBlock('RESUMO', { style: 'bold', size: 10.5, lineH: 4.5 });
+  textLineValor('Lucro bruto', moeda(resumo.lucroBruto), { prefix: '+ ', bold: true });
 
-  drawSecao('Despesas planejadas por camada');
-  drawResumoLinha('Contas fixas (recorrentes)', resumo.fixasRecorrentes, { prefix: '- ' });
-  drawResumoLinha('Folha de pagamento', resumo.folha, { prefix: '- ' });
-  drawResumoLinha('Budgets', resumo.budgets, { prefix: '- ' });
+  sectionTitle('Despesas planejadas por camada');
+  textLineValor('Contas fixas (recorrentes)', moeda(resumo.fixasRecorrentes), { prefix: '- ' });
+  textLineValor('Folha de pagamento', moeda(resumo.folha), { prefix: '- ' });
+  textLineValor('Budgets', moeda(resumo.budgets), { prefix: '- ' });
   if (number(resumo.pontuaisExtraPlano) > 0) {
-    drawResumoLinha('Pauta do mes (fora do plano fixo)', resumo.pontuaisExtraPlano, { prefix: '- ' });
+    textLineValor('Pauta do mes (fora do plano fixo)', moeda(resumo.pontuaisExtraPlano), { prefix: '- ' });
   }
-  drawResumoLinha('Total operacional', resumo.totalOperacional, { prefix: '- ', bold: true });
-  drawResumoLinha('Resultado operacional', resumo.resultadoOperacional, { prefix: '= ', bold: true });
+  textLineValor('Total operacional', moeda(resumo.totalOperacional), { prefix: '- ', bold: true });
+  textLineValor('Resultado operacional', moeda(resumo.resultadoOperacional), { prefix: '= ', bold: true });
 
-  drawSecao('Provisoes mensais');
-  drawResumoLinha('Provisao anuais/trimestrais', resumo.anuaisDiluido, { prefix: '- ' });
+  sectionTitle('Provisoes mensais');
+  textLineValor('Provisao anuais/trimestrais', moeda(resumo.anuaisDiluido), { prefix: '- ' });
   if (number(resumo.naoMensaisEquivalenteAnual) > 0) {
-    ensureSpace(5);
-    setFont('normal', 7.5, COLOR.muted);
-    doc.text(
-      safe(`Equivalente anual no cadastro: ${moeda(resumo.naoMensaisEquivalenteAnual)}`),
-      margin + 2,
-      y,
-    );
-    y += 4;
+    textBlock(`Equivalente anual no cadastro: ${moeda(resumo.naoMensaisEquivalenteAnual)}`, {
+      size: 8.5,
+      color: COLOR.muted,
+      lineH: 3.6,
+    });
   }
-  drawResumoLinha('Provisoes de folha', resumo.provisoesFolha, { prefix: '- ' });
-  drawResumoLinha('Total com provisoes', resumo.totalComProvisoes, { prefix: '- ', bold: true });
-  drawResumoLinha('Resultado com provisoes', resumo.resultadoComProvisoes, { prefix: '= ', bold: true });
+  textLineValor('Provisoes de folha', moeda(resumo.provisoesFolha), { prefix: '- ' });
+  textLineValor('Total com provisoes', moeda(resumo.totalComProvisoes), { prefix: '- ', bold: true });
+  textLineValor('Resultado com provisoes', moeda(resumo.resultadoComProvisoes), { prefix: '= ', bold: true });
 
-  drawSecao('Capacidade de compra');
-  drawResumoLinha('CMV vendido (base)', resumo.capacidadeCompraBase, { prefix: '+ ' });
-  drawResumoLinha('Fretes agendados no mes', resumo.fretesAgendados, { prefix: '- ' });
-  drawResumoLinha('Disponivel para novas compras', resumo.capacidadeCompraDisponivel, { prefix: '= ', bold: true });
+  sectionTitle('Capacidade de compra');
+  textLineValor('CMV vendido (base)', moeda(resumo.capacidadeCompraBase), { prefix: '+ ' });
+  textLineValor('Fretes agendados no mes', moeda(resumo.fretesAgendados), { prefix: '- ' });
+  textLineValor('Disponivel para novas compras', moeda(resumo.capacidadeCompraDisponivel), {
+    prefix: '= ',
+    bold: true,
+  });
 
   if (number(resumo.pontuais) > 0 || number(resumo.anuaisVencimentoMes) > 0) {
-    drawSecao('Desembolso conhecido no mes');
+    sectionTitle('Desembolso conhecido no mes');
     if (number(resumo.pontuais) > 0) {
-      drawResumoLinha('Pauta do mes (vencimentos)', resumo.pontuais, { prefix: '- ' });
+      textLineValor('Pauta do mes (vencimentos)', moeda(resumo.pontuais), { prefix: '- ' });
     }
     if (number(resumo.anuaisVencimentoMes) > 0) {
-      drawResumoLinha('Vencimentos nao mensais (integral)', resumo.anuaisVencimentoMes, { prefix: '- ' });
+      textLineValor('Vencimentos nao mensais (integral)', moeda(resumo.anuaisVencimentoMes), { prefix: '- ' });
     }
-    drawResumoLinha('Total desembolso', resumo.totalDesembolsoMes, { prefix: '- ', bold: true });
-    drawResumoLinha('Saldo apos compromissos', resumo.resultadoDesembolso, { prefix: '= ', bold: true });
+    textLineValor('Total desembolso', moeda(resumo.totalDesembolsoMes), { prefix: '- ', bold: true });
+    textLineValor('Saldo apos compromissos', moeda(resumo.resultadoDesembolso), { prefix: '= ', bold: true });
   }
 
   if (number(margemDetalhe?.receita_liquida) > 0) {
-    ensureSpace(7);
-    y += 1;
-    setFont('normal', 7.8, COLOR.muted);
-    doc.text(
-      safe(
-        `Base do lucro bruto: receita liquida ${moeda(margemDetalhe.receita_liquida)} - CMV ${moeda(
-          margemDetalhe.custo_total,
-        )}`,
-      ),
-      margin + 2,
-      y,
+    textBlock(
+      `Base do lucro bruto: receita liquida ${moeda(margemDetalhe.receita_liquida)} - CMV ${moeda(
+        margemDetalhe.custo_total,
+      )}`,
+      { size: 8.5, color: COLOR.muted, lineH: 3.6 },
     );
-    y += 5;
   }
 
-  y += 2;
-  rule(y);
-  y += 5;
-  setFont('bold', 12);
-  doc.text('PLANO EXPLODIDO', margin, y);
-  y += 6;
+  advance(2);
+  hRule();
+  textBlock('PLANO EXPLODIDO', { style: 'bold', size: 12, lineH: 5 });
+  advance(1);
 
   for (const grupo of grupos) {
     drawGrupoExplodido(grupo);
   }
 
-  ensureSpace(27);
-  rule(y);
-  y += 5;
-  setFont('bold', 9.5);
-  doc.text('TOTAIS FINAIS', margin, y);
-  y += 4;
+  advance(2);
+  hRule();
+  textBlock('TOTAIS FINAIS', { style: 'bold', size: 10, lineH: 4.5 });
   const finais = [
     ['Total operacional', resumo.totalOperacional],
     ['Provisoes mensais', resumo.totalProvisoesMensais],
@@ -427,17 +421,11 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     ['Capacidade de compra apos fretes', resumo.capacidadeCompraDisponivel],
   ];
   finais.forEach(([label, value]) => {
-    setFont('normal', 8.5, COLOR.muted);
-    doc.text(safe(label), margin + 2, y);
-    setFont('bold', 8.8);
-    doc.text(moeda(value), right, y, { align: 'right' });
-    y += 4;
+    textLineValor(label, moeda(value));
   });
 
   if (anexoNaoMensais?.itens?.length > 0 || (Array.isArray(anexoNaoMensais) && anexoNaoMensais.length > 0)) {
-    const itensAnexo = Array.isArray(anexoNaoMensais?.itens)
-      ? anexoNaoMensais.itens
-      : anexoNaoMensais;
+    const itensAnexo = Array.isArray(anexoNaoMensais?.itens) ? anexoNaoMensais.itens : anexoNaoMensais;
     const totalProvisao =
       Number(anexoNaoMensais?.totalProvisaoMensal) ||
       itensAnexo.reduce((acc, item) => acc + (Number(item.provisaoMensal) || 0), 0);
@@ -445,67 +433,40 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
       Number(anexoNaoMensais?.totalEquivalenteAnual) ||
       itensAnexo.reduce((acc, item) => acc + (Number(item.equivalenteAnual) || 0), 0);
 
-    addPage('ANEXO');
-    setFont('bold', 11);
-    doc.text('ANEXO - CONTAS ANUAIS E NAO MENSAIS', margin, y);
-    y += 5;
-    setFont('normal', 8, COLOR.muted);
-    doc.text(
-      safe(
-        'IPTU, IPVA, alvaras e demais contas com recorrencia maior que mensal. Provisao mensal = parcela diluida.',
-      ),
-      margin,
-      y,
+    advance(3);
+    hRule();
+    textBlock('ANEXO - CONTAS ANUAIS E NAO MENSAIS', { style: 'bold', size: 11, lineH: 4.8 });
+    textBlock(
+      'IPTU, IPVA, alvaras e demais contas com recorrencia maior que mensal. Provisao mensal = parcela diluida.',
+      { size: 8.5, color: COLOR.muted, lineH: 3.6 },
     );
-    y += 6;
-
-    const colFreq = margin + 2;
-    const colNome = margin + 28;
-    const colProv = right - 38;
-    const colParcela = right;
-
-    ensureSpace(8);
-    setFont('bold', 7.8, COLOR.muted);
-    doc.text('FREQ.', colFreq, y);
-    doc.text('CONTA', colNome, y);
-    doc.text('PROV./MES', colProv, y, { align: 'right' });
-    doc.text('PARCELA', colParcela, y, { align: 'right' });
-    y += 4;
-    rule(y, COLOR.line, 0.1);
-    y += 4;
+    advance(1);
 
     for (const item of itensAnexo) {
-      ensureSpace(7);
-      setFont('normal', 7.5, COLOR.muted);
-      doc.text(safe(item.frequencia || ''), colFreq, y);
-      setFont('normal', 8.2);
-      const nomeLines = doc.splitTextToSize(safe(item.nome || ''), colProv - colNome - 4);
-      nomeLines.forEach((line, index) => doc.text(line, colNome, y + index * 3));
-      doc.text(moeda(item.provisaoMensal), colProv, y, { align: 'right' });
-      setFont('normal', 7.5, COLOR.muted);
-      doc.text(moeda(item.valorParcela), colParcela, y, { align: 'right' });
-      if (item.venceNesteMes) {
-        setFont('normal', 6.8, COLOR.muted);
-        doc.text('Vence neste mes', colNome, y + 3.2);
-      }
-      y += Math.max(6, nomeLines.length * 3.2 + (item.venceNesteMes ? 3.2 : 0) + 1.4);
-      rule(y, COLOR.lightLine, 0.06, colFreq, right);
-      y += 2.4;
+      const titulo = `${item.frequencia || ''} · ${item.nome || ''}`.trim();
+      const detalhe = [
+        `Prov./mes: ${moeda(item.provisaoMensal)}`,
+        `Parcela: ${moeda(item.valorParcela)}`,
+        item.venceNesteMes ? 'Vence neste mes' : '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      drawItem(
+        {
+          nome: titulo,
+          valor: item.provisaoMensal,
+          detalhe,
+          entraNoTotal: true,
+        },
+        { mostrarDetalhe: true },
+      );
     }
 
-    ensureSpace(10);
-    y += 2;
-    rule(y, COLOR.line, 0.1);
-    y += 4;
-    setFont('bold', 8.5);
-    doc.text('Total provisao mensal', colNome, y);
-    doc.text(moeda(totalProvisao), colProv, y, { align: 'right' });
-    y += 4;
-    setFont('normal', 8, COLOR.muted);
-    doc.text('Equivalente anual no cadastro', colNome, y);
-    doc.text(moeda(totalAnual), colProv, y, { align: 'right' });
-    y += 4;
+    textLineValor('Total provisao mensal', moeda(totalProvisao), { bold: true });
+    textLineValor('Equivalente anual no cadastro', moeda(totalAnual));
   }
+
+  finalizePage();
 
   const pageCount = doc.internal.getNumberOfPages();
   for (let page = 1; page <= pageCount; page += 1) {
@@ -517,6 +478,6 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'visao_financeira_enxuto_a4_v4',
+    version: 'visao_financeira_enxuto_a4_v5',
   };
 }
