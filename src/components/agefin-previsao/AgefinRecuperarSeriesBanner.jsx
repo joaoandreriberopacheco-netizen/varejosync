@@ -9,30 +9,37 @@ import { createPageUrl } from '@/utils';
 function descreverFontes(diag) {
   const partes = [];
   if (diag.fontes?.includes('backup')) {
-    partes.push(`backup do sistema (${diag.backupNaoMensais} não mensais)`);
+    partes.push(`backup do sistema (${diag.backup} conta(s))`);
   }
   if (diag.fontes?.includes('local')) {
-    partes.push(`dados locais deste navegador (${diag.localNaoMensais} não mensais)`);
+    partes.push(`dados locais deste navegador (${diag.local} conta(s))`);
   }
   if (diag.fontes?.includes('entidade')) {
-    partes.push(`cadastro espelhado (${diag.entityNaoMensais} não mensais)`);
+    partes.push(`cadastro espelhado (${diag.entidade} conta(s))`);
   }
   if (diag.fontes?.includes('financeiro')) {
-    partes.push(`lançamentos no financeiro (${diag.reconstruidasNaoMensais} candidata(s))`);
+    partes.push(`lançamentos no financeiro (${diag.reconstruidas} candidata(s))`);
   }
   return partes;
 }
 
 function mensagemRecuperacao(diag) {
   const fontes = descreverFontes(diag);
-  const faltando = diag.candidatasNaoMensais || diag.faltandoNaoMensais || 0;
-  const atual = diag.atualNaoMensais ?? 0;
+  const faltando = diag.candidatasRecuperacao || diag.faltando || 0;
+  const gravado = diag.atualGravado ?? diag.empresa ?? 0;
 
   if (fontes.length > 0) {
-    return `Encontramos contas anuais ou trimestrais em ${fontes.join(', ')}. Hoje aparecem ${atual} no cadastro — é possível recuperar até ${faltando || diag.candidatasNaoMensais || 'algumas'} antes de cadastrar tudo de novo.`;
+    return `Encontramos contas fixas em ${fontes.join(', ')} que não estão gravadas na nuvem (${gravado} hoje). É possível recuperar até ${faltando} conta(s) — mensais, anuais e trimestrais.`;
   }
 
-  return `O cadastro atual tem ${atual} conta(s) anual(is)/trimestral(is), mas há indícios de contas perdidas. Tente recuperar antes de cadastrar tudo de novo.`;
+  return `O cadastro na nuvem parece incompleto (${gravado} conta(s)). Tente recuperar antes de cadastrar tudo de novo.`;
+}
+
+function descreverResultado(resultado) {
+  const partes = [];
+  if (resultado.mensais > 0) partes.push(`${resultado.mensais} mensal(is)`);
+  if (resultado.naoMensais > 0) partes.push(`${resultado.naoMensais} anual(is)/trimestral(is)`);
+  return partes.length ? partes.join(' e ') : `${resultado.recuperadas} conta(s)`;
 }
 
 export default function AgefinRecuperarSeriesBanner({ className = '', showPlanejamentoLink = false }) {
@@ -59,13 +66,13 @@ export default function AgefinRecuperarSeriesBanner({ className = '', showPlanej
         toast({
           title: 'Nada novo para recuperar',
           description:
-            'Não encontramos contas anuais/trimestrais em backup, cadastro local ou financeiro. Se cadastrou hoje neste navegador, peça ajuda para ler o backup local.',
+            'Não encontramos contas em backup, cadastro local ou financeiro. Se cadastrou hoje neste navegador, peça ajuda para ler o backup local.',
           variant: 'destructive',
         });
       } else {
         toast({
           title: 'Contas recuperadas',
-          description: `${resultado.recuperadas} conta(s) restaurada(s), sendo ${resultado.naoMensais} anual(is)/trimestral(is).`,
+          description: `${resultado.recuperadas} conta(s) restaurada(s): ${descreverResultado(resultado)}.`,
         });
       }
     } catch (e) {
@@ -78,7 +85,7 @@ export default function AgefinRecuperarSeriesBanner({ className = '', showPlanej
   return (
     <div className={className}>
       <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-3 space-y-2">
-        <p className="text-sm font-medium text-foreground">Contas anuais ou trimestrais podem ter sido perdidas</p>
+        <p className="text-sm font-medium text-foreground">Contas fixas podem ter sido perdidas</p>
         <p className="text-xs text-muted-foreground">{mensagemRecuperacao(diag)}</p>
         <div className="flex flex-wrap items-center gap-2">
           <Button
@@ -89,7 +96,7 @@ export default function AgefinRecuperarSeriesBanner({ className = '', showPlanej
             disabled={recuperando}
             onClick={handleRecuperar}
           >
-            {recuperando ? 'Recuperando…' : 'Recuperar contas anuais/trimestrais'}
+            {recuperando ? 'Recuperando…' : 'Recuperar contas fixas'}
           </Button>
           {showPlanejamentoLink ? (
             <Button type="button" size="sm" variant="ghost" className="rounded-lg" asChild>
