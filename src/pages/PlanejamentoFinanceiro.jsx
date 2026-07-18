@@ -81,7 +81,6 @@ export default function PlanejamentoFinanceiroPage() {
   const [sortOrderContas, setSortOrderContas] = useState('asc');
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
-  const [abaAtiva, setAbaAtiva] = useState('contas');
   const [draggingSerieId, setDraggingSerieId] = useState('');
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
   const [showImportador, setShowImportador] = useState(false);
@@ -94,42 +93,38 @@ export default function PlanejamentoFinanceiroPage() {
   const { data: lancamentosRecorrentes = [] } = useQuery({
     queryKey: ['agefin-previsao', 'lancamentos-recorrentes'],
     queryFn: listarLancamentosRecorrentes,
-    enabled: abaAtiva === 'projecao',
-    staleTime: 120_000,
+    staleTime: 60_000,
   });
 
   const { data: lancamentosMes = [], isLoading: loadingLanc } = useQuery({
     queryKey: ['agefin-previsao', 'lancamentos', competenciaMes],
     queryFn: () => listarLancamentosCompetencia(competenciaMes),
-    enabled: abaAtiva === 'previsao',
     staleTime: 60_000,
   });
 
   const { data: modelos = [], isLoading: loadingModelos } = useQuery({
     queryKey: ['agefin-previsao', 'modelos'],
     queryFn: listarModelos,
-    staleTime: 60_000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
   });
 
   const { data: parcelamentos = [] } = useQuery({
     queryKey: ['agefin-previsao', 'parcelamentos'],
     queryFn: listarParcelamentos,
-    enabled: abaAtiva === 'previsao',
-    staleTime: 120_000,
+    staleTime: 60_000,
   });
 
   const { data: contas = [] } = useQuery({
     queryKey: ['agefin-previsao', 'contas'],
     queryFn: listarContasFinanceiras,
-    enabled: abaAtiva === 'previsao' && Boolean(selectedComp),
     staleTime: 300_000,
   });
 
   const { data: centrosCustoRegistros = [], refetch: refetchCentros } = useQuery({
     queryKey: ['agefin-previsao', 'centros-custo-registros'],
     queryFn: listarCentrosCustoRegistros,
-    staleTime: 300_000,
+    staleTime: 60_000,
   });
 
   const centrosRegistrados = useMemo(
@@ -193,10 +188,21 @@ export default function PlanejamentoFinanceiroPage() {
   );
 
   const invalidate = useCallback(() => {
-    invalidarCacheLancamentosFinanceiros();
     queryClient.invalidateQueries({ queryKey: ['agefin-previsao'] });
     queryClient.invalidateQueries({ queryKey: ['visao-financeira'] });
   }, [queryClient]);
+
+  const invalidateLancamentos = useCallback(() => {
+    invalidarCacheLancamentosFinanceiros();
+    queryClient.invalidateQueries({ queryKey: ['agefin-previsao', 'lancamentos'] });
+    queryClient.invalidateQueries({ queryKey: ['agefin-previsao', 'lancamentos-recorrentes'] });
+    queryClient.invalidateQueries({ queryKey: ['visao-financeira'] });
+  }, [queryClient]);
+
+  const refreshDepoisDeLancamentos = useCallback(() => {
+    invalidateLancamentos();
+    invalidate();
+  }, [invalidateLancamentos, invalidate]);
 
   useEffect(() => {
     return subscribeSeriesStorageChanges(() => {
@@ -220,7 +226,7 @@ export default function PlanejamentoFinanceiroPage() {
     setSaving(true);
     try {
       const { criados, pulados } = await abrirCompetenciasDoMes(competenciaMes);
-      invalidate();
+      refreshDepoisDeLancamentos();
       if (serieAlvo) {
         const lancs = await listarLancamentosCompetencia(competenciaMes);
         const modelo = modelosMap[serieAlvo];
@@ -254,7 +260,7 @@ export default function PlanejamentoFinanceiroPage() {
       if (selectedComp && removidas.some((r) => r.id === selectedComp.id)) {
         setSelectedComp(null);
       }
-      invalidate();
+      refreshDepoisDeLancamentos();
       if (!total) {
         toast({ title: 'Nada para desfazer', description: 'Este mês ainda não foi aberto.' });
         return;
@@ -331,7 +337,7 @@ export default function PlanejamentoFinanceiroPage() {
         contaFinanceiraId: contaPadrao.id,
         modelo: selectedModelo,
       });
-      invalidate();
+      refreshDepoisDeLancamentos();
       toast({ title: 'Enviado ao financeiro', description: 'Lançamento previsto criado/atualizado.' });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
@@ -442,7 +448,7 @@ export default function PlanejamentoFinanceiroPage() {
         dataVencimento,
         diaVencimento,
       });
-      invalidate();
+      refreshDepoisDeLancamentos();
       const lancs = await listarLancamentosCompetencia(competenciaMes);
       const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcelamentos);
       refreshSelectedComp(visao);
@@ -464,7 +470,7 @@ export default function PlanejamentoFinanceiroPage() {
     setSaving(true);
     try {
       await abrirCompetenciaSerie(selectedModelo, competenciaMes);
-      invalidate();
+      refreshDepoisDeLancamentos();
       const lancs = await listarLancamentosCompetencia(competenciaMes);
       const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcelamentos);
       refreshSelectedComp(visao);
@@ -484,7 +490,7 @@ export default function PlanejamentoFinanceiroPage() {
       setSaving(true);
       try {
         const lf = await abrirCompetenciaSerie(selectedModelo, competenciaMes);
-        invalidate();
+        refreshDepoisDeLancamentos();
         const lancs = await listarLancamentosCompetencia(competenciaMes);
         const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcelamentos);
         refreshSelectedComp(visao);
@@ -521,7 +527,7 @@ export default function PlanejamentoFinanceiroPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Contas fixas mensais — energia, telefone, internet…</p>
       </div>
 
-      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full mt-4">
+      <Tabs defaultValue="contas" className="w-full mt-4">
         <TabsList
           className={cn(
             'w-full h-auto p-1 rounded-xl flex-nowrap overflow-x-auto md:overflow-visible md:flex-wrap',
@@ -801,7 +807,7 @@ export default function PlanejamentoFinanceiroPage() {
                   : undefined
               }
               onSuccess={() => {
-                invalidate();
+                refreshDepoisDeLancamentos();
                 setShowImportador(false);
                 setImportadorLancamentoId(null);
                 void (async () => {
