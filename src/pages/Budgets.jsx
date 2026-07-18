@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,
   ChevronRight,
+  Download,
+  Loader2,
   Plus,
   Target,
   CalendarClock,
@@ -62,6 +64,8 @@ import {
   montarCompetenciasVisao as montarCompetenciasAgefin,
 } from '@/lib/agefinPrevisaoCalculos';
 import { listarModelos as listarModelosAgefin, listarLancamentosCompetencia } from '@/lib/agefinPrevisaoService';
+import { gerarRelatorioBudgets } from '@/functions/gerarRelatorioBudgets';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 export default function BudgetsPage() {
   const { toast } = useToast();
@@ -83,6 +87,7 @@ export default function BudgetsPage() {
   const [filtroCadastroBusca, setFiltroCadastroBusca] = useState('');
   const [filtroCadastroAtivo, setFiltroCadastroAtivo] = useState('ativos');
   const [fabOpen, setFabOpen] = useState(false);
+  const [gerandoPdf, setGerandoPdf] = useState(false);
 
   const abaInicial = searchParams.get('aba') || 'cadastro';
   const [aba, setAba] = useState(abaInicial);
@@ -334,9 +339,63 @@ export default function BudgetsPage() {
 
   const competenciaLabel = formatCompetenciaLabel(competenciaMes);
 
+  const handleGerarPdf = async () => {
+    const modoCadastro = aba === 'cadastro';
+    const listaAcompanhamento = visoesFiltradas;
+    const listaCadastro = modelosCadastro;
+
+    if (gerandoPdf) return;
+    if (modoCadastro && !listaCadastro.length) {
+      toast({ title: 'Nada para exportar', description: 'Não há budgets na lista atual.' });
+      return;
+    }
+    if (!modoCadastro && !listaAcompanhamento.length) {
+      toast({ title: 'Nada para exportar', description: 'Não há budgets para este mês com os filtros atuais.' });
+      return;
+    }
+
+    setGerandoPdf(true);
+    toast({ title: 'Gerando PDF dos budgets...' });
+    try {
+      const resposta = await gerarRelatorioBudgets({
+        competencia: competenciaMes,
+        competenciaLabel,
+        modo: modoCadastro ? 'cadastro' : 'acompanhamento',
+        visoes: listaAcompanhamento,
+        modelos: listaCadastro,
+        totais,
+      });
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `Budgets_${modoCadastro ? 'cadastro' : 'acompanhamento'}_${competenciaMes}_${dataHoje()}.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast({ title: 'PDF dos budgets gerado' });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Erro ao gerar PDF',
+        description: error?.message || String(error),
+        variant: 'destructive',
+      });
+    } finally {
+      setGerandoPdf(false);
+    }
+  };
+
+  const podeGerarPdf =
+    aba === 'cadastro'
+      ? modelosCadastro.length > 0
+      : aba === 'acompanhamento'
+        ? visoesFiltradas.length > 0
+        : false;
+
   return (
     <div className="w-full max-w-[1400px] mx-auto min-w-0 overflow-x-hidden font-din-1451 bg-background px-4 py-4 md:px-6 lg:px-8 lg:py-6 xl:px-10 pb-[calc(var(--p38-scroll-pad-below-nav)+5.5rem)] md:pb-6">
-      <div className="flex items-center gap-1.5 pb-3 border-b border-border/40">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-border/40">
+        <div className="flex items-center gap-1.5 min-w-0">
         <h1 className="text-xl font-medium text-foreground">Budgets</h1>
         <P38HelpPopover label="Ajuda: budgets" side="bottom" align="start">
           <p className="font-medium text-foreground">Orçamento de despesas variáveis</p>
@@ -348,6 +407,20 @@ export default function BudgetsPage() {
             Dias úteis = segunda a sábado (domingo não conta). Padrão = mês completo.
           </p>
         </P38HelpPopover>
+        </div>
+        {(aba === 'cadastro' || aba === 'acompanhamento') && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-9 rounded-xl gap-1.5 shrink-0"
+            disabled={!podeGerarPdf || gerandoPdf || loadingModelos || loadingLanc}
+            onClick={handleGerarPdf}
+          >
+            {gerandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            <span>PDF</span>
+          </Button>
+        )}
       </div>
 
       <Tabs
