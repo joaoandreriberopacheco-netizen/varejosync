@@ -1,0 +1,96 @@
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  listarCentrosCustoRegistros,
+  listarContasFinanceiras,
+  listarLancamentosCompetencia,
+  listarLancamentosRecorrentes,
+  listarModelos,
+} from '@/lib/agefinPrevisaoService';
+import { listarParcelamentos } from '@/lib/agefinParcelamentoService';
+import { agefinQueryKeys } from '../constants/queryKeys';
+
+const STALE_MODELOS = 60_000;
+const STALE_PADRAO = 60_000;
+const STALE_CONTAS = 300_000;
+
+/**
+ * Carrega só o necessário para a aba activa.
+ * - contas: modelos + centros
+ * - previsao: + lançamentos do mês + parcelamentos
+ * - projecao: modelos + recorrentes (sem histórico do mês)
+ * - contas financeiras: só quando o drawer pede sync
+ */
+export function useAgefinPrevisaoQueries({ abaAtiva, competenciaMes, precisaContas = false }) {
+  const precisaCentros = abaAtiva === 'contas' || abaAtiva === 'previsao';
+  const precisaLancamentos = abaAtiva === 'previsao';
+  const precisaParcelamentos = abaAtiva === 'previsao';
+  const precisaRecorrentes = abaAtiva === 'projecao';
+
+  const modelosQuery = useQuery({
+    queryKey: agefinQueryKeys.modelos,
+    queryFn: listarModelos,
+    staleTime: STALE_MODELOS,
+    refetchOnWindowFocus: false,
+  });
+
+  const centrosQuery = useQuery({
+    queryKey: agefinQueryKeys.centros,
+    queryFn: listarCentrosCustoRegistros,
+    enabled: precisaCentros,
+    staleTime: STALE_PADRAO,
+  });
+
+  const lancamentosQuery = useQuery({
+    queryKey: agefinQueryKeys.lancamentos(competenciaMes),
+    queryFn: () => listarLancamentosCompetencia(competenciaMes),
+    enabled: precisaLancamentos,
+    staleTime: STALE_PADRAO,
+  });
+
+  const parcelamentosQuery = useQuery({
+    queryKey: agefinQueryKeys.parcelamentos,
+    queryFn: listarParcelamentos,
+    enabled: precisaParcelamentos,
+    staleTime: STALE_PADRAO,
+  });
+
+  const recorrentesQuery = useQuery({
+    queryKey: agefinQueryKeys.recorrentes,
+    queryFn: listarLancamentosRecorrentes,
+    enabled: precisaRecorrentes,
+    staleTime: STALE_PADRAO,
+  });
+
+  const contasQuery = useQuery({
+    queryKey: agefinQueryKeys.contas,
+    queryFn: listarContasFinanceiras,
+    enabled: precisaContas,
+    staleTime: STALE_CONTAS,
+  });
+
+  const centrosRegistrados = useMemo(
+    () =>
+      [...(centrosQuery.data || [])]
+        .filter((row) => row?.ativo !== false)
+        .map((row) => String(row?.nome || '').trim())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })),
+    [centrosQuery.data],
+  );
+
+  return {
+    modelos: modelosQuery.data ?? [],
+    loadingModelos: modelosQuery.isLoading,
+    centrosCustoRegistros: centrosQuery.data ?? [],
+    centrosRegistrados,
+    refetchCentros: centrosQuery.refetch,
+    lancamentosMes: lancamentosQuery.data ?? [],
+    loadingLancamentos: lancamentosQuery.isLoading,
+    parcelamentos: parcelamentosQuery.data ?? [],
+    lancamentosRecorrentes: recorrentesQuery.data ?? [],
+    loadingRecorrentes: recorrentesQuery.isLoading,
+    contas: contasQuery.data ?? [],
+    loadingContas: contasQuery.isLoading,
+  };
+}
