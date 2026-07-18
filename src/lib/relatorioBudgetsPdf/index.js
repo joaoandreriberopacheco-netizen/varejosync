@@ -1,0 +1,1 @@
+export { generateRelatorioBudgetsPdf } from './generateRelatorioBudgetsPdf';
