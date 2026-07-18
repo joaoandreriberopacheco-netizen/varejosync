@@ -73,8 +73,8 @@ export default function PlanejamentoFinanceiroV2Page() {
               cadastra a recorrência, abre o mês, ajusta valor/vencimento e projeta os próximos meses.
             </p>
             <p className="text-muted-foreground">
-              Ao abrir o mês ou editar uma conta já lançada, a alteração vai direto para o financeiro — a AGEFIN
-              reflete na hora.
+              Ao salvar ou remover uma conta, a alteração vai para o financeiro (LancamentoFinanceiro) — a
+              mesma base que a AGEFIN Consulta lê. Remover cancela os lançamentos em aberto do grupo.
             </p>
           </P38HelpPopover>
         </div>

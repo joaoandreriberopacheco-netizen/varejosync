@@ -187,8 +187,10 @@ export function usePlanejamentoActions({
       );
       await removerSerie(serie.id, serie);
       queryClient.invalidateQueries({ queryKey: agefinQueryKeys.modelos });
+      queryClient.invalidateQueries({ queryKey: [...AGEFIN_PREVISAO_ROOT, 'lancamentos'] });
+      queryClient.invalidateQueries({ queryKey: agefinQueryKeys.recorrentes });
       queryClient.invalidateQueries({ queryKey: ['visao-financeira'] });
-      toast({ title: 'Removida da agenda' });
+      toast({ title: 'Removida da agenda', description: 'Lançamentos em aberto cancelados no financeiro.' });
     } catch (e) {
       queryClient.invalidateQueries({ queryKey: agefinQueryKeys.modelos });
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });

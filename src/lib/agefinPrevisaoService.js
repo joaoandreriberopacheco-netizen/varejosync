@@ -11,6 +11,7 @@ import {
   criarSerieComDefaults,
   dataVencimentoNaCompetencia,
   gerarGrupoLancamentoId,
+  getCompetenciaAtual,
   normalizarFrequenciaSerie,
   FREQUENCIA_SERIE,
   serieDeveAparecerNaCompetencia,
@@ -25,6 +26,7 @@ import {
   invalidarCacheLancamentosFinanceiros,
   listarContasPagarAgefinCache,
   listarLancamentosFinanceirosAgefinBruto,
+  listarLancamentosRecorrentesCache,
   listarLancamentosVencimentoCompetenciaCache,
 } from '@/lib/lancamentoFinanceiroCache';
 import { filtrarLancamentosPlanejamento, grupoLancamentosPareceContaFixa } from '@/lib/agefinConsultaData';
@@ -446,6 +448,88 @@ function filtrarSeriesContasFixasValidas(series, lancamentos = [], chavesExcluid
   });
 }
 
+function tagsSerieFinanceiro(tags = []) {
+  const base = new Set([...(Array.isArray(tags) ? tags : []), 'conta_pagar', 'recorrente', 'agefin_previsao']);
+  base.delete('cancelado');
+  base.delete('cancelada');
+  base.delete('agefin_agenda_removida');
+  return [...base];
+}
+
+async function listarLancamentosGrupoSerie(modelo) {
+  if (!modelo?.grupo_lancamento_id) return [];
+  const rows = await base44.entities.LancamentoFinanceiro.filter({
+    grupo_lancamento_id: modelo.grupo_lancamento_id,
+  });
+  return Array.isArray(rows) ? rows : [];
+}
+
+/** Grava alterações da série no LancamentoFinanceiro (fonte da AGEFIN). */
+async function sincronizarSerieNoFinanceiro(modelo) {
+  if (!modelo?.grupo_lancamento_id || modelo.ativo === false) return { atualizados: 0, criados: 0 };
+
+  const rows = await listarLancamentosGrupoSerie(modelo);
+  const abertos = rows.filter((lf) => !lancamentoPago(lf) && !lancamentoCancelado(lf));
+  let atualizados = 0;
+
+  for (const lf of abertos) {
+    const ven =
+      lf.data_vencimento && modelo.dia_vencimento
+        ? dataVencimentoNaCompetencia(
+            String(lf.data_vencimento).slice(0, 7),
+            modelo.dia_vencimento,
+          )
+        : lf.data_vencimento;
+    const valor = Number(modelo.valor_previsto) || Number(lf.valor) || 0;
+    await base44.entities.LancamentoFinanceiro.update(lf.id, {
+      descricao: modelo.nome,
+      terceiro_id: modelo.terceiro_id || lf.terceiro_id,
+      terceiro_nome: modelo.terceiro_nome || lf.terceiro_nome,
+      valor,
+      valor_liquido: valor,
+      data_vencimento: ven,
+      categoria: modelo.categoria_nome || lf.categoria,
+      categoria_id: modelo.categoria_id || lf.categoria_id,
+      referencia_id: modelo.id,
+      is_recorrente: true,
+      frequencia_recorrencia: normalizarFrequenciaSerie(modelo.frequencia),
+      tags: tagsSerieFinanceiro(lf.tags),
+    });
+    atualizados += 1;
+  }
+
+  let criados = 0;
+  if (!rows.length) {
+    const comp = getCompetenciaAtual();
+    if (serieDeveAparecerNaCompetencia(modelo, comp)) {
+      await base44.entities.LancamentoFinanceiro.create(payloadLancamentoAuto(modelo, comp));
+      criados = 1;
+    }
+  }
+
+  if (atualizados || criados) invalidarCacheLancamentosFinanceiros();
+  return { atualizados, criados };
+}
+
+/** Cancela lançamentos em aberto do grupo — some da AGEFIN e da agenda. */
+async function cancelarLancamentosAbertosDaSerie(modelo) {
+  const rows = modelo?.grupo_lancamento_id ? await listarLancamentosGrupoSerie(modelo) : [];
+  let cancelados = 0;
+
+  for (const lf of rows) {
+    if (lancamentoPago(lf) || lancamentoCancelado(lf)) continue;
+    const tags = [...new Set([...(lf.tags || []), 'cancelado', 'agefin_agenda_removida'])];
+    await base44.entities.LancamentoFinanceiro.update(lf.id, {
+      status: 'Cancelado',
+      tags,
+    });
+    cancelados += 1;
+  }
+
+  if (cancelados) invalidarCacheLancamentosFinanceiros();
+  return { cancelados };
+}
+
 export async function salvarSerie(payload) {
   const existente = payload.id
     ? (await obterSeriesParaEdicao()).find((s) => s.id === payload.id)
@@ -467,6 +551,7 @@ export async function salvarSerie(payload) {
 
   const { seriesNorm, empresaRows } = await persistirSeriesModelo([body]);
   await desmarcarSerieExcluida(body);
+  await sincronizarSerieNoFinanceiro(body);
   const naRespostaEmpresa = empresaRows.find((s) => s.id === body.id);
   if (naRespostaEmpresa) return criarSerieComDefaults(naRespostaEmpresa);
   if (entityRow?.id) return entityRow;
@@ -482,13 +567,17 @@ export async function salvarSerie(payload) {
 export async function removerSerie(serieId, serieMeta = null) {
   const series = await obterSeriesParaEdicao();
   const alvo = serieMeta || series.find((s) => s.id === serieId);
-  if (alvo) await marcarSerieExcluida(alvo);
+
+  if (alvo) {
+    await cancelarLancamentosAbertosDaSerie(alvo);
+    await marcarSerieExcluida(alvo);
+    await persistirSeriesModelo([criarSerieComDefaults({ ...alvo, ativo: false })], { modo: 'merge' });
+  }
+
   await removerSerieEntidade(serieId);
-  const next = filtrarSeriesNaoExcluidas(
-    series.filter((s) => s.id !== serieId),
-    new Set(chavesExclusaoSerie(alvo || { id: serieId })),
-  );
+  const next = series.filter((s) => s.id !== serieId);
   await persistirSeriesModelo(next, { modo: 'merge' });
+  invalidarCacheLancamentosFinanceiros();
 }
 
 export async function atualizarCentroCustoSerie(serieId, centroCusto) {
@@ -499,6 +588,7 @@ export async function atualizarCentroCustoSerie(serieId, centroCusto) {
     centro_custo: centroCusto || '',
   });
   await persistirSeriesModelo([atualizada]);
+  await sincronizarSerieNoFinanceiro(atualizada);
   return atualizada;
 }
 
