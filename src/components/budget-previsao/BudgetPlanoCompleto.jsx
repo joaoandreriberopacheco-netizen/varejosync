@@ -71,17 +71,17 @@ function LinhaPlano({ label, planejado, realizado, linkTo }) {
   const diff = (Number(planejado) || 0) - (Number(realizado) || 0);
   return (
     <tr className="border-b border-border/40">
-      <td className="py-3 pr-2 text-sm font-medium">{label}</td>
-      <td className="py-3 px-2 text-right text-sm">
+      <td className="py-3.5 pl-3 pr-3 text-sm font-medium">{label}</td>
+      <td className="py-3.5 px-3 text-right text-sm">
         <CelulaValor valor={planejado} />
       </td>
-      <td className="py-3 px-2 text-right text-sm">
+      <td className="py-3.5 px-3 text-right text-sm">
         <CelulaValor valor={realizado} />
       </td>
-      <td className="py-3 pl-2 text-right text-sm">
+      <td className="py-3.5 pl-3 pr-3 text-right text-sm">
         <CelulaValor valor={diff} positivo={diff >= 0} />
       </td>
-      <td className="py-3 pl-2 text-right">
+      <td className="py-3.5 pl-2 pr-3 text-right">
         {linkTo ? (
           <Link to={linkTo} className="text-xs text-primary hover:underline">
             Abrir →
@@ -140,8 +140,8 @@ export default function BudgetPlanoCompleto({
   );
 
   return (
-    <div className="space-y-3 pb-2">
-      <div className="flex items-center gap-1.5 pr-14 md:pr-0">
+    <div className="space-y-4 pb-3">
+      <div className="flex items-center gap-1.5 px-1 pr-14 md:pr-1">
         <h2 className="text-sm font-semibold leading-snug">Plano financeiro — {compLabel}</h2>
         <P38HelpPopover label="Ajuda: plano completo" size="sm">
           <p className="text-muted-foreground">
@@ -191,15 +191,15 @@ export default function BudgetPlanoCompleto({
         />
       </div>
 
-      <div className={cn('hidden md:block overflow-x-auto rounded-xl', P38_FIELD_SURFACE)}>
+      <div className={cn('hidden md:block overflow-x-auto rounded-2xl p-2 lg:p-3', P38_FIELD_SURFACE)}>
         <table className="w-full min-w-[520px] text-left">
           <thead>
             <tr className="border-b border-border/50 text-[11px] uppercase tracking-wide text-muted-foreground">
-              <th className="py-2.5 pr-2 font-medium">Camada</th>
-              <th className="py-2.5 px-2 text-right font-medium">Planejado</th>
-              <th className="py-2.5 px-2 text-right font-medium">Realizado</th>
-              <th className="py-2.5 pl-2 text-right font-medium">Diferença</th>
-              <th className="py-2.5 pl-2 w-16" />
+              <th className="py-3 pl-3 pr-3 font-medium">Camada</th>
+              <th className="py-3 px-3 text-right font-medium">Planejado</th>
+              <th className="py-3 px-3 text-right font-medium">Realizado</th>
+              <th className="py-3 pl-3 pr-3 text-right font-medium">Diferença</th>
+              <th className="py-3 pl-2 pr-3 w-16" />
             </tr>
           </thead>
           <tbody>
@@ -213,25 +213,25 @@ export default function BudgetPlanoCompleto({
               />
             ))}
             <tr className="border-t-2 border-border/60 bg-muted/20 font-semibold">
-              <td className="py-3 pr-2 text-sm">Total despesas</td>
-              <td className="py-3 px-2 text-right text-sm">
+              <td className="py-3.5 pl-3 pr-3 text-sm">Total despesas</td>
+              <td className="py-3.5 px-3 text-right text-sm">
                 <CelulaValor valor={planejadoDespesas} />
               </td>
-              <td className="py-3 px-2 text-right text-sm">
+              <td className="py-3.5 px-3 text-right text-sm">
                 <CelulaValor valor={realizadoDespesas} />
               </td>
-              <td className="py-3 pl-2 text-right text-sm">
+              <td className="py-3.5 pl-3 pr-3 text-right text-sm">
                 <CelulaValor valor={diffDespesas} positivo={diffDespesas >= 0} />
               </td>
               <td />
             </tr>
             <tr className="border-b border-border/40">
-              <td className="py-3 pr-2 text-sm">Lucro bruto</td>
-              <td className="py-3 px-2 text-right text-sm text-muted-foreground">—</td>
-              <td className="py-3 px-2 text-right text-sm">
+              <td className="py-3.5 pl-3 pr-3 text-sm">Lucro bruto</td>
+              <td className="py-3.5 px-3 text-right text-sm text-muted-foreground">—</td>
+              <td className="py-3.5 px-3 text-right text-sm">
                 <CelulaValor valor={lucro} positivo={lucro >= 0} />
               </td>
-              <td className="py-3 pl-2" colSpan={2} />
+              <td className="py-3.5 pl-3 pr-3" colSpan={2} />
             </tr>
             {margemDetalhe?.receita_liquida > 0 && (
               <tr className="border-b border-border/20 text-[11px] text-muted-foreground">
@@ -242,12 +242,12 @@ export default function BudgetPlanoCompleto({
               </tr>
             )}
             <tr>
-              <td className="py-3 pr-2 text-sm font-semibold">Resultado</td>
-              <td className="py-3 px-2 text-right text-sm text-muted-foreground">—</td>
-              <td className="py-3 px-2 text-right text-sm font-semibold">
+              <td className="py-3.5 pl-3 pr-3 text-sm font-semibold">Resultado</td>
+              <td className="py-3.5 px-3 text-right text-sm text-muted-foreground">—</td>
+              <td className="py-3.5 px-3 text-right text-sm font-semibold">
                 <CelulaValor valor={resultado} positivo={resultado >= 0} />
               </td>
-              <td className="py-3 pl-2" colSpan={2} />
+              <td className="py-3.5 pl-3 pr-3" colSpan={2} />
             </tr>
           </tbody>
         </table>

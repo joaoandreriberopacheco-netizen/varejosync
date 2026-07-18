@@ -335,7 +335,7 @@ export default function BudgetsPage() {
   const competenciaLabel = formatCompetenciaLabel(competenciaMes);
 
   return (
-    <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background p-4 lg:p-6 pb-[calc(var(--p38-scroll-pad-below-nav)+5.5rem)] md:pb-6">
+    <div className="w-full max-w-[1400px] mx-auto min-w-0 overflow-x-hidden font-din-1451 bg-background px-4 py-4 md:px-6 lg:px-8 lg:py-6 xl:px-10 pb-[calc(var(--p38-scroll-pad-below-nav)+5.5rem)] md:pb-6">
       <div className="flex items-center gap-1.5 pb-3 border-b border-border/40">
         <h1 className="text-xl font-medium text-foreground">Budgets</h1>
         <P38HelpPopover label="Ajuda: budgets" side="bottom" align="start">
