@@ -24,7 +24,7 @@ import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, Printer } from 'luci
 import FluxoCaixaPrintDialog from './FluxoCaixaPrintDialog';
 import CorteDiarioDialog from './corte-diario/CorteDiarioDialog';
 import FolhaPrevisaoPage from '@/pages/FolhaPrevisao';
-import PlanejamentoFinanceiroPage from '@/pages/PlanejamentoFinanceiroV2';
+import PlanejamentoFinanceiroPage from '@/pages/PlanejamentoFinanceiro';
 import BudgetsPage from '@/pages/Budgets';
 import { gerarExtratoFluxoCaixa } from '@/functions/gerarExtratoFluxoCaixa';
 import NovoLancamentoDialog from './NovoLancamentoDialog';

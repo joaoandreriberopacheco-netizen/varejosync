@@ -132,10 +132,10 @@ export const ALL_QUICK_ACTIONS = [
     permissaoCheck: (p) => p?.financeiro?.acesso || p?.dashboard?.acesso,
   },
   {
-    id: 'planejamento_financeiro_v2',
+    id: 'planejamento_financeiro',
     icon: CalendarClock,
-    label: 'Planejamento v2',
-    page: 'PlanejamentoFinanceiroV2',
+    label: 'Planejamento',
+    page: 'PlanejamentoFinanceiro',
     permissaoCheck: (p) => p?.financeiro?.acesso,
   },
   {
