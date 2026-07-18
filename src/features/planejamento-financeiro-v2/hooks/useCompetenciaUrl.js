@@ -3,32 +3,32 @@ import { useSearchParams } from 'react-router-dom';
 import { getCompetenciaAtual } from '@/lib/agefinPrevisaoCalculos';
 
 const COMPETENCIA_RE = /^\d{4}-\d{2}$/;
-const ABAS_VALIDAS = new Set(['contas', 'previsao', 'projecao']);
+const ABAS_VALIDAS = new Set(['previsao', 'projecao']);
 
-function abaInicialDosParams(searchParams) {
-  const abaParam = searchParams.get('aba');
+function normalizarAba(abaParam) {
+  if (abaParam === 'contas') return 'previsao';
   if (abaParam && ABAS_VALIDAS.has(abaParam)) return abaParam;
   return 'previsao';
+}
+
+function abaInicialDosParams(searchParams) {
+  return normalizarAba(searchParams.get('aba'));
 }
 
 export function useCompetenciaUrl() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [competenciaMes, setCompetenciaMesState] = useState(
-    () => {
-      const comp = searchParams.get('competencia');
-      return comp && COMPETENCIA_RE.test(comp) ? comp : getCompetenciaAtual();
-    },
-  );
+  const [competenciaMes, setCompetenciaMesState] = useState(() => {
+    const comp = searchParams.get('competencia');
+    return comp && COMPETENCIA_RE.test(comp) ? comp : getCompetenciaAtual();
+  });
 
   const [abaAtiva, setAbaAtivaState] = useState(() => abaInicialDosParams(searchParams));
 
   useEffect(() => {
     const comp = searchParams.get('competencia');
     if (comp && COMPETENCIA_RE.test(comp)) setCompetenciaMesState(comp);
-    const abaParam = searchParams.get('aba');
-    if (abaParam && ABAS_VALIDAS.has(abaParam)) setAbaAtivaState(abaParam);
-    else if (comp && COMPETENCIA_RE.test(comp)) setAbaAtivaState('previsao');
+    setAbaAtivaState(abaInicialDosParams(searchParams));
   }, [searchParams]);
 
   const syncUrl = useCallback(
@@ -54,7 +54,8 @@ export function useCompetenciaUrl() {
 
   const setAbaAtiva = useCallback(
     (value) => {
-      const next = typeof value === 'function' ? value(abaAtiva) : value;
+      const raw = typeof value === 'function' ? value(abaAtiva) : value;
+      const next = normalizarAba(raw);
       setAbaAtivaState(next);
       syncUrl(competenciaMes, next);
     },

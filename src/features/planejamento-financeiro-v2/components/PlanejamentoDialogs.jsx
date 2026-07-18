@@ -1,16 +1,17 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AgefinPrevisaoDetalheDrawer from '@/components/agefin-previsao/AgefinPrevisaoDetalheDrawer';
 import AgefinParcelamentoDialog from '@/components/agefin-previsao/AgefinParcelamentoDialog';
-import AgefinSerieDialog from '@/components/agefin-previsao/AgefinSerieDialog';
 import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
-import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
+import { buildNovoLancamentoDespesaUrl } from '../constants/atalhos';
 
-export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
+export function PlanejamentoFab({ onCentros, onImportar }) {
   const [fabOpen, setFabOpen] = useState(false);
+  const novoLancamentoUrl = buildNovoLancamentoDespesaUrl();
 
   return (
     <div className="fixed right-4 z-[55] bottom-[calc(var(--p38-bottom-nav-h,0px)+1rem)] lg:bottom-8 lg:right-8">
@@ -38,15 +39,10 @@ export function PlanejamentoFab({ onCentros, onImportar, onNovaConta }) {
           >
             Importar conta (PDF)
           </Button>
-          <Button
-            size="sm"
-            className="rounded-full shadow-md"
-            onClick={() => {
-              setFabOpen(false);
-              onNovaConta();
-            }}
-          >
-            Nova conta fixa
+          <Button size="sm" className="rounded-full shadow-md" asChild>
+            <Link to={novoLancamentoUrl} onClick={() => setFabOpen(false)}>
+              Novo lançamento financeiro
+            </Link>
           </Button>
         </div>
       )}
@@ -61,15 +57,6 @@ export default function PlanejamentoDialogs({
   selectedComp,
   selectedModelo,
   onCloseSelected,
-  centrosRegistrados,
-  centrosCustoRegistros,
-  categorias,
-  onCategoriasChange,
-  onCentrosChange,
-  serieDialog,
-  onCloseSerieDialog,
-  onSaveSerie,
-  saving,
   parcelamentoDialog,
   onCloseParcelamentoDialog,
   onCriarParcelamento,
@@ -77,12 +64,6 @@ export default function PlanejamentoDialogs({
   centroDialogOpen,
   onCloseCentroDialog,
   onCentrosChanged,
-  draggingSerieId,
-  serieArrastando,
-  dropCentroAtual,
-  onHoverCentro,
-  onLeaveCentro,
-  onDropCentro,
   showImportador,
   onCloseImportador,
   importadorLancamentoId,
@@ -90,6 +71,7 @@ export default function PlanejamentoDialogs({
   syncing,
   onSyncFinanceiro,
   onAbrirSerieNoMes,
+  abrindoMes,
   onVincularBoleto,
   onSalvarManual,
   salvandoManual,
@@ -109,7 +91,7 @@ export default function PlanejamentoDialogs({
         onSyncFinanceiro={onSyncFinanceiro}
         syncing={syncing}
         onAbrirMes={onAbrirSerieNoMes}
-        abrindoMes={saving}
+        abrindoMes={abrindoMes}
         onVincularBoleto={onVincularBoleto}
         onSalvarManual={onSalvarManual}
         salvandoManual={salvandoManual}
@@ -128,29 +110,7 @@ export default function PlanejamentoDialogs({
         saving={salvandoParcelamento}
       />
 
-      <AgefinSerieDialog
-        open={Boolean(serieDialog)}
-        onClose={onCloseSerieDialog}
-        serie={serieDialog}
-        categorias={categorias}
-        centrosCustoRegistros={centrosCustoRegistros}
-        onCategoriasChange={onCategoriasChange}
-        onCentrosChange={onCentrosChange}
-        onSave={onSaveSerie}
-        saving={saving}
-      />
-
       <FolhaCentrosCustoDialog open={centroDialogOpen} onClose={onCloseCentroDialog} onChanged={onCentrosChanged} />
-
-      <FolhaCentroCustoDragOverlay
-        open={Boolean(draggingSerieId)}
-        centros={centrosRegistrados}
-        pessoaNome={serieArrastando?.nome}
-        dropCentroAtual={dropCentroAtual}
-        onHoverCentro={onHoverCentro}
-        onLeaveCentro={(chave) => onLeaveCentro(chave)}
-        onDropCentro={onDropCentro}
-      />
 
       <Dialog open={showImportador} onOpenChange={(open) => !open && onCloseImportador()}>
         <DialogContent className="flex min-h-0 max-h-[92vh] w-full max-w-2xl flex-col gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-xl">

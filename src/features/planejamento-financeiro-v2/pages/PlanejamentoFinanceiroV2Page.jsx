@@ -1,22 +1,18 @@
-import { useMemo, useState, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarClock, Repeat2, TrendingUp } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { CalendarClock, TrendingUp } from 'lucide-react';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import { cn } from '@/lib/utils';
 import { P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
-import { mapaModelosPorId, shiftCompetencia, ordenarSeriesPorCentroENome } from '@/lib/agefinPrevisaoCalculos';
+import { mapaModelosPorId, shiftCompetencia } from '@/lib/agefinPrevisaoCalculos';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCompetenciaUrl } from '../hooks/useCompetenciaUrl';
 import { useAgefinPrevisaoQueries } from '../hooks/useAgefinPrevisaoQueries';
 import { usePlanejamentoActions } from '../hooks/usePlanejamentoActions';
-import ContasFixasTab from '../tabs/ContasFixasTab';
 import PrevisaoMesTab from '../tabs/PrevisaoMesTab';
 import ProjecaoTab from '../tabs/ProjecaoTab';
 import PlanejamentoDialogs, { PlanejamentoFab } from '../components/PlanejamentoDialogs';
-import { agefinQueryKeys } from '../constants/queryKeys';
 
 export default function PlanejamentoFinanceiroV2Page() {
-  const queryClient = useQueryClient();
   const { competenciaMes, setCompetenciaMes, abaAtiva, setAbaAtiva } = useCompetenciaUrl();
 
   const [selectedComp, setSelectedComp] = useState(null);
@@ -24,10 +20,6 @@ export default function PlanejamentoFinanceiroV2Page() {
   const [filtroCentro, setFiltroCentro] = useState('__todos__');
   const [groupBy, setGroupBy] = useState('vencimento');
   const [sortOrder, setSortOrder] = useState('asc');
-  const [groupByContas, setGroupByContas] = useState('dia_vencimento');
-  const [sortOrderContas, setSortOrderContas] = useState('asc');
-  const [draggingSerieId, setDraggingSerieId] = useState('');
-  const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
   const [showImportador, setShowImportador] = useState(false);
   const [importadorLancamentoId, setImportadorLancamentoId] = useState(null);
@@ -53,40 +45,25 @@ export default function PlanejamentoFinanceiroV2Page() {
     setSelectedComp,
   });
 
-  const seriesAtivas = useMemo(
-    () => ordenarSeriesPorCentroENome(queries.modelos.filter((m) => m.ativo !== false)),
-    [queries.modelos],
-  );
-
-  const serieArrastando = useMemo(
-    () => seriesAtivas.find((s) => s.id === draggingSerieId) || null,
-    [seriesAtivas, draggingSerieId],
-  );
-
-  const handleCategoriasChange = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: agefinQueryKeys.categorias });
-  }, [queryClient]);
-
   return (
     <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="pb-3 border-b border-border/40">
         <div className="flex items-center gap-1.5">
           <h1 className="text-xl font-medium text-foreground">Planejamento financeiro</h1>
           <P38HelpPopover label="Ajuda: planejamento financeiro" side="bottom" align="start">
-            <p className="font-medium text-foreground">Três papéis distintos</p>
+            <p className="font-medium text-foreground">Dois papéis distintos</p>
             <p className="text-muted-foreground">
               <strong className="text-foreground">AGEFIN Consulta</strong> lê todas as contas a pagar por
               vencimento no financeiro — incluindo fretes e outras despesas avulsas.
             </p>
             <p className="text-muted-foreground mt-2">
-              <strong className="text-foreground">Contas fixas</strong> lista os lançamentos{' '}
-              <strong className="text-foreground">recorrentes</strong> do financeiro (chave:{' '}
-              <strong className="text-foreground">grupo_lancamento_id</strong>). Ao salvar, cria ou
-              atualiza esse lançamento recorrente — a mesma base que a AGEFIN lê por vencimento.
+              <strong className="text-foreground">Previsão do mês</strong> mostra a pauta da competência a
+              partir dos lançamentos <strong className="text-foreground">recorrentes</strong> do financeiro e
+              dos já abertos no mês — sem fretes (estes ficam só na AGEFIN).
             </p>
             <p className="text-muted-foreground mt-2">
-              <strong className="text-foreground">Previsão do mês</strong> mostra a pauta da competência a
-              partir desses templates e dos lançamentos já abertos — sem fretes (estes ficam só na AGEFIN).
+              Cadastre novas despesas recorrentes no <strong className="text-foreground">Financeiro</strong>{' '}
+              (botão + ou atalho desta tela). As contas já cadastradas continuam visíveis aqui.
             </p>
           </P38HelpPopover>
         </div>
@@ -102,14 +79,6 @@ export default function PlanejamentoFinanceiroV2Page() {
             P38_FIELD_SURFACE,
           )}
         >
-          <TabsTrigger
-            value="contas"
-            className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[100px] md:min-w-[120px]"
-          >
-            <Repeat2 className="w-4 h-4" />
-            <span className="text-xs md:hidden">Contas</span>
-            <span className="hidden md:inline text-sm">Contas fixas</span>
-          </TabsTrigger>
           <TabsTrigger
             value="previsao"
             className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]"
@@ -127,42 +96,6 @@ export default function PlanejamentoFinanceiroV2Page() {
             <span className="hidden md:inline text-sm">Projeção 12 meses</span>
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="contas" className="mt-4">
-          <ContasFixasTab
-            loading={queries.loadingModelos}
-            modelos={queries.modelos}
-            centrosRegistrados={queries.centrosRegistrados}
-            groupBy={groupByContas}
-            sortOrder={sortOrderContas}
-            onGroupByChange={setGroupByContas}
-            onSortOrderToggle={() => setSortOrderContas((o) => (o === 'asc' ? 'desc' : 'asc'))}
-            draggingSerieId={draggingSerieId}
-            dropCentroAtual={dropCentroAtual}
-            onDragStart={(id) => {
-              setDraggingSerieId(id);
-              void queries.refetchCentros();
-            }}
-            onDragEnd={() => {
-              setDraggingSerieId('');
-              setDropCentroAtual('__none__');
-            }}
-            onHoverCentro={setDropCentroAtual}
-            onLeaveCentro={() => setDropCentroAtual('__none__')}
-            onDropCentro={(serieId, centro) => {
-              const serie = seriesAtivas.find((s) => s.id === serieId);
-              if (serie) {
-                void actions.handleMoverSerieCentro(serie, centro, () => {
-                  setDraggingSerieId('');
-                  setDropCentroAtual('__none__');
-                });
-              }
-            }}
-            onEdit={actions.setSerieDialog}
-            onDelete={actions.handleDeleteSerie}
-            onCadastrar={() => actions.setSerieDialog({})}
-          />
-        </TabsContent>
 
         <TabsContent value="previsao" className="mt-4">
           <PrevisaoMesTab
@@ -186,7 +119,6 @@ export default function PlanejamentoFinanceiroV2Page() {
             onGroupByChange={setGroupBy}
             onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
             onOpenCompetencia={setSelectedComp}
-            onCadastrar={() => actions.setSerieDialog({})}
           />
         </TabsContent>
 
@@ -206,22 +138,12 @@ export default function PlanejamentoFinanceiroV2Page() {
           setImportadorLancamentoId(null);
           setShowImportador(true);
         }}
-        onNovaConta={() => actions.setSerieDialog({})}
       />
 
       <PlanejamentoDialogs
         selectedComp={selectedComp}
         selectedModelo={selectedModelo}
         onCloseSelected={() => setSelectedComp(null)}
-        centrosRegistrados={queries.centrosRegistrados}
-        centrosCustoRegistros={queries.centrosCustoRegistros}
-        categorias={queries.categorias}
-        onCategoriasChange={handleCategoriasChange}
-        onCentrosChange={actions.invalidateCentros}
-        serieDialog={actions.serieDialog}
-        onCloseSerieDialog={() => actions.setSerieDialog(null)}
-        onSaveSerie={actions.handleSaveSerie}
-        saving={actions.saving}
         parcelamentoDialog={actions.parcelamentoDialog}
         onCloseParcelamentoDialog={() => actions.setParcelamentoDialog(false)}
         onCriarParcelamento={actions.handleCriarParcelamento}
@@ -229,19 +151,6 @@ export default function PlanejamentoFinanceiroV2Page() {
         centroDialogOpen={centroDialogOpen}
         onCloseCentroDialog={() => setCentroDialogOpen(false)}
         onCentrosChanged={actions.invalidateCentros}
-        draggingSerieId={draggingSerieId}
-        serieArrastando={serieArrastando}
-        dropCentroAtual={dropCentroAtual}
-        onHoverCentro={setDropCentroAtual}
-        onLeaveCentro={(chave) => setDropCentroAtual((v) => (v === chave ? '__none__' : v))}
-        onDropCentro={(centro) => {
-          if (serieArrastando) {
-            void actions.handleMoverSerieCentro(serieArrastando, centro, () => {
-              setDraggingSerieId('');
-              setDropCentroAtual('__none__');
-            });
-          }
-        }}
         showImportador={showImportador}
         onCloseImportador={() => {
           setShowImportador(false);
@@ -257,6 +166,7 @@ export default function PlanejamentoFinanceiroV2Page() {
         syncing={actions.syncing}
         onSyncFinanceiro={() => void actions.handleSyncFinanceiro()}
         onAbrirSerieNoMes={actions.handleAbrirSerieNoMes}
+        abrindoMes={actions.saving}
         onVincularBoleto={() =>
           actions.handleVincularBoleto((lancId) => {
             setImportadorLancamentoId(lancId);
