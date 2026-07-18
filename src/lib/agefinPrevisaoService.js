@@ -13,6 +13,7 @@ import {
   dataVencimentoNaCompetencia,
   gerarGrupoLancamentoId,
   normalizarFrequenciaSerie,
+  FREQUENCIA_SERIE,
   serieDeveAparecerNaCompetencia,
   serieEstaAtivaNaCompetencia,
 } from '@/lib/agefinPrevisaoCalculos';
@@ -25,6 +26,8 @@ import {
 export { listarCentrosCustoRegistros };
 
 const DADOS_EMPRESA_SERIES_KEY = 'agefin_series_modelo';
+const DADOS_EMPRESA_SERIES_BACKUP_KEY = 'agefin_series_modelo_backup';
+const DADOS_EMPRESA_SERIES_BACKUP_AT_KEY = 'agefin_series_modelo_backup_at';
 
 async function obterRegistroDadosEmpresa() {
   return obterDadosEmpresa(base44);
@@ -40,6 +43,16 @@ function lerSeriesEmpresa(empresa) {
     empresa[DADOS_EMPRESA_SERIES_KEY] ??
     (empresa.dados && typeof empresa.dados === 'object'
       ? empresa.dados[DADOS_EMPRESA_SERIES_KEY]
+      : undefined);
+  return Array.isArray(raw) ? raw : [];
+}
+
+function lerSeriesBackupEmpresa(empresa) {
+  if (!empresa) return [];
+  const raw =
+    empresa[DADOS_EMPRESA_SERIES_BACKUP_KEY] ??
+    (empresa.dados && typeof empresa.dados === 'object'
+      ? empresa.dados[DADOS_EMPRESA_SERIES_BACKUP_KEY]
       : undefined);
   return Array.isArray(raw) ? raw : [];
 }
@@ -159,25 +172,30 @@ async function sincronizarSeriesParaEntidade(series) {
   }
 }
 
-async function substituirSeriesNaEntidade(series) {
+async function gravarBackupSeries(empresa, series) {
+  if (!Array.isArray(series) || series.length === 0) return;
   try {
-    const api = base44.entities?.AgefinSerieModelo;
-    if (!api?.list) return;
-    const existentes = (await api.list('-created_date')) || [];
-    const idsAtivos = new Set((series || []).map((s) => s.id));
-    for (const row of existentes) {
-      if (row?.id && !idsAtivos.has(row.id)) {
-        await api.delete(row.id);
-      }
-    }
-    await sincronizarSeriesParaEntidade(series);
-  } catch {
-    /* entidade opcional */
+    await atualizarDadosEmpresa(base44, {
+      [DADOS_EMPRESA_SERIES_BACKUP_KEY]: series.map((s) => criarSerieComDefaults(s)),
+      [DADOS_EMPRESA_SERIES_BACKUP_AT_KEY]: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.warn('[agefin] Falha ao gravar backup de séries:', error);
   }
 }
 
-async function persistirSeriesModelo(series) {
-  const seriesNorm = (series || []).map((s) => criarSerieComDefaults(s));
+async function persistirSeriesModelo(series, { modo = 'merge' } = {}) {
+  const snapshot = await lerTodasSeriesArmazenadas();
+  const atual = snapshot.merged;
+
+  if (atual.length > 0) {
+    await gravarBackupSeries(snapshot.empresa, atual);
+  }
+
+  const incoming = (series || []).map((s) => criarSerieComDefaults(s));
+  const seriesNorm =
+    modo === 'substituir' ? incoming : mesclarSeriesPorId(atual, incoming);
+
   salvarSeriesLocalStorage(seriesNorm);
 
   let empresaAtualizada = null;
@@ -190,7 +208,7 @@ async function persistirSeriesModelo(series) {
   }
 
   try {
-    await substituirSeriesNaEntidade(seriesNorm);
+    await sincronizarSeriesParaEntidade(seriesNorm);
   } catch (error) {
     console.error('[agefin] Falha ao espelhar em AgefinSerieModelo:', error);
   }
@@ -278,7 +296,7 @@ export async function removerSerie(serieId) {
   const series = await obterSeriesParaEdicao();
   const next = series.filter((s) => s.id !== serieId);
   await removerSerieEntidade(serieId);
-  await persistirSeriesModelo(next);
+  await persistirSeriesModelo(next, { modo: 'substituir' });
 }
 
 export async function atualizarCentroCustoSerie(serieId, centroCusto) {
@@ -332,7 +350,7 @@ export async function sincronizarModelosDesdeLancamentos() {
     );
   }
 
-  if (series.length) await persistirSeriesModelo(series);
+  if (series.length) await persistirSeriesModelo(series, { modo: 'merge' });
   return series;
 }
 
@@ -525,6 +543,141 @@ export async function reativarSerie(serieId) {
 
 export function podeEditarCompetencia(comp) {
   return comp && !competenciaBloqueadaEdicao(comp);
+}
+
+function contarSeriesNaoMensais(series = []) {
+  return (series || []).filter(
+    (s) => normalizarFrequenciaSerie(s?.frequencia) !== FREQUENCIA_SERIE.MENSAL,
+  ).length;
+}
+
+function reconstruirSeriesDesdeLancamentos(lancamentos = [], seriesExistentes = []) {
+  const gruposExistentes = new Set(
+    (seriesExistentes || []).map((s) => s.grupo_lancamento_id).filter(Boolean),
+  );
+  const idsExistentes = new Set((seriesExistentes || []).map((s) => s.id));
+  const byGrupo = new Map();
+
+  for (const lf of lancamentos || []) {
+    const gid = lf?.grupo_lancamento_id;
+    if (!gid || gruposExistentes.has(gid)) continue;
+    const freq = normalizarFrequenciaSerie(lf.frequencia_recorrencia);
+    if (freq === FREQUENCIA_SERIE.MENSAL) continue;
+    if (!byGrupo.has(gid)) byGrupo.set(gid, []);
+    byGrupo.get(gid).push(lf);
+  }
+
+  const reconstruidas = [];
+  for (const [gid, rows] of byGrupo) {
+    const sorted = [...rows].sort((a, b) =>
+      (b.data_vencimento || '').localeCompare(a.data_vencimento || ''),
+    );
+    const rep = sorted[0];
+    const freq = normalizarFrequenciaSerie(rep.frequencia_recorrencia);
+    const id = `serie-recuperada-${gid}`;
+    if (idsExistentes.has(id)) continue;
+
+    reconstruidas.push(
+      criarSerieComDefaults({
+        id,
+        nome: rep.descricao || rep.terceiro_nome || 'Conta recuperada',
+        terceiro_nome: rep.terceiro_nome || '',
+        terceiro_id: rep.terceiro_id || '',
+        categoria_id: rep.categoria_id || '',
+        categoria_nome: rep.categoria || '',
+        valor_previsto: Number(rep.valor_liquido ?? rep.valor) || 0,
+        dia_vencimento: Number((rep.data_vencimento || '').slice(8, 10)) || 10,
+        mes_vencimento: Number((rep.data_vencimento || '').slice(5, 7)) || new Date().getMonth() + 1,
+        frequencia: freq,
+        grupo_lancamento_id: gid,
+        ativo: true,
+        observacoes: 'Recuperada automaticamente a partir do financeiro.',
+      }),
+    );
+  }
+
+  return reconstruidas;
+}
+
+/** Diagnóstico das fontes de armazenamento (sem expor dados sensíveis). */
+export async function diagnosticarSeriesArmazenadas() {
+  const snapshot = await lerTodasSeriesArmazenadas();
+  const empresa = snapshot.empresa || (await obterRegistroDadosEmpresa());
+  const backup = lerSeriesBackupEmpresa(empresa);
+  const backupAt = empresa?.[DADOS_EMPRESA_SERIES_BACKUP_AT_KEY] || empresa?.dados?.[DADOS_EMPRESA_SERIES_BACKUP_AT_KEY] || null;
+
+  return {
+    atual: snapshot.merged.length,
+    atualNaoMensais: contarSeriesNaoMensais(snapshot.merged),
+    local: snapshot.localRows.length,
+    entidade: snapshot.entityRows.length,
+    empresa: snapshot.empresaRows.length,
+    backup: backup.length,
+    backupNaoMensais: contarSeriesNaoMensais(backup),
+    backupAt,
+  };
+}
+
+/**
+ * Tenta recuperar contas anuais/trimestrais perdidas a partir de backup e lançamentos.
+ * Nunca apaga contas existentes — só une fontes.
+ */
+export async function recuperarSeriesPerdidas() {
+  const snapshot = await lerTodasSeriesArmazenadas();
+  const empresa = snapshot.empresa || (await obterRegistroDadosEmpresa());
+  const backup = lerSeriesBackupEmpresa(empresa);
+  const lancamentos = await listarLancamentosRecorrentes();
+  const reconstruidas = reconstruirSeriesDesdeLancamentos(lancamentos, snapshot.merged);
+
+  const antesIds = new Set(snapshot.merged.map((s) => s.id));
+  const candidatas = mesclarSeriesPorId(snapshot.merged, backup, reconstruidas);
+  const novas = candidatas.filter((s) => !antesIds.has(s.id));
+  const naoMensaisNovas = novas.filter(
+    (s) => normalizarFrequenciaSerie(s.frequencia) !== FREQUENCIA_SERIE.MENSAL,
+  );
+
+  if (novas.length === 0) {
+    return {
+      recuperadas: 0,
+      naoMensais: 0,
+      series: snapshot.merged,
+      fontes: {
+        backup: backup.length,
+        reconstruidas: reconstruidas.length,
+      },
+    };
+  }
+
+  const { seriesNorm } = await persistirSeriesModelo(candidatas, { modo: 'substituir' });
+
+  return {
+    recuperadas: novas.length,
+    naoMensais: naoMensaisNovas.length,
+    series: seriesNorm,
+    fontes: {
+      backup: backup.length,
+      reconstruidas: reconstruidas.length,
+    },
+  };
+}
+
+/** Restaura explicitamente o último backup gravado antes de uma persistência. */
+export async function restaurarSeriesDoBackup() {
+  const empresa = await obterRegistroDadosEmpresa();
+  const backup = lerSeriesBackupEmpresa(empresa);
+  if (!backup.length) {
+    throw new Error('Nenhum backup de contas fixas encontrado para restaurar.');
+  }
+
+  const snapshot = await lerTodasSeriesArmazenadas();
+  const restauradas = mesclarSeriesPorId(snapshot.merged, backup);
+  const { seriesNorm } = await persistirSeriesModelo(restauradas, { modo: 'substituir' });
+
+  return {
+    total: seriesNorm.length,
+    naoMensais: contarSeriesNaoMensais(seriesNorm),
+    series: seriesNorm,
+  };
 }
 
 /**
