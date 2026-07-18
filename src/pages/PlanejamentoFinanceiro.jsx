@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -55,6 +55,7 @@ import {
   sincronizarLancamentoFinanceiro,
   atualizarCentroCustoSerie,
   atualizarCompetenciaManual,
+  subscribeSeriesStorageChanges,
 } from '@/lib/agefinPrevisaoService';
 import {
   criarParcelamento,
@@ -105,6 +106,8 @@ export default function PlanejamentoFinanceiroPage() {
   const { data: modelos = [], isLoading: loadingModelos } = useQuery({
     queryKey: ['agefin-previsao', 'modelos'],
     queryFn: listarModelos,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: parcelamentos = [] } = useQuery({
@@ -187,6 +190,12 @@ export default function PlanejamentoFinanceiroPage() {
     queryClient.invalidateQueries({ queryKey: ['agefin-previsao'] });
   }, [queryClient]);
 
+  useEffect(() => {
+    return subscribeSeriesStorageChanges(() => {
+      invalidate();
+    });
+  }, [invalidate]);
+
   const invalidateCentros = useCallback(
     (lista) => {
       if (lista) {
@@ -256,18 +265,10 @@ export default function PlanejamentoFinanceiroPage() {
   const handleSaveSerie = async (payload) => {
     setSaving(true);
     try {
-      const saved = await salvarSerie(payload);
-      queryClient.setQueryData(['agefin-previsao', 'modelos'], (old = []) => {
-        const idx = old.findIndex((s) => s.id === saved.id);
-        if (idx >= 0) {
-          const next = [...old];
-          next[idx] = saved;
-          return next;
-        }
-        return [...old, saved];
-      });
+      await salvarSerie(payload);
       setSerieDialog(null);
-      const freq = saved.frequencia || 'Mensal';
+      invalidate();
+      const freq = payload.frequencia || 'Mensal';
       toast({
         title: 'Conta salva',
         description:
