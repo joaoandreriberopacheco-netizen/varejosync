@@ -8,6 +8,7 @@ import {
 } from '@/lib/budgetCalculos';
 import { calcularLucroBrutoCompetencia } from '@/lib/relatorioMargemCalculos';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
+import { listarLancamentosFinanceirosCache } from '@/lib/lancamentoFinanceiroCache';
 
 export { listarCentrosCustoRegistros };
 
@@ -297,7 +298,7 @@ export async function salvarAjusteCompetencia(budgetModeloId, competencia, { val
 }
 
 export async function listarLancamentosMes(competencia) {
-  const lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_pagamento', 8000);
+  const lancamentos = await listarLancamentosFinanceirosCache();
   return filtrarLancamentosBudgetMes(lancamentos, competencia);
 }
 
@@ -305,7 +306,7 @@ export async function listarLancamentosMes(competencia) {
 export async function listarLancamentosVencimentoMes(competencia) {
   const prefix = String(competencia || '').slice(0, 7);
   if (!prefix) return [];
-  const lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 8000);
+  const lancamentos = await listarLancamentosFinanceirosCache();
   return (lancamentos || []).filter(
     (lancamento) => String(lancamento?.data_vencimento || '').slice(0, 7) === prefix,
   );

@@ -51,7 +51,6 @@ import {
   listarModelos,
   removerSerie,
   salvarSerie,
-  sincronizarFechamentoCompetencias,
   sincronizarLancamentoFinanceiro,
   atualizarCentroCustoSerie,
   atualizarCompetenciaManual,
@@ -64,6 +63,7 @@ import {
   removerParcelamento,
 } from '@/lib/agefinParcelamentoService';
 import { parcelamentoAfetaSerieNoMes, montarCompetenciasVisaoComParcelas } from '@/lib/agefinParcelamentoCalculos';
+import { invalidarCacheLancamentosFinanceiros } from '@/lib/lancamentoFinanceiroCache';
 
 export default function PlanejamentoFinanceiroPage() {
   const { toast } = useToast();
@@ -81,6 +81,7 @@ export default function PlanejamentoFinanceiroPage() {
   const [sortOrderContas, setSortOrderContas] = useState('asc');
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState('contas');
   const [draggingSerieId, setDraggingSerieId] = useState('');
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
   const [showImportador, setShowImportador] = useState(false);
@@ -93,37 +94,42 @@ export default function PlanejamentoFinanceiroPage() {
   const { data: lancamentosRecorrentes = [] } = useQuery({
     queryKey: ['agefin-previsao', 'lancamentos-recorrentes'],
     queryFn: listarLancamentosRecorrentes,
+    enabled: abaAtiva === 'projecao',
+    staleTime: 120_000,
   });
 
   const { data: lancamentosMes = [], isLoading: loadingLanc } = useQuery({
     queryKey: ['agefin-previsao', 'lancamentos', competenciaMes],
-    queryFn: async () => {
-      await sincronizarFechamentoCompetencias(competenciaMes);
-      return listarLancamentosCompetencia(competenciaMes);
-    },
+    queryFn: () => listarLancamentosCompetencia(competenciaMes),
+    enabled: abaAtiva === 'previsao',
+    staleTime: 60_000,
   });
 
   const { data: modelos = [], isLoading: loadingModelos } = useQuery({
     queryKey: ['agefin-previsao', 'modelos'],
     queryFn: listarModelos,
-    staleTime: 0,
+    staleTime: 60_000,
     refetchOnWindowFocus: true,
   });
 
   const { data: parcelamentos = [] } = useQuery({
     queryKey: ['agefin-previsao', 'parcelamentos'],
     queryFn: listarParcelamentos,
+    enabled: abaAtiva === 'previsao',
+    staleTime: 120_000,
   });
 
   const { data: contas = [] } = useQuery({
     queryKey: ['agefin-previsao', 'contas'],
     queryFn: listarContasFinanceiras,
+    enabled: abaAtiva === 'previsao' && Boolean(selectedComp),
+    staleTime: 300_000,
   });
 
   const { data: centrosCustoRegistros = [], refetch: refetchCentros } = useQuery({
     queryKey: ['agefin-previsao', 'centros-custo-registros'],
     queryFn: listarCentrosCustoRegistros,
-    staleTime: 0,
+    staleTime: 300_000,
   });
 
   const centrosRegistrados = useMemo(
@@ -187,7 +193,9 @@ export default function PlanejamentoFinanceiroPage() {
   );
 
   const invalidate = useCallback(() => {
+    invalidarCacheLancamentosFinanceiros();
     queryClient.invalidateQueries({ queryKey: ['agefin-previsao'] });
+    queryClient.invalidateQueries({ queryKey: ['visao-financeira'] });
   }, [queryClient]);
 
   useEffect(() => {
@@ -513,7 +521,7 @@ export default function PlanejamentoFinanceiroPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Contas fixas mensais — energia, telefone, internet…</p>
       </div>
 
-      <Tabs defaultValue="contas" className="w-full mt-4">
+      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full mt-4">
         <TabsList
           className={cn(
             'w-full h-auto p-1 rounded-xl flex-nowrap overflow-x-auto md:overflow-visible md:flex-wrap',

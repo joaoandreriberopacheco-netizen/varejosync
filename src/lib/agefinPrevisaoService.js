@@ -22,6 +22,7 @@ import {
   atualizarDadosEmpresa,
   obterRegistroDadosEmpresa as obterDadosEmpresa,
 } from '@/lib/dadosEmpresaMerge';
+import { listarLancamentosFinanceirosCache } from '@/lib/lancamentoFinanceiroCache';
 
 export { listarCentrosCustoRegistros };
 
@@ -392,7 +393,7 @@ export async function sincronizarModelosDesdeLancamentos() {
     console.error('Sincronizar recorrências mensais:', e);
   }
 
-  const lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
+  const lancamentos = await listarLancamentosFinanceirosCache({ limit: 5000 });
   const recorrentes = (lancamentos || []).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
   const byGrupo = new Map();
   for (const lf of recorrentes) {
@@ -430,7 +431,7 @@ export async function sincronizarModelosDesdeLancamentos() {
 }
 
 export async function listarLancamentosCompetencia(competencia) {
-  const lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
+  const lancamentos = await listarLancamentosFinanceirosCache({ limit: 5000 });
   return (lancamentos || []).filter((lf) => {
     if (!lancamentoRecorrenteContaPagarParaListaBoleto(lf)) return false;
     return mesReferenciaLancamento(lf) === competencia;
@@ -439,7 +440,7 @@ export async function listarLancamentosCompetencia(competencia) {
 
 /** Lançamentos recorrentes (conta a pagar) para alimentar a projeção de 12 meses. */
 export async function listarLancamentosRecorrentes() {
-  const lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000);
+  const lancamentos = await listarLancamentosFinanceirosCache({ limit: 5000 });
   return (lancamentos || []).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
 }
 
@@ -548,7 +549,7 @@ export async function desfazerAberturaCompetenciasDoMes(competencia) {
 export async function sincronizarFechamentoCompetencias(competencia) {
   const lancamentos = competencia
     ? await listarLancamentosCompetencia(competencia)
-    : (await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 5000)).filter(
+    : (await listarLancamentosFinanceirosCache({ limit: 5000 })).filter(
         lancamentoRecorrenteContaPagarParaListaBoleto,
       );
 

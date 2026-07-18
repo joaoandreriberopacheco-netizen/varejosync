@@ -14,15 +14,7 @@ import { P38MobileLine, P38StatusLabel } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/lib/utils';
 import { P38_CHIP_INACTIVE, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
 import { formatCompetenciaLabel, getCompetenciaAtual, shiftCompetencia } from '@/lib/budgetCalculos';
-import {
-  listarModelos as listarModelosBudget,
-  listarCompetencias as listarCompetenciasBudget,
-  listarLancamentosMes,
-  listarLancamentosVencimentoMes,
-  obterLucroBrutoCompetencia,
-} from '@/lib/budgetService';
-import { listarModelos as listarModelosFolha, listarCompetencias as listarCompetenciasFolha } from '@/lib/folhaPrevisaoService';
-import { listarModelos as listarModelosAgefin, listarLancamentosCompetencia, listarLancamentosRecorrentes } from '@/lib/agefinPrevisaoService';
+import { carregarDadosVisaoFinanceira } from '@/lib/visaoFinanceiraData';
 import { montarPlanoFinanceiroConsolidado } from '@/lib/planoFinanceiroConsolidado';
 import { gerarRelatorioVisaoFinanceira } from '@/functions/gerarRelatorioVisaoFinanceira';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -651,98 +643,45 @@ export default function VisaoFinanceiraPlano() {
   const [gerandoPdf, setGerandoPdf] = useState(false);
   const [agrupamentoFixas, setAgrupamentoFixas] = useState('vencimento');
 
-  const { data: modelosAgefin = [], isLoading: loadingAgefin } = useQuery({
-    queryKey: ['agefin-previsao', 'modelos'],
-    queryFn: listarModelosAgefin,
+  const { data: dadosPlano, isLoading: loading } = useQuery({
+    queryKey: ['visao-financeira', 'plano', competencia],
+    queryFn: () => carregarDadosVisaoFinanceira(competencia),
+    staleTime: 60_000,
   });
 
-  const { data: lancamentosRecorrentesAgefin = [], isLoading: loadingRecorrentesAgefin } = useQuery({
-    queryKey: ['agefin-previsao', 'lancamentos-recorrentes'],
-    queryFn: listarLancamentosRecorrentes,
-  });
-
-  const { data: modelosFolha = [], isLoading: loadingFolha } = useQuery({
-    queryKey: ['visao-financeira', 'folha-modelos'],
-    queryFn: listarModelosFolha,
-  });
-
-  const { data: modelosBudget = [], isLoading: loadingBudget } = useQuery({
-    queryKey: ['visao-financeira', 'budget-modelos'],
-    queryFn: listarModelosBudget,
-  });
-
-  const { data: competenciasFolha = [], isLoading: loadingCompetenciasFolha } = useQuery({
-    queryKey: ['visao-financeira', 'folha-competencias', competencia],
-    queryFn: () => listarCompetenciasFolha(competencia),
-  });
-
-  const { data: competenciasBudget = [], isLoading: loadingCompetenciasBudget } = useQuery({
-    queryKey: ['visao-financeira', 'budget-competencias', competencia],
-    queryFn: () => listarCompetenciasBudget(competencia),
-  });
-
-  const { data: lancamentosAgefin = [], isLoading: loadingLancamentosAgefin } = useQuery({
-    queryKey: ['visao-financeira', 'agefin-lancamentos', competencia],
-    queryFn: () => listarLancamentosCompetencia(competencia),
-  });
-
-  const { data: lancamentosMes = [], isLoading: loadingLancamentosMes } = useQuery({
-    queryKey: ['visao-financeira', 'lancamentos-mes', competencia],
-    queryFn: () => listarLancamentosMes(competencia),
-  });
-
-  const { data: lancamentosVencimento = [], isLoading: loadingLancamentosVencimento } = useQuery({
-    queryKey: ['visao-financeira', 'lancamentos-vencimento', competencia],
-    queryFn: () => listarLancamentosVencimentoMes(competencia),
-  });
-
-  const { data: lucroBrutoMes, isLoading: loadingLucroBruto } = useQuery({
-    queryKey: ['visao-financeira', 'lucro-bruto', competencia],
-    queryFn: () => obterLucroBrutoCompetencia(competencia),
-  });
-
-  const plano = useMemo(
-    () =>
-      montarPlanoFinanceiroConsolidado({
+  const plano = useMemo(() => {
+    if (!dadosPlano) {
+      return montarPlanoFinanceiroConsolidado({
         competencia,
-        modelosAgefin,
-        lancamentosAgefin,
-        modelosFolha,
-        competenciasFolha,
-        modelosBudget,
-        competenciasBudget,
-        lancamentosMes,
-        lancamentosVencimento,
-        lancamentosRecorrentesAgefin,
-        lucroBruto: lucroBrutoMes?.lucro_bruto || 0,
-        margemDetalhe: lucroBrutoMes,
-      }),
-    [
-      competencia,
-      modelosAgefin,
-      lancamentosAgefin,
-      modelosFolha,
-      competenciasFolha,
-      modelosBudget,
-      competenciasBudget,
-      lancamentosMes,
-      lancamentosVencimento,
-      lancamentosRecorrentesAgefin,
-      lucroBrutoMes,
-    ],
-  );
+        modelosAgefin: [],
+        lancamentosAgefin: [],
+        modelosFolha: [],
+        competenciasFolha: [],
+        modelosBudget: [],
+        competenciasBudget: [],
+        lancamentosMes: [],
+        lancamentosVencimento: [],
+        lancamentosRecorrentesAgefin: [],
+        lucroBruto: 0,
+        margemDetalhe: null,
+      });
+    }
 
-  const loading =
-    loadingAgefin ||
-    loadingFolha ||
-    loadingBudget ||
-    loadingCompetenciasFolha ||
-    loadingCompetenciasBudget ||
-    loadingLancamentosAgefin ||
-    loadingRecorrentesAgefin ||
-    loadingLancamentosMes ||
-    loadingLancamentosVencimento ||
-    loadingLucroBruto;
+    return montarPlanoFinanceiroConsolidado({
+      competencia,
+      modelosAgefin: dadosPlano.modelosAgefin,
+      lancamentosAgefin: dadosPlano.lancamentosAgefin,
+      modelosFolha: dadosPlano.modelosFolha,
+      competenciasFolha: dadosPlano.competenciasFolha,
+      modelosBudget: dadosPlano.modelosBudget,
+      competenciasBudget: dadosPlano.competenciasBudget,
+      lancamentosMes: dadosPlano.lancamentosMes,
+      lancamentosVencimento: dadosPlano.lancamentosVencimento,
+      lancamentosRecorrentesAgefin: dadosPlano.lancamentosRecorrentesAgefin,
+      lucroBruto: dadosPlano.lucroBrutoMes?.lucro_bruto || 0,
+      margemDetalhe: dadosPlano.lucroBrutoMes,
+    });
+  }, [competencia, dadosPlano]);
   const { resumo } = plano;
   const compLabel = formatCompetenciaLabel(competencia);
 
