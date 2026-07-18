@@ -437,7 +437,12 @@ export default function PlanejamentoFinanceiroPage() {
       const lancs = await listarLancamentosCompetencia(competenciaMes);
       const visao = montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancs, parcelamentos);
       refreshSelectedComp(visao);
-      toast({ title: 'Valor e vencimento guardados' });
+      toast({
+        title: 'Salvo',
+        description: selectedComp?.lancamento_id
+          ? 'Valor e vencimento atualizados no planejamento e no financeiro.'
+          : 'Valor e vencimento gravados no cadastro.',
+      });
     } catch (e) {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {

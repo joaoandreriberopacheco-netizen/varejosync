@@ -8,7 +8,7 @@ import {
 import { lancamentoPago, lancamentoCancelado } from '@/lib/agefinConsultaFilters';
 import {
   competenciaDeveEstarFechada,
-  competenciaEstaFechada,
+  competenciaBloqueadaEdicao,
   criarSerieComDefaults,
   dataVencimentoNaCompetencia,
   gerarGrupoLancamentoId,
@@ -524,7 +524,7 @@ export async function reativarSerie(serieId) {
 }
 
 export function podeEditarCompetencia(comp) {
-  return comp && !competenciaEstaFechada(comp) && !comp._modoPlanejamento;
+  return comp && !competenciaBloqueadaEdicao(comp);
 }
 
 /**
@@ -541,12 +541,21 @@ export async function atualizarCompetenciaManual({ competencia, modelo, valor, d
     const tags = new Set([...(lf?.tags || []), 'conta_pagar']);
     tags.delete(TAG_LF_GERADO_AUTO);
     const ven = (dataVencimento || '').slice(0, 10) || lf?.data_vencimento;
-    return base44.entities.LancamentoFinanceiro.update(competencia.lancamento_id, {
+    const atualizado = await base44.entities.LancamentoFinanceiro.update(competencia.lancamento_id, {
       valor: valorNum,
       valor_liquido: valorNum,
       data_vencimento: ven,
       tags: [...tags],
     });
+    if (modelo?.id) {
+      const dia = Number(diaVencimento) || Number((ven || '').slice(8, 10)) || Number(modelo.dia_vencimento) || 10;
+      await salvarSerie({
+        ...modelo,
+        valor_previsto: valorNum,
+        dia_vencimento: dia,
+      });
+    }
+    return atualizado;
   }
 
   if (!modelo?.id) throw new Error('Abra o mês antes de editar o valor desta conta.');
