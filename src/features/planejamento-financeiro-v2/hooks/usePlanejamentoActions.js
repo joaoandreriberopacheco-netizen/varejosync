@@ -182,10 +182,15 @@ export function usePlanejamentoActions({
     if (!window.confirm(`Remover "${serie.nome}" da agenda? A programação deixa de incluí-la.`)) return;
     setSaving(true);
     try {
-      await removerSerie(serie.id);
-      invalidate();
+      queryClient.setQueryData(agefinQueryKeys.modelos, (old) =>
+        (old || []).filter((s) => s.id !== serie.id),
+      );
+      await removerSerie(serie.id, serie);
+      queryClient.invalidateQueries({ queryKey: agefinQueryKeys.modelos });
+      queryClient.invalidateQueries({ queryKey: ['visao-financeira'] });
       toast({ title: 'Removida da agenda' });
     } catch (e) {
+      queryClient.invalidateQueries({ queryKey: agefinQueryKeys.modelos });
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setSaving(false);

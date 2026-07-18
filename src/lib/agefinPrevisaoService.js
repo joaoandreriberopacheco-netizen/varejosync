@@ -33,8 +33,79 @@ import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
 export { listarCentrosCustoRegistros };
 
 const DADOS_EMPRESA_SERIES_KEY = 'agefin_series_modelo';
+const DADOS_EMPRESA_SERIES_EXCLUIDAS_KEY = 'agefin_series_excluidas';
 const DADOS_EMPRESA_SERIES_BACKUP_KEY = 'agefin_series_modelo_backup';
 const DADOS_EMPRESA_SERIES_BACKUP_AT_KEY = 'agefin_series_modelo_backup_at';
+
+function lerSeriesExcluidasEmpresa(empresa) {
+  if (!empresa) return [];
+  const raw =
+    empresa[DADOS_EMPRESA_SERIES_EXCLUIDAS_KEY] ??
+    (empresa.dados && typeof empresa.dados === 'object'
+      ? empresa.dados[DADOS_EMPRESA_SERIES_EXCLUIDAS_KEY]
+      : undefined);
+  return Array.isArray(raw) ? raw : [];
+}
+
+async function lerChavesSeriesExcluidas() {
+  const empresa = await obterRegistroDadosEmpresa();
+  const rows = lerSeriesExcluidasEmpresa(empresa);
+  const keys = new Set();
+  for (const row of rows) {
+    for (const k of row?.chaves || []) keys.add(k);
+  }
+  return keys;
+}
+
+function chavesExclusaoSerie(serie = {}) {
+  const keys = new Set();
+  if (serie?.id) keys.add(`id:${serie.id}`);
+  if (serie?.grupo_lancamento_id) keys.add(`grp:${serie.grupo_lancamento_id}`);
+  const nome = String(serie?.nome || '').trim().toLowerCase();
+  const terceiro = String(serie?.terceiro_nome || '').trim().toLowerCase();
+  if (nome || terceiro) keys.add(`avulso:${nome}-${terceiro}`);
+  return [...keys];
+}
+
+function serieEstaExcluida(serie, chavesExcluidas) {
+  if (!chavesExcluidas?.size) return false;
+  return chavesExclusaoSerie(serie).some((k) => chavesExcluidas.has(k));
+}
+
+async function marcarSerieExcluida(serie) {
+  if (!serie) return;
+  const chaves = chavesExclusaoSerie(serie);
+  if (!chaves.length) return;
+  const empresa = await obterRegistroDadosEmpresa();
+  const atual = lerSeriesExcluidasEmpresa(empresa);
+  const chavesAtuais = new Set(atual.flatMap((r) => r.chaves || []));
+  if (chaves.every((k) => chavesAtuais.has(k))) return;
+  const next = [
+    ...atual.filter((r) => !chaves.some((k) => (r.chaves || []).includes(k))),
+    {
+      chaves,
+      nome: serie.nome || '',
+      grupo_lancamento_id: serie.grupo_lancamento_id || null,
+      removido_em: new Date().toISOString(),
+    },
+  ];
+  await atualizarDadosEmpresa(base44, { [DADOS_EMPRESA_SERIES_EXCLUIDAS_KEY]: next });
+}
+
+async function desmarcarSerieExcluida(serie) {
+  const chaves = chavesExclusaoSerie(serie);
+  if (!chaves.length) return;
+  const empresa = await obterRegistroDadosEmpresa();
+  const atual = lerSeriesExcluidasEmpresa(empresa);
+  const next = atual.filter((r) => !(r.chaves || []).some((k) => chaves.includes(k)));
+  if (next.length === atual.length) return;
+  await atualizarDadosEmpresa(base44, { [DADOS_EMPRESA_SERIES_EXCLUIDAS_KEY]: next });
+}
+
+function filtrarSeriesNaoExcluidas(series, chavesExcluidas) {
+  return (series || []).filter((s) => !serieEstaExcluida(s, chavesExcluidas));
+}
+
 
 async function obterRegistroDadosEmpresa() {
   return obterDadosEmpresa(base44);
@@ -343,39 +414,19 @@ export async function listarModelos() {
     console.warn('[agefin] Falha ao migrar contas fixas do cache local:', error);
   }
 
-  const [naNuvem, lancamentos] = await Promise.all([
+  const [naNuvem, lancamentos, chavesExcluidas] = await Promise.all([
     lerSeriesNaNuvem(),
     listarContasPagarAgefinCache(),
+    lerChavesSeriesExcluidas(),
   ]);
-  const importados = derivarSeriesDeLancamentos(lancamentos);
-  const merged = deduplicarSeriesPorGrupo(mesclarSeriesPorId(naNuvem, importados));
-
-  const chavesNuvem = new Set(
-    naNuvem.flatMap((s) => [s.grupo_lancamento_id, s.id].filter(Boolean)),
-  );
-  const temNovos = importados.some((s) => {
-    const chaves = [s.grupo_lancamento_id, s.id].filter(Boolean);
-    return chaves.some((chave) => !chavesNuvem.has(chave));
-  });
-
-  if (temNovos && importados.length) {
-    try {
-      await persistirSeriesModelo(importados, { modo: 'merge' });
-      const aposPersist = await lerSeriesNaNuvem();
-      const final = deduplicarSeriesPorGrupo(mesclarSeriesPorId(aposPersist, importados));
-      if (final.length) return filtrarSeriesContasFixasValidas(final, lancamentos);
-    } catch (error) {
-      console.warn('[agefin] Falha ao persistir séries importadas da AGEFIN:', error);
-    }
-  }
-
-  if (merged.length) return filtrarSeriesContasFixasValidas(merged, lancamentos);
-  if (importados.length) return importados;
-  return filtrarSeriesContasFixasValidas(naNuvem, lancamentos);
+  const importados = filtrarSeriesNaoExcluidas(derivarSeriesDeLancamentos(lancamentos), chavesExcluidas);
+  const naNuvemFiltrado = filtrarSeriesNaoExcluidas(naNuvem, chavesExcluidas);
+  const merged = deduplicarSeriesPorGrupo(mesclarSeriesPorId(naNuvemFiltrado, importados));
+  return filtrarSeriesContasFixasValidas(merged, lancamentos, chavesExcluidas);
 }
 
 /** Remove séries importadas que eram fretes/avulsos já persistidas por engano. */
-function filtrarSeriesContasFixasValidas(series, lancamentos = []) {
+function filtrarSeriesContasFixasValidas(series, lancamentos = [], chavesExcluidas = new Set()) {
   const porGrupo = new Map();
   for (const lf of lancamentos || []) {
     const gid = lf?.grupo_lancamento_id;
@@ -385,6 +436,7 @@ function filtrarSeriesContasFixasValidas(series, lancamentos = []) {
   }
 
   return (series || []).filter((s) => {
+    if (serieEstaExcluida(s, chavesExcluidas)) return false;
     const ehImportada =
       String(s.id).startsWith('serie-import-') || String(s.id).startsWith('serie-agefin-');
     if (!ehImportada) return s.ativo !== false;
@@ -414,6 +466,7 @@ export async function salvarSerie(payload) {
   }
 
   const { seriesNorm, empresaRows } = await persistirSeriesModelo([body]);
+  await desmarcarSerieExcluida(body);
   const naRespostaEmpresa = empresaRows.find((s) => s.id === body.id);
   if (naRespostaEmpresa) return criarSerieComDefaults(naRespostaEmpresa);
   if (entityRow?.id) return entityRow;
@@ -426,11 +479,16 @@ export async function salvarSerie(payload) {
   );
 }
 
-export async function removerSerie(serieId) {
+export async function removerSerie(serieId, serieMeta = null) {
   const series = await obterSeriesParaEdicao();
-  const next = series.filter((s) => s.id !== serieId);
+  const alvo = serieMeta || series.find((s) => s.id === serieId);
+  if (alvo) await marcarSerieExcluida(alvo);
   await removerSerieEntidade(serieId);
-  await persistirSeriesModelo(next, { modo: 'substituir' });
+  const next = filtrarSeriesNaoExcluidas(
+    series.filter((s) => s.id !== serieId),
+    new Set(chavesExclusaoSerie(alvo || { id: serieId })),
+  );
+  await persistirSeriesModelo(next, { modo: 'merge' });
 }
 
 export async function atualizarCentroCustoSerie(serieId, centroCusto) {
@@ -490,8 +548,11 @@ function derivarSeriesDeLancamentos(lancamentos = []) {
 
 /** Importa séries a partir das contas a pagar já existentes no financeiro (fonte AGEFIN). */
 export async function sincronizarModelosDesdeLancamentos() {
-  const lancamentos = await listarContasPagarAgefinCache();
-  const series = derivarSeriesDeLancamentos(lancamentos);
+  const [lancamentos, chavesExcluidas] = await Promise.all([
+    listarContasPagarAgefinCache(),
+    lerChavesSeriesExcluidas(),
+  ]);
+  const series = filtrarSeriesNaoExcluidas(derivarSeriesDeLancamentos(lancamentos), chavesExcluidas);
   if (series.length) await persistirSeriesModelo(series, { modo: 'merge' });
   return series;
 }
