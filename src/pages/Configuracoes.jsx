@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ShieldAlert } from 'lucide-react';
-import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt, Printer, Trash2 } from 'lucide-react';
+import { TrendingUp, Package, DollarSign, BarChart3, Settings, Building2, Users, Sliders, Tags, Wallet, CreditCard, Smartphone, Bookmark, Wrench, Shield, MapPin, Receipt, Printer, Trash2, LineChart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/components/utils';
 import { GlacialTabsList, GlacialTabsTrigger, GlacialSubTabsList, GlacialSubTabsTrigger } from '@/components/ui/GlacialTabs';
@@ -22,6 +22,7 @@ import CodigoProdutoBackfillTool from '@/components/config/CodigoProdutoBackfill
 import { useNavigate } from 'react-router-dom';
 import PersonalizacaoComprovanteManager from '@/components/config/PersonalizacaoComprovanteManager';
 import EditorLayoutsTres from '@/pages/EditorLayoutsTres';
+import VisaoFinanceiraPlano from '@/components/config/VisaoFinanceiraPlano';
 
 export default function ConfiguracoesPage() {
   const [userLoaded, setUserLoaded] = useState(false);
@@ -111,12 +112,14 @@ export default function ConfiguracoesPage() {
               <GlacialSubTabsTrigger value="formas"      activeValue={finTab} onSelect={setFinTab} icon={CreditCard} label="Pagamentos" />
               <GlacialSubTabsTrigger value="maquininhas" activeValue={finTab} onSelect={setFinTab} icon={Smartphone} label="Maquininhas" />
               <GlacialSubTabsTrigger value="categorias"  activeValue={finTab} onSelect={setFinTab} icon={Bookmark}   label="Categorias" />
+              <GlacialSubTabsTrigger value="visao"       activeValue={finTab} onSelect={setFinTab} icon={LineChart}  label="Visão ampla" />
             </GlacialSubTabsList>
             <div>
               {finTab === 'contas'      && <ContasFinanceirasManager />}
               {finTab === 'formas'      && <FormasPagamentoManager />}
               {finTab === 'maquininhas' && <MaquininhasManager />}
               {finTab === 'categorias'  && <CategoriasFinanceirasManager />}
+              {finTab === 'visao'       && <VisaoFinanceiraPlano />}
             </div>
           </div>
         )}
