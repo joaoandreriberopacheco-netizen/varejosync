@@ -29,10 +29,10 @@ export const SHARE_SUBTARGET_KEYS = {
   conta_pdf: 'importar_pdf_conta',
   importar_pdf: 'importar_pdf_conta',
   conta: 'importar_pdf_conta',
-  /** Escolher card do atualizador de boletos e atualizar com o PDF */
-  atualizar_boleto: 'atualizar_boleto',
-  boletos: 'atualizar_boleto',
-  atualizador: 'atualizar_boleto',
+  /** Legado: redireciona para importar PDF e criar conta nova */
+  atualizar_boleto: 'importar_pdf_conta',
+  boletos: 'importar_pdf_conta',
+  atualizador: 'importar_pdf_conta',
   /** Novo pedido de compra + importador de itens (PDF) */
   importar_pedido: 'importar_pedido_novo',
   novo_pedido: 'importar_pedido_novo',

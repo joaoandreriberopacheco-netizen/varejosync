@@ -6,7 +6,6 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
 import AgefinLista from '@/components/agefin/AgefinLista';
-import AgefinAtualizador from '@/components/agefin/AgefinAtualizador';
 
 export default function Agefin() {
   const [activeTab, setActiveTab] = useState('contas');
@@ -186,12 +185,6 @@ export default function Agefin() {
             >
               Contas a Pagar
             </TabsTrigger>
-            <TabsTrigger
-              value="recorrentes"
-              className="rounded-none border-b-2 px-6 py-3 ml-4 data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=inactive]:border-transparent text-muted-foreground"
-            >
-              Recorrências
-            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -233,9 +226,6 @@ export default function Agefin() {
           <>
             <TabsContent value="contas" className="mt-0">
               <AgefinLista contas={contas} onRefresh={loadContas} />
-            </TabsContent>
-            <TabsContent value="recorrentes" className="mt-0">
-              <AgefinAtualizador onRefresh={loadContas} />
             </TabsContent>
           </>
         )}

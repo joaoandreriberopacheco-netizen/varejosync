@@ -9,11 +9,10 @@ export const TORRE_WIDGET_ACTIONS = {
   FINANCEIRO_NOVO: 'financeiro_novo',
   FINANCEIRO_EXISTENTE: 'financeiro_existente',
   FINANCEIRO_IMPORTAR_BOLETO: 'financeiro_importar_boleto',
-  FINANCEIRO_ATUALIZAR_BOLETO: 'financeiro_atualizar_boleto',
   LOGISTICA_EVENTO: 'logistica_evento',
 };
 
-/** @typedef {'raiz' | 'pedidos' | 'pedido_novo' | 'pedido_existente' | 'financeiro' | 'financeiro_comprovante' | 'financeiro_novo' | 'financeiro_existente' | 'financeiro_boleto' | 'financeiro_importar_boleto' | 'financeiro_atualizar_boleto' | 'logistica' | 'logistica_evento'} TorreWidgetNodeId */
+/** @typedef {'raiz' | 'pedidos' | 'pedido_novo' | 'pedido_existente' | 'financeiro' | 'financeiro_comprovante' | 'financeiro_novo' | 'financeiro_existente' | 'financeiro_boleto' | 'logistica' | 'logistica_evento'} TorreWidgetNodeId */
 
 /** @type {Record<string, { titulo: string, descricao?: string, icon: string, children?: string[], action?: string, requiresFile?: boolean }>} */
 export const TORRE_WIDGET_NODES = {
@@ -66,23 +65,10 @@ export const TORRE_WIDGET_NODES = {
     action: TORRE_WIDGET_ACTIONS.FINANCEIRO_EXISTENTE,
   },
   financeiro_boleto: {
-    titulo: 'Boleto / conta a pagar',
-    descricao: 'Ler PDF de cobrança ou atualizar recorrente',
-    icon: 'file-text',
-    children: ['financeiro_importar_boleto', 'financeiro_atualizar_boleto'],
-  },
-  financeiro_importar_boleto: {
-    titulo: 'Importar conta (AGEFIN)',
-    descricao: 'Ler PDF e criar conta a pagar',
+    titulo: 'Importar conta (PDF)',
+    descricao: 'Ler PDF e criar nova conta a pagar',
     icon: 'file-text',
     action: TORRE_WIDGET_ACTIONS.FINANCEIRO_IMPORTAR_BOLETO,
-    requiresFile: true,
-  },
-  financeiro_atualizar_boleto: {
-    titulo: 'Atualizar boleto recorrente',
-    descricao: 'Escolher o mês e substituir o PDF',
-    icon: 'refresh-cw',
-    action: TORRE_WIDGET_ACTIONS.FINANCEIRO_ATUALIZAR_BOLETO,
     requiresFile: true,
   },
   logistica: {
@@ -109,9 +95,9 @@ export const TORRE_WIDGET_DEEP_LINKS = {
   comprovante: ['financeiro', 'financeiro_comprovante'],
   boleto: ['financeiro', 'financeiro_boleto'],
   boletos: ['financeiro', 'financeiro_boleto'],
-  atualizar_boleto: ['financeiro', 'financeiro_boleto', 'financeiro_atualizar_boleto'],
-  importar_pdf: ['financeiro', 'financeiro_boleto', 'financeiro_importar_boleto'],
-  conta_pdf: ['financeiro', 'financeiro_boleto', 'financeiro_importar_boleto'],
+  atualizar_boleto: ['financeiro', 'financeiro_boleto'],
+  importar_pdf: ['financeiro', 'financeiro_boleto'],
+  conta_pdf: ['financeiro', 'financeiro_boleto'],
   frete: ['logistica'],
   evento: ['logistica', 'logistica_evento'],
   logistica: ['logistica'],
@@ -123,8 +109,6 @@ export const TORRE_WIDGET_RETURN_PATH = {
   vincular_pedido: ['pedidos'],
   vincular_evento: ['logistica'],
   importar_pdf_conta: ['financeiro', 'financeiro_boleto'],
-  atualizar_boleto: ['financeiro', 'financeiro_boleto'],
-  atualizar_boleto_import: ['financeiro', 'financeiro_boleto'],
 };
 
 export function resolverWidgetPath(destinoRaw) {
