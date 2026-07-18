@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, LayoutList, PieChart, Truck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, LayoutList, Loader2, PieChart, Truck } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import {
@@ -23,6 +24,8 @@ import {
 import { listarModelos as listarModelosFolha, listarCompetencias as listarCompetenciasFolha } from '@/lib/folhaPrevisaoService';
 import { listarModelos as listarModelosAgefin, listarLancamentosCompetencia } from '@/lib/agefinPrevisaoService';
 import { montarPlanoFinanceiroConsolidado } from '@/lib/planoFinanceiroConsolidado';
+import { gerarRelatorioVisaoFinanceira } from '@/functions/gerarRelatorioVisaoFinanceira';
+import { dataHoje } from '@/components/utils/dateUtils';
 
 function CelulaValor({ valor, positivo, className }) {
   const n = Number(valor) || 0;
@@ -141,6 +144,7 @@ export default function VisaoFinanceiraPlano() {
       ? 'explodido'
       : 'resumo',
   );
+  const [gerandoPdf, setGerandoPdf] = useState(false);
 
   const { data: modelosAgefin = [], isLoading: loadingAgefin } = useQuery({
     queryKey: ['visao-financeira', 'agefin-modelos'],
@@ -229,6 +233,37 @@ export default function VisaoFinanceiraPlano() {
   const { resumo } = plano;
   const compLabel = formatCompetenciaLabel(competencia);
 
+  const handleGerarPdf = async () => {
+    if (loading || !plano.grupos.length || gerandoPdf) return;
+    setGerandoPdf(true);
+    toast.loading('Gerando PDF da visão financeira...', { id: 'pdf-visao-financeira' });
+    try {
+      const resposta = await gerarRelatorioVisaoFinanceira({
+        competencia,
+        competenciaLabel: compLabel,
+        resumo,
+        margemDetalhe: plano.margemDetalhe,
+        grupos: plano.grupos,
+      });
+      const blob = new Blob([resposta.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `RelatorioVisaoFinanceira_enxuto_${competencia}_${dataHoje()}.pdf`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast.success('PDF da visão financeira gerado', { id: 'pdf-visao-financeira' });
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível gerar o PDF', {
+        id: 'pdf-visao-financeira',
+        description: error?.message || String(error),
+      });
+    } finally {
+      setGerandoPdf(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -261,6 +296,18 @@ export default function VisaoFinanceiraPlano() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-10 rounded-xl gap-1.5"
+            disabled={loading || !plano.grupos.length || gerandoPdf}
+            onClick={handleGerarPdf}
+          >
+            {gerandoPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            <span>PDF enxuto</span>
+          </Button>
+
           <div className={cn('flex items-center rounded-xl p-1', P38_FIELD_SURFACE)}>
             <Button
               type="button"
