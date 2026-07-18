@@ -553,18 +553,58 @@ function montarAnexoNaoMensais(itens = []) {
   };
 }
 
+/** Anexo: cadastro das contas anuais/trimestrais (parcela integral e vencimento). */
+function montarAnexoContasAnuais(itens = []) {
+  const linhas = [...itens]
+    .sort((a, b) => compararNome(a.nome, b.nome))
+    .map((item) => ({
+      id: item.id,
+      nome: item.nome,
+      frequencia: item.frequencia,
+      valorParcela: item.valorSecundario,
+      dataVencimentoLabel: item.dataVencimentoLabel,
+      venceNesteMes: item.destaque,
+      centroCusto: item.centroCusto,
+    }));
+
+  return {
+    itens: linhas,
+    totalVencimentoMes: somaVencimentoNaoMensal(itens),
+  };
+}
+
+function montarAnexoFretesCapacidade({ pautaFretes = [], margemDetalhe = null }) {
+  const totalFretes = somaLinhas(pautaFretes);
+  const capacidadeCompraBase = Number(margemDetalhe?.custo_total) || 0;
+
+  return {
+    capacidadeCompraBase,
+    totalFretes,
+    capacidadeDisponivel: capacidadeCompraBase - totalFretes,
+    porVencimento: agruparItensPorVencimento(pautaFretes),
+    itens: pautaFretes,
+  };
+}
+
+function particionarPauta(pauta = []) {
+  const pautaPrincipal = pauta.filter(
+    (item) => item.tipoPauta !== 'compra_mercadoria' && item.tipoPauta !== 'frete',
+  );
+  const pautaFretes = pauta.filter((item) => item.tipoPauta === 'frete');
+  return { pautaPrincipal, pautaFretes };
+}
+
 const GRUPO_LABELS = {
   [GRUPO.FIXAS_RECORRENTES]: 'Contas fixas (recorrentes)',
   [GRUPO.FIXAS_NAO_MENSAIS]: 'Provisão mensal — IPTU, IPVA, alvarás e similares',
   [GRUPO.FOLHA]: 'Folha de pagamento',
   [GRUPO.FOLHA_PROVISOES]: 'Provisões de folha',
   [GRUPO.BUDGETS]: 'Budgets',
-  [GRUPO.PONTUAIS]: 'Pauta do mês — vencimentos',
+  [GRUPO.PONTUAIS]: 'Pauta do mês — boletos e ocasionais',
 };
 
-const GRUPO_ORDEM = [
+const GRUPO_ORDEM_PRINCIPAL = [
   GRUPO.FIXAS_RECORRENTES,
-  GRUPO.FIXAS_NAO_MENSAIS,
   GRUPO.PONTUAIS,
   GRUPO.FOLHA,
   GRUPO.FOLHA_PROVISOES,
@@ -647,19 +687,16 @@ export function montarPlanoFinanceiroConsolidado({
   const subtotalFolha = somaLinhas(folha);
   const subtotalProvisoes = somaLinhasNoTotal(provisoes);
   const subtotalBudgets = somaLinhas(budgets);
-  const subtotalPauta = somaLinhas(pauta);
-  const subtotalPautaExtraPlano = somaLinhasNoTotal(pauta);
-  const subtotalFretes = somaLinhas(pauta.filter((item) => item.tipoPauta === 'frete'));
-  const subtotalComprasMercadoria = somaLinhas(
-    pauta.filter((item) => item.tipoPauta === 'compra_mercadoria'),
-  );
+  const { pautaPrincipal, pautaFretes } = particionarPauta(pauta);
+  const subtotalPauta = somaLinhas(pautaPrincipal);
+  const subtotalPautaExtraPlano = somaLinhasNoTotal(pautaPrincipal);
+  const subtotalFretes = somaLinhas(pautaFretes);
 
   const totalOperacional =
     subtotalFixasRecorrentes + subtotalFolha + subtotalBudgets + subtotalPautaExtraPlano;
-  const totalProvisoesMensais = subtotalNaoMensaisDiluido + subtotalProvisoes;
+  const totalProvisoesMensais = subtotalProvisoes;
   const totalComProvisoes = totalOperacional + totalProvisoesMensais;
-  const totalDesembolsoMes =
-    subtotalFixasRecorrentes + subtotalFolha + subtotalPauta + subtotalNaoMensaisVencimento;
+  const totalDesembolsoMes = subtotalFixasRecorrentes + subtotalFolha + subtotalPauta;
 
   const visoesBudget = montarVisoesBudgets(
     modelosBudget,
@@ -677,16 +714,15 @@ export function montarPlanoFinanceiroConsolidado({
 
   const mapaItens = {
     [GRUPO.FIXAS_RECORRENTES]: recorrentes,
-    [GRUPO.FIXAS_NAO_MENSAIS]: naoMensais,
     [GRUPO.FOLHA]: folha,
     [GRUPO.FOLHA_PROVISOES]: provisoes,
     [GRUPO.BUDGETS]: budgets,
-    [GRUPO.PONTUAIS]: pauta,
+    [GRUPO.PONTUAIS]: pautaPrincipal,
   };
 
-  const grupos = GRUPO_ORDEM.map((g) => {
+  const grupos = GRUPO_ORDEM_PRINCIPAL.map((g) => {
     const items = mapaItens[g] || [];
-    if (items.length === 0 && g !== GRUPO.PONTUAIS && g !== GRUPO.FIXAS_NAO_MENSAIS) return null;
+    if (items.length === 0 && g !== GRUPO.PONTUAIS) return null;
     const agrupamentos = montarAgrupamentosGrupo(g, items);
     return {
       id: g,
@@ -695,20 +731,25 @@ export function montarPlanoFinanceiroConsolidado({
       items,
       subtotal: somaLinhas(items),
       subtotalNoTotal: somaLinhasNoTotal(items),
-      vazio:
-        (g === GRUPO.PONTUAIS || g === GRUPO.FIXAS_NAO_MENSAIS) && items.length === 0,
-      separadoDoTotal: g === GRUPO.FIXAS_NAO_MENSAIS || g === GRUPO.FOLHA_PROVISOES,
+      vazio: g === GRUPO.PONTUAIS && items.length === 0,
+      separadoDoTotal: g === GRUPO.FOLHA_PROVISOES,
       ...agrupamentos,
       centros: agrupamentos.porCentroCategoria || agrupamentos.porCentro || [],
     };
   }).filter(Boolean);
 
   const anexoNaoMensais = montarAnexoNaoMensais(naoMensais);
+  const anexos = {
+    contasAnuais: montarAnexoContasAnuais(naoMensais),
+    provisoesAnuais: anexoNaoMensais,
+    fretesCapacidade: montarAnexoFretesCapacidade({ pautaFretes, margemDetalhe }),
+  };
 
   return {
     competencia,
     grupos,
     anexoNaoMensais,
+    anexos,
     resumo: {
       fixasRecorrentes: subtotalFixasRecorrentes,
       anuaisDiluido: subtotalNaoMensaisDiluido,
@@ -720,7 +761,6 @@ export function montarPlanoFinanceiroConsolidado({
       pontuais: subtotalPauta,
       pontuaisExtraPlano: subtotalPautaExtraPlano,
       fretesAgendados: subtotalFretes,
-      comprasMercadoriaAgendadas: subtotalComprasMercadoria,
       totalOperacional,
       totalProvisoesMensais,
       totalComProvisoes,

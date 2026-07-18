@@ -35,11 +35,8 @@ function itemObservacao(item) {
 }
 
 function notaGrupo(grupo) {
-  if (grupo.id === 'fixas_nao_mensais') {
-    return 'Provisão mensal de IPTU, IPVA, alvarás e similares. O valor integral só entra no desembolso no mês de vencimento.';
-  }
   if (grupo.id === 'pontuais') {
-    return 'Boletos, fretes e compras com vencimento neste mês. Compras de mercadoria são só conferência.';
+    return 'Boletos e contas ocasionais com vencimento neste mês.';
   }
   if (grupo.separadoDoTotal) {
     return 'Provisão ou evento à parte — não entra no total operacional.';
@@ -58,6 +55,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     resumo = {},
     margemDetalhe = {},
     grupos = [],
+    anexos = {},
     opcoesExplodido = {},
     generatedAt = new Date().toLocaleString('pt-BR', {
       dateStyle: 'short',
@@ -67,6 +65,11 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
 
   const agrupamentoFixas = opcoesExplodido.agrupamentoFixas || 'vencimento';
   const provisoesExpandidas = opcoesExplodido.provisoesExpandidas || {};
+  const {
+    contasAnuais = {},
+    provisoesAnuais = {},
+    fretesCapacidade = {},
+  } = anexos;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const font = await registerJsPdfDin1451Fonts(doc);
@@ -218,12 +221,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     }
 
     if (grupo.vazio) {
-      textLines(
-        grupo.id === 'fixas_nao_mensais'
-          ? 'Nenhuma conta anual ou trimestral cadastrada no Planejamento Financeiro.'
-          : 'Nenhum item nesta camada.',
-        { size: FONT.nota, color: COLOR.muted, lineH: 3.4 },
-      );
+      textLines('Nenhum item nesta camada.', { size: FONT.nota, color: COLOR.muted, lineH: 3.4 });
       advance(2);
       return;
     }
@@ -292,6 +290,18 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     advance(3);
   };
 
+  const drawAnexoTitulo = (titulo, nota = '') => {
+    doc.addPage();
+    y = 12;
+    setFont('bold', 11);
+    doc.text(safe(titulo), contentLeft, y);
+    advance(5);
+    if (nota) {
+      textLines(nota, contentWidth, { size: FONT.nota, color: COLOR.muted, lineH: 3.4 });
+      advance(2);
+    }
+  };
+
   // —— Página 1: cabeçalho + resumo (largura total) ——
   setFont('bold', FONT.title);
   doc.text(safe('Relatório Visão Financeira'), contentLeft, y);
@@ -327,37 +337,19 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   drawResumoLinha('Total operacional', resumo.totalOperacional, { prefix: '− ', bold: true });
   drawResumoLinha('Resultado operacional', resumo.resultadoOperacional, { prefix: '= ', bold: true });
 
-  drawResumoSecao('Provisões mensais (informativas)');
-  drawResumoLinha('Provisão — contas anuais/trimestrais', resumo.anuaisDiluido, {
-    prefix: '− ',
-    sublabel:
-      number(resumo.naoMensaisEquivalenteAnual) > 0
-        ? `Equivalente a ${moeda(resumo.naoMensaisEquivalenteAnual)}/ano no cadastro`
-        : 'IPTU, IPVA, alvarás e similares (parcela diluída no mês)',
-  });
-  drawResumoLinha('Provisões de folha', resumo.provisoesFolha, { prefix: '− ' });
-  drawResumoLinha('Total com provisões', resumo.totalComProvisoes, { prefix: '− ', bold: true });
-  drawResumoLinha('Resultado com provisões', resumo.resultadoComProvisoes, { prefix: '= ', bold: true });
+  if (number(resumo.provisoesFolha) > 0) {
+    drawResumoSecao('Provisões de folha');
+    drawResumoLinha('Provisões de folha', resumo.provisoesFolha, { prefix: '− ' });
+    drawResumoLinha('Total com provisões de folha', resumo.totalComProvisoes, { prefix: '− ', bold: true });
+    drawResumoLinha('Resultado com provisões de folha', resumo.resultadoComProvisoes, {
+      prefix: '= ',
+      bold: true,
+    });
+  }
 
-  drawResumoSecao('Capacidade de compra');
-  drawResumoLinha('CMV vendido (base)', resumo.capacidadeCompraBase, { prefix: '+ ' });
-  drawResumoLinha('Fretes agendados no mês', resumo.fretesAgendados, {
-    prefix: '− ',
-    sublabel: 'Não altera o lucro bruto',
-  });
-  drawResumoLinha('Disponível para novas compras', resumo.capacidadeCompraDisponivel, {
-    prefix: '= ',
-    bold: true,
-  });
-
-  if (number(resumo.pontuais) > 0 || number(resumo.anuaisVencimentoMes) > 0) {
+  if (number(resumo.pontuais) > 0) {
     drawResumoSecao('Desembolso conhecido no mês');
-    if (number(resumo.pontuais) > 0) {
-      drawResumoLinha('Pauta do mês (vencimentos)', resumo.pontuais, { prefix: '− ' });
-    }
-    if (number(resumo.anuaisVencimentoMes) > 0) {
-      drawResumoLinha('Vencimentos não mensais (integral)', resumo.anuaisVencimentoMes, { prefix: '− ' });
-    }
+    drawResumoLinha('Pauta do mês (boletos e ocasionais)', resumo.pontuais, { prefix: '− ' });
     drawResumoLinha('Total desembolso', resumo.totalDesembolsoMes, { prefix: '− ', bold: true });
     drawResumoLinha('Saldo após compromissos conhecidos', resumo.resultadoDesembolso, {
       prefix: '= ',
@@ -377,7 +369,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   doc.text(safe('Plano detalhado'), contentLeft, y);
   advance(5);
   textLines(
-    'Duas famílias de contas fixas: (1) mensais recorrentes e (2) anuais/trimestrais com provisão mensal.',
+    'Corpo do relatório: contas fixas mensais, folha, budgets e pauta ocasional.',
     contentWidth,
     { size: FONT.nota, color: COLOR.muted, lineH: 3.4 },
   );
@@ -385,6 +377,70 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
 
   for (const grupo of grupos) {
     drawGrupo(grupo);
+  }
+
+  if (contasAnuais?.itens?.length > 0) {
+    drawAnexoTitulo(
+      'Anexo A — Contas anuais e não mensais',
+      'Cadastro de IPTU, IPVA, alvarás e similares. Valores integrais e vencimentos de referência.',
+    );
+    for (const item of contasAnuais.itens) {
+      const detalhe = [
+        item.frequencia,
+        item.dataVencimentoLabel ? `Venc. ${item.dataVencimentoLabel}` : '',
+        item.venceNesteMes ? 'Vence neste mês' : '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      drawItem(
+        { nome: item.nome, valor: item.valorParcela, detalhe },
+        { mostrarDetalhe: Boolean(detalhe), indent: 2 },
+      );
+    }
+    if (number(contasAnuais.totalVencimentoMes) > 0) {
+      drawResumoLinha('Total com vencimento neste mês', contasAnuais.totalVencimentoMes, { bold: true });
+    }
+  }
+
+  if (provisoesAnuais?.itens?.length > 0) {
+    drawAnexoTitulo(
+      'Anexo B — Provisões anuais',
+      'Parcela mensal diluída das contas com recorrência maior que mensal.',
+    );
+    for (const item of provisoesAnuais.itens) {
+      const detalhe = [
+        item.frequencia,
+        `Parcela: ${moeda(item.valorParcela)}`,
+        item.venceNesteMes ? 'Vence neste mês' : '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      drawItem(
+        { nome: item.nome, valor: item.provisaoMensal, detalhe },
+        { mostrarDetalhe: true, indent: 2 },
+      );
+    }
+    drawResumoLinha('Total provisão mensal', provisoesAnuais.totalProvisaoMensal, { bold: true });
+    drawResumoLinha('Equivalente anual no cadastro', provisoesAnuais.totalEquivalenteAnual);
+  }
+
+  if (
+    number(fretesCapacidade?.capacidadeCompraBase) > 0 ||
+    number(fretesCapacidade?.totalFretes) > 0 ||
+    (fretesCapacidade?.itens || []).length > 0
+  ) {
+    drawAnexoTitulo(
+      'Anexo C — Fretes e capacidade de compra',
+      'Fretes de barcaças e itinerários. A capacidade usa o CMV vendido como base.',
+    );
+    drawResumoLinha('CMV vendido (base)', fretesCapacidade.capacidadeCompraBase, { prefix: '+ ' });
+    drawResumoLinha('Fretes agendados no mês', fretesCapacidade.totalFretes, { prefix: '− ' });
+    drawResumoLinha('Disponível para novas compras', fretesCapacidade.capacidadeDisponivel, {
+      prefix: '= ',
+      bold: true,
+    });
+    advance(2);
+    drawItensPorVencimento(fretesCapacidade.porVencimento || []);
   }
 
   const pageCount = doc.internal.getNumberOfPages();
@@ -397,6 +453,6 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'visao_financeira_enxuto_a4_v8',
+    version: 'visao_financeira_enxuto_a4_v9',
   };
 }
