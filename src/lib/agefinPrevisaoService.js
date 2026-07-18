@@ -27,7 +27,7 @@ import {
   listarLancamentosFinanceirosAgefinBruto,
   listarLancamentosVencimentoCompetenciaCache,
 } from '@/lib/lancamentoFinanceiroCache';
-import { filtrarLancamentosPlanejamento } from '@/lib/agefinConsultaData';
+import { filtrarLancamentosPlanejamento, grupoLancamentosPareceContaFixa } from '@/lib/agefinConsultaData';
 import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
 
 export { listarCentrosCustoRegistros };
@@ -363,15 +363,35 @@ export async function listarModelos() {
       await persistirSeriesModelo(importados, { modo: 'merge' });
       const aposPersist = await lerSeriesNaNuvem();
       const final = deduplicarSeriesPorGrupo(mesclarSeriesPorId(aposPersist, importados));
-      if (final.length) return final;
+      if (final.length) return filtrarSeriesContasFixasValidas(final, lancamentos);
     } catch (error) {
       console.warn('[agefin] Falha ao persistir séries importadas da AGEFIN:', error);
     }
   }
 
-  if (merged.length) return merged;
+  if (merged.length) return filtrarSeriesContasFixasValidas(merged, lancamentos);
   if (importados.length) return importados;
-  return naNuvem;
+  return filtrarSeriesContasFixasValidas(naNuvem, lancamentos);
+}
+
+/** Remove séries importadas que eram fretes/avulsos já persistidas por engano. */
+function filtrarSeriesContasFixasValidas(series, lancamentos = []) {
+  const porGrupo = new Map();
+  for (const lf of lancamentos || []) {
+    const gid = lf?.grupo_lancamento_id;
+    if (!gid) continue;
+    if (!porGrupo.has(gid)) porGrupo.set(gid, []);
+    porGrupo.get(gid).push(lf);
+  }
+
+  return (series || []).filter((s) => {
+    const ehImportada =
+      String(s.id).startsWith('serie-import-') || String(s.id).startsWith('serie-agefin-');
+    if (!ehImportada) return s.ativo !== false;
+    if (!s.grupo_lancamento_id) return false;
+    const rows = porGrupo.get(s.grupo_lancamento_id) || [];
+    return grupoLancamentosPareceContaFixa(rows);
+  });
 }
 
 export async function salvarSerie(payload) {
@@ -434,6 +454,7 @@ function chaveGrupoSerie(lf) {
 function derivarSeriesDeLancamentos(lancamentos = []) {
   const byGrupo = new Map();
   for (const lf of lancamentos || []) {
+    if (!filtrarLancamentosPlanejamento([lf]).length) continue;
     const gid = chaveGrupoSerie(lf);
     if (!byGrupo.has(gid)) byGrupo.set(gid, []);
     byGrupo.get(gid).push(lf);
@@ -441,6 +462,7 @@ function derivarSeriesDeLancamentos(lancamentos = []) {
 
   const series = [];
   for (const [gid, rows] of byGrupo) {
+    if (!grupoLancamentosPareceContaFixa(rows)) continue;
     const sorted = [...rows].sort((a, b) =>
       (b.data_vencimento || '').localeCompare(a.data_vencimento || ''),
     );
