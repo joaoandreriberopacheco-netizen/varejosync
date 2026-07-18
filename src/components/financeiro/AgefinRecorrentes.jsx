@@ -12,13 +12,11 @@ import {
   X,
   Wallet,
   CalendarClock,
-  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { dataHoje } from '@/components/utils/dateUtils';
-import { TAG_LF_BOLETO_PDF, TAG_LF_GERADO_AUTO, tagsOrigemBoleto } from '@/lib/agefinLancamentosRecorrencia';
 import { getMonthKey, getContaDoMes, useRecorrentesBoletoData } from '@/hooks/useRecorrentesBoletoData';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
 import { format } from 'date-fns';
@@ -95,23 +93,15 @@ function FilterSection({ label, icon: Icon, options, value, onChange }) {
 }
 
 function AgefinCard({ recorrente, contaMes, onOpen }) {
-  const hasBoleto = Boolean(contaMes?.forma_pagamento_tipo === 'Boleto' || contaMes?.forma_pagamento === 'Boleto');
   const isPaid = contaMes?.status === 'Pago';
   const todayKey = dataHoje();
   const isOverdue = !isPaid && contaMes?.data_vencimento && contaMes.data_vencimento < todayKey;
-  const boletoVencido = hasBoleto && isOverdue;
-  const atualizadoPdf = tagsOrigemBoleto(contaMes?.tags) === 'pdf';
-  /** Lima só com tag de PDF e conta como boleto — evita destaque com tag órfã ou despesa sem boleto. */
-  const boletoMarcadoComoAtualizadoPdf = atualizadoPdf && hasBoleto;
 
-  const iconRing =
-    !isPaid && hasBoleto && boletoVencido
+  const iconRing = isPaid
+    ? 'ring-2 ring-[#5c6b3a] dark:ring-[#8a9a5c]'
+    : isOverdue
       ? 'ring-2 ring-red-400 dark:ring-red-400/75'
-      : isPaid
-        ? 'ring-2 ring-[#5c6b3a] dark:ring-[#8a9a5c]'
-        : boletoMarcadoComoAtualizadoPdf
-          ? 'ring-2 ring-lime-200 dark:ring-lime-400/50'
-          : '';
+      : '';
 
   return (
     <div
@@ -173,11 +163,6 @@ function AgefinCard({ recorrente, contaMes, onOpen }) {
             >
               <FileText className="h-5 w-5 text-muted-foreground dark:text-muted-foreground" />
             </div>
-            {hasBoleto && !isPaid && (
-              <span className="absolute -right-1 -top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-card shadow-sm dark:bg-card">
-                <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground dark:text-muted-foreground" />
-              </span>
-            )}
           </div>
         </div>
       </div>
@@ -191,7 +176,6 @@ export default function AgefinRecorrentes() {
   const { recorrentes, contas, loading, reload } = useRecorrentesBoletoData();
   const [filterPagamento, setFilterPagamento] = useState('todos');
   const [filterPrazo, setFilterPrazo] = useState('todos');
-  const [filterOrigem, setFilterOrigem] = useState('todos');
   const [search, setSearch] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [groupBy, setGroupBy] = useState('nome');
@@ -201,7 +185,6 @@ export default function AgefinRecorrentes() {
 
   const filteredCards = useMemo(() => {
     const todayKey = dataHoje();
-    const tags = (c) => (Array.isArray(c?.tags) ? c.tags : []);
 
     const cards = recorrentes
       .map((recorrente) => {
@@ -232,21 +215,12 @@ export default function AgefinRecorrentes() {
       });
     }
 
-    if (filterOrigem === 'atualizadas') {
-      out = out.filter((x) => tags(x.contaMes).includes(TAG_LF_BOLETO_PDF));
-    } else if (filterOrigem === 'automaticas') {
-      out = out.filter((x) => {
-        const t = tags(x.contaMes);
-        return t.includes(TAG_LF_GERADO_AUTO) && !t.includes(TAG_LF_BOLETO_PDF);
-      });
-    }
-
     if (search.trim()) {
       out = out.filter((item) => cardMatchesSearch(item, search));
     }
 
     return out;
-  }, [recorrentes, contas, monthKey, filterPagamento, filterPrazo, filterOrigem, search]);
+  }, [recorrentes, contas, monthKey, filterPagamento, filterPrazo, search]);
 
   const gruposCards = useMemo(() => {
     const todayKey = dataHoje();
@@ -302,8 +276,7 @@ export default function AgefinRecorrentes() {
       }));
   }, [filteredCards, groupBy, sortOrder]);
 
-  const hasActiveFilters =
-    filterPagamento !== 'todos' || filterPrazo !== 'todos' || filterOrigem !== 'todos';
+  const hasActiveFilters = filterPagamento !== 'todos' || filterPrazo !== 'todos';
 
   const currentMonthText = currentMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
@@ -311,7 +284,6 @@ export default function AgefinRecorrentes() {
     setSearch('');
     setFilterPagamento('todos');
     setFilterPrazo('todos');
-    setFilterOrigem('todos');
   };
 
   const abrirAtualizacao = useCallback((recorrente, contaMes) => {
@@ -324,7 +296,7 @@ export default function AgefinRecorrentes() {
       <div className="rounded-[28px] bg-card p-4 shadow-sm dark:bg-card dark:ring-1 dark:ring-border">
         <div className="mb-3 rounded-2xl bg-muted/40 px-3 py-2 dark:bg-muted/40">
           <p className="text-[11px] leading-4 text-muted-foreground dark:text-muted-foreground">
-            Toque num cartão para editar valor/vencimento ou vincular o PDF do boleto (só anexo). Contorno verde-lima no ícone = boleto anexado nesse mês; contorno verde-oliva = pago; check verde ao lado do título quando pago.
+            Toque num cartão para editar valor e vencimento ou anexar o PDF do boleto (opcional). Contorno verde-oliva = pago; vermelho = vencido.
           </p>
         </div>
         <div className="flex items-center justify-between gap-3">
@@ -427,24 +399,12 @@ export default function AgefinRecorrentes() {
                 { id: 'em_dia', label: 'Em dia' },
               ]}
             />
-            <FilterSection
-              label="Origem do lançamento"
-              icon={Sparkles}
-              value={filterOrigem}
-              onChange={setFilterOrigem}
-              options={[
-                { id: 'todos', label: 'Todas' },
-                { id: 'atualizadas', label: 'Atualizadas (PDF)' },
-                { id: 'automaticas', label: 'Automáticas' },
-              ]}
-            />
             <div className="flex gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => {
                   setFilterPagamento('todos');
                   setFilterPrazo('todos');
-                  setFilterOrigem('todos');
                 }}
                 className="h-11 flex-1 rounded-2xl bg-muted text-sm text-muted-foreground dark:bg-muted dark:text-muted-foreground"
               >

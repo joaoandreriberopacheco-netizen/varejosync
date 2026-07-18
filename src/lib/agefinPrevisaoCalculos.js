@@ -661,8 +661,6 @@ export function agruparCompetenciasPorCentroCusto(competencias, centrosRegistrad
 
 export function calcularTotaisGrupo(competencias, modelosMap = {}) {
   let total = 0;
-  let comBoleto = 0;
-  let semBoleto = 0;
   let planejamento = 0;
   let vencidas = 0;
   const hoje = dataHojeIso();
@@ -679,8 +677,6 @@ export function calcularTotaisGrupo(competencias, modelosMap = {}) {
       planejamento += 1;
       continue;
     }
-    if (c.origem_boleto === 'pdf') comBoleto += 1;
-    else semBoleto += 1;
     const venc = c._lancamento?.data_vencimento?.slice(0, 10);
     if (venc && venc < hoje && !lancamentoPago(c._lancamento)) vencidas += 1;
   }
@@ -688,8 +684,6 @@ export function calcularTotaisGrupo(competencias, modelosMap = {}) {
   return {
     total,
     count: competencias?.length || 0,
-    comBoleto,
-    semBoleto,
     planejamento,
     vencidas,
   };

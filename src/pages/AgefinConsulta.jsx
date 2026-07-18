@@ -137,14 +137,11 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, a
   const todayKey = dataHoje();
   const isPaid = lancamentoPago(conta);
   const isOverdue = lancamentoVencidoOuAtrasado(conta, todayKey);
-  const hasBoleto = conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto';
   const iconClass = isPaid
     ? 'w-4 h-4 text-emerald-600 shrink-0'
     : isOverdue
       ? 'w-4 h-4 text-pink-500 shrink-0'
-      : hasBoleto
-        ? 'w-4 h-4 text-lime-500 shrink-0'
-        : 'w-4 h-4 text-muted-foreground shrink-0';
+      : 'w-4 h-4 text-muted-foreground shrink-0';
   const ehCmv = lancamentoEhCmv(conta);
   const ehFrete = lancamentoEhFreteItinerario(conta);
 
@@ -208,12 +205,10 @@ function ContaCard({ conta, onOpen, modoSelecao, selecionado, onToggleSelecao, a
                     ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200'
                     : isOverdue
                       ? 'bg-pink-50 text-pink-800 dark:bg-red-950/35 dark:text-red-200'
-                      : hasBoleto
-                        ? 'bg-lime-50 text-lime-800 dark:bg-lime-950/30 dark:text-lime-200'
-                        : 'bg-card text-muted-foreground dark:bg-background/80 dark:text-muted-foreground dark:ring-1 dark:ring-border'
+                      : 'bg-card text-muted-foreground dark:bg-background/80 dark:text-muted-foreground dark:ring-1 dark:ring-border'
                 }`}
               >
-                {isPaid ? 'Pago' : isOverdue ? 'Vencido' : hasBoleto ? 'Atualizado' : 'Pendente'}
+                {isPaid ? 'Pago' : isOverdue ? 'Vencido' : 'Em aberto'}
               </span>
             </div>
           </div>
@@ -231,11 +226,10 @@ function ContaLinhaP38({ conta, onOpen, modoSelecao, selecionado, onToggleSeleca
   const todayKey = dataHoje();
   const isPaid = lancamentoPago(conta);
   const isOverdue = lancamentoVencidoOuAtrasado(conta, todayKey);
-  const hasBoleto = conta.forma_pagamento_tipo === 'Boleto' || conta.forma_pagamento === 'Boleto';
   const ehCmv = lancamentoEhCmv(conta);
   const ehFrete = lancamentoEhFreteItinerario(conta);
-  const tone = isPaid ? 'success' : isOverdue ? 'danger' : hasBoleto ? 'info' : 'warning';
-  const statusLabel = isPaid ? 'Pago' : isOverdue ? 'Vencido' : hasBoleto ? 'Boleto' : 'Pendente';
+  const tone = isPaid ? 'success' : isOverdue ? 'danger' : 'warning';
+  const statusLabel = isPaid ? 'Pago' : isOverdue ? 'Vencido' : 'Em aberto';
 
   return (
     <P38MobileLine

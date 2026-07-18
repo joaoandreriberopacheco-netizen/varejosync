@@ -218,7 +218,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
           safe(
             grupo.id === 'fixas_nao_mensais'
               ? 'Nenhuma conta anual/trimestral cadastrada no Planejamento Financeiro.'
-              : 'Nenhum boleto ocasional, frete ou compra com vencimento neste mes.',
+              : 'Nenhuma conta ocasional, frete ou compra com vencimento neste mes.',
           ),
           margin + 2,
           y,

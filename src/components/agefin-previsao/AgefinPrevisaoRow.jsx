@@ -20,15 +20,9 @@ const LINE_TITLE_CLASS =
 
 function rowAccent(competencia, modelo) {
   if (isCompetenciaPlanejamento(competencia)) return 'info';
-  if (competencia.origem_boleto === 'pdf') return 'success';
   if ((modelo?.situacao || '') === SITUACAO_SERIE.ENCERRADA) return 'muted';
   return 'warning';
 }
-
-const ORIGEM_LABELS = {
-  pdf: 'Boleto PDF',
-  auto: 'Previsto auto',
-};
 
 export default function AgefinPrevisaoRow({ competencia, modelo, onClick, striped }) {
   const fantasma = Boolean(competencia._fantasmaParcelamento);
@@ -54,11 +48,6 @@ export default function AgefinPrevisaoRow({ competencia, modelo, onClick, stripe
       ) : (
         <P38StatusLabel tone={statusEfetivo === 'fechado' ? 'success' : 'warning'}>
           {statusEfetivo === 'fechado' ? 'Fechada' : 'Em aberto'}
-        </P38StatusLabel>
-      )}
-      {competencia.origem_boleto && (
-        <P38StatusLabel tone={competencia.origem_boleto === 'pdf' ? 'success' : 'muted'}>
-          {ORIGEM_LABELS[competencia.origem_boleto] || competencia.origem_boleto}
         </P38StatusLabel>
       )}
       {modelo?.centro_custo && <span>CC {modelo.centro_custo}</span>}

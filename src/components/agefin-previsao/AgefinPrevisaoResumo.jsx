@@ -29,24 +29,10 @@ export default function AgefinPrevisaoResumo({
           <p className="text-muted-foreground">
             {mesFuturo
               ? 'Este mês ainda não precisa estar aberto para consultar os valores.'
-              : 'Abra o mês quando quiser gerar as contas; depois edite valor e vencimento à mão e vincule o boleto se quiser.'}
+              : 'Abra o mês quando quiser gerar as contas; depois edite valor e vencimento à mão. O PDF do boleto é opcional.'}
           </p>
         </P38HelpPopover>
       </span>,
-    );
-  }
-  if (totais?.comBoleto > 0) {
-    chips.push(
-      <FinanceiroSummaryChip key="pdf" className="text-emerald-800 dark:text-emerald-300">
-        {totais.comBoleto} com boleto
-      </FinanceiroSummaryChip>,
-    );
-  }
-  if (totais?.semBoleto > 0) {
-    chips.push(
-      <FinanceiroSummaryChip key="auto" className="text-amber-800 dark:text-amber-300">
-        {totais.semBoleto} sem boleto
-      </FinanceiroSummaryChip>,
     );
   }
   if (totais?.vencidas > 0) {
