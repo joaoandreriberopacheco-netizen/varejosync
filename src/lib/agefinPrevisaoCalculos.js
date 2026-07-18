@@ -501,27 +501,47 @@ export function competenciaFromLancamento(lf, modelo, competencia) {
 }
 
 /**
- * Mescla lançamentos do mês com linhas de planejamento (séries ativas sem LF no mês).
+ * Mescla lançamentos do mês (fonte AGEFIN / LancamentoFinanceiro) com linhas de planejamento.
  */
 export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes = []) {
-  const bySerie = {};
+  const byKey = new Map();
   const lfByGrupo = {};
+  const modelosByGrupo = {};
+  const modelosById = mapaModelosPorId(modelos);
+
   for (const lf of lancamentosMes || []) {
     const gid = lf.grupo_lancamento_id;
     if (gid) lfByGrupo[gid] = lf;
   }
+  for (const modelo of modelos || []) {
+    if (modelo?.grupo_lancamento_id) modelosByGrupo[modelo.grupo_lancamento_id] = modelo;
+  }
 
+  // 1) Lançamentos reais do mês — mesma base que a AGEFIN Consulta
+  for (const lf of lancamentosMes || []) {
+    const modelo =
+      (lf.grupo_lancamento_id ? modelosByGrupo[lf.grupo_lancamento_id] : null) ||
+      modelosById[lf.referencia_id] ||
+      null;
+    const comp = competenciaFromLancamento(lf, modelo, competenciaMes);
+    const key = modelo?.id || `lf-${lf.id}`;
+    comp.serie_id = comp.serie_id || key;
+    byKey.set(key, comp);
+  }
+
+  // 2) Séries cadastradas sem LF no mês (modo planejamento)
   for (const modelo of (modelos || []).filter((m) => m?.ativo !== false)) {
     if (!serieDeveAparecerNaCompetencia(modelo, competenciaMes)) continue;
+    if (byKey.has(modelo.id)) continue;
     const lf = modelo.grupo_lancamento_id ? lfByGrupo[modelo.grupo_lancamento_id] : null;
     if (lf) {
-      bySerie[modelo.id] = competenciaFromLancamento(lf, modelo, competenciaMes);
+      byKey.set(modelo.id, competenciaFromLancamento(lf, modelo, competenciaMes));
     } else {
-      bySerie[modelo.id] = criarCompetenciaPlanejada(modelo, competenciaMes);
+      byKey.set(modelo.id, criarCompetenciaPlanejada(modelo, competenciaMes));
     }
   }
 
-  return Object.values(bySerie).sort((a, b) =>
+  return [...byKey.values()].sort((a, b) =>
     (a.serie_nome || '').localeCompare(b.serie_nome || '', 'pt-BR'),
   );
 }

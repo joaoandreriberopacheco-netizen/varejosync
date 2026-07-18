@@ -21,7 +21,12 @@ import {
   atualizarDadosEmpresa,
   obterRegistroDadosEmpresa as obterDadosEmpresa,
 } from '@/lib/dadosEmpresaMerge';
-import { listarLancamentosRecorrentesCache, listarLancamentosVencimentoCompetenciaCache } from '@/lib/lancamentoFinanceiroCache';
+import {
+  invalidarCacheLancamentosFinanceiros,
+  listarContasPagarAgefinCache,
+  listarLancamentosVencimentoCompetenciaCache,
+} from '@/lib/lancamentoFinanceiroCache';
+import { filtrarLancamentosPlanejamento } from '@/lib/agefinConsultaData';
 
 export { listarCentrosCustoRegistros };
 
@@ -336,17 +341,27 @@ export async function listarModelos() {
     console.warn('[agefin] Falha ao migrar contas fixas do cache local:', error);
   }
 
-  const naNuvem = await lerSeriesNaNuvem();
-  if (naNuvem.length) {
-    return naNuvem;
+  const [naNuvem, lancamentos] = await Promise.all([
+    lerSeriesNaNuvem(),
+    listarContasPagarAgefinCache(),
+  ]);
+  const importados = derivarSeriesDeLancamentos(lancamentos);
+  const merged = deduplicarSeriesPorGrupo(mesclarSeriesPorId(naNuvem, importados));
+
+  const chavesNuvem = new Set(
+    naNuvem.map((s) => s.grupo_lancamento_id || s.id).filter(Boolean),
+  );
+  const temNovos = importados.some((s) => {
+    const chave = s.grupo_lancamento_id || s.id;
+    return chave && !chavesNuvem.has(chave);
+  });
+
+  if (temNovos) {
+    await persistirSeriesModelo(importados, { modo: 'merge' });
+    return deduplicarSeriesPorGrupo(mesclarSeriesPorId(await lerSeriesNaNuvem(), importados));
   }
 
-  const empresa = await obterRegistroDadosEmpresa();
-  if (empresaTemArmazenamentoSeries(empresa)) {
-    return sincronizarModelosDesdeLancamentos();
-  }
-
-  return sincronizarModelosDesdeLancamentos();
+  return merged.length ? merged : naNuvem;
 }
 
 export async function salvarSerie(payload) {
@@ -399,13 +414,17 @@ export async function atualizarCentroCustoSerie(serieId, centroCusto) {
   return atualizada;
 }
 
-/** Importa séries a partir de grupos recorrentes já existentes no financeiro. */
-export async function sincronizarModelosDesdeLancamentos() {
-  const lancamentos = await listarLancamentosRecorrentesCache();
-  const recorrentes = (lancamentos || []).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
+function chaveGrupoSerie(lf) {
+  if (lf?.grupo_lancamento_id) return String(lf.grupo_lancamento_id);
+  const nome = String(lf?.descricao || lf?.terceiro_nome || 'conta').trim().toLowerCase();
+  const terceiro = String(lf?.terceiro_nome || '').trim().toLowerCase();
+  return `avulso-${nome}-${terceiro}`;
+}
+
+function derivarSeriesDeLancamentos(lancamentos = []) {
   const byGrupo = new Map();
-  for (const lf of recorrentes) {
-    const gid = lf.grupo_lancamento_id;
+  for (const lf of lancamentos || []) {
+    const gid = chaveGrupoSerie(lf);
     if (!byGrupo.has(gid)) byGrupo.set(gid, []);
     byGrupo.get(gid).push(lf);
   }
@@ -416,9 +435,10 @@ export async function sincronizarModelosDesdeLancamentos() {
       (b.data_vencimento || '').localeCompare(a.data_vencimento || ''),
     );
     const rep = sorted[0];
+    const serieId = gid.startsWith('avulso-') ? `serie-agefin-${gid}` : `serie-import-${gid}`;
     series.push(
       criarSerieComDefaults({
-        id: `serie-import-${gid}`,
+        id: serieId,
         nome: rep.descricao || rep.terceiro_nome || 'Conta recorrente',
         terceiro_nome: rep.terceiro_nome || '',
         terceiro_id: rep.terceiro_id || '',
@@ -428,34 +448,30 @@ export async function sincronizarModelosDesdeLancamentos() {
         dia_vencimento: Number((rep.data_vencimento || '').slice(8, 10)) || 10,
         mes_vencimento: Number((rep.data_vencimento || '').slice(5, 7)) || new Date().getMonth() + 1,
         frequencia: rep.frequencia_recorrencia || 'Mensal',
-        grupo_lancamento_id: gid,
+        grupo_lancamento_id: rep.grupo_lancamento_id || (gid.startsWith('avulso-') ? undefined : gid),
         ativo: true,
       }),
     );
   }
+  return series;
+}
 
+/** Importa séries a partir das contas a pagar já existentes no financeiro (fonte AGEFIN). */
+export async function sincronizarModelosDesdeLancamentos() {
+  const lancamentos = await listarContasPagarAgefinCache();
+  const series = derivarSeriesDeLancamentos(lancamentos);
   if (series.length) await persistirSeriesModelo(series, { modo: 'merge' });
   return series;
 }
 
 export async function listarLancamentosCompetencia(competencia) {
-  const [porVencimento, recorrentes] = await Promise.all([
-    listarLancamentosVencimentoCompetenciaCache(competencia),
-    listarLancamentosRecorrentesCache(),
-  ]);
-
-  const porId = new Map();
-  for (const lf of [...(porVencimento || []), ...(recorrentes || [])]) {
-    if (!lancamentoRecorrenteContaPagarParaListaBoleto(lf)) continue;
-    if (mesReferenciaLancamento(lf) !== competencia) continue;
-    if (lf?.id) porId.set(lf.id, lf);
-  }
-  return [...porId.values()];
+  const rows = await listarLancamentosVencimentoCompetenciaCache(competencia);
+  return filtrarLancamentosPlanejamento(rows);
 }
 
 /** Lançamentos recorrentes (conta a pagar) para alimentar a projeção de 12 meses. */
 export async function listarLancamentosRecorrentes() {
-  const lancamentos = await listarLancamentosRecorrentesCache();
+  const lancamentos = await listarContasPagarAgefinCache();
   return (lancamentos || []).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
 }
 
