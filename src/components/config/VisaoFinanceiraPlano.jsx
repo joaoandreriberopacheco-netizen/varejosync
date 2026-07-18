@@ -424,7 +424,7 @@ function ConteudoCamadaExplodida({ grupo, agrupamentoFixas }) {
     if (grupo.vazio) {
       return (
         <p className="text-xs md:text-sm text-muted-foreground px-2 py-2">
-          Nenhum boleto ocasional, frete ou compra de mercadoria com vencimento neste mês.
+          Nenhum boleto ou conta ocasional com vencimento neste mês.
         </p>
       );
     }
@@ -482,23 +482,10 @@ function SecaoCamadaExplodida({ grupo, agrupamentoFixas, onAgrupamentoFixas }) {
           </p>
         ) : null}
 
-        {grupo.id === 'fixas_nao_mensais' ? (
-          <p className="text-xs md:text-sm text-muted-foreground px-2">
-            Provisão mensal das contas anuais, trimestrais e similares do Planejamento Financeiro (IPTU, IPVA,
-            alvarás…). O valor integral só entra no desembolso no mês de vencimento.
-            {grupo.subtotal > 0 ? (
-              <>
-                {' '}
-                Total desta provisão: {formatFinanceiroValor(grupo.subtotal)}/mês.
-              </>
-            ) : null}
-          </p>
-        ) : null}
-
         {grupo.id === 'pontuais' ? (
           <p className="text-xs md:text-sm text-muted-foreground px-2">
-            Boletos únicos, parcelados, fretes e compras de mercadoria com vencimento neste mês. Compras de
-            mercadoria aparecem só para conferência — não somam de novo no resultado.
+            Boletos e contas ocasionais com vencimento neste mês. Fretes, contas anuais e pedidos de compra
+            ficam nos anexos do PDF.
           </p>
         ) : null}
 
@@ -512,6 +499,98 @@ function SecaoCamadaExplodida({ grupo, agrupamentoFixas, onAgrupamentoFixas }) {
         <ConteudoCamadaExplodida grupo={grupo} agrupamentoFixas={agrupamentoFixas} />
       </div>
     </FinanceiroGrupo>
+  );
+}
+
+function SecoesAnexosPlano({ anexos }) {
+  const { contasAnuais, provisoesAnuais, fretesCapacidade } = anexos || {};
+  const temAnexos =
+    (contasAnuais?.itens?.length || 0) > 0 ||
+    (provisoesAnuais?.itens?.length || 0) > 0 ||
+    (fretesCapacidade?.itens?.length || 0) > 0 ||
+    (fretesCapacidade?.capacidadeCompraBase || 0) > 0;
+
+  if (!temAnexos) return null;
+
+  return (
+    <div className="space-y-3 pt-2">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-1">
+        Anexos (detalhe no PDF)
+      </p>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 xl:gap-4 items-start">
+        {(contasAnuais?.itens?.length || 0) > 0 ? (
+          <FinanceiroGrupo
+            card
+            label="Anexo A — Contas anuais e não mensais"
+            labelClassName={GRUPO_EXPLODIDO_LABEL}
+            despesas={contasAnuais.totalVencimentoMes}
+            liquido={-contasAnuais.totalVencimentoMes}
+            defaultOpen={false}
+          >
+            <div className="px-1 pb-1">
+              <ListaItensPlano
+                items={contasAnuais.itens.map((item) => ({
+                  id: item.id,
+                  nome: item.nome,
+                  valor: item.valorParcela,
+                  detalhe: [item.frequencia, item.dataVencimentoLabel ? `Venc. ${item.dataVencimentoLabel}` : '']
+                    .filter(Boolean)
+                    .join(' · '),
+                }))}
+                explodido
+              />
+            </div>
+          </FinanceiroGrupo>
+        ) : null}
+
+        {(provisoesAnuais?.itens?.length || 0) > 0 ? (
+          <FinanceiroGrupo
+            card
+            label="Anexo B — Provisões anuais"
+            labelClassName={GRUPO_EXPLODIDO_LABEL}
+            despesas={provisoesAnuais.totalProvisaoMensal}
+            liquido={-provisoesAnuais.totalProvisaoMensal}
+            defaultOpen={false}
+          >
+            <div className="px-1 pb-1">
+              <ListaItensPlano
+                items={provisoesAnuais.itens.map((item) => ({
+                  id: item.id,
+                  nome: item.nome,
+                  valor: item.provisaoMensal,
+                  detalhe: [item.frequencia, `Parcela: ${formatFinanceiroValor(item.valorParcela)}`]
+                    .filter(Boolean)
+                    .join(' · '),
+                }))}
+                explodido
+              />
+            </div>
+          </FinanceiroGrupo>
+        ) : null}
+
+        {(fretesCapacidade?.itens?.length || 0) > 0 || (fretesCapacidade?.capacidadeCompraBase || 0) > 0 ? (
+          <FinanceiroGrupo
+            card
+            label="Anexo C — Fretes e capacidade de compra"
+            labelClassName={GRUPO_EXPLODIDO_LABEL}
+            despesas={fretesCapacidade.totalFretes}
+            liquido={fretesCapacidade.capacidadeDisponivel}
+            defaultOpen={false}
+          >
+            <div className="space-y-2 px-1 pb-1">
+              <p className="text-xs text-muted-foreground px-2">
+                Base CMV {formatFinanceiroValor(fretesCapacidade.capacidadeCompraBase)} · Fretes{' '}
+                {formatFinanceiroValor(fretesCapacidade.totalFretes)} · Disponível{' '}
+                {formatFinanceiroValor(fretesCapacidade.capacidadeDisponivel)}
+              </p>
+              {(fretesCapacidade.porVencimento || []).map((bloco) => (
+                <GrupoDataVencimentoPlano key={bloco.id} bloco={bloco} modo="pauta" explodido />
+              ))}
+            </div>
+          </FinanceiroGrupo>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -560,50 +639,30 @@ function TabelaResumoPlano({ resumo, margemDetalhe }) {
             destaque
           />
 
-          <tr className="border-b border-border/30">
-            <td className="py-2 pl-3 pr-3 text-[11px] uppercase tracking-wide text-muted-foreground" colSpan={2}>
-              Provisões mensais (informativas)
-            </td>
-          </tr>
-          <LinhaResumo
-            label="Provisão — contas anuais/trimestrais"
-            valor={resumo.anuaisDiluido}
-            tipo="subtrai"
-            sublabel={
-              resumo.naoMensaisEquivalenteAnual > 0
-                ? `Equivalente a ${formatFinanceiroValor(resumo.naoMensaisEquivalenteAnual)}/ano no cadastro`
-                : 'Anuais, bimestrais, trimestrais e semestrais'
-            }
-          />
-          <LinhaResumo label="Provisões de folha" valor={resumo.provisoesFolha} tipo="subtrai" />
-          <LinhaResumo label="Total com provisões" valor={resumo.totalComProvisoes} tipo="subtrai" destaque />
-          <LinhaResumo
-            label="Resultado com provisões"
-            valor={resumo.resultadoComProvisoes}
-            tipo="resultado"
-            destaque
-          />
+          {resumo.provisoesFolha > 0 ? (
+            <>
+              <tr className="border-b border-border/30">
+                <td className="py-2 pl-3 pr-3 text-[11px] uppercase tracking-wide text-muted-foreground" colSpan={2}>
+                  Provisões de folha
+                </td>
+              </tr>
+              <LinhaResumo label="Provisões de folha" valor={resumo.provisoesFolha} tipo="subtrai" />
+              <LinhaResumo
+                label="Total com provisões de folha"
+                valor={resumo.totalComProvisoes}
+                tipo="subtrai"
+                destaque
+              />
+              <LinhaResumo
+                label="Resultado com provisões de folha"
+                valor={resumo.resultadoComProvisoes}
+                tipo="resultado"
+                destaque
+              />
+            </>
+          ) : null}
 
-          <tr className="border-b border-border/30">
-            <td className="py-2 pl-3 pr-3 text-[11px] uppercase tracking-wide text-muted-foreground" colSpan={2}>
-              Capacidade de compra
-            </td>
-          </tr>
-          <LinhaResumo label="CMV vendido (base)" valor={resumo.capacidadeCompraBase} tipo="soma" />
-          <LinhaResumo
-            label="Fretes agendados no mês"
-            valor={resumo.fretesAgendados}
-            tipo="subtrai"
-            sublabel="Não altera o lucro bruto"
-          />
-          <LinhaResumo
-            label="Disponível para novas compras"
-            valor={resumo.capacidadeCompraDisponivel}
-            tipo="resultado"
-            destaque
-          />
-
-          {resumo.pontuais > 0 || resumo.anuaisVencimentoMes > 0 ? (
+          {resumo.pontuais > 0 ? (
             <>
               <tr className="border-b border-border/30">
                 <td
@@ -613,12 +672,7 @@ function TabelaResumoPlano({ resumo, margemDetalhe }) {
                   Desembolso conhecido no mês
                 </td>
               </tr>
-              {resumo.pontuais > 0 ? (
-                <LinhaResumo label="Pauta do mês (vencimentos)" valor={resumo.pontuais} tipo="subtrai" />
-              ) : null}
-              {resumo.anuaisVencimentoMes > 0 ? (
-                <LinhaResumo label="Vencimentos não mensais (integral)" valor={resumo.anuaisVencimentoMes} tipo="subtrai" />
-              ) : null}
+              <LinhaResumo label="Pauta do mês (boletos e ocasionais)" valor={resumo.pontuais} tipo="subtrai" />
               <LinhaResumo label="Total desembolso" valor={resumo.totalDesembolsoMes} tipo="subtrai" destaque />
               <LinhaResumo
                 label="Saldo após compromissos conhecidos"
@@ -757,7 +811,7 @@ export default function VisaoFinanceiraPlano() {
         resumo,
         margemDetalhe: plano.margemDetalhe,
         grupos: plano.grupos,
-        anexoNaoMensais: plano.anexoNaoMensais,
+        anexos: plano.anexos,
         opcoesExplodido: { agrupamentoFixas },
       });
       const blob = new Blob([resposta.data], { type: 'application/pdf' });
@@ -787,8 +841,8 @@ export default function VisaoFinanceiraPlano() {
             <h2 className="text-sm font-semibold text-foreground">Visão ampla do negócio</h2>
             <P38HelpPopover label="Ajuda: visão ampla" size="sm">
               <p className="text-muted-foreground">
-                A pauta do mês traz boletos ocasionais, fretes e compras de mercadoria com vencimento na
-                competência, ordenados por data.
+                A pauta do mês traz boletos e contas ocasionais com vencimento na competência. Fretes,
+                contas anuais e capacidade de compra ficam nos anexos do PDF.
               </p>
               <p className="text-muted-foreground mt-2">
                 Provisões de 13º e férias ficam resumidas — expanda para ver por colaborador.
@@ -883,6 +937,7 @@ export default function VisaoFinanceiraPlano() {
               />
             ))}
           </div>
+          <SecoesAnexosPlano anexos={plano.anexos} />
           <TabelaResumoPlano resumo={resumo} margemDetalhe={plano.margemDetalhe} />
         </div>
       )}
