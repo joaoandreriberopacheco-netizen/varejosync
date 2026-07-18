@@ -215,7 +215,11 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
       if (grupo.vazio) {
         setFont('normal', 7.8, COLOR.muted);
         doc.text(
-          safe('Nenhum boleto ocasional, frete ou compra com vencimento neste mes.'),
+          safe(
+            grupo.id === 'fixas_nao_mensais'
+              ? 'Nenhuma conta anual/trimestral cadastrada no Planejamento Financeiro.'
+              : 'Nenhum boleto ocasional, frete ou compra com vencimento neste mes.',
+          ),
           margin + 2,
           y,
         );
@@ -273,7 +277,17 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   drawResumoLinha('Resultado operacional', resumo.resultadoOperacional, { prefix: '= ', bold: true });
 
   drawSecao('Provisoes mensais');
-  drawResumoLinha('Contas nao mensais (provisao)', resumo.anuaisDiluido, { prefix: '- ' });
+  drawResumoLinha('Provisao anuais/trimestrais', resumo.anuaisDiluido, { prefix: '- ' });
+  if (number(resumo.naoMensaisEquivalenteAnual) > 0) {
+    ensureSpace(5);
+    setFont('normal', 7.5, COLOR.muted);
+    doc.text(
+      safe(`Equivalente anual no cadastro: ${moeda(resumo.naoMensaisEquivalenteAnual)}`),
+      margin + 2,
+      y,
+    );
+    y += 4;
+  }
   drawResumoLinha('Provisoes de folha', resumo.provisoesFolha, { prefix: '- ' });
   drawResumoLinha('Total com provisoes', resumo.totalComProvisoes, { prefix: '- ', bold: true });
   drawResumoLinha('Resultado com provisoes', resumo.resultadoComProvisoes, { prefix: '= ', bold: true });
@@ -343,14 +357,26 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     y += 4;
   });
 
-  if (anexoNaoMensais.length > 0) {
+  if (anexoNaoMensais?.itens?.length > 0 || (Array.isArray(anexoNaoMensais) && anexoNaoMensais.length > 0)) {
+    const itensAnexo = Array.isArray(anexoNaoMensais?.itens)
+      ? anexoNaoMensais.itens
+      : anexoNaoMensais;
+    const totalProvisao =
+      Number(anexoNaoMensais?.totalProvisaoMensal) ||
+      itensAnexo.reduce((acc, item) => acc + (Number(item.provisaoMensal) || 0), 0);
+    const totalAnual =
+      Number(anexoNaoMensais?.totalEquivalenteAnual) ||
+      itensAnexo.reduce((acc, item) => acc + (Number(item.equivalenteAnual) || 0), 0);
+
     addPage('ANEXO');
     setFont('bold', 11);
-    doc.text('ANEXO - CONTAS NAO MENSAIS', margin, y);
+    doc.text('ANEXO - CONTAS ANUAIS E NAO MENSAIS', margin, y);
     y += 5;
     setFont('normal', 8, COLOR.muted);
     doc.text(
-      safe('Visao das contas anuais, bimestrais, trimestrais e semestrais com provisao mensal.'),
+      safe(
+        'IPTU, IPVA, alvaras e demais contas com recorrencia maior que mensal. Provisao mensal = parcela diluida.',
+      ),
       margin,
       y,
     );
@@ -371,7 +397,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     rule(y, COLOR.line, 0.1);
     y += 4;
 
-    for (const item of anexoNaoMensais) {
+    for (const item of itensAnexo) {
       ensureSpace(7);
       setFont('normal', 7.5, COLOR.muted);
       doc.text(safe(item.frequencia || ''), colFreq, y);
@@ -388,6 +414,19 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
       y += Math.max(5.5, nomeLines.length * 3 + (item.venceNesteMes ? 3 : 0));
       rule(y - 1, COLOR.lightLine, 0.06, colFreq, right);
     }
+
+    ensureSpace(10);
+    y += 2;
+    rule(y, COLOR.line, 0.1);
+    y += 4;
+    setFont('bold', 8.5);
+    doc.text('Total provisao mensal', colNome, y);
+    doc.text(moeda(totalProvisao), colProv, y, { align: 'right' });
+    y += 4;
+    setFont('normal', 8, COLOR.muted);
+    doc.text('Equivalente anual no cadastro', colNome, y);
+    doc.text(moeda(totalAnual), colProv, y, { align: 'right' });
+    y += 4;
   }
 
   const pageCount = doc.internal.getNumberOfPages();

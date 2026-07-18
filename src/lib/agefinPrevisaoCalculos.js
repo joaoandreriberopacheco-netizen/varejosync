@@ -61,6 +61,80 @@ export function normalizarFrequenciaSerie(frequencia) {
   return found || FREQUENCIA_SERIE.MENSAL;
 }
 
+/** Mapa grupo_lancamento_id → frequência inferida dos lançamentos recorrentes. */
+export function mapaFrequenciaPorGrupoLancamento(lancamentos = []) {
+  const map = {};
+  for (const lf of lancamentos || []) {
+    const gid = lf?.grupo_lancamento_id;
+    const raw = lf?.frequencia_recorrencia;
+    if (!gid || !raw) continue;
+    const freq = normalizarFrequenciaSerie(raw);
+    if (!map[gid] || freq !== FREQUENCIA_SERIE.MENSAL) {
+      map[gid] = freq;
+    }
+  }
+  return map;
+}
+
+/** Frequência efetiva da série (cadastro + espelho do financeiro). */
+export function frequenciaEfetivaSerie(modelo, frequenciasPorGrupo = {}) {
+  const fromModelo = normalizarFrequenciaSerie(
+    modelo?.frequencia || modelo?.frequencia_recorrencia,
+  );
+  if (fromModelo !== FREQUENCIA_SERIE.MENSAL) return fromModelo;
+  const gid = modelo?.grupo_lancamento_id;
+  if (gid && frequenciasPorGrupo[gid]) {
+    return normalizarFrequenciaSerie(frequenciasPorGrupo[gid]);
+  }
+  return fromModelo;
+}
+
+export function serieEhNaoMensal(modelo, frequenciasPorGrupo = {}) {
+  return frequenciaEfetivaSerie(modelo, frequenciasPorGrupo) !== FREQUENCIA_SERIE.MENSAL;
+}
+
+export function provisaoMensalPorFrequencia(valor, frequencia) {
+  const f = normalizarFrequenciaSerie(frequencia);
+  const v = Number(valor) || 0;
+  switch (f) {
+    case FREQUENCIA_SERIE.ANUAL:
+      return v / 12;
+    case FREQUENCIA_SERIE.SEMESTRAL:
+      return v / 6;
+    case FREQUENCIA_SERIE.TRIMESTRAL:
+      return v / 3;
+    case FREQUENCIA_SERIE.BIMESTRAL:
+      return v / 2;
+    default:
+      return v;
+  }
+}
+
+export function valorAnualEquivalente(valorParcela, frequencia) {
+  const f = normalizarFrequenciaSerie(frequencia);
+  const v = Number(valorParcela) || 0;
+  switch (f) {
+    case FREQUENCIA_SERIE.ANUAL:
+      return v;
+    case FREQUENCIA_SERIE.SEMESTRAL:
+      return v * 2;
+    case FREQUENCIA_SERIE.TRIMESTRAL:
+      return v * 4;
+    case FREQUENCIA_SERIE.BIMESTRAL:
+      return v * 6;
+    default:
+      return v * 12;
+  }
+}
+
+export function dataVencimentoReferenciaSerie(modelo, competencia) {
+  const dia = Number(modelo?.dia_vencimento) || 10;
+  const mesRef = Math.min(12, Math.max(1, Number(modelo?.mes_vencimento) || 1));
+  const ano = parseInt(String(competencia || '').slice(0, 4), 10) || new Date().getFullYear();
+  const mesVenc = `${ano}-${String(mesRef).padStart(2, '0')}`;
+  return dataVencimentoNaCompetencia(mesVenc, dia) || dataVencimentoNaCompetencia(competencia, dia);
+}
+
 export function labelFrequenciaSerie(modelo) {
   return normalizarFrequenciaSerie(modelo?.frequencia);
 }

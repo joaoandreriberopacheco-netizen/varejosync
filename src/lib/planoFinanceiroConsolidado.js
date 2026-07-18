@@ -13,6 +13,11 @@ import {
   montarCompetenciasVisao as montarCompetenciasAgefin,
   dataVencimentoCompetencia,
   formatDataBr,
+  mapaFrequenciaPorGrupoLancamento,
+  frequenciaEfetivaSerie,
+  provisaoMensalPorFrequencia,
+  valorAnualEquivalente,
+  dataVencimentoReferenciaSerie,
 } from '@/lib/agefinPrevisaoCalculos';
 import {
   calcularTotaisCompetencia,
@@ -103,30 +108,14 @@ function ehFrequenciaMensal(frequencia) {
   return normalizarFrequenciaSerie(frequencia) === FREQUENCIA_SERIE.MENSAL;
 }
 
-function provisaoMensalPorFrequencia(valor, frequencia) {
-  const f = normalizarFrequenciaSerie(frequencia);
-  const v = Number(valor) || 0;
-  switch (f) {
-    case FREQUENCIA_SERIE.ANUAL:
-      return v / 12;
-    case FREQUENCIA_SERIE.SEMESTRAL:
-      return v / 6;
-    case FREQUENCIA_SERIE.TRIMESTRAL:
-      return v / 3;
-    case FREQUENCIA_SERIE.BIMESTRAL:
-      return v / 2;
-    default:
-      return v;
-  }
-}
-
 function labelValorParcela(frequencia) {
   const f = normalizarFrequenciaSerie(frequencia);
   if (f === FREQUENCIA_SERIE.ANUAL) return 'Valor anual';
   return `Valor ${f.toLowerCase()}`;
 }
 
-function montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin) {
+function montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin, lancamentosRecorrentes = []) {
+  const frequenciasPorGrupo = mapaFrequenciaPorGrupoLancamento(lancamentosRecorrentes);
   const competencias = montarCompetenciasAgefin(competencia, modelosAgefin, lancamentosAgefin);
   const competenciasMap = Object.fromEntries(competencias.map((comp) => [comp.serie_id, comp]));
 
@@ -136,15 +125,19 @@ function montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin) {
   for (const modelo of modelosAgefin || []) {
     if (!serieEstaAtivaNaCompetencia(modelo, competencia)) continue;
 
-    const frequencia = normalizarFrequenciaSerie(modelo.frequencia);
+    const frequencia = frequenciaEfetivaSerie(modelo, frequenciasPorGrupo);
     const mensal = ehFrequenciaMensal(frequencia);
     if (mensal && !serieDeveAparecerNaCompetencia(modelo, competencia)) continue;
 
     const comp = competenciasMap[modelo.id];
     const valorParcela = comp ? valorEfetivoCompetencia(comp, modelo) : Number(modelo.valor_previsto) || 0;
+    if (valorParcela <= 0) continue;
+
     const centroCusto = comp?.centro_custo || modelo.centro_custo || '';
     const categoria = limparCategoria(comp?.categoria_nome || modelo.categoria_nome || '');
-    const dataVencimento = dataVencimentoCompetencia(comp, modelo);
+    const dataVencimento = mensal
+      ? dataVencimentoCompetencia(comp, modelo)
+      : dataVencimentoReferenciaSerie(modelo, competencia);
     const nome = comp?.serie_nome || modelo.nome;
     const venceNesteMes = serieDeveAparecerNaCompetencia(modelo, competencia);
 
@@ -530,7 +523,7 @@ function somaVencimentoNaoMensal(linhas) {
 }
 
 function montarAnexoNaoMensais(itens = []) {
-  return [...itens]
+  const linhas = [...itens]
     .sort((a, b) => compararNome(a.nome, b.nome))
     .map((item) => ({
       id: item.id,
@@ -538,16 +531,23 @@ function montarAnexoNaoMensais(itens = []) {
       frequencia: item.frequencia,
       provisaoMensal: item.valor,
       valorParcela: item.valorSecundario,
+      equivalenteAnual: valorAnualEquivalente(item.valorSecundario, item.frequencia),
       venceNesteMes: item.destaque,
       dataVencimento: item.dataVencimento,
       dataVencimentoLabel: item.dataVencimentoLabel,
       centroCusto: item.centroCusto,
     }));
+
+  return {
+    itens: linhas,
+    totalProvisaoMensal: somaLinhas(itens),
+    totalEquivalenteAnual: linhas.reduce((acc, item) => acc + (Number(item.equivalenteAnual) || 0), 0),
+  };
 }
 
 const GRUPO_LABELS = {
   [GRUPO.FIXAS_RECORRENTES]: 'Contas fixas (recorrentes)',
-  [GRUPO.FIXAS_NAO_MENSAIS]: 'Contas não mensais (provisão mensal)',
+  [GRUPO.FIXAS_NAO_MENSAIS]: 'Provisão mensal — IPTU, IPVA, alvarás e similares',
   [GRUPO.FOLHA]: 'Folha de pagamento',
   [GRUPO.FOLHA_PROVISOES]: 'Provisões de folha',
   [GRUPO.BUDGETS]: 'Budgets',
@@ -556,8 +556,8 @@ const GRUPO_LABELS = {
 
 const GRUPO_ORDEM = [
   GRUPO.FIXAS_RECORRENTES,
-  GRUPO.PONTUAIS,
   GRUPO.FIXAS_NAO_MENSAIS,
+  GRUPO.PONTUAIS,
   GRUPO.FOLHA,
   GRUPO.FOLHA_PROVISOES,
   GRUPO.BUDGETS,
@@ -612,10 +612,16 @@ export function montarPlanoFinanceiroConsolidado({
   competenciasBudget = [],
   lancamentosMes = [],
   lancamentosVencimento = [],
+  lancamentosRecorrentesAgefin = [],
   lucroBruto = 0,
   margemDetalhe = null,
 }) {
-  const { recorrentes, naoMensais } = montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin);
+  const { recorrentes, naoMensais } = montarLinhasFixas(
+    competencia,
+    modelosAgefin,
+    lancamentosAgefin,
+    lancamentosRecorrentesAgefin,
+  );
   const { folha, provisoes } = montarLinhasFolha(competencia, modelosFolha, competenciasFolha);
   const budgets = montarLinhasBudgets(competencia, modelosBudget, competenciasBudget, lancamentosMes);
   const pauta = montarLinhasPauta({
@@ -672,7 +678,7 @@ export function montarPlanoFinanceiroConsolidado({
 
   const grupos = GRUPO_ORDEM.map((g) => {
     const items = mapaItens[g] || [];
-    if (items.length === 0 && g !== GRUPO.PONTUAIS) return null;
+    if (items.length === 0 && g !== GRUPO.PONTUAIS && g !== GRUPO.FIXAS_NAO_MENSAIS) return null;
     const agrupamentos = montarAgrupamentosGrupo(g, items);
     return {
       id: g,
@@ -681,20 +687,24 @@ export function montarPlanoFinanceiroConsolidado({
       items,
       subtotal: somaLinhas(items),
       subtotalNoTotal: somaLinhasNoTotal(items),
-      vazio: g === GRUPO.PONTUAIS && items.length === 0,
+      vazio:
+        (g === GRUPO.PONTUAIS || g === GRUPO.FIXAS_NAO_MENSAIS) && items.length === 0,
       separadoDoTotal: g === GRUPO.FIXAS_NAO_MENSAIS || g === GRUPO.FOLHA_PROVISOES,
       ...agrupamentos,
       centros: agrupamentos.porCentroCategoria || agrupamentos.porCentro || [],
     };
   }).filter(Boolean);
 
+  const anexoNaoMensais = montarAnexoNaoMensais(naoMensais);
+
   return {
     competencia,
     grupos,
-    anexoNaoMensais: montarAnexoNaoMensais(naoMensais),
+    anexoNaoMensais,
     resumo: {
       fixasRecorrentes: subtotalFixasRecorrentes,
       anuaisDiluido: subtotalNaoMensaisDiluido,
+      naoMensaisEquivalenteAnual: anexoNaoMensais.totalEquivalenteAnual,
       anuaisVencimentoMes: subtotalNaoMensaisVencimento,
       folha: subtotalFolha,
       provisoesFolha: subtotalProvisoes,

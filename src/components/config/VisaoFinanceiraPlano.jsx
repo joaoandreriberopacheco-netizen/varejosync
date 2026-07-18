@@ -22,7 +22,7 @@ import {
   obterLucroBrutoCompetencia,
 } from '@/lib/budgetService';
 import { listarModelos as listarModelosFolha, listarCompetencias as listarCompetenciasFolha } from '@/lib/folhaPrevisaoService';
-import { listarModelos as listarModelosAgefin, listarLancamentosCompetencia } from '@/lib/agefinPrevisaoService';
+import { listarModelos as listarModelosAgefin, listarLancamentosCompetencia, listarLancamentosRecorrentes } from '@/lib/agefinPrevisaoService';
 import { montarPlanoFinanceiroConsolidado } from '@/lib/planoFinanceiroConsolidado';
 import { gerarRelatorioVisaoFinanceira } from '@/functions/gerarRelatorioVisaoFinanceira';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -114,10 +114,16 @@ function ItemPlanoLine({
       : item.nome;
 
   const subtitle =
-    modo === 'vencimento' || modo === 'pauta'
-      ? ''
-      : item.detalhe ||
-        (item.valorSecundario != null ? `${item.valorSecundarioLabel}: ${formatFinanceiroValor(item.valorSecundario)}` : '');
+    modo === 'provisao'
+      ? [item.frequencia, item.dataVencimentoLabel ? `ref. ${item.dataVencimentoLabel}` : '']
+          .filter(Boolean)
+          .join(' · ')
+      : modo === 'vencimento' || modo === 'pauta'
+        ? ''
+        : item.detalhe ||
+          (item.valorSecundario != null
+            ? `${item.valorSecundarioLabel}: ${formatFinanceiroValor(item.valorSecundario)}`
+            : '');
 
   return (
     <P38MobileLine
@@ -137,7 +143,7 @@ function ItemPlanoLine({
         </>
       }
       valueSub={
-        modo !== 'vencimento' && modo !== 'pauta' && item.valorSecundario != null
+        (modo === 'provisao' || (modo !== 'vencimento' && modo !== 'pauta')) && item.valorSecundario != null
           ? `${item.valorSecundarioLabel}: ${formatFinanceiroValor(item.valorSecundario)}`
           : null
       }
@@ -309,13 +315,29 @@ function ConteudoCamadaExplodida({ grupo, agrupamentoFixas }) {
     );
   }
 
-  return (
-    <div className="space-y-2 px-1 pb-1">
-      {(grupo.lista || []).flatMap((bloco) => bloco.items).map((item, index) => (
-        <ItemPlanoLine key={item.id} item={item} striped={index % 2 === 1} modo="vencimento" />
-      ))}
-    </div>
-  );
+  if (grupo.layout === 'lista') {
+    return (
+      <div className="space-y-2 px-1 pb-1">
+        {grupo.vazio ? (
+          <p className="text-[11px] text-muted-foreground px-2 py-2">
+            Nenhuma conta anual, bimestral, trimestral ou semestral cadastrada no Planejamento Financeiro
+            (aba Contas fixas).
+          </p>
+        ) : (
+          (grupo.lista || []).flatMap((bloco) => bloco.items).map((item, index) => (
+            <ItemPlanoLine
+              key={item.id}
+              item={item}
+              striped={index % 2 === 1}
+              modo="provisao"
+            />
+          ))
+        )}
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function SecaoCamadaExplodida({ grupo, agrupamentoFixas, onAgrupamentoFixas }) {
@@ -336,6 +358,19 @@ function SecaoCamadaExplodida({ grupo, agrupamentoFixas, onAgrupamentoFixas }) {
         {grupo.separadoDoTotal ? (
           <p className="text-[11px] text-muted-foreground px-2">
             Provisão ou evento à parte — não entra no total operacional
+          </p>
+        ) : null}
+
+        {grupo.id === 'fixas_nao_mensais' ? (
+          <p className="text-[11px] text-muted-foreground px-2">
+            Provisão mensal das contas anuais, trimestrais e similares do Planejamento Financeiro (IPTU, IPVA,
+            alvarás…). O valor integral só entra no desembolso no mês de vencimento.
+            {grupo.subtotal > 0 ? (
+              <>
+                {' '}
+                Total desta provisão: {formatFinanceiroValor(grupo.subtotal)}/mês.
+              </>
+            ) : null}
           </p>
         ) : null}
 
@@ -410,10 +445,14 @@ function TabelaResumoPlano({ resumo, margemDetalhe }) {
             </td>
           </tr>
           <LinhaResumo
-            label="Contas não mensais (provisão)"
+            label="Provisão — contas anuais/trimestrais"
             valor={resumo.anuaisDiluido}
             tipo="subtrai"
-            sublabel="Anuais, bimestrais, trimestrais e semestrais"
+            sublabel={
+              resumo.naoMensaisEquivalenteAnual > 0
+                ? `Equivalente a ${formatFinanceiroValor(resumo.naoMensaisEquivalenteAnual)}/ano no cadastro`
+                : 'Anuais, bimestrais, trimestrais e semestrais'
+            }
           />
           <LinhaResumo label="Provisões de folha" valor={resumo.provisoesFolha} tipo="subtrai" />
           <LinhaResumo label="Total com provisões" valor={resumo.totalComProvisoes} tipo="subtrai" destaque />
@@ -492,8 +531,13 @@ export default function VisaoFinanceiraPlano() {
   const [agrupamentoFixas, setAgrupamentoFixas] = useState('vencimento');
 
   const { data: modelosAgefin = [], isLoading: loadingAgefin } = useQuery({
-    queryKey: ['visao-financeira', 'agefin-modelos'],
+    queryKey: ['agefin-previsao', 'modelos'],
     queryFn: listarModelosAgefin,
+  });
+
+  const { data: lancamentosRecorrentesAgefin = [], isLoading: loadingRecorrentesAgefin } = useQuery({
+    queryKey: ['agefin-previsao', 'lancamentos-recorrentes'],
+    queryFn: listarLancamentosRecorrentes,
   });
 
   const { data: modelosFolha = [], isLoading: loadingFolha } = useQuery({
@@ -548,6 +592,7 @@ export default function VisaoFinanceiraPlano() {
         competenciasBudget,
         lancamentosMes,
         lancamentosVencimento,
+        lancamentosRecorrentesAgefin,
         lucroBruto: lucroBrutoMes?.lucro_bruto || 0,
         margemDetalhe: lucroBrutoMes,
       }),
@@ -561,6 +606,7 @@ export default function VisaoFinanceiraPlano() {
       competenciasBudget,
       lancamentosMes,
       lancamentosVencimento,
+      lancamentosRecorrentesAgefin,
       lucroBrutoMes,
     ],
   );
@@ -572,6 +618,7 @@ export default function VisaoFinanceiraPlano() {
     loadingCompetenciasFolha ||
     loadingCompetenciasBudget ||
     loadingLancamentosAgefin ||
+    loadingRecorrentesAgefin ||
     loadingLancamentosMes ||
     loadingLancamentosVencimento ||
     loadingLucroBruto;
@@ -696,7 +743,7 @@ export default function VisaoFinanceiraPlano() {
 
       {loading ? (
         <FinanceiroListaEstado loading />
-      ) : plano.grupos.length === 0 ? (
+      ) : plano.grupos.every((g) => !(g.items || []).length) ? (
         <FinanceiroListaEstado
           vazio
           vazioMensagem="Cadastre contas fixas, folha, budgets ou contas a pagar para ver a consolidação."
