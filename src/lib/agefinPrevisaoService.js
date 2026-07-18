@@ -393,7 +393,7 @@ export async function sincronizarModelosDesdeLancamentos() {
     console.error('Sincronizar recorrências mensais:', e);
   }
 
-  const lancamentos = await listarLancamentosFinanceirosCache({ limit: 5000 });
+  const lancamentos = await listarLancamentosFinanceirosCache();
   const recorrentes = (lancamentos || []).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
   const byGrupo = new Map();
   for (const lf of recorrentes) {
@@ -431,7 +431,7 @@ export async function sincronizarModelosDesdeLancamentos() {
 }
 
 export async function listarLancamentosCompetencia(competencia) {
-  const lancamentos = await listarLancamentosFinanceirosCache({ limit: 5000 });
+  const lancamentos = await listarLancamentosFinanceirosCache();
   return (lancamentos || []).filter((lf) => {
     if (!lancamentoRecorrenteContaPagarParaListaBoleto(lf)) return false;
     return mesReferenciaLancamento(lf) === competencia;
@@ -440,7 +440,7 @@ export async function listarLancamentosCompetencia(competencia) {
 
 /** Lançamentos recorrentes (conta a pagar) para alimentar a projeção de 12 meses. */
 export async function listarLancamentosRecorrentes() {
-  const lancamentos = await listarLancamentosFinanceirosCache({ limit: 5000 });
+  const lancamentos = await listarLancamentosFinanceirosCache();
   return (lancamentos || []).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
 }
 
@@ -549,7 +549,7 @@ export async function desfazerAberturaCompetenciasDoMes(competencia) {
 export async function sincronizarFechamentoCompetencias(competencia) {
   const lancamentos = competencia
     ? await listarLancamentosCompetencia(competencia)
-    : (await listarLancamentosFinanceirosCache({ limit: 5000 })).filter(
+    : (await listarLancamentosFinanceirosCache()).filter(
         lancamentoRecorrenteContaPagarParaListaBoleto,
       );
 
