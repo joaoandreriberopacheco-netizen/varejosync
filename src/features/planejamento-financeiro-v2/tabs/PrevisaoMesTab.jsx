@@ -28,6 +28,7 @@ export default function PrevisaoMesTab({
   modelos,
   lancamentosMes,
   parcelamentos,
+  lancamentosRecorrentes = [],
   filtroBusca,
   onBuscaChange,
   filtroCentro,
@@ -43,8 +44,15 @@ export default function PrevisaoMesTab({
   const modelosMap = useMemo(() => mapaModelosPorId(modelos), [modelos]);
 
   const competenciasVisao = useMemo(
-    () => montarCompetenciasVisaoComParcelas(competenciaMes, modelos, lancamentosMes, parcelamentos),
-    [competenciaMes, modelos, lancamentosMes, parcelamentos],
+    () =>
+      montarCompetenciasVisaoComParcelas(
+        competenciaMes,
+        modelos,
+        lancamentosMes,
+        parcelamentos,
+        lancamentosRecorrentes,
+      ),
+    [competenciaMes, modelos, lancamentosMes, parcelamentos, lancamentosRecorrentes],
   );
 
   const competenciasExibidas = useMemo(

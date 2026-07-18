@@ -195,9 +195,9 @@ export function mesCompetenciaNum(competencia) {
  * Define em quais meses a conta fixa entra na previsão / projeção.
  * mes_vencimento (1–12) é o mês âncora (ex.: IPTU em março; bimestral a partir de jan).
  */
-export function serieDeveAparecerNaCompetencia(modelo, competencia) {
+export function serieDeveAparecerNaCompetencia(modelo, competencia, frequenciasPorGrupo = {}) {
   if (!serieEstaAtivaNaCompetencia(modelo, competencia)) return false;
-  const f = frequenciaEfetivaSerie(modelo);
+  const f = frequenciaEfetivaSerie(modelo, frequenciasPorGrupo);
   const mesRef = Math.min(12, Math.max(1, Number(modelo.mes_vencimento) || 1));
   const mes = mesCompetenciaNum(competencia);
   const offset = (mes - mesRef + 12) % 12;
@@ -539,7 +539,8 @@ export function competenciaFromLancamento(lf, modelo, competencia) {
 /**
  * Mescla lançamentos do mês (fonte AGEFIN / LancamentoFinanceiro) com linhas de planejamento.
  */
-export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes = []) {
+export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes = [], lancamentosRecorrentes = []) {
+  const frequenciasPorGrupo = mapaFrequenciaPorGrupoLancamento(lancamentosRecorrentes);
   const byKey = new Map();
   const lfByGrupo = {};
   const modelosByGrupo = {};
@@ -567,7 +568,7 @@ export function montarCompetenciasVisao(competenciaMes, modelos, lancamentosMes 
 
   // 2) Séries cadastradas sem LF no mês (modo planejamento)
   for (const modelo of (modelos || []).filter((m) => m?.ativo !== false)) {
-    if (!serieDeveAparecerNaCompetencia(modelo, competenciaMes)) continue;
+    if (!serieDeveAparecerNaCompetencia(modelo, competenciaMes, frequenciasPorGrupo)) continue;
     if (byKey.has(modelo.id)) continue;
     const lf = modelo.grupo_lancamento_id ? lfByGrupo[modelo.grupo_lancamento_id] : null;
     if (lf) {
@@ -784,13 +785,14 @@ export function mapaValoresReaisPorGrupoMes(lancamentos) {
  */
 export function calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos = []) {
   const reais = mapaValoresReaisPorGrupoMes(lancamentos);
+  const frequenciasPorGrupo = mapaFrequenciaPorGrupoLancamento(lancamentos);
 
   /** Valor âncora por série = mês inicial da projeção (competenciaInicio). */
   const anchorPorGrupo = {};
   for (const m of modelos || []) {
     const gid = m.grupo_lancamento_id;
     if (!gid) continue;
-    if (!serieDeveAparecerNaCompetencia(m, competenciaInicio)) continue;
+    if (!serieDeveAparecerNaCompetencia(m, competenciaInicio, frequenciasPorGrupo)) continue;
     const real = reais[`${gid}:${competenciaInicio}`];
     anchorPorGrupo[gid] = real ?? (Number(m.valor_previsto) || 0);
   }
@@ -801,7 +803,7 @@ export function calcularProjecaoAgefin(modelos, competenciaInicio, lancamentos =
     let total = 0;
     let count = 0;
     for (const m of modelos || []) {
-      if (!serieDeveAparecerNaCompetencia(m, comp)) continue;
+      if (!serieDeveAparecerNaCompetencia(m, comp, frequenciasPorGrupo)) continue;
       const gid = m.grupo_lancamento_id;
       const valor = gid
         ? (anchorPorGrupo[gid] ?? (Number(m.valor_previsto) || 0))

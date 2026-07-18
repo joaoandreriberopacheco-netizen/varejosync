@@ -151,9 +151,10 @@ export function montarCompetenciasVisaoComParcelas(
   modelos,
   lancamentosMes = [],
   parcelamentos = [],
+  lancamentosRecorrentes = [],
 ) {
   const mes = String(competenciaMes).slice(0, 7);
-  const base = montarCompetenciasVisao(mes, modelos, lancamentosMes);
+  const base = montarCompetenciasVisao(mes, modelos, lancamentosMes, lancamentosRecorrentes);
   const modelosMap = {};
   for (const m of modelos || []) {
     if (m?.id) modelosMap[m.id] = m;

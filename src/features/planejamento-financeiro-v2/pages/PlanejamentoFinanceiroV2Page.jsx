@@ -112,6 +112,7 @@ export default function PlanejamentoFinanceiroV2Page() {
             modelos={queries.modelos}
             lancamentosMes={queries.lancamentosMes}
             parcelamentos={queries.parcelamentos}
+            lancamentosRecorrentes={queries.lancamentosRecorrentes}
             filtroBusca={filtroBusca}
             onBuscaChange={setFiltroBusca}
             filtroCentro={filtroCentro}

@@ -16,7 +16,7 @@ const STALE_CONTAS = 300_000;
 
 /**
  * Carrega só o necessário para a aba activa.
- * - previsao: modelos + centros + lançamentos do mês + parcelamentos
+ * - previsao: modelos + centros + lançamentos do mês + parcelamentos + recorrentes (frequência)
  * - projecao: modelos + recorrentes (sem histórico do mês)
  * - contas financeiras: só quando o drawer pede sync
  */
@@ -24,7 +24,7 @@ export function useAgefinPrevisaoQueries({ abaAtiva, competenciaMes, precisaCont
   const precisaCentros = abaAtiva === 'previsao';
   const precisaLancamentos = abaAtiva === 'previsao';
   const precisaParcelamentos = abaAtiva === 'previsao';
-  const precisaRecorrentes = abaAtiva === 'projecao';
+  const precisaRecorrentes = abaAtiva === 'projecao' || abaAtiva === 'previsao';
 
   const modelosQuery = useQuery({
     queryKey: agefinQueryKeys.modelos,

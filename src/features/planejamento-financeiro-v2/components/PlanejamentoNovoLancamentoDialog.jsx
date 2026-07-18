@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import NovoLancamentoDialog from '@/components/financeiro/NovoLancamentoDialog';
+import { useToast } from '@/components/ui/use-toast';
 import { listarCategoriasDespesa } from '@/lib/budgetService';
 import { listarCentrosCustoRegistros } from '@/lib/agefinPrevisaoService';
 import { agefinQueryKeys } from '../constants/queryKeys';
@@ -8,6 +9,7 @@ import { persistirOverlayPlanejamentoAposLancamento } from '../lib/planejamentoL
 
 export default function PlanejamentoNovoLancamentoDialog({ open, onClose, onSaved }) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [centroCusto, setCentroCusto] = useState('');
 
   const categoriasQuery = useQuery({
@@ -53,6 +55,11 @@ export default function PlanejamentoNovoLancamentoDialog({ open, onClose, onSave
       }
     } catch (error) {
       console.warn('[planejamento] overlay após lançamento:', error);
+      toast({
+        title: 'Lançamento salvo, mas planejamento não sincronizou',
+        description: error?.message || 'Tente abrir a conta na previsão e salvar de novo.',
+        variant: 'destructive',
+      });
     }
     setCentroCusto('');
     await onSaved?.(resultado);

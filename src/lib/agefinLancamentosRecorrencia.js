@@ -94,7 +94,8 @@ export function isLancamentoParcelasMensaisRecorrente(l) {
   if (!tags.includes('conta_pagar') || !l.is_recorrente || !l.grupo_lancamento_id) return false;
   if (tags.includes('parcelado')) return false;
   const f = l.frequencia_recorrencia;
-  return !f || f === 'Mensal';
+  // Só replica automaticamente séries explicitamente mensais (evita tratar Anual como Mensal)
+  return f === 'Mensal';
 }
 
 export async function maxDataVencimentoMensaisOutrosGrupos(base44, excludeGrupoId) {

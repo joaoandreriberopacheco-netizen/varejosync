@@ -198,6 +198,12 @@ export default function NovoLancamentoDialog({
       .finally(() => setLoadingPessoasFolha(false));
   }, [open, modoEdicao]);
 
+  useEffect(() => {
+    if (!open || modoEdicao || lancamentoExistente || !modoPlanejamento) return;
+    setIsRecorrente(true);
+    setFrequencia((prev) => prev || 'Mensal');
+  }, [open, modoEdicao, lancamentoExistente, modoPlanejamento]);
+
   const handleValeFolhaToggle = (ativo) => {
     setIsValeFolha(ativo);
     if (ativo) {
@@ -416,6 +422,16 @@ export default function NovoLancamentoDialog({
         return;
       }
     }
+    if (isRecorrente && !frequencia) {
+      toast({
+        title: 'Escolha a frequência',
+        description: modoPlanejamento
+          ? 'Ex.: Anual para IPTU em março, Mensal para aluguel.'
+          : 'Abra Mais opções e selecione Mensal, Anual, etc.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const descricaoNorm = normalizeDataText(descricao.trim());
     const categoriaNorm = normalizeDataText(categoria);
@@ -477,11 +493,12 @@ export default function NovoLancamentoDialog({
         await sincronizarSaldosAposAlteracao(base44, [contaId, contaDestinoId]);
       }
     } else if (isRecorrente && frequencia) {
+      const freqSalvar = frequencia;
       const grupoId = gerarGrupoId();
       const baseDate = new Date(`${dataVenc}T12:00:00Z`);
       const lotes = [];
 
-      if (frequencia === 'Parcelado') {
+      if (freqSalvar === 'Parcelado') {
         for (let i = 0; i < parcelas; i++) {
           const dtVenc = addMonths(baseDate, i);
           lotes.push({
@@ -500,7 +517,7 @@ export default function NovoLancamentoDialog({
             conta_financeira_nome: conta?.nome,
             referencia_tipo: 'Manual',
             is_recorrente: true,
-            frequencia_recorrencia: frequencia,
+            frequencia_recorrencia: freqSalvar,
             numero_parcelas_total: parcelas,
             parcela_atual: i + 1,
             grupo_lancamento_id: grupoId,
@@ -510,12 +527,12 @@ export default function NovoLancamentoDialog({
           });
         }
       } else {
-        const addFn = FREQS_MAP[frequencia] || FREQS_MAP.Mensal;
+        const addFn = FREQS_MAP[freqSalvar] || FREQS_MAP.Mensal;
         const limiteDate = dataFim
           ? new Date(dataFim)
-          : frequencia === 'Anual'
+          : freqSalvar === 'Anual'
             ? addYears(new Date(), 3)
-            : frequencia === 'Semestral'
+            : freqSalvar === 'Semestral'
               ? addYears(new Date(), 2)
               : addMonths(baseDate, 11);
         let i = 0;
@@ -537,7 +554,7 @@ export default function NovoLancamentoDialog({
             conta_financeira_nome: conta?.nome,
             referencia_tipo: 'Manual',
             is_recorrente: true,
-            frequencia_recorrencia: frequencia,
+            frequencia_recorrencia: freqSalvar,
             parcela_atual: i + 1,
             grupo_lancamento_id: grupoId,
             data_fim_recorrencia: dataFim || null,
@@ -562,7 +579,7 @@ export default function NovoLancamentoDialog({
         valor: valorNumerico,
         categoria: categoriaNorm,
         categoria_id: categoriaId,
-        frequencia,
+        frequencia: freqSalvar,
         data_vencimento: primeiro?.data_vencimento || dataVenc,
       };
     } else {

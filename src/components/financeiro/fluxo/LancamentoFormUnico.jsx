@@ -12,6 +12,7 @@ import SeletorContaMobile from './SeletorContaMobile';
 import { SeletorCategoria } from './DialogCategoria';
 import TagsInput from './TagsInput';
 import LancamentoMaisOpcoes from './LancamentoMaisOpcoes';
+import RecorrenciaConfig from './RecorrenciaConfig';
 import LancamentoValeFolha from './LancamentoValeFolha';
 import LancamentoPickerDialog from './LancamentoPickerDialog';
 import BudgetCategoriaSelect from '@/components/budget-previsao/BudgetCategoriaSelect';
@@ -308,6 +309,19 @@ export default function LancamentoFormUnico({
           </div>
         ) : null}
 
+        {!isTransfer && modoPlanejamento && !bloquearRecorrencia && (
+          <RecorrenciaConfig
+            isRecorrente={isRecorrente}
+            onToggle={onRecorrenteToggle}
+            frequencia={frequencia}
+            onFrequencia={onFrequencia}
+            parcelas={parcelas}
+            onParcelas={onParcelas}
+            dataFim={dataFim}
+            onDataFim={onDataFim}
+          />
+        )}
+
         {!isTransfer && (
           <>
             <LancamentoValeFolha
@@ -331,6 +345,7 @@ export default function LancamentoFormUnico({
             isRecorrente={isRecorrente}
             onRecorrenteToggle={onRecorrenteToggle}
             bloquearRecorrencia={bloquearRecorrencia}
+            hideRecorrencia={modoPlanejamento}
             frequencia={frequencia}
             onFrequencia={onFrequencia}
             parcelas={parcelas}

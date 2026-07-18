@@ -194,14 +194,22 @@ function derivarSerieDoGrupoLancamentos(grupoId, rows = []) {
   const sorted = [...rows].sort((a, b) =>
     (b.data_vencimento || '').localeCompare(a.data_vencimento || ''),
   );
+  const sortedAsc = [...rows].sort((a, b) =>
+    (a.data_vencimento || '').localeCompare(b.data_vencimento || ''),
+  );
   const rep =
     sorted.find(lancamentoRecorrenteContaPagarParaListaBoleto) ||
     sorted.find((lf) => !lancamentoCancelado(lf)) ||
     sorted[0];
+  const ancora =
+    sortedAsc.find((lf) => !lancamentoCancelado(lf)) ||
+    sortedAsc[0] ||
+    rep;
   if (!rep) return null;
 
   const abertos = rows.filter((lf) => !lancamentoPago(lf) && !lancamentoCancelado(lf));
   const freq = frequenciaDoGrupoLancamentos(grupoId, rows);
+  const venAncora = ancora?.data_vencimento || rep.data_vencimento || '';
 
   return criarSerieComDefaults({
     id: serieIdFromGrupoLancamento(grupoId),
@@ -211,8 +219,8 @@ function derivarSerieDoGrupoLancamentos(grupoId, rows = []) {
     categoria_id: rep.categoria_id || '',
     categoria_nome: rep.categoria || '',
     valor_previsto: Number(rep.valor) || 0,
-    dia_vencimento: Number((rep.data_vencimento || '').slice(8, 10)) || 10,
-    mes_vencimento: Number((rep.data_vencimento || '').slice(5, 7)) || new Date().getMonth() + 1,
+    dia_vencimento: Number((venAncora || '').slice(8, 10)) || 10,
+    mes_vencimento: Number((venAncora || '').slice(5, 7)) || new Date().getMonth() + 1,
     frequencia: freq,
     grupo_lancamento_id: grupoId,
     // Anuais/trimestrais etc. seguem na previsão mesmo sem parcela em aberto no mês
