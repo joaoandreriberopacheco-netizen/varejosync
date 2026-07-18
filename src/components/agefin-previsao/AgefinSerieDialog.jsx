@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import BudgetCategoriaSelect from '@/components/budget-previsao/BudgetCategoriaSelect';
+import FolhaCentroCustoSelect from '@/components/folha-previsao/FolhaCentroCustoSelect';
 import {
   FREQUENCIA_SERIE,
   FREQUENCIAS_SERIE_OPCOES,
@@ -20,13 +22,17 @@ export default function AgefinSerieDialog({
   open,
   onClose,
   serie,
-  centrosRegistrados = [],
+  categorias = [],
+  centrosCustoRegistros = [],
+  onCategoriasChange,
+  onCentrosChange,
   onSave,
   saving,
 }) {
   const [form, setForm] = useState({
     nome: '',
     terceiro_nome: '',
+    categoria_id: '',
     categoria_nome: '',
     centro_custo: '',
     valor_previsto: 0,
@@ -37,22 +43,41 @@ export default function AgefinSerieDialog({
   });
 
   useEffect(() => {
-    if (open) {
-      setForm({
-        nome: serie?.nome || '',
-        terceiro_nome: serie?.terceiro_nome || '',
-        categoria_nome: serie?.categoria_nome || '',
-        centro_custo: serie?.centro_custo || '',
-        valor_previsto: Number(serie?.valor_previsto) || 0,
-        dia_vencimento: Number(serie?.dia_vencimento) || 10,
-        frequencia: serie?.frequencia || FREQUENCIA_SERIE.MENSAL,
-        mes_vencimento: Number(serie?.mes_vencimento) || new Date().getMonth() + 1,
-        observacoes: serie?.observacoes || '',
-      });
+    if (!open) return;
+
+    let categoriaId = serie?.categoria_id || '';
+    let categoriaNome = serie?.categoria_nome || '';
+    if (!categoriaId && categoriaNome) {
+      const match = categorias.find(
+        (c) => String(c.nome || '').toLocaleLowerCase('pt-BR') === categoriaNome.toLocaleLowerCase('pt-BR'),
+      );
+      if (match) categoriaId = match.id;
     }
-  }, [open, serie]);
+
+    setForm({
+      nome: serie?.nome || '',
+      terceiro_nome: serie?.terceiro_nome || '',
+      categoria_id: categoriaId,
+      categoria_nome: categoriaNome,
+      centro_custo: serie?.centro_custo || '',
+      valor_previsto: Number(serie?.valor_previsto) || 0,
+      dia_vencimento: Number(serie?.dia_vencimento) || 10,
+      frequencia: serie?.frequencia || FREQUENCIA_SERIE.MENSAL,
+      mes_vencimento: Number(serie?.mes_vencimento) || new Date().getMonth() + 1,
+      observacoes: serie?.observacoes || '',
+    });
+  }, [open, serie, categorias]);
 
   const precisaMesReferencia = form.frequencia !== FREQUENCIA_SERIE.MENSAL;
+
+  const handleCategoria = (cat) => {
+    if (!cat?.id) return;
+    setForm((f) => ({
+      ...f,
+      categoria_id: cat.id,
+      categoria_nome: cat.nome || '',
+    }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -91,10 +116,11 @@ export default function AgefinSerieDialog({
           </div>
           <div>
             <Label>Categoria</Label>
-            <Input
-              value={form.categoria_nome}
-              onChange={(e) => setForm((f) => ({ ...f, categoria_nome: e.target.value }))}
-              placeholder="Energia, Telefone…"
+            <BudgetCategoriaSelect
+              categorias={categorias}
+              value={form.categoria_id || ''}
+              onValueChange={handleCategoria}
+              onCategoriasChange={onCategoriasChange}
             />
           </div>
           <div>
@@ -146,24 +172,12 @@ export default function AgefinSerieDialog({
           )}
           <div>
             <Label>Centro de custo</Label>
-            <Select
-              value={form.centro_custo || '__sem__'}
-              onValueChange={(v) =>
-                setForm((f) => ({ ...f, centro_custo: v === '__sem__' ? '' : v }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__sem__">Sem centro</SelectItem>
-                {centrosRegistrados.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FolhaCentroCustoSelect
+              centros={centrosCustoRegistros}
+              value={form.centro_custo || ''}
+              onValueChange={(nome) => setForm((f) => ({ ...f, centro_custo: nome }))}
+              onCentrosChange={onCentrosChange}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -191,7 +205,7 @@ export default function AgefinSerieDialog({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="submit" disabled={saving || !form.nome.trim() || !form.categoria_id}>
               {saving ? 'Salvando…' : 'Salvar'}
             </Button>
           </DialogFooter>

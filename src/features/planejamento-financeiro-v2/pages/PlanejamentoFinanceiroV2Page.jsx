@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarClock, Repeat2, TrendingUp } from 'lucide-react';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
@@ -12,8 +13,10 @@ import ContasFixasTab from '../tabs/ContasFixasTab';
 import PrevisaoMesTab from '../tabs/PrevisaoMesTab';
 import ProjecaoTab from '../tabs/ProjecaoTab';
 import PlanejamentoDialogs, { PlanejamentoFab } from '../components/PlanejamentoDialogs';
+import { agefinQueryKeys } from '../constants/queryKeys';
 
 export default function PlanejamentoFinanceiroV2Page() {
+  const queryClient = useQueryClient();
   const { competenciaMes, setCompetenciaMes, abaAtiva, setAbaAtiva } = useCompetenciaUrl();
 
   const [selectedComp, setSelectedComp] = useState(null);
@@ -59,6 +62,10 @@ export default function PlanejamentoFinanceiroV2Page() {
     () => seriesAtivas.find((s) => s.id === draggingSerieId) || null,
     [seriesAtivas, draggingSerieId],
   );
+
+  const handleCategoriasChange = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: agefinQueryKeys.categorias });
+  }, [queryClient]);
 
   return (
     <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
@@ -207,6 +214,10 @@ export default function PlanejamentoFinanceiroV2Page() {
         selectedModelo={selectedModelo}
         onCloseSelected={() => setSelectedComp(null)}
         centrosRegistrados={queries.centrosRegistrados}
+        centrosCustoRegistros={queries.centrosCustoRegistros}
+        categorias={queries.categorias}
+        onCategoriasChange={handleCategoriasChange}
+        onCentrosChange={actions.invalidateCentros}
         serieDialog={actions.serieDialog}
         onCloseSerieDialog={() => actions.setSerieDialog(null)}
         onSaveSerie={actions.handleSaveSerie}

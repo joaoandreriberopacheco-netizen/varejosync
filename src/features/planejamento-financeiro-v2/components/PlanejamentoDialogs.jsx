@@ -62,6 +62,10 @@ export default function PlanejamentoDialogs({
   selectedModelo,
   onCloseSelected,
   centrosRegistrados,
+  centrosCustoRegistros,
+  categorias,
+  onCategoriasChange,
+  onCentrosChange,
   serieDialog,
   onCloseSerieDialog,
   onSaveSerie,
@@ -128,7 +132,10 @@ export default function PlanejamentoDialogs({
         open={Boolean(serieDialog)}
         onClose={onCloseSerieDialog}
         serie={serieDialog}
-        centrosRegistrados={centrosRegistrados}
+        categorias={categorias}
+        centrosCustoRegistros={centrosCustoRegistros}
+        onCategoriasChange={onCategoriasChange}
+        onCentrosChange={onCentrosChange}
         onSave={onSaveSerie}
         saving={saving}
       />
