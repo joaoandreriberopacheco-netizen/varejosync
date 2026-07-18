@@ -195,7 +195,8 @@ export function agruparSeriesPorFrequenciaECentro(series, centrosRegistrados = [
   }
 
   for (const serie of series || []) {
-    const freq = normalizarFrequenciaSerie(serie.frequencia);
+    const freq = frequenciaEfetivaSerie(serie);
+    if (!out[freq]) out[freq] = {};
     const centro = String(serie.centro_custo || '').trim();
     const chave =
       centro && centrosSet.has(centro.toLocaleLowerCase('pt-BR')) ? centro : '__sem__';
@@ -269,7 +270,7 @@ function ordenarSeriesContasFixas(series, groupBy, sortOrder) {
  */
 export function agruparSeriesPorFrequenciaEGrupo(
   series,
-  { centrosRegistrados = [], groupBy = 'centro_custo', sortOrder = 'asc' } = {},
+  { centrosRegistrados = [], groupBy = 'centro_custo', sortOrder = 'asc', frequenciasPorGrupo = {} } = {},
 ) {
   const centrosSet = new Set(
     (centrosRegistrados || []).map((c) => String(c).toLocaleLowerCase('pt-BR')),
@@ -278,7 +279,8 @@ export function agruparSeriesPorFrequenciaEGrupo(
   for (const f of ORDEM_FREQUENCIAS_CONTAS_FIXAS) porFreq[f] = [];
 
   for (const serie of series || []) {
-    const freq = normalizarFrequenciaSerie(serie.frequencia);
+    const freq = frequenciaEfetivaSerie(serie, frequenciasPorGrupo);
+    if (!porFreq[freq]) porFreq[freq] = [];
     porFreq[freq].push(serie);
   }
 

@@ -12,6 +12,7 @@ import {
   dataVencimentoNaCompetencia,
   gerarGrupoLancamentoId,
   getCompetenciaAtual,
+  mapaFrequenciaPorGrupoLancamento,
   normalizarFrequenciaSerie,
   FREQUENCIA_SERIE,
   serieDeveAparecerNaCompetencia,
@@ -177,14 +178,16 @@ function agruparLancamentosPorGrupo(lancamentos = []) {
   return map;
 }
 
-function frequenciaDoGrupoLancamentos(rows = []) {
-  const rep =
-    rows.find(lancamentoRecorrenteContaPagarParaListaBoleto) ||
-    rows.find((lf) => lf?.frequencia_recorrencia && lf.frequencia_recorrencia !== 'Único') ||
-    rows[0];
-  const f = rep?.frequencia_recorrencia;
-  if (f && f !== 'Único') return f;
-  return 'Mensal';
+function frequenciaDoGrupoLancamentos(grupoId, rows = []) {
+  const mapa = mapaFrequenciaPorGrupoLancamento(rows);
+  if (grupoId && mapa[grupoId]) return mapa[grupoId];
+
+  const explicita = rows
+    .filter((lf) => lf?.frequencia_recorrencia && lf.frequencia_recorrencia !== 'Único')
+    .sort((a, b) => (b.data_vencimento || '').localeCompare(a.data_vencimento || ''));
+  if (explicita.length) return normalizarFrequenciaSerie(explicita[0].frequencia_recorrencia);
+
+  return FREQUENCIA_SERIE.MENSAL;
 }
 
 /** Deriva o template da aba Contas fixas a partir de um grupo de lançamentos recorrentes. */
@@ -212,17 +215,32 @@ function derivarSerieDoGrupoLancamentos(grupoId, rows = []) {
     valor_previsto: Number(rep.valor) || 0,
     dia_vencimento: Number((rep.data_vencimento || '').slice(8, 10)) || 10,
     mes_vencimento: Number((rep.data_vencimento || '').slice(5, 7)) || new Date().getMonth() + 1,
-    frequencia: frequenciaDoGrupoLancamentos(rows),
+    frequencia: frequenciaDoGrupoLancamentos(grupoId, rows),
     grupo_lancamento_id: grupoId,
     ativo: abertos.length > 0,
   });
 }
 
-/** DadosEmpresa guarda só metadados de UI (centro de custo, encerramento); o LF é a fonte. */
+/** Une cadastro (overlay) com dados do LF — frequência e vencimento vêm do formulário. */
 function aplicarOverlaySerie(serie, overlay) {
   if (!overlay || !serie) return serie;
+  const freqOverlay = overlay.frequencia ? normalizarFrequenciaSerie(overlay.frequencia) : null;
   return criarSerieComDefaults({
     ...serie,
+    nome: String(overlay.nome || '').trim() ? overlay.nome : serie.nome,
+    terceiro_nome: overlay.terceiro_nome != null ? overlay.terceiro_nome : serie.terceiro_nome,
+    terceiro_id: overlay.terceiro_id || serie.terceiro_id,
+    categoria_id: overlay.categoria_id || serie.categoria_id,
+    categoria_nome: overlay.categoria_nome || serie.categoria_nome,
+    frequencia: freqOverlay || serie.frequencia,
+    mes_vencimento:
+      overlay.mes_vencimento != null ? Number(overlay.mes_vencimento) : serie.mes_vencimento,
+    dia_vencimento:
+      overlay.dia_vencimento != null ? Number(overlay.dia_vencimento) : serie.dia_vencimento,
+    valor_previsto:
+      overlay.valor_previsto != null && overlay.valor_previsto !== ''
+        ? Number(overlay.valor_previsto)
+        : serie.valor_previsto,
     centro_custo: overlay.centro_custo || serie.centro_custo,
     observacoes: overlay.observacoes || serie.observacoes,
     situacao: overlay.situacao || serie.situacao,
@@ -567,9 +585,21 @@ async function sincronizarSerieNoFinanceiro(modelo) {
 
   const rows = await listarLancamentosGrupoSerie(modelo);
   const abertos = rows.filter((lf) => !lancamentoPago(lf) && !lancamentoCancelado(lf));
+  const freq = normalizarFrequenciaSerie(modelo.frequencia);
   let atualizados = 0;
 
-  for (const lf of abertos) {
+  for (const lf of rows) {
+    if (lancamentoCancelado(lf)) continue;
+    const aberto = !lancamentoPago(lf);
+    if (!aberto) {
+      await base44.entities.LancamentoFinanceiro.update(lf.id, {
+        is_recorrente: true,
+        frequencia_recorrencia: freq,
+      });
+      atualizados += 1;
+      continue;
+    }
+
     const ven =
       lf.data_vencimento && modelo.dia_vencimento
         ? dataVencimentoNaCompetencia(
@@ -589,7 +619,7 @@ async function sincronizarSerieNoFinanceiro(modelo) {
       categoria_id: modelo.categoria_id || lf.categoria_id,
       referencia_id: serieIdFromGrupoLancamento(modelo.grupo_lancamento_id) || modelo.id,
       is_recorrente: true,
-      frequencia_recorrencia: normalizarFrequenciaSerie(modelo.frequencia),
+      frequencia_recorrencia: freq,
       tags: tagsSerieFinanceiro(lf.tags),
     });
     atualizados += 1;
