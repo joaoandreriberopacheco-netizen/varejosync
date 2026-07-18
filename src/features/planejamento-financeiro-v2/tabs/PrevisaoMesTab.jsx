@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Repeat2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { buildNovoLancamentoDespesaUrl } from '../constants/atalhos';
 import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import AgefinPrevisaoCabecalho from '@/components/agefin-previsao/AgefinPrevisaoCabecalho';
 import AgefinPrevisaoFiltros from '@/components/agefin-previsao/AgefinPrevisaoFiltros';
@@ -40,8 +38,8 @@ export default function PrevisaoMesTab({
   onGroupByChange,
   onSortOrderToggle,
   onOpenCompetencia,
+  onNovoLancamento,
 }) {
-  const novoLancamentoUrl = buildNovoLancamentoDespesaUrl();
   const modelosMap = useMemo(() => mapaModelosPorId(modelos), [modelos]);
 
   const competenciasVisao = useMemo(
@@ -112,7 +110,7 @@ export default function PrevisaoMesTab({
         vazioMensagem={
           !semFiltros
             ? 'Nenhuma conta encontrada com estes filtros.'
-            : `Nenhuma despesa recorrente para ${formatCompetenciaLabel(competenciaMes)}. Cadastre no Financeiro.`
+            : `Nenhuma despesa recorrente para ${formatCompetenciaLabel(competenciaMes)}. Cadastre pelo botão +.`
         }
         vazioIcon={Repeat2}
       >
@@ -126,8 +124,8 @@ export default function PrevisaoMesTab({
 
       {!loading && competenciasExibidas.length === 0 && semFiltros && (
         <div className="flex justify-center -mt-6 pb-4 gap-2">
-          <Button variant="outline" asChild>
-            <Link to={novoLancamentoUrl}>Novo lançamento financeiro</Link>
+          <Button variant="outline" onClick={onNovoLancamento}>
+            Novo lançamento financeiro
           </Button>
         </div>
       )}

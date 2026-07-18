@@ -14,6 +14,8 @@ import TagsInput from './TagsInput';
 import LancamentoMaisOpcoes from './LancamentoMaisOpcoes';
 import LancamentoValeFolha from './LancamentoValeFolha';
 import LancamentoPickerDialog from './LancamentoPickerDialog';
+import BudgetCategoriaSelect from '@/components/budget-previsao/BudgetCategoriaSelect';
+import FolhaCentroCustoSelect from '@/components/folha-previsao/FolhaCentroCustoSelect';
 
 const TIPOS = [
   { value: 'Receita', label: 'Receita', icon: ArrowDownLeft },
@@ -102,6 +104,13 @@ export default function LancamentoFormUnico({
   bloquearTipo = false,
   bloquearRecorrencia = false,
   salvarLabel = 'Salvar',
+  modoPlanejamento = false,
+  centroCusto = '',
+  onCentroCustoChange,
+  centrosCustoRegistros = [],
+  onCentrosCustoChange,
+  categoriasDespesa = [],
+  onCategoriasDespesaChange,
 }) {
   const [campoAtivo, setCampoAtivo] = useState('valor');
   const [picker, setPicker] = useState(null); // 'conta' | 'contaDestino' | 'categoria' | 'tags'
@@ -258,7 +267,28 @@ export default function LancamentoFormUnico({
           />
         )}
 
-        {!isTransfer && (
+        {!isTransfer && modoPlanejamento ? (
+          <div className="rounded-2xl bg-card shadow-sm px-4 py-3 space-y-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Categoria</p>
+              <BudgetCategoriaSelect
+                categorias={categoriasDespesa}
+                value={categoriaId}
+                onValueChange={(cat) => onCategoriaChange(cat?.nome || '', cat?.id || '')}
+                onCategoriasChange={onCategoriasDespesaChange}
+              />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Centro de custo</p>
+              <FolhaCentroCustoSelect
+                centros={centrosCustoRegistros}
+                value={centroCusto}
+                onValueChange={onCentroCustoChange}
+                onCentrosChange={onCentrosCustoChange}
+              />
+            </div>
+          </div>
+        ) : !isTransfer ? (
           <div className="grid gap-2 sm:grid-cols-2">
             <CampoLinha
               label="Categoria"
@@ -276,7 +306,7 @@ export default function LancamentoFormUnico({
               className="sm:col-span-1"
             />
           </div>
-        )}
+        ) : null}
 
         {!isTransfer && (
           <>

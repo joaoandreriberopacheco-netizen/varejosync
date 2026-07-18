@@ -59,6 +59,13 @@ export default function NovoLancamentoDialog({
   origemContaPagar,
   presentation,
   lancamentoExistente = null,
+  modoPlanejamento = false,
+  centroCusto = '',
+  onCentroCustoChange,
+  centrosCustoRegistros = [],
+  onCentrosCustoChange,
+  categoriasDespesa = [],
+  onCategoriasDespesaChange,
 }) {
   const [tipo, setTipo] = useState(tipoInicial || 'Despesa');
   const [contas, setContas] = useState([]);
@@ -419,6 +426,7 @@ export default function NovoLancamentoDialog({
     setShowConfirmDialog(true);
 
     let lancamentoParaCallback = null;
+    let metaRecorrente = null;
     const conta = contas.find((c) => c.id === contaId);
     const pedidoCompra = pedidoCompraId ? pedidosCompra.find((p) => p.id === pedidoCompraId) : null;
     const pessoaVale = isValeFolha ? pessoasFolha.find((p) => p.id === valeFolhaModeloId) : null;
@@ -532,6 +540,17 @@ export default function NovoLancamentoDialog({
       if (realizado && conta) {
         await sincronizarSaldosAposAlteracao(base44, [conta.id]);
       }
+      const primeiro = lotes[0];
+      metaRecorrente = {
+        is_recorrente: true,
+        grupo_lancamento_id: grupoId,
+        descricao: descricaoNorm,
+        valor: valorNumerico,
+        categoria: categoriaNorm,
+        categoria_id: categoriaId,
+        frequencia,
+        data_vencimento: primeiro?.data_vencimento || dataVenc,
+      };
     } else {
       const novoLancamento = await base44.entities.LancamentoFinanceiro.create({
         ...metaDataLancamento(),
@@ -591,7 +610,7 @@ export default function NovoLancamentoDialog({
         categoriaId,
       });
     }
-    onSaved?.(lancamentoParaCallback);
+    onSaved?.(lancamentoParaCallback || metaRecorrente);
     setSaving(false);
     setConfirmDialogMode('success');
   };
@@ -675,6 +694,13 @@ export default function NovoLancamentoDialog({
         onCancelar={onClose}
         salvarLabel={modoEdicao ? 'Salvar alterações' : 'Salvar'}
         bloquearRecorrencia={modoEdicao}
+        modoPlanejamento={modoPlanejamento}
+        centroCusto={centroCusto}
+        onCentroCustoChange={onCentroCustoChange}
+        centrosCustoRegistros={centrosCustoRegistros}
+        onCentrosCustoChange={onCentrosCustoChange}
+        categoriasDespesa={categoriasDespesa}
+        onCategoriasDespesaChange={onCategoriasDespesaChange}
       />
 
       <LancamentoFormSheet

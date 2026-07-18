@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -7,11 +6,9 @@ import AgefinPrevisaoDetalheDrawer from '@/components/agefin-previsao/AgefinPrev
 import AgefinParcelamentoDialog from '@/components/agefin-previsao/AgefinParcelamentoDialog';
 import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
-import { buildNovoLancamentoDespesaUrl } from '../constants/atalhos';
 
-export function PlanejamentoFab({ onCentros, onImportar }) {
+export function PlanejamentoFab({ onCentros, onImportar, onNovoLancamento }) {
   const [fabOpen, setFabOpen] = useState(false);
-  const novoLancamentoUrl = buildNovoLancamentoDespesaUrl();
 
   return (
     <div className="fixed right-4 z-[55] bottom-[calc(var(--p38-bottom-nav-h,0px)+1rem)] lg:bottom-8 lg:right-8">
@@ -39,10 +36,15 @@ export function PlanejamentoFab({ onCentros, onImportar }) {
           >
             Importar conta (PDF)
           </Button>
-          <Button size="sm" className="rounded-full shadow-md" asChild>
-            <Link to={novoLancamentoUrl} onClick={() => setFabOpen(false)}>
-              Novo lançamento financeiro
-            </Link>
+          <Button
+            size="sm"
+            className="rounded-full shadow-md"
+            onClick={() => {
+              setFabOpen(false);
+              onNovoLancamento();
+            }}
+          >
+            Novo lançamento financeiro
           </Button>
         </div>
       )}

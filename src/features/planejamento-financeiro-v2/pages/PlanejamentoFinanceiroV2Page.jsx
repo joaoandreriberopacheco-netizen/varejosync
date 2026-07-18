@@ -11,6 +11,7 @@ import { usePlanejamentoActions } from '../hooks/usePlanejamentoActions';
 import PrevisaoMesTab from '../tabs/PrevisaoMesTab';
 import ProjecaoTab from '../tabs/ProjecaoTab';
 import PlanejamentoDialogs, { PlanejamentoFab } from '../components/PlanejamentoDialogs';
+import PlanejamentoNovoLancamentoDialog from '../components/PlanejamentoNovoLancamentoDialog';
 
 export default function PlanejamentoFinanceiroV2Page() {
   const { competenciaMes, setCompetenciaMes, abaAtiva, setAbaAtiva } = useCompetenciaUrl();
@@ -23,6 +24,7 @@ export default function PlanejamentoFinanceiroV2Page() {
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
   const [showImportador, setShowImportador] = useState(false);
   const [importadorLancamentoId, setImportadorLancamentoId] = useState(null);
+  const [showNovoLancamento, setShowNovoLancamento] = useState(false);
 
   const queries = useAgefinPrevisaoQueries({
     abaAtiva,
@@ -62,8 +64,9 @@ export default function PlanejamentoFinanceiroV2Page() {
               dos já abertos no mês — sem fretes (estes ficam só na AGEFIN).
             </p>
             <p className="text-muted-foreground mt-2">
-              Cadastre novas despesas recorrentes no <strong className="text-foreground">Financeiro</strong>{' '}
-              (botão + ou atalho desta tela). As contas já cadastradas continuam visíveis aqui.
+              Cadastre novas despesas recorrentes pelo botão <strong className="text-foreground">+</strong>{' '}
+              desta tela — o formulário abre aqui, sem sair do planejamento. As contas já cadastradas continuam
+              visíveis.
             </p>
           </P38HelpPopover>
         </div>
@@ -119,6 +122,7 @@ export default function PlanejamentoFinanceiroV2Page() {
             onGroupByChange={setGroupBy}
             onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
             onOpenCompetencia={setSelectedComp}
+            onNovoLancamento={() => setShowNovoLancamento(true)}
           />
         </TabsContent>
 
@@ -128,6 +132,7 @@ export default function PlanejamentoFinanceiroV2Page() {
             modelos={queries.modelos}
             competenciaMes={competenciaMes}
             lancamentosRecorrentes={queries.lancamentosRecorrentes}
+            onNovoLancamento={() => setShowNovoLancamento(true)}
           />
         </TabsContent>
       </Tabs>
@@ -137,6 +142,16 @@ export default function PlanejamentoFinanceiroV2Page() {
         onImportar={() => {
           setImportadorLancamentoId(null);
           setShowImportador(true);
+        }}
+        onNovoLancamento={() => setShowNovoLancamento(true)}
+      />
+
+      <PlanejamentoNovoLancamentoDialog
+        open={showNovoLancamento}
+        onClose={() => setShowNovoLancamento(false)}
+        onSaved={() => {
+          actions.refreshDepoisDeLancamentos();
+          void actions.recarregarVisaoMes();
         }}
       />
 
