@@ -95,13 +95,21 @@ function deduplicarSeriesPorGrupo(series = []) {
   return [...porGrupo.values(), ...semGrupo];
 }
 
+/** Fonte de verdade: entidade + DadosEmpresa (sem localStorage). */
+async function lerSeriesNaNuvem() {
+  const empresa = await obterRegistroDadosEmpresa();
+  const empresaRows = lerSeriesEmpresa(empresa);
+  const entityRows = (await tryListEntitySeries()) ?? [];
+  return deduplicarSeriesPorGrupo(mesclarSeriesPorId(entityRows, empresaRows));
+}
+
 async function lerTodasSeriesArmazenadas() {
   const empresa = await obterRegistroDadosEmpresa();
   const empresaRows = lerSeriesEmpresa(empresa);
   const backupRows = lerSeriesBackupEmpresa(empresa);
   const entityRows = (await tryListEntitySeries()) ?? [];
   const localRows = lerSeriesLocalStorage();
-  const merged = deduplicarSeriesPorGrupo(mesclarSeriesPorId(localRows, entityRows, empresaRows));
+  const merged = await lerSeriesNaNuvem();
   return {
     empresa,
     empresaRows,
@@ -132,6 +140,29 @@ function salvarSeriesLocalStorage(series) {
   } catch {
     /* quota / modo privado */
   }
+}
+
+/** Sincroniza outras abas/janelas quando o cache local é atualizado após gravação na nuvem. */
+export function subscribeSeriesStorageChanges(onChange) {
+  if (typeof window === 'undefined') return () => {};
+  const handler = (event) => {
+    if (event.key === LS_SERIES_KEY) onChange?.();
+  };
+  window.addEventListener('storage', handler);
+  return () => window.removeEventListener('storage', handler);
+}
+
+async function migrarSeriesLocalStorageParaNuvem() {
+  const localRows = lerSeriesLocalStorage();
+  if (!localRows.length) return false;
+
+  const naNuvem = await lerSeriesNaNuvem();
+  const idsNuvem = new Set(naNuvem.map((s) => s.id));
+  const orfaos = localRows.filter((s) => s?.id && !idsNuvem.has(s.id));
+  if (!orfaos.length) return false;
+
+  await persistirSeriesModelo(orfaos, { modo: 'merge' });
+  return true;
 }
 
 async function tryListEntitySeries() {
@@ -214,11 +245,11 @@ async function gravarBackupSeries(empresa, series) {
 }
 
 async function persistirSeriesModelo(series, { modo = 'merge' } = {}) {
-  const snapshot = await lerTodasSeriesArmazenadas();
-  const atual = snapshot.merged;
+  const empresa = await obterRegistroDadosEmpresa();
+  const atual = await lerSeriesNaNuvem();
 
   if (atual.length > 0) {
-    await gravarBackupSeries(snapshot.empresa, atual);
+    await gravarBackupSeries(empresa, atual);
   }
 
   const incoming = (series || []).map((s) => criarSerieComDefaults(s));
@@ -227,26 +258,39 @@ async function persistirSeriesModelo(series, { modo = 'merge' } = {}) {
       ? deduplicarSeriesPorGrupo(incoming)
       : deduplicarSeriesPorGrupo(mesclarSeriesPorId(atual, incoming));
 
-  salvarSeriesLocalStorage(seriesNorm);
+  let entityOk = false;
+  try {
+    await sincronizarSeriesParaEntidade(seriesNorm);
+    entityOk = true;
+  } catch (error) {
+    console.error('[agefin] Falha ao gravar em AgefinSerieModelo:', error);
+  }
 
   let empresaAtualizada = null;
+  let empresaOk = false;
   try {
     empresaAtualizada = await atualizarDadosEmpresa(base44, {
       [DADOS_EMPRESA_SERIES_KEY]: seriesNorm,
     });
+    const gravadas = lerSeriesEmpresa(empresaAtualizada);
+    empresaOk =
+      gravadas.length >= seriesNorm.length &&
+      seriesNorm.every((serie) => gravadas.some((g) => g.id === serie.id));
   } catch (error) {
     console.error('[agefin] Falha ao gravar em DadosEmpresa:', error);
   }
 
-  try {
-    await sincronizarSeriesParaEntidade(seriesNorm);
-  } catch (error) {
-    console.error('[agefin] Falha ao espelhar em AgefinSerieModelo:', error);
+  if (!entityOk && !empresaOk) {
+    throw new Error('Não foi possível gravar as contas fixas na base de dados.');
   }
+
+  salvarSeriesLocalStorage(seriesNorm);
 
   return {
     seriesNorm,
     empresaRows: lerSeriesEmpresa(empresaAtualizada),
+    entityOk,
+    empresaOk,
   };
 }
 
@@ -255,8 +299,8 @@ async function verificarSeriePersistida(serieId, tentativas = 5) {
     const fromEntity = await buscarSerieEntidade(serieId);
     if (fromEntity) return fromEntity;
 
-    const { merged } = await lerTodasSeriesArmazenadas();
-    const found = merged.find((s) => s.id === serieId);
+    const naNuvem = await lerSeriesNaNuvem();
+    const found = naNuvem.find((s) => s.id === serieId);
     if (found) return criarSerieComDefaults(found);
 
     if (i < tentativas - 1) {
@@ -267,18 +311,23 @@ async function verificarSeriePersistida(serieId, tentativas = 5) {
 }
 
 async function obterSeriesParaEdicao() {
-  const { merged } = await lerTodasSeriesArmazenadas();
-  return merged;
+  return lerSeriesNaNuvem();
 }
 
 export async function listarModelos() {
-  const snapshot = await lerTodasSeriesArmazenadas();
-
-  if (snapshot.merged.length) {
-    return snapshot.merged;
+  try {
+    await migrarSeriesLocalStorageParaNuvem();
+  } catch (error) {
+    console.warn('[agefin] Falha ao migrar contas fixas do cache local:', error);
   }
 
-  if (empresaTemArmazenamentoSeries(snapshot.empresa)) {
+  const naNuvem = await lerSeriesNaNuvem();
+  if (naNuvem.length) {
+    return naNuvem;
+  }
+
+  const empresa = await obterRegistroDadosEmpresa();
+  if (empresaTemArmazenamentoSeries(empresa)) {
     return sincronizarModelosDesdeLancamentos();
   }
 
@@ -312,14 +361,8 @@ export async function salvarSerie(payload) {
   const verificada = await verificarSeriePersistida(body.id);
   if (verificada) return verificada;
 
-  const noLocal = seriesNorm.find((s) => s.id === body.id);
-  if (noLocal) {
-    console.warn('[agefin] Conta salva localmente; nuvem não confirmou ainda.');
-    return criarSerieComDefaults(noLocal);
-  }
-
   throw new Error(
-    'Não foi possível gravar a conta. Verifique a conexão e tente novamente.',
+    'Não foi possível gravar a conta na base de dados. Verifique a conexão e tente novamente.',
   );
 }
 
