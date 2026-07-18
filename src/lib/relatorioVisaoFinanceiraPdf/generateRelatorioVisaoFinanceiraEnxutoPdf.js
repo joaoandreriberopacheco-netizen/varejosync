@@ -9,11 +9,11 @@ const COLOR = {
 };
 
 const FONT = {
-  itemTitle: 9.5,
-  itemDetail: 8,
-  itemValue: 9.5,
-  grupo: 10,
-  resumo: 8.8,
+  itemTitle: 10.5,
+  itemDetail: 9,
+  itemValue: 10.5,
+  grupo: 11.5,
+  resumo: 9.2,
 };
 
 const safe = (value) => normalizePdfText(value);
@@ -79,6 +79,13 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     doc.line(x0, atY, x1, atY);
   };
 
+  const ruleVertical = (x, y0, y1, color = COLOR.line, width = 0.14) => {
+    if (y1 <= y0) return;
+    doc.setDrawColor(...color);
+    doc.setLineWidth(width);
+    doc.line(x, y0, x, y1);
+  };
+
   const addPage = (titulo = 'CONTINUACAO') => {
     doc.addPage();
     y = 13;
@@ -122,11 +129,11 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     setFont('normal', FONT.itemDetail, COLOR.muted);
     const detalheLines = detalhe ? doc.splitTextToSize(safe(detalhe), descW) : [];
 
-    const titleLH = 3.9;
-    const detailLH = 3.5;
+    const titleLH = 4.2;
+    const detailLH = 3.8;
     const titleBlock = nomeLines.length * titleLH;
-    const detailBlock = detalheLines.length ? detalheLines.length * detailLH + 0.8 : 0;
-    const height = Math.max(7, titleBlock + detailBlock + 2.2);
+    const detailBlock = detalheLines.length ? detalheLines.length * detailLH + 1 : 0;
+    const height = Math.max(8, titleBlock + detailBlock + 2.6);
 
     return { titulo, detalhe, nomeLines, detalheLines, titleLH, detailLH, height };
   };
@@ -181,33 +188,35 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     const list = items || [];
     if (!list.length) return;
 
-    const useDuasColunas = list.length >= 4;
-    if (!useDuasColunas) {
-      for (const item of list) drawItemLinha(item, options);
+    if (list.length === 1) {
+      drawItemLinha(list[0], options);
       return;
     }
 
-    const colGap = 5;
+    const colGap = 6;
     const colW = (contentW - colGap) / 2;
     const col1X = margin + 2;
     const col2X = margin + 2 + colW + colGap;
+    const centerX = col1X + colW + colGap / 2;
 
     for (let i = 0; i < list.length; i += 2) {
       const left = list[i];
       const rightItem = list[i + 1];
-      const valueW = Math.min(24, colW * 0.34);
+      const valueW = Math.min(26, colW * 0.36);
       const descW = Math.max(18, colW - valueW - 2);
       const hLeft = buildItemLayout(left, descW, options).height;
       const hRight = rightItem ? buildItemLayout(rightItem, descW, options).height : 0;
-      const rowHeight = Math.max(hLeft, hRight, 7);
+      const rowHeight = Math.max(hLeft, hRight, 8);
 
-      ensureSpace(rowHeight + 5);
+      ensureSpace(rowHeight + 6);
       const rowTop = y;
       drawItemLinhaAt(left, col1X, colW, rowTop, options);
       if (rightItem) drawItemLinhaAt(rightItem, col2X, colW, rowTop, options);
-      y = rowTop + rowHeight + 1.4;
-      rule(y, COLOR.lightLine, 0.06, margin + 2, right);
-      y += 2.6;
+
+      y = rowTop + rowHeight + 1.6;
+      ruleVertical(centerX, rowTop - 0.8, y + 0.4, COLOR.line, 0.16);
+      rule(y, COLOR.lightLine, 0.07, col1X, col2X + colW);
+      y += 3;
     }
   };
 
@@ -220,13 +229,16 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   };
 
   const drawGrupoHeader = (grupo) => {
-    ensureSpace(12);
+    ensureSpace(16);
+    rule(y, COLOR.line, 0.16);
+    y += 3.5;
     setFont('bold', FONT.grupo);
     doc.text(safe(String(grupo.label || '').toUpperCase()), margin, y);
+    setFont('bold', FONT.grupo);
     doc.text(moeda(grupo.subtotal), right, y, { align: 'right' });
-    y += 3.5;
-    rule(y, COLOR.line, 0.12);
     y += 4.5;
+    rule(y, COLOR.line, 0.16);
+    y += 5;
   };
 
   const drawGrupoExplodido = (grupo) => {
@@ -393,9 +405,9 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   y += 2;
   rule(y);
   y += 5;
-  setFont('bold', 10.5);
+  setFont('bold', 12);
   doc.text('PLANO EXPLODIDO', margin, y);
-  y += 5;
+  y += 6;
 
   for (const grupo of grupos) {
     drawGrupoExplodido(grupo);
@@ -505,6 +517,6 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'visao_financeira_enxuto_a4_v3',
+    version: 'visao_financeira_enxuto_a4_v4',
   };
 }
