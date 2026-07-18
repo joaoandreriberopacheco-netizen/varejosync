@@ -361,8 +361,16 @@ export function statusCompetenciaEfetivo(comp, hojeIso = dataHojeIso()) {
   if (comp.status === 'fechado') return 'fechado';
   if (lancamentoPago(comp._lancamento)) return 'fechado';
   if (lancamentoCancelado(comp._lancamento)) return 'cancelado';
-  if (competenciaDeveEstarFechada(comp.competencia, hojeIso)) return 'fechado';
   return 'rascunho';
+}
+
+/** Só bloqueia edição quando o financeiro já marcou pago ou cancelado. */
+export function competenciaBloqueadaEdicao(comp) {
+  if (!comp || comp._fantasmaParcelamento) return true;
+  if (comp._modoPlanejamento) return false;
+  if (lancamentoPago(comp._lancamento)) return true;
+  if (lancamentoCancelado(comp._lancamento)) return true;
+  return false;
 }
 
 export function competenciaEstaFechada(comp, hojeIso = dataHojeIso()) {

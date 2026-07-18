@@ -10,12 +10,18 @@ import {
   formatCompetenciaLabel,
   statusCompetenciaEfetivo,
   tagFrequenciaSerie,
-  competenciaEstaFechada,
+  competenciaBloqueadaEdicao,
   isCompetenciaPlanejamento,
   valorEfetivoCompetencia,
   dataVencimentoNaCompetencia,
 } from '@/lib/agefinPrevisaoCalculos';
 import { labelParcelaCurta } from '@/lib/agefinParcelamentoCalculos';
+import { roundToTwoDecimals } from '@/lib/financialUtils';
+import { lancamentoPago } from '@/lib/agefinConsultaFilters';
+
+function parseValorInput(raw) {
+  return roundToTwoDecimals(raw);
+}
 
 function LinhaValor({ label, valor }) {
   return (
@@ -69,14 +75,15 @@ export default function AgefinPrevisaoDetalheDrawer({
   if (!competencia) return null;
 
   const planejamento = isCompetenciaPlanejamento(competencia);
-  const fechada = !planejamento && competenciaEstaFechada(competencia);
+  const bloqueada = competenciaBloqueadaEdicao(competencia);
+  const paga = lancamentoPago(competencia._lancamento);
   const statusEfetivo = statusCompetenciaEfetivo(competencia);
   const valor =
     parcela && competencia.valor_previsto != null
       ? Number(competencia.valor_previsto) || 0
       : valorEfetivoCompetencia(competencia, modelo);
   const dia = modelo?.dia_vencimento || competencia.dia_vencimento || 10;
-  const valorNumerico = parseFloat(valorInput) || 0;
+  const valorNumerico = parseValorInput(valorInput);
   const valorMudou = Math.abs(valorNumerico - valor) > 0.009;
   const venOriginal = parcela
     ? (competencia._parcelaDataVencimento ||
@@ -85,13 +92,13 @@ export default function AgefinPrevisaoDetalheDrawer({
       ? (competencia._lancamento.data_vencimento || '').slice(0, 10)
       : dataVencimentoNaCompetencia(competencia.competencia, dia);
   const vencimentoMudou = (vencimentoInput || '').slice(0, 10) !== venOriginal;
-  const podeEditar = !fechada && !fantasma;
-  const temAlteracao = podeEditar && valorNumerico > 0 && (valorMudou || vencimentoMudou);
+  const podeEditar = !bloqueada;
+  const podeSalvar = podeEditar && valorNumerico > 0;
   const tagFreq = tagFrequenciaSerie(modelo || competencia);
   const parcelaLabel = labelParcelaCurta(competencia);
 
   const handleSalvar = () => {
-    if (!temAlteracao || salvandoManual) return;
+    if (!podeSalvar || salvandoManual) return;
     if (parcela && onSalvarParcela) {
       onSalvarParcela({
         parcelamentoId: competencia._parcelamentoId,
@@ -130,7 +137,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                 </P38HelpPopover>
               </span>
             )}
-            {statusEfetivo === 'fechado' && <Badge>Fechada</Badge>}
+            {statusEfetivo === 'fechado' && <Badge>{paga ? 'Paga' : 'Fechada'}</Badge>}
             {statusEfetivo === 'rascunho' && !fantasma && <Badge variant="outline">Em aberto</Badge>}
           </DrawerTitle>
           <p className="text-xs text-muted-foreground">
@@ -139,6 +146,11 @@ export default function AgefinPrevisaoDetalheDrawer({
               : formatCicloAgefinCompetencia(competencia.competencia, dia)}
             {competencia.terceiro_nome && ` · ${competencia.terceiro_nome}`}
           </p>
+          {bloqueada && paga && (
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+              Conta já paga pelo financeiro — valor e vencimento não podem mais ser alterados aqui.
+            </p>
+          )}
         </DrawerHeader>
 
         <div className="overflow-y-auto px-4 pb-6">
@@ -196,7 +208,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                       ? 'Ajuste valor e vencimento desta parcela.'
                       : planejamento
                         ? 'Ajuste valor e vencimento antes de abrir o mês. Salvar grava no cadastro; Anexar guarda o PDF como referência.'
-                        : 'Digite valor e vencimento manualmente. O boleto (se houver) é só anexo de referência.'}
+                        : 'Edite valor e vencimento e toque em Salvar. Se a conta já estiver aberta no mês, o financeiro é atualizado automaticamente.'}
                   </p>
                 </>
               ) : (
@@ -227,9 +239,9 @@ export default function AgefinPrevisaoDetalheDrawer({
             {!fantasma && podeEditar && (onSalvarManual || (parcela && onSalvarParcela)) && (
               <Button
                 className="w-full"
-                variant={temAlteracao ? 'default' : 'outline'}
+                variant={valorMudou || vencimentoMudou ? 'default' : 'outline'}
                 onClick={handleSalvar}
-                disabled={!temAlteracao || salvandoManual || valorNumerico <= 0}
+                disabled={!podeSalvar || salvandoManual}
               >
                 {salvandoManual ? 'Salvando…' : 'Salvar'}
               </Button>
@@ -261,7 +273,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                 {abrindoMes ? 'Abrindo…' : 'Abrir esta conta no mês'}
               </Button>
             )}
-            {!fechada && !parcela && onVincularBoleto && (
+            {!bloqueada && !parcela && onVincularBoleto && (
               <Button
                 variant="outline"
                 className="w-full gap-2"
@@ -272,7 +284,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                 {abrindoMes ? 'A preparar anexo…' : 'Anexar boleto (PDF)'}
               </Button>
             )}
-            {!planejamento && !fechada && !parcela && onSyncFinanceiro && (
+            {!planejamento && !bloqueada && !parcela && onSyncFinanceiro && (
               <Button variant="secondary" className="w-full gap-2" onClick={onSyncFinanceiro} disabled={syncing}>
                 <Link2 className="h-4 w-4" />
                 Enviar ao financeiro
