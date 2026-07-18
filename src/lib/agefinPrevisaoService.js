@@ -599,21 +599,84 @@ function reconstruirSeriesDesdeLancamentos(lancamentos = [], seriesExistentes = 
   return reconstruidas;
 }
 
+function idsSeriesNaoMensais(series = []) {
+  return new Set(
+    (series || [])
+      .filter((s) => normalizarFrequenciaSerie(s?.frequencia) !== FREQUENCIA_SERIE.MENSAL)
+      .map((s) => s.id)
+      .filter(Boolean),
+  );
+}
+
+/** Avalia fontes que podem repor contas anuais/trimestrais ausentes do cadastro atual. */
+function avaliarCandidatasRecuperacao(snapshot, lancamentos = []) {
+  const merged = snapshot.merged || [];
+  const backup = lerSeriesBackupEmpresa(snapshot.empresa);
+  const reconstruidas = reconstruirSeriesDesdeLancamentos(lancamentos, merged);
+  const mergedIds = new Set(merged.map((s) => s.id));
+  const candidatas = mesclarSeriesPorId(
+    merged,
+    backup,
+    reconstruidas,
+    snapshot.entityRows,
+    snapshot.localRows,
+  );
+  const novas = candidatas.filter((s) => !mergedIds.has(s.id));
+  const naoMensaisNovas = novas.filter(
+    (s) => normalizarFrequenciaSerie(s.frequencia) !== FREQUENCIA_SERIE.MENSAL,
+  );
+
+  const atualNaoMensais = contarSeriesNaoMensais(merged);
+  const backupNaoMensais = contarSeriesNaoMensais(backup);
+  const localNaoMensais = contarSeriesNaoMensais(snapshot.localRows);
+  const entityNaoMensais = contarSeriesNaoMensais(snapshot.entityRows);
+  const reconstruidasNaoMensais = contarSeriesNaoMensais(reconstruidas);
+
+  const atualIds = idsSeriesNaoMensais(merged);
+  const fontesExternas = mesclarSeriesPorId(backup, snapshot.localRows, snapshot.entityRows, reconstruidas);
+  const faltandoNaoMensais = [...idsSeriesNaoMensais(fontesExternas)].filter((id) => !atualIds.has(id)).length;
+
+  const fontes = [];
+  if ([...idsSeriesNaoMensais(backup)].some((id) => !atualIds.has(id))) fontes.push('backup');
+  if ([...idsSeriesNaoMensais(snapshot.localRows)].some((id) => !atualIds.has(id))) fontes.push('local');
+  if ([...idsSeriesNaoMensais(snapshot.entityRows)].some((id) => !atualIds.has(id))) fontes.push('entidade');
+  if (reconstruidasNaoMensais > 0 && reconstruidas.some((s) => !mergedIds.has(s.id))) fontes.push('financeiro');
+
+  const precisaRecuperacao = naoMensaisNovas.length > 0 || faltandoNaoMensais > 0;
+
+  return {
+    atual: merged.length,
+    atualNaoMensais,
+    local: snapshot.localRows.length,
+    localNaoMensais,
+    entidade: snapshot.entityRows.length,
+    entityNaoMensais,
+    empresa: snapshot.empresaRows.length,
+    backup: backup.length,
+    backupNaoMensais,
+    reconstruidas: reconstruidas.length,
+    reconstruidasNaoMensais,
+    candidatasRecuperacao: novas.length,
+    candidatasNaoMensais: naoMensaisNovas.length,
+    faltandoNaoMensais,
+    precisaRecuperacao,
+    fontes,
+  };
+}
+
 /** Diagnóstico das fontes de armazenamento (sem expor dados sensíveis). */
 export async function diagnosticarSeriesArmazenadas() {
   const snapshot = await lerTodasSeriesArmazenadas();
   const empresa = snapshot.empresa || (await obterRegistroDadosEmpresa());
-  const backup = lerSeriesBackupEmpresa(empresa);
-  const backupAt = empresa?.[DADOS_EMPRESA_SERIES_BACKUP_AT_KEY] || empresa?.dados?.[DADOS_EMPRESA_SERIES_BACKUP_AT_KEY] || null;
+  const backupAt =
+    empresa?.[DADOS_EMPRESA_SERIES_BACKUP_AT_KEY] ||
+    empresa?.dados?.[DADOS_EMPRESA_SERIES_BACKUP_AT_KEY] ||
+    null;
+  const lancamentos = await listarLancamentosRecorrentes();
+  const avaliacao = avaliarCandidatasRecuperacao({ ...snapshot, empresa }, lancamentos);
 
   return {
-    atual: snapshot.merged.length,
-    atualNaoMensais: contarSeriesNaoMensais(snapshot.merged),
-    local: snapshot.localRows.length,
-    entidade: snapshot.entityRows.length,
-    empresa: snapshot.empresaRows.length,
-    backup: backup.length,
-    backupNaoMensais: contarSeriesNaoMensais(backup),
+    ...avaliacao,
     backupAt,
   };
 }
@@ -630,7 +693,13 @@ export async function recuperarSeriesPerdidas() {
   const reconstruidas = reconstruirSeriesDesdeLancamentos(lancamentos, snapshot.merged);
 
   const antesIds = new Set(snapshot.merged.map((s) => s.id));
-  const candidatas = mesclarSeriesPorId(snapshot.merged, backup, reconstruidas);
+  const candidatas = mesclarSeriesPorId(
+    snapshot.merged,
+    backup,
+    reconstruidas,
+    snapshot.entityRows,
+    snapshot.localRows,
+  );
   const novas = candidatas.filter((s) => !antesIds.has(s.id));
   const naoMensaisNovas = novas.filter(
     (s) => normalizarFrequenciaSerie(s.frequencia) !== FREQUENCIA_SERIE.MENSAL,

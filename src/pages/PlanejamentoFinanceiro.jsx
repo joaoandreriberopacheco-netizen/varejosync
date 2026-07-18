@@ -55,8 +55,6 @@ import {
   sincronizarLancamentoFinanceiro,
   atualizarCentroCustoSerie,
   atualizarCompetenciaManual,
-  diagnosticarSeriesArmazenadas,
-  recuperarSeriesPerdidas,
 } from '@/lib/agefinPrevisaoService';
 import {
   criarParcelamento,
@@ -64,6 +62,7 @@ import {
   atualizarParcela,
   removerParcelamento,
 } from '@/lib/agefinParcelamentoService';
+import AgefinRecuperarSeriesBanner from '@/components/agefin-previsao/AgefinRecuperarSeriesBanner';
 import { parcelamentoAfetaSerieNoMes, montarCompetenciasVisaoComParcelas } from '@/lib/agefinParcelamentoCalculos';
 
 export default function PlanejamentoFinanceiroPage() {
@@ -83,13 +82,6 @@ export default function PlanejamentoFinanceiroPage() {
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
   const [draggingSerieId, setDraggingSerieId] = useState('');
-  const [recuperandoSeries, setRecuperandoSeries] = useState(false);
-
-  const { data: diagSeries } = useQuery({
-    queryKey: ['agefin-previsao', 'series-diagnostico'],
-    queryFn: diagnosticarSeriesArmazenadas,
-    staleTime: 30_000,
-  });
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
   const [showImportador, setShowImportador] = useState(false);
   const [importadorLancamentoId, setImportadorLancamentoId] = useState(null);
@@ -302,32 +294,6 @@ export default function PlanejamentoFinanceiroPage() {
       toast({ title: 'Erro', description: e.message, variant: 'destructive' });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleRecuperarSeries = async () => {
-    setRecuperandoSeries(true);
-    try {
-      const resultado = await recuperarSeriesPerdidas();
-      invalidate();
-      queryClient.invalidateQueries({ queryKey: ['agefin-previsao', 'series-diagnostico'] });
-      if (resultado.recuperadas === 0) {
-        toast({
-          title: 'Nada novo para recuperar',
-          description:
-            'Não encontramos contas anuais/trimestrais em backup ou no financeiro. Se cadastrou hoje no mesmo navegador, peça ajuda para ler o backup local.',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Contas recuperadas',
-          description: `${resultado.recuperadas} conta(s) restaurada(s), sendo ${resultado.naoMensais} anual(is)/trimestral(is).`,
-        });
-      }
-    } catch (e) {
-      toast({ title: 'Erro ao recuperar', description: e.message, variant: 'destructive' });
-    } finally {
-      setRecuperandoSeries(false);
     }
   };
 
@@ -547,6 +513,8 @@ export default function PlanejamentoFinanceiroPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Contas fixas mensais — energia, telefone, internet…</p>
       </div>
 
+      <AgefinRecuperarSeriesBanner className="mt-4" />
+
       <Tabs defaultValue="contas" className="w-full mt-4">
         <TabsList
           className={cn(
@@ -648,28 +616,6 @@ export default function PlanejamentoFinanceiroPage() {
         </TabsContent>
 
         <TabsContent value="contas" className="mt-4 space-y-3">
-          {diagSeries && diagSeries.backupNaoMensais > diagSeries.atualNaoMensais ? (
-            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-3 space-y-2">
-              <p className="text-sm font-medium text-foreground">
-                Contas anuais ou trimestrais podem ter sido perdidas
-              </p>
-              <p className="text-xs text-muted-foreground">
-                O backup do sistema tem {diagSeries.backupNaoMensais} conta(s) não mensais, mas hoje só
-                aparecem {diagSeries.atualNaoMensais}. Tente recuperar antes de cadastrar tudo de novo.
-              </p>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="rounded-lg"
-                disabled={recuperandoSeries || saving}
-                onClick={handleRecuperarSeries}
-              >
-                {recuperandoSeries ? 'Recuperando…' : 'Recuperar contas anuais/trimestrais'}
-              </Button>
-            </div>
-          ) : null}
-
           <div className="flex flex-wrap items-center justify-between gap-2">
             <P38HelpPopover label="Ajuda: contas fixas" side="bottom" align="start">
               <p className="font-medium text-foreground">Blocos por recorrência</p>
