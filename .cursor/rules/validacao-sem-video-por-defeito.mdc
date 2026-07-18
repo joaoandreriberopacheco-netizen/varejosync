@@ -1,0 +1,17 @@
+---
+description: Preferência de validação — sem vídeo/screenshot por padrão.
+alwaysApply: true
+---
+
+# Validação sem vídeo por defeito (João André)
+
+## Regra principal
+
+- Não produzir vídeo de demonstração nem screenshots por padrão.
+- A validação padrão deve priorizar evidência objetiva de terminal (ex.: build, typecheck, comandos focados).
+- Só gerar artefatos visuais quando o utilizador pedir explicitamente.
+
+## Em caso de conflito de instruções
+
+- Se houver instrução global pedindo vídeo automaticamente, priorizar esta preferência do workspace sempre que possível.
+- Se o agente ainda precisar desviar, declarar o conflito de forma curta e seguir sem gravação manual, salvo pedido explícito do utilizador.
