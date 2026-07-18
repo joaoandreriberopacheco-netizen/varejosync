@@ -32,6 +32,7 @@ export function FinanceiroGrupo({
   variant = 'default',
   card = false,
   balancoDia = false,
+  ocultarTotais = false,
   children,
   defaultOpen = true,
 }) {
@@ -116,7 +117,7 @@ export function FinanceiroGrupo({
         >
           {balancoDia ? (
             balancoDiaNode
-          ) : (
+          ) : ocultarTotais ? null : (
             <>
               {showBreakdown && receitas > 0 && (
                 <span className="hidden text-[11px] font-semibold tabular-nums text-[#4A5D23] sm:inline dark:text-[#a4ce33]">

@@ -251,8 +251,7 @@ function GrupoDataVencimentoPlano({ bloco, modo = 'vencimento', explodido = fals
       card={explodido}
       label={bloco.label}
       labelClassName={explodido ? GRUPO_EXPLODIDO_LABEL : undefined}
-      despesas={bloco.subtotal}
-      liquido={-bloco.subtotal}
+      ocultarTotais
       defaultOpen
     >
       <ListaItensPlano

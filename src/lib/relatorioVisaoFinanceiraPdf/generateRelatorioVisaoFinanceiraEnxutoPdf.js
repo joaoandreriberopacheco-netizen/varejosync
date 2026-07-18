@@ -227,11 +227,10 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   };
 
   const drawDateBucket = (bloco) => {
-    ensureSpace(7);
+    ensureSpace(6);
     setFont('bold', 9.5, COLOR.muted);
     doc.text(versal(bloco.label), colX(), y);
-    doc.text(moeda(bloco.subtotal), colX() + colWidth(), y, { align: 'right' });
-    advance(4.8);
+    advance(4.2);
     drawItensLista(bloco.items || [], { modoVencimento: true, mostrarDetalhe: false, indent: 2.5 });
     advance(1.5);
   };
@@ -476,6 +475,6 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'visao_financeira_enxuto_a4_v6',
+    version: 'visao_financeira_enxuto_a4_v7',
   };
 }
