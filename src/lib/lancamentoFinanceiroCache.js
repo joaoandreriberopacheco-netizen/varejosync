@@ -1,5 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
+import { lancamentoRecorrenteContaPagarParaListaBoleto } from '@/lib/agefinLancamentosRecorrencia';
 
 const CACHE_TTL_MS = 90_000;
 
@@ -11,6 +12,21 @@ const mesVencimentoCache = new Map();
 
 /** @type {Map<string, { at: number, data?: unknown[], promise?: Promise<unknown[]> }>} */
 const mesBudgetCache = new Map();
+
+function dedupPorId(rows) {
+  const porId = new Map();
+  for (const row of rows || []) {
+    if (row?.id) porId.set(row.id, row);
+  }
+  return [...porId.values()];
+}
+
+/** Últimos 24 meses — cobre contas antigas sem flag is_recorrente. */
+function dataLimiteRecorrentes() {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 24);
+  return d.toISOString().slice(0, 10);
+}
 
 function competenciaLimites(competencia) {
   const intervalo = competenciaParaIntervalo(competencia);
@@ -67,7 +83,7 @@ export function invalidarCacheLancamentosFinanceiros() {
   mesBudgetCache.clear();
 }
 
-/** ~25 contas recorrentes — busca só is_recorrente (não os 8000 lançamentos). */
+/** ~25 contas recorrentes — inclui lançamentos com tag recorrente / frequência, não só is_recorrente. */
 export async function listarLancamentosRecorrentesCache({ force = false } = {}) {
   const now = Date.now();
   if (!force && recorrentesCache?.data && now - recorrentesCache.at < CACHE_TTL_MS) {
@@ -75,11 +91,21 @@ export async function listarLancamentosRecorrentesCache({ force = false } = {}) 
   }
   if (recorrentesCache?.promise) return recorrentesCache.promise;
 
-  const promise = base44.entities.LancamentoFinanceiro.filter(
-    { is_recorrente: true },
-    '-data_vencimento',
-    400,
-  )
+  const promise = (async () => {
+    const desde = dataLimiteRecorrentes();
+    const [porFlag, porDespesaRecente] = await Promise.all([
+      base44.entities.LancamentoFinanceiro.filter({ is_recorrente: true }, '-data_vencimento', 400).catch(
+        () => [],
+      ),
+      base44.entities.LancamentoFinanceiro.filter(
+        { tipo: 'Despesa', data_vencimento: { $gte: desde } },
+        '-data_vencimento',
+        1200,
+      ).catch(() => []),
+    ]);
+    const merged = dedupPorId([...(porFlag || []), ...(porDespesaRecente || [])]);
+    return merged.filter(lancamentoRecorrenteContaPagarParaListaBoleto);
+  })()
     .then((rows) => {
       const data = Array.isArray(rows) ? rows : [];
       recorrentesCache = { at: Date.now(), data };

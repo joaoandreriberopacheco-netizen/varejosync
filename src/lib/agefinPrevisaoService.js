@@ -21,7 +21,7 @@ import {
   atualizarDadosEmpresa,
   obterRegistroDadosEmpresa as obterDadosEmpresa,
 } from '@/lib/dadosEmpresaMerge';
-import { listarLancamentosRecorrentesCache } from '@/lib/lancamentoFinanceiroCache';
+import { listarLancamentosRecorrentesCache, listarLancamentosVencimentoCompetenciaCache } from '@/lib/lancamentoFinanceiroCache';
 
 export { listarCentrosCustoRegistros };
 
@@ -439,11 +439,18 @@ export async function sincronizarModelosDesdeLancamentos() {
 }
 
 export async function listarLancamentosCompetencia(competencia) {
-  const lancamentos = await listarLancamentosRecorrentesCache();
-  return (lancamentos || []).filter((lf) => {
-    if (!lancamentoRecorrenteContaPagarParaListaBoleto(lf)) return false;
-    return mesReferenciaLancamento(lf) === competencia;
-  });
+  const [porVencimento, recorrentes] = await Promise.all([
+    listarLancamentosVencimentoCompetenciaCache(competencia),
+    listarLancamentosRecorrentesCache(),
+  ]);
+
+  const porId = new Map();
+  for (const lf of [...(porVencimento || []), ...(recorrentes || [])]) {
+    if (!lancamentoRecorrenteContaPagarParaListaBoleto(lf)) continue;
+    if (mesReferenciaLancamento(lf) !== competencia) continue;
+    if (lf?.id) porId.set(lf.id, lf);
+  }
+  return [...porId.values()];
 }
 
 /** Lançamentos recorrentes (conta a pagar) para alimentar a projeção de 12 meses. */

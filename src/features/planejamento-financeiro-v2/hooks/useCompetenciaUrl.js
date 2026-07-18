@@ -8,9 +8,7 @@ const ABAS_VALIDAS = new Set(['contas', 'previsao', 'projecao']);
 function abaInicialDosParams(searchParams) {
   const abaParam = searchParams.get('aba');
   if (abaParam && ABAS_VALIDAS.has(abaParam)) return abaParam;
-  const comp = searchParams.get('competencia');
-  if (comp && COMPETENCIA_RE.test(comp)) return 'previsao';
-  return 'contas';
+  return 'previsao';
 }
 
 export function useCompetenciaUrl() {
@@ -38,7 +36,7 @@ export function useCompetenciaUrl() {
       const next = new URLSearchParams(searchParams);
       if (competencia) next.set('competencia', competencia);
       else next.delete('competencia');
-      if (aba && aba !== 'contas') next.set('aba', aba);
+      if (aba && aba !== 'previsao') next.set('aba', aba);
       else next.delete('aba');
       setSearchParams(next, { replace: true });
     },
