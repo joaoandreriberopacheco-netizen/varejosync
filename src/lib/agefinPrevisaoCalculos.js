@@ -61,15 +61,49 @@ export function normalizarFrequenciaSerie(frequencia) {
   return found || FREQUENCIA_SERIE.MENSAL;
 }
 
+/** Índice na escala Mensal (0) → Anual (4) — maior = menos recorrente. */
+export function indiceFrequenciaSerie(frequencia) {
+  const idx = ORDEM_FREQUENCIAS_CONTAS_FIXAS.indexOf(normalizarFrequenciaSerie(frequencia));
+  return idx >= 0 ? idx : 0;
+}
+
+/** Prefere a frequência mais específica (ex.: Anual vence Mensal genérico do LF). */
+export function escolherFrequenciaCadastro(overlay, serie) {
+  const candidatas = [];
+  if (serie?.frequencia != null && serie.frequencia !== '') {
+    candidatas.push(normalizarFrequenciaSerie(serie.frequencia));
+  }
+  if (overlay?.frequencia != null && overlay.frequencia !== '') {
+    candidatas.push(normalizarFrequenciaSerie(overlay.frequencia));
+  }
+  if (!candidatas.length) return FREQUENCIA_SERIE.MENSAL;
+  return candidatas.reduce((best, freq) =>
+    indiceFrequenciaSerie(freq) > indiceFrequenciaSerie(best) ? freq : best,
+  );
+}
+
+/** Competência YYYY-MM do mês âncora (ex.: IPTU em março). */
+export function competenciaAncoraSerie(modelo, ref = getCompetenciaAtual()) {
+  const mesRef = Math.min(12, Math.max(1, Number(modelo?.mes_vencimento) || 1));
+  const anoRef = parseInt(String(ref || '').slice(0, 4), 10) || new Date().getFullYear();
+  const mesAtual = parseInt(String(ref || '').slice(5, 7), 10) || new Date().getMonth() + 1;
+  let ano = anoRef;
+  const f = normalizarFrequenciaSerie(modelo?.frequencia);
+  if (f === FREQUENCIA_SERIE.ANUAL && mesRef < mesAtual) {
+    ano += 1;
+  }
+  return `${ano}-${String(mesRef).padStart(2, '0')}`;
+}
+
 /** Mapa grupo_lancamento_id → frequência inferida dos lançamentos recorrentes. */
 export function mapaFrequenciaPorGrupoLancamento(lancamentos = []) {
   const map = {};
   for (const lf of lancamentos || []) {
     const gid = lf?.grupo_lancamento_id;
     const raw = lf?.frequencia_recorrencia;
-    if (!gid || !raw) continue;
+    if (!gid || !raw || raw === 'Único') continue;
     const freq = normalizarFrequenciaSerie(raw);
-    if (!map[gid] || freq !== FREQUENCIA_SERIE.MENSAL) {
+    if (!map[gid] || indiceFrequenciaSerie(freq) > indiceFrequenciaSerie(map[gid])) {
       map[gid] = freq;
     }
   }

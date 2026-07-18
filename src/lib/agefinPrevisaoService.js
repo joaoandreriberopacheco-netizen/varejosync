@@ -8,10 +8,13 @@ import { lancamentoPago, lancamentoCancelado } from '@/lib/agefinConsultaFilters
 import {
   competenciaDeveEstarFechada,
   competenciaBloqueadaEdicao,
+  competenciaAncoraSerie,
   criarSerieComDefaults,
   dataVencimentoNaCompetencia,
+  escolherFrequenciaCadastro,
   gerarGrupoLancamentoId,
   getCompetenciaAtual,
+  indiceFrequenciaSerie,
   mapaFrequenciaPorGrupoLancamento,
   normalizarFrequenciaSerie,
   FREQUENCIA_SERIE,
@@ -181,12 +184,6 @@ function agruparLancamentosPorGrupo(lancamentos = []) {
 function frequenciaDoGrupoLancamentos(grupoId, rows = []) {
   const mapa = mapaFrequenciaPorGrupoLancamento(rows);
   if (grupoId && mapa[grupoId]) return mapa[grupoId];
-
-  const explicita = rows
-    .filter((lf) => lf?.frequencia_recorrencia && lf.frequencia_recorrencia !== 'Único')
-    .sort((a, b) => (b.data_vencimento || '').localeCompare(a.data_vencimento || ''));
-  if (explicita.length) return normalizarFrequenciaSerie(explicita[0].frequencia_recorrencia);
-
   return FREQUENCIA_SERIE.MENSAL;
 }
 
@@ -221,10 +218,11 @@ function derivarSerieDoGrupoLancamentos(grupoId, rows = []) {
   });
 }
 
-/** Une cadastro (overlay) com dados do LF — frequência e vencimento vêm do formulário. */
+/** Une cadastro (overlay) com dados do LF — frequência mais específica vence. */
 function aplicarOverlaySerie(serie, overlay) {
   if (!overlay || !serie) return serie;
-  const freqOverlay = overlay.frequencia ? normalizarFrequenciaSerie(overlay.frequencia) : null;
+  const frequencia = escolherFrequenciaCadastro(overlay, serie);
+  const mesOverlay = overlay.mes_vencimento != null ? Number(overlay.mes_vencimento) : null;
   return criarSerieComDefaults({
     ...serie,
     nome: String(overlay.nome || '').trim() ? overlay.nome : serie.nome,
@@ -232,9 +230,8 @@ function aplicarOverlaySerie(serie, overlay) {
     terceiro_id: overlay.terceiro_id || serie.terceiro_id,
     categoria_id: overlay.categoria_id || serie.categoria_id,
     categoria_nome: overlay.categoria_nome || serie.categoria_nome,
-    frequencia: freqOverlay || serie.frequencia,
-    mes_vencimento:
-      overlay.mes_vencimento != null ? Number(overlay.mes_vencimento) : serie.mes_vencimento,
+    frequencia,
+    mes_vencimento: mesOverlay || serie.mes_vencimento,
     dia_vencimento:
       overlay.dia_vencimento != null ? Number(overlay.dia_vencimento) : serie.dia_vencimento,
     valor_previsto:
@@ -253,7 +250,15 @@ function indexarOverlaysSeries(overlays = []) {
   const byGrupo = new Map();
   const byId = new Map();
   for (const row of overlays || []) {
-    if (row?.grupo_lancamento_id) byGrupo.set(row.grupo_lancamento_id, row);
+    if (row?.grupo_lancamento_id) {
+      const prev = byGrupo.get(row.grupo_lancamento_id);
+      if (
+        !prev ||
+        indiceFrequenciaSerie(row.frequencia) > indiceFrequenciaSerie(prev.frequencia)
+      ) {
+        byGrupo.set(row.grupo_lancamento_id, row);
+      }
+    }
     if (row?.id) byId.set(row.id, row);
   }
   return { byGrupo, byId };
@@ -554,10 +559,15 @@ export async function listarModelos() {
   }
 
   const gruposLf = new Set(porGrupo.keys());
+  const gruposNaLista = new Set(series.map((s) => s.grupo_lancamento_id).filter(Boolean));
+
   for (const overlay of overlaysNuvem || []) {
-    if (serieEstaExcluida(overlay, chavesExcluidas)) continue;
+    if (serieEstaExcluida(overlay, chavesExcluidas) || overlay.ativo === false) continue;
     if (!serieRascunhoSemLancamento(overlay, gruposLf)) continue;
+    const gid = overlay.grupo_lancamento_id;
+    if (gid && gruposNaLista.has(gid)) continue;
     series.push(criarSerieComDefaults(overlay));
+    if (gid) gruposNaLista.add(gid);
   }
 
   return deduplicarSeriesPorGrupo(filtrarSeriesNaoExcluidas(series, chavesExcluidas));
@@ -627,11 +637,11 @@ async function sincronizarSerieNoFinanceiro(modelo) {
 
   let criados = 0;
   if (!rows.length) {
-    const comp = getCompetenciaAtual();
-    if (serieDeveAparecerNaCompetencia(modelo, comp)) {
-      await base44.entities.LancamentoFinanceiro.create(payloadLancamentoAuto(modelo, comp));
-      criados = 1;
-    }
+    const compAtual = getCompetenciaAtual();
+    const comp =
+      serieDeveAparecerNaCompetencia(modelo, compAtual) ? compAtual : competenciaAncoraSerie(modelo, compAtual);
+    await base44.entities.LancamentoFinanceiro.create(payloadLancamentoAuto(modelo, comp));
+    criados = 1;
   }
 
   if (atualizados || criados) invalidarCacheLancamentosFinanceiros();
@@ -685,7 +695,7 @@ export async function salvarSerie(payload) {
     const naRespostaEmpresa = empresaRows.find(
       (s) => s.id === body.id || s.grupo_lancamento_id === body.grupo_lancamento_id,
     );
-    if (naRespostaEmpresa) return criarSerieComDefaults(naRespostaEmpresa);
+    if (naRespostaEmpresa) return criarSerieComDefaults({ ...naRespostaEmpresa, frequencia: body.frequencia });
   } catch (error) {
     console.warn('[agefin] Falha ao gravar overlay (centro de custo, etc.):', error);
   }
