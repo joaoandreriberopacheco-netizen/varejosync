@@ -584,6 +584,134 @@ export function calcularProjecaoCaixa(modelos, meses = 12, competenciaInicio = n
   return linhas;
 }
 
+function resolverChaveCentroCusto(modelo, centrosRegistradosSet) {
+  const centro = String(modelo?.centro_custo || '').trim();
+  if (centro && centrosRegistradosSet?.has(centro.toLocaleLowerCase('pt-BR'))) return centro;
+  return '__sem__';
+}
+
+function resolverNomePessoaFolha(modelo, colaboradoresMap = {}) {
+  return (
+    colaboradoresMap[modelo?.colaborador_id]?.nome ||
+    modelo?.colaborador_nome ||
+    modelo?.nome ||
+    'Pessoa'
+  );
+}
+
+/**
+ * Projeção de 12 meses para uma pessoa: média mensal recorrente (sem 13º/férias)
+ * e totais anuais de 13º e férias programadas.
+ */
+export function calcularProjecaoPessoaFolha(modelo, meses = 12, competenciaInicio = null) {
+  const inicio = competenciaInicio || getCompetenciaAtual();
+  let somaMensalRecorrente = 0;
+  let mesesAtivos = 0;
+  let totalDecimo = 0;
+  let totalFerias = 0;
+
+  for (let i = 0; i < meses; i += 1) {
+    const competencia = shiftCompetencia(inicio, i);
+    if (!modeloEstaAtivoNaCompetencia(modelo, competencia)) continue;
+
+    mesesAtivos += 1;
+    const fakeComp = {
+      competencia,
+      rubricas: modelo.rubricas || [],
+      movimentos: [],
+    };
+    const t = calcularTotaisCompetencia(fakeComp, modelo);
+    somaMensalRecorrente += Math.max(0, t.custoTotalEmpresa - t.totalDecimo - t.totalFerias);
+    totalDecimo += t.totalDecimo;
+    totalFerias += t.totalFerias;
+  }
+
+  return {
+    mediaMensal: mesesAtivos > 0 ? somaMensalRecorrente / mesesAtivos : 0,
+    totalDecimo,
+    totalFerias,
+    mesesAtivos,
+  };
+}
+
+/**
+ * Relatório agrupado por centro de custo com média mensal por pessoa (12 meses).
+ */
+export function calcularRelatorioFolhaPorCentroCusto({
+  modelos = [],
+  centrosRegistrados = [],
+  colaboradoresMap = {},
+  competenciaInicio = null,
+  meses = 12,
+  filtrarModelo = null,
+} = {}) {
+  const inicio = competenciaInicio || getCompetenciaAtual();
+  const centrosSet = new Set(
+    (centrosRegistrados || []).map((c) => String(c).trim().toLocaleLowerCase('pt-BR')),
+  );
+  const chaves = [...(centrosRegistrados || []), '__sem__'];
+  const mapaSecoes = Object.fromEntries(chaves.map((c) => [c || '__sem__', []]));
+
+  let totalMediaMensal = 0;
+  let totalDecimo = 0;
+  let totalFerias = 0;
+
+  const lista = (modelos || []).filter((m) => m?.colaborador_id && m.ativo !== false);
+  for (const modelo of lista) {
+    if (typeof filtrarModelo === 'function' && !filtrarModelo(modelo)) continue;
+
+    const projecao = calcularProjecaoPessoaFolha(modelo, meses, inicio);
+    if (projecao.mesesAtivos === 0) continue;
+
+    const chave = resolverChaveCentroCusto(modelo, centrosSet);
+    const linha = {
+      id: modelo.id,
+      nome: resolverNomePessoaFolha(modelo, colaboradoresMap),
+      tipo: modelo.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO,
+      tipoLabel: TIPO_VINCULO_LABELS[modelo.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO],
+      mediaMensal: projecao.mediaMensal,
+      totalDecimo: projecao.totalDecimo,
+      totalFerias: projecao.totalFerias,
+    };
+
+    if (!mapaSecoes[chave]) mapaSecoes[chave] = [];
+    mapaSecoes[chave].push(linha);
+
+    totalMediaMensal += linha.mediaMensal;
+    totalDecimo += linha.totalDecimo;
+    totalFerias += linha.totalFerias;
+  }
+
+  const secoes = chaves
+    .map((centro) => {
+      const chave = centro || '__sem__';
+      const pessoas = (mapaSecoes[chave] || []).sort((a, b) =>
+        ordenarTextoPtBr(a.nome, b.nome),
+      );
+      if (!pessoas.length) return null;
+      const subtotalMediaMensal = pessoas.reduce((acc, p) => acc + p.mediaMensal, 0);
+      return {
+        chave,
+        titulo: chave === '__sem__' ? 'Sem centro de custo' : centro,
+        pessoas,
+        subtotalMediaMensal,
+      };
+    })
+    .filter(Boolean);
+
+  return {
+    competenciaInicio: inicio,
+    meses,
+    secoes,
+    resumo: {
+      totalMediaMensal,
+      totalDecimo,
+      totalFerias,
+      totalPessoas: secoes.reduce((acc, s) => acc + s.pessoas.length, 0),
+    },
+  };
+}
+
 export function mapaModelosPorColaborador(modelos) {
   const map = {};
   for (const m of modelos || []) {

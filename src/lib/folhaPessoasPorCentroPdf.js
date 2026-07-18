@@ -1,55 +1,32 @@
 import { jsPDF } from 'jspdf';
 import { normalizePdfText, registerJsPdfNotoFonts } from '@/lib/jspdfNotoFont';
-import { TIPO_VINCULO, TIPO_VINCULO_LABELS } from '@/lib/folhaPrevisaoCalculos';
+import {
+  calcularRelatorioFolhaPorCentroCusto,
+  formatCompetenciaLabel,
+  formatCurrency,
+} from '@/lib/folhaPrevisaoCalculos';
 
 const PAGE_W_MM = 210;
 const PAGE_H_MM = 297;
-const MARGIN_MM = 15;
+const MARGIN_MM = 14;
 const CONTENT_W_MM = PAGE_W_MM - MARGIN_MM * 2;
 const BLACK = [0, 0, 0];
+const GRAY = [80, 80, 80];
 
-const FONT_TITLE = 16;
-const FONT_SUBTITLE = 10;
-const FONT_SECTION = 12;
-const FONT_BODY = 10;
-const LINE_H_BODY = 5;
-const LINE_H_SECTION = 7;
-const GAP_AFTER_SECTION = 4;
+const FONT_TITLE = 15;
+const FONT_SUBTITLE = 9;
+const FONT_SECTION = 11;
+const FONT_HEADER = 8.5;
+const FONT_BODY = 9;
+const FONT_TOTAL = 9.5;
 
-function resolvePessoaLinha(pessoa, colaboradoresMap = {}) {
-  const nome =
-    colaboradoresMap[pessoa?.colaborador_id]?.nome ||
-    pessoa?.colaborador_nome ||
-    pessoa?.nome ||
-    'Pessoa';
-  const tipo =
-    TIPO_VINCULO_LABELS[pessoa?.tipo_vinculo || TIPO_VINCULO.FUNCIONARIO] ||
-    TIPO_VINCULO_LABELS[TIPO_VINCULO.FUNCIONARIO];
-  return { nome: normalizePdfText(nome), tipo: normalizePdfText(tipo) };
-}
+const LINE_H = 4.8;
+const LINE_H_SECTION = 6.5;
+const GAP_SECTION = 5;
 
-export function montarSecoesFolhaPessoasPorCentro({
-  centrosRegistrados = [],
-  pessoasPorCentro = {},
-  colaboradoresMap = {},
-}) {
-  const chaves = [...(centrosRegistrados || []), '__sem__'];
-  return chaves
-    .map((centro) => {
-      const chave = centro || '__sem__';
-      const pessoas = pessoasPorCentro[chave] || [];
-      if (!pessoas.length) return null;
-      return {
-        chave,
-        titulo: chave === '__sem__' ? 'Sem centro de custo' : normalizePdfText(centro),
-        linhas: pessoas.map((pessoa) => {
-          const { nome, tipo } = resolvePessoaLinha(pessoa, colaboradoresMap);
-          return `${nome} — ${tipo}`;
-        }),
-      };
-    })
-    .filter(Boolean);
-}
+const COL_NOME_W = 92;
+const COL_TIPO_W = 28;
+const COL_VALOR_W = CONTENT_W_MM - COL_NOME_W - COL_TIPO_W;
 
 function ensurePageSpace(doc, y, neededMm) {
   if (y + neededMm <= PAGE_H_MM - MARGIN_MM) return y;
@@ -57,24 +34,83 @@ function ensurePageSpace(doc, y, neededMm) {
   return MARGIN_MM;
 }
 
+function drawTableHeader(doc, fontFamily, y) {
+  doc.setFont(fontFamily, 'bold');
+  doc.setFontSize(FONT_HEADER);
+  doc.setTextColor(...GRAY);
+  doc.text('Nome', MARGIN_MM, y);
+  doc.text('Tipo', MARGIN_MM + COL_NOME_W, y);
+  doc.text('Média/mês', MARGIN_MM + COL_NOME_W + COL_TIPO_W + COL_VALOR_W, y, { align: 'right' });
+  y += LINE_H * 0.6;
+  doc.setDrawColor(180, 180, 180);
+  doc.setLineWidth(0.2);
+  doc.line(MARGIN_MM, y, MARGIN_MM + CONTENT_W_MM, y);
+  return y + LINE_H;
+}
+
+function drawPersonRow(doc, fontFamily, y, pessoa) {
+  doc.setFont(fontFamily, 'normal');
+  doc.setFontSize(FONT_BODY);
+  doc.setTextColor(...BLACK);
+
+  const nome = normalizePdfText(pessoa.nome);
+  const tipo = normalizePdfText(pessoa.tipoLabel);
+  const valor = formatCurrency(pessoa.mediaMensal);
+
+  const nomeLines = doc.splitTextToSize(nome, COL_NOME_W - 2);
+  const rowH = Math.max(LINE_H, nomeLines.length * LINE_H);
+
+  doc.text(nomeLines, MARGIN_MM, y);
+  doc.text(tipo, MARGIN_MM + COL_NOME_W, y);
+  doc.text(valor, MARGIN_MM + COL_NOME_W + COL_TIPO_W + COL_VALOR_W, y, { align: 'right' });
+
+  return y + rowH;
+}
+
+function drawSubtotalRow(doc, fontFamily, y, label, valor) {
+  y += 1;
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.15);
+  doc.line(MARGIN_MM + COL_NOME_W, y - 1.5, MARGIN_MM + CONTENT_W_MM, y - 1.5);
+
+  doc.setFont(fontFamily, 'bold');
+  doc.setFontSize(FONT_TOTAL);
+  doc.setTextColor(...BLACK);
+  doc.text(normalizePdfText(label), MARGIN_MM + COL_NOME_W, y);
+  doc.text(formatCurrency(valor), MARGIN_MM + CONTENT_W_MM, y, { align: 'right' });
+  return y + LINE_H_SECTION;
+}
+
 export async function generateFolhaPessoasPorCentroPdf({
+  modelos = [],
   centrosRegistrados = [],
-  pessoasPorCentro = {},
   colaboradoresMap = {},
+  competenciaInicio = null,
   filtroVinculoLabel = 'Todos',
+  filtrarModelo = null,
+  meses = 12,
 } = {}) {
-  const secoes = montarSecoesFolhaPessoasPorCentro({
+  const relatorio = calcularRelatorioFolhaPorCentroCusto({
+    modelos,
     centrosRegistrados,
-    pessoasPorCentro,
     colaboradoresMap,
+    competenciaInicio,
+    meses,
+    filtrarModelo,
   });
 
-  if (!secoes.length) {
+  if (!relatorio.secoes.length) {
     throw new Error('Nenhuma pessoa cadastrada para gerar o PDF.');
   }
 
-  const totalPessoas = secoes.reduce((acc, sec) => acc + sec.linhas.length, 0);
   const geradoEm = new Date().toLocaleString('pt-BR');
+  const periodoLabel = `${formatCompetenciaLabel(relatorio.competenciaInicio)} → ${formatCompetenciaLabel(
+    (() => {
+      const [y, m] = relatorio.competenciaInicio.split('-').map(Number);
+      const d = new Date(y, m - 1 + relatorio.meses - 1, 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    })(),
+  )}`;
 
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -84,48 +120,81 @@ export async function generateFolhaPessoasPorCentroPdf({
   });
 
   doc.setProperties({
-    title: 'Folha — Pessoas por centro de custo',
-    subject: `Funcionários e sócios (${filtroVinculoLabel})`,
+    title: 'Folha — Relatório por centro de custo',
+    subject: `Média mensal em ${meses} meses (${filtroVinculoLabel})`,
     creator: 'P38 ERP',
   });
 
   const fontFamily = await registerJsPdfNotoFonts(doc);
-  doc.setTextColor(...BLACK);
-
   let y = MARGIN_MM;
 
   doc.setFont(fontFamily, 'bold');
   doc.setFontSize(FONT_TITLE);
-  doc.text('Folha — Pessoas por centro de custo', MARGIN_MM, y);
+  doc.setTextColor(...BLACK);
+  doc.text('Folha — Relatório por centro de custo', MARGIN_MM, y);
   y += LINE_H_SECTION + 1;
 
   doc.setFont(fontFamily, 'normal');
   doc.setFontSize(FONT_SUBTITLE);
-  doc.text(`Filtro: ${normalizePdfText(filtroVinculoLabel)} · ${totalPessoas} pessoa(s)`, MARGIN_MM, y);
-  y += LINE_H_BODY;
+  doc.setTextColor(...GRAY);
+  doc.text(
+    `Projeção ${meses} meses (${periodoLabel}) · Filtro: ${normalizePdfText(filtroVinculoLabel)} · ${relatorio.resumo.totalPessoas} pessoa(s)`,
+    MARGIN_MM,
+    y,
+  );
+  y += LINE_H;
   doc.text(`Gerado em ${normalizePdfText(geradoEm)}`, MARGIN_MM, y);
-  y += LINE_H_SECTION;
+  y += LINE_H_SECTION + 2;
 
-  for (const secao of secoes) {
-    y = ensurePageSpace(doc, y, LINE_H_SECTION + LINE_H_BODY);
+  for (const secao of relatorio.secoes) {
+    y = ensurePageSpace(doc, y, LINE_H_SECTION + LINE_H * 2);
     doc.setFont(fontFamily, 'bold');
     doc.setFontSize(FONT_SECTION);
     doc.setTextColor(...BLACK);
-    doc.text(secao.titulo, MARGIN_MM, y);
+    doc.text(normalizePdfText(secao.titulo), MARGIN_MM, y);
     y += LINE_H_SECTION;
 
-    doc.setFont(fontFamily, 'normal');
-    doc.setFontSize(FONT_BODY);
-    for (const linha of secao.linhas) {
-      const wrapped = doc.splitTextToSize(linha, CONTENT_W_MM);
-      const blockH = wrapped.length * LINE_H_BODY;
-      y = ensurePageSpace(doc, y, blockH);
-      doc.setTextColor(...BLACK);
-      doc.text(wrapped, MARGIN_MM + 2, y);
-      y += blockH;
+    y = ensurePageSpace(doc, y, LINE_H * 2);
+    y = drawTableHeader(doc, fontFamily, y);
+
+    for (const pessoa of secao.pessoas) {
+      y = ensurePageSpace(doc, y, LINE_H * 2);
+      y = drawPersonRow(doc, fontFamily, y, pessoa);
     }
 
-    y += GAP_AFTER_SECTION;
+    y = ensurePageSpace(doc, y, LINE_H_SECTION + 2);
+    y = drawSubtotalRow(doc, fontFamily, y, `Subtotal ${secao.titulo}`, secao.subtotalMediaMensal);
+    y += GAP_SECTION;
+  }
+
+  y = ensurePageSpace(doc, y, LINE_H_SECTION * 5);
+  y += 2;
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN_MM, y, MARGIN_MM + CONTENT_W_MM, y);
+  y += LINE_H_SECTION;
+
+  doc.setFont(fontFamily, 'bold');
+  doc.setFontSize(FONT_SECTION);
+  doc.setTextColor(...BLACK);
+  doc.text('Resumo geral', MARGIN_MM, y);
+  y += LINE_H_SECTION;
+
+  const resumoLinhas = [
+    ['Total médio mensal (todos os centros)', relatorio.resumo.totalMediaMensal],
+    ['Total 13º salário (12 meses)', relatorio.resumo.totalDecimo],
+    ['Total férias (12 meses)', relatorio.resumo.totalFerias],
+  ];
+
+  doc.setFontSize(FONT_BODY);
+  for (const [label, valor] of resumoLinhas) {
+    y = ensurePageSpace(doc, y, LINE_H + 1);
+    doc.setFont(fontFamily, 'normal');
+    doc.setTextColor(...BLACK);
+    doc.text(normalizePdfText(label), MARGIN_MM, y);
+    doc.setFont(fontFamily, 'bold');
+    doc.text(formatCurrency(valor), MARGIN_MM + CONTENT_W_MM, y, { align: 'right' });
+    y += LINE_H + 1.2;
   }
 
   return doc.output('blob');

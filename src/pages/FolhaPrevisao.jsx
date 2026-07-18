@@ -462,22 +462,23 @@ export default function FolhaPrevisaoPage() {
       const filtroLabel =
         FILTRO_VINCULO_OPTS.find((opt) => opt.id === filtroVinculo)?.label || 'Todos';
       const blob = await generateFolhaPessoasPorCentroPdf({
+        modelos: pessoasFiltradas,
         centrosRegistrados,
-        pessoasPorCentro,
         colaboradoresMap,
+        competenciaInicio: getCompetenciaAtual(),
         filtroVinculoLabel: filtroLabel,
       });
       const data = new Date().toISOString().slice(0, 10);
       const result = await shareOrDownloadBlob(
         blob,
-        `folha_pessoas_por_centro_${data}.pdf`,
+        `folha_relatorio_centro_custo_${data}.pdf`,
         'application/pdf',
-        'Folha — Pessoas por centro de custo',
+        'Folha — Relatório por centro de custo',
       );
       if (result !== 'aborted') {
         toast({
           title: result === 'shared' ? 'PDF compartilhado' : 'PDF gerado',
-          description: `${pessoasFiltradas.length} pessoa(s) em ${centrosRegistrados.length + 1} centro(s).`,
+          description: `Relatório com ${pessoasFiltradas.length} pessoa(s) — média mensal em 12 meses.`,
         });
       }
     } catch (e) {
@@ -639,7 +640,7 @@ export default function FolhaPrevisaoPage() {
                 ) : (
                   <FileDown className="h-4 w-4" />
                 )}
-                {gerandoPdfPessoas ? 'Gerando…' : 'PDF por centro'}
+                {gerandoPdfPessoas ? 'Gerando…' : 'PDF relatório'}
               </Button>
               <P38HelpPopover label="Ajuda: aba Pessoas" side="bottom" align="end">
               <p className="font-medium text-foreground">Organização por centro de custo</p>
