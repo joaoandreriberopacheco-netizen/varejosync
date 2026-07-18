@@ -69,20 +69,46 @@ function mesclarSeriesPorId(...listas) {
   return [...map.values()];
 }
 
+function prioridadeSerieId(id = '') {
+  if (String(id).startsWith('serie-recuperada-')) return 1;
+  if (String(id).startsWith('serie-import-')) return 2;
+  return 10;
+}
+
+/** Evita duplicatas do mesmo grupo (import/recuperação vs cadastro manual). */
+function deduplicarSeriesPorGrupo(series = []) {
+  const porGrupo = new Map();
+  const semGrupo = [];
+
+  for (const serie of series || []) {
+    const gid = serie?.grupo_lancamento_id;
+    if (!gid) {
+      semGrupo.push(serie);
+      continue;
+    }
+    const prev = porGrupo.get(gid);
+    if (!prev || prioridadeSerieId(serie.id) > prioridadeSerieId(prev.id)) {
+      porGrupo.set(gid, serie);
+    }
+  }
+
+  return [...porGrupo.values(), ...semGrupo];
+}
+
 async function lerTodasSeriesArmazenadas() {
   const empresa = await obterRegistroDadosEmpresa();
   const empresaRows = lerSeriesEmpresa(empresa);
   const backupRows = lerSeriesBackupEmpresa(empresa);
   const entityRows = (await tryListEntitySeries()) ?? [];
   const localRows = lerSeriesLocalStorage();
+  const merged = deduplicarSeriesPorGrupo(mesclarSeriesPorId(localRows, entityRows, empresaRows));
   return {
     empresa,
     empresaRows,
     backupRows,
     entityRows,
     localRows,
-    // Backup e entidade preenchem buracos do cadastro gravado sem apagar o que a empresa já tem.
-    merged: mesclarSeriesPorId(localRows, entityRows, backupRows, empresaRows),
+    merged,
   };
 }
 
@@ -189,7 +215,6 @@ async function gravarBackupSeries(empresa, series) {
 
 async function persistirSeriesModelo(series, { modo = 'merge' } = {}) {
   const snapshot = await lerTodasSeriesArmazenadas();
-  const backup = snapshot.backupRows ?? lerSeriesBackupEmpresa(snapshot.empresa);
   const atual = snapshot.merged;
 
   if (atual.length > 0) {
@@ -199,8 +224,8 @@ async function persistirSeriesModelo(series, { modo = 'merge' } = {}) {
   const incoming = (series || []).map((s) => criarSerieComDefaults(s));
   const seriesNorm =
     modo === 'substituir'
-      ? incoming
-      : mesclarSeriesPorId(backup, snapshot.localRows, snapshot.entityRows, atual, incoming);
+      ? deduplicarSeriesPorGrupo(incoming)
+      : deduplicarSeriesPorGrupo(mesclarSeriesPorId(atual, incoming));
 
   salvarSeriesLocalStorage(seriesNorm);
 
@@ -261,16 +286,16 @@ export async function listarModelos() {
 }
 
 export async function salvarSerie(payload) {
-  const series = await obterSeriesParaEdicao();
+  const existente = payload.id
+    ? (await obterSeriesParaEdicao()).find((s) => s.id === payload.id)
+    : null;
   const body = criarSerieComDefaults({
+    ...(existente || {}),
     ...payload,
     id: payload.id || undefined,
-    grupo_lancamento_id: payload.grupo_lancamento_id || gerarGrupoLancamentoId(),
+    grupo_lancamento_id:
+      payload.grupo_lancamento_id || existente?.grupo_lancamento_id || gerarGrupoLancamentoId(),
   });
-  const idx = series.findIndex((s) => s.id === body.id);
-  const next = [...series];
-  if (idx >= 0) next[idx] = { ...next[idx], ...body };
-  else next.push(body);
 
   let entityRow = null;
   try {
@@ -279,7 +304,7 @@ export async function salvarSerie(payload) {
     console.error('[agefin] AgefinSerieModelo indisponível:', error);
   }
 
-  const { seriesNorm, empresaRows } = await persistirSeriesModelo(next);
+  const { seriesNorm, empresaRows } = await persistirSeriesModelo([body]);
   const naRespostaEmpresa = empresaRows.find((s) => s.id === body.id);
   if (naRespostaEmpresa) return criarSerieComDefaults(naRespostaEmpresa);
   if (entityRow?.id) return entityRow;
@@ -306,13 +331,14 @@ export async function removerSerie(serieId) {
 }
 
 export async function atualizarCentroCustoSerie(serieId, centroCusto) {
-  const series = await obterSeriesParaEdicao();
-  const next = series.map((s) =>
-    s.id === serieId ? { ...s, centro_custo: centroCusto || '' } : s,
-  );
-  const atualizada = next.find((s) => s.id === serieId);
-  await persistirSeriesModelo(next);
-  return atualizada || null;
+  const existente = (await obterSeriesParaEdicao()).find((s) => s.id === serieId);
+  if (!existente) throw new Error('Conta não encontrada.');
+  const atualizada = criarSerieComDefaults({
+    ...existente,
+    centro_custo: centroCusto || '',
+  });
+  await persistirSeriesModelo([atualizada]);
+  return atualizada;
 }
 
 /** Importa séries a partir de grupos recorrentes já existentes no financeiro. */
@@ -521,237 +547,33 @@ export async function listarContasFinanceiras() {
 }
 
 export async function registrarEncerramentoSerie(serieId, dataEncerramento) {
-  const series = await listarModelos();
-  const next = series.map((s) =>
-    s.id === serieId
-      ? {
-          ...s,
-          situacao: 'encerrada',
-          data_encerramento: dataEncerramento,
-          ativo: false,
-        }
-      : s,
-  );
-  await persistirSeriesModelo(next);
-  return next.find((s) => s.id === serieId);
+  const existente = (await listarModelos()).find((s) => s.id === serieId);
+  if (!existente) throw new Error('Conta não encontrada.');
+  const encerrada = criarSerieComDefaults({
+    ...existente,
+    situacao: 'encerrada',
+    data_encerramento: dataEncerramento,
+    ativo: false,
+  });
+  await persistirSeriesModelo([encerrada]);
+  return encerrada;
 }
 
 export async function reativarSerie(serieId) {
-  const series = await listarModelos();
-  const next = series.map((s) =>
-    s.id === serieId
-      ? { ...s, situacao: 'ativa', data_encerramento: null, ativo: true }
-      : s,
-  );
-  await persistirSeriesModelo(next);
-  return next.find((s) => s.id === serieId);
+  const existente = (await listarModelos()).find((s) => s.id === serieId);
+  if (!existente) throw new Error('Conta não encontrada.');
+  const reativada = criarSerieComDefaults({
+    ...existente,
+    situacao: 'ativa',
+    data_encerramento: null,
+    ativo: true,
+  });
+  await persistirSeriesModelo([reativada]);
+  return reativada;
 }
 
 export function podeEditarCompetencia(comp) {
   return comp && !competenciaBloqueadaEdicao(comp);
-}
-
-function contarSeriesNaoMensais(series = []) {
-  return (series || []).filter(
-    (s) => normalizarFrequenciaSerie(s?.frequencia) !== FREQUENCIA_SERIE.MENSAL,
-  ).length;
-}
-
-function reconstruirSeriesDesdeLancamentos(lancamentos = [], seriesExistentes = []) {
-  const gruposExistentes = new Set(
-    (seriesExistentes || []).map((s) => s.grupo_lancamento_id).filter(Boolean),
-  );
-  const idsExistentes = new Set((seriesExistentes || []).map((s) => s.id));
-  const byGrupo = new Map();
-
-  for (const lf of lancamentos || []) {
-    const gid = lf?.grupo_lancamento_id;
-    if (!gid || gruposExistentes.has(gid)) continue;
-    if (!byGrupo.has(gid)) byGrupo.set(gid, []);
-    byGrupo.get(gid).push(lf);
-  }
-
-  const reconstruidas = [];
-  for (const [gid, rows] of byGrupo) {
-    const sorted = [...rows].sort((a, b) =>
-      (b.data_vencimento || '').localeCompare(a.data_vencimento || ''),
-    );
-    const rep = sorted[0];
-    const freq = normalizarFrequenciaSerie(rep.frequencia_recorrencia || FREQUENCIA_SERIE.MENSAL);
-    const id = `serie-recuperada-${gid}`;
-    if (idsExistentes.has(id)) continue;
-
-    reconstruidas.push(
-      criarSerieComDefaults({
-        id,
-        nome: rep.descricao || rep.terceiro_nome || 'Conta recuperada',
-        terceiro_nome: rep.terceiro_nome || '',
-        terceiro_id: rep.terceiro_id || '',
-        categoria_id: rep.categoria_id || '',
-        categoria_nome: rep.categoria || '',
-        valor_previsto: Number(rep.valor_liquido ?? rep.valor) || 0,
-        dia_vencimento: Number((rep.data_vencimento || '').slice(8, 10)) || 10,
-        mes_vencimento: Number((rep.data_vencimento || '').slice(5, 7)) || new Date().getMonth() + 1,
-        frequencia: freq,
-        grupo_lancamento_id: gid,
-        ativo: true,
-        observacoes: 'Recuperada automaticamente a partir do financeiro.',
-      }),
-    );
-  }
-
-  return reconstruidas;
-}
-
-function idsSeries(series = []) {
-  return new Set((series || []).map((s) => s.id).filter(Boolean));
-}
-
-/** Avalia fontes que podem repor contas fixas ausentes do cadastro gravado. */
-function avaliarCandidatasRecuperacao(snapshot, lancamentos = []) {
-  const gravado = snapshot.empresaRows || [];
-  const gravadoIds = idsSeries(gravado);
-  const backup = snapshot.backupRows ?? lerSeriesBackupEmpresa(snapshot.empresa);
-  const reconstruidas = reconstruirSeriesDesdeLancamentos(lancamentos, gravado);
-  const candidatas = mesclarSeriesPorId(
-    gravado,
-    snapshot.localRows,
-    snapshot.entityRows,
-    backup,
-    reconstruidas,
-  );
-  const novas = candidatas.filter((s) => !gravadoIds.has(s.id));
-  const naoMensaisNovas = novas.filter(
-    (s) => normalizarFrequenciaSerie(s.frequencia) !== FREQUENCIA_SERIE.MENSAL,
-  );
-  const mensaisNovas = novas.length - naoMensaisNovas.length;
-
-  const atual = snapshot.merged || [];
-  const atualNaoMensais = contarSeriesNaoMensais(atual);
-  const backupNaoMensais = contarSeriesNaoMensais(backup);
-  const localNaoMensais = contarSeriesNaoMensais(snapshot.localRows);
-  const entityNaoMensais = contarSeriesNaoMensais(snapshot.entityRows);
-  const reconstruidasNaoMensais = contarSeriesNaoMensais(reconstruidas);
-
-  const fontesExternas = mesclarSeriesPorId(backup, snapshot.localRows, snapshot.entityRows, reconstruidas);
-  const faltando = [...idsSeries(fontesExternas)].filter((id) => !gravadoIds.has(id)).length;
-
-  const fontes = [];
-  if ([...idsSeries(backup)].some((id) => !gravadoIds.has(id))) fontes.push('backup');
-  if ([...idsSeries(snapshot.localRows)].some((id) => !gravadoIds.has(id))) fontes.push('local');
-  if ([...idsSeries(snapshot.entityRows)].some((id) => !gravadoIds.has(id))) fontes.push('entidade');
-  if (reconstruidas.some((s) => !gravadoIds.has(s.id))) fontes.push('financeiro');
-
-  const precisaRecuperacao = novas.length > 0 || faltando > 0;
-
-  return {
-    atual: atual.length,
-    atualGravado: gravado.length,
-    atualNaoMensais,
-    local: snapshot.localRows.length,
-    localNaoMensais,
-    entidade: snapshot.entityRows.length,
-    entityNaoMensais,
-    empresa: gravado.length,
-    backup: backup.length,
-    backupNaoMensais,
-    reconstruidas: reconstruidas.length,
-    reconstruidasNaoMensais,
-    candidatasRecuperacao: novas.length,
-    candidatasNaoMensais: naoMensaisNovas.length,
-    candidatasMensais: mensaisNovas,
-    faltando,
-    precisaRecuperacao,
-    fontes,
-  };
-}
-
-/** Diagnóstico das fontes de armazenamento (sem expor dados sensíveis). */
-export async function diagnosticarSeriesArmazenadas() {
-  const snapshot = await lerTodasSeriesArmazenadas();
-  const empresa = snapshot.empresa || (await obterRegistroDadosEmpresa());
-  const backupAt =
-    empresa?.[DADOS_EMPRESA_SERIES_BACKUP_AT_KEY] ||
-    empresa?.dados?.[DADOS_EMPRESA_SERIES_BACKUP_AT_KEY] ||
-    null;
-  const lancamentos = await listarLancamentosRecorrentes();
-  const avaliacao = avaliarCandidatasRecuperacao({ ...snapshot, empresa }, lancamentos);
-
-  return {
-    ...avaliacao,
-    backupAt,
-  };
-}
-
-/**
- * Tenta recuperar contas fixas perdidas (mensais, anuais, trimestrais…) a partir de backup e lançamentos.
- * Nunca apaga contas existentes — só une fontes e grava na nuvem.
- */
-export async function recuperarSeriesPerdidas() {
-  const snapshot = await lerTodasSeriesArmazenadas();
-  const backup = snapshot.backupRows ?? lerSeriesBackupEmpresa(snapshot.empresa);
-  const lancamentos = await listarLancamentosRecorrentes();
-  const reconstruidas = reconstruirSeriesDesdeLancamentos(lancamentos, snapshot.empresaRows);
-
-  const gravadoIds = new Set((snapshot.empresaRows || []).map((s) => s.id));
-  const candidatas = mesclarSeriesPorId(
-    snapshot.empresaRows,
-    snapshot.merged,
-    backup,
-    reconstruidas,
-    snapshot.entityRows,
-    snapshot.localRows,
-  );
-  const novas = candidatas.filter((s) => !gravadoIds.has(s.id));
-  const naoMensaisNovas = novas.filter(
-    (s) => normalizarFrequenciaSerie(s.frequencia) !== FREQUENCIA_SERIE.MENSAL,
-  );
-  const mensaisNovas = novas.length - naoMensaisNovas.length;
-
-  if (novas.length === 0) {
-    return {
-      recuperadas: 0,
-      mensais: 0,
-      naoMensais: 0,
-      series: snapshot.merged,
-      fontes: {
-        backup: backup.length,
-        reconstruidas: reconstruidas.length,
-      },
-    };
-  }
-
-  const { seriesNorm } = await persistirSeriesModelo(candidatas, { modo: 'substituir' });
-
-  return {
-    recuperadas: novas.length,
-    mensais: mensaisNovas,
-    naoMensais: naoMensaisNovas.length,
-    series: seriesNorm,
-    fontes: {
-      backup: backup.length,
-      reconstruidas: reconstruidas.length,
-    },
-  };
-}
-
-/** Restaura explicitamente o último backup gravado antes de uma persistência. */
-export async function restaurarSeriesDoBackup() {
-  const empresa = await obterRegistroDadosEmpresa();
-  const backup = lerSeriesBackupEmpresa(empresa);
-  if (!backup.length) {
-    throw new Error('Nenhum backup de contas fixas encontrado para restaurar.');
-  }
-
-  const snapshot = await lerTodasSeriesArmazenadas();
-  const restauradas = mesclarSeriesPorId(snapshot.merged, backup);
-  const { seriesNorm } = await persistirSeriesModelo(restauradas, { modo: 'substituir' });
-
-  return {
-    total: seriesNorm.length,
-    naoMensais: contarSeriesNaoMensais(seriesNorm),
-    series: seriesNorm,
-  };
 }
 
 /**

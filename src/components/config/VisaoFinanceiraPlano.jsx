@@ -23,7 +23,6 @@ import {
 } from '@/lib/budgetService';
 import { listarModelos as listarModelosFolha, listarCompetencias as listarCompetenciasFolha } from '@/lib/folhaPrevisaoService';
 import { listarModelos as listarModelosAgefin, listarLancamentosCompetencia, listarLancamentosRecorrentes } from '@/lib/agefinPrevisaoService';
-import AgefinRecuperarSeriesBanner from '@/components/agefin-previsao/AgefinRecuperarSeriesBanner';
 import { montarPlanoFinanceiroConsolidado } from '@/lib/planoFinanceiroConsolidado';
 import { gerarRelatorioVisaoFinanceira } from '@/functions/gerarRelatorioVisaoFinanceira';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -661,8 +660,6 @@ export default function VisaoFinanceiraPlano() {
 
   return (
     <div className="space-y-4">
-      <AgefinRecuperarSeriesBanner />
-
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-1.5">

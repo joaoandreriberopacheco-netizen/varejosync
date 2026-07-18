@@ -62,7 +62,6 @@ import {
   atualizarParcela,
   removerParcelamento,
 } from '@/lib/agefinParcelamentoService';
-import AgefinRecuperarSeriesBanner from '@/components/agefin-previsao/AgefinRecuperarSeriesBanner';
 import { parcelamentoAfetaSerieNoMes, montarCompetenciasVisaoComParcelas } from '@/lib/agefinParcelamentoCalculos';
 
 export default function PlanejamentoFinanceiroPage() {
@@ -512,8 +511,6 @@ export default function PlanejamentoFinanceiroPage() {
         </div>
         <p className="text-sm text-muted-foreground mt-0.5">Contas fixas mensais — energia, telefone, internet…</p>
       </div>
-
-      <AgefinRecuperarSeriesBanner className="mt-4" />
 
       <Tabs defaultValue="contas" className="w-full mt-4">
         <TabsList
