@@ -82,6 +82,7 @@ export default function PlanejamentoFinanceiroPage() {
   const [sortOrderContas, setSortOrderContas] = useState('asc');
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
+  const [draggingSerieId, setDraggingSerieId] = useState('');
   const [recuperandoSeries, setRecuperandoSeries] = useState(false);
 
   const { data: diagSeries } = useQuery({
@@ -815,9 +816,12 @@ export default function PlanejamentoFinanceiroPage() {
       />
 
       <FolhaCentroCustoDragOverlay
-        pessoa={serieArrastando ? { colaborador_nome: serieArrastando.nome, nome: serieArrastando.nome } : null}
-        centrosRegistrados={centrosRegistrados}
+        open={Boolean(draggingSerieId)}
+        centros={centrosRegistrados}
+        pessoaNome={serieArrastando?.nome}
         dropCentroAtual={dropCentroAtual}
+        onHoverCentro={setDropCentroAtual}
+        onLeaveCentro={(chave) => setDropCentroAtual((v) => (v === chave ? '__none__' : v))}
         onDropCentro={(centro) => {
           if (serieArrastando) void handleMoverSerieCentro(serieArrastando, centro);
         }}
