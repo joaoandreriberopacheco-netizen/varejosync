@@ -93,7 +93,7 @@ export default function AgefinPrevisaoDetalheDrawer({
       : dataVencimentoNaCompetencia(competencia.competencia, dia);
   const vencimentoMudou = (vencimentoInput || '').slice(0, 10) !== venOriginal;
   const podeEditar = !bloqueada;
-  const podeSalvar = podeEditar && valorNumerico > 0;
+  const podeSalvar = podeEditar && valorNumerico >= 0;
   const tagFreq = tagFrequenciaSerie(modelo || competencia);
   const parcelaLabel = labelParcelaCurta(competencia);
 
@@ -208,7 +208,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                       ? 'Ajuste valor e vencimento desta parcela.'
                       : planejamento
                         ? 'Ajuste valor e vencimento antes de abrir o mês. Salvar grava no cadastro; Anexar guarda o PDF como referência.'
-                        : 'Edite valor e vencimento e toque em Salvar. Se a conta já estiver aberta no mês, o financeiro é atualizado automaticamente.'}
+                        : 'Edite valor e vencimento e toque em Salvar. Conta zerada no mês também pode ser corrigida aqui.'}
                   </p>
                 </>
               ) : (

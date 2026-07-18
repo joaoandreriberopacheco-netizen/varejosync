@@ -534,7 +534,7 @@ export function podeEditarCompetencia(comp) {
  */
 export async function atualizarCompetenciaManual({ competencia, modelo, valor, dataVencimento, diaVencimento }) {
   const valorNum = Number(valor) || 0;
-  if (valorNum <= 0) throw new Error('Informe um valor maior que zero.');
+  if (valorNum < 0) throw new Error('O valor não pode ser negativo.');
 
   if (competencia?.lancamento_id) {
     const lf = await base44.entities.LancamentoFinanceiro.get(competencia.lancamento_id);
