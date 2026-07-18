@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, Clock, AlertTriangle, Paperclip } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import LancamentoDetalheDialog from '@/components/financeiro/LancamentoDetalheDialog';
+import NovoLancamentoDialog from '@/components/financeiro/NovoLancamentoDialog';
 
 const formatDateSafe = (value, mask) => {
   if (!value || typeof value !== 'string') return '';
@@ -22,23 +24,34 @@ const STATUS_CONFIG = {
 export default function LancamentosCompraPanel({ pedidoId, refreshKey = 0 }) {
   const [lancs, setLancs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [detalhe, setDetalhe] = useState(null);
+  const [editando, setEditando] = useState(null);
 
-  useEffect(() => {
+  const carregarLancamentos = useCallback(async () => {
     if (!pedidoId) return;
     setLoading(true);
-    Promise.all([
-      base44.entities.LancamentoFinanceiro.filter({ pedido_compra_vinculado_id: pedidoId }),
-      base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedidoId, referencia_tipo: 'PedidoCompra' })
-    ])
-      .then(([porVinculo, porReferencia]) => {
-        const unicos = [...porVinculo, ...porReferencia].filter(
-          (item, index, arr) => arr.findIndex((x) => x.id === item.id) === index
-        );
-        setLancs(unicos);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [pedidoId, refreshKey]);
+    try {
+      const [porVinculo, porReferencia] = await Promise.all([
+        base44.entities.LancamentoFinanceiro.filter({ pedido_compra_vinculado_id: pedidoId }),
+        base44.entities.LancamentoFinanceiro.filter({ referencia_id: pedidoId, referencia_tipo: 'PedidoCompra' })
+      ]);
+      const unicos = [...porVinculo, ...porReferencia].filter(
+        (item, index, arr) => arr.findIndex((x) => x.id === item.id) === index
+      );
+      setLancs(unicos);
+    } finally {
+      setLoading(false);
+    }
+  }, [pedidoId]);
+
+  useEffect(() => {
+    void carregarLancamentos();
+  }, [carregarLancamentos, refreshKey]);
+
+  const handleLancamentoAtualizado = useCallback(async () => {
+    await carregarLancamentos();
+    setDetalhe(null);
+  }, [carregarLancamentos]);
 
   if (!pedidoId) return null;
 
@@ -93,7 +106,12 @@ export default function LancamentosCompraPanel({ pedidoId, refreshKey = 0 }) {
             const cfg = STATUS_CONFIG[l.status] || STATUS_CONFIG['Em Aberto'];
             const Icon = cfg.icon;
             return (
-              <div key={l.id} className="flex items-center gap-3 px-4 py-3">
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => setDetalhe(l)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              >
                 {/* Status icon */}
                 <span className={`w-8 h-8 rounded-xl flex items-center justify-center flex-none ${cfg.bg}`}>
                   <Icon className={`w-3.5 h-3.5 ${cfg.color}`} />
@@ -120,7 +138,7 @@ export default function LancamentosCompraPanel({ pedidoId, refreshKey = 0 }) {
                     </span>
                   )}
                 </div>
-              </div>
+              </button>
             );
           })}
       </div>
@@ -135,6 +153,28 @@ export default function LancamentosCompraPanel({ pedidoId, refreshKey = 0 }) {
           <span className="text-xs font-bold text-foreground/90">{R(totalTotal)}</span>
         </div>
       </div>
+
+      {detalhe && (
+        <LancamentoDetalheDialog
+          lancamento={detalhe}
+          onClose={() => setDetalhe(null)}
+          onEdit={(l) => {
+            setDetalhe(null);
+            setEditando(l);
+          }}
+          onSaved={handleLancamentoAtualizado}
+        />
+      )}
+
+      <NovoLancamentoDialog
+        open={!!editando}
+        lancamentoExistente={editando}
+        onClose={() => setEditando(null)}
+        onSaved={async () => {
+          setEditando(null);
+          await carregarLancamentos();
+        }}
+      />
     </div>
   );
 }
