@@ -301,6 +301,16 @@ export async function listarLancamentosMes(competencia) {
   return filtrarLancamentosBudgetMes(lancamentos, competencia);
 }
 
+/** Contas cujo vencimento pertence à competência, independentemente da data de pagamento. */
+export async function listarLancamentosVencimentoMes(competencia) {
+  const prefix = String(competencia || '').slice(0, 7);
+  if (!prefix) return [];
+  const lancamentos = await base44.entities.LancamentoFinanceiro.list('-data_vencimento', 8000);
+  return (lancamentos || []).filter(
+    (lancamento) => String(lancamento?.data_vencimento || '').slice(0, 7) === prefix,
+  );
+}
+
 export async function listarLancamentosDespesas(competencia) {
   const mes = await listarLancamentosMes(competencia);
   return mes.filter(lancamentoElegivelBudget);

@@ -1,18 +1,23 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, LayoutList, PieChart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutList, PieChart, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
-import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import {
+  FinanceiroGrupo,
+  FinanceiroListaEstado,
+  formatFinanceiroValor,
+} from '@/components/financeiro/fluxo/FinanceiroListaShared';
+import { P38MobileLine, P38StatusLabel } from '@/components/ui/p38-mobile-line';
 import { cn } from '@/lib/utils';
 import { P38_CHIP_INACTIVE, P38_FIELD_SURFACE } from '@/components/financeiro/fluxo/financeiroP38';
-import { FinanceiroListaEstado } from '@/components/financeiro/fluxo/FinanceiroListaShared';
 import { formatCompetenciaLabel, getCompetenciaAtual, shiftCompetencia } from '@/lib/budgetCalculos';
 import {
   listarModelos as listarModelosBudget,
   listarCompetencias as listarCompetenciasBudget,
   listarLancamentosMes,
+  listarLancamentosVencimentoMes,
   obterLucroBrutoCompetencia,
 } from '@/lib/budgetService';
 import { listarModelos as listarModelosFolha, listarCompetencias as listarCompetenciasFolha } from '@/lib/folhaPrevisaoService';
@@ -49,81 +54,93 @@ function CardResumo({ label, valor, sublabel, destaque = false, positivo }) {
   );
 }
 
-function LinhaExplodida({ item }) {
+function ItemPlanoLine({ item, striped }) {
+  const accent = item.destaque
+    ? 'warning'
+    : item.coberturaBudget
+      ? 'info'
+      : item.entraNoTotal === false
+        ? 'muted'
+        : 'default';
+  const meta = (
+    <>
+      {item.coberturaBudget ? (
+        <P38StatusLabel tone="info">Coberto por budget</P38StatusLabel>
+      ) : null}
+      {item.entraNoTotal === false && !item.coberturaBudget ? (
+        <P38StatusLabel tone="muted">Não soma novamente</P38StatusLabel>
+      ) : null}
+      {item.destaque ? <P38StatusLabel tone="warning">Compromisso do mês</P38StatusLabel> : null}
+    </>
+  );
+  const line = (
+    <P38MobileLine
+      as={item.link ? Link : 'div'}
+      to={item.link || undefined}
+      thinAccent
+      striped={striped}
+      accent={accent}
+      className="w-full text-left max-md:!py-3.5 max-md:min-h-[58px]"
+      title={item.nome}
+      subtitle={item.detalhe}
+      meta={meta}
+      value={
+        <>
+          <span className="text-foreground/85">−</span>
+          {formatFinanceiroValor(item.valor)}
+        </>
+      }
+      valueSub={
+        item.valorSecundario != null
+          ? `${item.valorSecundarioLabel}: ${formatFinanceiroValor(item.valorSecundario)}`
+          : null
+      }
+      trailing={item.link ? <ChevronRight className="h-4 w-4 text-muted-foreground" /> : null}
+    />
+  );
+  return line;
+}
+
+function GrupoCategoriaPlano({ categoria }) {
   return (
-    <tr className={cn('border-b border-border/30', item.destaque && 'bg-amber-50/50 dark:bg-amber-950/20')}>
-      <td className="py-2.5 pl-3 pr-2 text-sm">
-        <div className="font-medium leading-snug">{item.nome}</div>
-        {item.detalhe ? (
-          <div className="text-[11px] text-muted-foreground mt-0.5">{item.detalhe}</div>
-        ) : null}
-      </td>
-      <td className="py-2.5 px-2 text-right text-sm">
-        <CelulaValor valor={item.valor} />
-      </td>
-      <td className="py-2.5 pl-2 pr-3 text-right text-sm">
-        {item.valorSecundario != null ? (
-          <div>
-            <CelulaValor valor={item.valorSecundario} />
-            {item.valorSecundarioLabel ? (
-              <div className="text-[10px] text-muted-foreground">{item.valorSecundarioLabel}</div>
-            ) : null}
-          </div>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </td>
-      <td className="py-2.5 pl-2 pr-3 text-right">
-        {item.link ? (
-          <Link to={item.link} className="text-xs text-primary hover:underline whitespace-nowrap">
-            Abrir
-          </Link>
-        ) : null}
-      </td>
-    </tr>
+    <FinanceiroGrupo
+      label={`${categoria.label} (${categoria.items.length})`}
+      labelClassName="text-[10px] font-medium normal-case tracking-normal text-muted-foreground"
+      despesas={categoria.subtotal}
+      liquido={-categoria.subtotal}
+      defaultOpen
+    >
+      {categoria.items.map((item, index) => (
+        <ItemPlanoLine key={item.id} item={item} striped={index % 2 === 1} />
+      ))}
+    </FinanceiroGrupo>
   );
 }
 
-function CardExplodidoMobile({ item }) {
+function GrupoCentroPlano({ centro }) {
   return (
-    <div
-      className={cn(
-        'rounded-xl border border-border/40 p-3 space-y-1',
-        item.destaque ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/60' : 'bg-card/40',
-      )}
+    <FinanceiroGrupo
+      label={centro.label}
+      despesas={centro.subtotal}
+      liquido={-centro.subtotal}
+      defaultOpen
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-sm font-medium leading-snug">{item.nome}</p>
-          {item.detalhe ? <p className="text-[11px] text-muted-foreground">{item.detalhe}</p> : null}
-        </div>
-        {item.link ? (
-          <Link to={item.link} className="shrink-0 text-xs text-primary hover:underline">
-            Abrir
-          </Link>
-        ) : null}
+      <div className="space-y-1 pl-0.5 sm:pl-1">
+        {centro.categorias.map((categoria) => (
+          <GrupoCategoriaPlano key={categoria.id} categoria={categoria} />
+        ))}
       </div>
-      <div className="flex items-end justify-between gap-3 pt-1">
-        <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Valor</p>
-          <CelulaValor valor={item.valor} className="text-sm" />
-        </div>
-        {item.valorSecundario != null ? (
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-              {item.valorSecundarioLabel || 'Extra'}
-            </p>
-            <CelulaValor valor={item.valorSecundario} className="text-sm" />
-          </div>
-        ) : null}
-      </div>
-    </div>
+    </FinanceiroGrupo>
   );
 }
 
 export default function VisaoFinanceiraPlano() {
   const [competencia, setCompetencia] = useState(getCompetenciaAtual);
-  const [modo, setModo] = useState('resumo');
+  const [modo, setModo] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches
+      ? 'explodido'
+      : 'resumo',
+  );
 
   const { data: modelosAgefin = [], isLoading: loadingAgefin } = useQuery({
     queryKey: ['visao-financeira', 'agefin-modelos'],
@@ -160,6 +177,11 @@ export default function VisaoFinanceiraPlano() {
     queryFn: () => listarLancamentosMes(competencia),
   });
 
+  const { data: lancamentosVencimento = [] } = useQuery({
+    queryKey: ['visao-financeira', 'lancamentos-vencimento', competencia],
+    queryFn: () => listarLancamentosVencimentoMes(competencia),
+  });
+
   const { data: lucroBrutoMes } = useQuery({
     queryKey: ['visao-financeira', 'lucro-bruto', competencia],
     queryFn: () => obterLucroBrutoCompetencia(competencia),
@@ -176,6 +198,7 @@ export default function VisaoFinanceiraPlano() {
         modelosBudget,
         competenciasBudget,
         lancamentosMes,
+        lancamentosVencimento,
         lucroBruto: lucroBrutoMes?.lucro_bruto || 0,
         margemDetalhe: lucroBrutoMes,
       }),
@@ -188,6 +211,7 @@ export default function VisaoFinanceiraPlano() {
       modelosBudget,
       competenciasBudget,
       lancamentosMes,
+      lancamentosVencimento,
       lucroBrutoMes,
     ],
   );
@@ -204,7 +228,8 @@ export default function VisaoFinanceiraPlano() {
             <h2 className="text-sm font-semibold text-foreground">Visão ampla do negócio</h2>
             <P38HelpPopover label="Ajuda: visão ampla" size="sm">
               <p className="text-muted-foreground">
-                Consolida contas fixas, folha (com provisões de 13º e férias) e budgets num único painel analítico.
+                Consolida contas fixas, folha (com provisões de 13º e férias), budgets e contas pontuais ou
+                parceladas que vencem no mês.
               </p>
               <p className="text-muted-foreground mt-2">
                 Contas <strong className="text-foreground">anuais</strong> ficam separadas do total operacional e
@@ -214,6 +239,10 @@ export default function VisaoFinanceiraPlano() {
                 O <strong className="text-foreground">resultado com provisões</strong> compara o lucro bruto com
                 despesas operacionais + provisões mensais — útil para saber se o negócio sustenta o custo real do
                 time e das obrigações recorrentes.
+              </p>
+              <p className="text-muted-foreground mt-2">
+                Fretes agendados não alteram o lucro bruto. Eles reduzem a
+                <strong className="text-foreground"> capacidade disponível para novas compras</strong>.
               </p>
             </P38HelpPopover>
           </div>
@@ -277,14 +306,49 @@ export default function VisaoFinanceiraPlano() {
       ) : plano.grupos.length === 0 ? (
         <FinanceiroListaEstado
           vazio
-          vazioMensagem="Cadastre contas fixas, folha ou budgets para ver a consolidação."
+          vazioMensagem="Cadastre contas fixas, folha, budgets ou contas a pagar para ver a consolidação."
         />
       ) : modo === 'resumo' ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className={cn('rounded-xl border border-border/40 p-3', P38_FIELD_SURFACE)}>
+            <div className="flex items-center gap-2 mb-3">
+              <Truck className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs font-semibold">Capacidade de compra</p>
+                <p className="text-[11px] text-muted-foreground">
+                  CMV vendido menos fretes com vencimento no mês — não altera o lucro bruto
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-border/50">
+              <div className="pr-2">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">CMV vendido</p>
+                <CelulaValor valor={resumo.capacidadeCompraBase} className="text-sm" />
+              </div>
+              <div className="px-2 text-center">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Fretes reservados</p>
+                <CelulaValor valor={resumo.fretesAgendados} className="text-sm" />
+              </div>
+              <div className="pl-2 text-right">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Disponível</p>
+                <CelulaValor
+                  valor={resumo.capacidadeCompraDisponivel}
+                  positivo={resumo.capacidadeCompraDisponivel >= 0}
+                  className="text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
             <CardResumo label="Fixas recorrentes" valor={resumo.fixasRecorrentes} />
             <CardResumo label="Folha" valor={resumo.folha} />
             <CardResumo label="Budgets" valor={resumo.budgets} />
+            <CardResumo
+              label="Pontuais fora do plano"
+              valor={resumo.pontuaisExtraPlano}
+              sublabel={`${formatFinanceiroValor(resumo.pontuais)} em compromissos pontuais`}
+            />
             <CardResumo
               label="Total operacional"
               valor={resumo.totalOperacional}
@@ -301,7 +365,7 @@ export default function VisaoFinanceiraPlano() {
             <CardResumo
               label="Provisões folha"
               valor={resumo.provisoesFolha}
-              sublabel="13º acumulado + 1/3 férias + eventos"
+              sublabel="13º acumulado + 1/3 férias"
             />
             <CardResumo
               label="Com provisões"
@@ -309,14 +373,16 @@ export default function VisaoFinanceiraPlano() {
               sublabel="Operacional + provisões mensais"
               destaque
             />
-            {resumo.anuaisVencimentoMes > 0 ? (
-              <CardResumo
-                label="Vencimento anual (mês)"
-                valor={resumo.anuaisVencimentoMes}
-                sublabel="Desembolso extra neste mês"
-                destaque
-              />
-            ) : null}
+            <CardResumo
+              label="Desembolso conhecido"
+              valor={resumo.totalDesembolsoMes}
+              sublabel={
+                resumo.anuaisVencimentoMes > 0
+                  ? `${formatFinanceiroValor(resumo.anuaisVencimentoMes)} em vencimentos anuais`
+                  : 'Fixas + folha + contas pontuais'
+              }
+              destaque
+            />
           </div>
 
           <div className={cn('rounded-2xl p-3 lg:p-4', P38_FIELD_SURFACE)}>
@@ -360,17 +426,26 @@ export default function VisaoFinanceiraPlano() {
                     />
                   </td>
                 </tr>
-                {resumo.anuaisVencimentoMes > 0 && (
-                  <tr className="border-b border-border/30">
-                    <td className="py-2.5 pl-3">Resultado após vencimentos anuais</td>
-                    <td className="py-2.5 pr-3 text-right">
-                      <CelulaValor
-                        valor={resumo.resultadoDesembolso}
-                        positivo={resumo.resultadoDesembolso >= 0}
-                      />
-                    </td>
-                  </tr>
-                )}
+                <tr className="border-b border-border/30">
+                  <td className="py-2.5 pl-3">
+                    Compromissos pontuais / parcelados
+                    <span className="block text-[11px] text-muted-foreground font-normal">
+                      Inclui fretes; itens cobertos por budget não somam novamente no operacional
+                    </span>
+                  </td>
+                  <td className="py-2.5 pr-3 text-right">
+                    <CelulaValor valor={resumo.pontuais} />
+                  </td>
+                </tr>
+                <tr className="border-b border-border/30">
+                  <td className="py-2.5 pl-3">Saldo bruto após compromissos conhecidos</td>
+                  <td className="py-2.5 pr-3 text-right">
+                    <CelulaValor
+                      valor={resumo.resultadoDesembolso}
+                      positivo={resumo.resultadoDesembolso >= 0}
+                    />
+                  </td>
+                </tr>
                 <tr>
                   <td className="py-2.5 pl-3 text-muted-foreground">Realizado (pago no fluxo)</td>
                   <td className="py-2.5 pr-3 text-right text-muted-foreground">
@@ -396,39 +471,19 @@ export default function VisaoFinanceiraPlano() {
                       Não entra no total operacional — provisão / evento à parte
                     </p>
                   ) : null}
+                  {grupo.subtotalNoTotal !== grupo.subtotal && grupo.id === 'pontuais' ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      {formatFinanceiroValor(grupo.subtotalNoTotal)} fora de budgets e do CMV já reconhecido
+                    </p>
+                  ) : null}
                 </div>
                 <CelulaValor valor={grupo.subtotal} className="text-sm" />
               </div>
 
-              <div className="space-y-2 md:hidden">
-                {grupo.items.map((item) => (
-                  <CardExplodidoMobile key={item.id} item={item} />
+              <div className="space-y-2">
+                {grupo.centros.map((centro) => (
+                  <GrupoCentroPlano key={centro.id} centro={centro} />
                 ))}
-              </div>
-
-              <div className={cn('hidden md:block overflow-x-auto rounded-2xl p-2', P38_FIELD_SURFACE)}>
-                <table className="w-full min-w-[520px] text-left">
-                  <thead>
-                    <tr className="border-b border-border/50 text-[11px] uppercase tracking-wide text-muted-foreground">
-                      <th className="py-2 pl-3 font-medium">Item</th>
-                      <th className="py-2 px-2 text-right font-medium">Valor</th>
-                      <th className="py-2 px-2 text-right font-medium">Complemento</th>
-                      <th className="py-2 pr-3 w-16" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {grupo.items.map((item) => (
-                      <LinhaExplodida key={item.id} item={item} />
-                    ))}
-                    <tr className="border-t border-border/60 font-medium text-sm">
-                      <td className="py-2.5 pl-3">Subtotal</td>
-                      <td className="py-2.5 px-2 text-right">
-                        <CelulaValor valor={grupo.subtotal} />
-                      </td>
-                      <td colSpan={2} />
-                    </tr>
-                  </tbody>
-                </table>
               </div>
             </div>
           ))}
@@ -452,11 +507,26 @@ export default function VisaoFinanceiraPlano() {
                 <CelulaValor valor={resumo.anuaisVencimentoMes} />
               </div>
             )}
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Compromissos pontuais / parcelados</span>
+              <CelulaValor valor={resumo.pontuais} />
+            </div>
+            <div className="flex justify-between text-sm font-semibold border-t border-border/50 pt-2">
+              <span>Desembolso conhecido no mês</span>
+              <CelulaValor valor={resumo.totalDesembolsoMes} />
+            </div>
             <div className="flex justify-between text-sm font-semibold border-t border-border/50 pt-2">
               <span>Lucro bruto − com provisões</span>
               <CelulaValor
                 valor={resumo.resultadoComProvisoes}
                 positivo={resumo.resultadoComProvisoes >= 0}
+              />
+            </div>
+            <div className="flex justify-between text-sm font-semibold border-t border-border/50 pt-2">
+              <span>Capacidade de compra após fretes</span>
+              <CelulaValor
+                valor={resumo.capacidadeCompraDisponivel}
+                positivo={resumo.capacidadeCompraDisponivel >= 0}
               />
             </div>
           </div>
