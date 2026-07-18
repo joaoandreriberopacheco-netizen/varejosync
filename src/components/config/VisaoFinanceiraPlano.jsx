@@ -84,6 +84,15 @@ function ItemPlanoLine({
 
   const meta = (
     <>
+      {item.tipoPauta === 'frete' ? <P38StatusLabel tone="warning">Frete</P38StatusLabel> : null}
+      {item.tipoPauta === 'compra_mercadoria' ? (
+        <P38StatusLabel tone="muted">Compra mercadoria</P38StatusLabel>
+      ) : null}
+      {item.raw?.numero_parcelas_total > 1 ? (
+        <P38StatusLabel tone="muted">
+          Parcela {item.raw.parcela_atual || '?'} de {item.raw.numero_parcelas_total}
+        </P38StatusLabel>
+      ) : null}
       {item.coberturaBudget ? (
         <P38StatusLabel tone="info">Coberto por budget</P38StatusLabel>
       ) : null}
@@ -98,12 +107,14 @@ function ItemPlanoLine({
   );
 
   const title =
-    modo === 'vencimento' && item.dataVencimentoLabel
-      ? `${item.dataVencimentoLabel} · ${item.nome}`
+    modo === 'vencimento' || modo === 'pauta'
+      ? item.dataVencimentoLabel
+        ? `${item.dataVencimentoLabel} · ${item.nome}`
+        : item.nome
       : item.nome;
 
   const subtitle =
-    modo === 'vencimento'
+    modo === 'vencimento' || modo === 'pauta'
       ? ''
       : item.detalhe ||
         (item.valorSecundario != null ? `${item.valorSecundarioLabel}: ${formatFinanceiroValor(item.valorSecundario)}` : '');
@@ -126,7 +137,7 @@ function ItemPlanoLine({
         </>
       }
       valueSub={
-        modo !== 'vencimento' && item.valorSecundario != null
+        modo !== 'vencimento' && modo !== 'pauta' && item.valorSecundario != null
           ? `${item.valorSecundarioLabel}: ${formatFinanceiroValor(item.valorSecundario)}`
           : null
       }
@@ -285,9 +296,15 @@ function ConteudoCamadaExplodida({ grupo, agrupamentoFixas }) {
   if (grupo.layout === 'vencimento') {
     return (
       <div className="space-y-2 px-1 pb-1">
-        {(grupo.porVencimento || []).map((bloco) => (
-          <ListaItensPlano key={bloco.id} items={bloco.items} modo="vencimento" />
-        ))}
+        {grupo.vazio ? (
+          <p className="text-[11px] text-muted-foreground px-2 py-2">
+            Nenhum boleto ocasional, frete ou compra de mercadoria com vencimento neste mês.
+          </p>
+        ) : (
+          (grupo.porVencimento || []).map((bloco) => (
+            <ListaItensPlano key={bloco.id} items={bloco.items} modo="pauta" />
+          ))
+        )}
       </div>
     );
   }
@@ -319,6 +336,13 @@ function SecaoCamadaExplodida({ grupo, agrupamentoFixas, onAgrupamentoFixas }) {
         {grupo.separadoDoTotal ? (
           <p className="text-[11px] text-muted-foreground px-2">
             Provisão ou evento à parte — não entra no total operacional
+          </p>
+        ) : null}
+
+        {grupo.id === 'pontuais' ? (
+          <p className="text-[11px] text-muted-foreground px-2">
+            Boletos únicos, parcelados, fretes e compras de mercadoria com vencimento neste mês. Compras de
+            mercadoria aparecem só para conferência — não somam de novo no resultado.
           </p>
         ) : null}
 
@@ -366,10 +390,10 @@ function TabelaResumoPlano({ resumo, margemDetalhe }) {
           <LinhaResumo label="Budgets" valor={resumo.budgets} tipo="subtrai" />
           {resumo.pontuaisExtraPlano > 0 ? (
             <LinhaResumo
-              label="Contas pontuais (fora do plano)"
+              label="Pauta do mês (fora do plano fixo)"
               valor={resumo.pontuaisExtraPlano}
               tipo="subtrai"
-              sublabel={`${formatFinanceiroValor(resumo.pontuais)} no total de compromissos do mês`}
+              sublabel={`${formatFinanceiroValor(resumo.pontuais)} no total de vencimentos do mês`}
             />
           ) : null}
           <LinhaResumo label="Total operacional" valor={resumo.totalOperacional} tipo="subtrai" destaque />
@@ -430,7 +454,7 @@ function TabelaResumoPlano({ resumo, margemDetalhe }) {
                 </td>
               </tr>
               {resumo.pontuais > 0 ? (
-                <LinhaResumo label="Compromissos pontuais / parcelados" valor={resumo.pontuais} tipo="subtrai" />
+                <LinhaResumo label="Pauta do mês (vencimentos)" valor={resumo.pontuais} tipo="subtrai" />
               ) : null}
               {resumo.anuaisVencimentoMes > 0 ? (
                 <LinhaResumo label="Vencimentos não mensais (integral)" valor={resumo.anuaisVencimentoMes} tipo="subtrai" />
@@ -595,8 +619,8 @@ export default function VisaoFinanceiraPlano() {
             <h2 className="text-sm font-semibold text-foreground">Visão ampla do negócio</h2>
             <P38HelpPopover label="Ajuda: visão ampla" size="sm">
               <p className="text-muted-foreground">
-                Contas fixas mensais aparecem por vencimento (data, descrição e valor). Contas não mensais
-                entram como provisão mensal, com anexo no PDF.
+                A pauta do mês traz boletos ocasionais, fretes e compras de mercadoria com vencimento na
+                competência, ordenados por data.
               </p>
               <p className="text-muted-foreground mt-2">
                 Provisões de 13º e férias ficam resumidas — expanda para ver por colaborador.

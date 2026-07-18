@@ -212,11 +212,21 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     }
 
     if (grupo.layout === 'vencimento' || grupo.layout === 'lista') {
+      if (grupo.vazio) {
+        setFont('normal', 7.8, COLOR.muted);
+        doc.text(
+          safe('Nenhum boleto ocasional, frete ou compra com vencimento neste mes.'),
+          margin + 2,
+          y,
+        );
+        y += 5;
+        return;
+      }
       const items =
         grupo.layout === 'vencimento'
           ? (grupo.porVencimento || []).flatMap((bloco) => bloco.items)
           : (grupo.lista || []).flatMap((bloco) => bloco.items);
-      drawItensLista(items, { modoVencimento: true, mostrarDetalhe: grupo.layout === 'lista' });
+      drawItensLista(items, { modoVencimento: true, mostrarDetalhe: false });
       y += 2;
       return;
     }
@@ -257,7 +267,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   drawResumoLinha('Folha de pagamento', resumo.folha, { prefix: '- ' });
   drawResumoLinha('Budgets', resumo.budgets, { prefix: '- ' });
   if (number(resumo.pontuaisExtraPlano) > 0) {
-    drawResumoLinha('Contas pontuais (fora do plano)', resumo.pontuaisExtraPlano, { prefix: '- ' });
+    drawResumoLinha('Pauta do mes (fora do plano fixo)', resumo.pontuaisExtraPlano, { prefix: '- ' });
   }
   drawResumoLinha('Total operacional', resumo.totalOperacional, { prefix: '- ', bold: true });
   drawResumoLinha('Resultado operacional', resumo.resultadoOperacional, { prefix: '= ', bold: true });
@@ -276,7 +286,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   if (number(resumo.pontuais) > 0 || number(resumo.anuaisVencimentoMes) > 0) {
     drawSecao('Desembolso conhecido no mes');
     if (number(resumo.pontuais) > 0) {
-      drawResumoLinha('Compromissos pontuais / parcelados', resumo.pontuais, { prefix: '- ' });
+      drawResumoLinha('Pauta do mes (vencimentos)', resumo.pontuais, { prefix: '- ' });
     }
     if (number(resumo.anuaisVencimentoMes) > 0) {
       drawResumoLinha('Vencimentos nao mensais (integral)', resumo.anuaisVencimentoMes, { prefix: '- ' });

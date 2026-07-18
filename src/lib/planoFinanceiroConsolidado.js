@@ -30,9 +30,10 @@ import {
 } from '@/lib/budgetCalculos';
 import {
   lancamentoCancelado,
-  lancamentoEhContaPagar,
   lancamentoEhCmv,
+  lancamentoEhCompraMercadoriaPedido,
   lancamentoEhFreteItinerario,
+  lancamentoElegivelPautaMes,
   lancamentoPago,
 } from '@/lib/agefinConsultaFilters';
 
@@ -66,6 +67,7 @@ function linhaItem({
   frequencia = '',
   colapsavel = false,
   filhos = [],
+  tipoPauta = '',
   raw = null,
 }) {
   return {
@@ -87,6 +89,7 @@ function linhaItem({
     frequencia: String(frequencia || '').trim(),
     colapsavel,
     filhos: Array.isArray(filhos) ? filhos : [],
+    tipoPauta: String(tipoPauta || '').trim(),
     raw,
   };
 }
@@ -342,7 +345,15 @@ function encontrarBudgetCobertura(lancamento, modelosBudget) {
   );
 }
 
-function montarLinhasPontuais({
+function classificarTipoPauta(lancamento) {
+  if (lancamentoEhFreteItinerario(lancamento)) return 'frete';
+  if (lancamentoEhCmv(lancamento) || lancamentoEhCompraMercadoriaPedido(lancamento)) {
+    return 'compra_mercadoria';
+  }
+  return 'ocasional';
+}
+
+function montarLinhasPauta({
   competencia,
   lancamentosVencimento,
   modelosAgefin,
@@ -361,13 +372,8 @@ function montarLinhasPontuais({
 
   return (lancamentosVencimento || [])
     .filter((lancamento) => {
-      if (!lancamento || lancamento.tipo !== 'Despesa' || lancamentoCancelado(lancamento)) {
-        return false;
-      }
-      if (!lancamentoEhContaPagar(lancamento) && !lancamentoEhFreteItinerario(lancamento)) {
-        return false;
-      }
       if (String(lancamento.data_vencimento || '').slice(0, 7) !== competencia) return false;
+      if (!lancamentoElegivelPautaMes(lancamento)) return false;
 
       const tags = tagsLancamento(lancamento);
       if (tags.includes('agefin_previsao') || tags.includes('folha_previsao')) return false;
@@ -377,35 +383,31 @@ function montarLinhasPontuais({
     })
     .map((lancamento) => {
       const frete = lancamentoEhFreteItinerario(lancamento);
-      const cmv = lancamentoEhCmv(lancamento);
+      const compraMercadoria =
+        lancamentoEhCmv(lancamento) || lancamentoEhCompraMercadoriaPedido(lancamento);
       const budgetCobertura = encontrarBudgetCobertura(lancamento, modelosBudget);
-      const parcela =
-        lancamento.numero_parcelas_total > 1
-          ? `Parcela ${lancamento.parcela_atual || '?'} de ${lancamento.numero_parcelas_total}`
-          : '';
-      const status = lancamentoPago(lancamento) ? 'Pago' : 'Em aberto';
       const categoria =
         limparCategoria(lancamento.categoria) ||
-        (frete ? 'Frete de mercadoria' : cmv ? 'Compra de mercadoria' : '');
+        (frete ? 'Frete de mercadoria' : compraMercadoria ? 'Compra de mercadoria' : '');
       const centroCusto = String(lancamento.centro_custo || '').trim();
       const coberturaBudget = budgetCobertura?.nome || '';
       const dataVencimento = String(lancamento.data_vencimento || '').slice(0, 10);
-      const detalhe = [parcela, status, frete ? 'Frete' : '', cmv ? 'CMV' : '', coberturaBudget ? `Budget ${coberturaBudget}` : '']
-        .filter(Boolean)
-        .join(' · ');
+      const tipoPauta = classificarTipoPauta(lancamento);
 
       return linhaItem({
-        id: `pontual-${lancamento.id}`,
+        id: `pauta-${lancamento.id}`,
         grupo: GRUPO.PONTUAIS,
-        nome: lancamento.descricao || lancamento.terceiro_nome || 'Conta pontual',
-        detalhe,
+        nome: String(lancamento.descricao || '').trim() || 'Conta sem descrição',
+        detalhe: '',
         valor: valorLancamento(lancamento),
         link: `/AgefinConsulta?competencia=${competencia}`,
-        destaque: frete,
+        destaque: frete || !lancamentoPago(lancamento),
         centroCusto,
         categoria,
         dataVencimento,
-        entraNoTotal: !budgetCobertura && !cmv,
+        tipoPauta,
+        // CMV e compras de mercadoria já estão no lucro bruto; fretes entram no desembolso.
+        entraNoTotal: !budgetCobertura && !compraMercadoria,
         coberturaBudget,
         raw: lancamento,
       });
@@ -549,16 +551,16 @@ const GRUPO_LABELS = {
   [GRUPO.FOLHA]: 'Folha de pagamento',
   [GRUPO.FOLHA_PROVISOES]: 'Provisões de folha',
   [GRUPO.BUDGETS]: 'Budgets',
-  [GRUPO.PONTUAIS]: 'Contas pontuais e parceladas',
+  [GRUPO.PONTUAIS]: 'Pauta do mês — vencimentos',
 };
 
 const GRUPO_ORDEM = [
   GRUPO.FIXAS_RECORRENTES,
+  GRUPO.PONTUAIS,
   GRUPO.FIXAS_NAO_MENSAIS,
   GRUPO.FOLHA,
   GRUPO.FOLHA_PROVISOES,
   GRUPO.BUDGETS,
-  GRUPO.PONTUAIS,
 ];
 
 function layoutGrupo(grupoId) {
@@ -616,7 +618,7 @@ export function montarPlanoFinanceiroConsolidado({
   const { recorrentes, naoMensais } = montarLinhasFixas(competencia, modelosAgefin, lancamentosAgefin);
   const { folha, provisoes } = montarLinhasFolha(competencia, modelosFolha, competenciasFolha);
   const budgets = montarLinhasBudgets(competencia, modelosBudget, competenciasBudget, lancamentosMes);
-  const pontuais = montarLinhasPontuais({
+  const pauta = montarLinhasPauta({
     competencia,
     lancamentosVencimento,
     modelosAgefin,
@@ -631,24 +633,19 @@ export function montarPlanoFinanceiroConsolidado({
   const subtotalFolha = somaLinhas(folha);
   const subtotalProvisoes = somaLinhasNoTotal(provisoes);
   const subtotalBudgets = somaLinhas(budgets);
-  const subtotalPontuais = somaLinhas(pontuais);
-  const subtotalPontuaisExtraPlano = somaLinhasNoTotal(pontuais);
-  const subtotalFretes = somaLinhas(
-    pontuais.filter((item) => lancamentoEhFreteItinerario(item.raw)),
-  );
+  const subtotalPauta = somaLinhas(pauta);
+  const subtotalPautaExtraPlano = somaLinhasNoTotal(pauta);
+  const subtotalFretes = somaLinhas(pauta.filter((item) => item.tipoPauta === 'frete'));
   const subtotalComprasMercadoria = somaLinhas(
-    pontuais.filter((item) => lancamentoEhCmv(item.raw)),
+    pauta.filter((item) => item.tipoPauta === 'compra_mercadoria'),
   );
 
   const totalOperacional =
-    subtotalFixasRecorrentes + subtotalFolha + subtotalBudgets + subtotalPontuaisExtraPlano;
+    subtotalFixasRecorrentes + subtotalFolha + subtotalBudgets + subtotalPautaExtraPlano;
   const totalProvisoesMensais = subtotalNaoMensaisDiluido + subtotalProvisoes;
   const totalComProvisoes = totalOperacional + totalProvisoesMensais;
   const totalDesembolsoMes =
-    subtotalFixasRecorrentes +
-    subtotalFolha +
-    subtotalPontuais +
-    subtotalNaoMensaisVencimento;
+    subtotalFixasRecorrentes + subtotalFolha + subtotalPauta + subtotalNaoMensaisVencimento;
 
   const visoesBudget = montarVisoesBudgets(
     modelosBudget,
@@ -670,24 +667,26 @@ export function montarPlanoFinanceiroConsolidado({
     [GRUPO.FOLHA]: folha,
     [GRUPO.FOLHA_PROVISOES]: provisoes,
     [GRUPO.BUDGETS]: budgets,
-    [GRUPO.PONTUAIS]: pontuais,
+    [GRUPO.PONTUAIS]: pauta,
   };
 
-  const grupos = GRUPO_ORDEM.filter((g) => (mapaItens[g] || []).length > 0).map((g) => {
-    const agrupamentos = montarAgrupamentosGrupo(g, mapaItens[g]);
+  const grupos = GRUPO_ORDEM.map((g) => {
+    const items = mapaItens[g] || [];
+    if (items.length === 0 && g !== GRUPO.PONTUAIS) return null;
+    const agrupamentos = montarAgrupamentosGrupo(g, items);
     return {
       id: g,
       label: GRUPO_LABELS[g],
       layout: layoutGrupo(g),
-      items: mapaItens[g],
-      subtotal: somaLinhas(mapaItens[g]),
-      subtotalNoTotal: somaLinhasNoTotal(mapaItens[g]),
-      separadoDoTotal:
-        g === GRUPO.FIXAS_NAO_MENSAIS || g === GRUPO.FOLHA_PROVISOES,
+      items,
+      subtotal: somaLinhas(items),
+      subtotalNoTotal: somaLinhasNoTotal(items),
+      vazio: g === GRUPO.PONTUAIS && items.length === 0,
+      separadoDoTotal: g === GRUPO.FIXAS_NAO_MENSAIS || g === GRUPO.FOLHA_PROVISOES,
       ...agrupamentos,
       centros: agrupamentos.porCentroCategoria || agrupamentos.porCentro || [],
     };
-  });
+  }).filter(Boolean);
 
   return {
     competencia,
@@ -700,8 +699,8 @@ export function montarPlanoFinanceiroConsolidado({
       folha: subtotalFolha,
       provisoesFolha: subtotalProvisoes,
       budgets: subtotalBudgets,
-      pontuais: subtotalPontuais,
-      pontuaisExtraPlano: subtotalPontuaisExtraPlano,
+      pontuais: subtotalPauta,
+      pontuaisExtraPlano: subtotalPautaExtraPlano,
       fretesAgendados: subtotalFretes,
       comprasMercadoriaAgendadas: subtotalComprasMercadoria,
       totalOperacional,

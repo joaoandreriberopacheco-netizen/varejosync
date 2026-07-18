@@ -60,6 +60,20 @@ function normalizarFormaPagamento(s) {
 }
 
 /**
+ * Compromissos que entram na pauta de vencimentos do mês (Visão Financeira / consulta).
+ * Inclui contas pontuais, fretes de itinerário e compras de mercadoria (estas só informativas).
+ */
+export function lancamentoElegivelPautaMes(l) {
+  if (!l || l.tipo !== 'Despesa' || lancamentoCancelado(l)) return false;
+  if (lancamentoCompraMercadoriaPedidoPagamentoAVista(l)) return false;
+  if (lancamentoEhFreteItinerario(l)) return true;
+  if (lancamentoEhContaPagar(l)) return true;
+  if (lancamentoEhCmv(l)) return true;
+  if (lancamentoEhCompraMercadoriaPedido(l)) return true;
+  return false;
+}
+
+/**
  * Compra de mercadoria vinculada a pedido (fluxo de aprovação financeira do PedidoCompra).
  */
 export function lancamentoEhCompraMercadoriaPedido(l) {
