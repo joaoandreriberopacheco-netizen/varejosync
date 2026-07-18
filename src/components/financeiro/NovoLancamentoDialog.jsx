@@ -28,6 +28,14 @@ import {
   salvarEdicaoLancamentoFinanceiro,
 } from '@/lib/editarLancamentoFinanceiro';
 
+const REFERENCIA_TIPO_PEDIDO_COMPRA = 'pedidocompra';
+
+const mergeTags = (tagsAtuais = [], tagsNovas = []) =>
+  Array.from(new Set([...(tagsAtuais || []), ...(tagsNovas || [])].filter(Boolean)));
+
+const isReferenciaPedidoCompra = (referenciaTipo) =>
+  String(referenciaTipo || '').trim().toLowerCase() === REFERENCIA_TIPO_PEDIDO_COMPRA;
+
 const FREQS_MAP = {
   Semanal: (d, i) => addWeeks(d, i),
   Mensal: (d, i) => addMonths(d, i),
@@ -97,8 +105,11 @@ export default function NovoLancamentoDialog({
   const { categorias, reload: reloadCats } = useCategorias();
 
   const modoEdicao = !!lancamentoExistente;
+  const origemCompraPorReferencia = isReferenciaPedidoCompra(referenciaTipo) && !!referenciaId;
 
   const resetForm = () => {
+    const tagsIniciais = origemContaPagar ? ['conta_pagar'] : [];
+    const tagsOrigemCompra = origemCompraPorReferencia ? mergeTags(tagsIniciais, ['cmv']) : tagsIniciais;
     setTipo(tipoInicial || 'Despesa');
     setValorCents(valorInicial ? Math.round(parseFloat(valorInicial) * 100).toString() : '0');
     setDescricao(descricaoInicial || '');
@@ -110,13 +121,13 @@ export default function NovoLancamentoDialog({
     setContaId(contaDefaultId || '');
     setContaDestinoId('');
     setStatus('Em Aberto');
-    setTags(origemContaPagar ? ['conta_pagar'] : []);
+    setTags(tagsOrigemCompra);
     setIsRecorrente(false);
     setFrequencia('');
     setParcelas(2);
     setDataFim('');
-    setIsCustoMercadoria(false);
-    setPedidoCompraId('');
+    setIsCustoMercadoria(origemCompraPorReferencia);
+    setPedidoCompraId(origemCompraPorReferencia ? String(referenciaId) : '');
     setObservacoes('');
     setSaving(false);
     setConfirmDialogMode('processing');
@@ -130,6 +141,10 @@ export default function NovoLancamentoDialog({
 
   const popularDeLancamento = (l) => {
     if (!l) return;
+    const referenciaEhPedidoCompra = isReferenciaPedidoCompra(l.referencia_tipo);
+    const pedidoCompraOrigemId =
+      l.pedido_compra_vinculado_id || (referenciaEhPedidoCompra ? l.referencia_id || '' : '');
+    const veioDeCompra = !!pedidoCompraOrigemId || !!l.is_custo_mercadoria;
     setTipo(l.tipo || 'Despesa');
     setValorCents(Math.round((parseFloat(l.valor) || 0) * 100).toString());
     setDescricao(l.descricao || '');
@@ -151,26 +166,45 @@ export default function NovoLancamentoDialog({
     setContaId(l.conta_financeira_id || '');
     setContaDestinoId('');
     setStatus(isLancamentoPago(l) ? 'Pago' : 'Em Aberto');
-    setTags(l.tags || []);
+    setTags(veioDeCompra ? mergeTags(l.tags || [], ['cmv']) : l.tags || []);
     setIsRecorrente(!!l.is_recorrente);
     setFrequencia(l.frequencia_recorrencia || '');
     setParcelas(l.numero_parcelas_total || 2);
     setDataFim((l.data_fim_recorrencia || '').slice(0, 10));
-    setIsCustoMercadoria(!!l.is_custo_mercadoria);
-    setPedidoCompraId(l.pedido_compra_vinculado_id || '');
+    setIsCustoMercadoria(veioDeCompra);
+    setPedidoCompraId(pedidoCompraOrigemId || '');
     setObservacoes((l.observacoes || '').replace(/\[CANCELADO.*?\]/gs, '').trim());
   };
 
   useEffect(() => {
     if (!open) return;
     base44.entities.ContasFinanceiras.filter({ ativo: true }).then(setContas);
-    base44.entities.PedidoCompra.list('-created_date', 50).then(setPedidosCompra);
+    const carregarPedidos = async () => {
+      const recentes = await base44.entities.PedidoCompra.list('-created_date', 50);
+      if (!origemCompraPorReferencia || !referenciaId) {
+        setPedidosCompra(recentes || []);
+        return;
+      }
+      const idRef = String(referenciaId);
+      const jaTemReferencia = (recentes || []).some((pedido) => String(pedido?.id || '') === idRef);
+      if (jaTemReferencia) {
+        setPedidosCompra(recentes || []);
+        return;
+      }
+      const [pedidoRef] = await base44.entities.PedidoCompra.filter({ id: idRef });
+      if (!pedidoRef) {
+        setPedidosCompra(recentes || []);
+        return;
+      }
+      setPedidosCompra([pedidoRef, ...(recentes || [])]);
+    };
+    carregarPedidos().catch(() => setPedidosCompra([]));
     if (lancamentoExistente) {
       popularDeLancamento(lancamentoExistente);
       return;
     }
     resetForm();
-  }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial, origemContaPagar, lancamentoExistente?.id]);
+  }, [open, tipoInicial, contaDefaultId, descricaoInicial, valorInicial, origemContaPagar, lancamentoExistente?.id, referenciaId, referenciaTipo]);
 
   useEffect(() => {
     if (!open || modoEdicao || tipo === 'Transferência') return;
@@ -420,9 +454,14 @@ export default function NovoLancamentoDialog({
 
     let lancamentoParaCallback = null;
     const conta = contas.find((c) => c.id === contaId);
-    const pedidoCompra = pedidoCompraId ? pedidosCompra.find((p) => p.id === pedidoCompraId) : null;
+    const pedidoCompraOrigemId = pedidoCompraId || (origemCompraPorReferencia ? String(referenciaId) : '');
+    const pedidoCompra = pedidoCompraOrigemId
+      ? pedidosCompra.find((p) => String(p.id) === String(pedidoCompraOrigemId))
+      : null;
+    const isCustoMercadoriaFinal = isCustoMercadoria || !!pedidoCompraOrigemId || origemCompraPorReferencia;
     const pessoaVale = isValeFolha ? pessoasFolha.find((p) => p.id === valeFolhaModeloId) : null;
-    const tagsSalvar = isValeFolha && pessoaVale ? montarTagsValeFolha(tags, pessoaVale) : tags;
+    const tagsBaseSalvar = isValeFolha && pessoaVale ? montarTagsValeFolha(tags, pessoaVale) : tags;
+    const tagsSalvar = isCustoMercadoriaFinal ? mergeTags(tagsBaseSalvar, ['cmv']) : tagsBaseSalvar;
 
     if (tipo === 'Transferência') {
       if (!contaDestinoId) {
@@ -488,8 +527,8 @@ export default function NovoLancamentoDialog({
             numero_parcelas_total: parcelas,
             parcela_atual: i + 1,
             grupo_lancamento_id: grupoId,
-            is_custo_mercadoria: isCustoMercadoria,
-            pedido_compra_vinculado_id: pedidoCompra?.id,
+            is_custo_mercadoria: isCustoMercadoriaFinal,
+            pedido_compra_vinculado_id: pedidoCompra?.id || pedidoCompraOrigemId || '',
             pedido_compra_vinculado_numero: pedidoCompra?.numero,
           });
         }
@@ -519,8 +558,8 @@ export default function NovoLancamentoDialog({
             parcela_atual: i + 1,
             grupo_lancamento_id: grupoId,
             data_fim_recorrencia: dataFim || null,
-            is_custo_mercadoria: isCustoMercadoria,
-            pedido_compra_vinculado_id: pedidoCompra?.id,
+            is_custo_mercadoria: isCustoMercadoriaFinal,
+            pedido_compra_vinculado_id: pedidoCompra?.id || pedidoCompraOrigemId || '',
             pedido_compra_vinculado_numero: pedidoCompra?.numero,
           });
           i += 1;
@@ -550,8 +589,8 @@ export default function NovoLancamentoDialog({
         conta_financeira_nome: conta?.nome,
         referencia_tipo: referenciaTipo || 'Manual',
         referencia_id: referenciaId || '',
-        is_custo_mercadoria: isCustoMercadoria,
-        pedido_compra_vinculado_id: pedidoCompra?.id,
+        is_custo_mercadoria: isCustoMercadoriaFinal,
+        pedido_compra_vinculado_id: pedidoCompra?.id || pedidoCompraOrigemId || '',
         pedido_compra_vinculado_numero: pedidoCompra?.numero,
       });
       if (realizado && conta) {
