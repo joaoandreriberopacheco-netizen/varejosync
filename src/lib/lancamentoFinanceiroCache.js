@@ -3,15 +3,11 @@ import { base44 } from '@/api/base44Client';
 const CACHE_TTL_MS = 90_000;
 const DEFAULT_LIMIT = 8000;
 
-/** @type {Map<string, { at: number, data?: unknown[], promise?: Promise<unknown[]> }>} */
-const cache = new Map();
-
-function cacheKey(sort, limit) {
-  return `${sort}:${limit}`;
-}
+/** @type {{ at: number, data?: unknown[], promise?: Promise<unknown[]> } | null} */
+let cacheEntry = null;
 
 export function invalidarCacheLancamentosFinanceiros() {
-  cache.clear();
+  cacheEntry = null;
 }
 
 /**
@@ -23,37 +19,35 @@ export async function listarLancamentosFinanceirosCache({
   limit = DEFAULT_LIMIT,
   force = false,
 } = {}) {
-  const key = cacheKey(sort, limit);
   const now = Date.now();
-  const entry = cache.get(key);
 
-  if (!force && entry?.data && now - entry.at < CACHE_TTL_MS) {
-    return entry.data;
+  if (!force && cacheEntry?.data && now - cacheEntry.at < CACHE_TTL_MS) {
+    return cacheEntry.data;
   }
 
-  if (entry?.promise) {
-    return entry.promise;
+  if (cacheEntry?.promise) {
+    return cacheEntry.promise;
   }
 
-  const promise = base44.entities.LancamentoFinanceiro.list(sort, limit)
+  const fetchLimit = Math.max(Number(limit) || 0, DEFAULT_LIMIT);
+
+  const promise = base44.entities.LancamentoFinanceiro.list(sort, fetchLimit)
     .then((rows) => {
       const data = Array.isArray(rows) ? rows : [];
-      cache.set(key, { at: Date.now(), data });
+      cacheEntry = { at: Date.now(), data };
       return data;
     })
     .catch((error) => {
-      const stale = cache.get(key);
-      if (stale?.data) return stale.data;
+      if (cacheEntry?.data) return cacheEntry.data;
       throw error;
     })
     .finally(() => {
-      const current = cache.get(key);
-      if (current?.promise) {
-        const { promise: _p, ...rest } = current;
-        cache.set(key, rest);
+      if (cacheEntry?.promise) {
+        const { promise: _p, ...rest } = cacheEntry;
+        cacheEntry = rest;
       }
     });
 
-  cache.set(key, { ...(entry || {}), promise });
+  cacheEntry = { ...(cacheEntry || {}), promise };
   return promise;
 }
