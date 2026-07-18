@@ -6,7 +6,6 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
 import AgefinLista from '@/components/agefin/AgefinLista';
-import AgefinAtualizador from '@/components/agefin/AgefinAtualizador';
 
 export default function Agefin() {
   const [activeTab, setActiveTab] = useState('contas');
@@ -105,7 +104,6 @@ export default function Agefin() {
 
     const total = contas.length;
     const pendentes = contas.filter(c => c.status === 'Em Aberto').length;
-    const comBoleto = contas.filter(c => c.forma_pagamento_tipo === 'Boleto' || c.forma_pagamento === 'Boleto').length;
     const vencidas = contas.filter(c => (c.status === 'Vencido') || (new Date(c.data_vencimento) < hoje && c.status !== 'Pago' && c.status !== 'Cancelado')).length;
     const proximosSete = contas.filter(c => {
       const d = new Date(c.data_vencimento);
@@ -113,7 +111,7 @@ export default function Agefin() {
     }).length;
     const valorTotal = contas.reduce((sum, c) => sum + (c.valor || 0), 0);
     
-    return { total, pendentes, comBoleto, vencidas, proximosSete, valorTotal };
+    return { total, pendentes, vencidas, proximosSete, valorTotal };
   }, [contas]);
 
   return (
@@ -173,7 +171,7 @@ export default function Agefin() {
           {/* Secondary Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
             <MetricPill label="Pendentes" value={stats.pendentes} icon={<DollarSign className="w-4 h-4" />} color="blue" />
-            <MetricPill label="Com Boleto" value={stats.comBoleto} icon={<FileText className="w-4 h-4" />} color="green" />
+            <MetricPill label="Total" value={stats.total} icon={<FileText className="w-4 h-4" />} color="green" />
             <MetricPill label="Valor Total" value={`R$ ${(stats.valorTotal / 1000).toFixed(1)}k`} icon={<TrendingUp className="w-4 h-4" />} color="purple" />
           </div>
         </div>
@@ -186,12 +184,6 @@ export default function Agefin() {
               className="rounded-none border-b-2 px-0 py-3 data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=inactive]:border-transparent text-muted-foreground"
             >
               Contas a Pagar
-            </TabsTrigger>
-            <TabsTrigger
-              value="recorrentes"
-              className="rounded-none border-b-2 px-6 py-3 ml-4 data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=inactive]:border-transparent text-muted-foreground"
-            >
-              Recorrências
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -234,9 +226,6 @@ export default function Agefin() {
           <>
             <TabsContent value="contas" className="mt-0">
               <AgefinLista contas={contas} onRefresh={loadContas} />
-            </TabsContent>
-            <TabsContent value="recorrentes" className="mt-0">
-              <AgefinAtualizador onRefresh={loadContas} />
             </TabsContent>
           </>
         )}

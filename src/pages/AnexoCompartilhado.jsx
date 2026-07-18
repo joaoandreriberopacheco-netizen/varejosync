@@ -21,7 +21,6 @@ import TipoDocumentoSearch from '@/components/anexos/TipoDocumentoSearch';
 import { TIPOS_DOCUMENTO_ANEXO, loadTiposCustomAnexo, saveTiposCustomAnexo } from '@/lib/tiposDocumentoAnexo';
 import { mapDestinoQueryToEtapa, SHARE_DESTINO_QUERY } from '@/lib/pwaShareTarget';
 import AgefinImportador from '@/components/agefin/AgefinImportador';
-import BoletoRecorrentePicker from '@/components/financeiro/BoletoRecorrentePicker';
 import { brandSurface } from '@/lib/brandSurfaces';
 import { navegarParaNovoPedidoImport } from '@/lib/torrePedidoImportBridge';
 import { navegarParaNovoLancamentoTorre } from '@/lib/torreLancamentoBridge';
@@ -50,8 +49,6 @@ export default function AnexoCompartilhado() {
   const [ajudaTorreAberta, setAjudaTorreAberta] = useState(false);
   const [feedbackClipboard, setFeedbackClipboard] = useState('');
   const [modoAtalhoClipboard, setModoAtalhoClipboard] = useState(false);
-  /** Lançamento do mês escolhido no atualizador de boletos (partilha → atualizar PDF) */
-  const [contaMesBoletoAlvo, setContaMesBoletoAlvo] = useState(null);
   const colagemAutomaticaClipboardTentada = useRef(false);
   /** Caminho no widget de destinos (pais → filhos → netos) */
   const [widgetPath, setWidgetPath] = useState([]);
@@ -125,9 +122,6 @@ export default function AnexoCompartilhado() {
         break;
       case TORRE_WIDGET_ACTIONS.FINANCEIRO_IMPORTAR_BOLETO:
         if (arquivo?.file) setEtapa('importar_pdf_conta');
-        break;
-      case TORRE_WIDGET_ACTIONS.FINANCEIRO_ATUALIZAR_BOLETO:
-        if (arquivo?.file) setEtapa('atualizar_boleto');
         break;
       case TORRE_WIDGET_ACTIONS.LOGISTICA_EVENTO:
         setEtapa('vincular_evento');
@@ -474,7 +468,7 @@ export default function AnexoCompartilhado() {
       } else if (etapaAlvo === 'importar_pdf_conta' || etapaAlvo === 'atualizar_boleto') {
         setWidgetPath(['financeiro', 'financeiro_boleto']);
       }
-      setEtapa(etapaAlvo);
+      setEtapa(etapaAlvo === 'atualizar_boleto' ? 'importar_pdf_conta' : etapaAlvo);
     }
   }, [carregando]);
 
@@ -533,13 +527,8 @@ export default function AnexoCompartilhado() {
 
   useEffect(() => {
     if (carregando) return;
-    const precisaArquivo =
-      etapa === 'importar_pdf_conta' ||
-      etapa === 'atualizar_boleto' ||
-      etapa === 'atualizar_boleto_import' ||
-      etapa === 'importar_pedido_novo';
+    const precisaArquivo = etapa === 'importar_pdf_conta' || etapa === 'importar_pedido_novo';
     if (precisaArquivo && !arquivo?.file) {
-      setContaMesBoletoAlvo(null);
       setEtapa('opcoes');
     }
   }, [carregando, etapa, arquivo?.file]);
@@ -660,7 +649,7 @@ export default function AnexoCompartilhado() {
         <div className="text-center">
           <h2 className="text-xl font-semibold text-foreground dark:text-foreground">{titulo}</h2>
           {etapa === 'sucesso_conta' && (
-            <p className={`mt-2 text-sm ${brandSurface.textMuted}`}>Pode rever no AGEFIN e no atualizador de boletos.</p>
+            <p className={`mt-2 text-sm ${brandSurface.textMuted}`}>Pode rever no AGEFIN Consulta ou no Planejamento Financeiro.</p>
           )}
         </div>
         <button
@@ -752,67 +741,6 @@ export default function AnexoCompartilhado() {
                 tipoDocumentoAnexo={tipoDocumento}
                 onSuccess={(_data, meta) => {
                   if (meta?.close) setEtapa('sucesso_conta');
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {etapa === 'atualizar_boleto' && arquivo?.file && (
-          <div
-            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-background"
-            style={{
-              paddingTop: 'env(safe-area-inset-top)',
-              paddingBottom: 'env(safe-area-inset-bottom)',
-            }}
-          >
-            <BoletoRecorrentePicker
-              onVoltar={() => voltarWidgetOverlay('atualizar_boleto')}
-              onSelectCard={({ contaMes }) => {
-                setContaMesBoletoAlvo(contaMes);
-                setEtapa('atualizar_boleto_import');
-              }}
-            />
-          </div>
-        )}
-
-        {etapa === 'atualizar_boleto_import' && arquivo?.file && contaMesBoletoAlvo && (
-          <div
-            className="fixed inset-0 z-[50000] flex min-h-[100dvh] flex-col bg-muted/40 dark:bg-background"
-            style={{
-              paddingTop: 'env(safe-area-inset-top)',
-              paddingBottom: 'env(safe-area-inset-bottom)',
-            }}
-          >
-            <div className="flex shrink-0 items-center gap-3 border-b border-border/40 px-4 py-3 dark:border-border/40">
-              <button
-                type="button"
-                onClick={() => {
-                  setContaMesBoletoAlvo(null);
-                  setEtapa('atualizar_boleto');
-                }}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </button>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">Vincular boleto</p>
-                <p className="truncate text-xs text-muted-foreground">{contaMesBoletoAlvo.descricao || 'Conta selecionada'}</p>
-              </div>
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <AgefinImportador
-                key={contaMesBoletoAlvo.id}
-                initialFile={arquivo.file}
-                tipoDocumentoAnexo={tipoDocumento}
-                modoAtualizacao
-                contaPrevistaId={contaMesBoletoAlvo.referencia_id || undefined}
-                lancamentoFinanceiroId={contaMesBoletoAlvo.id}
-                onSuccess={(_data, meta) => {
-                  if (meta?.close) {
-                    setContaMesBoletoAlvo(null);
-                    setEtapa('sucesso_conta');
-                  }
                 }}
               />
             </div>

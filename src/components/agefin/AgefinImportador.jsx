@@ -160,9 +160,7 @@ export default function AgefinImportador({
   initialFile = null,
   /** Tipo escolhido na Torre de controle (ex.: Boleto, Comprovante) */
   tipoDocumentoAnexo = 'Boleto',
-  /** Lista recorrentes: descri??o/terceiro da conta j? criada; sucesso volta ao painel */
-  fluxoLoopAtualizadorRecorrente = false,
-  /** { descricao, terceiro_nome?, conta_financeira_id? } ??? ap?s ler o PDF */
+  /** { descricao, terceiro_nome?, conta_financeira_id? } — contexto da conta em modo atualização */
   dadosContaExistente = null,
 }) {
   const [file, setFile] = useState(null);
@@ -339,7 +337,7 @@ ${blocoTextoLocal}`,
         codigo_pix_copia_cola: extracted.codigo_pix_copia_cola || '',
         observacoes: extracted.instrucoes || '',
       };
-      if (modoAtualizacao && fluxoLoopAtualizadorRecorrente && dadosContaExistente) {
+      if (modoAtualizacao && dadosContaExistente) {
         if (dadosContaExistente.descricao) baseExtracted.descricao = dadosContaExistente.descricao;
         if (dadosContaExistente.terceiro_nome) baseExtracted.terceiro_nome = dadosContaExistente.terceiro_nome;
       }
@@ -374,27 +372,13 @@ ${blocoTextoLocal}`,
     } finally {
       setLoading(false);
     }
-  }, [modoAtualizacao, fluxoLoopAtualizadorRecorrente, dadosContaExistente, somenteAnexo]);
+  }, [modoAtualizacao, dadosContaExistente, somenteAnexo]);
 
   useEffect(() => {
-    if (fluxoLoopAtualizadorRecorrente && modoAtualizacao) {
-      setSelectedNatureza('Recorrente');
-    }
-  }, [fluxoLoopAtualizadorRecorrente, modoAtualizacao]);
-
-  useEffect(() => {
-    if (fluxoLoopAtualizadorRecorrente && dadosContaExistente?.conta_financeira_id) {
+    if (dadosContaExistente?.conta_financeira_id) {
       setContaFinanceiraId(String(dadosContaExistente.conta_financeira_id));
     }
-  }, [fluxoLoopAtualizadorRecorrente, dadosContaExistente?.conta_financeira_id]);
-
-  useEffect(() => {
-    if (!successState || !fluxoLoopAtualizadorRecorrente) return;
-    const t = setTimeout(() => {
-      onSuccess?.(null, { close: true, voltarAtualizador: true });
-    }, 2000);
-    return () => clearTimeout(t);
-  }, [successState, fluxoLoopAtualizadorRecorrente, onSuccess]);
+  }, [dadosContaExistente?.conta_financeira_id]);
 
   const handleFileUpload = async (e) => {
     const selectedFile = e.target.files?.[0];
@@ -415,7 +399,7 @@ ${blocoTextoLocal}`,
   }, [initialFile, processSelectedFile]);
 
   useEffect(() => {
-    if (!modoAtualizacao || !contaPrevistaId || !extractedData || fluxoLoopAtualizadorRecorrente || sacredDescricaoFetchDone.current) return;
+    if (!modoAtualizacao || !contaPrevistaId || !extractedData || sacredDescricaoFetchDone.current) return;
     sacredDescricaoFetchDone.current = true;
     let cancelled = false;
     base44.entities.ContaPrevista.get(contaPrevistaId).then((cp) => {
@@ -426,7 +410,7 @@ ${blocoTextoLocal}`,
     return () => {
       cancelled = true;
     };
-  }, [modoAtualizacao, contaPrevistaId, extractedData, fluxoLoopAtualizadorRecorrente]);
+  }, [modoAtualizacao, contaPrevistaId, extractedData]);
 
   useEffect(() => {
     base44.entities.ContasFinanceiras.filter({ ativo: true }).then((data) => {
@@ -464,6 +448,7 @@ ${blocoTextoLocal}`,
           contaPrevistaId,
           lancamentoFinanceiroId,
           atualizarValores: false,
+          somenteAnexo: true,
           contextoMatch: 'somente_anexo',
           boletoFingerprint: file?.url ? `anexo:${hashDjb2(file.url)}` : null,
         });
@@ -490,9 +475,7 @@ ${blocoTextoLocal}`,
           descricao: dadosContaExistente?.descricao || file?.name || 'Boleto vinculado',
           somenteAnexo: true,
         });
-        if (!fluxoLoopAtualizadorRecorrente) {
-          onSuccess?.(null, { somenteAnexo: true });
-        }
+        onSuccess?.(null, { somenteAnexo: true });
       } catch (err) {
         setError('Erro ao vincular boleto. Tente novamente.');
         console.error(err);
@@ -503,7 +486,7 @@ ${blocoTextoLocal}`,
     }
 
     if (!contaFinanceiraId) return;
-    if (!fluxoLoopAtualizadorRecorrente && !selectedNatureza) return;
+    if (!selectedNatureza) return;
 
     setLoading(true);
     setError(null);
@@ -616,11 +599,9 @@ ${blocoTextoLocal}`,
       }
 
       const descricaoFinal =
-        fluxoLoopAtualizadorRecorrente && (extractedData.descricao || '').trim()
-          ? extractedData.descricao.trim()
-          : descricaoReservadaExistente != null
-            ? descricaoReservadaExistente
-            : recorrenteFinal?.nome_despesa || extractedData.descricao;
+        descricaoReservadaExistente != null
+          ? descricaoReservadaExistente
+          : recorrenteFinal?.nome_despesa || extractedData.descricao;
 
       const payload = {
         descricao: descricaoFinal,
@@ -676,6 +657,7 @@ ${blocoTextoLocal}`,
           dataVencimento: extractedData.data_vencimento,
           valor: extractedData.valor,
           atualizarValores: !somenteAnexo,
+          somenteAnexo,
           permitirFallbackGrupo: false,
           contextoMatch,
           boletoFingerprint,
@@ -784,9 +766,7 @@ ${blocoTextoLocal}`,
         descricao: payload.descricao,
         recorrenteCriada: Boolean(novaSeriePorFingerprint || (!recorrenteVinculado && recorrenteFinal)),
       });
-      if (!fluxoLoopAtualizadorRecorrente) {
-        onSuccess?.({ contaPrevista: contaCriada, lancamento: lancamentoCriado });
-      }
+      onSuccess?.({ contaPrevista: contaCriada, lancamento: lancamentoCriado });
     } catch (err) {
       const raw = String(err?.message || err || '').toLowerCase();
       const rede =
@@ -804,14 +784,9 @@ ${blocoTextoLocal}`,
     }
   };
 
-  /** Atualizador de boletos (lista): formul?rio sem natureza/recorr?ncia nova */
-  const fluxoListaRecorrentes = Boolean(modoAtualizacao && fluxoLoopAtualizadorRecorrente);
-
   if (successState) {
     return (
-      <div
-        className={`flex h-full flex-col justify-between px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-5 md:pb-5 ${fluxoLoopAtualizadorRecorrente ? 'min-h-0' : 'min-h-[32rem]'}`}
-      >
+      <div className="flex h-full min-h-[32rem] flex-col justify-between px-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-5 md:pb-5">
         <div className="rounded-[32px] bg-card p-6 shadow-sm dark:bg-muted">
           <div className="mb-5 flex items-start gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
@@ -851,39 +826,24 @@ ${blocoTextoLocal}`,
                     : 'Ela também já pode aparecer no AGEFIN quando for recorrente.'}
               </p>
             </div>
-            {fluxoLoopAtualizadorRecorrente && (
-              <p className="mt-4 text-center text-sm text-muted-foreground">A regressar ao atualizador para escolher outra conta???</p>
-            )}
           </div>
         </div>
 
-        {fluxoLoopAtualizadorRecorrente ? (
-          <div className="pt-4">
-            <Button
-              variant="outline"
-              onClick={() => onSuccess?.(null, { close: true, voltarAtualizador: true })}
-              className="h-12 w-full rounded-2xl border-0 bg-[#2e2629] text-sm font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
-            >
-              Voltar j?
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => onSuccess?.(null, { close: true })}
-              className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
-            >
-              Fechar
-            </Button>
-            <Button
-              onClick={resetState}
+        <div className="grid grid-cols-2 gap-3 pt-4">
+          <Button
+            variant="outline"
+            onClick={() => onSuccess?.(null, { close: true })}
+            className="h-14 rounded-2xl border-0 bg-[#2e2629] text-base font-semibold text-white hover:bg-[#362d31] dark:bg-[#2e2629] dark:text-white"
+          >
+            Fechar
+          </Button>
+          <Button
+            onClick={resetState}
               className="h-14 rounded-2xl bg-emerald-100 text-base font-semibold text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-200 dark:text-emerald-900 dark:hover:bg-emerald-100"
             >
               Importar outra
             </Button>
           </div>
-        )}
       </div>
     );
   }
@@ -1064,14 +1024,7 @@ ${blocoTextoLocal}`,
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Pr?-preenchimento</p>
-                <h3 className="mt-2 font-glacial text-xl font-semibold text-foreground">
-                  {fluxoListaRecorrentes ? 'Rever boleto desta conta' : 'Revisar dados'}
-                </h3>
-                {fluxoListaRecorrentes && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    A recorr?ncia j? est? definida no cadastro. Confirme valor, vencimento e dados do PDF.
-                  </p>
-                )}
+                <h3 className="mt-2 font-glacial text-xl font-semibold text-foreground">Revisar dados</h3>
               </div>
               <span className="rounded-2xl bg-muted px-3 py-1 text-xs font-medium text-muted-foreground dark:bg-muted dark:text-foreground/90">PDV style</span>
             </div>
@@ -1094,7 +1047,7 @@ ${blocoTextoLocal}`,
               <div>
                 <label className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground/90">
                   Descri??o
-                  {!fluxoListaRecorrentes && descricaoSacralizadaLock && (
+                  {descricaoSacralizadaLock && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
                       <Lock className="h-3 w-3" /> Fixa
                     </span>
@@ -1104,21 +1057,16 @@ ${blocoTextoLocal}`,
                   type="text"
                   value={extractedData.descricao}
                   onChange={(e) => setExtractedData({ ...extractedData, descricao: e.target.value })}
-                  readOnly={!fluxoListaRecorrentes && descricaoSacralizadaLock}
-                  title={!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'Esta conta j? tem descri??o confirmada; novos PDFs n?o a alteram.' : undefined}
-                  className={`h-14 w-full rounded-2xl bg-muted px-4 text-base text-foreground outline-none ring-0 placeholder:text-muted-foreground focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background ${!fluxoListaRecorrentes && descricaoSacralizadaLock ? 'cursor-not-allowed opacity-90' : ''}`}
+                  readOnly={descricaoSacralizadaLock}
+                  title={descricaoSacralizadaLock ? 'Esta conta j? tem descri??o confirmada; novos PDFs n?o a alteram.' : undefined}
+                  className={`h-14 w-full rounded-2xl bg-muted px-4 text-base text-foreground outline-none ring-0 placeholder:text-muted-foreground focus:bg-muted dark:bg-background dark:text-white dark:focus:bg-background ${descricaoSacralizadaLock ? 'cursor-not-allowed opacity-90' : ''}`}
                 />
-                {fluxoListaRecorrentes && (
-                  <p className="mt-1.5 text-xs text-muted-foreground">
-                    Nome da conta no cadastro (pode editar). O leitor do PDF n?o substitui este t?tulo ??? s? ajuda em valor, vencimento e anexo.
-                  </p>
-                )}
-                {!fluxoListaRecorrentes && !descricaoSacralizadaLock && (
+                {!descricaoSacralizadaLock && (
                   <p className="mt-1.5 text-xs text-muted-foreground">
                     Sugest?o do leitor autom?tico ??? pode editar antes de salvar. Depois de salva, a descri??o fica fixa para manter o mesmo nome mental nesta conta e nos meses seguintes.
                   </p>
                 )}
-                {!fluxoListaRecorrentes && descricaoSacralizadaLock && (
+                {descricaoSacralizadaLock && (
                   <p className="mt-1.5 text-xs text-amber-800/90 dark:text-amber-200/90">
                     Descri??o j? confirmada nesta conta; o PDF s? atualiza valores, vencimento e boleto.
                   </p>
@@ -1168,7 +1116,6 @@ ${blocoTextoLocal}`,
                 </div>
               </div>
 
-              {!fluxoListaRecorrentes && (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground/90">N? da parcela</label>
@@ -1196,7 +1143,6 @@ ${blocoTextoLocal}`,
                   </Select>
                 </div>
               </div>
-              )}
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-foreground/90">Linha digit?vel</label>
@@ -1227,7 +1173,6 @@ ${blocoTextoLocal}`,
             </div>
           </div>
 
-          {!fluxoListaRecorrentes && (
           <div className="rounded-[28px] bg-card p-5 shadow-sm dark:bg-muted">
             <label className="mb-3 block text-sm font-medium text-foreground/90">Qual ? a natureza desta conta?</label>
             <AgefinNaturezaSelector value={selectedNatureza || '??nico'} onChange={setSelectedNatureza} />
@@ -1237,7 +1182,6 @@ ${blocoTextoLocal}`,
               </p>
             )}
           </div>
-          )}
 
           {error && (
             <div className="rounded-3xl bg-red-50 p-4 shadow-sm dark:bg-red-900/20">
@@ -1261,10 +1205,10 @@ ${blocoTextoLocal}`,
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={loading || (!fluxoListaRecorrentes && !selectedNatureza) || !contaFinanceiraId}
+            disabled={loading || !selectedNatureza || !contaFinanceiraId}
             className="h-14 rounded-2xl bg-muted text-base font-semibold text-foreground hover:bg-muted-foreground/40 dark:bg-muted dark:text-foreground dark:hover:bg-card"
           >
-            {loading ? 'Salvando...' : fluxoListaRecorrentes ? 'Guardar boleto' : 'Salvar Conta'}
+            {loading ? 'Salvando...' : 'Salvar Conta'}
           </Button>
         </div>
       </div>

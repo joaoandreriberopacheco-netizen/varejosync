@@ -455,7 +455,7 @@ export async function desfazerAberturaCompetenciasDoMes(competencia) {
     }
     const tags = Array.isArray(lf.tags) ? lf.tags : [];
     if (!tags.includes(TAG_LF_GERADO_AUTO) && !tags.includes('agefin_previsao')) {
-      bloqueadas.push({ nome: modelo.nome, motivo: 'com_boleto' });
+      bloqueadas.push({ nome: modelo.nome, motivo: 'editada' });
       continue;
     }
 

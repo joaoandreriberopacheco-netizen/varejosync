@@ -235,7 +235,7 @@ export default function PlanejamentoFinanceiroPage() {
   const handleDesfazerAbrirMes = async () => {
     if (
       !window.confirm(
-        `Desfazer abertura de ${formatCompetenciaLabel(competenciaMes)}?\n\nRemove apenas lançamentos gerados automaticamente, sem boleto e não pagos.`,
+        `Desfazer abertura de ${formatCompetenciaLabel(competenciaMes)}?\n\nRemove apenas lançamentos gerados automaticamente na abertura do mês (não pagos e ainda não editados manualmente).`,
       )
     )
       return;

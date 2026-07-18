@@ -281,7 +281,7 @@ export default function AgefinPrevisaoDetalheDrawer({
                 disabled={abrindoMes}
               >
                 <FileText className="h-4 w-4" />
-                {abrindoMes ? 'A preparar anexo…' : 'Anexar boleto (PDF)'}
+                {abrindoMes ? 'A preparar anexo…' : 'Anexar PDF (opcional)'}
               </Button>
             )}
             {!planejamento && !bloqueada && !parcela && onSyncFinanceiro && (

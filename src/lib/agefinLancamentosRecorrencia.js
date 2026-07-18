@@ -338,6 +338,8 @@ export async function marcarLancamentosComoImportadosPorBoletoPdf(
     valor,
     /** Quando false (padrão), só marca tag de boleto — não altera valor nem vencimento. */
     atualizarValores = false,
+    /** Quando true, só registra anexo/tag — não força forma de pagamento Boleto. */
+    somenteAnexo = false,
     permitirFallbackGrupo = false,
     contextoMatch = null,
     boletoFingerprint = null,
@@ -365,8 +367,9 @@ export async function marcarLancamentosComoImportadosPorBoletoPdf(
               .join('\n'),
           }
         : {}),
-      forma_pagamento_tipo: 'Boleto',
-      forma_pagamento: 'Boleto',
+      ...(!somenteAnexo
+        ? { forma_pagamento_tipo: 'Boleto', forma_pagamento: 'Boleto' }
+        : {}),
     });
   };
 

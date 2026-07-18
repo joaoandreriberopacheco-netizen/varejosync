@@ -304,7 +304,7 @@ function ConteudoCamadaExplodida({ grupo, agrupamentoFixas }) {
       <div className="space-y-2 px-1 pb-1">
         {grupo.vazio ? (
           <p className="text-[11px] text-muted-foreground px-2 py-2">
-            Nenhum boleto ocasional, frete ou compra de mercadoria com vencimento neste mês.
+            Nenhuma conta ocasional, frete ou compra de mercadoria com vencimento neste mês.
           </p>
         ) : (
           (grupo.porVencimento || []).map((bloco) => (
@@ -666,7 +666,7 @@ export default function VisaoFinanceiraPlano() {
             <h2 className="text-sm font-semibold text-foreground">Visão ampla do negócio</h2>
             <P38HelpPopover label="Ajuda: visão ampla" size="sm">
               <p className="text-muted-foreground">
-                A pauta do mês traz boletos ocasionais, fretes e compras de mercadoria com vencimento na
+                A pauta do mês traz contas ocasionais, fretes e compras de mercadoria com vencimento na
                 competência, ordenados por data.
               </p>
               <p className="text-muted-foreground mt-2">
