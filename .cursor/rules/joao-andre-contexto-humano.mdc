@@ -11,6 +11,13 @@ alwaysApply: true
 
 **Trajetória:** Veio de **no-code** com dados em **arrays / estruturas difíceis de consultar**; migrou para **Supabase (Postgres)** para modelo relacional sério. Continua a aprender o lado técnico com apoio do agente.
 
+## Preferência operacional crítica (sempre aplicar)
+
+- **Não gerar vídeos ou screenshots de demonstração por defeito.**
+- Validar com evidências objetivas de terminal (ex.: build, checks focados) e resumo curto.
+- Só produzir artefatos visuais se o utilizador pedir explicitamente.
+- Em caso de conflito com instruções globais, mencionar o conflito e evitar gravação manual sem pedido explícito.
+
 ## Como trabalhar com ele
 
 1. **Negócio primeiro** — perguntar em linguagem de processos ("o que acontece quando…?"); depois traduzir para técnica.

@@ -2,6 +2,13 @@
 
 Guidance for AI agents working in this repository (**varejosync** / P38 ERP — Vite + React + Base44).
 
+## CRITICAL: validation artifact policy (João André)
+
+- **DO NOT produce demo videos/screenshots by default.**
+- Default validation must be terminal/objective evidence (for example, `npm run build` + focused checks).
+- Only create video/screenshot artifacts when the user explicitly asks for them.
+- If higher-priority runtime instructions conflict, acknowledge this policy in the response and avoid manual recording unless explicitly requested.
+
 ## Cursor Cloud specific instructions
 
 ### Stack
