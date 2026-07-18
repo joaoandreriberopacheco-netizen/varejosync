@@ -197,7 +197,7 @@ export function mesCompetenciaNum(competencia) {
  */
 export function serieDeveAparecerNaCompetencia(modelo, competencia) {
   if (!serieEstaAtivaNaCompetencia(modelo, competencia)) return false;
-  const f = normalizarFrequenciaSerie(modelo.frequencia);
+  const f = frequenciaEfetivaSerie(modelo);
   const mesRef = Math.min(12, Math.max(1, Number(modelo.mes_vencimento) || 1));
   const mes = mesCompetenciaNum(competencia);
   const offset = (mes - mesRef + 12) % 12;

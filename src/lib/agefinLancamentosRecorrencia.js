@@ -12,14 +12,21 @@ import { lancamentoEhContaPagar, lancamentoEhCmv, lancamentoCancelado } from '@/
 export function lancamentoRecorrenteContaPagarParaListaBoleto(l) {
   if (!l || l.tipo !== 'Despesa' || l.status === 'Cancelado' || lancamentoCancelado(l)) return false;
   if (lancamentoEhCmv(l)) return false;
-  if (!lancamentoEhContaPagar(l)) return false;
   if (!l.grupo_lancamento_id) return false;
   const tags = Array.isArray(l.tags) ? l.tags : [];
   if (tags.includes('parcelado')) return false;
-  return (
+
+  const recorrente =
     Boolean(l.is_recorrente) ||
     Boolean(l.frequencia_recorrencia && l.frequencia_recorrencia !== 'Único') ||
-    tags.includes('recorrente')
+    tags.includes('recorrente');
+  if (!recorrente) return false;
+
+  // Conta a pagar clássica (tag) ou recorrente explícita do planejamento/financeiro
+  return (
+    lancamentoEhContaPagar(l) ||
+    (Boolean(l.is_recorrente) &&
+      Boolean(l.frequencia_recorrencia && l.frequencia_recorrencia !== 'Único'))
   );
 }
 

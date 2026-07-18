@@ -430,7 +430,15 @@ export default function NovoLancamentoDialog({
     const conta = contas.find((c) => c.id === contaId);
     const pedidoCompra = pedidoCompraId ? pedidosCompra.find((p) => p.id === pedidoCompraId) : null;
     const pessoaVale = isValeFolha ? pessoasFolha.find((p) => p.id === valeFolhaModeloId) : null;
-    const tagsSalvar = isValeFolha && pessoaVale ? montarTagsValeFolha(tags, pessoaVale) : tags;
+    const tagsBase = isValeFolha && pessoaVale ? montarTagsValeFolha(tags, pessoaVale) : tags;
+    const tagsSalvar = (() => {
+      const base = [...(tagsBase || [])];
+      if (modoPlanejamento && tipo !== 'Transferência') {
+        base.push('conta_pagar', 'agefin_previsao');
+        if (isRecorrente) base.push('recorrente');
+      }
+      return [...new Set(base)];
+    })();
 
     if (tipo === 'Transferência') {
       if (!contaDestinoId) {
@@ -503,7 +511,13 @@ export default function NovoLancamentoDialog({
         }
       } else {
         const addFn = FREQS_MAP[frequencia] || FREQS_MAP.Mensal;
-        const limiteDate = dataFim ? new Date(dataFim) : addMonths(baseDate, 11);
+        const limiteDate = dataFim
+          ? new Date(dataFim)
+          : frequencia === 'Anual'
+            ? addYears(new Date(), 3)
+            : frequencia === 'Semestral'
+              ? addYears(new Date(), 2)
+              : addMonths(baseDate, 11);
         let i = 0;
         let dtAtual = baseDate;
         while (dtAtual <= limiteDate && i < 60) {

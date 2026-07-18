@@ -39,7 +39,8 @@ export function lancamentoEntraNoPlanejamento(lf) {
   if (lancamentoEhFreteItinerario(lf)) return false;
   if (lancamentoEhCmv(lf)) return false;
   if (lancamentoEhCompraMercadoriaPedido(lf)) return false;
-  return lancamentoEhContaPagar(lf);
+  if (lancamentoEhContaPagar(lf)) return true;
+  return lancamentoRecorrenteContaPagarParaListaBoleto(lf);
 }
 
 /**

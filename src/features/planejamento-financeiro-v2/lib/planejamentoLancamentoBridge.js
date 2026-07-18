@@ -27,5 +27,6 @@ export async function persistirOverlayPlanejamentoAposLancamento({
     grupo_lancamento_id,
     dia_vencimento: Number(ven.slice(8, 10)) || 10,
     mes_vencimento: Number(ven.slice(5, 7)) || 1,
+    ativo: true,
   });
 }

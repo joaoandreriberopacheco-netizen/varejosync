@@ -201,6 +201,7 @@ function derivarSerieDoGrupoLancamentos(grupoId, rows = []) {
   if (!rep) return null;
 
   const abertos = rows.filter((lf) => !lancamentoPago(lf) && !lancamentoCancelado(lf));
+  const freq = frequenciaDoGrupoLancamentos(grupoId, rows);
 
   return criarSerieComDefaults({
     id: serieIdFromGrupoLancamento(grupoId),
@@ -212,9 +213,10 @@ function derivarSerieDoGrupoLancamentos(grupoId, rows = []) {
     valor_previsto: Number(rep.valor) || 0,
     dia_vencimento: Number((rep.data_vencimento || '').slice(8, 10)) || 10,
     mes_vencimento: Number((rep.data_vencimento || '').slice(5, 7)) || new Date().getMonth() + 1,
-    frequencia: frequenciaDoGrupoLancamentos(grupoId, rows),
+    frequencia: freq,
     grupo_lancamento_id: grupoId,
-    ativo: abertos.length > 0,
+    // Anuais/trimestrais etc. seguem na previsão mesmo sem parcela em aberto no mês
+    ativo: abertos.length > 0 || freq !== FREQUENCIA_SERIE.MENSAL,
   });
 }
 
