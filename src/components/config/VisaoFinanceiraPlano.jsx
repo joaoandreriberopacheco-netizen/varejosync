@@ -89,6 +89,7 @@ function ItemPlanoLine({
   modo = 'padrao',
   mostrarCentro = false,
   explodido = false,
+  omitirDataVencimento = false,
 }) {
   const accent = item.destaque
     ? 'warning'
@@ -123,7 +124,7 @@ function ItemPlanoLine({
   );
 
   const title =
-    modo === 'vencimento' || modo === 'pauta'
+    (modo === 'vencimento' || modo === 'pauta') && !omitirDataVencimento
       ? item.dataVencimentoLabel
         ? `${item.dataVencimentoLabel} · ${item.nome}`
         : item.nome
@@ -144,7 +145,7 @@ function ItemPlanoLine({
   const subtitleFinal = explodido ? buildSubtitleExplodido(item, modo, subtitle) : subtitle;
 
   const titleNode = explodido ? (
-    <span className="text-sm md:text-[15px] font-medium normal-case tracking-normal leading-snug text-foreground">
+    <span className="text-sm md:text-[15px] font-medium uppercase tracking-wide leading-snug text-foreground">
       {title}
     </span>
   ) : (
@@ -202,7 +203,13 @@ function ItemPlanoLine({
   );
 }
 
-function ListaItensPlano({ items, modo = 'padrao', mostrarCentro = false, explodido = false }) {
+function ListaItensPlano({
+  items,
+  modo = 'padrao',
+  mostrarCentro = false,
+  explodido = false,
+  omitirDataVencimento = false,
+}) {
   const lines = items.map((item, index) => (
     <ItemPlanoLine
       key={item.id}
@@ -211,6 +218,7 @@ function ListaItensPlano({ items, modo = 'padrao', mostrarCentro = false, explod
       modo={modo}
       mostrarCentro={mostrarCentro}
       explodido={explodido}
+      omitirDataVencimento={omitirDataVencimento}
     />
   ));
 
@@ -234,7 +242,28 @@ function ListaItensPlano({ items, modo = 'padrao', mostrarCentro = false, explod
   );
 }
 
-const GRUPO_EXPLODIDO_LABEL = '!text-xs md:!text-sm !font-bold !tracking-wide !text-foreground !max-w-none';
+const GRUPO_EXPLODIDO_LABEL =
+  '!text-xs md:!text-sm !font-bold !uppercase !tracking-wide !text-foreground !max-w-none';
+
+function GrupoDataVencimentoPlano({ bloco, modo = 'vencimento', explodido = false }) {
+  return (
+    <FinanceiroGrupo
+      card={explodido}
+      label={bloco.label}
+      labelClassName={explodido ? GRUPO_EXPLODIDO_LABEL : undefined}
+      despesas={bloco.subtotal}
+      liquido={-bloco.subtotal}
+      defaultOpen
+    >
+      <ListaItensPlano
+        items={bloco.items}
+        modo={modo}
+        explodido={explodido}
+        omitirDataVencimento
+      />
+    </FinanceiroGrupo>
+  );
+}
 
 function GrupoCentroPlano({ centro, modo, mostrarCentro = true, explodido = false }) {
   return (
@@ -359,10 +388,11 @@ function ConteudoCamadaExplodida({ grupo, agrupamentoFixas }) {
       );
     }
 
-    const itensFixas = blocos.flatMap((bloco) => bloco.items || []);
     return (
-      <div className="px-1 pb-1">
-        <ListaItensPlano items={itensFixas} modo="vencimento" explodido />
+      <div className="space-y-2 px-1 pb-1">
+        {blocos.map((bloco) => (
+          <GrupoDataVencimentoPlano key={bloco.id} bloco={bloco} modo="vencimento" explodido />
+        ))}
       </div>
     );
   }
@@ -400,10 +430,11 @@ function ConteudoCamadaExplodida({ grupo, agrupamentoFixas }) {
       );
     }
 
-    const itensPauta = (grupo.porVencimento || []).flatMap((bloco) => bloco.items || []);
     return (
-      <div className="px-1 pb-1">
-        <ListaItensPlano items={itensPauta} modo="pauta" explodido />
+      <div className="space-y-2 px-1 pb-1">
+        {(grupo.porVencimento || []).map((bloco) => (
+          <GrupoDataVencimentoPlano key={bloco.id} bloco={bloco} modo="pauta" explodido />
+        ))}
       </div>
     );
   }
