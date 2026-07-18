@@ -81,6 +81,7 @@ export default function PlanejamentoFinanceiroPage() {
   const [sortOrderContas, setSortOrderContas] = useState('asc');
   const [fabOpen, setFabOpen] = useState(false);
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState('contas');
   const [draggingSerieId, setDraggingSerieId] = useState('');
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
   const [showImportador, setShowImportador] = useState(false);
@@ -93,6 +94,7 @@ export default function PlanejamentoFinanceiroPage() {
   const { data: lancamentosRecorrentes = [] } = useQuery({
     queryKey: ['agefin-previsao', 'lancamentos-recorrentes'],
     queryFn: listarLancamentosRecorrentes,
+    enabled: abaAtiva === 'projecao',
     staleTime: 60_000,
   });
 
@@ -527,7 +529,7 @@ export default function PlanejamentoFinanceiroPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Contas fixas mensais — energia, telefone, internet…</p>
       </div>
 
-      <Tabs defaultValue="contas" className="w-full mt-4">
+      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full mt-4">
         <TabsList
           className={cn(
             'w-full h-auto p-1 rounded-xl flex-nowrap overflow-x-auto md:overflow-visible md:flex-wrap',

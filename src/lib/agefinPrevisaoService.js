@@ -1,7 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import {
   TAG_LF_GERADO_AUTO,
-  gerarLancamentosMensaisAteFimDoAno,
   lancamentoRecorrenteContaPagarParaListaBoleto,
   mesReferenciaLancamento,
 } from '@/lib/agefinLancamentosRecorrencia';
@@ -22,7 +21,7 @@ import {
   atualizarDadosEmpresa,
   obterRegistroDadosEmpresa as obterDadosEmpresa,
 } from '@/lib/dadosEmpresaMerge';
-import { listarLancamentosFinanceirosCache } from '@/lib/lancamentoFinanceiroCache';
+import { listarLancamentosRecorrentesCache } from '@/lib/lancamentoFinanceiroCache';
 
 export { listarCentrosCustoRegistros };
 
@@ -98,10 +97,12 @@ function deduplicarSeriesPorGrupo(series = []) {
 
 /** Fonte de verdade: entidade + DadosEmpresa (sem localStorage). */
 async function lerSeriesNaNuvem() {
-  const empresa = await obterRegistroDadosEmpresa();
+  const [empresa, entityRows] = await Promise.all([
+    obterRegistroDadosEmpresa(),
+    tryListEntitySeries(),
+  ]);
   const empresaRows = lerSeriesEmpresa(empresa);
-  const entityRows = (await tryListEntitySeries()) ?? [];
-  return deduplicarSeriesPorGrupo(mesclarSeriesPorId(entityRows, empresaRows));
+  return deduplicarSeriesPorGrupo(mesclarSeriesPorId(entityRows ?? [], empresaRows));
 }
 
 async function lerTodasSeriesArmazenadas() {
@@ -153,16 +154,29 @@ export function subscribeSeriesStorageChanges(onChange) {
   return () => window.removeEventListener('storage', handler);
 }
 
+const LS_MIGRACAO_FEITA_KEY = 'p38_agefin_series_migradas_v1';
+
 async function migrarSeriesLocalStorageParaNuvem() {
+  if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(LS_MIGRACAO_FEITA_KEY) === '1') {
+    return false;
+  }
+
   const localRows = lerSeriesLocalStorage();
-  if (!localRows.length) return false;
+  if (!localRows.length) {
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(LS_MIGRACAO_FEITA_KEY, '1');
+    return false;
+  }
 
   const naNuvem = await lerSeriesNaNuvem();
   const idsNuvem = new Set(naNuvem.map((s) => s.id));
   const orfaos = localRows.filter((s) => s?.id && !idsNuvem.has(s.id));
-  if (!orfaos.length) return false;
+  if (!orfaos.length) {
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(LS_MIGRACAO_FEITA_KEY, '1');
+    return false;
+  }
 
   await persistirSeriesModelo(orfaos, { modo: 'merge' });
+  if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(LS_MIGRACAO_FEITA_KEY, '1');
   return true;
 }
 
@@ -387,13 +401,7 @@ export async function atualizarCentroCustoSerie(serieId, centroCusto) {
 
 /** Importa séries a partir de grupos recorrentes já existentes no financeiro. */
 export async function sincronizarModelosDesdeLancamentos() {
-  try {
-    await gerarLancamentosMensaisAteFimDoAno(base44);
-  } catch (e) {
-    console.error('Sincronizar recorrências mensais:', e);
-  }
-
-  const lancamentos = await listarLancamentosFinanceirosCache();
+  const lancamentos = await listarLancamentosRecorrentesCache();
   const recorrentes = (lancamentos || []).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
   const byGrupo = new Map();
   for (const lf of recorrentes) {
@@ -431,7 +439,7 @@ export async function sincronizarModelosDesdeLancamentos() {
 }
 
 export async function listarLancamentosCompetencia(competencia) {
-  const lancamentos = await listarLancamentosFinanceirosCache();
+  const lancamentos = await listarLancamentosRecorrentesCache();
   return (lancamentos || []).filter((lf) => {
     if (!lancamentoRecorrenteContaPagarParaListaBoleto(lf)) return false;
     return mesReferenciaLancamento(lf) === competencia;
@@ -440,7 +448,7 @@ export async function listarLancamentosCompetencia(competencia) {
 
 /** Lançamentos recorrentes (conta a pagar) para alimentar a projeção de 12 meses. */
 export async function listarLancamentosRecorrentes() {
-  const lancamentos = await listarLancamentosFinanceirosCache();
+  const lancamentos = await listarLancamentosRecorrentesCache();
   return (lancamentos || []).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
 }
 
@@ -549,9 +557,7 @@ export async function desfazerAberturaCompetenciasDoMes(competencia) {
 export async function sincronizarFechamentoCompetencias(competencia) {
   const lancamentos = competencia
     ? await listarLancamentosCompetencia(competencia)
-    : (await listarLancamentosFinanceirosCache()).filter(
-        lancamentoRecorrenteContaPagarParaListaBoleto,
-      );
+    : (await listarLancamentosRecorrentesCache()).filter(lancamentoRecorrenteContaPagarParaListaBoleto);
 
   let fechadas = 0;
   for (const lf of lancamentos || []) {

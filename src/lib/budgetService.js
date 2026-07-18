@@ -6,9 +6,12 @@ import {
   filtrarLancamentosBudgetMes,
   lancamentoElegivelBudget,
 } from '@/lib/budgetCalculos';
-import { calcularLucroBrutoCompetencia } from '@/lib/relatorioMargemCalculos';
+import { calcularLucroBrutoCompetencia, competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
-import { listarLancamentosFinanceirosCache } from '@/lib/lancamentoFinanceiroCache';
+import {
+  listarLancamentosMesCompetenciaCache,
+  listarLancamentosVencimentoCompetenciaCache,
+} from '@/lib/lancamentoFinanceiroCache';
 
 export { listarCentrosCustoRegistros };
 
@@ -298,7 +301,7 @@ export async function salvarAjusteCompetencia(budgetModeloId, competencia, { val
 }
 
 export async function listarLancamentosMes(competencia) {
-  const lancamentos = await listarLancamentosFinanceirosCache();
+  const lancamentos = await listarLancamentosMesCompetenciaCache(competencia);
   return filtrarLancamentosBudgetMes(lancamentos, competencia);
 }
 
@@ -306,7 +309,7 @@ export async function listarLancamentosMes(competencia) {
 export async function listarLancamentosVencimentoMes(competencia) {
   const prefix = String(competencia || '').slice(0, 7);
   if (!prefix) return [];
-  const lancamentos = await listarLancamentosFinanceirosCache();
+  const lancamentos = await listarLancamentosVencimentoCompetenciaCache(competencia);
   return (lancamentos || []).filter(
     (lancamento) => String(lancamento?.data_vencimento || '').slice(0, 7) === prefix,
   );
@@ -323,10 +326,28 @@ export async function listarCategoriasDespesa() {
 }
 
 export async function obterLucroBrutoCompetencia(competencia) {
+  const intervalo = competenciaParaIntervalo(competencia);
+  if (!intervalo) {
+    return { receita_liquida: 0, custo_total: 0, lucro_bruto: 0, quantidade_produtos: 0 };
+  }
+
+  const fromStr = intervalo.from.toISOString().slice(0, 10);
+  const toStr = intervalo.to.toISOString().slice(0, 10);
+
   const [sales, products] = await Promise.all([
-    base44.entities.PedidoVenda.filter({ tipo: 'PDV' }),
+    base44.entities.PedidoVenda.filter({
+      tipo: 'PDV',
+      status: { $ne: 'Cancelado' },
+      created_date: { $gte: fromStr, $lte: `${toStr}T23:59:59.999Z` },
+    }).catch(() =>
+      base44.entities.PedidoVenda.filter({
+        tipo: 'PDV',
+        created_date: { $gte: fromStr },
+      }),
+    ),
     base44.entities.Produto.list(),
   ]);
+
   return calcularLucroBrutoCompetencia(sales, products, competencia);
 }
 

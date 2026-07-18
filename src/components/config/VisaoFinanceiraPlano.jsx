@@ -805,8 +805,8 @@ export default function VisaoFinanceiraPlano() {
     loadingLancamentosAgefin ||
     loadingRecorrentesAgefin ||
     loadingLancamentosMes ||
-    loadingLancamentosVencimento ||
-    loadingLucroBruto;
+    loadingLancamentosVencimento;
+  const lucroBrutoCarregando = loadingLucroBruto && !lucroBrutoMes;
   const { resumo } = plano;
   const compLabel = formatCompetenciaLabel(competencia);
 
