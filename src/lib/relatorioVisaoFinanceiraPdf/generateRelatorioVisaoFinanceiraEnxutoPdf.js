@@ -89,64 +89,60 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   rule(y);
   y += 5;
 
-  setFont('bold', 9.5);
-  doc.text('CAPACIDADE DE COMPRA', margin, y);
-  y += 4;
-  const capacidadeCols = [
-    ['CMV vendido', resumo.capacidadeCompraBase],
-    ['Fretes reservados', resumo.fretesAgendados],
-    ['Disponivel para compras', resumo.capacidadeCompraDisponivel],
-  ];
-  const colW = contentW / capacidadeCols.length;
-  capacidadeCols.forEach(([label, value], index) => {
-    const x = margin + index * colW;
-    setFont('normal', 7.5, COLOR.muted);
-    doc.text(safe(label).toUpperCase(), x, y);
-    setFont('bold', 10.5);
-    doc.text(moeda(value), x, y + 4.2);
-  });
-  y += 10;
-  setFont('normal', 7.8, COLOR.muted);
-  doc.text('Fretes reduzem a capacidade de compra, sem alterar o lucro bruto.', margin, y);
-  y += 5;
-  rule(y, COLOR.lightLine, 0.08);
-  y += 5;
-
-  const resumoRows = [
-    ['Lucro bruto', resumo.lucroBruto],
-    ['Fixas recorrentes', resumo.fixasRecorrentes],
-    ['Folha', resumo.folha],
-    ['Budgets', resumo.budgets],
-    ['Pontuais fora do plano', resumo.pontuaisExtraPlano],
-    ['Total operacional', resumo.totalOperacional],
-    ['Provisao mensal - contas anuais', resumo.anuaisDiluido],
-    ['Provisoes da folha', resumo.provisoesFolha],
-    ['Total com provisoes', resumo.totalComProvisoes],
-    ['Compromissos pontuais / parcelados', resumo.pontuais],
-    ['Desembolso conhecido no mes', resumo.totalDesembolsoMes],
-    ['Resultado com provisoes', resumo.resultadoComProvisoes],
-    ['Saldo bruto apos compromissos', resumo.resultadoDesembolso],
-  ];
-
-  setFont('bold', 9.5);
-  doc.text('RESUMO EXECUTIVO', margin, y);
-  y += 4;
-  resumoRows.forEach(([label, value], index) => {
+  const drawResumoLinha = (label, value, { prefix = '', bold = false } = {}) => {
     ensureSpace(5);
-    const bold = [
-      'Total operacional',
-      'Total com provisoes',
-      'Desembolso conhecido no mes',
-      'Resultado com provisoes',
-      'Saldo bruto apos compromissos',
-    ].includes(label);
     setFont(bold ? 'bold' : 'normal', 8.5, bold ? COLOR.black : COLOR.muted);
     doc.text(safe(label), margin + 2, y);
     setFont(bold ? 'bold' : 'normal', 8.8, COLOR.black);
-    doc.text(moeda(value), right, y, { align: 'right' });
+    doc.text(safe(`${prefix}${moeda(value)}`), right, y, { align: 'right' });
     y += 4;
-    if (index < resumoRows.length - 1) rule(y - 1.5, COLOR.lightLine, 0.06, margin + 2, right);
-  });
+    rule(y - 1.5, COLOR.lightLine, 0.06, margin + 2, right);
+  };
+
+  const drawSecao = (titulo) => {
+    ensureSpace(6);
+    setFont('bold', 8.5, COLOR.muted);
+    doc.text(safe(titulo.toUpperCase()), margin + 2, y);
+    y += 4;
+  };
+
+  setFont('bold', 9.5);
+  doc.text('RESUMO', margin, y);
+  y += 4;
+  drawResumoLinha('Lucro bruto', resumo.lucroBruto, { prefix: '+ ', bold: true });
+
+  drawSecao('Despesas planejadas por camada');
+  drawResumoLinha('Contas fixas (recorrentes)', resumo.fixasRecorrentes, { prefix: '- ' });
+  drawResumoLinha('Folha de pagamento', resumo.folha, { prefix: '- ' });
+  drawResumoLinha('Budgets', resumo.budgets, { prefix: '- ' });
+  if (number(resumo.pontuaisExtraPlano) > 0) {
+    drawResumoLinha('Contas pontuais (fora do plano)', resumo.pontuaisExtraPlano, { prefix: '- ' });
+  }
+  drawResumoLinha('Total operacional', resumo.totalOperacional, { prefix: '- ', bold: true });
+  drawResumoLinha('Resultado operacional', resumo.resultadoOperacional, { prefix: '= ', bold: true });
+
+  drawSecao('Provisoes mensais');
+  drawResumoLinha('Contas anuais (÷ 12)', resumo.anuaisDiluido, { prefix: '- ' });
+  drawResumoLinha('Provisoes de folha', resumo.provisoesFolha, { prefix: '- ' });
+  drawResumoLinha('Total com provisoes', resumo.totalComProvisoes, { prefix: '- ', bold: true });
+  drawResumoLinha('Resultado com provisoes', resumo.resultadoComProvisoes, { prefix: '= ', bold: true });
+
+  drawSecao('Capacidade de compra');
+  drawResumoLinha('CMV vendido (base)', resumo.capacidadeCompraBase, { prefix: '+ ' });
+  drawResumoLinha('Fretes agendados no mes', resumo.fretesAgendados, { prefix: '- ' });
+  drawResumoLinha('Disponivel para novas compras', resumo.capacidadeCompraDisponivel, { prefix: '= ', bold: true });
+
+  if (number(resumo.pontuais) > 0 || number(resumo.anuaisVencimentoMes) > 0) {
+    drawSecao('Desembolso conhecido no mes');
+    if (number(resumo.pontuais) > 0) {
+      drawResumoLinha('Compromissos pontuais / parcelados', resumo.pontuais, { prefix: '- ' });
+    }
+    if (number(resumo.anuaisVencimentoMes) > 0) {
+      drawResumoLinha('Vencimentos anuais (integral)', resumo.anuaisVencimentoMes, { prefix: '- ' });
+    }
+    drawResumoLinha('Total desembolso', resumo.totalDesembolsoMes, { prefix: '- ', bold: true });
+    drawResumoLinha('Saldo apos compromissos', resumo.resultadoDesembolso, { prefix: '= ', bold: true });
+  }
 
   if (number(margemDetalhe?.receita_liquida) > 0) {
     ensureSpace(7);
