@@ -5,7 +5,6 @@ const COLOR = {
   black: [0, 0, 0],
   muted: [72, 72, 72],
   line: [110, 110, 110],
-  lightLine: [210, 210, 210],
 };
 
 const FONT = {
@@ -17,6 +16,7 @@ const FONT = {
 };
 
 const safe = (value) => normalizePdfText(value);
+const versal = (value) => safe(value).toLocaleUpperCase('pt-BR');
 const number = (value) => Number(value) || 0;
 const moeda = (value) =>
   `R$ ${number(value).toLocaleString('pt-BR', {
@@ -32,7 +32,6 @@ function itemObservacao(item) {
 }
 
 function tituloItemVencimento(item) {
-  if (item.dataVencimentoLabel) return `${item.dataVencimentoLabel} · ${item.nome || 'Sem descricao'}`;
   return item.nome || 'Sem descricao';
 }
 
@@ -83,12 +82,6 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     doc.setTextColor(...color);
   };
 
-  const strokeH = (yPos, x0, x1, color = COLOR.lightLine, width = 0.07) => {
-    doc.setDrawColor(...color);
-    doc.setLineWidth(width);
-    doc.line(x0, yPos, x1, yPos);
-  };
-
   const strokeV = (y0, y1, color = COLOR.line, width = 0.15) => {
     if (y1 <= y0 + 1) return;
     doc.setDrawColor(...color);
@@ -115,11 +108,8 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     colBottom[1] = topY;
     if (header) {
       setFont('bold', 8, COLOR.muted);
-      doc.text(safe(header), colXs[0], y);
-      y += 3.8;
-      colBottom[0] = y;
-      strokeH(y - 1, colXs[0], colXs[0] + colW, COLOR.lightLine, 0.06);
-      y += 2;
+      doc.text(versal(header), colXs[0], y);
+      y += 5;
       colBottom[0] = y;
     }
   };
@@ -150,9 +140,10 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
     syncColBottom();
   };
 
-  const textBlock = (text, { style = 'normal', size = 9, color = COLOR.black, lineH = 4 } = {}) => {
+  const textBlock = (text, { style = 'normal', size = 9, color = COLOR.black, lineH = 4, versalete = true } = {}) => {
     setFont(style, size, color);
-    const lines = doc.splitTextToSize(safe(text), colWidth());
+    const content = versalete ? versal(text) : safe(text);
+    const lines = doc.splitTextToSize(content, colWidth());
     const height = Math.max(lineH, lines.length * lineH);
     ensureSpace(height);
     lines.forEach((line, index) => doc.text(line, colX(), y + index * lineH));
@@ -162,27 +153,24 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
 
   const textLineValor = (label, value, { prefix = '', bold = false, size = FONT.resumo } = {}) => {
     const lineH = 4.2;
-    ensureSpace(lineH + 3);
+    ensureSpace(lineH + 1);
     const rowY = y;
     setFont(bold ? 'bold' : 'normal', size, bold ? COLOR.black : COLOR.muted);
-    const labelLines = doc.splitTextToSize(safe(label), colWidth() * 0.58);
+    const labelLines = doc.splitTextToSize(versal(label), colWidth() * 0.58);
     labelLines.forEach((line, index) => doc.text(line, colX(), rowY + index * lineH));
     setFont(bold ? 'bold' : 'normal', size + 0.15, COLOR.black);
     doc.text(safe(`${prefix}${value}`), colX() + colWidth(), rowY, { align: 'right' });
-    const blockH = Math.max(lineH, labelLines.length * lineH) + 1.6;
-    strokeH(rowY + blockH, colX(), colX() + colWidth());
-    advance(blockH + 1.4);
+    const blockH = Math.max(lineH, labelLines.length * lineH);
+    advance(blockH + 1.8);
   };
 
   const sectionTitle = (title) => {
     advance(2);
-    textBlock(title.toUpperCase(), { style: 'bold', size: 9.5, color: COLOR.muted, lineH: 4.2 });
+    textBlock(title, { style: 'bold', size: 9.5, color: COLOR.muted, lineH: 4.2 });
   };
 
-  const hRule = (color = COLOR.line, width = 0.14) => {
-    ensureSpace(3);
-    strokeH(y, colX(), colX() + colWidth(), color, width);
-    advance(3);
+  const hRule = () => {
+    advance(2);
   };
 
   const buildItemLayout = (item, descW, { modoVencimento = false, mostrarDetalhe = true } = {}) => {
@@ -192,9 +180,9 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
       : itemObservacao(item);
 
     setFont('normal', FONT.itemTitle);
-    const nomeLines = doc.splitTextToSize(safe(titulo), descW);
+    const nomeLines = doc.splitTextToSize(versal(titulo), descW);
     setFont('normal', FONT.itemDetail, COLOR.muted);
-    const detalheLines = detalhe ? doc.splitTextToSize(safe(detalhe), descW) : [];
+    const detalheLines = detalhe ? doc.splitTextToSize(versal(detalhe), descW) : [];
 
     const titleLH = 4.2;
     const detailLH = 3.8;
@@ -207,15 +195,17 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   };
 
   const drawItem = (item, options = {}) => {
+    const indent = options.indent || 0;
     const valueW = Math.min(24, colWidth() * 0.36);
-    const descW = Math.max(16, colWidth() - valueW - 1.5);
+    const descW = Math.max(16, colWidth() - valueW - 1.5 - indent);
     const layout = buildItemLayout(item, descW, options);
-    ensureSpace(layout.height + 3);
+    ensureSpace(layout.height + 1);
 
     const rowY = y;
+    const textX = colX() + indent;
     setFont('normal', FONT.itemTitle);
     layout.nomeLines.forEach((line, index) => {
-      doc.text(line, colX(), rowY + index * layout.titleLH);
+      doc.text(line, textX, rowY + index * layout.titleLH);
     });
 
     setFont('bold', FONT.itemValue);
@@ -225,37 +215,46 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
       const detalheY = rowY + layout.nomeLines.length * layout.titleLH + 0.6;
       setFont('normal', FONT.itemDetail, COLOR.muted);
       layout.detalheLines.forEach((line, index) => {
-        doc.text(line, colX(), detalheY + index * layout.detailLH);
+        doc.text(line, textX, detalheY + index * layout.detailLH);
       });
     }
 
-    advance(layout.height + 0.8);
-    strokeH(y, colX(), colX() + colWidth());
-    advance(2.2);
+    advance(layout.height + 1.2);
   };
 
   const drawItensLista = (items, options = {}) => {
     for (const item of items || []) drawItem(item, options);
   };
 
+  const drawDateBucket = (bloco) => {
+    ensureSpace(7);
+    setFont('bold', 9.5, COLOR.muted);
+    doc.text(versal(bloco.label), colX(), y);
+    doc.text(moeda(bloco.subtotal), colX() + colWidth(), y, { align: 'right' });
+    advance(4.8);
+    drawItensLista(bloco.items || [], { modoVencimento: true, mostrarDetalhe: false, indent: 2.5 });
+    advance(1.5);
+  };
+
+  const drawItensPorVencimento = (blocos = []) => {
+    for (const bloco of blocos || []) drawDateBucket(bloco);
+  };
+
   const drawSubgrupo = (label, subtotal) => {
     ensureSpace(6);
     setFont('bold', 9.2, COLOR.muted);
-    doc.text(safe(`> ${label}`), colX(), y);
+    doc.text(versal(label), colX(), y);
     doc.text(moeda(subtotal), colX() + colWidth(), y, { align: 'right' });
     advance(4.8);
   };
 
   const drawGrupoHeader = (grupo) => {
-    ensureSpace(14);
-    strokeH(y, colX(), colX() + colWidth(), COLOR.line, 0.15);
-    advance(3);
+    ensureSpace(10);
+    advance(2);
     setFont('bold', FONT.grupo);
-    doc.text(safe(String(grupo.label || '').toUpperCase()), colX(), y);
+    doc.text(versal(String(grupo.label || '')), colX(), y);
     doc.text(moeda(grupo.subtotal), colX() + colWidth(), y, { align: 'right' });
-    advance(4.5);
-    strokeH(y, colX(), colX() + colWidth(), COLOR.line, 0.15);
-    advance(4);
+    advance(5);
   };
 
   const drawGrupoExplodido = (grupo) => {
@@ -268,8 +267,7 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
           drawItensLista(centro.items, { modoVencimento: true, mostrarDetalhe: false });
         }
       } else {
-        const items = (grupo.porVencimento || []).flatMap((bloco) => bloco.items);
-        drawItensLista(items, { modoVencimento: true, mostrarDetalhe: false });
+        drawItensPorVencimento(grupo.porVencimento);
       }
       advance(2);
       return;
@@ -312,14 +310,14 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
         );
         return;
       }
-      const items =
-        grupo.layout === 'vencimento'
-          ? (grupo.porVencimento || []).flatMap((bloco) => bloco.items)
-          : (grupo.lista || []).flatMap((bloco) => bloco.items);
-      drawItensLista(items, {
-        modoVencimento: grupo.layout === 'vencimento',
-        mostrarDetalhe: grupo.layout !== 'vencimento',
-      });
+      const blocos =
+        grupo.layout === 'vencimento' ? grupo.porVencimento || [] : grupo.lista || [];
+      if (grupo.layout === 'vencimento') {
+        drawItensPorVencimento(blocos);
+      } else {
+        const items = blocos.flatMap((bloco) => bloco.items);
+        drawItensLista(items, { mostrarDetalhe: true });
+      }
       advance(2);
       return;
     }
@@ -472,12 +470,12 @@ export async function generateRelatorioVisaoFinanceiraEnxutoPdf(payload = {}) {
   for (let page = 1; page <= pageCount; page += 1) {
     doc.setPage(page);
     setFont('normal', 7, COLOR.muted);
-    doc.text(safe(`Visao Financeira | ${competenciaLabel}`), margin, pageH - 5);
+    doc.text(versal(`Visao Financeira | ${competenciaLabel}`), margin, pageH - 5);
     doc.text(`${page}/${pageCount}`, right, pageH - 5, { align: 'right' });
   }
 
   return {
     data: doc.output('arraybuffer'),
-    version: 'visao_financeira_enxuto_a4_v5',
+    version: 'visao_financeira_enxuto_a4_v6',
   };
 }

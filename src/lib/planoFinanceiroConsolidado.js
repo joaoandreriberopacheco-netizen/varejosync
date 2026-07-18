@@ -486,7 +486,7 @@ export function agruparItensCentro(items = []) {
     }));
 }
 
-/** Lista plana ordenada por data de vencimento. */
+/** Agrupa por data de vencimento (cada dia = um bloco tipo tree grid). */
 export function agruparItensPorVencimento(items = []) {
   const ordenados = [...items].sort((a, b) => {
     const cmpData = (a.dataVencimento || '9999-12-31').localeCompare(b.dataVencimento || '9999-12-31');
@@ -494,14 +494,22 @@ export function agruparItensPorVencimento(items = []) {
     return compararNome(a.nome, b.nome);
   });
 
-  return [
-    {
-      id: 'vencimento',
-      label: 'Por vencimento',
-      subtotal: somaLinhas(ordenados),
-      items: ordenados,
-    },
-  ];
+  const porData = new Map();
+  for (const item of ordenados) {
+    const key = item.dataVencimento || 'sem-data';
+    if (!porData.has(key)) porData.set(key, []);
+    porData.get(key).push(item);
+  }
+
+  return [...porData.entries()].map(([key, bucketItems]) => ({
+    id: key === 'sem-data' ? 'vencimento-sem-data' : `vencimento-${key}`,
+    label:
+      key === 'sem-data'
+        ? 'Sem vencimento'
+        : bucketItems[0]?.dataVencimentoLabel || formatDataBr(key),
+    subtotal: somaLinhas(bucketItems),
+    items: bucketItems,
+  }));
 }
 
 function somaLinhas(linhas) {
