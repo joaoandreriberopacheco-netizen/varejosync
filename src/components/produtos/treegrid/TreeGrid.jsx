@@ -100,6 +100,21 @@ export { TREE_GRID_EXPAND_ALL_LEVEL };
 
 const HIER_STEP = 20;    // recuo por nível hierárquico (filhos vs pais/solteiros)
 const CELL_PAD = 4;
+/** Largura fixa da coluna Produto — alinha thead, tbody e espaçadores de virtualização */
+const PRODUTO_COL_WIDTH = 220;
+
+function VirtualPaddingRow({ height, activeCols }) {
+  if (height <= 0) return null;
+  const padStyle = { height, padding: 0, border: 0, lineHeight: 0, fontSize: 0 };
+  return (
+    <tr aria-hidden="true">
+      <td style={{ ...padStyle, width: PRODUTO_COL_WIDTH, minWidth: PRODUTO_COL_WIDTH, maxWidth: PRODUTO_COL_WIDTH }} />
+      {activeCols.map((col) => (
+        <td key={col.id} style={{ ...padStyle, width: col.w, minWidth: col.w, maxWidth: col.w }} />
+      ))}
+    </tr>
+  );
+}
 
 const catalogHierDepth = (level) => Math.max(0, (level ?? 1) - 1);
 
@@ -365,7 +380,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
     >
       <td
         className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, 'py-2')}
-        style={{ left: 0, paddingRight: 8, minWidth: 220 }}
+        style={{ left: 0, paddingRight: 8, width: PRODUTO_COL_WIDTH, minWidth: PRODUTO_COL_WIDTH, maxWidth: PRODUTO_COL_WIDTH }}
       >
         <CatalogProdutoCell
           hierDepth={hierDepth}
@@ -384,7 +399,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       </td>
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-2 px-2 whitespace-nowrap"
-          style={{ width: col.w, minWidth: col.w }}>
+          style={{ width: col.w, minWidth: col.w, maxWidth: col.w }}>
           {groupCellValue(col.id, row)}
         </td>
       ))}
@@ -402,7 +417,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
     <tr className={cn(p38Table.row, 'group')}>
       <td
         className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, 'py-1.5')}
-        style={{ left: 0, paddingRight: 8, minWidth: 220 }}
+        style={{ left: 0, paddingRight: 8, width: PRODUTO_COL_WIDTH, minWidth: PRODUTO_COL_WIDTH, maxWidth: PRODUTO_COL_WIDTH }}
       >
         <div className="flex items-center min-w-0 gap-1">
           <div className="min-w-0 flex-1">
@@ -432,7 +447,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
       </td>
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-1.5 px-2 whitespace-nowrap"
-          style={{ width: col.w, minWidth: col.w }}>
+          style={{ width: col.w, minWidth: col.w, maxWidth: col.w }}>
           {skuCellValue(col.id, p, row.margem, row.lastro, row.markup)}
         </td>
       ))}
@@ -549,26 +564,38 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   const paddingTop = shouldVirtualizeRows ? virtualRows.paddingTop : 0;
   const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
 
-  const headerColSpan = activeCols.length + 1;
+  const tableWidth = PRODUTO_COL_WIDTH + activeCols.reduce((sum, col) => sum + col.w, 0);
 
   return (
     <div className="flex flex-col h-full w-full">
       {/* Scroll container — tabela rola livremente; coluna Produto é sticky */}
-      <div className="flex-1 overflow-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }} ref={scrollContainerRef}>
-        <table style={{ tableLayout: 'auto', borderCollapse: 'collapse', width: 'max-content', minWidth: '100%' }}>
+      <div
+        className="flex-1 overflow-auto overscroll-contain [overflow-anchor:none] [scrollbar-gutter:stable]"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+        ref={scrollContainerRef}
+      >
+        <table
+          style={{
+            tableLayout: 'fixed',
+            borderCollapse: 'separate',
+            borderSpacing: 0,
+            width: tableWidth,
+            minWidth: '100%',
+          }}
+        >
           {/* thead sticky no topo durante scroll vertical */}
-          <thead className={p38Table.header}>
+          <thead className={p38Table.headerSolid}>
             <tr className="border-b border-border/40 dark:border-white/10">
               <th
                 className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
-                style={{ left: 0, paddingLeft: 8, paddingRight: 8, minWidth: 220 }}
+                style={{ left: 0, paddingLeft: 8, paddingRight: 8, width: PRODUTO_COL_WIDTH, minWidth: PRODUTO_COL_WIDTH, maxWidth: PRODUTO_COL_WIDTH }}
               >
                 Produto
               </th>
               {activeCols.map(col => (
                 <th key={col.id}
                   className={cn(p38Table.head, p38Table.headRight, CATALOG_ROW_LABEL_CLASS, "py-2 whitespace-nowrap")}
-                  style={{ width: col.w, minWidth: col.w }}>
+                  style={{ width: col.w, minWidth: col.w, maxWidth: col.w }}>
                   {col.label}
                 </th>
               ))}
@@ -578,17 +605,13 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={headerColSpan} className="py-12 text-center text-sm text-muted-foreground">
+                <td colSpan={activeCols.length + 1} className="py-12 text-center text-sm text-muted-foreground">
                   Nenhum produto encontrado.
                 </td>
               </tr>
             ) : (
               <>
-                {paddingTop > 0 && (
-                  <tr aria-hidden="true">
-                    <td colSpan={headerColSpan} style={{ height: paddingTop, padding: 0, border: 0 }} />
-                  </tr>
-                )}
+                <VirtualPaddingRow height={paddingTop} activeCols={activeCols} />
                 {visibleRows.map(row =>
                   row.type === 'group'
                     ? <GroupRow key={row.key} row={row}
@@ -602,11 +625,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                         activeCols={activeCols}
                         readOnly={readOnly} />
                 )}
-                {paddingBottom > 0 && (
-                  <tr aria-hidden="true">
-                    <td colSpan={headerColSpan} style={{ height: paddingBottom, padding: 0, border: 0 }} />
-                  </tr>
-                )}
+                <VirtualPaddingRow height={paddingBottom} activeCols={activeCols} />
               </>
             )}
           </tbody>

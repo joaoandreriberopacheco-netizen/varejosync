@@ -10,6 +10,8 @@ export const p38Table = {
 
   /** thead sticky — mesmo fundo da tabela; separação só por borda */
   header: 'sticky top-0 z-30 backdrop-blur-sm bg-background text-foreground [&_tr]:border-b [&_tr]:border-border/40 dark:[&_tr]:border-white/10 [&_tr]:hover:bg-transparent',
+  /** thead sem blur — evita artefactos de composição com colunas sticky (TreeGrid) */
+  headerSolid: 'sticky top-0 z-30 bg-background text-foreground [&_tr]:border-b [&_tr]:border-border/40 dark:[&_tr]:border-white/10 [&_tr]:hover:bg-transparent',
   head: 'h-auto py-2 px-2 align-middle text-xs font-bold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground/90',
   headSortable: 'cursor-pointer hover:text-foreground dark:hover:text-white',
   headRight: 'text-right',
@@ -28,9 +30,9 @@ export const p38Table = {
 
   /** Colunas sticky (TreeGrid, catálogo) */
   stickyHead: 'sticky z-40 bg-background text-foreground',
-  stickyHeadLeft: 'sticky left-0 z-40 bg-background text-foreground border-r border-border/40 dark:border-white/10',
-  stickyCell: 'sticky z-20 bg-background border-r border-border/40 dark:border-white/10',
-  stickyCellLeft: 'sticky left-0 z-20 bg-background',
+  stickyHeadLeft: 'sticky left-0 z-40 bg-background text-foreground border-r border-border/40 dark:border-white/10 [transform:translateZ(0)] [backface-visibility:hidden]',
+  stickyCell: 'sticky z-20 bg-background border-r border-border/40 dark:border-white/10 [transform:translateZ(0)] [backface-visibility:hidden]',
+  stickyCellLeft: 'sticky left-0 z-20 bg-background [transform:translateZ(0)] [backface-visibility:hidden]',
 
   /** Painéis mobile / resumo */
   panel: 'bg-card text-white rounded-lg border border-border/40 dark:border-white/10',
