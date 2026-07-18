@@ -323,6 +323,12 @@ export const ALL_MENU_ITEMS = [
         permissaoCheck: (p) => p?.financeiro?.acesso === true
       },
       {
+        name: 'Planejamento v2',
+        page: 'PlanejamentoFinanceiroV2',
+        icon: CalendarClock,
+        permissaoCheck: (p) => p?.financeiro?.acesso === true
+      },
+      {
         name: 'Budgets',
         page: 'Budgets',
         icon: Target,

@@ -6,6 +6,7 @@ export const QUICK_ACCESS_LAUNCHER_HIDDEN_PAGES = new Set([
   'TabelaPrecosConsulta',
   'Budgets',
   'PlanejamentoFinanceiro',
+  'PlanejamentoFinanceiroV2',
   'FolhaPrevisao',
 ]);
 

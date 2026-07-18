@@ -64,7 +64,7 @@ export default function PlanejamentoFinanceiroV2Page() {
     <div className="w-full min-w-0 overflow-x-hidden font-din-1451 bg-background p-4 lg:p-6 pb-[var(--p38-scroll-pad-below-nav)] md:pb-6">
       <div className="pb-3 border-b border-border/40">
         <div className="flex items-center gap-1.5">
-          <h1 className="text-xl font-medium text-foreground">Planejamento financeiro</h1>
+          <h1 className="text-xl font-medium text-foreground">Planejamento financeiro (v2)</h1>
           <P38HelpPopover label="Ajuda: planejamento financeiro" side="bottom" align="start">
             <p className="font-medium text-foreground">Planejamento de contas fixas</p>
             <p className="text-muted-foreground">

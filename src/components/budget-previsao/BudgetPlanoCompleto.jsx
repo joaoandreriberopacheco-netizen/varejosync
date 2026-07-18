@@ -119,7 +119,7 @@ export default function BudgetPlanoCompleto({
         label: 'Contas fixas',
         planejado: totaisFixas?.total || 0,
         realizado: realizadoFixas || 0,
-        link: `/PlanejamentoFinanceiro?competencia=${competencia}`,
+        link: `/PlanejamentoFinanceiroV2?competencia=${competencia}`,
       },
       {
         key: 'folha',
