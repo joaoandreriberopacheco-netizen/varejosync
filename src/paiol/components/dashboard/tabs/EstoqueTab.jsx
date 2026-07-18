@@ -18,6 +18,7 @@ import {
 } from '@/lib/pedidoCompraFinanceiro';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { toLocalDateKey } from '@/components/utils/dateUtils';
 import { AlertCircle, Gauge, Layers, Package, Truck } from 'lucide-react';
 import {
@@ -422,6 +423,7 @@ export default function EstoqueTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState(null);
+  const [incluirTransitoQualidade, setIncluirTransitoQualidade] = useState(false);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.innerWidth < 640;
@@ -510,6 +512,12 @@ export default function EstoqueTab() {
         }, {});
 
         const qualityAccumulator = {
+          A: 0,
+          B: 0,
+          C: 0,
+          D: 0,
+        };
+        const qualityTransitRawAccumulator = {
           A: 0,
           B: 0,
           C: 0,
@@ -689,6 +697,39 @@ export default function EstoqueTab() {
           0
         );
 
+        const produtoById = new Map(
+          produtosComAbcdCatalogo.map((produto) => [String(produto.id), produto])
+        );
+
+        pedidosCompraLista
+          .filter((pedido) => pedidoCompraAprovadoNaoConcluido(pedido))
+          .forEach((pedido) => {
+            const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
+            const recebidosPedido = recebidosPorPedidoProduto[String(pedido.id)] || {};
+
+            itens.forEach((item) => {
+              const produtoId = String(item?.produto_id || '');
+              if (!produtoId) return;
+              const quantidadeTotal = Number(item.quantidade_base || item.quantidade || 0);
+              if (!Number.isFinite(quantidadeTotal) || quantidadeTotal <= 0) return;
+
+              const quantidadeRecebida = Number(recebidosPedido[produtoId] || 0);
+              const quantidadePendente = Math.max(0, quantidadeTotal - quantidadeRecebida);
+              if (!quantidadePendente) return;
+
+              const totalItem = Number(item.total || 0);
+              const custoViaTotal = quantidadeTotal > 0 ? totalItem / quantidadeTotal : 0;
+              const custoUnitario = Number(item.custo_final_unitario || item.custo_unitario || custoViaTotal || 0);
+              const valorPendenteItem = quantidadePendente * Math.max(0, custoUnitario);
+              if (valorPendenteItem <= 0) return;
+
+              const produto = produtoById.get(produtoId) || item;
+              const curva = resolveProdutoAbcdClasse(produto);
+              if (!QUALITY_ORDER.includes(curva)) return;
+              qualityTransitRawAccumulator[curva] += valorPendenteItem;
+            });
+          });
+
         const totalLocalizacao = estoqueFisico + transitoFinanceiroAprovado;
         const qualityTotal = QUALITY_ORDER.reduce((sum, key) => sum + qualityAccumulator[key], 0);
         const qualityDistribution = QUALITY_ORDER.map((key) => {
@@ -703,12 +744,42 @@ export default function EstoqueTab() {
             color: QUALITY_COLORS[key],
           };
         });
+        const qualityTransitRawTotal = QUALITY_ORDER.reduce(
+          (sum, key) => sum + Number(qualityTransitRawAccumulator[key] || 0),
+          0
+        );
+        const qualityTransitScale =
+          qualityTransitRawTotal > 0 ? transitoFinanceiroAprovado / qualityTransitRawTotal : 0;
+        const qualityDistributionGeral = QUALITY_ORDER.map((key) => {
+          const valorFisico = qualityAccumulator[key];
+          const valorTransito = Number(qualityTransitRawAccumulator[key] || 0) * qualityTransitScale;
+          const valor = valorFisico + valorTransito;
+          return {
+            key,
+            label: QUALITY_LABELS[key],
+            valor,
+            color: QUALITY_COLORS[key],
+          };
+        });
+        const qualityTotalGeral = qualityDistributionGeral.reduce(
+          (sum, bucket) => sum + Number(bucket.valor || 0),
+          0
+        );
+        const qualityDistributionGeralComPct = qualityDistributionGeral.map((bucket) => {
+          const share = qualityTotalGeral > 0 ? bucket.valor / qualityTotalGeral : 0;
+          return {
+            ...bucket,
+            share,
+            percentText: PERCENT.format(share),
+          };
+        });
 
         if (mounted) {
           setMetrics({
             nivelEstoqueSeries,
             supplyByMonth,
             qualityDistribution,
+            qualityDistributionGeral: qualityDistributionGeralComPct,
             estoqueFisico,
             transitoFinanceiroAprovado,
             totalLocalizacao,
@@ -764,8 +835,11 @@ export default function EstoqueTab() {
     );
   }
 
-  const totalQualidade = metrics.qualityDistribution.reduce((sum, bucket) => sum + Number(bucket.valor || 0), 0);
-  const qualityHalfDonutData = metrics.qualityDistribution.map((bucket) => ({
+  const qualityBase = incluirTransitoQualidade
+    ? (metrics.qualityDistributionGeral || metrics.qualityDistribution)
+    : metrics.qualityDistribution;
+  const totalQualidade = qualityBase.reduce((sum, bucket) => sum + Number(bucket.valor || 0), 0);
+  const qualityHalfDonutData = qualityBase.map((bucket) => ({
     name: bucket.label,
     value: Number(bucket.valor || 0),
     color: bucket.color,
@@ -940,10 +1014,21 @@ export default function EstoqueTab() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
         <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
-              <Layers className="w-4 h-4 text-lime-400" />
-              Qualidade do Estoque
-            </CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
+                <Layers className="w-4 h-4 text-lime-400" />
+                Qualidade do Estoque
+              </CardTitle>
+              <label className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+                Geral
+                <Switch
+                  checked={incluirTransitoQualidade}
+                  onCheckedChange={setIncluirTransitoQualidade}
+                  aria-label="Incluir estoque em trânsito na qualidade do estoque"
+                  className="scale-[0.85]"
+                />
+              </label>
+            </div>
           </CardHeader>
           <CardContent className="pt-1">
             <div className={`h-[170px] md:h-[180px] relative rounded-xl px-2 py-1 ${INNER_SURFACE}`}>
