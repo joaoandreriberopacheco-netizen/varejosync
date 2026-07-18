@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import {
   ChevronLeft,
   ChevronRight,
+  FileDown,
+  Loader2,
   Plus,
   RotateCcw,
   Users,
@@ -49,6 +51,8 @@ import {
   isCompetenciaFutura,
   isCompetenciaPlanejamento,
 } from '@/lib/folhaPrevisaoCalculos';
+import { generateFolhaPessoasPorCentroPdf } from '@/lib/folhaPessoasPorCentroPdf';
+import { shareOrDownloadBlob } from '@/lib/mobilePrintAndShare';
 import {
   abrirCompetenciasDoMes,
   desfazerAberturaCompetenciasDoMes,
@@ -110,6 +114,7 @@ export default function FolhaPrevisaoPage() {
   const [centroDialogOpen, setCentroDialogOpen] = useState(false);
   const [draggingModeloId, setDraggingModeloId] = useState('');
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
+  const [gerandoPdfPessoas, setGerandoPdfPessoas] = useState(false);
 
   const { data: competencias = [], isLoading: loadingComp } = useQuery({
     queryKey: ['folha-previsao', 'competencias', competenciaMes],
@@ -442,6 +447,50 @@ export default function FolhaPrevisaoPage() {
     }
   };
 
+  const handleGerarPdfPessoas = async () => {
+    if (!pessoasFiltradas.length) {
+      toast({
+        title: 'Nenhuma pessoa',
+        description: 'Cadastre pessoas na folha antes de gerar o PDF.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setGerandoPdfPessoas(true);
+    try {
+      const filtroLabel =
+        FILTRO_VINCULO_OPTS.find((opt) => opt.id === filtroVinculo)?.label || 'Todos';
+      const blob = await generateFolhaPessoasPorCentroPdf({
+        centrosRegistrados,
+        pessoasPorCentro,
+        colaboradoresMap,
+        filtroVinculoLabel: filtroLabel,
+      });
+      const data = new Date().toISOString().slice(0, 10);
+      const result = await shareOrDownloadBlob(
+        blob,
+        `folha_pessoas_por_centro_${data}.pdf`,
+        'application/pdf',
+        'Folha — Pessoas por centro de custo',
+      );
+      if (result !== 'aborted') {
+        toast({
+          title: result === 'shared' ? 'PDF compartilhado' : 'PDF gerado',
+          description: `${pessoasFiltradas.length} pessoa(s) em ${centrosRegistrados.length + 1} centro(s).`,
+        });
+      }
+    } catch (e) {
+      toast({
+        title: 'Erro ao gerar PDF',
+        description: e.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setGerandoPdfPessoas(false);
+    }
+  };
+
   const handleSyncFinanceiro = async () => {
     if (!selectedComp || !contaPadrao) {
       toast({ title: 'Configure uma conta financeira', variant: 'destructive' });
@@ -577,7 +626,22 @@ export default function FolhaPrevisaoPage() {
         <TabsContent value="pessoas" className="mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <FiltroVinculoChips value={filtroVinculo} onChange={setFiltroVinculo} />
-            <P38HelpPopover label="Ajuda: aba Pessoas" side="bottom" align="end">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={handleGerarPdfPessoas}
+                disabled={gerandoPdfPessoas || loadingModelos || pessoasFiltradas.length === 0}
+              >
+                {gerandoPdfPessoas ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4" />
+                )}
+                {gerandoPdfPessoas ? 'Gerando…' : 'PDF por centro'}
+              </Button>
+              <P38HelpPopover label="Ajuda: aba Pessoas" side="bottom" align="end">
               <p className="font-medium text-foreground">Organização por centro de custo</p>
               <p className="text-muted-foreground">
                 Cadastre centros pelo botão <strong className="text-foreground">+</strong>, depois arraste a pessoa para a bolinha do centro desejado.
@@ -585,7 +649,8 @@ export default function FolhaPrevisaoPage() {
               <p className="text-muted-foreground">
                 No formulário, o centro de custo é escolhido na lista — não digite um nome novo.
               </p>
-            </P38HelpPopover>
+              </P38HelpPopover>
+            </div>
           </div>
 
           <FinanceiroListaEstado
