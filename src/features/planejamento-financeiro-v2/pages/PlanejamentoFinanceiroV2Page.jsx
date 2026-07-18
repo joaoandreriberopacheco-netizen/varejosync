@@ -66,17 +66,21 @@ export default function PlanejamentoFinanceiroV2Page() {
         <div className="flex items-center gap-1.5">
           <h1 className="text-xl font-medium text-foreground">Planejamento financeiro (v2)</h1>
           <P38HelpPopover label="Ajuda: planejamento financeiro" side="bottom" align="start">
-            <p className="font-medium text-foreground">Planejamento de contas fixas</p>
+            <p className="font-medium text-foreground">Editor da mesma base da AGEFIN</p>
             <p className="text-muted-foreground">
-              Energia, telefone, internet e outras despesas que repetem todo mês. Cadastre uma vez — entra na
-              programação e na projeção de caixa.
+              O Planejamento lê e grava nos mesmos lançamentos financeiros que alimentam a AGEFIN Consulta
+              (contas com tag <strong className="text-foreground">conta_pagar</strong>). É um editor inteligente:
+              cadastra a recorrência, abre o mês, ajusta valor/vencimento e projeta os próximos meses.
             </p>
             <p className="text-muted-foreground">
-              Meses futuros aparecem em modo planejamento, mesmo antes de abrir o mês.
+              Ao abrir o mês ou editar uma conta já lançada, a alteração vai direto para o financeiro — a AGEFIN
+              reflete na hora.
             </p>
           </P38HelpPopover>
         </div>
-        <p className="text-sm text-muted-foreground mt-0.5">Contas fixas mensais — energia, telefone, internet…</p>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Mesma base da AGEFIN — cadastro, previsão e projeção de contas fixas
+        </p>
       </div>
 
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full mt-4">
