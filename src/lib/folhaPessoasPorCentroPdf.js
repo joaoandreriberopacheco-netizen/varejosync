@@ -89,18 +89,28 @@ export async function generateFolhaPessoasPorCentroPdf({
   filtroVinculoLabel = 'Todos',
   filtrarModelo = null,
   meses = 12,
+  relatorio: relatorioInformado = null,
+  titulo = 'Folha — Relatório por centro de custo',
+  avisoSimulacao = false,
+  comparativo = null,
 } = {}) {
-  const relatorio = calcularRelatorioFolhaPorCentroCusto({
-    modelos,
-    centrosRegistrados,
-    colaboradoresMap,
-    competenciaInicio,
-    meses,
-    filtrarModelo,
-  });
+  const relatorio =
+    relatorioInformado ||
+    calcularRelatorioFolhaPorCentroCusto({
+      modelos,
+      centrosRegistrados,
+      colaboradoresMap,
+      competenciaInicio,
+      meses,
+      filtrarModelo,
+    });
 
   if (!relatorio.secoes.length) {
-    throw new Error('Nenhuma pessoa cadastrada para gerar o PDF.');
+    throw new Error(
+      avisoSimulacao
+        ? 'Nenhuma pessoa restou na simulação para gerar o PDF.'
+        : 'Nenhuma pessoa cadastrada para gerar o PDF.',
+    );
   }
 
   const geradoEm = new Date().toLocaleString('pt-BR');
@@ -120,8 +130,10 @@ export async function generateFolhaPessoasPorCentroPdf({
   });
 
   doc.setProperties({
-    title: 'Folha — Relatório por centro de custo',
-    subject: `Média mensal em ${meses} meses (${filtroVinculoLabel})`,
+    title: normalizePdfText(titulo),
+    subject: avisoSimulacao
+      ? 'Simulação de cortes e reduções (não altera cadastro)'
+      : `Média mensal em ${meses} meses (${filtroVinculoLabel})`,
     creator: 'P38 ERP',
   });
 
@@ -131,20 +143,51 @@ export async function generateFolhaPessoasPorCentroPdf({
   doc.setFont(fontFamily, 'bold');
   doc.setFontSize(FONT_TITLE);
   doc.setTextColor(...BLACK);
-  doc.text('Folha — Relatório por centro de custo', MARGIN_MM, y);
+  doc.text(normalizePdfText(titulo), MARGIN_MM, y);
   y += LINE_H_SECTION + 1;
 
   doc.setFont(fontFamily, 'normal');
   doc.setFontSize(FONT_SUBTITLE);
   doc.setTextColor(...GRAY);
+  if (avisoSimulacao) {
+    doc.text('SIMULAÇÃO — não altera o cadastro real da folha', MARGIN_MM, y);
+    y += LINE_H;
+  }
   doc.text(
-    `Projeção ${meses} meses (${periodoLabel}) · Filtro: ${normalizePdfText(filtroVinculoLabel)} · ${relatorio.resumo.totalPessoas} pessoa(s)`,
+    `Projeção ${relatorio.meses} meses (${periodoLabel}) · ${relatorio.resumo.totalPessoas} pessoa(s)`,
     MARGIN_MM,
     y,
   );
   y += LINE_H;
   doc.text(`Gerado em ${normalizePdfText(geradoEm)}`, MARGIN_MM, y);
-  y += LINE_H_SECTION + 2;
+  y += LINE_H;
+  if (!relatorioInformado && !avisoSimulacao) {
+    doc.text(`Filtro: ${normalizePdfText(filtroVinculoLabel)}`, MARGIN_MM, y);
+    y += LINE_H;
+  }
+
+  if (comparativo) {
+    const linhasComp = [
+      comparativo.totalAntes != null
+        ? `Média mensal antes: ${formatCurrency(comparativo.totalAntes)}`
+        : null,
+      comparativo.economiaMensal > 0
+        ? `Economia mensal estimada: ${formatCurrency(comparativo.economiaMensal)}`
+        : null,
+      comparativo.pessoasCortadas > 0
+        ? `Pessoas cortadas na simulação: ${comparativo.pessoasCortadas}`
+        : null,
+      comparativo.pessoasAntes != null && comparativo.pessoasDepois != null
+        ? `Equipe: ${comparativo.pessoasAntes} → ${comparativo.pessoasDepois}`
+        : null,
+    ].filter(Boolean);
+    for (const linha of linhasComp) {
+      doc.text(normalizePdfText(linha), MARGIN_MM, y);
+      y += LINE_H;
+    }
+  }
+
+  y += LINE_H_SECTION;
 
   for (const secao of relatorio.secoes) {
     y = ensurePageSpace(doc, y, LINE_H_SECTION + LINE_H * 2);

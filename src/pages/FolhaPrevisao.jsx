@@ -15,6 +15,7 @@ import {
   Users,
   CalendarClock,
   TrendingUp,
+  FlaskConical,
 } from 'lucide-react';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import { useToast } from '@/components/ui/use-toast';
@@ -34,6 +35,7 @@ import FolhaPrevisaoProjecao from '@/components/folha-previsao/FolhaPrevisaoProj
 import FolhaCentroCustoDragOverlay from '@/components/folha-previsao/FolhaCentroCustoDragOverlay';
 import FolhaCentrosCustoDialog from '@/components/folha-previsao/FolhaCentrosCustoDialog';
 import FolhaPessoasPorCentroLista from '@/components/folha-previsao/FolhaPessoasPorCentroLista';
+import FolhaSimulacao from '@/components/folha-previsao/FolhaSimulacao';
 import {
   calcularTotaisGrupo,
   formatCompetenciaLabel,
@@ -115,6 +117,8 @@ export default function FolhaPrevisaoPage() {
   const [draggingModeloId, setDraggingModeloId] = useState('');
   const [dropCentroAtual, setDropCentroAtual] = useState('__none__');
   const [gerandoPdfPessoas, setGerandoPdfPessoas] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState('previsao');
+  const [simulacaoKey, setSimulacaoKey] = useState(0);
 
   const { data: competencias = [], isLoading: loadingComp } = useQuery({
     queryKey: ['folha-previsao', 'competencias', competenciaMes],
@@ -528,7 +532,16 @@ export default function FolhaPrevisaoPage() {
         </P38HelpPopover>
       </div>
 
-      <Tabs defaultValue="previsao" className="w-full mt-4">
+      <Tabs
+        value={abaAtiva}
+        onValueChange={(next) => {
+          if (abaAtiva === 'simulacao' && next !== 'simulacao') {
+            setSimulacaoKey((k) => k + 1);
+          }
+          setAbaAtiva(next);
+        }}
+        className="w-full mt-4"
+      >
         <TabsList className={cn('w-full h-auto p-1 rounded-xl flex-nowrap overflow-x-auto md:overflow-visible md:flex-wrap', P38_FIELD_SURFACE)}>
           <TabsTrigger value="previsao" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[86px] md:min-w-[120px]">
             <CalendarClock className="w-4 h-4" />
@@ -544,6 +557,11 @@ export default function FolhaPrevisaoPage() {
             <Users className="w-4 h-4" />
             <span className="text-xs md:hidden">Pessoas</span>
             <span className="hidden md:inline text-sm">Pessoas</span>
+          </TabsTrigger>
+          <TabsTrigger value="simulacao" className="shrink-0 md:flex-1 gap-2 rounded-lg py-2 min-h-[40px] min-w-[100px] md:min-w-[120px]">
+            <FlaskConical className="w-4 h-4" />
+            <span className="text-xs md:hidden">Simular</span>
+            <span className="hidden md:inline text-sm">Simulação</span>
           </TabsTrigger>
         </TabsList>
 
@@ -736,6 +754,16 @@ export default function FolhaPrevisaoPage() {
               <Button onClick={() => setPessoaDialog({})}>Cadastrar primeira pessoa</Button>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="simulacao" className="mt-4">
+          <FolhaSimulacao
+            key={simulacaoKey}
+            modelos={modelos}
+            centrosRegistrados={centrosRegistrados}
+            colaboradoresMap={colaboradoresMap}
+            loading={loadingModelos}
+          />
         </TabsContent>
       </Tabs>
 
