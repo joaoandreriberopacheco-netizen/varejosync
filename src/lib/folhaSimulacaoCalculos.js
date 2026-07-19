@@ -6,53 +6,86 @@ import {
   TIPO_VINCULO,
 } from '@/lib/folhaPrevisaoCalculos';
 
-/** @typedef {{ removido?: boolean, reducaoPercentual?: number }} AjusteSimulacaoFolha */
+/** @typedef {{ removido?: boolean, salarioBase?: number, retiradaValor?: number }} AjusteSimulacaoFolha */
 
 function clonarModelo(modelo) {
   return JSON.parse(JSON.stringify(modelo));
 }
 
-function normalizarReducaoPercentual(valor) {
-  const n = Number(valor);
-  if (!Number.isFinite(n) || n <= 0) return 0;
-  return Math.min(100, Math.max(0, n));
+function valoresIguais(a, b) {
+  return Math.abs((Number(a) || 0) - (Number(b) || 0)) < 0.005;
+}
+
+export function obterSalarioBaseOriginal(modelo) {
+  return extrairSalarioBase(modelo);
+}
+
+export function obterRetiradaOriginal(modelo) {
+  return Number(modelo?.retirada_valor_fixo) || 0;
+}
+
+export function obterSalarioBaseSimulado(modelo, ajuste = {}) {
+  if (ajuste?.salarioBase != null && Number.isFinite(Number(ajuste.salarioBase))) {
+    return Math.max(0, Number(ajuste.salarioBase));
+  }
+  return obterSalarioBaseOriginal(modelo);
+}
+
+export function obterRetiradaSimulada(modelo, ajuste = {}) {
+  if (ajuste?.retiradaValor != null && Number.isFinite(Number(ajuste.retiradaValor))) {
+    return Math.max(0, Number(ajuste.retiradaValor));
+  }
+  return obterRetiradaOriginal(modelo);
+}
+
+function ajusteTemAlteracaoValor(ajuste = {}, modelo) {
+  if (!ajuste || ajuste.removido) return Boolean(ajuste?.removido);
+  if (isSocio(modelo)) {
+    return (
+      (ajuste.retiradaValor != null && !valoresIguais(ajuste.retiradaValor, obterRetiradaOriginal(modelo))) ||
+      (ajuste.salarioBase != null && !valoresIguais(ajuste.salarioBase, obterSalarioBaseOriginal(modelo)))
+    );
+  }
+  return ajuste.salarioBase != null && !valoresIguais(ajuste.salarioBase, obterSalarioBaseOriginal(modelo));
 }
 
 /**
- * Aplica corte ou redução percentual em cópia do modelo (não altera o original).
+ * Aplica corte ou valores simulados em cópia do modelo (não altera o original).
  * @returns {object|null} modelo ajustado ou null se removido
  */
 export function aplicarAjusteSimulacaoPessoa(modelo, ajuste = {}) {
   if (!modelo) return null;
   if (ajuste?.removido) return null;
-
-  const reducao = normalizarReducaoPercentual(ajuste?.reducaoPercentual);
-  if (reducao === 0) return clonarModelo(modelo);
+  if (!ajusteTemAlteracaoValor(ajuste, modelo)) return clonarModelo(modelo);
 
   const clone = clonarModelo(modelo);
-  const fator = 1 - reducao / 100;
 
   if (isSocio(clone)) {
-    clone.retirada_valor_fixo = (Number(clone.retirada_valor_fixo) || 0) * fator;
-    const proLabore = extrairSalarioBase(clone);
-    if (proLabore > 0) {
+    if (ajuste.retiradaValor != null && Number.isFinite(Number(ajuste.retiradaValor))) {
+      clone.retirada_valor_fixo = Math.max(0, Number(ajuste.retiradaValor));
+    }
+    if (ajuste.salarioBase != null && Number.isFinite(Number(ajuste.salarioBase))) {
       clone.rubricas = aplicarSalarioBaseNasRubricas(
         clone.rubricas,
-        proLabore * fator,
+        Math.max(0, Number(ajuste.salarioBase)),
         TIPO_VINCULO.SOCIO,
       );
     }
     return clone;
   }
 
-  clone.rubricas = (clone.rubricas || []).map((r) => ({
-    ...r,
-    valor_base: (Number(r.valor_base) || 0) * fator,
-  }));
+  if (ajuste.salarioBase != null && Number.isFinite(Number(ajuste.salarioBase))) {
+    clone.rubricas = aplicarSalarioBaseNasRubricas(
+      clone.rubricas,
+      Math.max(0, Number(ajuste.salarioBase)),
+      TIPO_VINCULO.FUNCIONARIO,
+    );
+  }
+
   return clone;
 }
 
-/** Monta lista de modelos após simulação (exclui cortados, aplica reduções). */
+/** Monta lista de modelos após simulação (exclui cortados, aplica valores simulados). */
 export function montarModelosSimulacao(modelos = [], ajustesPorId = {}) {
   return (modelos || [])
     .filter((m) => m?.colaborador_id && m.ativo !== false)
@@ -90,12 +123,15 @@ export function calcularComparativoSimulacaoFolha({
   const pessoasAntes = base.resumo.totalPessoas;
   const pessoasDepois = depois.resumo.totalPessoas;
 
+  const temAlteracaoValor = (modelos || []).some((m) => ajusteTemAlteracaoValor(ajustesPorId[m.id], m));
+
   return {
     antes: base,
     depois,
     economiaMensal: Math.max(0, totalAntes - totalDepois),
     pessoasCortadas: Math.max(0, pessoasAntes - pessoasDepois),
-    temAlteracao: pessoasDepois < pessoasAntes || totalDepois < totalAntes - 0.009,
+    temAlteracao:
+      pessoasDepois < pessoasAntes || totalDepois < totalAntes - 0.009 || temAlteracaoValor,
   };
 }
 
@@ -103,12 +139,41 @@ export function criarEstadoAjustesVazio() {
   return {};
 }
 
-export function atualizarAjusteSimulacao(estado, modeloId, patch) {
-  const atual = estado[modeloId] || { removido: false, reducaoPercentual: 0 };
+export function atualizarAjusteSimulacao(estado, modeloId, patch, modelo = null) {
+  const atual = estado[modeloId] || { removido: false };
   const proximo = { ...atual, ...patch };
-  if (!proximo.removido && !normalizarReducaoPercentual(proximo.reducaoPercentual)) {
+
+  if (proximo.removido) {
+    return { ...estado, [modeloId]: { removido: true } };
+  }
+
+  const limpo = { removido: false };
+  if (proximo.salarioBase != null && Number.isFinite(Number(proximo.salarioBase))) {
+    limpo.salarioBase = Math.max(0, Number(proximo.salarioBase));
+  }
+  if (proximo.retiradaValor != null && Number.isFinite(Number(proximo.retiradaValor))) {
+    limpo.retiradaValor = Math.max(0, Number(proximo.retiradaValor));
+  }
+
+  if (modelo) {
+    if (
+      limpo.salarioBase != null &&
+      valoresIguais(limpo.salarioBase, obterSalarioBaseOriginal(modelo))
+    ) {
+      delete limpo.salarioBase;
+    }
+    if (
+      limpo.retiradaValor != null &&
+      valoresIguais(limpo.retiradaValor, obterRetiradaOriginal(modelo))
+    ) {
+      delete limpo.retiradaValor;
+    }
+  }
+
+  if (!ajusteTemAlteracaoValor(limpo, modelo)) {
     const { [modeloId]: _, ...resto } = estado;
     return resto;
   }
-  return { ...estado, [modeloId]: proximo };
+
+  return { ...estado, [modeloId]: limpo };
 }

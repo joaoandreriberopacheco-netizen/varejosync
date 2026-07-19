@@ -1,9 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { FileDown, Loader2, RotateCcw, Scissors, UserMinus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { P38HelpPopover } from '@/components/ui/p38-help-popover';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
@@ -13,18 +10,11 @@ import FinanceiroListaMeta, { FinanceiroSummaryChip } from '@/components/finance
 import { FinanceiroKpiItem, FinanceiroKpiStrip } from '@/components/financeiro/fluxo/FinanceiroKpiInline';
 import { P38_KPI_SHELL } from '@/components/financeiro/fluxo/financeiroP38';
 import { formatFinanceiroValor } from '@/components/financeiro/fluxo/FinanceiroListaShared';
-import {
-  P38MobileLine,
-  P38StatusLabel,
-  p38AccentKeyFromTone,
-} from '@/components/ui/p38-mobile-line';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import {
   calcularProjecaoPessoaFolha,
-  formatCurrency,
   getCompetenciaAtual,
   ordenarPessoasFolhaPorCentroENome,
-  TIPO_VINCULO_LABELS,
 } from '@/lib/folhaPrevisaoCalculos';
 import {
   atualizarAjusteSimulacao,
@@ -33,89 +23,7 @@ import {
 } from '@/lib/folhaSimulacaoCalculos';
 import { generateFolhaPessoasPorCentroPdf } from '@/lib/folhaPessoasPorCentroPdf';
 import { shareOrDownloadBlob } from '@/lib/mobilePrintAndShare';
-
-function SimulacaoPessoaRow({
-  modelo,
-  colaborador,
-  ajuste,
-  mediaAntes,
-  mediaDepois,
-  onToggleCorte,
-  onReducaoChange,
-  striped,
-}) {
-  const cortado = Boolean(ajuste?.removido);
-  const reducao = Number(ajuste?.reducaoPercentual) || 0;
-  const nome = colaborador?.nome || modelo.colaborador_nome || modelo.nome || 'Pessoa';
-  const tipoLabel = TIPO_VINCULO_LABELS[modelo.tipo_vinculo] || 'Funcionário';
-  const alterado = cortado || reducao > 0;
-
-  return (
-    <P38MobileLine
-      thinAccent
-      striped={striped}
-      accent={p38AccentKeyFromTone(cortado ? 'muted' : alterado ? 'warning' : 'danger')}
-      className={cn(
-        'max-md:!py-3 max-md:min-h-[72px]',
-        cortado && 'opacity-55',
-      )}
-      title={
-        <span className={cn('truncate', cortado && 'line-through')}>
-          {nome}
-        </span>
-      }
-      subtitle={
-        <span>
-          {tipoLabel}
-          {!cortado && reducao > 0 && (
-            <span className="text-amber-700 dark:text-amber-300"> · −{reducao}%</span>
-          )}
-        </span>
-      }
-      meta={
-        <>
-          <span>Antes {formatCurrency(mediaAntes)}</span>
-          {alterado && !cortado && (
-            <P38StatusLabel tone="warning">Depois {formatCurrency(mediaDepois)}</P38StatusLabel>
-          )}
-          {cortado && <P38StatusLabel tone="muted">Cortado</P38StatusLabel>}
-        </>
-      }
-      value={
-        <div className="flex flex-col items-end gap-2 w-full max-w-[148px] sm:max-w-[180px]">
-          <div className="flex items-center gap-2">
-            <Label htmlFor={`corte-${modelo.id}`} className="text-[10px] text-muted-foreground sr-only">
-              Cortar {nome}
-            </Label>
-            <Switch
-              id={`corte-${modelo.id}`}
-              checked={cortado}
-              onCheckedChange={onToggleCorte}
-              aria-label={`Cortar ${nome}`}
-            />
-            <span className="text-[10px] text-muted-foreground whitespace-nowrap">Cortar</span>
-          </div>
-          {!cortado && (
-            <div className="flex items-center gap-1 w-full">
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                step={5}
-                value={reducao || ''}
-                placeholder="0"
-                onChange={(e) => onReducaoChange(e.target.value)}
-                className="h-8 text-xs px-2"
-                aria-label={`Redução percentual de ${nome}`}
-              />
-              <span className="text-[10px] text-muted-foreground shrink-0">%</span>
-            </div>
-          )}
-        </div>
-      }
-    />
-  );
-}
+import SimulacaoPessoaRow from '@/components/folha-previsao/FolhaSimulacaoPessoaRow';
 
 export default function FolhaSimulacao({
   modelos = [],
@@ -241,7 +149,7 @@ export default function FolhaSimulacao({
       >
         <p className="font-medium text-foreground">Modo simulação</p>
         <p className="text-muted-foreground text-xs mt-0.5">
-          Teste cortes e reduções sem alterar o cadastro real. Ao sair desta aba, tudo é descartado.
+          Edite salários e retiradas, teste cortes e veja o impacto — sem alterar o cadastro real. Ao sair desta aba, tudo é descartado.
         </p>
       </div>
 
@@ -271,7 +179,7 @@ export default function FolhaSimulacao({
         <P38HelpPopover label="Ajuda: simulação de cortes" side="bottom" align="end">
           <p className="font-medium text-foreground">Como simular</p>
           <p className="text-muted-foreground">
-            Use <strong className="text-foreground">Cortar</strong> para remover alguém do cenário. Informe um percentual para simular redução de salário ou retirada (inclui encargos).
+            Edite o <strong className="text-foreground">salário base</strong> ou a <strong className="text-foreground">retirada</strong> como na previsão do mês. Use <strong className="text-foreground">Cortar</strong> para remover alguém do cenário.
           </p>
           <p className="text-muted-foreground">
             O PDF lista apenas quem ficou, com média mensal em 12 meses e totais por centro de custo.
@@ -347,16 +255,32 @@ export default function FolhaSimulacao({
                       mediaDepois={mediasPorId[`${pessoa.id}__depois`] ?? mediasPorId[pessoa.id] ?? 0}
                       onToggleCorte={(checked) => {
                         setAjustes((prev) =>
-                          atualizarAjusteSimulacao(prev, pessoa.id, {
-                            removido: checked,
-                            reducaoPercentual: checked ? 0 : prev[pessoa.id]?.reducaoPercentual || 0,
-                          }),
+                          atualizarAjusteSimulacao(
+                            prev,
+                            pessoa.id,
+                            { removido: checked },
+                            pessoa,
+                          ),
                         );
                       }}
-                      onReducaoChange={(valor) => {
-                        const n = Math.min(100, Math.max(0, parseFloat(valor) || 0));
+                      onSalarioChange={(valor) => {
                         setAjustes((prev) =>
-                          atualizarAjusteSimulacao(prev, pessoa.id, { reducaoPercentual: n, removido: false }),
+                          atualizarAjusteSimulacao(
+                            prev,
+                            pessoa.id,
+                            { salarioBase: parseFloat(valor) || 0, removido: false },
+                            pessoa,
+                          ),
+                        );
+                      }}
+                      onRetiradaChange={(valor) => {
+                        setAjustes((prev) =>
+                          atualizarAjusteSimulacao(
+                            prev,
+                            pessoa.id,
+                            { retiradaValor: parseFloat(valor) || 0, removido: false },
+                            pessoa,
+                          ),
                         );
                       }}
                       striped={idx % 2 === 1}
