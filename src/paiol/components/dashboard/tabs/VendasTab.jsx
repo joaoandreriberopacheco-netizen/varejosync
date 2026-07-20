@@ -14,7 +14,18 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { base44 } from '@/api/base44Client';
-import { AlertCircle, CalendarDays, CircleGauge, TrendingUp } from 'lucide-react';
+import { AlertCircle, CalendarDays, CircleGauge, Target, TrendingUp } from 'lucide-react';
+import {
+  buildDonutRingData,
+  getDailyMetaFromMonthly,
+  getElapsedDaysInMonth,
+  normalizeDashboardKpiConfig,
+} from '@/lib/dashboardKpiConfig';
+import {
+  DualDonutKpiModule,
+  formatDashboardCurrency,
+  LucroDiarioChart,
+} from '@/paiol/components/dashboard/charts/DashboardKpiCharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -101,12 +112,7 @@ function getMonthBuckets(monthCount) {
   });
 }
 
-function formatShort(value) {
-  if (!Number.isFinite(value) || value === 0) return 'R$ 0';
-  if (Math.abs(value) >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(value) >= 1_000) return `R$ ${(value / 1_000).toFixed(1)}K`;
-  return BRL.format(value);
-}
+const formatShort = formatDashboardCurrency;
 
 function extractSaleGrossAmount(sale = {}) {
   const itemTotal = Array.isArray(sale.itens)
@@ -192,10 +198,11 @@ export default function VendasTab() {
       try {
         const startDate = monthBuckets6[0]?.start || startOfMonth(subMonths(new Date(), 5));
         const endDate = monthBuckets6[monthBuckets6.length - 1]?.end || endOfMonth(new Date());
-        const [pedidosVendaRaw, produtosRaw] = await Promise.all([
+        const [pedidosVendaRaw, produtosRaw, configVendaRaw] = await Promise.all([
           // Evita depender de um único campo de data no backend; filtra localmente depois.
           base44.entities.PedidoVenda.list('-created_date', 30000),
           base44.entities.Produto.filter({}, '-created_date', 10000),
+          base44.entities.ConfiguracoesVenda.list(),
         ]);
 
         const pedidosVendaLista = Array.isArray(pedidosVendaRaw) ? pedidosVendaRaw : [];
@@ -219,9 +226,11 @@ export default function VendasTab() {
         });
 
         const salesByMonthDay = {};
+        const profitByMonthDay = {};
         const monthlyTotals = {};
         monthBuckets6.forEach((bucket) => {
           salesByMonthDay[bucket.key] = {};
+          profitByMonthDay[bucket.key] = {};
           monthlyTotals[bucket.key] = {
             salesGross: 0,
             discounts: 0,
@@ -245,6 +254,7 @@ export default function VendasTab() {
           const profitAmount = netAmount - costAmount;
 
           salesByMonthDay[monthKey][day] = (salesByMonthDay[monthKey][day] || 0) + netAmount;
+          profitByMonthDay[monthKey][day] = (profitByMonthDay[monthKey][day] || 0) + profitAmount;
           monthlyTotals[monthKey].salesGross += grossAmount;
           monthlyTotals[monthKey].discounts += discountAmount;
           monthlyTotals[monthKey].salesNet += netAmount;
@@ -287,6 +297,46 @@ export default function VendasTab() {
         const ratioPercent = previousProfit > 0 ? (currentProfit / previousProfit) * 100 : currentProfit > 0 ? 100 : 0;
         const ringFill = Math.min(Math.max(ratioPercent, 0), 100);
         const ringOverflow = Math.min(Math.max(ratioPercent - 100, 0), 100);
+        const kpiConfig = normalizeDashboardKpiConfig(configVendaRaw?.[0] || {});
+        const elapsedDays = getElapsedDaysInMonth(new Date());
+        const dailyProfitData = Array.from({ length: currentMonthDays }, (_, idx) => {
+          const day = idx + 1;
+          return {
+            diaLabel: `D${String(day).padStart(2, '0')}`,
+            lucro: Number(profitByMonthDay[currentMonthKey]?.[day] || 0),
+          };
+        });
+        const breakEvenDaily = Number(kpiConfig.kpi_lucro_break_even_diario || 0);
+        const metaLucroDaily = getDailyMetaFromMonthly(kpiConfig.kpi_lucro_meta_mensal, currentMonthDays);
+        const vendaMinimaDaily = Number(kpiConfig.kpi_venda_minima_diaria || 0);
+        const metaVendaDaily = getDailyMetaFromMonthly(kpiConfig.kpi_venda_meta_mensal, currentMonthDays);
+        const avgDailyProfit = elapsedDays > 0 ? currentProfit / elapsedDays : 0;
+        const avgDailySales = elapsedDays > 0 ? Number(monthlyTotals[currentMonthKey]?.salesNet || 0) / elapsedDays : 0;
+        const lucroDonutKpis = {
+          ringA: {
+            actual: avgDailyProfit,
+            target: breakEvenDaily,
+            ring: buildDonutRingData(avgDailyProfit, breakEvenDaily, RING_COLORS),
+          },
+          ringB: {
+            actual: avgDailyProfit,
+            target: metaLucroDaily,
+            ring: buildDonutRingData(avgDailyProfit, metaLucroDaily, RING_COLORS),
+          },
+        };
+        const vendaDonutKpis = {
+          ringA: {
+            actual: avgDailySales,
+            target: vendaMinimaDaily,
+            ring: buildDonutRingData(avgDailySales, vendaMinimaDaily, RING_COLORS),
+          },
+          ringB: {
+            actual: avgDailySales,
+            target: metaVendaDaily,
+            ring: buildDonutRingData(avgDailySales, metaVendaDaily, RING_COLORS),
+          },
+        };
+
         const lucroKpi = {
           currentMonthLabel: monthBuckets6[monthBuckets6.length - 1]?.monthLabel || 'Mês atual',
           previousMonthLabel: monthBuckets6[monthBuckets6.length - 2]?.monthLabel || 'Mês anterior',
@@ -317,6 +367,15 @@ export default function VendasTab() {
             currentAccumulatedData,
             monthlySalesData,
             lucroKpi,
+            dailyProfitData,
+            kpiConfig,
+            breakEvenDaily,
+            metaLucroDaily,
+            metaVendaDaily,
+            vendaMinimaDaily,
+            lucroDonutKpis,
+            vendaDonutKpis,
+            elapsedDays,
           });
         }
       } catch (loadError) {
@@ -675,27 +734,82 @@ export default function VendasTab() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-3">
-        {[1, 2, 3].map((slot) => (
-          <Card
-            key={`empty-slot-${slot}`}
-            className="border border-slate-500/20 border-dashed shadow-[0_10px_24px_rgba(0,0,0,0.2)] bg-[#252d3a]/55"
-          >
-            <CardHeader className="pb-1">
-              <CardTitle className="text-sm font-medium text-slate-300 uppercase tracking-wide">Em breve</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-1">
-              <div className="h-[90px] rounded-xl border border-slate-500/20 border-dashed bg-[#1f2734]/45 p-2.5">
-                <div className="h-1.5 w-16 rounded bg-slate-500/25 mb-2" />
-                <div className="grid grid-cols-4 gap-1 items-end h-8 mb-2">
-                  {[40, 68, 52, 74].map((h, idx) => (
-                    <div key={`placeholder-bottom-${slot}-${idx}`} className="rounded-sm bg-slate-400/20" style={{ height: `${h}%` }} />
-                  ))}
-                </div>
-                <div className="h-1.5 rounded bg-slate-500/20 w-4/5" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
+              <TrendingUp className="w-4 h-4 text-lime-400" />
+              Lucro diário do mês atual
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <LucroDiarioChart
+              data={metrics.dailyProfitData}
+              breakEvenDaily={metrics.breakEvenDaily}
+              metaDaily={metrics.metaLucroDaily}
+              innerSurfaceClassName={`h-[230px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}
+            />
+            <div className="flex flex-wrap gap-3 mt-2 text-[10px] text-slate-300/80">
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-[2px] w-4 rounded-full bg-[#ef4444]" />
+                Break-even: <strong className="text-slate-100">{formatShort(metrics.breakEvenDaily)}</strong>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-[2px] w-4 rounded-full bg-[#22c55e]" />
+                Meta diária: <strong className="text-slate-100">{formatShort(metrics.metaLucroDaily)}</strong>
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
+              <CircleGauge className="w-4 h-4 text-lime-400" />
+              KPIs diários — Lucro
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <DualDonutKpiModule
+              title={`Média dos últimos ${metrics.elapsedDays} dias`}
+              icon={Target}
+              ringA={metrics.lucroDonutKpis.ringA}
+              ringB={metrics.lucroDonutKpis.ringB}
+              labels={{
+                aTitle: 'Margem bruta média x mínima',
+                aActual: 'Lucro médio/dia',
+                aTarget: 'Break-even/dia',
+                bTitle: 'Margem bruta média x ideal',
+                bActual: 'Lucro médio/dia',
+                bTarget: 'Meta diária',
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        <Card className={`border border-slate-500/25 shadow-[0_10px_24px_rgba(0,0,0,0.25)] ${CARD_SURFACE}`}>
+          <CardHeader className="pb-1">
+            <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
+              <CircleGauge className="w-4 h-4 text-lime-400" />
+              KPIs diários — Vendas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <DualDonutKpiModule
+              title={`Média dos últimos ${metrics.elapsedDays} dias`}
+              icon={Target}
+              ringA={metrics.vendaDonutKpis.ringA}
+              ringB={metrics.vendaDonutKpis.ringB}
+              labels={{
+                aTitle: 'Venda média x mínima',
+                aActual: 'Venda média/dia',
+                aTarget: 'Mínima/dia',
+                bTitle: 'Venda média x meta',
+                bActual: 'Venda média/dia',
+                bTarget: 'Meta diária',
+              }}
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

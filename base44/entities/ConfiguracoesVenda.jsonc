@@ -44,6 +44,26 @@
       "type": "number",
       "default": 0,
       "description": "N\u00famero de casas decimais padr\u00e3o para quantidade de produtos (0 = inteiro, 2 = ex: 1,50 kg, 3 = ex: 1,500 m)"
+    },
+    "kpi_lucro_break_even_diario": {
+      "type": "number",
+      "default": 0,
+      "description": "Lucro bruto m\u00ednimo por dia (linha vermelha no dashboard de vendas)"
+    },
+    "kpi_lucro_meta_mensal": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de lucro bruto mensal (linha verde no gr\u00e1fico di\u00e1rio)"
+    },
+    "kpi_venda_minima_diaria": {
+      "type": "number",
+      "default": 0,
+      "description": "Venda l\u00edquida m\u00ednima por dia (KPI de vendas no dashboard)"
+    },
+    "kpi_venda_meta_mensal": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de venda l\u00edquida mensal (KPI de vendas no dashboard)"
     }
   },
   "required": []

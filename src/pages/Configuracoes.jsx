@@ -7,6 +7,7 @@ import { createPageUrl } from '@/components/utils';
 import { GlacialTabsList, GlacialTabsTrigger, GlacialSubTabsList, GlacialSubTabsTrigger } from '@/components/ui/GlacialTabs';
 import TabelasPrecoManager from '../components/config/TabelasPrecoManager';
 import ConfiguracoesVendaManager from '../components/config/ConfiguracoesVendaManager';
+import MetasDashboardKpiManager from '../components/config/MetasDashboardKpiManager';
 import AreasManager from '../components/config/AreasManager';
 import ContasFinanceirasManager from '../components/config/ContasFinanceirasManager';
 import CategoriasFinanceirasManager from '../components/config/CategoriasFinanceirasManager';
@@ -78,11 +79,13 @@ export default function ConfiguracoesPage() {
           <div className="space-y-4">
             <GlacialSubTabsList>
               <GlacialSubTabsTrigger value="fluxo"       activeValue={vendaTab} onSelect={setVendaTab} icon={Sliders}  label="Fluxo & Parâmetros" />
+              <GlacialSubTabsTrigger value="metas"       activeValue={vendaTab} onSelect={setVendaTab} icon={BarChart3} label="Metas Dashboard" />
               <GlacialSubTabsTrigger value="tabelas"     activeValue={vendaTab} onSelect={setVendaTab} icon={Tags}     label="Tabelas & Políticas" />
               <GlacialSubTabsTrigger value="comprovante" activeValue={vendaTab} onSelect={setVendaTab} icon={Receipt}  label="Comprovante" />
             </GlacialSubTabsList>
             <div>
               {vendaTab === 'fluxo'       && <ConfiguracoesVendaManager />}
+              {vendaTab === 'metas'       && <MetasDashboardKpiManager />}
               {vendaTab === 'tabelas'     && <TabelasPrecoManager />}
               {vendaTab === 'comprovante' && <PersonalizacaoComprovanteManager />}
             </div>
