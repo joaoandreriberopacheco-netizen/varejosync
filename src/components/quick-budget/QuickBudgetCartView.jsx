@@ -1,9 +1,22 @@
 import React from 'react';
 import { Check, Loader2, MessageCircle, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { formatCurrency } from './quickBudgetUtils';
 
-export default function QuickBudgetCartView({ items, summary, onClose, onShare, isSharing }) {
+export default function QuickBudgetCartView({
+  items,
+  summary,
+  desconto,
+  setDesconto,
+  tipoDesconto,
+  setTipoDesconto,
+  onSaveCart,
+  onClose,
+  onShare,
+  isSharing,
+  compact = false,
+}) {
   if (items.length === 0) {
     return null;
   }
@@ -43,18 +56,61 @@ export default function QuickBudgetCartView({ items, summary, onClose, onShare, 
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Button
-          variant="outline"
-          onClick={onClose}
-          className="h-12 rounded-2xl border-0 bg-muted shadow-none text-foreground/90"
-        >
-          <Check className="w-4 h-4 mr-2" /> Concluir
-        </Button>
-        <Button onClick={onShare} disabled={isSharing} className="h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none">
-          {isSharing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageCircle className="w-4 h-4 mr-2" />} Compartilhar
-        </Button>
+      {/* Desconto no carrinho */}
+      <div className="rounded-3xl bg-card shadow-sm p-4 space-y-2">
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Desconto</span>
+        <div className="flex gap-1.5 items-center">
+          <div className="relative flex-1">
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={desconto}
+              onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)}
+              className="pr-5 h-10 bg-muted/50 border-0 shadow-sm rounded-xl text-sm text-right focus:ring-1 focus:ring-border/40 dark:focus:ring-ring"
+              placeholder="0"
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+              {tipoDesconto === 'percentual' ? '%' : 'R$'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTipoDesconto(tipoDesconto === 'percentual' ? 'fixo' : 'percentual')}
+            className="h-10 px-3 bg-muted rounded-xl text-[10px] font-semibold text-foreground/90"
+          >
+            {tipoDesconto === 'percentual' ? '%' : 'R$'}
+          </button>
+        </div>
+        {summary.descontoCarrinho > 0 && (
+          <p className="text-xs text-muted-foreground text-right">
+            Desconto aplicado: −{formatCurrency(summary.descontoCarrinho)}
+          </p>
+        )}
       </div>
+
+      <Button
+        type="button"
+        onClick={onSaveCart}
+        className="w-full h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none"
+      >
+        <ShoppingCart className="w-4 h-4 mr-2" /> Salvar carrinho
+      </Button>
+
+      {!compact && (
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="h-12 rounded-2xl border-0 bg-muted shadow-none text-foreground/90"
+          >
+            <Check className="w-4 h-4 mr-2" /> Concluir
+          </Button>
+          <Button onClick={onShare} disabled={isSharing} className="h-12 rounded-2xl bg-background hover:bg-primary dark:bg-card dark:text-foreground shadow-none">
+            {isSharing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <MessageCircle className="w-4 h-4 mr-2" />} Compartilhar
+          </Button>
+        </div>
+      )}
 
       <div className="rounded-3xl bg-card shadow-sm px-4 py-3 flex items-center gap-3 text-xs text-muted-foreground">
         <ShoppingCart className="w-4 h-4" />

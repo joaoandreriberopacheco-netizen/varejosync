@@ -16,6 +16,7 @@ import {
 import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/lib/mobilePrintAndShare';
 import { toast } from 'sonner';
 import {
+  cleanupQuickAccessPortalLayers,
   QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS,
   QUICK_ACCESS_PANEL_CLASS,
   QUICK_ACCESS_PANEL_SHELL_CLASS,
@@ -33,6 +34,8 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
   const [itemDialog, setItemDialog] = useState(null);
   const [isSharing, setIsSharing] = useState(false);
   const [showCartMobile, setShowCartMobile] = useState(false);
+  const [desconto, setDesconto] = useState(0);
+  const [tipoDesconto, setTipoDesconto] = useState('percentual');
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -61,7 +64,10 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     })();
   }, [open, produtos.length]);
 
-  const summary = useMemo(() => getBudgetSummary(items), [items]);
+  const summary = useMemo(
+    () => getBudgetSummary(items, desconto > 0 ? { valor: desconto, tipo: tipoDesconto } : null),
+    [items, desconto, tipoDesconto],
+  );
 
   useEffect(() => {
     if (!open) {
@@ -105,6 +111,16 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     setItems([]);
     setIsSharing(false);
     setShowCartMobile(false);
+    setDesconto(0);
+    setTipoDesconto('percentual');
+  };
+
+  const handlePanelOpenChange = (nextOpen) => {
+    if (!nextOpen) {
+      cleanupQuickAccessPortalLayers();
+      resetPanel();
+    }
+    onOpenChange(nextOpen);
   };
 
   const handleDialogConfirm = (qtd, novoPreco, unidadeEscolhida) => {
@@ -252,7 +268,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
           type="button"
           onClick={() => {
             resetPanel();
-            onOpenChange(false);
+            handlePanelOpenChange(false);
           }}
           className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground"
         >
@@ -271,7 +287,28 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
           onSubmitFirstResult={handleSelectProduct}
         />
 
-        {!itemDialog && (
+        {!itemDialog && items.length > 0 && !isMobile && (
+          <QuickBudgetCartView
+            items={items}
+            summary={summary}
+            desconto={desconto}
+            setDesconto={setDesconto}
+            tipoDesconto={tipoDesconto}
+            setTipoDesconto={setTipoDesconto}
+            onSaveCart={() => {
+              setShowCartMobile(false);
+              setTimeout(() => searchInputRef.current?.focus(), 80);
+            }}
+            onClose={() => {
+              resetPanel();
+              handlePanelOpenChange(false);
+            }}
+            onShare={handleShare}
+            isSharing={isSharing}
+          />
+        )}
+
+        {!itemDialog && items.length === 0 && (
           <div className="rounded-3xl bg-card shadow-sm px-4 py-4 flex items-center gap-3 text-xs text-muted-foreground">
             <Search className="w-4 h-4" />
             Os itens ficam guardados no carrinho para você continuar buscando sem fechar o teclado.
@@ -288,15 +325,16 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
           unitOptions={itemDialog.unitOptions}
           onClose={closeItemDialog}
           onConfirm={handleDialogConfirm}
-          confirmLabel="Salvar carrinho"
           dialogTitleId="quick-budget-item-dialog-title"
           overlayClassName={QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS}
           selectContentClassName={NESTED_SELECT_Z}
         />
       )}
 
-      {isMobile && items.length > 0 && (
-        <div className={`absolute inset-0 z-[100] ${QUICK_ACCESS_PANEL_SHELL_CLASS} flex flex-col`} style={{ display: showCartMobile ? 'flex' : 'none' }}>
+      {isMobile && items.length > 0 && !itemDialog && showCartMobile && (
+        <div
+          className={`absolute inset-0 z-[100] ${QUICK_ACCESS_PANEL_SHELL_CLASS} flex flex-col pointer-events-auto`}
+        >
           <div className="flex items-center justify-between px-4 py-4 border-b border-border/40 bg-card">
             <button type="button" onClick={() => setShowCartMobile(false)} className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
               <X className="w-4 h-4" />
@@ -311,9 +349,14 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
             <QuickBudgetCartView
               items={items}
               summary={summary}
+              desconto={desconto}
+              setDesconto={setDesconto}
+              tipoDesconto={tipoDesconto}
+              setTipoDesconto={setTipoDesconto}
+              onSaveCart={() => setShowCartMobile(false)}
               onClose={() => {
                 resetPanel();
-                onOpenChange(false);
+                handlePanelOpenChange(false);
               }}
               onShare={handleShare}
               isSharing={isSharing}
@@ -347,7 +390,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
               type="button"
               onClick={() => {
                 resetPanel();
-                onOpenChange(false);
+                handlePanelOpenChange(false);
               }}
               className="h-10 px-4 bg-muted text-foreground/90 rounded-xl font-medium flex items-center justify-center gap-2 text-sm"
             >
@@ -369,7 +412,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
+      <Drawer open={open} onOpenChange={handlePanelOpenChange} modal={!itemDialog}>
         <DrawerContent
           overlayClassName={QUICK_ACCESS_PANEL_CLASS}
           className={`${QUICK_ACCESS_PANEL_CLASS} ${QUICK_ACCESS_PANEL_SHELL_CLASS} mt-0 flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col rounded-none border-0 p-0 [&>div:first-child]:hidden`}
@@ -381,7 +424,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handlePanelOpenChange} modal={!itemDialog}>
       <DialogContent
         overlayClassName={QUICK_ACCESS_PANEL_CLASS}
         className={`${QUICK_ACCESS_PANEL_CLASS} ${QUICK_ACCESS_PANEL_SHELL_CLASS} flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 shadow-2xl [&>button.absolute]:hidden`}

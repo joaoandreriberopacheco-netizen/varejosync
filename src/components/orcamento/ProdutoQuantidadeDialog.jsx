@@ -110,11 +110,19 @@ export default function ProdutoQuantidadeDialog({
   };
 
   return createPortal(
-    <div className={`fixed inset-0 flex items-center justify-center p-4 ${overlayClassName}`} onClick={onClose}>
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" aria-hidden="true" />
+    <div
+      className={`fixed inset-0 flex items-center justify-center p-4 pointer-events-auto isolate ${overlayClassName}`}
+      role="presentation"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 z-0 cursor-default bg-black/50 backdrop-blur-[1px] touch-none"
+        aria-label="Fechar"
+        onClick={onClose}
+      />
 
       <div
-        className="relative w-full max-w-md bg-card rounded-3xl shadow-2xl max-h-[min(90dvh,640px)] overflow-y-auto"
+        className="relative z-10 w-full max-w-md bg-card rounded-3xl shadow-2xl max-h-[min(90dvh,640px)] overflow-y-auto pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

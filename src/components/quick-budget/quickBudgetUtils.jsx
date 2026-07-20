@@ -153,12 +153,23 @@ export function matchesProduct(produto, query) {
   return words.every((word) => searchable.includes(word));
 }
 
-export function getBudgetSummary(items) {
+export function getBudgetSummary(items, cartDiscount = null) {
   const subtotal = items.reduce((sum, item) => sum + ((Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0)), 0);
-  const desconto = items.reduce((sum, item) => sum + (Number(item.desconto) || 0), 0);
+  const descontoItens = items.reduce((sum, item) => sum + (Number(item.desconto) || 0), 0);
+  let descontoCarrinho = 0;
+  if (cartDiscount?.valor > 0) {
+    if (cartDiscount.tipo === 'percentual') {
+      descontoCarrinho = subtotal * (cartDiscount.valor / 100);
+    } else {
+      descontoCarrinho = cartDiscount.valor;
+    }
+  }
+  const desconto = descontoItens + descontoCarrinho;
   return {
     subtotal,
     desconto,
+    descontoItens,
+    descontoCarrinho,
     total: Math.max(subtotal - desconto, 0),
     quantidadeItens: items.reduce((sum, item) => sum + (Number(item.quantidade) || 0), 0),
   };
