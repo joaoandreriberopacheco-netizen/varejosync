@@ -40,6 +40,26 @@ export const CAIXA_MIRROR_DIALOG_CLASS = 'z-[80090]';
 export const CAIXA_MIRROR_DIALOG_CHILD_CLASS = 'z-[80100]';
 
 /**
+ * Hierarquia interna do orçamento rápido (dentro do shell z-80020).
+ * search (0) → footer (10) → cart (20) → quantity (30) → select dropdown (80055+).
+ */
+export const QUICK_BUDGET_FLOW = {
+  search: 0,
+  footer: 10,
+  cart: 20,
+  quantity: 30,
+};
+
+export const QUICK_BUDGET_FLOW_CLASS = {
+  footer: 'z-[10]',
+  cart: 'z-[20]',
+  quantity: 'z-[30]',
+};
+
+/** Select/unidade acima do painel e das camadas internas (portal no body). */
+export const QUICK_BUDGET_SELECT_CLASS = 'z-[80055]';
+
+/**
  * Remove camadas Radix presas e travas de pointer-events/scroll no body
  * após fechar o painel de atalho (caixa/orçamento/vendedor).
  */

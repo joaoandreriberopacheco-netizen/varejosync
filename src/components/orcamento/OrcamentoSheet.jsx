@@ -526,7 +526,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-card">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-card relative overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/40 flex-shrink-0">
         <button
@@ -618,6 +618,7 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
 
       {itemDialog && (
         <ProdutoQuantidadeDialog
+          embedded
           produto={itemDialog.produto}
           preco={itemDialog.preco}
           qtdAtual={itemDialog.qtdAtual}
@@ -625,6 +626,8 @@ export default function OrcamentoSheet({ isOpen, onClose, produtos, tabelaSeleci
           unitOptions={itemDialog.unitOptions}
           onClose={closeItemDialog}
           dialogTitleId="orcamento-item-dialog-title"
+          overlayClassName="z-[10]"
+          selectContentClassName="z-[70]"
           onConfirm={(qtd, novoPreco, unidadeEscolhida) => {
             itemDialog.onConfirm(qtd, novoPreco, unidadeEscolhida);
             closeItemDialog();

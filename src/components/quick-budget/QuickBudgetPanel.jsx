@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { Check, Loader2, MessageCircle, Search, ShoppingCart, X } from 'lucide-react';
 import QuickBudgetProductSearch from './QuickBudgetProductSearch';
 import QuickBudgetCartView from './QuickBudgetCartView';
@@ -17,13 +16,25 @@ import { shareOrDownloadHtmlDocument, shouldUseMobileDocumentExport } from '@/li
 import { toast } from 'sonner';
 import {
   cleanupQuickAccessPortalLayers,
-  QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS,
-  QUICK_ACCESS_PANEL_CLASS,
   QUICK_ACCESS_PANEL_SHELL_CLASS,
+  QUICK_ACCESS_Z,
+  QUICK_BUDGET_FLOW_CLASS,
+  QUICK_BUDGET_SELECT_CLASS,
 } from '@/lib/quickAccessOverlay';
 import { getItemUnitKey } from '@/lib/productUnits';
 
-const NESTED_SELECT_Z = 'z-[80080]';
+/**
+ * Fluxo do orçamento rápido (camadas internas, de baixo para cima):
+ * 1. search  — busca de produtos (base)
+ * 2. footer  — total + ações rápidas
+ * 3. cart    — revisão do carrinho + desconto + salvar
+ * 4. quantity — quantidade / embalagem / preço livre
+ */
+function resolveFlowScreen({ itemDialog, isMobile, showCartMobile }) {
+  if (itemDialog) return 'quantity';
+  if (isMobile && showCartMobile) return 'cart';
+  return 'search';
+}
 
 export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 }) {
   const [produtos, setProdutos] = useState([]);
@@ -37,6 +48,8 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
   const [desconto, setDesconto] = useState(0);
   const [tipoDesconto, setTipoDesconto] = useState('percentual');
   const searchInputRef = useRef(null);
+
+  const flowScreen = resolveFlowScreen({ itemDialog, isMobile, showCartMobile });
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -69,37 +82,6 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     [items, desconto, tipoDesconto],
   );
 
-  useEffect(() => {
-    if (!open) {
-      resetPanel();
-      return;
-    }
-    setTimeout(() => searchInputRef.current?.focus(), 50);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || sessionKey === 0) return;
-    resetPanel();
-    setProdutos([]);
-  }, [sessionKey, open]);
-
-  const handleSelectProduct = (produto) => {
-    const ctx = getQuickBudgetUnitContext(produto, tabelaSelecionada);
-    const unidadeDefault = ctx.unidadeDefault;
-    const sigla = unidadeDefault?.unidade || produto.unidade_principal || 'UN';
-    const lineKey = getItemUnitKey(produto.id, sigla);
-    const existing = items.find((item) => item.item_key === lineKey);
-    setItemDialog({
-      produto,
-      preco: getFullPrice(produto, tabelaSelecionada, unidadeDefault),
-      unidadeSelecionada: unidadeDefault,
-      unitOptions: ctx.unitOptions || [],
-      qtdAtual: existing?.quantidade || 0,
-    });
-  };
-
-  const closeItemDialog = () => setItemDialog(null);
-
   const resetFlow = () => {
     setItemDialog(null);
     setQuery('');
@@ -115,13 +97,50 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     setTipoDesconto('percentual');
   };
 
-  const handlePanelOpenChange = (nextOpen) => {
-    if (!nextOpen) {
-      cleanupQuickAccessPortalLayers();
-      resetPanel();
-    }
-    onOpenChange(nextOpen);
+  const handleClose = () => {
+    cleanupQuickAccessPortalLayers();
+    resetPanel();
+    onOpenChange(false);
   };
+
+  useEffect(() => {
+    if (!open) {
+      resetPanel();
+      return undefined;
+    }
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const t = setTimeout(() => searchInputRef.current?.focus(), 50);
+    return () => {
+      clearTimeout(t);
+      document.body.style.overflow = prevOverflow;
+      cleanupQuickAccessPortalLayers();
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || sessionKey === 0) return;
+    resetPanel();
+    setProdutos([]);
+  }, [sessionKey, open]);
+
+  const handleSelectProduct = (produto) => {
+    const ctx = getQuickBudgetUnitContext(produto, tabelaSelecionada);
+    const unidadeDefault = ctx.unidadeDefault;
+    const sigla = unidadeDefault?.unidade || produto.unidade_principal || 'UN';
+    const lineKey = getItemUnitKey(produto.id, sigla);
+    const existing = items.find((item) => item.item_key === lineKey);
+    setShowCartMobile(false);
+    setItemDialog({
+      produto,
+      preco: getFullPrice(produto, tabelaSelecionada, unidadeDefault),
+      unidadeSelecionada: unidadeDefault,
+      unitOptions: ctx.unitOptions || [],
+      qtdAtual: existing?.quantidade || 0,
+    });
+  };
+
+  const closeItemDialog = () => setItemDialog(null);
 
   const handleDialogConfirm = (qtd, novoPreco, unidadeEscolhida) => {
     if (!itemDialog) return;
@@ -257,86 +276,121 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
     }
   };
 
-  const content = (
-    <div className={`relative flex min-h-0 flex-1 flex-col ${QUICK_ACCESS_PANEL_SHELL_CLASS}`}>
-      <div className="flex items-center justify-between px-4 py-4 border-b border-border/40 bg-card">
-        <div>
-          <DialogTitle className="text-lg font-semibold text-foreground font-glacial">Orçamento rápido</DialogTitle>
-          <p className="text-xs text-muted-foreground mt-1">Consulta leve sem perder a tela de baixo</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            resetPanel();
-            handlePanelOpenChange(false);
-          }}
-          className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+  if (!open || typeof document === 'undefined') return null;
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 pb-28 md:pb-4">
-        <QuickBudgetProductSearch
-          inputRef={searchInputRef}
-          query={query}
-          onQueryChange={setQuery}
-          produtos={produtos}
-          tabelaPreco={tabelaSelecionada}
-          onAddProduct={handleSelectProduct}
-          onSubmitFirstResult={handleSelectProduct}
-        />
-
-        {!itemDialog && items.length > 0 && !isMobile && (
-          <QuickBudgetCartView
-            items={items}
-            summary={summary}
-            desconto={desconto}
-            setDesconto={setDesconto}
-            tipoDesconto={tipoDesconto}
-            setTipoDesconto={setTipoDesconto}
-            onSaveCart={() => {
-              setShowCartMobile(false);
-              setTimeout(() => searchInputRef.current?.focus(), 80);
-            }}
-            onClose={() => {
-              resetPanel();
-              handlePanelOpenChange(false);
-            }}
-            onShare={handleShare}
-            isSharing={isSharing}
-          />
-        )}
-
-        {!itemDialog && items.length === 0 && (
-          <div className="rounded-3xl bg-card shadow-sm px-4 py-4 flex items-center gap-3 text-xs text-muted-foreground">
-            <Search className="w-4 h-4" />
-            Os itens ficam guardados no carrinho para você continuar buscando sem fechar o teclado.
+  const shell = (
+    <div
+      className={`fixed inset-0 flex min-h-0 flex-col overflow-hidden ${QUICK_ACCESS_PANEL_SHELL_CLASS}`}
+      style={{ zIndex: QUICK_ACCESS_Z.panel }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Orçamento rápido"
+    >
+      {/* Camada 1 — Busca */}
+      {flowScreen === 'search' && (
+        <>
+          <div className="flex items-center justify-between px-4 py-4 border-b border-border/40 bg-card flex-shrink-0">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground font-glacial">Orçamento rápido</h2>
+              <p className="text-xs text-muted-foreground mt-1">Consulta leve sem perder a tela de baixo</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-        )}
-      </div>
 
-      {itemDialog && (
-        <ProdutoQuantidadeDialog
-          produto={itemDialog.produto}
-          preco={itemDialog.preco}
-          qtdAtual={itemDialog.qtdAtual}
-          unidadeSelecionada={itemDialog.unidadeSelecionada}
-          unitOptions={itemDialog.unitOptions}
-          onClose={closeItemDialog}
-          onConfirm={handleDialogConfirm}
-          dialogTitleId="quick-budget-item-dialog-title"
-          overlayClassName={QUICK_ACCESS_NESTED_CHILD_DIALOG_CLASS}
-          selectContentClassName={NESTED_SELECT_Z}
-        />
+          <div className="relative flex flex-1 min-h-0 flex-col">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 pb-28 md:pb-4">
+              <QuickBudgetProductSearch
+                inputRef={searchInputRef}
+                query={query}
+                onQueryChange={setQuery}
+                produtos={produtos}
+                tabelaPreco={tabelaSelecionada}
+                onAddProduct={handleSelectProduct}
+                onSubmitFirstResult={handleSelectProduct}
+              />
+
+              {items.length > 0 && !isMobile && (
+                <QuickBudgetCartView
+                  items={items}
+                  summary={summary}
+                  desconto={desconto}
+                  setDesconto={setDesconto}
+                  tipoDesconto={tipoDesconto}
+                  setTipoDesconto={setTipoDesconto}
+                  onSaveCart={() => setTimeout(() => searchInputRef.current?.focus(), 80)}
+                  onClose={handleClose}
+                  onShare={handleShare}
+                  isSharing={isSharing}
+                />
+              )}
+
+              {items.length === 0 && (
+                <div className="rounded-3xl bg-card shadow-sm px-4 py-4 flex items-center gap-3 text-xs text-muted-foreground">
+                  <Search className="w-4 h-4" />
+                  Os itens ficam guardados no carrinho para você continuar buscando sem fechar o teclado.
+                </div>
+              )}
+            </div>
+
+            {items.length > 0 && (
+              <div className={`relative ${QUICK_BUDGET_FLOW_CLASS.footer} border-t border-border/40 bg-card/95 dark:bg-background/95 backdrop-blur-md px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-4 shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)]`}>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] text-muted-foreground leading-none mb-0.5">Total</div>
+                    <div className="text-xl font-bold text-foreground leading-tight font-glacial">
+                      {summary.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </div>
+                  </div>
+                  {isMobile && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCartMobile(true)}
+                      aria-label="Abrir carrinho"
+                      className="relative w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted dark:hover:bg-muted/80 flex-shrink-0"
+                    >
+                      <ShoppingCart className="w-5 h-5" />
+                      <span className="absolute -top-0.5 -right-0.5 bg-muted text-foreground text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center pointer-events-none">
+                        {items.length}
+                      </span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="h-10 px-4 bg-muted text-foreground/90 rounded-xl font-medium flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Check className="w-4 h-4" /> Concluir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    disabled={isSharing}
+                    className="h-10 px-4 bg-muted hover:bg-muted text-foreground rounded-xl font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                  >
+                    {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />} Compartilhar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
-      {isMobile && items.length > 0 && !itemDialog && showCartMobile && (
-        <div
-          className={`absolute inset-0 z-[100] ${QUICK_ACCESS_PANEL_SHELL_CLASS} flex flex-col pointer-events-auto`}
-        >
-          <div className="flex items-center justify-between px-4 py-4 border-b border-border/40 bg-card">
-            <button type="button" onClick={() => setShowCartMobile(false)} className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
+      {/* Camada 2 — Carrinho (mobile) */}
+      {flowScreen === 'cart' && (
+        <div className={`absolute inset-0 flex flex-col ${QUICK_ACCESS_PANEL_SHELL_CLASS} ${QUICK_BUDGET_FLOW_CLASS.cart}`}>
+          <div className="flex items-center justify-between px-4 py-4 border-b border-border/40 bg-card flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowCartMobile(false)}
+              className="w-9 h-9 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground"
+            >
               <X className="w-4 h-4" />
             </button>
             <div className="text-center">
@@ -345,7 +399,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
             </div>
             <div className="w-9" />
           </div>
-          <div className="flex-1 overflow-y-auto p-4 pb-28">
+          <div className="flex-1 overflow-y-auto p-4 pb-8">
             <QuickBudgetCartView
               items={items}
               summary={summary}
@@ -354,10 +408,7 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
               tipoDesconto={tipoDesconto}
               setTipoDesconto={setTipoDesconto}
               onSaveCart={() => setShowCartMobile(false)}
-              onClose={() => {
-                resetPanel();
-                handlePanelOpenChange(false);
-              }}
+              onClose={handleClose}
               onShare={handleShare}
               isSharing={isSharing}
               compact
@@ -366,72 +417,24 @@ export default function QuickBudgetPanel({ open, onOpenChange, sessionKey = 0 })
         </div>
       )}
 
-      {items.length > 0 && (
-        <div className="relative z-40 border-t border-border/40 bg-card/95 dark:bg-background/95 backdrop-blur-md px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-4 shadow-[0_-10px_26px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_26px_rgba(0,0,0,0.32)]">
-          <div className="flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="text-[10px] text-muted-foreground leading-none mb-0.5">Total</div>
-              <div className="text-xl font-bold text-foreground leading-tight font-glacial">{summary.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
-            </div>
-            {isMobile && (
-              <button
-                type="button"
-                onClick={() => setShowCartMobile(true)}
-                aria-label="Abrir carrinho"
-                className="relative w-10 h-10 flex items-center justify-center rounded-xl text-muted-foreground hover:bg-muted dark:hover:bg-muted/80 flex-shrink-0"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                <span className="absolute -top-0.5 -right-0.5 bg-muted text-foreground text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center pointer-events-none">
-                  {items.length}
-                </span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                resetPanel();
-                handlePanelOpenChange(false);
-              }}
-              className="h-10 px-4 bg-muted text-foreground/90 rounded-xl font-medium flex items-center justify-center gap-2 text-sm"
-            >
-              <Check className="w-4 h-4" /> Concluir
-            </button>
-            <button
-              type="button"
-              onClick={handleShare}
-              disabled={isSharing}
-              className="h-10 px-4 bg-muted hover:bg-muted text-foreground rounded-xl font-semibold flex items-center justify-center gap-2 text-sm disabled:opacity-50"
-            >
-              {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />} Compartilhar
-            </button>
-          </div>
-        </div>
+      {/* Camada 3 — Quantidade / embalagem (sempre por cima) */}
+      {flowScreen === 'quantity' && itemDialog && (
+        <ProdutoQuantidadeDialog
+          embedded
+          produto={itemDialog.produto}
+          preco={itemDialog.preco}
+          qtdAtual={itemDialog.qtdAtual}
+          unidadeSelecionada={itemDialog.unidadeSelecionada}
+          unitOptions={itemDialog.unitOptions}
+          onClose={closeItemDialog}
+          onConfirm={handleDialogConfirm}
+          dialogTitleId="quick-budget-item-dialog-title"
+          overlayClassName={QUICK_BUDGET_FLOW_CLASS.quantity}
+          selectContentClassName={QUICK_BUDGET_SELECT_CLASS}
+        />
       )}
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={handlePanelOpenChange} modal={!itemDialog}>
-        <DrawerContent
-          overlayClassName={QUICK_ACCESS_PANEL_CLASS}
-          className={`${QUICK_ACCESS_PANEL_CLASS} ${QUICK_ACCESS_PANEL_SHELL_CLASS} mt-0 flex h-[100dvh] max-h-[100dvh] min-h-0 flex-col rounded-none border-0 p-0 [&>div:first-child]:hidden`}
-        >
-          {content}
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={handlePanelOpenChange} modal={!itemDialog}>
-      <DialogContent
-        overlayClassName={QUICK_ACCESS_PANEL_CLASS}
-        className={`${QUICK_ACCESS_PANEL_CLASS} ${QUICK_ACCESS_PANEL_SHELL_CLASS} flex h-[100dvh] w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 shadow-2xl [&>button.absolute]:hidden`}
-      >
-        <DialogHeader className="hidden" />
-        {content}
-      </DialogContent>
-    </Dialog>
-  );
+  return createPortal(shell, document.body);
 }
