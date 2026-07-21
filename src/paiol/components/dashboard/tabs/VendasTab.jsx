@@ -17,8 +17,9 @@ import { base44 } from '@/api/base44Client';
 import { AlertCircle, CalendarDays, CircleGauge, Target, TrendingUp } from 'lucide-react';
 import {
   buildDonutRingData,
+  countElapsedWorkingDaysInMonth,
+  countWorkingDaysInMonth,
   getDailyMetaFromMonthly,
-  getElapsedDaysInMonth,
   normalizeDashboardKpiConfig,
 } from '@/lib/dashboardKpiConfig';
 import {
@@ -298,7 +299,9 @@ export default function VendasTab() {
         const ringFill = Math.min(Math.max(ratioPercent, 0), 100);
         const ringOverflow = Math.min(Math.max(ratioPercent - 100, 0), 100);
         const kpiConfig = normalizeDashboardKpiConfig(configVendaRaw?.[0] || {});
-        const elapsedDays = getElapsedDaysInMonth(new Date());
+        const referenceDate = new Date();
+        const elapsedWorkingDays = countElapsedWorkingDaysInMonth(referenceDate);
+        const workingDaysInMonth = countWorkingDaysInMonth(referenceDate);
         const dailyProfitData = Array.from({ length: currentMonthDays }, (_, idx) => {
           const day = idx + 1;
           return {
@@ -307,11 +310,11 @@ export default function VendasTab() {
           };
         });
         const breakEvenDaily = Number(kpiConfig.kpi_lucro_break_even_diario || 0);
-        const metaLucroDaily = getDailyMetaFromMonthly(kpiConfig.kpi_lucro_meta_mensal, currentMonthDays);
+        const metaLucroDaily = getDailyMetaFromMonthly(kpiConfig.kpi_lucro_meta_mensal, referenceDate);
         const vendaMinimaDaily = Number(kpiConfig.kpi_venda_minima_diaria || 0);
-        const metaVendaDaily = getDailyMetaFromMonthly(kpiConfig.kpi_venda_meta_mensal, currentMonthDays);
-        const avgDailyProfit = elapsedDays > 0 ? currentProfit / elapsedDays : 0;
-        const avgDailySales = elapsedDays > 0 ? Number(monthlyTotals[currentMonthKey]?.salesNet || 0) / elapsedDays : 0;
+        const metaVendaDaily = getDailyMetaFromMonthly(kpiConfig.kpi_venda_meta_mensal, referenceDate);
+        const avgDailyProfit = elapsedWorkingDays > 0 ? currentProfit / elapsedWorkingDays : 0;
+        const avgDailySales = elapsedWorkingDays > 0 ? Number(monthlyTotals[currentMonthKey]?.salesNet || 0) / elapsedWorkingDays : 0;
         const lucroDonutKpis = {
           ringA: {
             actual: avgDailyProfit,
@@ -375,7 +378,8 @@ export default function VendasTab() {
             vendaMinimaDaily,
             lucroDonutKpis,
             vendaDonutKpis,
-            elapsedDays,
+            elapsedWorkingDays,
+            workingDaysInMonth,
           });
         }
       } catch (loadError) {
@@ -770,7 +774,7 @@ export default function VendasTab() {
           </CardHeader>
           <CardContent className="pt-1">
             <DualDonutKpiModule
-              title={`Média dos últimos ${metrics.elapsedDays} dias`}
+              title={`Média em ${metrics.elapsedWorkingDays} dias úteis (mês: ${metrics.workingDaysInMonth})`}
               icon={Target}
               ringA={metrics.lucroDonutKpis.ringA}
               ringB={metrics.lucroDonutKpis.ringB}
@@ -795,7 +799,7 @@ export default function VendasTab() {
           </CardHeader>
           <CardContent className="pt-1">
             <DualDonutKpiModule
-              title={`Média dos últimos ${metrics.elapsedDays} dias`}
+              title={`Média em ${metrics.elapsedWorkingDays} dias úteis (mês: ${metrics.workingDaysInMonth})`}
               icon={Target}
               ringA={metrics.vendaDonutKpis.ringA}
               ringB={metrics.vendaDonutKpis.ringB}

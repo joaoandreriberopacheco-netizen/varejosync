@@ -145,7 +145,7 @@ export default function MetasDashboardKpiManager() {
       </div>
 
       <p className="text-[11px] text-muted-foreground px-1">
-        As metas mensais são divididas pelos dias do mês para as linhas de referência e roscas diárias.
+        As metas mensais são divididas pelos dias úteis do mês (sem domingos, em média ~26 dias) para as linhas de referência e roscas diárias.
       </p>
     </div>
   );
