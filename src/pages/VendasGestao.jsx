@@ -21,6 +21,11 @@ import ComprovanteCompra from '@/components/vendas/ComprovanteCompra';
 
 import { createPageUrl } from '@/components/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  listarFormasPagamentoParaFiltro,
+  pedidoMatchesFormasPagamento,
+} from '@/lib/formasPagamentoVenda';
 import { GlacialTabsList, GlacialTabsTrigger } from '@/components/ui/GlacialTabs';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import MobileDateRangePicker from '@/components/vendas/MobileDateRangePicker';
@@ -435,6 +440,7 @@ function VendasGestaoPage() {
   const [rascunhosFiltrados, setRascunhosFiltrados] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFiltro, setStatusFiltro] = useState('todos');
+  const [formasPagamentoFiltro, setFormasPagamentoFiltro] = useState([]);
   const [dataInicio, setDataInicio] = useState(() => getPeriodoMesCorrente().start);
   const [dataFim, setDataFim] = useState(() => getPeriodoMesCorrente().end);
   const [isLoading, setIsLoading] = useState(true);
@@ -457,6 +463,17 @@ function VendasGestaoPage() {
     finalizados: 0,
     totalMes: 0
   });
+
+  const formasPagamentoOpcoes = useMemo(
+    () => listarFormasPagamentoParaFiltro(pedidos),
+    [pedidos],
+  );
+
+  const toggleFormaPagamentoFiltro = (forma) => {
+    setFormasPagamentoFiltro((prev) =>
+      prev.includes(forma) ? prev.filter((f) => f !== forma) : [...prev, forma],
+    );
+  };
 
   const loadPedidos = async () => {
     setIsLoading(true);
@@ -504,8 +521,14 @@ function VendasGestaoPage() {
       currentFiltered = currentFiltered.filter(p => dateRangeMatches(p.created_date, dataInicio, dataFim));
     }
 
+    if (formasPagamentoFiltro.length > 0) {
+      currentFiltered = currentFiltered.filter((p) =>
+        pedidoMatchesFormasPagamento(p, formasPagamentoFiltro),
+      );
+    }
+
     setPedidosFiltrados(currentFiltered);
-  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim]);
+  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim, formasPagamentoFiltro]);
 
   useEffect(() => {
     let currentFiltered = rascunhos;
@@ -547,8 +570,12 @@ function VendasGestaoPage() {
       list = list.filter((p) => dateRangeMatches(p.created_date, dataInicio, dataFim));
     }
 
+    if (formasPagamentoFiltro.length > 0) {
+      list = list.filter((p) => pedidoMatchesFormasPagamento(p, formasPagamentoFiltro));
+    }
+
     return list;
-  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim]);
+  }, [pedidos, searchTerm, statusFiltro, dataInicio, dataFim, formasPagamentoFiltro]);
 
   // Calcular subtotal dos pedidos filtrados
   const subtotalFiltrado = activeTab === 'pedidos'
@@ -617,6 +644,7 @@ function VendasGestaoPage() {
   const limparFiltros = () => {
     setSearchTerm('');
     setStatusFiltro('todos');
+    setFormasPagamentoFiltro([]);
     const { start, end } = getPeriodoMesCorrente();
     setDataInicio(start);
     setDataFim(end);
@@ -743,6 +771,45 @@ function VendasGestaoPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {(activeTab === 'pedidos' || activeTab === 'consulta') && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs text-muted-foreground">Forma de pagamento</label>
+                  {formasPagamentoFiltro.length > 0 && (
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline"
+                      onClick={() => setFormasPagamentoFiltro([])}
+                    >
+                      Limpar seleção
+                    </button>
+                  )}
+                </div>
+                <div className="rounded-2xl bg-muted dark:bg-muted p-3 space-y-2 max-h-48 overflow-y-auto">
+                  {formasPagamentoOpcoes.map((forma) => {
+                    const checked = formasPagamentoFiltro.includes(forma);
+                    return (
+                      <label
+                        key={forma}
+                        className="flex items-center gap-3 py-1.5 cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => toggleFormaPagamentoFiltro(forma)}
+                        />
+                        <span className="text-sm text-foreground">{forma}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {formasPagamentoFiltro.length > 0 && (
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    Mostrando pedidos com pelo menos uma das formas selecionadas.
+                  </p>
+                )}
+              </div>
+            )}
 
             <div>
               <label className="block text-xs text-muted-foreground mb-2">Período</label>
