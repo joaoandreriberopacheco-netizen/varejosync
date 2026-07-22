@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
 import { ChevronRight, Layers } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   useCatalogTreeGrid,
@@ -114,7 +115,62 @@ function ProdutoCell({ row, isExpanded, onToggle }) {
   );
 }
 
-function SugestaoDataCells({ linha, row, disp, renderFornecedorSelect }) {
+function QtdSugeridaInput({ linha, disp, onQuantidadeLinhaChange }) {
+  const qty = disp?.quantidade ?? 0;
+  const unidade = disp?.unidade || '';
+  const [localValue, setLocalValue] = useState(() => String(qty));
+
+  useEffect(() => {
+    setLocalValue(String(qty));
+  }, [linha.id, qty]);
+
+  const commit = () => {
+    const parsed = Number(String(localValue).replace(',', '.'));
+    if (!Number.isFinite(parsed)) {
+      setLocalValue(String(qty));
+      return;
+    }
+    onQuantidadeLinhaChange?.(linha, parsed);
+  };
+
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <Input
+        type="text"
+        inputMode="decimal"
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+            e.currentTarget.blur();
+          }
+        }}
+        className="h-7 w-16 px-1.5 text-right text-xs tabular-nums"
+        onClick={(e) => e.stopPropagation()}
+      />
+      {unidade ? (
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap">{unidade}</span>
+      ) : null}
+      {linha.tipo === 'grupo' ? (
+        <div className="text-[10px] text-muted-foreground inline-flex items-center gap-0.5">
+          <Layers className="w-3 h-3" />
+          {linha.skus?.length ?? 0}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SugestaoDataCells({
+  linha,
+  row,
+  disp,
+  onQuantidadeLinhaChange,
+  renderFornecedorSelect,
+}) {
   if (!linha) {
     const groupAbcd = row?.abcdDominante || '';
     return (
@@ -125,6 +181,7 @@ function SugestaoDataCells({ linha, row, disp, renderFornecedorSelect }) {
         <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
         <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
         <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
+        <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
         <td className="py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
       </>
     );
@@ -132,7 +189,8 @@ function SugestaoDataCells({ linha, row, disp, renderFornecedorSelect }) {
 
   const sugestao = linha.sugestao;
   const estoque = sugestao?.estoque_atual ?? linha.produto?.estoque_atual ?? 0;
-  const ponto = sugestao?.ponto_pedido ?? linha.produto?.estoque_minimo ?? 0;
+  const media30d = sugestao?.media_30d_texto;
+  const pontoFuturo = sugestao?.ponto_futuro_texto;
   const abcd = getLinhaAbcdLetter(linha, row?.abcdDominante);
 
   return (
@@ -144,19 +202,24 @@ function SugestaoDataCells({ linha, row, disp, renderFornecedorSelect }) {
         <span className="text-xs text-muted-foreground tabular-nums">{fmtN(estoque)}</span>
       </td>
       <td className="text-right py-2 px-2 whitespace-nowrap">
-        <span className="text-xs text-muted-foreground tabular-nums">{fmtN(ponto)}</span>
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {media30d || '—'}
+        </span>
       </td>
       <td className="text-right py-2 px-2 whitespace-nowrap">
-        <span className="text-xs font-medium text-foreground tabular-nums">
-          {fmtN(disp?.quantidade ?? 0)}
-          {disp?.unidade ? <span className="text-muted-foreground font-normal ml-1">{disp.unidade}</span> : null}
+        <span className={cn(
+          'text-xs tabular-nums',
+          sugestao?.fallback_cadastro ? 'text-muted-foreground italic' : 'text-amber-700 dark:text-amber-400 font-medium',
+        )}>
+          {pontoFuturo || (sugestao?.fallback_cadastro ? fmtN(sugestao?.ponto_pedido) : '—')}
         </span>
-        {linha.tipo === 'grupo' ? (
-          <div className="text-[10px] text-muted-foreground inline-flex items-center gap-0.5 justify-end">
-            <Layers className="w-3 h-3" />
-            {linha.skus?.length ?? 0} mod.
-          </div>
-        ) : null}
+      </td>
+      <td className="text-right py-2 px-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+        <QtdSugeridaInput
+          linha={linha}
+          disp={disp}
+          onQuantidadeLinhaChange={onQuantidadeLinhaChange}
+        />
       </td>
       <td className="py-2 px-2 min-w-[10rem]" onClick={(e) => e.stopPropagation()}>
         {renderFornecedorSelect?.(linha)}
@@ -175,6 +238,7 @@ export default function SugestaoCompraTreeGrid({
   selectedItems = {},
   onToggleSelected,
   sugestaoDisplayLinha,
+  onQuantidadeLinhaChange,
   renderFornecedorSelect,
 }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
@@ -233,6 +297,7 @@ export default function SugestaoCompraTreeGrid({
   const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
 
   const produtoWidth = PRODUTO_MIN_WIDTH;
+  const colSpan = 8;
 
   return (
     <div className="flex flex-col min-h-0 w-full border border-border/40 rounded-lg overflow-hidden bg-card">
@@ -240,7 +305,7 @@ export default function SugestaoCompraTreeGrid({
         ref={scrollContainerRef}
         className="flex-1 overflow-auto overscroll-contain max-h-[min(70vh,720px)] [overflow-anchor:none]"
       >
-        <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: 0, minWidth: 760 }}>
+        <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: 0, minWidth: 900 }}>
           <thead className={p38Table.headerSolid}>
             <tr className="border-b border-border/40">
               <th className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, 'text-left py-2 w-10')} style={{ left: 0 }} />
@@ -252,22 +317,23 @@ export default function SugestaoCompraTreeGrid({
               </th>
               <th className={cn(p38Table.head, 'text-center py-2 w-14')}>ABCD</th>
               <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-20')}>Estoque</th>
-              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-20')}>Ponto</th>
-              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-28')}>Qtd sugerida</th>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-24')}>Média 30d</th>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-24')}>Ponto futuro</th>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-32')}>Qtd sugerida</th>
               <th className={cn(p38Table.head, 'text-left py-2 min-w-[10rem]')}>Fornecedor</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
+                <td colSpan={colSpan} className="py-10 text-center text-sm text-muted-foreground">
                   Nenhum item na árvore.
                 </td>
               </tr>
             ) : (
               <>
                 {paddingTop > 0 ? (
-                  <tr aria-hidden="true"><td colSpan={7} style={{ height: paddingTop, padding: 0, border: 0 }} /></tr>
+                  <tr aria-hidden="true"><td colSpan={colSpan} style={{ height: paddingTop, padding: 0, border: 0 }} /></tr>
                 ) : null}
                 {visibleRows.map((row) => {
                   const linha = resolveSugestaoLinhaForTreeRow(row, linhaLookup, { agruparHierarquia });
@@ -309,13 +375,14 @@ export default function SugestaoCompraTreeGrid({
                         linha={linha}
                         row={row}
                         disp={linha ? sugestaoDisplayLinha?.(linha) : null}
+                        onQuantidadeLinhaChange={onQuantidadeLinhaChange}
                         renderFornecedorSelect={renderFornecedorSelect}
                       />
                     </tr>
                   );
                 })}
                 {paddingBottom > 0 ? (
-                  <tr aria-hidden="true"><td colSpan={7} style={{ height: paddingBottom, padding: 0, border: 0 }} /></tr>
+                  <tr aria-hidden="true"><td colSpan={colSpan} style={{ height: paddingBottom, padding: 0, border: 0 }} /></tr>
                 ) : null}
               </>
             )}

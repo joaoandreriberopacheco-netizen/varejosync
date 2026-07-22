@@ -19,6 +19,10 @@ import {
   calcularSugestaoCompraProdutoCatalogo,
 } from '@/lib/calcularSugestaoCompraCatalogo';
 import {
+  calcularSugestaoCompraGrupoVelocidade,
+  calcularSugestaoCompraProdutoVelocidade,
+} from '@/lib/calcularSugestaoCompraVelocidade';
+import {
   buildMapaSaldoFimDia,
   contarDiasComEstoqueAtivo,
   iterarDiasCalendario,
@@ -289,6 +293,8 @@ export function buildLinhasSugestaoCompra(
   const agrupar = options.agruparHierarquia !== false;
   const roundingMode = options.roundingMode ?? 'auto';
   const usarCatalogo = options.fonte === 'catalogo';
+  const usarVelocidade = options.fonte === 'velocidade';
+  const salesVelocityMap = options.salesVelocityMap || {};
   const { map, soltos } = agruparSkusPorHierarquiaCompra(produtosAtivos);
 
   const linhas = [];
@@ -304,9 +310,13 @@ export function buildLinhasSugestaoCompra(
       skus.forEach((p) => skusEmGrupo.add(p.id));
       const sugestao = usarCatalogo
         ? calcularSugestaoCompraGrupoCatalogo(skus, { roundingMode })
-        : calcularSugestaoCompraGrupo(skus, pedidos90d, movsPorProduto, {
-            roundingMode,
-          });
+        : usarVelocidade
+          ? calcularSugestaoCompraGrupoVelocidade(skus, pedidos90d, salesVelocityMap, {
+              roundingMode,
+            })
+          : calcularSugestaoCompraGrupo(skus, pedidos90d, movsPorProduto, {
+              roundingMode,
+            });
       if (!sugestao.elegivel) continue;
 
       const representativo =
@@ -334,9 +344,13 @@ export function buildLinhasSugestaoCompra(
     if (agrupar && skusEmGrupo.has(p.id)) continue;
     const sugestao = usarCatalogo
       ? calcularSugestaoCompraProdutoCatalogo(p, { roundingMode })
-      : calcularSugestaoCompraProduto(p, pedidos90d, movsPorProduto[p.id] || [], {
-          roundingMode,
-        });
+      : usarVelocidade
+        ? calcularSugestaoCompraProdutoVelocidade(p, pedidos90d, salesVelocityMap, {
+            roundingMode,
+          })
+        : calcularSugestaoCompraProduto(p, pedidos90d, movsPorProduto[p.id] || [], {
+            roundingMode,
+          });
     if (!sugestao.elegivel) continue;
 
     linhas.push({
