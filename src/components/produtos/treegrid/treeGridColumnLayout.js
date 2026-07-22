@@ -1,6 +1,14 @@
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
-import { aggregateCatalogSalesVelocity, formatCatalogMedia30d } from '@/lib/catalogSalesVelocity';
-import { aggregateEstoqueDisplay, collectSkus } from './useTreeGrid';
+import {
+  aggregateCatalogPontoEsperadoLt,
+  aggregateCatalogSalesVelocity,
+  formatCatalogMedia30d,
+  formatCatalogMetaQuantidade,
+  formatCatalogPontoEsperadoLt,
+  formatCatalogSalesQuantity,
+  getCatalogLeadTimeDias,
+} from '@/lib/catalogSalesVelocity';
+import { aggregateEstoqueDisplay, collectSkus, aggregateMetaEstoqueDisplay } from './useTreeGrid';
 
 const HIER_STEP = 20;
 const CELL_PAD = 4;
@@ -87,9 +95,13 @@ function skuCellText(colId, produto, row, salesVelocityMap = {}) {
       return `${fmtN(qtd)} ${un}`;
     }
     case 'media_30d': return formatCatalogMedia30d(velocity) || '—';
-    case 'estoque_minimo': return fmtN(produto.estoque_minimo);
-    case 'estoque_ideal': return fmtN(produto.estoque_ideal);
-    case 'estoque_maximo': return fmtN(produto.estoque_maximo);
+    case 'ponto_esperado_lt': {
+      const lt = getCatalogLeadTimeDias(produto);
+      return formatCatalogPontoEsperadoLt(velocity, lt) || '—';
+    }
+    case 'estoque_minimo': return formatCatalogMetaQuantidade(produto, produto.estoque_minimo) || '—';
+    case 'estoque_ideal': return formatCatalogMetaQuantidade(produto, produto.estoque_ideal) || '—';
+    case 'estoque_maximo': return formatCatalogMetaQuantidade(produto, produto.estoque_maximo) || '—';
     case 'tempo_reposicao': return `${produto.tempo_reposicao_dias || 0}d`;
     case 'peso': return `${fmtN(produto.peso_kg)}kg`;
     case 'dimensoes': return produto.dimensoes_cm || '—';
@@ -135,9 +147,29 @@ function groupCellText(colId, row, salesVelocityMap = {}) {
       const agg = aggregateCatalogSalesVelocity(skus, salesVelocityMap);
       return formatCatalogMedia30d(agg, { tilde: true }) || '—';
     }
-    case 'estoque_minimo': return fmtN(row.estoqueMinTotal);
-    case 'estoque_ideal': return fmtN(row.estoqueIdealTotal);
-    case 'estoque_maximo': return fmtN(row.estoqueMaxTotal);
+    case 'ponto_esperado_lt': {
+      const skus = collectSkus(row.node);
+      const agg = aggregateCatalogPontoEsperadoLt(skus, salesVelocityMap);
+      return formatCatalogSalesQuantity(agg.quantidade, agg.unidade, { tilde: true }) || '—';
+    }
+    case 'estoque_minimo': {
+      const disp = aggregateMetaEstoqueDisplay(collectSkus(row.node), 'estoque_minimo');
+      if (disp.mode === 'empty' || disp.quantidade <= 0) return '—';
+      if (disp.mode === 'mixed') return `${fmtN(disp.quantidade)} un. base (mistura)`;
+      return `${fmtN(disp.quantidade)} ${disp.sigla}`;
+    }
+    case 'estoque_ideal': {
+      const disp = aggregateMetaEstoqueDisplay(collectSkus(row.node), 'estoque_ideal');
+      if (disp.mode === 'empty' || disp.quantidade <= 0) return '—';
+      if (disp.mode === 'mixed') return `${fmtN(disp.quantidade)} un. base (mistura)`;
+      return `${fmtN(disp.quantidade)} ${disp.sigla}`;
+    }
+    case 'estoque_maximo': {
+      const disp = aggregateMetaEstoqueDisplay(collectSkus(row.node), 'estoque_maximo');
+      if (disp.mode === 'empty' || disp.quantidade <= 0) return '—';
+      if (disp.mode === 'mixed') return `${fmtN(disp.quantidade)} un. base (mistura)`;
+      return `${fmtN(disp.quantidade)} ${disp.sigla}`;
+    }
     case 'peso': return `${fmtN(row.pesoTotal)}kg`;
     case 'status':
       return row.criticalCount > 0

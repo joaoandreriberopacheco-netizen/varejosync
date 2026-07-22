@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { getCatalogoComercialView, formatEstoqueApresentacao } from '@/lib/productUnits';
+import { getCatalogoComercialView, formatEstoqueApresentacao, formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 import { compareTreeLabels, sortedTreeChildEntries } from '@/lib/treeSort';
 import {
   aggregatePerformanceFromSkus,
@@ -94,6 +94,29 @@ export function aggregateEstoqueDisplay(skus) {
   }
   const quantidade = skus.reduce((s, p) => s + (p.estoque_atual || 0), 0);
   return { mode: 'mixed', quantidade };
+}
+
+/** Soma metas de estoque (mín/ideal/máx) em unidade comercial quando o grupo é homogéneo. */
+export function aggregateMetaEstoqueDisplay(skus, field = 'estoque_minimo') {
+  if (!skus?.length) return { mode: 'empty', quantidade: 0 };
+  const rows = skus.map((p) => ({
+    ap: formatQuantidadeCatalogoApresentacao(p, p[field] || 0),
+    base: p[field] || 0,
+  }));
+  const allDisp = rows.every((x) => x.ap);
+  if (allDisp) {
+    const s0 = rows[0].ap.sigla;
+    if (rows.every((x) => x.ap.sigla === s0)) {
+      const quantidade = rows.reduce((s, x) => s + x.ap.quantidade, 0);
+      return { mode: 'display', quantidade, sigla: s0 };
+    }
+  }
+  const quantidade = rows.reduce((s, x) => s + x.base, 0);
+  return {
+    mode: 'mixed',
+    quantidade,
+    sigla: (skus[0]?.unidade_principal || 'UN').toUpperCase(),
+  };
 }
 
 /**

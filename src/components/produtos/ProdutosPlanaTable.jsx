@@ -6,7 +6,8 @@ import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
 import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
-import { formatCatalogMedia30d } from '@/lib/catalogSalesVelocity';
+import { formatCatalogMedia30d, formatCatalogMetaQuantidade, formatCatalogPontoEsperadoLt, getCatalogLeadTimeDias } from '@/lib/catalogSalesVelocity';
+import { formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 
 const headMap = {
   status: 'Status',
@@ -23,6 +24,7 @@ const headMap = {
   markup: 'Markup %',
   estoque_atual: 'Estoque',
   media_30d: 'Média 30d',
+  ponto_esperado_lt: 'Ponto LT',
   estoque_minimo: 'Est. Mín',
   estoque_ideal: 'Est. Ideal',
   estoque_maximo: 'Est. Máx',
@@ -51,6 +53,7 @@ const widthMap = {
   markup: 'min-w-[90px]',
   estoque_atual: 'min-w-[110px]',
   media_30d: 'min-w-[100px]',
+  ponto_esperado_lt: 'min-w-[100px]',
   estoque_minimo: 'min-w-[90px]',
   estoque_ideal: 'min-w-[90px]',
   estoque_maximo: 'min-w-[90px]',
@@ -133,12 +136,36 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
           {formatCatalogMedia30d(velocity) || '—'}
         </TableCell>
       );
-    case 'estoque_minimo':
-      return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(produto.estoque_minimo)}</TableCell>;
-    case 'estoque_ideal':
-      return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(produto.estoque_ideal)}</TableCell>;
-    case 'estoque_maximo':
-      return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(produto.estoque_maximo)}</TableCell>;
+    case 'ponto_esperado_lt':
+      return (
+        <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
+          {formatCatalogPontoEsperadoLt(velocity, getCatalogLeadTimeDias(produto)) || '—'}
+        </TableCell>
+      );
+    case 'estoque_minimo': {
+      const ap = formatQuantidadeCatalogoApresentacao(produto, produto.estoque_minimo || 0);
+      return (
+        <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
+          {(produto.estoque_minimo || 0) > 0 ? `${formatarNumero(ap.quantidade)} ${ap.sigla}` : '—'}
+        </TableCell>
+      );
+    }
+    case 'estoque_ideal': {
+      const ap = formatQuantidadeCatalogoApresentacao(produto, produto.estoque_ideal || 0);
+      return (
+        <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
+          {(produto.estoque_ideal || 0) > 0 ? `${formatarNumero(ap.quantidade)} ${ap.sigla}` : '—'}
+        </TableCell>
+      );
+    }
+    case 'estoque_maximo': {
+      const ap = formatQuantidadeCatalogoApresentacao(produto, produto.estoque_maximo || 0);
+      return (
+        <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
+          {(produto.estoque_maximo || 0) > 0 ? `${formatarNumero(ap.quantidade)} ${ap.sigla}` : '—'}
+        </TableCell>
+      );
+    }
     case 'tempo_reposicao':
       return <TableCell key={col} className="text-xs text-foreground/90">{produto.tempo_reposicao_dias || 0}d</TableCell>;
     case 'peso':

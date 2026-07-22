@@ -1,5 +1,6 @@
 import {
   formatEstoqueApresentacao,
+  formatQuantidadeCatalogoApresentacao,
   resolveCommercialDisplay,
 } from '@/lib/productUnits';
 
@@ -148,6 +149,117 @@ export function formatCatalogMedia30d(velocity, options = {}) {
     velocity?.unidade,
     options,
   );
+}
+
+/** Ponto de pedido esperado (unidade comercial) a partir da Média 30d e lead time. */
+export function getCatalogLeadTimeDias(produto, leadTimePadrao = 20) {
+  return Math.max(1, Number(produto?.tempo_reposicao_dias) || leadTimePadrao);
+}
+
+export function getCatalogPontoEsperadoLt(velocity, leadTimeDias = 20) {
+  const media30 = getCatalogMedia30dFrom60d(velocity);
+  const lt = Math.max(1, Number(leadTimeDias) || 20);
+  if (media30 <= 0) return 0;
+  return (media30 * lt) / DIAS_MEDIA;
+}
+
+export function formatCatalogPontoEsperadoLt(velocity, leadTimeDias = 20, options = {}) {
+  return formatCatalogSalesQuantity(
+    getCatalogPontoEsperadoLt(velocity, leadTimeDias),
+    velocity?.unidade,
+    options,
+  );
+}
+
+/** Converte meta de estoque (unidade base) para texto comercial — alinha com Estoque e Média 30d. */
+export function formatCatalogMetaQuantidade(produto, quantidadeBase, options = {}) {
+  const qtyBase = Number(quantidadeBase) || 0;
+  if (qtyBase <= 0 && options.dashIfZero !== false) return null;
+  const ap = formatQuantidadeCatalogoApresentacao(produto, qtyBase);
+  return formatCatalogSalesQuantity(ap.quantidade, ap.sigla, options);
+}
+
+/** Soma ponto esperado (LT) dos SKUs do grupo na unidade comercial quando homogénea. */
+export function aggregateCatalogPontoEsperadoLt(skus = [], salesVelocityMap = {}, leadTimePadrao = 20) {
+  let quantidade = 0;
+  const units = new Set();
+
+  for (const sku of skus) {
+    const velocity = salesVelocityMap[String(sku?.id)];
+    const lt = getCatalogLeadTimeDias(sku, leadTimePadrao);
+    const ponto = getCatalogPontoEsperadoLt(velocity, lt);
+    quantidade += ponto;
+    if (velocity?.unidade) units.add(String(velocity.unidade).trim().toUpperCase());
+  }
+
+  return {
+    quantidade,
+    unidade: units.size === 1 ? [...units][0] : null,
+  };
+}
+
+/**
+ * Vendas 60d de um SKU (base + comercial) — mesma regra da coluna Média 30d.
+ * @returns {{ qtd60Base: number, qtd60Commercial: number, unidade: string|null, teveVenda: boolean }}
+ */
+export function aggregateProductSalesVelocity(produto, pedidos = []) {
+  if (!produto?.id) {
+    return { qtd60Base: 0, qtd60Commercial: 0, unidade: null, teveVenda: false };
+  }
+
+  const prodId = String(produto.id);
+  let qtd60Base = 0;
+  let qtd60Commercial = 0;
+  let unidade = resolveSkuUnidade(produto);
+
+  const now = new Date();
+  const cut60 = new Date(now);
+  cut60.setDate(cut60.getDate() - 60);
+
+  for (const pedido of pedidos || []) {
+    if (!pedidoElegivelVendas(pedido)) continue;
+    const rawDate = pedido?.created_date ?? pedido?.created_at;
+    if (!rawDate) continue;
+    const saleDate = new Date(rawDate);
+    if (Number.isNaN(saleDate.getTime()) || saleDate < cut60) continue;
+
+    for (const item of pedido.itens || []) {
+      const itemProdId = String(item?.produto_id ?? item?.produtoId ?? '');
+      if (itemProdId !== prodId) continue;
+
+      const qtyBase = lineQuantityBaseVendas(item);
+      const resolved = resolveCommercialDisplay(
+        produto,
+        qtyBase,
+        item.unidade_medida || produto.unidade_principal || 'UN',
+      );
+      qtd60Base += qtyBase || 0;
+      qtd60Commercial += resolved.quantidade || 0;
+      if (resolved.unidade) unidade = resolved.unidade;
+    }
+  }
+
+  return {
+    qtd60Base,
+    qtd60Commercial,
+    unidade,
+    teveVenda: qtd60Base > 0,
+  };
+}
+
+/** Média diária (unidade base) nos últimos 60 dias corridos — alinha com a coluna Média 30d. */
+export function calcularMediaDiaVendas60dCalendario(produto, pedidos = []) {
+  const agg = aggregateProductSalesVelocity(produto, pedidos);
+  const mediaDia = agg.qtd60Base > 0 ? agg.qtd60Base / 60 : 0;
+  return {
+    mediaDia,
+    quantidade_limpa_60d: agg.qtd60Base,
+    quantidade_comercial_60d: agg.qtd60Commercial,
+    diasJanela: 60,
+    teveVenda: agg.teveVenda,
+    teveMedia: mediaDia > 0,
+    unidade_comercial: agg.unidade,
+  };
 }
 
 export const CATALOG_SALES_WINDOW_LABELS = {

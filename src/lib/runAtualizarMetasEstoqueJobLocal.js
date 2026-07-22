@@ -111,8 +111,8 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
   onProgress?.({
     phase: 'preparing',
     etapa: sobrescrever
-      ? 'Recalculando e sobrescrevendo pontos de pedido (vendas 90d × lead time)…'
-      : 'Calculando pontos de pedido localmente (vendas 90d e lead time)…',
+      ? 'Recalculando e sobrescrevendo pontos de pedido (média 60d × lead time)…'
+      : 'Calculando pontos de pedido localmente (média 60d e lead time)…',
   });
 
   const produtos = await fetchProdutosAtivos({ provided: produtosFornecidos });

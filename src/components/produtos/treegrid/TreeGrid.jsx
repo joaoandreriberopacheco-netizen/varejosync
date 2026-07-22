@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffe
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
+import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, aggregateMetaEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
@@ -10,14 +10,48 @@ import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { computeTreeGridColumnLayout } from './treeGridColumnLayout';
 import {
+  aggregateCatalogPontoEsperadoLt,
   aggregateCatalogSalesVelocity,
   formatCatalogMedia30d,
+  formatCatalogMetaQuantidade,
+  formatCatalogPontoEsperadoLt,
+  formatCatalogSalesQuantity,
+  getCatalogLeadTimeDias,
 } from '@/lib/catalogSalesVelocity';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtPct = (n) => `${(n ?? 0).toFixed(1)}%`;
 const fmtN   = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+
+function renderMetaQuantidade(produto, field) {
+  const text = formatCatalogMetaQuantidade(produto, produto[field]);
+  return (
+    <span className="text-xs text-muted-foreground tabular-nums">
+      {text || '—'}
+    </span>
+  );
+}
+
+function renderGroupMetaQuantidade(skus, field) {
+  const disp = aggregateMetaEstoqueDisplay(skus, field);
+  if (disp.mode === 'empty' || disp.quantidade <= 0) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  if (disp.mode === 'mixed') {
+    return (
+      <span className="text-xs text-muted-foreground tabular-nums inline-flex flex-col leading-tight items-end">
+        <span>{fmtN(disp.quantidade)}</span>
+        <span className="text-[10px] text-muted-foreground">un. base (mistura)</span>
+      </span>
+    );
+  }
+  return (
+    <span className="text-xs text-muted-foreground tabular-nums">
+      {fmtN(disp.quantidade)} {disp.sigla}
+    </span>
+  );
+}
 
 function AbcdBadge({ letter }) {
   const value = String(letter || '').toUpperCase();
@@ -82,6 +116,7 @@ const COL_DEFS = [
   { id: 'inventario_valorizado', label: 'Inventário R$', w: 108 },
   { id: 'estoque_atual',        label: 'Estoque',        w: 96  },
   { id: 'media_30d',            label: 'Média 30d',      w: 96  },
+  { id: 'ponto_esperado_lt',    label: 'Ponto LT',       w: 96  },
   { id: 'estoque_minimo',       label: 'Est. Mín',       w: 80  },
   { id: 'estoque_ideal',        label: 'Est. Ideal',     w: 80  },
   { id: 'estoque_maximo',       label: 'Est. Máx',       w: 80  },
@@ -291,9 +326,18 @@ function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap =
         </span>
       );
     }
-    case 'estoque_minimo':       return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.estoque_minimo)}</span>;
-    case 'estoque_ideal':        return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.estoque_ideal)}</span>;
-    case 'estoque_maximo':       return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.estoque_maximo)}</span>;
+    case 'ponto_esperado_lt': {
+      const lt = getCatalogLeadTimeDias(produto);
+      const text = formatCatalogPontoEsperadoLt(velocity, lt);
+      return (
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {text || '—'}
+        </span>
+      );
+    }
+    case 'estoque_minimo':       return renderMetaQuantidade(produto, 'estoque_minimo');
+    case 'estoque_ideal':        return renderMetaQuantidade(produto, 'estoque_ideal');
+    case 'estoque_maximo':       return renderMetaQuantidade(produto, 'estoque_maximo');
     case 'tempo_reposicao':      return <span className="text-xs text-muted-foreground tabular-nums">{produto.tempo_reposicao_dias || 0}d</span>;
     case 'peso':                 return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.peso_kg)}kg</span>;
     case 'dimensoes':            return <span className="text-xs text-muted-foreground">{produto.dimensoes_cm || '—'}</span>;
@@ -365,9 +409,19 @@ function groupCellValue(colId, row, salesVelocityMap = {}) {
         </span>
       );
     }
-    case 'estoque_minimo':        return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(row.estoqueMinTotal)}</span>;
-    case 'estoque_ideal':         return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(row.estoqueIdealTotal)}</span>;
-    case 'estoque_maximo':        return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(row.estoqueMaxTotal)}</span>;
+    case 'ponto_esperado_lt': {
+      const skus = collectSkus(row.node);
+      const agg = aggregateCatalogPontoEsperadoLt(skus, salesVelocityMap);
+      const text = formatCatalogSalesQuantity(agg.quantidade, agg.unidade, { tilde: true });
+      return (
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {text || '—'}
+        </span>
+      );
+    }
+    case 'estoque_minimo':        return renderGroupMetaQuantidade(collectSkus(row.node), 'estoque_minimo');
+    case 'estoque_ideal':         return renderGroupMetaQuantidade(collectSkus(row.node), 'estoque_ideal');
+    case 'estoque_maximo':        return renderGroupMetaQuantidade(collectSkus(row.node), 'estoque_maximo');
     case 'peso':                  return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(row.pesoTotal)}kg</span>;
     case 'status':                return row.criticalCount > 0
       ? (

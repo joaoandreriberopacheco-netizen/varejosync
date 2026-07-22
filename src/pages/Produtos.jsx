@@ -1096,7 +1096,7 @@ function ProdutosPageContent() {
     return filtered;
   }, [produtos, filters, sortOrder]);
 
-  const needsSalesVelocity = visibleColumns.includes('media_30d');
+  const needsSalesVelocity = visibleColumns.some((col) => ['media_30d', 'ponto_esperado_lt'].includes(col));
   const { data: pedidosVenda90d = [] } = usePedidosVenda90dQuery({
     enabled: needsSalesVelocity,
   });

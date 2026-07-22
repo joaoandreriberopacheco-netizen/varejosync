@@ -1,16 +1,15 @@
 /**
  * Metas de estoque (mínimo / ideal) derivadas de vendas recentes.
- * Regras:
- * - Janela: 90 dias
- * - Outliers: linhas com quantidade > Q3 descartadas
- * - m = qty vendida / dias com estoque ≠ 0 (negativo conta)
+ * Regras (v4):
+ * - Média diária: vendas dos últimos 60 dias corridos ÷ 60 (unidade base)
+ * - Alinha com a coluna «Média 30d» do catálogo (mesma janela, sem outliers)
  * - Lead time: tempo_reposicao_dias ou 20 dias
- * - Ponto de pedido (mínimo): m × lead time — cobertura mínima enquanto a reposição chega
- * - Ideal / pedido: m × lead time — quantidade sugerida por ciclo de reposição
- * - Arredondamento: lote_compra_vitrine ou fator da unidade de vitrine
+ * - Ponto de pedido (mínimo): média × lead time
+ * - Ideal / pedido: média × lead time
  */
 
 import { collectItensVendaProduto, lineQuantityBase } from '@/lib/calcularIepProdutos';
+import { calcularMediaDiaVendas60dCalendario } from '@/lib/catalogSalesVelocity';
 import {
   buildPurchaseUnitOptions,
   resolveUnidadeExibicaoParaCompras,
@@ -203,16 +202,21 @@ export function calcularMetasEstoqueParaProduto(produto, pedidos90d, options = {
     Number(produto?.tempo_reposicao_dias) || leadTimePadrao,
   );
 
-  const media = calcularMediaVendaDia(produto, pedidos90d, movimentacoes, {
-    janelaDias,
-    mediaFallbackDiasJanela,
-  });
+  const usarMedia60d = options.usarMedia60dCalendario !== false;
+  const media = usarMedia60d
+    ? calcularMediaDiaVendas60dCalendario(produto, pedidos90d)
+    : calcularMediaVendaDia(produto, pedidos90d, movimentacoes, {
+        janelaDias,
+        mediaFallbackDiasJanela,
+      });
   if (!media.teveMedia) {
     return {
       atualizar: false,
-      motivo: !media.teveVenda ? 'sem_venda' : 'sem_dias_com_estoque',
+      motivo: !media.teveVenda
+        ? 'sem_venda'
+        : (usarMedia60d ? 'sem_media_60d' : 'sem_dias_com_estoque'),
       lead_time_dias: leadTime,
-      dias_com_estoque: media.diasComEstoque,
+      dias_com_estoque: media.diasComEstoque ?? null,
       ...media,
     };
   }
@@ -235,12 +239,13 @@ export function calcularMetasEstoqueParaProduto(produto, pedidos90d, options = {
     fator_vitrine: fator,
     lote_compra_vitrine: resolveLoteCompraVitrine(produto) || null,
     lote_compra_base: resolveLoteCompraBase(produto),
-    dias_com_estoque: media.diasComEstoque,
-    quantidade_limpa_90d: media.quantidadeLimpa,
-    outliers_descartados: media.outliersDescartados,
-    linhas_venda_total: media.linhasTotal,
+    dias_com_estoque: media.diasComEstoque ?? null,
+    quantidade_limpa_90d: media.quantidade_limpa_90d ?? media.quantidade_limpa_60d ?? null,
+    quantidade_limpa_60d: media.quantidade_limpa_60d ?? null,
+    outliers_descartados: media.outliersDescartados ?? 0,
+    linhas_venda_total: media.linhasTotal ?? null,
     metas_estoque_atualizado_em: new Date().toISOString(),
-    metas_estoque_versao: 'v3-ponto-pedido-media-lead-time',
+    metas_estoque_versao: usarMedia60d ? 'v4-media-60d-calendario' : 'v3-ponto-pedido-media-lead-time',
   };
 }
 

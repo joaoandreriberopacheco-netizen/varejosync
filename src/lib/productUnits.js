@@ -1088,6 +1088,19 @@ export function formatEstoqueApresentacao(produto) {
   return { sigla: pref, quantidade: qtd, rotulo: alt.rotulo };
 }
 
+/** Converte quantidade em unidade base para apresentação comercial (metas, mínimo, ideal). */
+export function formatQuantidadeCatalogoApresentacao(produto, quantidadeBase) {
+  const qty = normalizeNumber(quantidadeBase, 0);
+  if (!isShowUnitEnabled(produto)) {
+    const un = resolvePrimaryFromFactorOne(produto, produto?.unidade_principal || 'UN');
+    return { sigla: un, quantidade: qty, rotulo: null };
+  }
+  const apresent = formatEstoqueApresentacao({ ...produto, estoque_atual: qty });
+  if (apresent) return { sigla: apresent.sigla, quantidade: apresent.quantidade, rotulo: apresent.rotulo };
+  const un = resolvePrimaryFromFactorOne(produto, produto?.unidade_principal || 'UN');
+  return { sigla: un, quantidade: qty, rotulo: null };
+}
+
 /**
  * Resolve quantidade/unidade a partir da **unidade de compra** escolhida (PDF, modal, catálogo).
  * Não substitui pela vitrine comercial do produto (ex.: manter M² quando o fornecedor faturou em M²).
