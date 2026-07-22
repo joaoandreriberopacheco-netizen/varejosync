@@ -25,7 +25,7 @@ import {
 import {
   DualDonutKpiModule,
   formatDashboardCurrency,
-  LucroDiarioChart,
+  LucroAcumuladoChart,
 } from '@/paiol/components/dashboard/charts/DashboardKpiCharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -302,15 +302,19 @@ export default function VendasTab() {
         const referenceDate = new Date();
         const elapsedWorkingDays = countElapsedWorkingDaysInMonth(referenceDate);
         const workingDaysInMonth = countWorkingDaysInMonth(referenceDate);
-        const dailyProfitData = Array.from({ length: currentMonthDays }, (_, idx) => {
-          const day = idx + 1;
-          return {
-            diaLabel: `D${String(day).padStart(2, '0')}`,
-            lucro: Number(profitByMonthDay[currentMonthKey]?.[day] || 0),
-          };
-        });
         const breakEvenDaily = Number(kpiConfig.kpi_lucro_break_even_diario || 0);
         const metaLucroDaily = getDailyMetaFromMonthly(kpiConfig.kpi_lucro_meta_mensal, referenceDate);
+        let runningProfit = 0;
+        const accumulatedProfitData = Array.from({ length: currentMonthDays }, (_, idx) => {
+          const day = idx + 1;
+          runningProfit += Number(profitByMonthDay[currentMonthKey]?.[day] || 0);
+          return {
+            diaLabel: `D${String(day).padStart(2, '0')}`,
+            lucro: runningProfit,
+            breakEven: breakEvenDaily * day,
+            meta: metaLucroDaily * day,
+          };
+        });
         const vendaMinimaDaily = Number(kpiConfig.kpi_venda_minima_diaria || 0);
         const metaVendaDaily = getDailyMetaFromMonthly(kpiConfig.kpi_venda_meta_mensal, referenceDate);
         const avgDailyProfit = elapsedWorkingDays > 0 ? currentProfit / elapsedWorkingDays : 0;
@@ -370,7 +374,7 @@ export default function VendasTab() {
             currentAccumulatedData,
             monthlySalesData,
             lucroKpi,
-            dailyProfitData,
+            accumulatedProfitData,
             kpiConfig,
             breakEvenDaily,
             metaLucroDaily,
@@ -742,24 +746,25 @@ export default function VendasTab() {
           <CardHeader className="pb-1">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-slate-100 uppercase tracking-wide">
               <TrendingUp className="w-4 h-4 text-lime-400" />
-              Lucro diário do mês atual
+              Lucro acumulado do mês atual
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <LucroDiarioChart
-              data={metrics.dailyProfitData}
-              breakEvenDaily={metrics.breakEvenDaily}
-              metaDaily={metrics.metaLucroDaily}
+            <LucroAcumuladoChart
+              data={metrics.accumulatedProfitData}
               innerSurfaceClassName={`h-[230px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}
             />
             <div className="flex flex-wrap gap-3 mt-2 text-[10px] text-slate-300/80">
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-[2px] w-4 rounded-full bg-[#ef4444]" />
-                Break-even: <strong className="text-slate-100">{formatShort(metrics.breakEvenDaily)}</strong>
+                Break-even/dia: <strong className="text-slate-100">{formatShort(metrics.breakEvenDaily)}</strong>
               </span>
               <span className="inline-flex items-center gap-1">
                 <span className="inline-block h-[2px] w-4 rounded-full bg-[#22c55e]" />
-                Meta diária: <strong className="text-slate-100">{formatShort(metrics.metaLucroDaily)}</strong>
+                Meta/dia: <strong className="text-slate-100">{formatShort(metrics.metaLucroDaily)}</strong>
+              </span>
+              <span>
+                Acumulado atual: <strong className="text-slate-100">{formatShort(metrics.accumulatedProfitData.at(-1)?.lucro || 0)}</strong>
               </span>
             </div>
           </CardContent>

@@ -6,7 +6,6 @@ import {
   LineChart,
   Pie,
   PieChart,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -34,12 +33,16 @@ const TOOLTIP_STYLE = {
   boxShadow: '0 12px 26px rgba(0,0,0,0.45)',
 };
 
-export function LucroDiarioChart({
-  data,
-  breakEvenDaily,
-  metaDaily,
-  innerSurfaceClassName,
-}) {
+const SERIES_LABELS = {
+  lucro: 'Lucro acumulado',
+  breakEven: 'Break-even acumulado',
+  meta: 'Meta acumulada',
+};
+
+export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
+  const hasBreakEven = data.some((point) => Number(point.breakEven) > 0);
+  const hasMeta = data.some((point) => Number(point.meta) > 0);
+
   return (
     <div className={innerSurfaceClassName}>
       <ResponsiveContainer width="100%" height="100%">
@@ -58,37 +61,33 @@ export function LucroDiarioChart({
             tickLine={false}
           />
           <Tooltip
-            formatter={(value, name) => [BRL.format(Number(value || 0)), name === 'lucro' ? 'Lucro' : name]}
+            formatter={(value, name) => [BRL.format(Number(value || 0)), SERIES_LABELS[name] || name]}
             contentStyle={TOOLTIP_STYLE}
             labelStyle={{ color: '#e2e8f0', fontWeight: 700 }}
             itemStyle={{ color: '#cbd5e1' }}
           />
-          {breakEvenDaily > 0 ? (
-            <ReferenceLine
-              y={breakEvenDaily}
+          {hasBreakEven ? (
+            <Line
+              type="monotone"
+              dataKey="breakEven"
+              name="breakEven"
               stroke="#ef4444"
               strokeWidth={2}
               strokeDasharray="6 4"
-              label={{
-                value: 'Break-even',
-                position: 'insideTopRight',
-                fill: '#fca5a5',
-                fontSize: 10,
-              }}
+              dot={false}
+              activeDot={false}
             />
           ) : null}
-          {metaDaily > 0 ? (
-            <ReferenceLine
-              y={metaDaily}
+          {hasMeta ? (
+            <Line
+              type="monotone"
+              dataKey="meta"
+              name="meta"
               stroke="#22c55e"
               strokeWidth={2}
               strokeDasharray="6 4"
-              label={{
-                value: 'Meta',
-                position: 'insideBottomRight',
-                fill: '#86efac',
-                fontSize: 10,
-              }}
+              dot={false}
+              activeDot={false}
             />
           ) : null}
           <Line
