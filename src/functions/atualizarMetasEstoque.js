@@ -1,7 +1,7 @@
 import { invokeFunction } from './_invokeHelper';
 
 /**
- * Job servidor: calcula ponto de pedido (estoque mínimo) e qtd a repor (estoque ideal) a partir de vendas 90d.
+ * Job servidor: calcula estoque mínimo e ideal a partir de vendas 60d (v4).
  * @param {{
  *   somente_metas_vazias?: boolean,
  *   modo?: 'manual' | 'agendado',

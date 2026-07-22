@@ -1,15 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-const JANELA_DIAS = 90;
+const JANELA_VENDAS_DIAS = 60;
 const LEAD_TIME_PADRAO = 20;
-
-function q3(values: number[]) {
-  if (!values || values.length === 0) return Infinity;
-  const sorted = [...values].sort((a, b) => a - b);
-  if (sorted.length === 1) return sorted[0];
-  const idx = Math.ceil(sorted.length * 0.75) - 1;
-  return sorted[Math.max(0, Math.min(sorted.length - 1, idx))];
-}
+const ESTOQUE_MINIMO_LT_FATOR = 1.5;
 
 function normalizeUnitCode(value: unknown) {
   return String(value || '')
@@ -32,8 +25,10 @@ function lineQuantityBase(item: Record<string, unknown>) {
 function pedidoElegivel(pedido: Record<string, unknown>) {
   const status = String(pedido?.status ?? '');
   if (status === 'Cancelado') return false;
-  const tipo = String(pedido?.tipo ?? 'PDV').toUpperCase();
-  return tipo === 'PDV' || tipo === 'PEDIDO';
+  const tipo = String(pedido?.tipo ?? 'PDV').trim().toUpperCase();
+  if (tipo === 'PEDIDO') return true;
+  if (tipo === 'PDV' || tipo.startsWith('PDV ')) return true;
+  return false;
 }
 
 function resolvePrimaryUnit(produto: Record<string, unknown>) {
@@ -110,141 +105,51 @@ function arredondarQuantidadeSugestao(quantityBase: number, produto: Record<stri
   return Math.ceil(base / pack) * pack;
 }
 
-function localDateKey(value: unknown) {
-  const d = new Date(String(value || ''));
-  if (Number.isNaN(d.getTime())) return 'sem-data';
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function deltaMovimento(mov: Record<string, unknown>) {
-  const q = Number(mov?.quantidade) || 0;
-  const t = mov?.tipo;
-  if (t === 'Entrada') return q;
-  if (t === 'Saída') return -q;
-  return 0;
-}
-
-function buildMapaSaldoFimDia(
-  movimentacoes: Record<string, unknown>[],
-  estoqueAtual: number,
-  janelaDias = JANELA_DIAS,
-) {
-  const hoje = new Date();
-  const inicio = new Date(hoje);
-  inicio.setDate(inicio.getDate() - janelaDias);
-  const diaInicio = localDateKey(inicio);
-
-  const movsJanela = movimentacoes.filter((m) => {
-    const dia = localDateKey(m?.created_date);
-    return dia !== 'sem-data' && dia >= diaInicio;
-  });
-
-  const deltasNaJanela = movsJanela.reduce((acc, m) => acc + deltaMovimento(m), 0);
-  let saldo = (Number(estoqueAtual) || 0) - deltasNaJanela;
-
-  const movsPorDia = new Map<string, Record<string, unknown>[]>();
-  for (const m of movsJanela.sort((a, b) =>
-    new Date(String(a?.created_date || 0)).getTime() - new Date(String(b?.created_date || 0)).getTime()
-  )) {
-    const dia = localDateKey(m?.created_date);
-    if (!movsPorDia.has(dia)) movsPorDia.set(dia, []);
-    movsPorDia.get(dia)!.push(m);
-  }
-
-  const saldoPorDia = new Map<string, number>();
-  const dias: string[] = [];
-  const cur = new Date(inicio);
-  cur.setHours(12, 0, 0, 0);
-  const end = new Date(hoje);
-  end.setHours(12, 0, 0, 0);
-  while (cur <= end) {
-    dias.push(localDateKey(cur));
-    cur.setDate(cur.getDate() + 1);
-  }
-
-  for (const dia of dias) {
-    for (const m of movsPorDia.get(dia) || []) {
-      saldo += deltaMovimento(m);
-    }
-    saldoPorDia.set(dia, saldo);
-  }
-
-  return saldoPorDia;
-}
-
-function contarDiasComEstoqueAtivo(saldoPorDia: Map<string, number>) {
-  let count = 0;
-  for (const saldo of saldoPorDia.values()) {
-    if (saldo !== 0) count += 1;
-  }
-  return count;
-}
-
-function arredondarParaVitrineBase(quantityBase: number, fatorVitrine: number) {
-  const base = Number(quantityBase) || 0;
-  if (base <= 0) return 0;
-  const fator = Math.max(1, Number(fatorVitrine) || 1);
-  const packs = Math.ceil(base / fator);
-  return Math.max(fator, packs * fator);
-}
-
-function collectItensProduto(produto: Record<string, unknown>, pedidos: Record<string, unknown>[]) {
+function calcularVendas60dCalendario(produto: Record<string, unknown>, pedidos: Record<string, unknown>[]) {
   const pid = String(produto.id ?? '');
-  return pedidos
-    .flatMap((p) => (Array.isArray(p.itens) ? p.itens : []) as Record<string, unknown>[])
-    .filter((it) => String(it?.produto_id ?? '') === pid);
-}
+  const hoje = new Date();
+  const cut60 = new Date(hoje);
+  cut60.setDate(cut60.getDate() - JANELA_VENDAS_DIAS);
 
-function calcularVendasSemOutliers(produto: Record<string, unknown>, pedidos: Record<string, unknown>[]) {
-  const quantidades = collectItensProduto(produto, pedidos)
-    .map((it) => lineQuantityBase(it))
-    .filter((qty) => qty > 0);
+  let qtd60 = 0;
+  for (const pedido of pedidos) {
+    if (!pedidoElegivel(pedido)) continue;
+    const rawDate = pedido?.created_date ?? pedido?.created_at;
+    if (!rawDate) continue;
+    const saleDate = new Date(String(rawDate));
+    if (Number.isNaN(saleDate.getTime()) || saleDate < cut60) continue;
 
-  if (quantidades.length === 0) {
-    return { quantidadeLimpa: 0, outliersDescartados: 0, linhasTotal: 0, teveVenda: false };
+    for (const item of (Array.isArray(pedido.itens) ? pedido.itens : []) as Record<string, unknown>[]) {
+      if (String(item?.produto_id ?? '') !== pid) continue;
+      qtd60 += lineQuantityBase(item);
+    }
   }
-
-  const limiteQ3 = quantidades.length < 4 ? Infinity : q3(quantidades);
-  const core = quantidades.filter((q) => q <= limiteQ3);
-  const quantidadeLimpa = core.reduce((acc, q) => acc + q, 0);
 
   return {
-    quantidadeLimpa,
-    outliersDescartados: quantidades.length - core.length,
-    linhasTotal: quantidades.length,
-    teveVenda: quantidadeLimpa > 0,
+    qtd60,
+    teveVenda: qtd60 > 0,
   };
 }
 
-function calcularMetas(
-  produto: Record<string, unknown>,
-  pedidos: Record<string, unknown>[],
-  movimentacoes: Record<string, unknown>[],
-) {
+function calcularMetas(produto: Record<string, unknown>, pedidos: Record<string, unknown>[]) {
   const leadTime = Math.max(1, Number(produto?.tempo_reposicao_dias) || LEAD_TIME_PADRAO);
-  const vendas = calcularVendasSemOutliers(produto, pedidos);
-  const saldoPorDia = buildMapaSaldoFimDia(movimentacoes, Number(produto?.estoque_atual) || 0);
-  const diasComEstoque = contarDiasComEstoqueAtivo(saldoPorDia);
+  const vendas = calcularVendas60dCalendario(produto, pedidos);
 
-  if (!vendas.teveVenda || diasComEstoque === 0) {
+  if (!vendas.teveVenda) {
     return {
       atualizar: false,
-      motivo: !vendas.teveVenda ? 'sem_venda' : 'sem_dias_com_estoque',
+      motivo: 'sem_venda',
       leadTime,
-      diasComEstoque,
-      ...vendas,
+      quantidade_limpa_60d: 0,
     };
   }
 
-  const m = vendas.quantidadeLimpa / diasComEstoque;
+  const m = vendas.qtd60 / JANELA_VENDAS_DIAS;
   const idealBase = m * leadTime;
-  const minimoBase = m * leadTime;
+  const minimoBase = m * leadTime * ESTOQUE_MINIMO_LT_FATOR;
   const { unidade, fator } = resolveFatorVitrine(produto);
 
-  let estoqueIdeal = arredondarQuantidadeSugestao(idealBase, produto);
+  const estoqueIdeal = arredondarQuantidadeSugestao(idealBase, produto);
   const estoqueMinimo = arredondarQuantidadeSugestao(minimoBase, produto);
 
   return {
@@ -256,12 +161,9 @@ function calcularMetas(
     unidade_vitrine_compra: unidade,
     fator_vitrine: fator,
     lote_compra_vitrine: resolveLoteCompraVitrine(produto) || null,
-    dias_com_estoque: diasComEstoque,
-    quantidade_limpa_90d: vendas.quantidadeLimpa,
-    outliers_descartados: vendas.outliersDescartados,
-    linhas_venda_total: vendas.linhasTotal,
+    quantidade_limpa_60d: vendas.qtd60,
     metas_estoque_atualizado_em: new Date().toISOString(),
-    metas_estoque_versao: 'v3-ponto-pedido-media-lead-time',
+    metas_estoque_versao: 'v4-media-60d-calendario',
   };
 }
 
@@ -287,46 +189,6 @@ async function fetchPedidos90d(base44: ReturnType<typeof createClientFromRequest
   }
 
   return todos;
-}
-
-async function fetchMovimentacoes90d(
-  base44: ReturnType<typeof createClientFromRequest>,
-  dataISO: string,
-  pageSize = 500,
-) {
-  const todos: Record<string, unknown>[] = [];
-  let skip = 0;
-  let temMais = true;
-
-  while (temMais) {
-    const batch = await base44.entities.MovimentacaoEstoque.filter(
-      { created_date: { $gte: dataISO } },
-      'created_date',
-      pageSize,
-      skip,
-    );
-
-    if (!batch || batch.length === 0) {
-      temMais = false;
-    } else {
-      todos.push(...batch);
-      skip += pageSize;
-      if (batch.length < pageSize) temMais = false;
-    }
-  }
-
-  return todos;
-}
-
-function groupMovsPorProduto(movs: Record<string, unknown>[]) {
-  const map: Record<string, Record<string, unknown>[]> = {};
-  for (const m of movs) {
-    const pid = String(m?.produto_id ?? '');
-    if (!pid) continue;
-    if (!map[pid]) map[pid] = [];
-    map[pid].push(m);
-  }
-  return map;
 }
 
 const DEFAULT_BATCH_SIZE = 50;
@@ -380,14 +242,6 @@ function buildUpdatePayload(metas: Record<string, unknown>) {
   return {
     estoque_minimo: metas.estoque_minimo,
     estoque_ideal: metas.estoque_ideal,
-    venda_media_dia: metas.venda_media_dia,
-    metas_estoque_lead_time_dias: metas.lead_time_dias,
-    metas_estoque_unidade_compra: metas.unidade_vitrine_compra,
-    metas_estoque_quantidade_limpa_90d: metas.quantidade_limpa_90d,
-    metas_estoque_outliers_descartados: metas.outliers_descartados,
-    metas_estoque_dias_com_estoque: metas.dias_com_estoque,
-    metas_estoque_atualizado_em: metas.metas_estoque_atualizado_em,
-    metas_estoque_versao: metas.metas_estoque_versao,
   };
 }
 
@@ -447,24 +301,16 @@ async function clearJobCache(db: ReturnType<typeof createClientFromRequest>['ent
   }
 }
 
-function regrasResposta(somenteMetasVazias: boolean) {
+function regrasResposta() {
   return {
-    janela_dias: JANELA_DIAS,
-    lead_time_padrao: LEAD_TIME_PADRAO,
-    media: 'qty_vendida / dias_com_estoque_diferente_de_zero',
-    estoque_minimo: 'ponto de pedido = m × lead time',
-    estoque_ideal: 'quantidade a repor = m × lead time',
-    outliers: 'qty_linha > Q3 descartada',
-    arredondamento: 'lote_compra_vitrine ou fator_vitrine',
-    somente_metas_vazias: somenteMetasVazias,
-    batch_size: DEFAULT_BATCH_SIZE,
+    estoque_minimo: 'vendas 60d ÷ 60 × 1,5 × lead time',
+    estoque_ideal: 'vendas 60d ÷ 60 × lead time',
   };
 }
 
 function computeSnapshot(
   produtos: Record<string, unknown>[],
   pedidos: Record<string, unknown>[],
-  movsPorProduto: Record<string, Record<string, unknown>[]>,
   somenteMetasVazias: boolean,
 ) {
   const updates: Record<string, Record<string, unknown>> = {};
@@ -479,7 +325,7 @@ function computeSnapshot(
     }
     if (somenteMetasVazias && !produtoMetasVazio(produto)) continue;
 
-    const metas = calcularMetas(produto, pedidos, movsPorProduto[String(produto.id)] || []);
+    const metas = calcularMetas(produto, pedidos);
     if (!metas.atualizar) {
       ignorados_sem_venda += 1;
       continue;
@@ -508,18 +354,16 @@ async function runPreparar(
   batchSize: number,
 ) {
   const hoje = new Date();
-  const data90d = new Date();
-  data90d.setDate(hoje.getDate() - JANELA_DIAS);
-  const dataISO = data90d.toISOString();
+  const dataCorte = new Date();
+  dataCorte.setDate(hoje.getDate() - JANELA_VENDAS_DIAS);
+  const dataISO = dataCorte.toISOString();
 
-  const [produtos, pedidos, movimentacoes] = await Promise.all([
+  const [produtos, pedidos] = await Promise.all([
     fetchProdutosComPaginacao(db),
     fetchPedidos90d(db, dataISO),
-    fetchMovimentacoes90d(db, dataISO),
   ]);
 
-  const movsPorProduto = groupMovsPorProduto(movimentacoes);
-  const snapshot = computeSnapshot(produtos, pedidos, movsPorProduto, somenteMetasVazias);
+  const snapshot = computeSnapshot(produtos, pedidos, somenteMetasVazias);
 
   if (somenteMetasVazias && snapshot.produto_ids.length === 0) {
     await clearJobCache(db);
@@ -666,8 +510,8 @@ async function runGravar(
     ignorados_trava_manual: cache.ignorados_trava_manual,
     pedidos_analisados: cache.pedidos_analisados,
     concluido: bloco.concluido,
-    versao: 'v2-media-dias-estoque-blocos',
-    regras: regrasResposta(Boolean(cache.somente_metas_vazias)),
+    versao: 'v4-media-60d-calendario',
+    regras: regrasResposta(),
     timestamp: new Date().toISOString(),
   };
 }
@@ -683,8 +527,8 @@ async function runGravarTodosBlocos(
   if (prep.status === 'sem_alteracao' || prep.concluido) {
     return {
       ...prep,
-      versao: 'v2-media-dias-estoque-blocos',
-      regras: regrasResposta(somenteMetasVazias),
+      versao: 'v4-media-60d-calendario',
+      regras: regrasResposta(),
       timestamp: new Date().toISOString(),
     };
   }
@@ -720,8 +564,8 @@ async function runGravarTodosBlocos(
     pedidos_analisados: prep.pedidos_analisados,
     total_blocos: prep.total_blocos,
     batch_size: batchSize,
-    versao: 'v2-media-dias-estoque-blocos',
-    regras: regrasResposta(somenteMetasVazias),
+    versao: 'v4-media-60d-calendario',
+    regras: regrasResposta(),
     timestamp: new Date().toISOString(),
   };
 }
@@ -758,8 +602,8 @@ Deno.serve(async (req) => {
       const prep = await runPreparar(db, body, modo, somenteMetasVazias, batchSize);
       return Response.json({
         ...prep,
-        versao: 'v2-media-dias-estoque-blocos',
-        regras: regrasResposta(somenteMetasVazias),
+        versao: 'v4-media-60d-calendario',
+        regras: regrasResposta(),
         timestamp: new Date().toISOString(),
       });
     }
@@ -781,8 +625,8 @@ Deno.serve(async (req) => {
     const prep = await runPreparar(db, body, modo, somenteMetasVazias, batchSize);
     return Response.json({
       ...prep,
-      versao: 'v2-media-dias-estoque-blocos',
-      regras: regrasResposta(somenteMetasVazias),
+      versao: 'v4-media-60d-calendario',
+      regras: regrasResposta(),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

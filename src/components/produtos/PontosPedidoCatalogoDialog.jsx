@@ -15,6 +15,7 @@ import {
   extractAtualizarMetasEstoqueError,
   runAtualizarMetasEstoqueJob,
 } from '@/lib/runAtualizarMetasEstoqueJob';
+import { METAS_ESTOQUE_FORMULA_RESUMO } from '@/lib/metasEstoqueFormula';
 
 export default function PontosPedidoCatalogoDialog({
   products = [],
@@ -49,7 +50,7 @@ export default function PontosPedidoCatalogoDialog({
           setProgress({
             atualizados: p.atualizados ?? 0,
             totalPendentes: p.totalPendentes ?? 0,
-            etapa: p.etapa || 'Gravando pontos de pedido…',
+            etapa: p.etapa || 'Gravando…',
           });
         },
       });
@@ -62,7 +63,7 @@ export default function PontosPedidoCatalogoDialog({
       } else {
         toast({
           title: 'Pontos de pedido gravados',
-          description: `${result.atualizados} produto(s) com estoque mínimo e ideal recalculados.`,
+          description: `${result.atualizados} produto(s) atualizado(s).`,
         });
       }
 
@@ -94,23 +95,16 @@ export default function PontosPedidoCatalogoDialog({
             <Gauge className="w-5 h-5 text-muted-foreground" />
             Pontos de pedido no catálogo
           </DialogTitle>
-          <DialogDescription>
-            Calcula a partir das vendas dos últimos 90 dias e grava no cadastro:{' '}
-            <strong>estoque mínimo</strong> (ponto de pedido) e <strong>estoque ideal</strong>{' '}
-            (quantidade a repor). A tela de Sugestões de Compra só lê estes valores.
+          <DialogDescription asChild>
+            <div className="text-xs text-muted-foreground font-mono space-y-0.5 pt-1">
+              {METAS_ESTOQUE_FORMULA_RESUMO.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+            </div>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 py-2 text-sm text-muted-foreground">
-          <p>
-            <strong className="text-foreground/90">{produtosAtivos.length}</strong> produto(s) ativo(s)
-            no catálogo serão analisados.
-          </p>
-          <p className="text-xs leading-relaxed">
-            Fórmula: média diária de vendas × tempo de reposição (padrão 20 dias). Em catálogos grandes
-            o processo pode levar alguns minutos (grava em lotes para não sobrecarregar o servidor).
-          </p>
-
           {running && (
             <div className="space-y-2 rounded-xl bg-muted/60 px-3 py-3">
               <div className="flex items-center gap-2 text-foreground/90">

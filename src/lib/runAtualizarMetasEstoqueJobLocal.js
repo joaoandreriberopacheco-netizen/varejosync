@@ -2,10 +2,6 @@ import { base44 } from '@/api/base44Client';
 import { calcularMetasEstoqueParaProduto } from '@/lib/calcularMetasEstoqueVendas';
 import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
-import {
-  fetchMovimentacoesEstoque90d,
-  groupMovimentacoesPorProduto,
-} from '@/lib/fetchMovimentacoesEstoque90d';
 import { isRateLimitApiError, withRateLimitRetry } from '@/lib/p38ApiErrors';
 
 /** Gravações sequenciais com pausa — evita rate limit no Base44 em catálogos grandes. */
@@ -27,18 +23,10 @@ function buildUpdatePayload(metas) {
   return {
     estoque_minimo: metas.estoque_minimo,
     estoque_ideal: metas.estoque_ideal,
-    venda_media_dia: metas.venda_media_dia,
-    metas_estoque_lead_time_dias: metas.lead_time_dias,
-    metas_estoque_unidade_compra: metas.unidade_vitrine_compra,
-    metas_estoque_quantidade_limpa_90d: metas.quantidade_limpa_90d,
-    metas_estoque_outliers_descartados: metas.outliers_descartados,
-    metas_estoque_dias_com_estoque: metas.dias_com_estoque,
-    metas_estoque_atualizado_em: metas.metas_estoque_atualizado_em,
-    metas_estoque_versao: metas.metas_estoque_versao,
   };
 }
 
-function computeLocalUpdates(produtos, pedidos90d, movsPorProduto, options = {}) {
+function computeLocalUpdates(produtos, pedidos90d, options = {}) {
   const { somenteMetasVazias = false, sobrescrever = false } = options;
   const mediaFallbackDiasJanela = sobrescrever;
   const updates = [];
@@ -52,14 +40,9 @@ function computeLocalUpdates(produtos, pedidos90d, movsPorProduto, options = {})
     }
     if (somenteMetasVazias && !produtoMetasVazio(produto)) continue;
 
-    const metas = calcularMetasEstoqueParaProduto(
-      produto,
-      pedidos90d,
-      {
-        movimentacoes: movsPorProduto[produto.id] || [],
-        mediaFallbackDiasJanela,
-      },
-    );
+    const metas = calcularMetasEstoqueParaProduto(produto, pedidos90d, {
+      mediaFallbackDiasJanela,
+    });
 
     if (!metas.atualizar) {
       ignorados_sem_venda += 1;
@@ -110,9 +93,7 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
 
   onProgress?.({
     phase: 'preparing',
-    etapa: sobrescrever
-      ? 'Recalculando e sobrescrevendo pontos de pedido (média 60d × 1,5 × lead time)…'
-      : 'Calculando pontos de pedido localmente (média 60d × 1,5 × lead time)…',
+    etapa: 'Calculando metas (vendas 60d)…',
   });
 
   const produtos = await fetchProdutosAtivos({ provided: produtosFornecidos });
@@ -121,15 +102,9 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
     maxAttempts: 5,
     baseDelayMs: 1500,
   });
-  await sleep(300);
-  const movimentacoes = await withRateLimitRetry(() => fetchMovimentacoesEstoque90d(), {
-    maxAttempts: 5,
-    baseDelayMs: 1500,
-  });
 
-  const movsPorProduto = groupMovimentacoesPorProduto(movimentacoes);
   const { updates, ignorados_trava_manual, ignorados_sem_venda, total_produtos } =
-    computeLocalUpdates(produtos, pedidos90d, movsPorProduto, {
+    computeLocalUpdates(produtos, pedidos90d, {
       somenteMetasVazias,
       sobrescrever,
     });
@@ -139,7 +114,7 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
       ? 'Não foi possível carregar produtos do catálogo.'
       : somenteMetasVazias
         ? 'Nenhum produto sem metas de estoque para preencher.'
-        : `Nenhum produto com venda nos últimos 90 dias para recalcular (${total_produtos} analisado(s); ${ignorados_sem_venda} sem venda).`;
+        : `Nenhum produto com venda nos últimos 60 dias para recalcular (${total_produtos} analisado(s); ${ignorados_sem_venda} sem venda).`;
 
     return {
       status: 'sem_alteracao',

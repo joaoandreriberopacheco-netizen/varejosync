@@ -20,6 +20,7 @@ import {
   METAS_ESTOQUE_BATCH_SIZE,
   runAtualizarMetasEstoqueJob,
 } from '@/lib/runAtualizarMetasEstoqueJob';
+import { METAS_ESTOQUE_FORMULA_RESUMO } from '@/lib/metasEstoqueFormula';
 
 const BATCH_SIZE = METAS_ESTOQUE_BATCH_SIZE;
 
@@ -67,7 +68,7 @@ export default function MetasEstoqueConfigTool() {
     setPhase('preparing');
     setProgress((p) => ({
       ...p,
-      etapa: 'Analisando vendas 90d, dias com estoque e lead time…',
+      etapa: 'Calculando metas (vendas 60d)…',
     }));
 
     try {
@@ -126,13 +127,11 @@ export default function MetasEstoqueConfigTool() {
           <Package className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
           <div className="min-w-0 space-y-1">
             <p className="text-sm font-semibold text-foreground/90">Ponto de pedido e estoque mínimo</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Calcula a partir das vendas dos últimos 60 dias (média diária alinhada à coluna Média 30d) e grava no
-              cadastro: <strong className="font-medium text-foreground/80">estoque mínimo</strong> = ponto de
-              pedido (média diária × 1,5 × lead time, padrão 20 dias) e{' '}
-              <strong className="font-medium text-foreground/80">estoque ideal</strong> = quantidade a repor no
-              ciclo (média × lead time).
-            </p>
+            <div className="text-xs text-muted-foreground leading-relaxed font-mono space-y-0.5">
+              {METAS_ESTOQUE_FORMULA_RESUMO.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -166,22 +165,6 @@ export default function MetasEstoqueConfigTool() {
             Recalcular todos os produtos
           </Button>
         </div>
-
-        {result?.status === 'sucesso' && !dialogOpen && (
-          <div className="rounded-xl bg-card/80 border border-border/40 px-3 py-2.5 text-xs text-muted-foreground space-y-1">
-            <div className="flex items-center gap-1.5 text-foreground/90 font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5 p38-text-accent" />
-              Última execução
-            </div>
-            <p>
-              Atualizados: {result.atualizados ?? 0}
-              {result.total_pendentes != null ? ` de ${result.total_pendentes} produtos` : ''}
-            </p>
-            {result.timestamp && (
-              <p className="tabular-nums">{new Date(result.timestamp).toLocaleString('pt-BR')}</p>
-            )}
-          </div>
-        )}
       </div>
 
       <Dialog
@@ -212,11 +195,11 @@ export default function MetasEstoqueConfigTool() {
               Metas de estoque
             </DialogTitle>
             <DialogDescription>
-              {phase === 'preparing' && 'Preparando cálculo com vendas e movimentações dos últimos 90 dias.'}
-              {phase === 'writing' && 'Salvando estoque mínimo e ideal no cadastro.'}
-              {phase === 'success' && 'Processo concluído com sucesso.'}
+              {phase === 'preparing' && 'Calculando metas…'}
+              {phase === 'writing' && 'Gravando no cadastro…'}
+              {phase === 'success' && 'Concluído.'}
               {phase === 'empty' && 'Nenhuma alteração necessária.'}
-              {phase === 'error' && 'Não foi possível concluir a atualização.'}
+              {phase === 'error' && 'Não foi possível concluir.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -256,20 +239,11 @@ export default function MetasEstoqueConfigTool() {
           )}
 
           {phase === 'success' && result && (
-            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 space-y-2">
+            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3">
               <p className="text-sm font-medium text-foreground">
                 {result.atualizados} produto(s) atualizado(s)
                 {result.total_pendentes != null ? ` de ${result.total_pendentes}` : ''}.
               </p>
-              <p className="text-xs text-muted-foreground">
-                Ponto de pedido (estoque mínimo) e quantidade de reposição (estoque ideal) gravados no cadastro.
-                A tela de Sugestões de Compra usa a mesma regra em tempo real.
-              </p>
-              {result.total_blocos != null && (
-                <p className="text-xs text-muted-foreground">
-                  Processado em {result.total_blocos} bloco(s) · janela de 90 dias
-                </p>
-              )}
             </div>
           )}
 
@@ -285,10 +259,6 @@ export default function MetasEstoqueConfigTool() {
             <div className="rounded-xl bg-red-50 dark:bg-red-900/20 px-4 py-3 space-y-2">
               <p className="text-sm font-medium text-foreground">Erro na atualização</p>
               <p className="text-xs text-muted-foreground break-words">{errorMessage}</p>
-              <p className="text-[11px] text-muted-foreground">
-                Se o erro persistir, confirme que a função <strong>atualizarMetasEstoque</strong> foi
-                publicada no Base44 com a versão mais recente.
-              </p>
             </div>
           )}
 
