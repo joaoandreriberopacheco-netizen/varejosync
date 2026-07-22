@@ -19,7 +19,7 @@ import {
   buildLinhasSugestaoCompra,
   distribuirQuantidadeGrupo,
 } from '@/lib/calcularSugestaoCompraHierarquia';
-import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+import { fetchPedidosVenda90d, fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -27,6 +27,7 @@ import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCa
 import { CATALOG_SORT_OPTIONS } from '@/lib/catalogProdutoPerformance';
 import {
   buildSugestaoCompraLinhaLookup,
+  enrichSugestaoLinhasComAbcd,
   extractProdutosFromSugestaoLinhas,
 } from '@/lib/sugestaoCompraTree';
 import {
@@ -99,7 +100,8 @@ export default function SugestaoCompra({ onStatsChange }) {
 
   const { toast } = useToast();
   const navigate = useNavigate();
-  const calcContextRef = useRef({ pedidos: [], movsPorProduto: {}, prods: [], pending: {} });
+  const calcContextRef = useRef({ pedidos: [], movsPorProduto: {}, prods: [], pending: {}, vendasDados: null });
+  const abcdLoadRef = useRef(0);
 
   const allTags = useMemo(() => collectSugestaoTags(linhas), [linhas]);
   const unidadesVitrine = useMemo(() => collectSugestaoVitrineUnits(linhas), [linhas]);
@@ -188,6 +190,24 @@ export default function SugestaoCompra({ onStatsChange }) {
       setLinhas(novasLinhas);
       setFornecedores(forn);
       setCategorias(cats);
+
+      const abcdLoadId = ++abcdLoadRef.current;
+      withRateLimitRetry(() => fetchDadosVendaAbcd90d(), {
+        maxAttempts: 3,
+        baseDelayMs: 800,
+      })
+        .then((vendasDados) => {
+          if (abcdLoadId !== abcdLoadRef.current) return;
+          calcContextRef.current = {
+            ...calcContextRef.current,
+            pedidos: vendasDados.pedidos90d,
+            vendasDados,
+          };
+          setLinhas((prev) => enrichSugestaoLinhasComAbcd(prev, prods, vendasDados));
+        })
+        .catch(() => {
+          /* ABCD ao vivo é opcional; a lista já está visível */
+        });
     } catch (error) {
       toast({ title: 'Erro ao carregar', description: error.message, variant: 'destructive' });
     } finally {
@@ -202,12 +222,14 @@ export default function SugestaoCompra({ onStatsChange }) {
   useEffect(() => {
     const ctx = calcContextRef.current;
     if (!ctx.prods?.length) return;
-    setLinhas(
-      recomputarLinhas(ctx.prods, ctx.pedidos, ctx.movsPorProduto, ctx.pending, {
-        agruparHierarquia,
-        roundingMode,
-      }),
-    );
+    let next = recomputarLinhas(ctx.prods, ctx.pedidos, ctx.movsPorProduto, ctx.pending, {
+      agruparHierarquia,
+      roundingMode,
+    });
+    if (ctx.vendasDados) {
+      next = enrichSugestaoLinhasComAbcd(next, ctx.prods, ctx.vendasDados);
+    }
+    setLinhas(next);
   }, [roundingMode, agruparHierarquia, recomputarLinhas]);
 
   const filteredLinhas = useMemo(

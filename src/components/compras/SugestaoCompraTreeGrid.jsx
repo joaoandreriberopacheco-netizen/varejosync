@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
 import { ChevronRight, Layers } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -12,14 +12,16 @@ import {
 } from '@/components/produtos/treegrid/useTreeGrid';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
-import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
-import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import {
   countDescendantSugestaoLinhas,
+  getLinhaAbcdLetter,
   resolveSugestaoLinhaForTreeRow,
 } from '@/lib/sugestaoCompraTree';
+
+/** Listas típicas de sugestão (<250 linhas): render completo evita tela vazia da virtualização. */
+const SUGESTAO_VIRTUALIZE_MIN_ROWS = 250;
 
 const HIER_STEP = 20;
 const CELL_PAD = 4;
@@ -112,11 +114,14 @@ function ProdutoCell({ row, isExpanded, onToggle }) {
   );
 }
 
-function SugestaoDataCells({ linha, disp, renderFornecedorSelect }) {
+function SugestaoDataCells({ linha, row, disp, renderFornecedorSelect }) {
   if (!linha) {
+    const groupAbcd = row?.abcdDominante || '';
     return (
       <>
-        <td className="text-center py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
+        <td className="text-center py-2 px-2 whitespace-nowrap">
+          {groupAbcd ? <AbcdBadge letter={groupAbcd} /> : <span className="text-xs text-muted-foreground">—</span>}
+        </td>
         <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
         <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
         <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
@@ -128,7 +133,7 @@ function SugestaoDataCells({ linha, disp, renderFornecedorSelect }) {
   const sugestao = linha.sugestao;
   const estoque = sugestao?.estoque_atual ?? linha.produto?.estoque_atual ?? 0;
   const ponto = sugestao?.ponto_pedido ?? linha.produto?.estoque_minimo ?? 0;
-  const abcd = resolveProdutoAbcdClasse(linha.produto || linha.skus?.[0]);
+  const abcd = getLinhaAbcdLetter(linha, row?.abcdDominante);
 
   return (
     <>
@@ -188,6 +193,11 @@ export default function SugestaoCompraTreeGrid({
     setExpandedKeys(resolveExpandedKeysForMasterLevel(treeRef.current, masterLevel, groupByCategory));
   }, [produtosStructureSig, groupByCategory, masterLevel]);
 
+  useLayoutEffect(() => {
+    const el = scrollContainerRef.current;
+    if (el) el.scrollTop = 0;
+  }, [produtosStructureSig, groupByCategory, masterLevel, sortOrder]);
+
   const rows = useMemo(
     () => mergeAdjacentDuplicateGroupHeaders(
       flattenTree(tree, expandedKeys, '', 0, sortOrder, { groupByCategory }),
@@ -214,11 +224,13 @@ export default function SugestaoCompraTreeGrid({
     overscan: 12,
     scrollElementRef: scrollContainerRef,
   });
-  const shouldVirtualizeRows = rows.length >= CATALOGO_VIRTUALIZE_MIN_ROWS;
+  const shouldVirtualizeRows = rows.length >= SUGESTAO_VIRTUALIZE_MIN_ROWS;
   const visibleRows = useMemo(
     () => (shouldVirtualizeRows ? rows.slice(virtualRows.startIndex, virtualRows.endIndex) : rows),
     [rows, shouldVirtualizeRows, virtualRows.endIndex, virtualRows.startIndex],
   );
+  const paddingTop = shouldVirtualizeRows ? virtualRows.paddingTop : 0;
+  const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
 
   const produtoWidth = PRODUTO_MIN_WIDTH;
 
@@ -226,7 +238,7 @@ export default function SugestaoCompraTreeGrid({
     <div className="flex flex-col min-h-0 w-full border border-border/40 rounded-lg overflow-hidden bg-card">
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-auto overscroll-contain max-h-[min(70vh,720px)]"
+        className="flex-1 overflow-auto overscroll-contain max-h-[min(70vh,720px)] [overflow-anchor:none]"
       >
         <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: 0, minWidth: 760 }}>
           <thead className={p38Table.headerSolid}>
@@ -254,8 +266,8 @@ export default function SugestaoCompraTreeGrid({
               </tr>
             ) : (
               <>
-                {virtualRows.paddingTop > 0 ? (
-                  <tr aria-hidden="true"><td colSpan={7} style={{ height: virtualRows.paddingTop, padding: 0, border: 0 }} /></tr>
+                {paddingTop > 0 ? (
+                  <tr aria-hidden="true"><td colSpan={7} style={{ height: paddingTop, padding: 0, border: 0 }} /></tr>
                 ) : null}
                 {visibleRows.map((row) => {
                   const linha = resolveSugestaoLinhaForTreeRow(row, linhaLookup, { agruparHierarquia });
@@ -295,14 +307,15 @@ export default function SugestaoCompraTreeGrid({
                       </td>
                       <SugestaoDataCells
                         linha={linha}
+                        row={row}
                         disp={linha ? sugestaoDisplayLinha?.(linha) : null}
                         renderFornecedorSelect={renderFornecedorSelect}
                       />
                     </tr>
                   );
                 })}
-                {virtualRows.paddingBottom > 0 ? (
-                  <tr aria-hidden="true"><td colSpan={7} style={{ height: virtualRows.paddingBottom, padding: 0, border: 0 }} /></tr>
+                {paddingBottom > 0 ? (
+                  <tr aria-hidden="true"><td colSpan={7} style={{ height: paddingBottom, padding: 0, border: 0 }} /></tr>
                 ) : null}
               </>
             )}

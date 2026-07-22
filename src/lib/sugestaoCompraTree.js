@@ -1,6 +1,7 @@
 import { collectSkus } from '@/components/produtos/treegrid/useTreeGrid';
 import { grupoCompraHierarquiaKey } from '@/lib/calcularSugestaoCompraHierarquia';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
+import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
 
 /** Produtos únicos das linhas de sugestão (para montar a árvore). */
 export function extractProdutosFromSugestaoLinhas(linhas = []) {
@@ -85,7 +86,34 @@ export function countDescendantSugestaoLinhas(row, lookup, { agruparHierarquia =
   return count;
 }
 
-export function getLinhaAbcdLetter(linha) {
+export function getLinhaAbcdLetter(linha, fallback = '') {
   const sku = linha?.produto || linha?.skus?.[0];
-  return resolveProdutoAbcdClasse(sku) || '';
+  return resolveProdutoAbcdClasse(sku) || fallback;
+}
+
+function applyAbcdMapToLinhas(linhas, enrichedMap) {
+  if (!enrichedMap?.size) return linhas;
+  return linhas.map((linha) => ({
+    ...linha,
+    produto: enrichedMap.get(linha.produto?.id) ?? linha.produto,
+    skus: (linha.skus || []).map((s) => enrichedMap.get(s.id) ?? s),
+  }));
+}
+
+/** ABCD/IEP ao vivo (mesma regra do catálogo) só nos SKUs das sugestões visíveis. */
+export function enrichSugestaoLinhasComAbcd(linhas, prods, vendasDados) {
+  if (!linhas?.length || !vendasDados?.pedidos90d?.length) return linhas;
+
+  const ids = new Set();
+  for (const linha of linhas) {
+    for (const sku of linha?.skus || []) {
+      if (sku?.id != null) ids.add(sku.id);
+    }
+  }
+  if (!ids.size) return linhas;
+
+  const subset = (prods || []).filter((p) => ids.has(p.id));
+  const enriched = enrichProdutosComIep(subset, vendasDados);
+  const map = new Map(enriched.map((p) => [p.id, p]));
+  return applyAbcdMapToLinhas(linhas, map);
 }

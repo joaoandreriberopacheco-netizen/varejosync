@@ -95,7 +95,7 @@ export function useVirtualRows({
       resizeObserver?.disconnect();
       window.removeEventListener('resize', scheduleUpdate);
     };
-  }, [scrollElementRef, updateRange]);
+  }, [scrollElementRef, updateRange, itemCount]);
 
   const startIndex = itemCount > 0 ? Math.min(range.startIndex, itemCount - 1) : 0;
   const endIndex = itemCount > 0 ? Math.min(Math.max(range.endIndex, startIndex + 1), itemCount) : 0;
