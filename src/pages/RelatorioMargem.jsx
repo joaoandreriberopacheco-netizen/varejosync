@@ -16,7 +16,7 @@ import { jsPDF } from 'jspdf';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
-import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
+import { resolveCommercialDisplay, formatCommercialQuantity } from '@/lib/productUnits';
 import { fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
 import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
 import {
