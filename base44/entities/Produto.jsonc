@@ -187,6 +187,43 @@
       "default": 0,
       "description": "Valor alvo para sugest\u00e3o de compra (considerando pacotes)"
     },
+    "estoque_trava_manual": {
+      "type": "boolean",
+      "default": false,
+      "description": "Quando ativo, o job de metas de estoque ignora este produto"
+    },
+    "venda_media_dia": {
+      "type": "number",
+      "description": "M\u00e9dia di\u00e1ria de vendas (qty/dias com estoque) usada no ponto de pedido"
+    },
+    "metas_estoque_lead_time_dias": {
+      "type": "number",
+      "description": "Lead time (dias de reposi\u00e7\u00e3o) usado no \u00faltimo c\u00e1lculo de metas"
+    },
+    "metas_estoque_unidade_compra": {
+      "type": "string",
+      "description": "Unidade de compra/vitrine usada no arredondamento das metas"
+    },
+    "metas_estoque_quantidade_limpa_90d": {
+      "type": "number",
+      "description": "Quantidade vendida l\u00edmpa nos \u00faltimos 90 dias (sem outliers)"
+    },
+    "metas_estoque_outliers_descartados": {
+      "type": "number",
+      "description": "Linhas de venda descartadas como outlier no \u00faltimo c\u00e1lculo"
+    },
+    "metas_estoque_dias_com_estoque": {
+      "type": "number",
+      "description": "Dias com estoque no per\u00edodo usado no \u00faltimo c\u00e1lculo"
+    },
+    "metas_estoque_atualizado_em": {
+      "type": "string",
+      "description": "Data/hora ISO do \u00faltimo job de metas de estoque"
+    },
+    "metas_estoque_versao": {
+      "type": "string",
+      "description": "Vers\u00e3o do algoritmo de metas de estoque aplicado"
+    },
     "estoque_maximo": {
       "type": "number",
       "default": 0,

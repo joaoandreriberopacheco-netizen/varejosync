@@ -424,6 +424,22 @@ async function saveJobCache(db: ReturnType<typeof createClientFromRequest>['enti
   });
 }
 
+async function persistirCacheJob(
+  db: ReturnType<typeof createClientFromRequest>['entities'],
+  cache: Record<string, unknown>,
+) {
+  try {
+    await saveJobCache(db, cache);
+    const loaded = await loadJobCache(db);
+    if (loaded && String((loaded as Record<string, unknown>).run_id) === String(cache.run_id)) {
+      return true;
+    }
+  } catch {
+    // cliente pode enviar job_cache completo na fase gravar
+  }
+  return false;
+}
+
 async function clearJobCache(db: ReturnType<typeof createClientFromRequest>['entities']) {
   const configs = await db.ConfiguracoesVenda.list();
   if (configs?.[0]?.id) {
@@ -529,11 +545,7 @@ async function runPreparar(
     ...snapshot,
   };
 
-  try {
-    await saveJobCache(db, cache);
-  } catch {
-    // cliente pode enviar job_cache na fase gravar
-  }
+  const cacheNoServidor = await persistirCacheJob(db, cache);
 
   const totalPendentes = snapshot.produto_ids.length;
   const totalBlocos = totalPendentes > 0 ? Math.ceil(totalPendentes / batchSize) : 0;
@@ -543,6 +555,7 @@ async function runPreparar(
     fase: 'preparar',
     run_id: runId,
     job_cache: cache,
+    cache_no_servidor: cacheNoServidor,
     modo,
     somente_metas_vazias: somenteMetasVazias,
     total_produtos: snapshot.total_produtos,

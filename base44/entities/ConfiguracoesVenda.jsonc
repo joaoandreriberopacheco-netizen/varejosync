@@ -64,6 +64,14 @@
       "type": "number",
       "default": 0,
       "description": "Meta de venda l\u00edquida mensal (KPI de vendas no dashboard)"
+    },
+    "iep_job_run": {
+      "type": "object",
+      "description": "Cache tempor\u00e1rio do job calcularIEP (curva ABCD) entre as fases preparar e gravar"
+    },
+    "metas_estoque_job_run": {
+      "type": "object",
+      "description": "Cache tempor\u00e1rio do job atualizarMetasEstoque (ponto de pedido) entre as fases preparar e gravar"
     }
   },
   "required": []
