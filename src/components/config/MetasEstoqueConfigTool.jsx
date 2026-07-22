@@ -127,11 +127,11 @@ export default function MetasEstoqueConfigTool() {
           <div className="min-w-0 space-y-1">
             <p className="text-sm font-semibold text-foreground/90">Ponto de pedido e estoque mínimo</p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Calcula a partir das vendas dos últimos 90 dias (dias com estoque, sem outliers) e grava no
+              Calcula a partir das vendas dos últimos 60 dias (média diária alinhada à coluna Média 30d) e grava no
               cadastro: <strong className="font-medium text-foreground/80">estoque mínimo</strong> = ponto de
-              pedido (média diária × lead time, padrão 20 dias) e{' '}
+              pedido (média diária × 1,5 × lead time, padrão 20 dias) e{' '}
               <strong className="font-medium text-foreground/80">estoque ideal</strong> = quantidade a repor no
-              ciclo.
+              ciclo (média × lead time).
             </p>
           </div>
         </div>

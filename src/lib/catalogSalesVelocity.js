@@ -127,6 +127,9 @@ export function aggregateCatalogSalesVelocity(skus = [], velocityMap = {}) {
 
 export { DIAS_MEDIA };
 
+/** Fator de segurança do estoque mínimo / ponto de pedido: 1,5 × lead time. */
+export const ESTOQUE_MINIMO_LT_FATOR = 1.5;
+
 /** Projeção de 30 dias a partir da média diária dos últimos 60 dias: (qtd60 / 60) × 30. */
 export function getCatalogMedia30dFrom60d(velocity) {
   const qtd60 = Number(velocity?.qtd60) || 0;
@@ -151,16 +154,17 @@ export function formatCatalogMedia30d(velocity, options = {}) {
   );
 }
 
-/** Ponto de pedido esperado (unidade comercial) a partir da Média 30d e lead time. */
+/** Lead time do produto (tempo_reposicao_dias) ou padrão. */
 export function getCatalogLeadTimeDias(produto, leadTimePadrao = 20) {
   return Math.max(1, Number(produto?.tempo_reposicao_dias) || leadTimePadrao);
 }
 
+/** Ponto de pedido esperado (unidade comercial): Média 30d × 1,5 × (lead time ÷ 30). */
 export function getCatalogPontoEsperadoLt(velocity, leadTimeDias = 20) {
   const media30 = getCatalogMedia30dFrom60d(velocity);
   const lt = Math.max(1, Number(leadTimeDias) || 20);
   if (media30 <= 0) return 0;
-  return (media30 * lt) / DIAS_MEDIA;
+  return (media30 * lt * ESTOQUE_MINIMO_LT_FATOR) / DIAS_MEDIA;
 }
 
 export function formatCatalogPontoEsperadoLt(velocity, leadTimeDias = 20, options = {}) {

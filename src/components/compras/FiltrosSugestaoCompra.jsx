@@ -204,7 +204,7 @@ function FiltrosPainel({
           columns={4}
         />
         <p className="text-[11px] text-muted-foreground leading-snug">
-          Usa estoque atual vs. ponto de pedido calculado (média × lead time).
+          Usa estoque atual vs. ponto de pedido calculado (média × 1,5 × lead time).
         </p>
       </FilterSection>
 

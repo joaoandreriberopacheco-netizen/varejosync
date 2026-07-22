@@ -4,12 +4,12 @@
  * - Média diária: vendas dos últimos 60 dias corridos ÷ 60 (unidade base)
  * - Alinha com a coluna «Média 30d» do catálogo (mesma janela, sem outliers)
  * - Lead time: tempo_reposicao_dias ou 20 dias
- * - Ponto de pedido (mínimo): média × lead time
+ * - Ponto de pedido (mínimo): média × 1,5 × lead time
  * - Ideal / pedido: média × lead time
  */
 
 import { collectItensVendaProduto, lineQuantityBase } from '@/lib/calcularIepProdutos';
-import { calcularMediaDiaVendas60dCalendario } from '@/lib/catalogSalesVelocity';
+import { calcularMediaDiaVendas60dCalendario, ESTOQUE_MINIMO_LT_FATOR } from '@/lib/catalogSalesVelocity';
 import {
   buildPurchaseUnitOptions,
   resolveUnidadeExibicaoParaCompras,
@@ -22,16 +22,18 @@ import {
 export const METAS_ESTOQUE_JANELA_DIAS = 90;
 export const METAS_ESTOQUE_LEAD_TIME_PADRAO = 20;
 
-/** Ponto de pedido em unidade base: média diária × dias de reposição. */
+/** Ponto de pedido em unidade base: média diária × 1,5 × dias de reposição. */
 export function calcularPontoPedidoBase(mediaDia, leadTimeDias) {
   const m = Number(mediaDia) || 0;
   const lt = Math.max(1, Number(leadTimeDias) || METAS_ESTOQUE_LEAD_TIME_PADRAO);
-  return m * lt;
+  return m * lt * ESTOQUE_MINIMO_LT_FATOR;
 }
 
-/** Quantidade sugerida por ciclo de reposição (mesma base do ponto de pedido). */
+/** Quantidade sugerida por ciclo de reposição (média × lead time, sem fator de segurança). */
 export function calcularQuantidadeReposicaoBase(mediaDia, leadTimeDias) {
-  return calcularPontoPedidoBase(mediaDia, leadTimeDias);
+  const m = Number(mediaDia) || 0;
+  const lt = Math.max(1, Number(leadTimeDias) || METAS_ESTOQUE_LEAD_TIME_PADRAO);
+  return m * lt;
 }
 
 function q3(values) {
