@@ -21,7 +21,23 @@ function sleep(ms) {
 
 export function isMetasEstoqueServerCacheError(message) {
   const msg = String(message || '');
-  return /metas_estoque_job_run|guardar o job no servidor|job incompleto no servidor/i.test(msg);
+  return (
+    /metas_estoque_job_run|guardar o job no servidor|job incompleto no servidor/i.test(msg) ||
+    /request failed with status code/i.test(msg) ||
+    /\bHTTP 5\d{2}\b/i.test(msg) ||
+    /status code 5\d{2}/i.test(msg)
+  );
+}
+
+export function shouldFallbackMetasEstoqueToLocal(errorOrPrep) {
+  if (!errorOrPrep) return true;
+  if (typeof errorOrPrep === 'object' && errorOrPrep.status === 'erro') return true;
+  if (typeof errorOrPrep === 'object' && errorOrPrep.cache_no_servidor === false) return true;
+  const msg =
+    typeof errorOrPrep === 'string'
+      ? errorOrPrep
+      : errorOrPrep?.error || errorOrPrep?.message || String(errorOrPrep);
+  return isMetasEstoqueServerCacheError(msg);
 }
 
 export function extractAtualizarMetasEstoqueError(error) {
@@ -31,13 +47,6 @@ export function extractAtualizarMetasEstoqueError(error) {
     return msg.replace(/^.*?:\s*/, '').trim() || `Erro HTTP ${match[1]}`;
   }
   return msg;
-}
-
-function shouldFallbackToLocal(prep) {
-  if (!prep || typeof prep !== 'object') return false;
-  if (prep.status === 'erro' && isMetasEstoqueServerCacheError(prep.error)) return true;
-  if (prep.cache_no_servidor === false && prep.status === 'preparado') return true;
-  return false;
 }
 
 function resolveJobExecution(prep) {
@@ -52,11 +61,12 @@ function resolveJobExecution(prep) {
 }
 
 /**
- * Executa o job servidor que grava estoque mínimo (ponto de pedido) e ideal no cadastro.
- * Se o cache no servidor falhar, recalcula e grava direto no browser.
+ * Executa o job que grava estoque mínimo (ponto de pedido) e ideal no cadastro.
+ * Por defeito usa o browser (não depende da função Base44).
  * @param {{
  *   somenteMetasVazias?: boolean,
  *   batchSize?: number,
+ *   useServerJob?: boolean,
  *   onProgress?: (progress: {
  *     phase: 'preparing' | 'writing',
  *     bloco?: number,
@@ -69,6 +79,24 @@ function resolveJobExecution(prep) {
  * }} options
  */
 export async function runAtualizarMetasEstoqueJob(options = {}) {
+  const {
+    somenteMetasVazias = false,
+    batchSize = METAS_ESTOQUE_BATCH_SIZE,
+    useServerJob = false,
+    onProgress,
+    shouldAbort,
+  } = options;
+
+  const localOptions = { somenteMetasVazias, batchSize, onProgress, shouldAbort };
+
+  if (!useServerJob) {
+    return runAtualizarMetasEstoqueJobLocal(localOptions);
+  }
+
+  return runAtualizarMetasEstoqueServerJob(localOptions);
+}
+
+async function runAtualizarMetasEstoqueServerJob(options = {}) {
   const {
     somenteMetasVazias = false,
     batchSize = METAS_ESTOQUE_BATCH_SIZE,
@@ -88,13 +116,13 @@ export async function runAtualizarMetasEstoqueJob(options = {}) {
     });
     prep = normalizeJobResponse(prepResp);
   } catch (error) {
-    if (isMetasEstoqueServerCacheError(extractAtualizarMetasEstoqueError(error))) {
+    if (shouldFallbackMetasEstoqueToLocal(error)) {
       return runAtualizarMetasEstoqueJobLocal(options);
     }
     throw error;
   }
 
-  if (shouldFallbackToLocal(prep)) {
+  if (shouldFallbackMetasEstoqueToLocal(prep)) {
     return runAtualizarMetasEstoqueJobLocal(options);
   }
 
@@ -155,14 +183,14 @@ export async function runAtualizarMetasEstoqueJob(options = {}) {
       const gravarResp = await atualizarMetasEstoque(gravarBody);
       bloco = normalizeJobResponse(gravarResp);
     } catch (error) {
-      if (isMetasEstoqueServerCacheError(extractAtualizarMetasEstoqueError(error))) {
+      if (shouldFallbackMetasEstoqueToLocal(error)) {
         return runAtualizarMetasEstoqueJobLocal(options);
       }
       throw error;
     }
 
     if (bloco.error || bloco.status === 'erro') {
-      if (isMetasEstoqueServerCacheError(bloco.error)) {
+      if (shouldFallbackMetasEstoqueToLocal(bloco)) {
         return runAtualizarMetasEstoqueJobLocal(options);
       }
       throw new Error(bloco.error || 'Falha ao gravar um bloco de produtos.');
