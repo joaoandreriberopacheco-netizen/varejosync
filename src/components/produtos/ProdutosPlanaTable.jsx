@@ -6,6 +6,7 @@ import { MoreHorizontal, Edit, Trash2, Copy, Package } from 'lucide-react';
 import { isCadastroIncompleto, getStockStatusIndicator } from './ProdutosHelpers';
 import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, getCatalogUnitLabels, getCatalogoComercialView, resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
+import { formatCatalogMedia30d } from '@/lib/catalogSalesVelocity';
 
 const headMap = {
   status: 'Status',
@@ -21,6 +22,7 @@ const headMap = {
   valor_compra: 'Vl. Compra',
   markup: 'Markup %',
   estoque_atual: 'Estoque',
+  media_30d: 'Média 30d',
   estoque_minimo: 'Est. Mín',
   estoque_ideal: 'Est. Ideal',
   estoque_maximo: 'Est. Máx',
@@ -48,6 +50,7 @@ const widthMap = {
   valor_compra: 'min-w-[110px]',
   markup: 'min-w-[90px]',
   estoque_atual: 'min-w-[110px]',
+  media_30d: 'min-w-[100px]',
   estoque_minimo: 'min-w-[90px]',
   estoque_ideal: 'min-w-[90px]',
   estoque_maximo: 'min-w-[90px]',
@@ -62,7 +65,8 @@ const widthMap = {
   inventario_valorizado: 'min-w-[120px]',
 };
 
-function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap }) {
+function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap, salesVelocityMap = {} }) {
+  const velocity = salesVelocityMap[String(produto?.id)];
   switch (col) {
     case 'codigo_interno':
       return <TableCell key={col} className="text-xs text-foreground/90">{produto.codigo_interno}</TableCell>;
@@ -123,6 +127,12 @@ function renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, fo
           </div>
         </TableCell>
       );
+    case 'media_30d':
+      return (
+        <TableCell key={col} className="text-xs text-foreground/90 tabular-nums">
+          {formatCatalogMedia30d(velocity) || '—'}
+        </TableCell>
+      );
     case 'estoque_minimo':
       return <TableCell key={col} className="text-xs text-foreground/90">{formatarNumero(produto.estoque_minimo)}</TableCell>;
     case 'estoque_ideal':
@@ -178,6 +188,7 @@ export default function ProdutosPlanaTable({
   handleCreateSimilar,
   readOnly = false,
   embedded = false,
+  salesVelocityMap = {},
 }) {
   const scrollContainerRef = useRef(null);
   const virtualRows = useVirtualRows({
@@ -253,7 +264,7 @@ export default function ProdutosPlanaTable({
                   <div className="font-medium text-sm text-foreground/90 uppercase">{produto.nome}</div>
                   <div className="text-xs text-muted-foreground uppercase">{produto.codigo_interno}</div>
                 </TableCell>
-                {visibleColumns.map((col) => renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap }))}
+                {visibleColumns.map((col) => renderProdutoColumnCell(col, { produto, cadastroStatus, cat, margem, formatarNumero, fornecedorMap, salesVelocityMap }))}
               </TableRow>
             );
           })}

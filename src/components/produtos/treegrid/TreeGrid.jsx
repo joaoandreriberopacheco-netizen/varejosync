@@ -9,6 +9,10 @@ import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import { computeTreeGridColumnLayout } from './treeGridColumnLayout';
+import {
+  aggregateCatalogSalesVelocity,
+  formatCatalogMedia30d,
+} from '@/lib/catalogSalesVelocity';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -77,6 +81,7 @@ const COL_DEFS = [
   { id: 'markup',               label: 'Markup %',       w: 80  },
   { id: 'inventario_valorizado', label: 'Inventário R$', w: 108 },
   { id: 'estoque_atual',        label: 'Estoque',        w: 96  },
+  { id: 'media_30d',            label: 'Média 30d',      w: 96  },
   { id: 'estoque_minimo',       label: 'Est. Mín',       w: 80  },
   { id: 'estoque_ideal',        label: 'Est. Ideal',     w: 80  },
   { id: 'estoque_maximo',       label: 'Est. Máx',       w: 80  },
@@ -230,8 +235,9 @@ function StatusDot({ produto }) {
 }
 
 // ── Valor de célula SKU ───────────────────────────────────────────────────────
-function skuCellValue(colId, produto, margem, lastro, markup) {
+function skuCellValue(colId, produto, margem, lastro, markup, salesVelocityMap = {}) {
   const cat = getCatalogoComercialView(produto);
+  const velocity = salesVelocityMap[String(produto?.id)];
   switch (colId) {
     case 'status':               return <StatusDot produto={produto} />;
     case 'codigo_interno':       return <span className="text-[10px] font-mono text-muted-foreground">{produto.codigo_interno || '—'}</span>;
@@ -277,6 +283,14 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
         </span>
       );
     }
+    case 'media_30d': {
+      const text = formatCatalogMedia30d(velocity);
+      return (
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {text || '—'}
+        </span>
+      );
+    }
     case 'estoque_minimo':       return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.estoque_minimo)}</span>;
     case 'estoque_ideal':        return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.estoque_ideal)}</span>;
     case 'estoque_maximo':       return <span className="text-xs text-muted-foreground tabular-nums">{fmtN(produto.estoque_maximo)}</span>;
@@ -310,7 +324,7 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
 }
 
 // ── Valor agregado para grupos ────────────────────────────────────────────────
-function groupCellValue(colId, row) {
+function groupCellValue(colId, row, salesVelocityMap = {}) {
   const tilde  = v => v > 0 ? <span className="text-xs text-muted-foreground tabular-nums">~{fmtR(v)}</span> : dash();
   const tildeP = v => v > 0 ? <span className="text-xs text-muted-foreground tabular-nums">~{fmtPct(v)}</span> : dash();
   const dash   = () => <span className="text-xs text-muted-foreground dark:text-foreground/90">—</span>;
@@ -338,6 +352,16 @@ function groupCellValue(colId, row) {
       return (
         <span className="text-xs text-muted-foreground tabular-nums">
           {fmtN(disp.quantidade)} {disp.sigla || (skus[0]?.unidade_principal || 'UN')}
+        </span>
+      );
+    }
+    case 'media_30d': {
+      const skus = collectSkus(row.node);
+      const agg = aggregateCatalogSalesVelocity(skus, salesVelocityMap);
+      const text = formatCatalogMedia30d(agg, { tilde: true });
+      return (
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {text || '—'}
         </span>
       );
     }
@@ -370,7 +394,7 @@ function groupCellValue(colId, row) {
 }
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
-const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, produtoWidth, readOnly }) {
+const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, produtoWidth, readOnly, salesVelocityMap }) {
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
 
@@ -401,7 +425,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-2 px-2 whitespace-nowrap"
           style={{ width: col.width, minWidth: col.minW }}>
-          {groupCellValue(col.id, row)}
+          {groupCellValue(col.id, row, salesVelocityMap)}
         </td>
       ))}
     </tr>
@@ -409,7 +433,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 });
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, readOnly }) {
+const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, readOnly, salesVelocityMap }) {
   const p = row.produto;
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
@@ -447,7 +471,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, p
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-1.5 px-2 whitespace-nowrap"
           style={{ width: col.width, minWidth: col.minW }}>
-          {skuCellValue(col.id, p, row.margem, row.lastro, row.markup)}
+          {skuCellValue(col.id, p, row.margem, row.lastro, row.markup, salesVelocityMap)}
         </td>
       ))}
     </tr>
@@ -486,7 +510,7 @@ export function LevelControl({ level, onChange }) {
 // masterLevel é controlado pelo pai (painel fixo da página Produtos).
 // expandedKeys é gerenciado internamente — toggle manual do usuário funciona
 // independente do nível selecionado.
-export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false, onExpandedKeysChange }) {
+export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = DEFAULT_COLS, masterLevel = TREE_GRID_EXPAND_ALL_LEVEL, readOnly = false, sortOrder = 'az', groupByCategory = false, onExpandedKeysChange, salesVelocityMap = {} }) {
   const [expandedKeys, setExpandedKeys] = useState(new Set());
   const scrollContainerRef = useRef(null);
   const treeRef = useRef(null);
@@ -561,8 +585,8 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   }, []);
 
   const columnLayout = useMemo(
-    () => computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth }),
-    [rows, activeCols, readOnly, containerWidth],
+    () => computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth, salesVelocityMap }),
+    [rows, activeCols, readOnly, containerWidth, salesVelocityMap],
   );
   const { produtoWidth, cols: layoutCols, tableWidth } = columnLayout;
 
@@ -636,13 +660,15 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
                         onToggle={handleToggle}
                         activeCols={layoutCols}
                         produtoWidth={produtoWidth}
-                        readOnly={readOnly} />
+                        readOnly={readOnly}
+                        salesVelocityMap={salesVelocityMap} />
                     : <SkuRow key={row.key} row={row}
                         onEdit={onEdit}
                         onDelete={onDelete || noopDelete}
                         activeCols={layoutCols}
                         produtoWidth={produtoWidth}
-                        readOnly={readOnly} />
+                        readOnly={readOnly}
+                        salesVelocityMap={salesVelocityMap} />
                 )}
                 <VirtualPaddingRow height={paddingBottom} produtoWidth={produtoWidth} activeCols={layoutCols} />
               </>

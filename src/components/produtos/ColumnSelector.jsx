@@ -54,6 +54,7 @@ export default function ColumnSelector({ visibleColumns, onColumnsChange, open, 
       icon: Truck,
       columns: [
         { id: 'estoque_atual', label: 'Estoque Atual' },
+        { id: 'media_30d', label: 'Média 30d' },
         { id: 'show_logistica', label: 'Unidade de exibição (sigla)' },
         { id: 'estoque_minimo', label: 'Estoque Mínimo' },
         { id: 'estoque_ideal', label: 'Estoque Ideal' },

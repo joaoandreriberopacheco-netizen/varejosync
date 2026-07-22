@@ -43,6 +43,7 @@ import {
 import {
   CATALOG_SALES_WINDOW_LABELS,
   normalizeCatalogSalesWindow,
+  buildCatalogSalesVelocityMap,
 } from '@/lib/catalogSalesVelocity';
 import { saveCatalogProdutoFilters } from '@/lib/catalogProdutoFiltersStorage';
 import { sumCatalogStockTotals } from '@/lib/catalogStockTotals';
@@ -58,6 +59,7 @@ import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import {
   useProdutosComIepQuery,
   useFornecedoresQuery,
+  usePedidosVenda90dQuery,
 } from '@/hooks/useP38Entities';
 
 const CATALOG_GROUP_BY_CATEGORY_KEY = 'catalogo.groupTreeByCategory';
@@ -1094,6 +1096,15 @@ function ProdutosPageContent() {
     return filtered;
   }, [produtos, filters, sortOrder]);
 
+  const needsSalesVelocity = visibleColumns.includes('media_30d');
+  const { data: pedidosVenda90d = [] } = usePedidosVenda90dQuery({
+    enabled: needsSalesVelocity,
+  });
+  const salesVelocityMap = useMemo(() => {
+    if (!needsSalesVelocity) return {};
+    return buildCatalogSalesVelocityMap(filteredProdutos, pedidosVenda90d);
+  }, [needsSalesVelocity, filteredProdutos, pedidosVenda90d]);
+
   const fornecedorMap = useMemo(() => {
     return fornecedores.reduce((acc, f) => {
       acc[f.id] = f.nome;
@@ -1431,7 +1442,7 @@ function ProdutosPageContent() {
 
               {isDesktop && viewMode === 'dinamica' && (
                 <div className="flex flex-col w-full h-full min-h-0">
-                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} />
+                  <TreeGrid produtos={filteredProdutos} onEdit={handleEdit} onDelete={setProdutoParaExcluir} visibleColumns={visibleColumns} masterLevel={treeLevel} sortOrder={sortOrder} groupByCategory={groupTreeByCategory} onExpandedKeysChange={handleCatalogExpandedKeysChange} salesVelocityMap={salesVelocityMap} />
                 </div>
               )}
 
@@ -1444,6 +1455,7 @@ function ProdutosPageContent() {
                   formatarNumero={formatarNumero}
                   fornecedorMap={fornecedorMap}
                   handleCreateSimilar={handleCreateSimilar}
+                  salesVelocityMap={salesVelocityMap}
                 />
               )}
             </div>

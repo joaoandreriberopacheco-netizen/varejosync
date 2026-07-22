@@ -1,4 +1,5 @@
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
+import { aggregateCatalogSalesVelocity, formatCatalogMedia30d } from '@/lib/catalogSalesVelocity';
 import { aggregateEstoqueDisplay, collectSkus } from './useTreeGrid';
 
 const HIER_STEP = 20;
@@ -51,11 +52,12 @@ function produtoCellWidth(row, readOnly, measure) {
   return Math.max(PRODUTO_MIN_WIDTH, width);
 }
 
-function skuCellText(colId, produto, row) {
+function skuCellText(colId, produto, row, salesVelocityMap = {}) {
   const cat = getCatalogoComercialView(produto);
   const margem = row?.margem ?? 0;
   const lastro = row?.lastro ?? 0;
   const markup = row?.markup ?? 0;
+  const velocity = salesVelocityMap[String(produto?.id)];
 
   switch (colId) {
     case 'status': {
@@ -84,6 +86,7 @@ function skuCellText(colId, produto, row) {
       const un = apresent ? apresent.sigla : (produto.unidade_principal || 'UN');
       return `${fmtN(qtd)} ${un}`;
     }
+    case 'media_30d': return formatCatalogMedia30d(velocity) || '—';
     case 'estoque_minimo': return fmtN(produto.estoque_minimo);
     case 'estoque_ideal': return fmtN(produto.estoque_ideal);
     case 'estoque_maximo': return fmtN(produto.estoque_maximo);
@@ -112,7 +115,7 @@ function skuCellText(colId, produto, row) {
   }
 }
 
-function groupCellText(colId, row) {
+function groupCellText(colId, row, salesVelocityMap = {}) {
   switch (colId) {
     case 'preco_venda': return row.precoMedio > 0 ? `~${fmtR(row.precoMedio)}` : '—';
     case 'preco_custo': return row.custoMedio > 0 ? `~${fmtR(row.custoMedio)}` : '—';
@@ -126,6 +129,11 @@ function groupCellText(colId, row) {
       if (disp.mode === 'empty') return '—';
       if (disp.mode === 'mixed') return `${fmtN(disp.quantidade)} un. base (mistura)`;
       return `${fmtN(disp.quantidade)} ${disp.sigla || (skus[0]?.unidade_principal || 'UN')}`;
+    }
+    case 'media_30d': {
+      const skus = collectSkus(row.node);
+      const agg = aggregateCatalogSalesVelocity(skus, salesVelocityMap);
+      return formatCatalogMedia30d(agg, { tilde: true }) || '—';
     }
     case 'estoque_minimo': return fmtN(row.estoqueMinTotal);
     case 'estoque_ideal': return fmtN(row.estoqueIdealTotal);
@@ -147,14 +155,14 @@ function groupCellText(colId, row) {
   }
 }
 
-function dataCellWidth(colId, row, measure) {
+function dataCellWidth(colId, row, measure, salesVelocityMap = {}) {
   const text = row.type === 'group'
-    ? groupCellText(colId, row)
-    : skuCellText(colId, row.produto, row);
+    ? groupCellText(colId, row, salesVelocityMap)
+    : skuCellText(colId, row.produto, row, salesVelocityMap);
   return measure(text, { size: 12, weight: 400 }) + COL_PAD_X;
 }
 
-export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth }) {
+export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth, salesVelocityMap = {} }) {
   const measure = createTextMeasurer();
 
   let produtoWidth = PRODUTO_MIN_WIDTH;
@@ -166,7 +174,7 @@ export function computeTreeGridColumnLayout({ rows, activeCols, readOnly, contai
   const cols = (activeCols || []).map((col) => {
     let minW = Math.max(col.w || 72, measure(col.label, { size: 12, weight: 700 }) + COL_PAD_X);
     for (const row of rows || []) {
-      minW = Math.max(minW, dataCellWidth(col.id, row, measure));
+      minW = Math.max(minW, dataCellWidth(col.id, row, measure, salesVelocityMap));
     }
     return { ...col, minW: Math.ceil(minW), width: Math.ceil(minW) };
   });

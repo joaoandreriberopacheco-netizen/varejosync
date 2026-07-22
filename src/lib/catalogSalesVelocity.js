@@ -126,6 +126,30 @@ export function aggregateCatalogSalesVelocity(skus = [], velocityMap = {}) {
 
 export { DIAS_MEDIA };
 
+/** Projeção de 30 dias a partir da média diária dos últimos 60 dias: (qtd60 / 60) × 30. */
+export function getCatalogMedia30dFrom60d(velocity) {
+  const qtd60 = Number(velocity?.qtd60) || 0;
+  return qtd60 / 2;
+}
+
+export function formatCatalogSalesQuantity(qty, unidade, { tilde = false, dashIfZero = true } = {}) {
+  const n = Number(qty) || 0;
+  if (dashIfZero && n <= 0) return null;
+  const formatted = n.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+  const prefix = tilde ? '~' : '';
+  if (unidade) return `${prefix}${formatted} ${unidade}`;
+  return `${prefix}${formatted}`;
+}
+
+/** Texto da coluna «Média 30d» (média dos últimos 60d projetada em 30d). */
+export function formatCatalogMedia30d(velocity, options = {}) {
+  return formatCatalogSalesQuantity(
+    getCatalogMedia30dFrom60d(velocity),
+    velocity?.unidade,
+    options,
+  );
+}
+
 export const CATALOG_SALES_WINDOW_LABELS = {
   '30d': 'vendas nos últimos 30 dias',
   '60d': 'vendas nos últimos 60 dias',
