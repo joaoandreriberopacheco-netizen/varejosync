@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast as sonnerToast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -10,32 +10,23 @@ import FiltrosSugestaoCompra, {
 } from '@/components/compras/FiltrosSugestaoCompra';
 import SugestaoCompraLinha from '@/components/compras/SugestaoCompraLinha';
 import SugestaoCompraLinhaGrupo from '@/components/compras/SugestaoCompraLinhaGrupo';
-import { ShoppingCart, RefreshCw, CheckCircle, FileText, Gauge } from 'lucide-react';
+import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
-import { calcularSugestaoCompraProduto } from '@/lib/calcularSugestaoCompra';
+import { calcularSugestaoCompraProdutoCatalogo } from '@/lib/calcularSugestaoCompraCatalogo';
 import {
   buildLinhasSugestaoCompra,
   distribuirQuantidadeGrupo,
 } from '@/lib/calcularSugestaoCompraHierarquia';
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
-import {
-  fetchMovimentacoesEstoque90d,
-  groupMovimentacoesPorProduto,
-} from '@/lib/fetchMovimentacoesEstoque90d';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
   filterSugestaoCompraLinhas,
 } from '@/lib/filterSugestaoCompraLinhas';
-import {
-  extractAtualizarMetasEstoqueError,
-  runAtualizarMetasEstoqueJob,
-} from '@/lib/runAtualizarMetasEstoqueJob';
-
 const FORNECEDOR_VAZIO = '__none__';
 
 function fornecedorPadraoLinha(linha) {
@@ -53,7 +44,6 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [fornecedores, setFornecedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUpdatingMetas, setIsUpdatingMetas] = useState(false);
   const [selectedItems, setSelectedItems] = useState({});
   const [fornecedorPorLinha, setFornecedorPorLinha] = useState({});
 
@@ -62,8 +52,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [loadStats, setLoadStats] = useState({
     totalAtivos: 0,
     elegiveis: 0,
-    semVenda90d: 0,
-    semDiasEstoque: 0,
+    semPontoPedido: 0,
     linhasGrupo: 0,
   });
 
@@ -94,6 +83,7 @@ export default function SugestaoCompra({ onStatsChange }) {
       return buildLinhasSugestaoCompra(prods, pedidos, movsPorProduto, pending, {
         agruparHierarquia: agrupar,
         roundingMode: round,
+        fonte: 'catalogo',
       });
     },
     [agruparHierarquia, roundingMode],
@@ -102,7 +92,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [prods, forn, cats, pedidos, pedidosCompra, movimentacoes] = await Promise.all([
+      const [prods, forn, cats, pedidos, pedidosCompra] = await Promise.all([
         base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
         base44.entities.Terceiro.list(),
         base44.entities.Categoria.list(),
@@ -110,7 +100,6 @@ export default function SugestaoCompra({ onStatsChange }) {
         base44.entities.PedidoCompra.filter({
           status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'],
         }),
-        fetchMovimentacoesEstoque90d(),
       ]);
 
       const pending = {};
@@ -120,17 +109,13 @@ export default function SugestaoCompra({ onStatsChange }) {
         });
       });
 
-      const movsPorProduto = groupMovimentacoesPorProduto(movimentacoes);
+      const movsPorProduto = {};
       calcContextRef.current = { pedidos, movsPorProduto, prods, pending };
 
-      let semVenda90d = 0;
-      let semDiasEstoque = 0;
+      let semPontoPedido = 0;
       prods.forEach((p) => {
-        const s = calcularSugestaoCompraProduto(p, pedidos, movsPorProduto[p.id] || [], {
-          roundingMode,
-        });
-        if (s.motivo === 'sem_venda') semVenda90d += 1;
-        if (s.motivo === 'sem_dias_com_estoque') semDiasEstoque += 1;
+        const s = calcularSugestaoCompraProdutoCatalogo(p, { roundingMode });
+        if (s.motivo === 'sem_ponto_pedido') semPontoPedido += 1;
       });
 
       const novasLinhas = recomputarLinhas(prods, pedidos, movsPorProduto, pending);
@@ -138,8 +123,7 @@ export default function SugestaoCompra({ onStatsChange }) {
       setLoadStats({
         totalAtivos: prods.length,
         elegiveis: novasLinhas.length,
-        semVenda90d,
-        semDiasEstoque,
+        semPontoPedido,
         linhasGrupo: novasLinhas.filter((l) => l.tipo === 'grupo').length,
       });
       setLinhas(novasLinhas);
@@ -197,39 +181,6 @@ export default function SugestaoCompra({ onStatsChange }) {
 
   const limparFiltros = () => {
     setFilters({ ...DEFAULT_SUGESTAO_COMPRA_FILTERS });
-  };
-
-  const handleAtualizarPontosPedido = async () => {
-    setIsUpdatingMetas(true);
-    const toastId = sonnerToast.loading('Atualizando pontos de pedido no cadastro…');
-    try {
-      const result = await runAtualizarMetasEstoqueJob({
-        somenteMetasVazias: false,
-        sobrescrever: true,
-        onProgress: (p) => {
-          if (p.phase === 'writing' && p.totalPendentes) {
-            sonnerToast.loading(
-              `Gravando pontos de pedido… ${p.atualizados ?? 0}/${p.totalPendentes}`,
-              { id: toastId },
-            );
-          }
-        },
-      });
-
-      if (result.status === 'sem_alteracao') {
-        sonnerToast.info(result.mensagem || 'Nenhum produto precisava de atualização.', { id: toastId });
-      } else {
-        sonnerToast.success(
-          `${result.atualizados} produto(s) com ponto de pedido ${result.sobrescrever ? 'recalculado e gravado' : 'atualizado'}.`,
-          { id: toastId },
-        );
-      }
-      await loadData();
-    } catch (error) {
-      sonnerToast.error(extractAtualizarMetasEstoqueError(error), { id: toastId });
-    } finally {
-      setIsUpdatingMetas(false);
-    }
   };
 
   const expandirLinhaItens = (linha) => {
@@ -456,23 +407,11 @@ export default function SugestaoCompra({ onStatsChange }) {
         <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
-            variant="outline"
-            size="sm"
-            className="h-11 rounded-2xl gap-1.5"
-            disabled={isUpdatingMetas || isLoading}
-            onClick={handleAtualizarPontosPedido}
-            title="Gravar ponto de pedido (média × lead time) no cadastro dos produtos"
-          >
-            <Gauge className={`w-4 h-4 ${isUpdatingMetas ? 'animate-pulse' : ''}`} />
-            {isUpdatingMetas ? 'Atualizando…' : 'Pontos de pedido'}
-          </Button>
-          <Button
-            type="button"
             variant="ghost"
             size="icon"
             className="h-11 w-11 rounded-2xl bg-muted shrink-0"
             onClick={loadData}
-            disabled={isLoading || isUpdatingMetas}
+            disabled={isLoading}
             title="Atualizar lista"
           >
             <RefreshCw className={`h-4 w-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
@@ -508,34 +447,29 @@ export default function SugestaoCompra({ onStatsChange }) {
           <p className="text-xs text-muted-foreground leading-relaxed">
             {loadStats.totalAtivos > 0 ? (
               <>
-                {loadStats.totalAtivos} produto(s) analisado(s) nos últimos 90 dias.
-                {loadStats.semVenda90d > 0 ? <> {loadStats.semVenda90d} sem venda no período.</> : null}
-                {loadStats.semDiasEstoque > 0 ? (
-                  <> {loadStats.semDiasEstoque} sem dias com estoque para calcular a média.</>
+                {loadStats.totalAtivos} produto(s) no catálogo.
+                {loadStats.semPontoPedido > 0 ? (
+                  <> {loadStats.semPontoPedido} ainda sem ponto de pedido (estoque mínimo) gravado.</>
                 ) : null}
-                {loadStats.elegiveis === 0 &&
-                loadStats.semVenda90d === 0 &&
-                loadStats.semDiasEstoque === 0 ? (
-                  <> Nenhum está abaixo do ponto de pedido (média diária × lead time).</>
+                {loadStats.elegiveis === 0 ? (
+                  <> Nenhum está com estoque abaixo do ponto de pedido cadastrado.</>
                 ) : null}
               </>
             ) : (
               <>Não foi possível carregar produtos ou o catálogo está vazio.</>
             )}
           </p>
-          {loadStats.totalAtivos > 0 ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-1 rounded-2xl gap-1.5"
-              disabled={isUpdatingMetas || isLoading}
-              onClick={handleAtualizarPontosPedido}
-            >
-              <Gauge className="w-4 h-4" />
-              {isUpdatingMetas ? 'Atualizando pontos de pedido…' : 'Atualizar pontos de pedido no cadastro'}
-            </Button>
-          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-1 rounded-2xl"
+            asChild
+          >
+            <Link to={createPageUrl('Produtos')}>
+              Atualizar pontos de pedido no Catálogo
+            </Link>
+          </Button>
         </div>
       ) : filteredLinhas.length === 0 ? (
         <div className="py-14 text-center text-sm text-muted-foreground">

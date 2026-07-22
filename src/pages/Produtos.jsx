@@ -23,6 +23,7 @@ import MassImageUploader from '../components/produtos/MassImageUploader';
 import MassTagGenerator from '../components/produtos/MassTagGenerator';
 import MassCategoryClassifier from '../components/produtos/MassCategoryClassifier';
 import MassMarkupDialog from '../components/produtos/MassMarkupDialog';
+import PontosPedidoCatalogoDialog from '../components/produtos/PontosPedidoCatalogoDialog';
 import TreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '../components/produtos/treegrid/TreeGrid';
 import MobileHierarquica, { CatalogoMobileScrollShell } from '../components/produtos/MobileHierarquica';
 import ProdutoFAB from '../components/produtos/ProdutoFAB';
@@ -156,6 +157,7 @@ function ProdutosPageContent() {
   const [isMassTagOpen, setIsMassTagOpen] = useState(false);
   const [isMassCategoryOpen, setIsMassCategoryOpen] = useState(false);
   const [isMassMarkupOpen, setIsMassMarkupOpen] = useState(false);
+  const [isPontosPedidoOpen, setIsPontosPedidoOpen] = useState(false);
   const [isCatalogTagPrintOpen, setIsCatalogTagPrintOpen] = useState(false);
   // States for unified import (products + costs)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -1395,6 +1397,7 @@ function ProdutosPageContent() {
     onOpenMassTag: () => setIsMassTagOpen(true),
     onOpenMassCategory: () => setIsMassCategoryOpen(true),
     onOpenMassMarkup: () => setIsMassMarkupOpen(true),
+    onOpenPontosPedido: () => setIsPontosPedidoOpen(true),
     groupTreeByCategory,
     onGroupTreeByCategoryChange: handleGroupTreeByCategoryChange,
   };
@@ -1727,6 +1730,13 @@ function ProdutosPageContent() {
         open={isMassMarkupOpen}
         onOpenChange={setIsMassMarkupOpen}
         hideTrigger
+      />
+
+      <PontosPedidoCatalogoDialog
+        products={produtos}
+        open={isPontosPedidoOpen}
+        onOpenChange={setIsPontosPedidoOpen}
+        onComplete={loadData}
       />
 
       <ExcluirProdutoDialog

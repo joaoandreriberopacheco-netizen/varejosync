@@ -29,7 +29,11 @@ function buildUpdatePayload(metas) {
   };
 }
 
-async function fetchProdutosAtivos() {
+async function fetchProdutosAtivos(provided) {
+  if (Array.isArray(provided) && provided.length > 0) {
+    return provided;
+  }
+
   const todos = [];
   let skip = 0;
   const pageSize = 500;
@@ -120,6 +124,7 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
   const {
     somenteMetasVazias = false,
     sobrescrever = false,
+    produtos: produtosFornecidos,
     batchSize = 50,
     onProgress,
     shouldAbort,
@@ -133,7 +138,7 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
   });
 
   const [produtos, pedidos90d, movimentacoes] = await Promise.all([
-    fetchProdutosAtivos(),
+    fetchProdutosAtivos(produtosFornecidos),
     fetchPedidosVenda90d(),
     fetchMovimentacoesEstoque90d(),
   ]);

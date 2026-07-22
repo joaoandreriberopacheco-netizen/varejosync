@@ -15,6 +15,10 @@ import {
 } from '@/lib/calcularMetasEstoqueVendas';
 import { calcularSugestaoCompraProduto } from '@/lib/calcularSugestaoCompra';
 import {
+  calcularSugestaoCompraGrupoCatalogo,
+  calcularSugestaoCompraProdutoCatalogo,
+} from '@/lib/calcularSugestaoCompraCatalogo';
+import {
   buildMapaSaldoFimDia,
   contarDiasComEstoqueAtivo,
   iterarDiasCalendario,
@@ -284,6 +288,7 @@ export function buildLinhasSugestaoCompra(
 ) {
   const agrupar = options.agruparHierarquia !== false;
   const roundingMode = options.roundingMode ?? 'auto';
+  const usarCatalogo = options.fonte === 'catalogo';
   const { map, soltos } = agruparSkusPorHierarquiaCompra(produtosAtivos);
 
   const linhas = [];
@@ -297,9 +302,11 @@ export function buildLinhasSugestaoCompra(
       }
 
       skus.forEach((p) => skusEmGrupo.add(p.id));
-      const sugestao = calcularSugestaoCompraGrupo(skus, pedidos90d, movsPorProduto, {
-        roundingMode,
-      });
+      const sugestao = usarCatalogo
+        ? calcularSugestaoCompraGrupoCatalogo(skus, { roundingMode })
+        : calcularSugestaoCompraGrupo(skus, pedidos90d, movsPorProduto, {
+            roundingMode,
+          });
       if (!sugestao.elegivel) continue;
 
       const representativo =
@@ -325,12 +332,11 @@ export function buildLinhasSugestaoCompra(
 
   for (const p of soltos) {
     if (agrupar && skusEmGrupo.has(p.id)) continue;
-    const sugestao = calcularSugestaoCompraProduto(
-      p,
-      pedidos90d,
-      movsPorProduto[p.id] || [],
-      { roundingMode },
-    );
+    const sugestao = usarCatalogo
+      ? calcularSugestaoCompraProdutoCatalogo(p, { roundingMode })
+      : calcularSugestaoCompraProduto(p, pedidos90d, movsPorProduto[p.id] || [], {
+          roundingMode,
+        });
     if (!sugestao.elegivel) continue;
 
     linhas.push({

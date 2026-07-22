@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPageUrl } from '@/components/utils';
-import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, Tags, LayoutGrid, TrendingUp } from 'lucide-react';
+import { Columns, Download, Upload, Sparkles, Wand2, PlusCircle, SlidersHorizontal, Search, X, Image as ImageIcon, BarChart3, Filter, Percent, Loader2, Tag, Tags, LayoutGrid, TrendingUp, Gauge } from 'lucide-react';
 import { DEFAULT_PRODUTO_FILTERS, ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
 import ProdutosSomentePositivosToggle from '@/components/produtos/ProdutosSomentePositivosToggle';
@@ -52,6 +52,7 @@ export default function ProdutosHeader({
   onOpenMassTag,
   onOpenMassCategory,
   onOpenMassMarkup,
+  onOpenPontosPedido,
   groupTreeByCategory = false,
   onGroupTreeByCategoryChange,
 }) {
@@ -181,6 +182,15 @@ export default function ProdutosHeader({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 flex-shrink-0"
+              title="Recalcular pontos de pedido (estoque mínimo)"
+              onClick={() => onOpenPontosPedido?.()}
+            >
+              <Gauge className="w-4 h-4 p38-text-accent" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"

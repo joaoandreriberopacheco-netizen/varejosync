@@ -83,13 +83,14 @@ export async function runAtualizarMetasEstoqueJob(options = {}) {
   const {
     somenteMetasVazias = false,
     sobrescrever = false,
+    produtos,
     batchSize = METAS_ESTOQUE_BATCH_SIZE,
     useServerJob = false,
     onProgress,
     shouldAbort,
   } = options;
 
-  const localOptions = { somenteMetasVazias, sobrescrever, batchSize, onProgress, shouldAbort };
+  const localOptions = { somenteMetasVazias, sobrescrever, produtos, batchSize, onProgress, shouldAbort };
 
   if (!useServerJob) {
     return runAtualizarMetasEstoqueJobLocal(localOptions);
