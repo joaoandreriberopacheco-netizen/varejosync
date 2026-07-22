@@ -8,9 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import FiltrosSugestaoCompra, {
   DEFAULT_SUGESTAO_COMPRA_FILTERS,
 } from '@/components/compras/FiltrosSugestaoCompra';
-import SugestaoCompraLinha from '@/components/compras/SugestaoCompraLinha';
-import SugestaoCompraLinhaGrupo from '@/components/compras/SugestaoCompraLinhaGrupo';
-import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
+import SugestaoCompraTreeGrid, { LevelControl, TREE_GRID_EXPAND_ALL_LEVEL } from '@/components/compras/SugestaoCompraTreeGrid';
+import { ShoppingCart, RefreshCw, CheckCircle, FileText, TrendingUp } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -23,13 +22,49 @@ import {
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
-import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
+import { CATALOG_SORT_OPTIONS } from '@/lib/catalogProdutoPerformance';
+import {
+  buildSugestaoCompraLinhaLookup,
+  extractProdutosFromSugestaoLinhas,
+} from '@/lib/sugestaoCompraTree';
 import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
   filterSugestaoCompraLinhas,
 } from '@/lib/filterSugestaoCompraLinhas';
 const FORNECEDOR_VAZIO = '__none__';
+const SUGESTAO_TREE_LEVEL_KEY = 'sugestaoCompra.treeLevel';
+const SUGESTAO_GROUP_CATEGORY_KEY = 'sugestaoCompra.groupByCategory';
+const SUGESTAO_SORT_KEY = 'sugestaoCompra.sortOrder';
+
+function readSugestaoTreeLevel() {
+  try {
+    const raw = localStorage.getItem(SUGESTAO_TREE_LEVEL_KEY);
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= 1 ? n : 1;
+  } catch {
+    return 1;
+  }
+}
+
+function readSugestaoGroupByCategory() {
+  try {
+    return localStorage.getItem(SUGESTAO_GROUP_CATEGORY_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function readSugestaoSortOrder() {
+  try {
+    const raw = localStorage.getItem(SUGESTAO_SORT_KEY);
+    return CATALOG_SORT_OPTIONS.some((o) => o.id === raw) ? raw : 'abcd_desc';
+  } catch {
+    return 'abcd_desc';
+  }
+}
 
 function fornecedorPadraoLinha(linha) {
   const ids = linha.skus.map((p) => p.fornecedor_padrao_id).filter(Boolean);
@@ -51,6 +86,9 @@ export default function SugestaoCompra({ onStatsChange }) {
 
   const [filters, setFilters] = useState(() => ({ ...DEFAULT_SUGESTAO_COMPRA_FILTERS }));
   const { roundingMode, agruparHierarquia } = filters;
+  const [sortOrder, setSortOrder] = useState(readSugestaoSortOrder);
+  const [treeLevel, setTreeLevel] = useState(readSugestaoTreeLevel);
+  const [groupByCategory, setGroupByCategory] = useState(readSugestaoGroupByCategory);
   const [loadStats, setLoadStats] = useState({
     totalAtivos: 0,
     elegiveis: 0,
@@ -176,6 +214,45 @@ export default function SugestaoCompra({ onStatsChange }) {
     () => filterSugestaoCompraLinhas(linhas, filters),
     [linhas, filters],
   );
+
+  const treeProdutos = useMemo(
+    () => extractProdutosFromSugestaoLinhas(filteredLinhas),
+    [filteredLinhas],
+  );
+  const linhaLookup = useMemo(
+    () => buildSugestaoCompraLinhaLookup(filteredLinhas),
+    [filteredLinhas],
+  );
+
+  const currentSort = CATALOG_SORT_OPTIONS.find((opt) => opt.id === sortOrder)
+    || CATALOG_SORT_OPTIONS.find((o) => o.id === 'abcd_desc');
+
+  const handleSortOrderChange = useCallback((next) => {
+    setSortOrder(next);
+    try {
+      localStorage.setItem(SUGESTAO_SORT_KEY, next);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const handleTreeLevelChange = useCallback((next) => {
+    setTreeLevel(next);
+    try {
+      localStorage.setItem(SUGESTAO_TREE_LEVEL_KEY, String(next));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const handleGroupByCategoryChange = useCallback((next) => {
+    setGroupByCategory(next);
+    try {
+      localStorage.setItem(SUGESTAO_GROUP_CATEGORY_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const selectedCount = Object.keys(selectedItems).length;
 
@@ -497,8 +574,8 @@ export default function SugestaoCompra({ onStatsChange }) {
           Nenhum item corresponde aos filtros.
         </div>
       ) : (
-        <div className="min-w-0 w-full space-y-2">
-          <div className="flex items-center justify-between gap-3 px-1 py-1">
+        <div className="min-w-0 w-full space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
             <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
               <Checkbox
                 checked={
@@ -506,44 +583,59 @@ export default function SugestaoCompra({ onStatsChange }) {
                 }
                 onCheckedChange={handleSelectAll}
               />
-              Selecionar visíveis
+              Selecionar visíveis ({filteredLinhas.length})
             </label>
-            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Qtd sugerida</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1">
+                    <TrendingUp className="w-3.5 h-3.5 rotate-90" />
+                    <span className="max-w-[160px] truncate">{currentSort?.label || 'Ordenar'}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="max-h-[70vh] overflow-y-auto">
+                  <DropdownMenuLabel className="text-xs">Ordenar sugestões</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {CATALOG_SORT_OPTIONS.map((opt) => (
+                    <DropdownMenuItem
+                      key={opt.id}
+                      onClick={() => handleSortOrderChange(opt.id)}
+                      className={sortOrder === opt.id ? 'font-semibold' : ''}
+                    >
+                      {opt.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <ProdutosTreeByCategoryToggle
+                checked={groupByCategory}
+                onChange={handleGroupByCategoryChange}
+                className="h-8"
+              />
+              <div className="flex items-center gap-1 rounded-xl bg-muted px-2 h-8">
+                <span className="text-[10px] text-muted-foreground">nível</span>
+                <LevelControl level={treeLevel} onChange={handleTreeLevelChange} />
+              </div>
+            </div>
           </div>
-          <P38MobileLineList allViewports className="rounded-none border-0 shadow-none bg-transparent">
-            {filteredLinhas.map((linha, index) => {
-              const LinhaComp = linha.tipo === 'grupo' ? SugestaoCompraLinhaGrupo : SugestaoCompraLinha;
-              const props =
-                linha.tipo === 'grupo'
-                  ? {
-                      linha,
-                      disp: sugestaoDisplayLinha(linha),
-                    }
-                  : {
-                      produto: linha.produto,
-                      sugestao: linha.sugestao,
-                      disp: sugestaoDisplayLinha(linha),
-                    };
-
-              return (
-                <LinhaComp
-                  key={linha.id}
-                  {...props}
-                  selecionado={!!selectedItems[linha.id]}
-                  striped={index % 2 === 1}
-                  onToggleSelecionado={(c) =>
-                    setSelectedItems((prev) =>
-                      c ? { ...prev, [linha.id]: true } : { ...prev, [linha.id]: undefined },
-                    )
-                  }
-                  fornecedorSelect={renderFornecedorSelect(
-                    linha,
-                    'h-8 w-full max-w-[16rem] rounded-md border-0 bg-muted/30 text-xs',
-                  )}
-                />
-              );
-            })}
-          </P38MobileLineList>
+          <SugestaoCompraTreeGrid
+            produtos={treeProdutos}
+            linhaLookup={linhaLookup}
+            agruparHierarquia={agruparHierarquia}
+            sortOrder={sortOrder}
+            groupByCategory={groupByCategory}
+            masterLevel={treeLevel === TREE_GRID_EXPAND_ALL_LEVEL ? TREE_GRID_EXPAND_ALL_LEVEL : treeLevel}
+            selectedItems={selectedItems}
+            onToggleSelected={(id, checked) =>
+              setSelectedItems((prev) =>
+                checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+              )
+            }
+            sugestaoDisplayLinha={sugestaoDisplayLinha}
+            renderFornecedorSelect={(linha) =>
+              renderFornecedorSelect(linha, 'h-8 w-full max-w-[14rem] rounded-md border-0 bg-muted/30 text-xs')
+            }
+          />
         </div>
       )}
     </div>
