@@ -5,8 +5,16 @@ import {
   fetchMovimentacoesEstoque90d,
   groupMovimentacoesPorProduto,
 } from '@/lib/fetchMovimentacoesEstoque90d';
+import { isRateLimitApiError, withRateLimitRetry } from '@/lib/p38ApiErrors';
 
-const UPDATE_CONCURRENCY = 5;
+/** Gravações sequenciais com pausa — evita rate limit no Base44 em catálogos grandes. */
+const WRITE_DELAY_MS = 150;
+const BATCH_PAUSE_MS = 800;
+const DEFAULT_LOCAL_BATCH_SIZE = 10;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function produtoMetasVazio(produto) {
   const em = Number(produto?.estoque_minimo) || 0;
@@ -103,17 +111,12 @@ async function gravarBlocoLocal(payload) {
     estoque_ideal: data.estoque_ideal,
   });
 
-  for (let i = 0; i < payload.length; i += UPDATE_CONCURRENCY) {
-    const chunk = payload.slice(i, i + UPDATE_CONCURRENCY);
-    await Promise.all(
-      chunk.map(async ({ id, data }) => {
-        try {
-          await base44.entities.Produto.update(id, data);
-        } catch {
-          await base44.entities.Produto.update(id, minimalPayload(data));
-        }
-      }),
+  for (const { id, data } of payload) {
+    await withRateLimitRetry(
+      () => base44.entities.Produto.update(id, minimalPayload(data)),
+      { maxAttempts: 6, baseDelayMs: 1200 },
     );
+    await sleep(WRITE_DELAY_MS);
   }
 }
 
@@ -125,7 +128,7 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
     somenteMetasVazias = false,
     sobrescrever = false,
     produtos: produtosFornecidos,
-    batchSize = 50,
+    batchSize = DEFAULT_LOCAL_BATCH_SIZE,
     onProgress,
     shouldAbort,
   } = options;
@@ -137,11 +140,17 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
       : 'Calculando pontos de pedido localmente (vendas 90d e lead time)…',
   });
 
-  const [produtos, pedidos90d, movimentacoes] = await Promise.all([
-    fetchProdutosAtivos(produtosFornecidos),
-    fetchPedidosVenda90d(),
-    fetchMovimentacoesEstoque90d(),
-  ]);
+  const produtos = await fetchProdutosAtivos(produtosFornecidos);
+  await sleep(300);
+  const pedidos90d = await withRateLimitRetry(() => fetchPedidosVenda90d(), {
+    maxAttempts: 5,
+    baseDelayMs: 1500,
+  });
+  await sleep(300);
+  const movimentacoes = await withRateLimitRetry(() => fetchMovimentacoesEstoque90d(), {
+    maxAttempts: 5,
+    baseDelayMs: 1500,
+  });
 
   const movsPorProduto = groupMovimentacoesPorProduto(movimentacoes);
   const { updates, ignorados_trava_manual, ignorados_sem_venda, total_produtos } =
@@ -188,7 +197,16 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
     if (shouldAbort?.()) throw new Error('Operação cancelada.');
 
     const bloco = updates.slice(offset, offset + batchSize);
-    await gravarBlocoLocal(bloco);
+    try {
+      await gravarBlocoLocal(bloco);
+    } catch (error) {
+      if (isRateLimitApiError(error)) {
+        throw new Error(
+          'Limite de requisições do servidor (rate limit). Aguarde 1–2 minutos e tente de novo; o processo grava em lotes pequenos para evitar sobrecarga.',
+        );
+      }
+      throw error;
+    }
     totalAtualizados += bloco.length;
 
     onProgress?.({
@@ -199,6 +217,10 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
       totalPendentes,
       etapa: 'Gravando ponto de pedido e estoque ideal nos produtos…',
     });
+
+    if (offset + batchSize < totalPendentes) {
+      await sleep(BATCH_PAUSE_MS);
+    }
   }
 
   return {

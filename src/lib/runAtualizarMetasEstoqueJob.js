@@ -1,7 +1,7 @@
 import { atualizarMetasEstoque } from '@/functions/atualizarMetasEstoque';
 import { runAtualizarMetasEstoqueJobLocal } from '@/lib/runAtualizarMetasEstoqueJobLocal';
 
-export const METAS_ESTOQUE_BATCH_SIZE = 50;
+export const METAS_ESTOQUE_BATCH_SIZE = 10;
 
 function normalizeJobResponse(resp) {
   const data = resp?.data ?? resp;

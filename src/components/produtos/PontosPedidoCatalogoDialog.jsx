@@ -108,7 +108,8 @@ export default function PontosPedidoCatalogoDialog({
           </p>
           <p className="text-xs leading-relaxed">
             Fórmula: média diária de vendas × tempo de reposição (padrão 20 dias). Produtos com trava
-            manual de estoque são ignorados.
+            manual de estoque são ignorados. Em catálogos grandes o processo pode levar alguns minutos
+            (grava em lotes para não sobrecarregar o servidor).
           </p>
 
           {running && (
