@@ -9,6 +9,7 @@ import {
   produtoMatchesVitrineFilter,
 } from '@/lib/filterProdutos';
 import { getUnidadeExibicaoSigla } from '@/lib/productUnits';
+import { sugestaoTemGiroVelocidade } from '@/lib/calcularSugestaoCompraVelocidade';
 
 export const SUGESTAO_STATUS_ESTOQUE_OPTIONS = [
   { value: 'all', label: 'Todos' },
@@ -30,6 +31,7 @@ export const DEFAULT_SUGESTAO_COMPRA_FILTERS = {
   quantidadeValor: '',
   quantidadeValorAte: '',
   hidePending: false,
+  somenteAbaixoPontoFuturo: true,
   roundingMode: 'auto',
   agruparHierarquia: true,
 };
@@ -46,8 +48,19 @@ function linhaEstoqueAtual(linha) {
   return Number(linha?.sugestao?.estoque_atual ?? linha?.produto?.estoque_atual) || 0;
 }
 
+/** Ponto de pedido da sugestão (velocidade ao vivo) — nunca usa cadastro. */
 function linhaPontoPedido(linha) {
-  return Number(linha?.sugestao?.ponto_pedido ?? linha?.produto?.estoque_minimo) || 0;
+  return Number(linha?.sugestao?.ponto_pedido) || 0;
+}
+
+export function linhaAbaixoPontoFuturo(linha) {
+  const ponto = linhaPontoPedido(linha);
+  if (ponto <= 0) return false;
+  return linhaEstoqueAtual(linha) < ponto;
+}
+
+export function linhaTemGiroVelocidade(linha) {
+  return sugestaoTemGiroVelocidade(linha?.sugestao);
 }
 
 function linhaMatchesStatusEstoque(linha, statusEstoque = 'all') {
@@ -95,6 +108,7 @@ export function filterSugestaoCompraLinhas(linhas, filters = DEFAULT_SUGESTAO_CO
   if (!Array.isArray(linhas)) return [];
 
   return linhas.filter((linha) => {
+    if (filters.somenteAbaixoPontoFuturo !== false && !linhaAbaixoPontoFuturo(linha)) return false;
     if (filters.hidePending && linha.quantidade_pendente > 0) return false;
     if (!linhaMatchesSearch(linha, filters)) return false;
 
@@ -171,6 +185,7 @@ export function countActiveSugestaoCompraFilters(filters = DEFAULT_SUGESTAO_COMP
     filters.statusEstoque !== 'all',
     hasActiveQuantityFilter(filters),
     filters.hidePending,
+    filters.somenteAbaixoPontoFuturo === false,
     filters.roundingMode !== 'auto',
     filters.agruparHierarquia === false,
   ].filter(Boolean).length;

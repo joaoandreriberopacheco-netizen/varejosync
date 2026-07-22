@@ -21,6 +21,7 @@ import {
 import {
   calcularSugestaoCompraGrupoVelocidade,
   calcularSugestaoCompraProdutoVelocidade,
+  sugestaoTemGiroVelocidade,
 } from '@/lib/calcularSugestaoCompraVelocidade';
 import {
   buildMapaSaldoFimDia,
@@ -297,6 +298,11 @@ export function buildLinhasSugestaoCompra(
   const salesVelocityMap = options.salesVelocityMap || {};
   const { map, soltos } = agruparSkusPorHierarquiaCompra(produtosAtivos);
 
+  const incluirLinha = (sugestao) => {
+    if (usarVelocidade) return sugestaoTemGiroVelocidade(sugestao);
+    return sugestao.elegivel;
+  };
+
   const linhas = [];
   const skusEmGrupo = new Set();
 
@@ -313,11 +319,12 @@ export function buildLinhasSugestaoCompra(
         : usarVelocidade
           ? calcularSugestaoCompraGrupoVelocidade(skus, pedidos90d, salesVelocityMap, {
               roundingMode,
+              fallbackCatalogo: false,
             })
           : calcularSugestaoCompraGrupo(skus, pedidos90d, movsPorProduto, {
               roundingMode,
             });
-      if (!sugestao.elegivel) continue;
+      if (!incluirLinha(sugestao)) continue;
 
       const representativo =
         skus.find((p) => p.id === sugestao.produto_representativo_id) || skus[0];
@@ -347,11 +354,12 @@ export function buildLinhasSugestaoCompra(
       : usarVelocidade
         ? calcularSugestaoCompraProdutoVelocidade(p, pedidos90d, salesVelocityMap, {
             roundingMode,
+            fallbackCatalogo: false,
           })
         : calcularSugestaoCompraProduto(p, pedidos90d, movsPorProduto[p.id] || [], {
             roundingMode,
           });
-    if (!sugestao.elegivel) continue;
+    if (!incluirLinha(sugestao)) continue;
 
     linhas.push({
       tipo: 'sku',
