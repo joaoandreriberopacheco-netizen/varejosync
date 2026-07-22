@@ -5,7 +5,9 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import FiltrosSugestaoCompra from '@/components/compras/FiltrosSugestaoCompra';
+import FiltrosSugestaoCompra, {
+  DEFAULT_SUGESTAO_COMPRA_FILTERS,
+} from '@/components/compras/FiltrosSugestaoCompra';
 import SugestaoCompraLinha from '@/components/compras/SugestaoCompraLinha';
 import SugestaoCompraLinhaGrupo from '@/components/compras/SugestaoCompraLinhaGrupo';
 import { ShoppingCart, RefreshCw, CheckCircle, FileText, Gauge } from 'lucide-react';
@@ -24,6 +26,11 @@ import {
   groupMovimentacoesPorProduto,
 } from '@/lib/fetchMovimentacoesEstoque90d';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
+import {
+  collectSugestaoTags,
+  collectSugestaoVitrineUnits,
+  filterSugestaoCompraLinhas,
+} from '@/lib/filterSugestaoCompraLinhas';
 import {
   extractAtualizarMetasEstoqueError,
   runAtualizarMetasEstoqueJob,
@@ -50,14 +57,8 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [selectedItems, setSelectedItems] = useState({});
   const [fornecedorPorLinha, setFornecedorPorLinha] = useState({});
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [supplierFilter, setSupplierFilter] = useState('all');
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [tagSearch, setTagSearch] = useState('');
-  const [hidePending, setHidePending] = useState(false);
-  const [roundingMode, setRoundingMode] = useState('auto');
-  const [agruparHierarquia, setAgruparHierarquia] = useState(true);
+  const [filters, setFilters] = useState(() => ({ ...DEFAULT_SUGESTAO_COMPRA_FILTERS }));
+  const { roundingMode, agruparHierarquia } = filters;
   const [loadStats, setLoadStats] = useState({
     totalAtivos: 0,
     elegiveis: 0,
@@ -70,11 +71,8 @@ export default function SugestaoCompra({ onStatsChange }) {
   const navigate = useNavigate();
   const calcContextRef = useRef({ pedidos: [], movsPorProduto: {}, prods: [], pending: {} });
 
-  const allTags = useMemo(() => {
-    const tags = new Set();
-    linhas.forEach((l) => l.skus.forEach((p) => p.tags?.forEach((t) => tags.add(t))));
-    return [...tags].sort();
-  }, [linhas]);
+  const allTags = useMemo(() => collectSugestaoTags(linhas), [linhas]);
+  const unidadesVitrine = useMemo(() => collectSugestaoVitrineUnits(linhas), [linhas]);
 
   const produtoParaCompra = (produto) => buildSnapshotExibicaoComercial(produto);
 
@@ -169,29 +167,10 @@ export default function SugestaoCompra({ onStatsChange }) {
     );
   }, [roundingMode, agruparHierarquia, recomputarLinhas]);
 
-  const filteredLinhas = useMemo(() => {
-    const s = searchTerm.toLowerCase().trim();
-    return linhas.filter((linha) => {
-      if (hidePending && linha.quantidade_pendente > 0) return false;
-      if (s && !linha.searchText.includes(s)) return false;
-      if (categoryFilter !== 'all' && !linha.skus.some((p) => p.categoria_id === categoryFilter)) {
-        return false;
-      }
-      if (
-        supplierFilter !== 'all' &&
-        !linha.skus.some((p) => p.fornecedor_padrao_id === supplierFilter)
-      ) {
-        return false;
-      }
-      if (
-        selectedTags.length > 0 &&
-        !linha.skus.some((p) => selectedTags.every((t) => p.tags?.includes(t)))
-      ) {
-        return false;
-      }
-      return true;
-    });
-  }, [linhas, searchTerm, categoryFilter, supplierFilter, selectedTags, hidePending]);
+  const filteredLinhas = useMemo(
+    () => filterSugestaoCompraLinhas(linhas, filters),
+    [linhas, filters],
+  );
 
   const selectedCount = Object.keys(selectedItems).length;
 
@@ -217,13 +196,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   };
 
   const limparFiltros = () => {
-    setCategoryFilter('all');
-    setSupplierFilter('all');
-    setSelectedTags([]);
-    setTagSearch('');
-    setHidePending(false);
-    setRoundingMode('auto');
-    setAgruparHierarquia(true);
+    setFilters({ ...DEFAULT_SUGESTAO_COMPRA_FILTERS });
   };
 
   const handleAtualizarPontosPedido = async () => {
@@ -464,25 +437,12 @@ export default function SugestaoCompra({ onStatsChange }) {
   return (
     <div className="space-y-4 min-w-0">
       <FiltrosSugestaoCompra
-        searchTerm={searchTerm}
-        onSearchTerm={setSearchTerm}
-        categoryFilter={categoryFilter}
-        onCategoryFilter={setCategoryFilter}
+        filters={filters}
+        onFiltersChange={setFilters}
         categorias={categorias}
-        supplierFilter={supplierFilter}
-        onSupplierFilter={setSupplierFilter}
         fornecedores={fornecedores}
-        selectedTags={selectedTags}
-        onSelectedTags={setSelectedTags}
         allTags={allTags}
-        tagSearch={tagSearch}
-        onTagSearch={setTagSearch}
-        hidePending={hidePending}
-        onHidePending={setHidePending}
-        roundingMode={roundingMode}
-        onRoundingMode={setRoundingMode}
-        agruparHierarquia={agruparHierarquia}
-        onAgruparHierarquia={setAgruparHierarquia}
+        unidadesVitrine={unidadesVitrine}
         onLimparFiltros={limparFiltros}
       />
 

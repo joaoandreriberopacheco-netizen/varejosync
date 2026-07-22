@@ -1,12 +1,37 @@
 import React, { useMemo, useState } from 'react';
-import { Search, X, SlidersHorizontal, Package, FilterX, Tag, Layers, Building2 } from 'lucide-react';
+import {
+  Search,
+  X,
+  SlidersHorizontal,
+  Package,
+  FilterX,
+  Tag,
+  Layers,
+  Building2,
+  BarChart3,
+  Boxes,
+} from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import SearchableFilterSelect from '@/components/compras/SearchableFilterSelect';
+import ProdutosSearchStartsWithToggle from '@/components/produtos/ProdutosSearchStartsWithToggle';
+import { ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
+import {
+  DEFAULT_SUGESTAO_COMPRA_FILTERS,
+  SUGESTAO_STATUS_ESTOQUE_OPTIONS,
+  countActiveSugestaoCompraFilters,
+} from '@/lib/filterSugestaoCompraLinhas';
 import { cn } from '@/lib/utils';
 
 const SECTION_CARD = 'rounded-2xl border border-border/40 bg-muted/20 dark:bg-muted/10 p-3.5 space-y-3';
+
+const CHIP_BASE =
+  'h-9 min-w-[2.25rem] px-2.5 rounded-xl text-xs font-semibold transition-colors border';
+const CHIP_ACTIVE =
+  'bg-teal-600 text-white border-teal-600 dark:bg-teal-500 dark:border-teal-500';
+const CHIP_IDLE =
+  'bg-card text-muted-foreground border-border/30 hover:bg-muted/50';
 
 function FilterSection({ title, icon: Icon, children }) {
   return (
@@ -36,31 +61,100 @@ function ActiveFilterChip({ label, onRemove }) {
   );
 }
 
+function ChipGrid({ options, value, onChange, columns = 3 }) {
+  return (
+    <div
+      className={cn('grid gap-1.5', columns === 2 && 'grid-cols-2', columns === 4 && 'grid-cols-4', columns === 3 && 'grid-cols-3')}
+      role="group"
+    >
+      {options.map(({ value: optionValue, label }) => (
+        <button
+          key={optionValue}
+          type="button"
+          onClick={() => onChange(optionValue)}
+          aria-pressed={value === optionValue}
+          className={cn(CHIP_BASE, value === optionValue ? CHIP_ACTIVE : CHIP_IDLE)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function AbcdMultiSelect({ selectedAbcd, onSelectedAbcd }) {
+  const toggle = (letter) => {
+    if (selectedAbcd.includes(letter)) {
+      onSelectedAbcd(selectedAbcd.filter((v) => v !== letter));
+    } else {
+      onSelectedAbcd([...selectedAbcd, letter]);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Curva ABCDE">
+        {ABCD_FILTER_VALUES.map((letter) => {
+          const active = selectedAbcd.includes(letter);
+          return (
+            <button
+              key={letter}
+              type="button"
+              onClick={() => toggle(letter)}
+              aria-pressed={active}
+              title={ABCD_FILTER_LABELS[letter] || `Classe ${letter}`}
+              className={cn(CHIP_BASE, 'h-10 min-w-[2.5rem]', active ? CHIP_ACTIVE : CHIP_IDLE)}
+            >
+              {letter}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-[11px] text-muted-foreground leading-snug">
+        {selectedAbcd.length === 0
+          ? 'Nenhuma selecionada — mostra todas as curvas.'
+          : `Mostrando curvas ${selectedAbcd.join(', ')}.`}
+      </p>
+    </div>
+  );
+}
+
 function FiltrosPainel({
-  categoryFilter,
-  onCategoryFilter,
+  filters,
+  patchFilters,
   categorias,
-  supplierFilter,
-  onSupplierFilter,
   fornecedores,
-  selectedTags,
-  onSelectedTags,
   allTags,
+  unidadesVitrine,
   tagSearch,
   onTagSearch,
-  hidePending,
-  onHidePending,
-  roundingMode,
-  onRoundingMode,
-  agruparHierarquia,
-  onAgruparHierarquia,
 }) {
+  const quantidadeOperador = filters.quantidadeOperador || 'all';
+
   return (
     <div className="space-y-3">
+      <FilterSection title="Busca" icon={Search}>
+        <ProdutosSearchStartsWithToggle
+          checked={!!filters.searchStartsWith}
+          onChange={(checked) => patchFilters({ searchStartsWith: checked })}
+          className="w-full justify-between px-3"
+        />
+        <p className="text-[11px] text-muted-foreground leading-snug">
+          Igual ao catálogo: termos com prefixo XX filtram área/categoria de cadastro na busca.
+        </p>
+      </FilterSection>
+
+      <FilterSection title="Curva ABCDE" icon={BarChart3}>
+        <AbcdMultiSelect
+          selectedAbcd={filters.selectedAbcd || []}
+          onSelectedAbcd={(selectedAbcd) => patchFilters({ selectedAbcd })}
+        />
+      </FilterSection>
+
       <FilterSection title="Categoria" icon={Layers}>
         <SearchableFilterSelect
-          value={categoryFilter}
-          onChange={onCategoryFilter}
+          value={filters.categoriaId}
+          onChange={(categoriaId) => patchFilters({ categoriaId })}
           placeholder="Todas Categorias"
           searchPlaceholder="Buscar categoria..."
           options={[
@@ -72,8 +166,8 @@ function FiltrosPainel({
 
       <FilterSection title="Fornecedor" icon={Building2}>
         <SearchableFilterSelect
-          value={supplierFilter}
-          onChange={onSupplierFilter}
+          value={filters.fornecedorId}
+          onChange={(fornecedorId) => patchFilters({ fornecedorId })}
           placeholder="Todos Fornecedores"
           searchPlaceholder="Buscar fornecedor..."
           options={[
@@ -83,14 +177,92 @@ function FiltrosPainel({
         />
       </FilterSection>
 
+      <FilterSection title="Unidade vitrine" icon={Boxes}>
+        <Select
+          value={filters.unidadeVitrine || 'all'}
+          onValueChange={(unidadeVitrine) => patchFilters({ unidadeVitrine })}
+        >
+          <SelectTrigger className="h-11 bg-card border border-border/30 rounded-xl">
+            <SelectValue placeholder="Todas as unidades" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as unidades</SelectItem>
+            {unidadesVitrine.map((sigla) => (
+              <SelectItem key={sigla} value={sigla}>
+                {sigla}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FilterSection>
+
+      <FilterSection title="Status de estoque" icon={Boxes}>
+        <ChipGrid
+          options={SUGESTAO_STATUS_ESTOQUE_OPTIONS}
+          value={filters.statusEstoque || 'all'}
+          onChange={(statusEstoque) => patchFilters({ statusEstoque })}
+          columns={4}
+        />
+        <p className="text-[11px] text-muted-foreground leading-snug">
+          Usa estoque atual vs. ponto de pedido calculado (média × lead time).
+        </p>
+      </FilterSection>
+
+      <FilterSection title="Quantidade em estoque" icon={Boxes}>
+        <div className="grid grid-cols-2 gap-2">
+          <Select
+            value={quantidadeOperador}
+            onValueChange={(quantidadeOperador) =>
+              patchFilters({
+                quantidadeOperador,
+                quantidadeValorAte: quantidadeOperador === 'between' ? filters.quantidadeValorAte : '',
+              })
+            }
+          >
+            <SelectTrigger className="h-11 bg-card border border-border/30 rounded-xl col-span-2">
+              <SelectValue placeholder="Qualquer quantidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Qualquer quantidade</SelectItem>
+              <SelectItem value="gt">Maior que</SelectItem>
+              <SelectItem value="gte">Maior ou igual a</SelectItem>
+              <SelectItem value="lt">Menor que</SelectItem>
+              <SelectItem value="lte">Menor ou igual a</SelectItem>
+              <SelectItem value="between">Entre</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            inputMode="decimal"
+            placeholder={quantidadeOperador === 'between' ? 'De' : 'Qtd.'}
+            disabled={quantidadeOperador === 'all'}
+            className="bg-card border border-border/30 h-11 rounded-xl disabled:opacity-50"
+            value={filters.quantidadeValor || ''}
+            onChange={(e) => patchFilters({ quantidadeValor: e.target.value })}
+          />
+          {quantidadeOperador === 'between' ? (
+            <Input
+              inputMode="decimal"
+              placeholder="Até"
+              className="bg-card border border-border/30 h-11 rounded-xl"
+              value={filters.quantidadeValorAte || ''}
+              onChange={(e) => patchFilters({ quantidadeValorAte: e.target.value })}
+            />
+          ) : null}
+        </div>
+      </FilterSection>
+
       <FilterSection title="Tags" icon={Tag}>
-        {selectedTags.length > 0 && (
+        {(filters.selectedTags || []).length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {selectedTags.map((tag) => (
+            {filters.selectedTags.map((tag) => (
               <ActiveFilterChip
                 key={tag}
                 label={tag}
-                onRemove={() => onSelectedTags(selectedTags.filter((t) => t !== tag))}
+                onRemove={() =>
+                  patchFilters({
+                    selectedTags: filters.selectedTags.filter((t) => t !== tag),
+                  })
+                }
               />
             ))}
           </div>
@@ -105,14 +277,18 @@ function FiltrosPainel({
           {tagSearch && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-card rounded-xl shadow-lg border border-border/40 max-h-40 overflow-y-auto z-10">
               {allTags
-                .filter((t) => t.toLowerCase().includes(tagSearch.toLowerCase()) && !selectedTags.includes(t))
+                .filter(
+                  (t) =>
+                    t.toLowerCase().includes(tagSearch.toLowerCase()) &&
+                    !(filters.selectedTags || []).includes(t),
+                )
                 .slice(0, 10)
                 .map((tag) => (
                   <button
                     key={tag}
                     type="button"
                     onClick={() => {
-                      onSelectedTags([...selectedTags, tag]);
+                      patchFilters({ selectedTags: [...(filters.selectedTags || []), tag] });
                       onTagSearch('');
                     }}
                     className="w-full text-left px-3 py-2 hover:bg-muted/40 text-sm"
@@ -126,7 +302,10 @@ function FiltrosPainel({
       </FilterSection>
 
       <FilterSection title="Embalagem" icon={Package}>
-        <Select value={roundingMode} onValueChange={onRoundingMode}>
+        <Select
+          value={filters.roundingMode}
+          onValueChange={(roundingMode) => patchFilters({ roundingMode })}
+        >
           <SelectTrigger className="h-11 bg-card border border-border/30 rounded-xl">
             <SelectValue />
           </SelectTrigger>
@@ -142,16 +321,16 @@ function FiltrosPainel({
       <FilterSection title="Hierarquia" icon={Layers}>
         <button
           type="button"
-          onClick={() => onAgruparHierarquia(!agruparHierarquia)}
+          onClick={() => patchFilters({ agruparHierarquia: !filters.agruparHierarquia })}
           className={cn(
             'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
-            agruparHierarquia
+            filters.agruparHierarquia
               ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
               : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
           )}
         >
           <Layers className="h-4 w-4" />
-          {agruparHierarquia ? 'Agrupar famílias (h1–h4)' : 'Listar por SKU'}
+          {filters.agruparHierarquia ? 'Agrupar famílias (h1–h4)' : 'Listar por SKU'}
         </button>
         <p className="text-[11px] text-muted-foreground leading-snug">
           Famílias com 2+ modelos aparecem numa linha (ex.: piso 45×45 sem escolher marca).
@@ -160,142 +339,143 @@ function FiltrosPainel({
 
       <button
         type="button"
-        onClick={() => onHidePending(!hidePending)}
+        onClick={() => patchFilters({ hidePending: !filters.hidePending })}
         className={cn(
           'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
-          hidePending
+          filters.hidePending
             ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
             : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
         )}
       >
         <FilterX className="h-4 w-4" />
-        {hidePending ? 'Mostrar itens em trânsito' : 'Ocultar itens em trânsito'}
+        {filters.hidePending ? 'Mostrar itens em trânsito' : 'Ocultar itens em trânsito'}
       </button>
     </div>
   );
 }
 
-/** Busca + ícone de filtros; painel avançado só no drawer (mobile e desktop). */
+/** Busca + filtros alinhados ao catálogo de produtos (no que couber). */
 export default function FiltrosSugestaoCompra({
-  searchTerm,
-  onSearchTerm,
-  categoryFilter,
-  onCategoryFilter,
+  filters,
+  onFiltersChange,
   categorias,
-  supplierFilter,
-  onSupplierFilter,
   fornecedores,
-  selectedTags,
-  onSelectedTags,
   allTags,
-  tagSearch,
-  onTagSearch,
-  hidePending,
-  onHidePending,
-  roundingMode,
-  onRoundingMode,
-  agruparHierarquia,
-  onAgruparHierarquia,
+  unidadesVitrine = [],
   onLimparFiltros,
 }) {
   const [showFilters, setShowFilters] = useState(false);
+  const [tagSearch, setTagSearch] = useState('');
 
-  const activeFilterCount = [
-    categoryFilter !== 'all',
-    supplierFilter !== 'all',
-    selectedTags.length > 0,
-    hidePending,
-    roundingMode !== 'auto',
-    !agruparHierarquia,
-  ].filter(Boolean).length;
+  const patchFilters = (patch) => onFiltersChange({ ...filters, ...patch });
+  const activeFilterCount = countActiveSugestaoCompraFilters(filters);
 
   const activeChips = useMemo(() => {
     const chips = [];
-    if (categoryFilter !== 'all') {
-      const cat = categorias.find((c) => c.id === categoryFilter);
+    if (filters.searchStartsWith) {
+      chips.push({
+        key: 'starts',
+        label: 'Começa com',
+        onRemove: () => patchFilters({ searchStartsWith: false }),
+      });
+    }
+    if (filters.categoriaId !== 'all') {
+      const cat = categorias.find((c) => c.id === filters.categoriaId);
       chips.push({
         key: 'cat',
         label: cat?.nome || 'Categoria',
-        onRemove: () => onCategoryFilter('all'),
+        onRemove: () => patchFilters({ categoriaId: 'all' }),
       });
     }
-    if (supplierFilter !== 'all') {
-      const f = fornecedores.find((x) => x.id === supplierFilter);
+    if (filters.fornecedorId !== 'all') {
+      const f = fornecedores.find((x) => x.id === filters.fornecedorId);
       chips.push({
         key: 'sup',
         label: f?.nome || 'Fornecedor',
-        onRemove: () => onSupplierFilter('all'),
+        onRemove: () => patchFilters({ fornecedorId: 'all' }),
       });
     }
-    selectedTags.forEach((tag) => {
+    if (filters.unidadeVitrine !== 'all') {
+      chips.push({
+        key: 'vitrine',
+        label: `Vitrine ${filters.unidadeVitrine}`,
+        onRemove: () => patchFilters({ unidadeVitrine: 'all' }),
+      });
+    }
+    if (filters.statusEstoque !== 'all') {
+      const status = SUGESTAO_STATUS_ESTOQUE_OPTIONS.find((o) => o.value === filters.statusEstoque);
+      chips.push({
+        key: 'status',
+        label: `Estoque ${status?.label || filters.statusEstoque}`,
+        onRemove: () => patchFilters({ statusEstoque: 'all' }),
+      });
+    }
+    if (filters.quantidadeOperador !== 'all') {
+      chips.push({
+        key: 'qty',
+        label: `Qtd. ${filters.quantidadeOperador}`,
+        onRemove: () =>
+          patchFilters({ quantidadeOperador: 'all', quantidadeValor: '', quantidadeValorAte: '' }),
+      });
+    }
+    (filters.selectedAbcd || []).forEach((letter) => {
+      chips.push({
+        key: `abcd-${letter}`,
+        label: `Curva ${letter}`,
+        onRemove: () =>
+          patchFilters({
+            selectedAbcd: filters.selectedAbcd.filter((v) => v !== letter),
+          }),
+      });
+    });
+    (filters.selectedTags || []).forEach((tag) => {
       chips.push({
         key: `tag-${tag}`,
         label: tag,
-        onRemove: () => onSelectedTags(selectedTags.filter((t) => t !== tag)),
+        onRemove: () =>
+          patchFilters({
+            selectedTags: filters.selectedTags.filter((t) => t !== tag),
+          }),
       });
     });
-    if (hidePending) {
+    if (filters.hidePending) {
       chips.push({
         key: 'pending',
         label: 'Sem em trânsito',
-        onRemove: () => onHidePending(false),
+        onRemove: () => patchFilters({ hidePending: false }),
       });
     }
-    if (roundingMode !== 'auto') {
+    if (filters.roundingMode !== 'auto') {
       chips.push({
         key: 'round',
-        label: `Arredondamento: ${roundingMode}`,
-        onRemove: () => onRoundingMode('auto'),
+        label: `Arredondamento: ${filters.roundingMode}`,
+        onRemove: () => patchFilters({ roundingMode: 'auto' }),
       });
     }
-    if (!agruparHierarquia) {
+    if (!filters.agruparHierarquia) {
       chips.push({
         key: 'sku',
         label: 'Por SKU',
-        onRemove: () => onAgruparHierarquia(true),
+        onRemove: () => patchFilters({ agruparHierarquia: true }),
       });
     }
     return chips;
-  }, [
-    categoryFilter,
-    supplierFilter,
-    selectedTags,
-    hidePending,
-    roundingMode,
-    agruparHierarquia,
-    categorias,
-    fornecedores,
-    onCategoryFilter,
-    onSupplierFilter,
-    onSelectedTags,
-    onHidePending,
-    onRoundingMode,
-    onAgruparHierarquia,
-  ]);
+  }, [filters, categorias, fornecedores, onFiltersChange]);
 
   const limpar = () => {
     onLimparFiltros();
-    onTagSearch('');
+    setTagSearch('');
   };
 
   const painelProps = {
-    categoryFilter,
-    onCategoryFilter,
+    filters,
+    patchFilters,
     categorias,
-    supplierFilter,
-    onSupplierFilter,
     fornecedores,
-    selectedTags,
-    onSelectedTags,
     allTags,
+    unidadesVitrine,
     tagSearch,
-    onTagSearch,
-    hidePending,
-    onHidePending,
-    roundingMode,
-    onRoundingMode,
-    agruparHierarquia,
-    onAgruparHierarquia,
+    onTagSearch: setTagSearch,
   };
 
   return (
@@ -305,15 +485,15 @@ export default function FiltrosSugestaoCompra({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             autoComplete="off"
-            value={searchTerm}
-            onChange={(e) => onSearchTerm(e.target.value)}
+            value={filters.searchTerm}
+            onChange={(e) => patchFilters({ searchTerm: e.target.value })}
             placeholder="Buscar produto..."
             className="h-12 w-full rounded-2xl border border-border/30 bg-card pl-10 pr-10 text-sm text-foreground/90 shadow-sm outline-none transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-teal-300 dark:bg-muted dark:text-foreground dark:focus:ring-teal-600"
           />
-          {searchTerm ? (
+          {filters.searchTerm ? (
             <button
               type="button"
-              onClick={() => onSearchTerm('')}
+              onClick={() => patchFilters({ searchTerm: '' })}
               className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
               aria-label="Limpar busca"
             >
@@ -391,3 +571,5 @@ export default function FiltrosSugestaoCompra({
     </div>
   );
 }
+
+export { DEFAULT_SUGESTAO_COMPRA_FILTERS };
