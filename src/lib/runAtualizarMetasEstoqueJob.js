@@ -1,4 +1,5 @@
 import { atualizarMetasEstoque } from '@/functions/atualizarMetasEstoque';
+import { runAtualizarMetasEstoqueJobLocal } from '@/lib/runAtualizarMetasEstoqueJobLocal';
 
 export const METAS_ESTOQUE_BATCH_SIZE = 50;
 
@@ -18,6 +19,11 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export function isMetasEstoqueServerCacheError(message) {
+  const msg = String(message || '');
+  return /metas_estoque_job_run|guardar o job no servidor|job incompleto no servidor/i.test(msg);
+}
+
 export function extractAtualizarMetasEstoqueError(error) {
   const msg = error?.message || String(error);
   const match = msg.match(/HTTP (\d+)/);
@@ -27,8 +33,27 @@ export function extractAtualizarMetasEstoqueError(error) {
   return msg;
 }
 
+function shouldFallbackToLocal(prep) {
+  if (!prep || typeof prep !== 'object') return false;
+  if (prep.status === 'erro' && isMetasEstoqueServerCacheError(prep.error)) return true;
+  if (prep.cache_no_servidor === false && prep.status === 'preparado') return true;
+  return false;
+}
+
+function resolveJobExecution(prep) {
+  const jobCache = prep.job_cache;
+  const runId = prep.run_id || jobCache?.run_id;
+  const totalPendentes =
+    prep.total_pendentes ?? jobCache?.total_pendentes ?? jobCache?.produto_ids?.length ?? 0;
+  const hasFullClientCache = Array.isArray(jobCache?.produto_ids) && jobCache.produto_ids.length > 0;
+  const useServerCacheOnly = Boolean(runId && totalPendentes > 0 && !hasFullClientCache);
+
+  return { jobCache, runId, totalPendentes, hasFullClientCache, useServerCacheOnly };
+}
+
 /**
  * Executa o job servidor que grava estoque mínimo (ponto de pedido) e ideal no cadastro.
+ * Se o cache no servidor falhar, recalcula e grava direto no browser.
  * @param {{
  *   somenteMetasVazias?: boolean,
  *   batchSize?: number,
@@ -53,13 +78,25 @@ export async function runAtualizarMetasEstoqueJob(options = {}) {
 
   onProgress?.({ phase: 'preparing', etapa: 'Analisando vendas 90d, dias com estoque e lead time…' });
 
-  const prepResp = await atualizarMetasEstoque({
-    fase: 'preparar',
-    somente_metas_vazias: somenteMetasVazias,
-    modo: 'manual',
-    batch_size: batchSize,
-  });
-  const prep = normalizeJobResponse(prepResp);
+  let prep;
+  try {
+    const prepResp = await atualizarMetasEstoque({
+      fase: 'preparar',
+      somente_metas_vazias: somenteMetasVazias,
+      modo: 'manual',
+      batch_size: batchSize,
+    });
+    prep = normalizeJobResponse(prepResp);
+  } catch (error) {
+    if (isMetasEstoqueServerCacheError(extractAtualizarMetasEstoqueError(error))) {
+      return runAtualizarMetasEstoqueJobLocal(options);
+    }
+    throw error;
+  }
+
+  if (shouldFallbackToLocal(prep)) {
+    return runAtualizarMetasEstoqueJobLocal(options);
+  }
 
   if (prep.error) throw new Error(prep.error);
   if (prep.status === 'erro') throw new Error(prep.error || 'Falha ao preparar o job.');
@@ -74,15 +111,18 @@ export async function runAtualizarMetasEstoqueJob(options = {}) {
     };
   }
 
-  const jobCache = prep.job_cache;
-  if (!jobCache?.run_id || !Array.isArray(jobCache.produto_ids)) {
+  const { jobCache, runId, totalPendentes, hasFullClientCache, useServerCacheOnly } =
+    resolveJobExecution(prep);
+
+  if (!runId || totalPendentes <= 0) {
+    if (!hasFullClientCache) {
+      return runAtualizarMetasEstoqueJobLocal(options);
+    }
     throw new Error(
       'Resposta incompleta do servidor. Atualize a função atualizarMetasEstoque no Base44.',
     );
   }
 
-  const runId = prep.run_id || jobCache.run_id;
-  const totalPendentes = prep.total_pendentes ?? jobCache.produto_ids.length;
   const totalBlocos = prep.total_blocos ?? Math.ceil(totalPendentes / batchSize);
   let offset = 0;
   let totalAtualizados = 0;
@@ -99,17 +139,32 @@ export async function runAtualizarMetasEstoqueJob(options = {}) {
   while (offset < totalPendentes) {
     if (shouldAbort?.()) throw new Error('Operação cancelada.');
 
-    const gravarResp = await atualizarMetasEstoque({
+    const gravarBody = {
       fase: 'gravar',
       run_id: runId,
-      job_cache: jobCache,
       offset,
       batch_size: batchSize,
       modo: 'manual',
-    });
-    const bloco = normalizeJobResponse(gravarResp);
+    };
+    if (!useServerCacheOnly) {
+      gravarBody.job_cache = jobCache;
+    }
+
+    let bloco;
+    try {
+      const gravarResp = await atualizarMetasEstoque(gravarBody);
+      bloco = normalizeJobResponse(gravarResp);
+    } catch (error) {
+      if (isMetasEstoqueServerCacheError(extractAtualizarMetasEstoqueError(error))) {
+        return runAtualizarMetasEstoqueJobLocal(options);
+      }
+      throw error;
+    }
 
     if (bloco.error || bloco.status === 'erro') {
+      if (isMetasEstoqueServerCacheError(bloco.error)) {
+        return runAtualizarMetasEstoqueJobLocal(options);
+      }
       throw new Error(bloco.error || 'Falha ao gravar um bloco de produtos.');
     }
 
