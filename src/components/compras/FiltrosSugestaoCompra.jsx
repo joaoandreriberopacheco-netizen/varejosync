@@ -196,6 +196,28 @@ function FiltrosPainel({
         </Select>
       </FilterSection>
 
+      <FilterSection title="Ponto futuro (giro)" icon={Boxes}>
+        <button
+          type="button"
+          onClick={() =>
+            patchFilters({ somenteAbaixoPontoFuturo: !filters.somenteAbaixoPontoFuturo })
+          }
+          className={cn(
+            'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
+            filters.somenteAbaixoPontoFuturo !== false
+              ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
+              : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
+          )}
+        >
+          {filters.somenteAbaixoPontoFuturo !== false
+            ? 'Somente abaixo do ponto futuro'
+            : 'Mostrar todos com giro'}
+        </button>
+        <p className="text-[11px] text-muted-foreground leading-snug font-mono">
+          Ponto futuro = vendas 60d ÷ 60 × 1,5 × lead time
+        </p>
+      </FilterSection>
+
       <FilterSection title="Status de estoque" icon={Boxes}>
         <ChipGrid
           options={SUGESTAO_STATUS_ESTOQUE_OPTIONS}
@@ -203,9 +225,6 @@ function FiltrosPainel({
           onChange={(statusEstoque) => patchFilters({ statusEstoque })}
           columns={4}
         />
-        <p className="text-[11px] text-muted-foreground leading-snug">
-          Usa estoque atual vs. ponto de pedido calculado (média × 1,5 × lead time).
-        </p>
       </FilterSection>
 
       <FilterSection title="Quantidade em estoque" icon={Boxes}>
@@ -438,6 +457,13 @@ export default function FiltrosSugestaoCompra({
           }),
       });
     });
+    if (filters.somenteAbaixoPontoFuturo === false) {
+      chips.push({
+        key: 'ponto',
+        label: 'Todos com giro',
+        onRemove: () => patchFilters({ somenteAbaixoPontoFuturo: true }),
+      });
+    }
     if (filters.hidePending) {
       chips.push({
         key: 'pending',

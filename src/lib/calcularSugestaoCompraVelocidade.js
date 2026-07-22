@@ -46,6 +46,11 @@ function buildMetricasVelocidade(produto, pedidos90d, salesVelocityMap, leadTime
   };
 }
 
+export function sugestaoTemGiroVelocidade(sugestao) {
+  if (!sugestao) return false;
+  return (Number(sugestao.media_dia) || 0) > 0 || (Number(sugestao.quantidade_limpa_60d) || 0) > 0;
+}
+
 export function calcularSugestaoCompraProdutoVelocidade(
   produto,
   pedidos90d = [],
@@ -54,7 +59,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
 ) {
   const roundingMode = options.roundingMode ?? 'auto';
   const leadTimePadrao = options.leadTimePadrao ?? 20;
-  const fallbackCatalogo = options.fallbackCatalogo !== false;
+  const fallbackCatalogo = options.fallbackCatalogo === true;
 
   const estoqueAtual = Number(produto?.estoque_atual) || 0;
   const leadTime = resolveLeadTime(produto, leadTimePadrao);
@@ -167,7 +172,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
   );
 
   const comVenda = sugestoes.filter((s) => s.media_dia > 0 || s.quantidade_limpa_60d > 0);
-  const usarFallbackGrupo = comVenda.length === 0 && options.fallbackCatalogo !== false;
+  const usarFallbackGrupo = comVenda.length === 0 && options.fallbackCatalogo === true;
 
   if (usarFallbackGrupo) {
     const estoqueAtual = lista.reduce((s, p) => s + (Number(p.estoque_atual) || 0), 0);

@@ -35,6 +35,7 @@ import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
   filterSugestaoCompraLinhas,
+  linhaAbaixoPontoFuturo,
 } from '@/lib/filterSugestaoCompraLinhas';
 const FORNECEDOR_VAZIO = '__none__';
 const SUGESTAO_TREE_LEVEL_KEY = 'sugestaoCompra.treeLevel';
@@ -191,7 +192,19 @@ export default function SugestaoCompra({ onStatsChange }) {
           baseDelayMs: 800,
         });
       } catch {
-        // Vendas 90d só são necessárias ao gerar pedido com distribuição por SKU.
+        toast({
+          title: 'Vendas não carregadas',
+          description: 'A sugestão usa o giro dos últimos 60 dias. Tente atualizar a página.',
+          variant: 'destructive',
+        });
+      }
+
+      if (!pedidos.length) {
+        toast({
+          title: 'Sem histórico de vendas',
+          description: 'Não foi possível calcular o ponto futuro. Verifique a conexão e atualize.',
+          variant: 'destructive',
+        });
       }
 
       const pending = {};
@@ -206,22 +219,25 @@ export default function SugestaoCompra({ onStatsChange }) {
       calcContextRef.current = { pedidos, movsPorProduto, prods, pending, salesVelocityMap };
 
       let semVenda = 0;
-      let abaixoPontoFuturo = 0;
       prods.forEach((p) => {
-        const s = calcularSugestaoCompraProdutoVelocidade(p, pedidos, salesVelocityMap, { roundingMode });
+        const s = calcularSugestaoCompraProdutoVelocidade(p, pedidos, salesVelocityMap, {
+          roundingMode,
+          fallbackCatalogo: false,
+        });
         if (s.motivo === 'sem_venda') semVenda += 1;
-        if (s.elegivel) abaixoPontoFuturo += 1;
       });
 
       const novasLinhas = recomputarLinhas(prods, pedidos, movsPorProduto, pending, {
         salesVelocityMap,
       });
+      const abaixoPonto = novasLinhas.filter(linhaAbaixoPontoFuturo).length;
 
       setLoadStats({
         totalAtivos: prods.length,
-        elegiveis: novasLinhas.length,
+        elegiveis: abaixoPonto,
+        comGiro: novasLinhas.length,
         semVenda,
-        abaixoPontoFuturo,
+        abaixoPontoFuturo: abaixoPonto,
         linhasGrupo: novasLinhas.filter((l) => l.tipo === 'grupo').length,
       });
       setLinhas(novasLinhas);
@@ -567,6 +583,9 @@ export default function SugestaoCompra({ onStatsChange }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-foreground/85">
           {filteredLinhas.length} sugestão(ões)
+          {loadStats.comGiro > filteredLinhas.length
+            ? ` · ${loadStats.comGiro} com giro (filtro ponto futuro ativo)`
+            : ''}
           {loadStats.linhasGrupo > 0 ? ` · ${loadStats.linhasGrupo} família(s)` : ''}
           {selectedCount > 0 ? ` · ${selectedCount} selecionada(s)` : ''}
         </p>
@@ -613,13 +632,18 @@ export default function SugestaoCompra({ onStatsChange }) {
           <p className="text-xs text-muted-foreground leading-relaxed">
             {loadStats.totalAtivos > 0 ? (
               <>
-                {loadStats.totalAtivos} produto(s) analisados pela velocidade de giro (60 dias).
-                {loadStats.semVenda > 0 ? (
-                  <> {loadStats.semVenda} sem vendas recentes — usam cadastro como referência quando existir ponto.</>
-                ) : null}
-                {loadStats.abaixoPontoFuturo === 0 ? (
-                  <> Nenhum está com estoque abaixo do ponto futuro calculado.</>
-                ) : null}
+                {loadStats.totalAtivos} produto(s) no catálogo.
+                {loadStats.comGiro > 0 ? (
+                  <>
+                    {' '}
+                    {loadStats.comGiro} com giro nos últimos 60 dias
+                    {loadStats.abaixoPontoFuturo === 0
+                      ? ', mas nenhum está abaixo do ponto futuro calculado.'
+                      : '.'}
+                  </>
+                ) : (
+                  <> Nenhum com vendas nos últimos 60 dias para calcular o ponto futuro.</>
+                )}
               </>
             ) : (
               <>Não foi possível carregar produtos do catálogo. Tente atualizar a página.</>
