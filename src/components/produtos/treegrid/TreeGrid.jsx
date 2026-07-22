@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffe
 import { ChevronRight, Package, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL } from './useTreeGrid';
+import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, aggregateEstoqueDisplay, collectSkus, catalogProdutosStructureSig, TREE_GRID_EXPAND_ALL_LEVEL, resolveExpandedKeysForMasterLevel } from './useTreeGrid';
 import { formatEstoqueApresentacao, getCatalogoComercialView, getCatalogUnitLabels } from '@/lib/productUnits';
 import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
@@ -396,7 +396,8 @@ function groupCellValue(colId, row, salesVelocityMap = {}) {
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
 const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, produtoWidth, readOnly, salesVelocityMap }) {
   const isPrimeiroNivel = row.level === 1;
-  const hierDepth = catalogHierDepth(row.level);
+  const isCategoryBand = !!row.isCategoryBand;
+  const hierDepth = isCategoryBand ? 0 : catalogHierDepth(row.level);
 
   return (
     <tr
@@ -411,15 +412,23 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
           hierDepth={hierDepth}
           showChevron
           isExpanded={isExpanded}
-          showTierDot={isPrimeiroNivel}
+          showTierDot={isPrimeiroNivel && !isCategoryBand}
           showIcon={false}
         >
-          <span className={CATALOG_ROW_LABEL_CLASS}>
+          <span className={isCategoryBand
+            ? 'text-xs font-bold text-teal-800 dark:text-teal-300 whitespace-nowrap uppercase tracking-wide'
+            : CATALOG_ROW_LABEL_CLASS}>
             {row.label}
           </span>
-          <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground flex-shrink-0 ml-0.5">
-            {row.count}
-          </Badge>
+          {!isCategoryBand ? (
+            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-border/40 text-muted-foreground dark:border-border/40 dark:text-muted-foreground flex-shrink-0 ml-0.5">
+              {row.count}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="h-5 px-1.5 text-[10px] font-medium border-teal-200/60 text-teal-700 dark:border-teal-800 dark:text-teal-300 flex-shrink-0 ml-0.5">
+              {row.count}
+            </Badge>
+          )}
         </CatalogProdutoCell>
       </td>
       {activeCols.map(col => (
@@ -531,9 +540,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     if (scrollEl) {
       pendingScrollRestoreRef.current = scrollEl.scrollTop;
     }
-    setExpandedKeys(
-      masterLevel === 1 ? new Set() : buildExpandedForLevel(treeRef.current, masterLevel - 1)
-    );
+    setExpandedKeys(resolveExpandedKeysForMasterLevel(treeRef.current, masterLevel, groupByCategory));
   }, [produtosStructureSig, groupByCategory, masterLevel]);
 
   useEffect(() => {
@@ -541,8 +548,10 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   }, [expandedKeys, onExpandedKeysChange]);
 
   const rows = useMemo(
-    () => mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys, '', 0, sortOrder)),
-    [tree, expandedKeys, sortOrder]
+    () => mergeAdjacentDuplicateGroupHeaders(
+      flattenTree(tree, expandedKeys, '', 0, sortOrder, { groupByCategory }),
+    ),
+    [tree, expandedKeys, sortOrder, groupByCategory],
   );
 
   useLayoutEffect(() => {
