@@ -14,12 +14,13 @@ import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
-import { calcularSugestaoCompraProdutoCatalogo } from '@/lib/calcularSugestaoCompraCatalogo';
+import { calcularSugestaoCompraProdutoVelocidade } from '@/lib/calcularSugestaoCompraVelocidade';
 import {
   buildLinhasSugestaoCompra,
   distribuirQuantidadeGrupo,
 } from '@/lib/calcularSugestaoCompraHierarquia';
 import { fetchPedidosVenda90d, fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
+import { buildCatalogSalesVelocityMap } from '@/lib/catalogSalesVelocity';
 import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -84,6 +85,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState({});
   const [fornecedorPorLinha, setFornecedorPorLinha] = useState({});
+  const [quantidadeOverrideBase, setQuantidadeOverrideBase] = useState({});
 
   const [filters, setFilters] = useState(() => ({ ...DEFAULT_SUGESTAO_COMPRA_FILTERS }));
   const { roundingMode, agruparHierarquia } = filters;
@@ -93,14 +95,21 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [loadStats, setLoadStats] = useState({
     totalAtivos: 0,
     elegiveis: 0,
-    semPontoPedido: 0,
-    abaixoPontoPedido: 0,
+    semVenda: 0,
+    abaixoPontoFuturo: 0,
     linhasGrupo: 0,
   });
 
   const { toast } = useToast();
   const navigate = useNavigate();
-  const calcContextRef = useRef({ pedidos: [], movsPorProduto: {}, prods: [], pending: {}, vendasDados: null });
+  const calcContextRef = useRef({
+    pedidos: [],
+    movsPorProduto: {},
+    prods: [],
+    pending: {},
+    vendasDados: null,
+    salesVelocityMap: {},
+  });
   const abcdLoadRef = useRef(0);
 
   const allTags = useMemo(() => collectSugestaoTags(linhas), [linhas]);
@@ -108,7 +117,29 @@ export default function SugestaoCompra({ onStatsChange }) {
 
   const produtoParaCompra = (produto) => buildSnapshotExibicaoComercial(produto);
 
-  const calcQuantityLinha = (linha) => linha.sugestao?.quantidade_sugerida_base || 0;
+  const calcQuantityLinha = (linha) => {
+    if (quantidadeOverrideBase[linha.id] != null) {
+      return quantidadeOverrideBase[linha.id];
+    }
+    return linha.sugestao?.quantidade_sugerida_base || 0;
+  };
+
+  const handleQuantidadeLinhaChange = useCallback((linha, qtyComercial) => {
+    const snap = produtoParaCompra(linha.produto);
+    const disp = resolveCommercialDisplay(
+      snap,
+      0,
+      linha.produto.unidade_principal || 'UN',
+    );
+    const fator = disp.fator_conversao || 1;
+    const parsed = Number(String(qtyComercial).replace(',', '.'));
+    if (!Number.isFinite(parsed) || parsed < 0) return;
+    const base = parsed * fator;
+    setQuantidadeOverrideBase((prev) => ({
+      ...prev,
+      [linha.id]: base,
+    }));
+  }, []);
 
   const sugestaoDisplayLinha = (linha) => {
     const qBase = calcQuantityLinha(linha);
@@ -123,10 +154,13 @@ export default function SugestaoCompra({ onStatsChange }) {
     (prods, pedidos, movsPorProduto, pending, opts = {}) => {
       const agrupar = opts.agruparHierarquia ?? agruparHierarquia;
       const round = opts.roundingMode ?? roundingMode;
+      const salesVelocityMap = opts.salesVelocityMap
+        ?? buildCatalogSalesVelocityMap(prods, pedidos);
       return buildLinhasSugestaoCompra(prods, pedidos, movsPorProduto, pending, {
         agruparHierarquia: agrupar,
         roundingMode: round,
-        fonte: 'catalogo',
+        fonte: 'velocidade',
+        salesVelocityMap,
       });
     },
     [agruparHierarquia, roundingMode],
@@ -168,26 +202,30 @@ export default function SugestaoCompra({ onStatsChange }) {
       });
 
       const movsPorProduto = {};
-      calcContextRef.current = { pedidos, movsPorProduto, prods, pending };
+      const salesVelocityMap = buildCatalogSalesVelocityMap(prods, pedidos);
+      calcContextRef.current = { pedidos, movsPorProduto, prods, pending, salesVelocityMap };
 
-      let semPontoPedido = 0;
-      let abaixoPontoPedido = 0;
+      let semVenda = 0;
+      let abaixoPontoFuturo = 0;
       prods.forEach((p) => {
-        const s = calcularSugestaoCompraProdutoCatalogo(p, { roundingMode });
-        if (s.motivo === 'sem_ponto_pedido') semPontoPedido += 1;
-        if (s.elegivel) abaixoPontoPedido += 1;
+        const s = calcularSugestaoCompraProdutoVelocidade(p, pedidos, salesVelocityMap, { roundingMode });
+        if (s.motivo === 'sem_venda') semVenda += 1;
+        if (s.elegivel) abaixoPontoFuturo += 1;
       });
 
-      const novasLinhas = recomputarLinhas(prods, pedidos, movsPorProduto, pending);
+      const novasLinhas = recomputarLinhas(prods, pedidos, movsPorProduto, pending, {
+        salesVelocityMap,
+      });
 
       setLoadStats({
         totalAtivos: prods.length,
         elegiveis: novasLinhas.length,
-        semPontoPedido,
-        abaixoPontoPedido,
+        semVenda,
+        abaixoPontoFuturo,
         linhasGrupo: novasLinhas.filter((l) => l.tipo === 'grupo').length,
       });
       setLinhas(novasLinhas);
+      setQuantidadeOverrideBase({});
       setFornecedores(forn);
       setCategorias(cats);
 
@@ -202,8 +240,15 @@ export default function SugestaoCompra({ onStatsChange }) {
             ...calcContextRef.current,
             pedidos: vendasDados.pedidos90d,
             vendasDados,
+            salesVelocityMap: buildCatalogSalesVelocityMap(prods, vendasDados.pedidos90d),
           };
-          setLinhas((prev) => enrichSugestaoLinhasComAbcd(prev, prods, vendasDados));
+          const velocityMap = calcContextRef.current.salesVelocityMap;
+          setLinhas(() => {
+            const next = recomputarLinhas(prods, vendasDados.pedidos90d, movsPorProduto, pending, {
+              salesVelocityMap: velocityMap,
+            });
+            return enrichSugestaoLinhasComAbcd(next, prods, vendasDados);
+          });
         })
         .catch(() => {
           /* ABCD ao vivo é opcional; a lista já está visível */
@@ -225,6 +270,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     let next = recomputarLinhas(ctx.prods, ctx.pedidos, ctx.movsPorProduto, ctx.pending, {
       agruparHierarquia,
       roundingMode,
+      salesVelocityMap: ctx.salesVelocityMap,
     });
     if (ctx.vendasDados) {
       next = enrichSugestaoLinhasComAbcd(next, ctx.prods, ctx.vendasDados);
@@ -567,12 +613,12 @@ export default function SugestaoCompra({ onStatsChange }) {
           <p className="text-xs text-muted-foreground leading-relaxed">
             {loadStats.totalAtivos > 0 ? (
               <>
-                {loadStats.totalAtivos} produto(s) lidos do catálogo.
-                {loadStats.semPontoPedido > 0 ? (
-                  <> {loadStats.semPontoPedido} sem ponto de pedido (estoque mínimo) — atualize no Catálogo.</>
+                {loadStats.totalAtivos} produto(s) analisados pela velocidade de giro (60 dias).
+                {loadStats.semVenda > 0 ? (
+                  <> {loadStats.semVenda} sem vendas recentes — usam cadastro como referência quando existir ponto.</>
                 ) : null}
-                {loadStats.abaixoPontoPedido === 0 && loadStats.semPontoPedido < loadStats.totalAtivos ? (
-                  <> Nenhum está com estoque abaixo do ponto de pedido cadastrado.</>
+                {loadStats.abaixoPontoFuturo === 0 ? (
+                  <> Nenhum está com estoque abaixo do ponto futuro calculado.</>
                 ) : null}
               </>
             ) : (
@@ -587,7 +633,7 @@ export default function SugestaoCompra({ onStatsChange }) {
             asChild
           >
             <Link to={createPageUrl('Produtos')}>
-              Atualizar pontos de pedido no Catálogo
+              Ver catálogo e histórico de vendas
             </Link>
           </Button>
         </div>
@@ -654,6 +700,8 @@ export default function SugestaoCompra({ onStatsChange }) {
               )
             }
             sugestaoDisplayLinha={sugestaoDisplayLinha}
+            calcQuantityLinha={calcQuantityLinha}
+            onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
             renderFornecedorSelect={(linha) =>
               renderFornecedorSelect(linha, 'h-8 w-full max-w-[14rem] rounded-md border-0 bg-muted/30 text-xs')
             }
