@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Search, X, SlidersHorizontal, Package, FilterX, Tag, Layers, Building2 } from 'lucide-react';
+import { Search, X, SlidersHorizontal, Package, FilterX, Tag, Layers, Building2, BarChart3 } from 'lucide-react';
+import { ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,48 @@ function FilterSection({ title, icon: Icon, children }) {
       </div>
       {children}
     </section>
+  );
+}
+
+function AbcdMultiSelect({ selectedAbcd, onSelectedAbcd }) {
+  const toggle = (letter) => {
+    if (selectedAbcd.includes(letter)) {
+      onSelectedAbcd(selectedAbcd.filter((v) => v !== letter));
+    } else {
+      onSelectedAbcd([...selectedAbcd, letter]);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Curva ABCDE">
+        {ABCD_FILTER_VALUES.map((letter) => {
+          const active = selectedAbcd.includes(letter);
+          return (
+            <button
+              key={letter}
+              type="button"
+              onClick={() => toggle(letter)}
+              aria-pressed={active}
+              title={ABCD_FILTER_LABELS[letter] || `Classe ${letter}`}
+              className={cn(
+                'h-10 min-w-[2.5rem] px-3 rounded-xl text-sm font-semibold transition-colors border',
+                active
+                  ? 'bg-teal-600 text-white border-teal-600 dark:bg-teal-500 dark:border-teal-500'
+                  : 'bg-card text-muted-foreground border-border/30 hover:bg-muted/50',
+              )}
+            >
+              {letter}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-[11px] text-muted-foreground leading-snug">
+        {selectedAbcd.length === 0
+          ? 'Nenhuma selecionada — mostra todas as curvas.'
+          : `Mostrando curvas ${selectedAbcd.join(', ')}.`}
+      </p>
+    </div>
   );
 }
 
@@ -54,9 +97,15 @@ function FiltrosPainel({
   onRoundingMode,
   agruparHierarquia,
   onAgruparHierarquia,
+  selectedAbcd,
+  onSelectedAbcd,
 }) {
   return (
     <div className="space-y-3">
+      <FilterSection title="Curva ABCDE" icon={BarChart3}>
+        <AbcdMultiSelect selectedAbcd={selectedAbcd} onSelectedAbcd={onSelectedAbcd} />
+      </FilterSection>
+
       <FilterSection title="Categoria" icon={Layers}>
         <SearchableFilterSelect
           value={categoryFilter}
@@ -196,6 +245,8 @@ export default function FiltrosSugestaoCompra({
   onRoundingMode,
   agruparHierarquia,
   onAgruparHierarquia,
+  selectedAbcd,
+  onSelectedAbcd,
   onLimparFiltros,
 }) {
   const [showFilters, setShowFilters] = useState(false);
@@ -204,6 +255,7 @@ export default function FiltrosSugestaoCompra({
     categoryFilter !== 'all',
     supplierFilter !== 'all',
     selectedTags.length > 0,
+    selectedAbcd.length > 0,
     hidePending,
     roundingMode !== 'auto',
     !agruparHierarquia,
@@ -234,6 +286,13 @@ export default function FiltrosSugestaoCompra({
         onRemove: () => onSelectedTags(selectedTags.filter((t) => t !== tag)),
       });
     });
+    if (selectedAbcd.length > 0) {
+      chips.push({
+        key: 'abcd',
+        label: `Curva ${selectedAbcd.join('+')}`,
+        onRemove: () => onSelectedAbcd([]),
+      });
+    }
     if (hidePending) {
       chips.push({
         key: 'pending',
@@ -260,6 +319,7 @@ export default function FiltrosSugestaoCompra({
     categoryFilter,
     supplierFilter,
     selectedTags,
+    selectedAbcd,
     hidePending,
     roundingMode,
     agruparHierarquia,
@@ -268,6 +328,7 @@ export default function FiltrosSugestaoCompra({
     onCategoryFilter,
     onSupplierFilter,
     onSelectedTags,
+    onSelectedAbcd,
     onHidePending,
     onRoundingMode,
     onAgruparHierarquia,
@@ -296,6 +357,8 @@ export default function FiltrosSugestaoCompra({
     onRoundingMode,
     agruparHierarquia,
     onAgruparHierarquia,
+    selectedAbcd,
+    onSelectedAbcd,
   };
 
   return (
