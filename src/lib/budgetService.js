@@ -7,6 +7,7 @@ import {
   lancamentoElegivelBudget,
 } from '@/lib/budgetCalculos';
 import { calcularLucroBrutoCompetencia, competenciaParaIntervalo } from '@/lib/relatorioMargemCalculos';
+import { fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
 import { listarCentrosCustoRegistros } from '@/lib/folhaPrevisaoService';
 import {
   listarLancamentosMesCompetenciaCache,
@@ -331,20 +332,8 @@ export async function obterLucroBrutoCompetencia(competencia) {
     return { receita_liquida: 0, custo_total: 0, lucro_bruto: 0, quantidade_produtos: 0 };
   }
 
-  const fromStr = intervalo.from.toISOString().slice(0, 10);
-  const toStr = intervalo.to.toISOString().slice(0, 10);
-
   const [sales, products] = await Promise.all([
-    base44.entities.PedidoVenda.filter({
-      tipo: 'PDV',
-      status: { $ne: 'Cancelado' },
-      created_date: { $gte: fromStr, $lte: `${toStr}T23:59:59.999Z` },
-    }).catch(() =>
-      base44.entities.PedidoVenda.filter({
-        tipo: 'PDV',
-        created_date: { $gte: fromStr },
-      }),
-    ),
+    fetchPedidosVendaParaMargem(),
     base44.entities.Produto.list(),
   ]);
 

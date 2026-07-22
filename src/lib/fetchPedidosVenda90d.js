@@ -8,7 +8,7 @@ import {
 
 const PEDIDO_IDS_CHUNK = 40;
 const PEDIDO_GET_CHUNK = 10;
-const TIPOS_VENDA_PDV = ['PDV', 'PDV Supermercado', 'PDV Autosserviço', 'Pedido'];
+export const TIPOS_VENDA_PDV = ['PDV', 'PDV Supermercado', 'PDV Autosserviço', 'Pedido'];
 
 function normalizeItemVenda(it) {
   return {
@@ -355,6 +355,52 @@ export async function fetchDadosVendaAbcd90d() {
     itensPorProduto,
     itens_linhas: countLinhasItens(itensPorProduto),
   };
+}
+
+/**
+ * Carrega vendas elegíveis para o Relatório de Margem (todos os tipos PDV + hidratação de itens).
+ */
+export async function fetchPedidosVendaParaMargem() {
+  const porId = new Map();
+  const dataKey = isoDiasAtrasDateKey(365);
+
+  for (const tipo of TIPOS_VENDA_PDV) {
+    try {
+      const rows = await fetchPedidosPaginados({
+        tipo,
+        status: { $ne: 'Cancelado' },
+      });
+      for (const pedido of rows) {
+        if (pedido?.id != null && pedidoElegivelIep(pedido)) {
+          porId.set(String(pedido.id), pedido);
+        }
+      }
+    } catch {
+      /* tenta próximo tipo */
+    }
+  }
+
+  if (porId.size === 0) {
+    const fallbacks = [
+      { status: { $ne: 'Cancelado' } },
+      { tipo: 'PDV', status: { $ne: 'Cancelado' } },
+    ];
+    for (const query of fallbacks) {
+      try {
+        const rows = await fetchPedidosPaginados(query);
+        for (const pedido of rows) {
+          if (pedido?.id != null && pedidoElegivelIep(pedido)) {
+            porId.set(String(pedido.id), pedido);
+          }
+        }
+        if (porId.size > 0) break;
+      } catch {
+        /* próximo fallback */
+      }
+    }
+  }
+
+  return hidratarPedidosSemItens([...porId.values()], dataKey);
 }
 
 export { countLinhasItens };
