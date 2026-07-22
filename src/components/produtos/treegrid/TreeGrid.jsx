@@ -8,6 +8,7 @@ import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { CATALOGO_VIRTUALIZE_MIN_ROWS } from '@/lib/p38VirtualList';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
+import { computeTreeGridColumnLayout } from './treeGridColumnLayout';
 
 // ── Formatação ────────────────────────────────────────────────────────────────
 const fmtR   = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -101,17 +102,16 @@ export { TREE_GRID_EXPAND_ALL_LEVEL };
 
 const HIER_STEP = 20;    // recuo por nível hierárquico (filhos vs pais/solteiros)
 const CELL_PAD = 4;
-/** Largura fixa da coluna Produto — alinha thead, tbody e espaçadores de virtualização */
-const PRODUTO_COL_WIDTH = 220;
+const PRODUTO_STICKY_SHADOW = 'shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.45)]';
 
-function VirtualPaddingRow({ height, activeCols }) {
+function VirtualPaddingRow({ height, produtoWidth, activeCols }) {
   if (height <= 0) return null;
   const padStyle = { height, padding: 0, border: 0, lineHeight: 0, fontSize: 0 };
   return (
     <tr aria-hidden="true">
-      <td style={{ ...padStyle, width: PRODUTO_COL_WIDTH, minWidth: PRODUTO_COL_WIDTH, maxWidth: PRODUTO_COL_WIDTH }} />
+      <td style={{ ...padStyle, width: produtoWidth, minWidth: produtoWidth }} />
       {activeCols.map((col) => (
-        <td key={col.id} style={{ ...padStyle, width: col.w, minWidth: col.w, maxWidth: col.w }} />
+        <td key={col.id} style={{ ...padStyle, width: col.width, minWidth: col.minW }} />
       ))}
     </tr>
   );
@@ -121,11 +121,11 @@ const catalogHierDepth = (level) => Math.max(0, (level ?? 1) - 1);
 
 /** Rótulo principal — pais, solteiros de 1º nível e cabeçalho da tabela */
 const CATALOG_ROW_LABEL_CLASS =
-  'text-xs font-semibold text-foreground/90 dark:text-foreground truncate uppercase tracking-wide';
+  'text-xs font-semibold text-foreground/90 dark:text-foreground whitespace-nowrap uppercase tracking-wide';
 
 /** Filhos (nível ≥ 2) — tom mais suave que o pai */
 const CATALOG_CHILD_LABEL_CLASS =
-  'text-xs font-normal text-muted-foreground truncate uppercase';
+  'text-xs font-normal text-muted-foreground whitespace-nowrap uppercase';
 
 /** Marcador verde mediterrâneo — pais e solteiros de 1º nível na árvore */
 function CatalogTierDot() {
@@ -154,7 +154,7 @@ function CatalogProdutoCell({
 
   return (
     <div
-      className="flex items-center min-w-0 w-full"
+      className="flex items-center w-max max-w-none"
       style={{ paddingLeft: CELL_PAD + hierDepth * HIER_STEP }}
     >
       {hasRail && (
@@ -188,7 +188,7 @@ function CatalogProdutoCell({
           )}
         </div>
       )}
-      <div className={cn('flex items-center gap-1.5 min-w-0 flex-1', hasRail && 'ml-1.5')}>
+      <div className={cn('flex items-center gap-1.5', hasRail && 'ml-1.5')}>
         {children}
       </div>
     </div>
@@ -244,7 +244,7 @@ function skuCellValue(colId, produto, margem, lastro, markup) {
         ))}
       </div>
     );
-    case 'fornecedor':           return <span className="text-xs text-muted-foreground truncate max-w-[120px] block">{produto.fornecedor_padrao_codigo || '—'}</span>;
+    case 'fornecedor':           return <span className="text-xs text-muted-foreground whitespace-nowrap">{produto.fornecedor_padrao_codigo || '—'}</span>;
     case 'preco_venda':          return (
       <span className="text-xs text-foreground/90 tabular-nums">
         {cat.precoVenda > 0 ? `R$ ${fmtR(cat.precoVenda)}` : '—'}
@@ -370,7 +370,7 @@ function groupCellValue(colId, row) {
 }
 
 // ── Linha de Grupo ─────────────────────────────────────────────────────────────
-const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, readOnly }) {
+const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activeCols, produtoWidth, readOnly }) {
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
 
@@ -380,8 +380,8 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       onClick={() => onToggle(row.key)}
     >
       <td
-        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, 'py-2')}
-        style={{ left: 0, paddingRight: 8, width: PRODUTO_COL_WIDTH, minWidth: PRODUTO_COL_WIDTH, maxWidth: PRODUTO_COL_WIDTH }}
+        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2')}
+        style={{ left: 0, paddingRight: 8, width: produtoWidth, minWidth: produtoWidth }}
       >
         <CatalogProdutoCell
           hierDepth={hierDepth}
@@ -400,7 +400,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
       </td>
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-2 px-2 whitespace-nowrap"
-          style={{ width: col.w, minWidth: col.w, maxWidth: col.w }}>
+          style={{ width: col.width, minWidth: col.minW }}>
           {groupCellValue(col.id, row)}
         </td>
       ))}
@@ -409,7 +409,7 @@ const GroupRow = React.memo(function GroupRow({ row, isExpanded, onToggle, activ
 });
 
 // ── Linha de SKU ───────────────────────────────────────────────────────────────
-const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, readOnly }) {
+const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, produtoWidth, readOnly }) {
   const p = row.produto;
   const isPrimeiroNivel = row.level === 1;
   const hierDepth = catalogHierDepth(row.level);
@@ -417,30 +417,28 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
   return (
     <tr className={cn(p38Table.row, 'group')}>
       <td
-        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, 'py-1.5')}
-        style={{ left: 0, paddingRight: 8, width: PRODUTO_COL_WIDTH, minWidth: PRODUTO_COL_WIDTH, maxWidth: PRODUTO_COL_WIDTH }}
+        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-1.5')}
+        style={{ left: 0, paddingRight: 8, width: produtoWidth, minWidth: produtoWidth }}
       >
-        <div className="flex items-center min-w-0 gap-1">
-          <div className="min-w-0 flex-1">
-            <CatalogProdutoCell
-              hierDepth={hierDepth}
-              showTierDot={isPrimeiroNivel}
-              showIcon
-              produto={p}
-            >
-              <span className={isPrimeiroNivel ? CATALOG_ROW_LABEL_CLASS : CATALOG_CHILD_LABEL_CLASS}>
-                {p.nome}
+        <div className="flex items-center gap-1 w-max max-w-none">
+          <CatalogProdutoCell
+            hierDepth={hierDepth}
+            showTierDot={isPrimeiroNivel}
+            showIcon
+            produto={p}
+          >
+            <span className={isPrimeiroNivel ? CATALOG_ROW_LABEL_CLASS : CATALOG_CHILD_LABEL_CLASS}>
+              {p.nome}
+            </span>
+            {p.codigo_interno && (
+              <span className={cn(
+                'text-[10px] flex-shrink-0 font-mono whitespace-nowrap',
+                isPrimeiroNivel ? 'text-foreground/70 dark:text-foreground/80' : 'text-muted-foreground',
+              )}>
+                {p.codigo_interno}
               </span>
-              {p.codigo_interno && (
-                <span className={cn(
-                  'text-[10px] flex-shrink-0 font-mono',
-                  isPrimeiroNivel ? 'text-foreground/70 dark:text-foreground/80' : 'text-muted-foreground',
-                )}>
-                  {p.codigo_interno}
-                </span>
-              )}
-            </CatalogProdutoCell>
-          </div>
+            )}
+          </CatalogProdutoCell>
           {!readOnly && (
             <CatalogRowActions onEdit={onEdit} onDelete={onDelete} produto={p} />
           )}
@@ -448,7 +446,7 @@ const SkuRow = React.memo(function SkuRow({ row, onEdit, onDelete, activeCols, r
       </td>
       {activeCols.map(col => (
         <td key={col.id} className="text-right py-1.5 px-2 whitespace-nowrap"
-          style={{ width: col.w, minWidth: col.w, maxWidth: col.w }}>
+          style={{ width: col.width, minWidth: col.minW }}>
           {skuCellValue(col.id, p, row.margem, row.lastro, row.markup)}
         </td>
       ))}
@@ -493,6 +491,7 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   const scrollContainerRef = useRef(null);
   const treeRef = useRef(null);
   const pendingScrollRestoreRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
   const tree = useCatalogTreeGrid(produtos, { groupByCategory });
   treeRef.current = tree;
@@ -547,6 +546,26 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
     return visibleColumns.map((id) => defsById.get(id)).filter(Boolean);
   }, [visibleColumns]);
 
+  useLayoutEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return undefined;
+    const update = () => setContainerWidth(el.clientWidth);
+    update();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null;
+    ro?.observe(el);
+    window.addEventListener('resize', update);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  const columnLayout = useMemo(
+    () => computeTreeGridColumnLayout({ rows, activeCols, readOnly, containerWidth }),
+    [rows, activeCols, readOnly, containerWidth],
+  );
+  const { produtoWidth, cols: layoutCols, tableWidth } = columnLayout;
+
   const estimateRowSize = useCallback(
     (index) => (rows[index]?.type === 'group' ? 38 : 46),
     [rows]
@@ -565,8 +584,6 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
   const paddingTop = shouldVirtualizeRows ? virtualRows.paddingTop : 0;
   const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
 
-  const tableWidth = PRODUTO_COL_WIDTH + activeCols.reduce((sum, col) => sum + col.w, 0);
-
   return (
     <div className="flex flex-col h-full w-full">
       {/* Scroll container — tabela rola livremente; coluna Produto é sticky */}
@@ -581,22 +598,21 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
             borderCollapse: 'separate',
             borderSpacing: 0,
             width: tableWidth,
-            minWidth: '100%',
           }}
         >
           {/* thead sticky no topo durante scroll vertical */}
           <thead className={p38Table.headerSolid}>
             <tr className="border-b border-border/40 dark:border-white/10">
               <th
-                className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
-                style={{ left: 0, paddingLeft: 8, paddingRight: 8, width: PRODUTO_COL_WIDTH, minWidth: PRODUTO_COL_WIDTH, maxWidth: PRODUTO_COL_WIDTH }}
+                className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, CATALOG_ROW_LABEL_CLASS, "text-left py-2")}
+                style={{ left: 0, paddingLeft: 8, paddingRight: 8, width: produtoWidth, minWidth: produtoWidth }}
               >
                 Produto
               </th>
-              {activeCols.map(col => (
+              {layoutCols.map(col => (
                 <th key={col.id}
                   className={cn(p38Table.head, p38Table.headRight, CATALOG_ROW_LABEL_CLASS, "py-2 whitespace-nowrap")}
-                  style={{ width: col.w, minWidth: col.w, maxWidth: col.w }}>
+                  style={{ width: col.width, minWidth: col.minW }}>
                   {col.label}
                 </th>
               ))}
@@ -606,27 +622,29 @@ export default function TreeGrid({ produtos, onEdit, onDelete, visibleColumns = 
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={activeCols.length + 1} className="py-12 text-center text-sm text-muted-foreground">
+                <td colSpan={layoutCols.length + 1} className="py-12 text-center text-sm text-muted-foreground">
                   Nenhum produto encontrado.
                 </td>
               </tr>
             ) : (
               <>
-                <VirtualPaddingRow height={paddingTop} activeCols={activeCols} />
+                <VirtualPaddingRow height={paddingTop} produtoWidth={produtoWidth} activeCols={layoutCols} />
                 {visibleRows.map(row =>
                   row.type === 'group'
                     ? <GroupRow key={row.key} row={row}
                         isExpanded={expandedKeys.has(row.key)}
                         onToggle={handleToggle}
-                        activeCols={activeCols}
+                        activeCols={layoutCols}
+                        produtoWidth={produtoWidth}
                         readOnly={readOnly} />
                     : <SkuRow key={row.key} row={row}
                         onEdit={onEdit}
                         onDelete={onDelete || noopDelete}
-                        activeCols={activeCols}
+                        activeCols={layoutCols}
+                        produtoWidth={produtoWidth}
                         readOnly={readOnly} />
                 )}
-                <VirtualPaddingRow height={paddingBottom} activeCols={activeCols} />
+                <VirtualPaddingRow height={paddingBottom} produtoWidth={produtoWidth} activeCols={layoutCols} />
               </>
             )}
           </tbody>
