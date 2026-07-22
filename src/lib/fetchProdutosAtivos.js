@@ -7,28 +7,42 @@ export function isProdutoAtivoCompra(produto) {
   return true;
 }
 
+function rowsFromProdutoList(batch) {
+  return Array.isArray(batch) ? batch : batch?.data ?? [];
+}
+
 /**
- * Lista todos os produtos ativos do catálogo (paginado).
- * Usa Produto.list como o Catálogo — evita limite implícito do filter.
+ * Lista todos os produtos ativos do catálogo (paginado com deduplicação).
+ * Evita loop infinito quando a API ignora `skip` e repete a mesma página.
  */
 export async function fetchProdutosAtivos(options = {}) {
-  const { provided, pageSize = 500 } = options;
+  const { provided, pageSize = 500, maxPages = 40 } = options;
 
   if (Array.isArray(provided) && provided.length > 0) {
     return provided.filter(isProdutoAtivoCompra);
   }
 
-  const todos = [];
+  const byId = new Map();
   let skip = 0;
 
-  while (true) {
+  for (let page = 0; page < maxPages; page += 1) {
     const batch = await base44.entities.Produto.list('-created_date', pageSize, skip);
-    const rows = Array.isArray(batch) ? batch : batch?.data ?? [];
+    const rows = rowsFromProdutoList(batch);
     if (!rows.length) break;
-    todos.push(...rows.filter(isProdutoAtivoCompra));
+
+    let novos = 0;
+    for (const row of rows) {
+      const id = row?.id;
+      if (!id || byId.has(id)) continue;
+      if (!isProdutoAtivoCompra(row)) continue;
+      byId.set(id, row);
+      novos += 1;
+    }
+
     if (rows.length < pageSize) break;
+    if (novos === 0) break;
     skip += pageSize;
   }
 
-  return todos;
+  return [...byId.values()];
 }

@@ -95,14 +95,20 @@ export default function SugestaoCompra({ onStatsChange }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [prods, forn, cats, pedidosCompra] = await Promise.all([
+      const [prods, forn, cats] = await Promise.all([
         fetchProdutosAtivos(),
         base44.entities.Terceiro.list(),
         base44.entities.Categoria.list(),
-        base44.entities.PedidoCompra.filter({
-          status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'],
-        }),
       ]);
+
+      let pedidosCompra = [];
+      try {
+        pedidosCompra = await base44.entities.PedidoCompra.filter({
+          status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'],
+        });
+      } catch {
+        // Pendências em pedidos abertos são opcionais para montar a lista.
+      }
 
       let pedidos = [];
       try {
