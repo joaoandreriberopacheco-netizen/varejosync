@@ -51,7 +51,9 @@ async function fetchProdutosAtivos() {
   return todos;
 }
 
-function computeLocalUpdates(produtos, pedidos90d, movsPorProduto, somenteMetasVazias) {
+function computeLocalUpdates(produtos, pedidos90d, movsPorProduto, options = {}) {
+  const { somenteMetasVazias = false, sobrescrever = false } = options;
+  const mediaFallbackDiasJanela = sobrescrever;
   const updates = [];
   let ignorados_trava_manual = 0;
   let ignorados_sem_venda = 0;
@@ -66,7 +68,10 @@ function computeLocalUpdates(produtos, pedidos90d, movsPorProduto, somenteMetasV
     const metas = calcularMetasEstoqueParaProduto(
       produto,
       pedidos90d,
-      { movimentacoes: movsPorProduto[produto.id] || [] },
+      {
+        movimentacoes: movsPorProduto[produto.id] || [],
+        mediaFallbackDiasJanela,
+      },
     );
 
     if (!metas.atualizar) {
@@ -80,7 +85,12 @@ function computeLocalUpdates(produtos, pedidos90d, movsPorProduto, somenteMetasV
     });
   }
 
-  return { updates, ignorados_trava_manual, ignorados_sem_venda };
+  return {
+    updates,
+    ignorados_trava_manual,
+    ignorados_sem_venda,
+    total_produtos: produtos.length,
+  };
 }
 
 async function gravarBlocoLocal(payload) {
@@ -109,6 +119,7 @@ async function gravarBlocoLocal(payload) {
 export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
   const {
     somenteMetasVazias = false,
+    sobrescrever = false,
     batchSize = 50,
     onProgress,
     shouldAbort,
@@ -116,7 +127,9 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
 
   onProgress?.({
     phase: 'preparing',
-    etapa: 'Calculando pontos de pedido localmente (vendas 90d e lead time)…',
+    etapa: sobrescrever
+      ? 'Recalculando e sobrescrevendo pontos de pedido (vendas 90d × lead time)…'
+      : 'Calculando pontos de pedido localmente (vendas 90d e lead time)…',
   });
 
   const [produtos, pedidos90d, movimentacoes] = await Promise.all([
@@ -126,22 +139,27 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
   ]);
 
   const movsPorProduto = groupMovimentacoesPorProduto(movimentacoes);
-  const { updates, ignorados_trava_manual, ignorados_sem_venda } = computeLocalUpdates(
-    produtos,
-    pedidos90d,
-    movsPorProduto,
-    somenteMetasVazias,
-  );
+  const { updates, ignorados_trava_manual, ignorados_sem_venda, total_produtos } =
+    computeLocalUpdates(produtos, pedidos90d, movsPorProduto, {
+      somenteMetasVazias,
+      sobrescrever,
+    });
 
   if (!updates.length) {
+    const mensagem = total_produtos === 0
+      ? 'Não foi possível carregar produtos do catálogo.'
+      : somenteMetasVazias
+        ? 'Nenhum produto sem metas de estoque para preencher.'
+        : `Nenhum produto com venda nos últimos 90 dias para recalcular (${total_produtos} analisado(s); ${ignorados_sem_venda} sem venda; ${ignorados_trava_manual} com trava manual).`;
+
     return {
       status: 'sem_alteracao',
-      mensagem: somenteMetasVazias
-        ? 'Nenhum produto sem metas de estoque para preencher.'
-        : 'Nenhum produto precisava de atualização.',
+      mensagem,
       somente_metas_vazias: somenteMetasVazias,
+      sobrescrever,
       atualizados: 0,
       total_pendentes: 0,
+      total_produtos,
       ignorados_trava_manual,
       ignorados_sem_venda,
       modo: 'local',
@@ -184,6 +202,8 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
     total_pendentes: totalPendentes,
     total_blocos: totalBlocos,
     somente_metas_vazias: somenteMetasVazias,
+    sobrescrever,
+    total_produtos,
     ignorados_trava_manual,
     ignorados_sem_venda,
     modo: 'local',

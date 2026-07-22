@@ -205,6 +205,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     try {
       const result = await runAtualizarMetasEstoqueJob({
         somenteMetasVazias: false,
+        sobrescrever: true,
         onProgress: (p) => {
           if (p.phase === 'writing' && p.totalPendentes) {
             sonnerToast.loading(
@@ -219,7 +220,7 @@ export default function SugestaoCompra({ onStatsChange }) {
         sonnerToast.info(result.mensagem || 'Nenhum produto precisava de atualização.', { id: toastId });
       } else {
         sonnerToast.success(
-          `${result.atualizados} produto(s) com ponto de pedido atualizado.`,
+          `${result.atualizados} produto(s) com ponto de pedido ${result.sobrescrever ? 'recalculado e gravado' : 'atualizado'}.`,
           { id: toastId },
         );
       }

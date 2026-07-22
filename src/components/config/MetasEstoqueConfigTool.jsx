@@ -59,7 +59,7 @@ export default function MetasEstoqueConfigTool() {
     resetDialog();
   };
 
-  const runJob = async (somenteMetasVazias) => {
+  const runJob = async (somenteMetasVazias, extra = {}) => {
     const key = somenteMetasVazias ? 'vazios' : 'completo';
     setRunning(key);
     setDialogOpen(true);
@@ -73,6 +73,7 @@ export default function MetasEstoqueConfigTool() {
     try {
       const finalResult = await runAtualizarMetasEstoqueJob({
         somenteMetasVazias,
+        ...extra,
         batchSize: BATCH_SIZE,
         shouldAbort: () => abortRef.current,
         onProgress: (p) => {
@@ -155,7 +156,7 @@ export default function MetasEstoqueConfigTool() {
             variant="outline"
             className="justify-start dark:bg-card"
             disabled={running != null}
-            onClick={() => runJob(false)}
+            onClick={() => runJob(false, { sobrescrever: true })}
           >
             {running === 'completo' ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

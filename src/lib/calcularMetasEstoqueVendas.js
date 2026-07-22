@@ -136,6 +136,7 @@ export function arredondarQuantidadeSugestao(quantityBase, produto, roundingMode
 /** Média diária m = qty vendida (sem outliers) / dias com estoque ≠ 0. */
 export function calcularMediaVendaDia(produto, pedidos90d, movimentacoesProduto, options = {}) {
   const janelaDias = options.janelaDias ?? METAS_ESTOQUE_JANELA_DIAS;
+  const mediaFallbackDiasJanela = options.mediaFallbackDiasJanela === true;
   const vendas = calcularVendasSemOutliersQuantidade(produto, pedidos90d);
 
   const saldoPorDia = buildMapaSaldoFimDia(
@@ -145,7 +146,29 @@ export function calcularMediaVendaDia(produto, pedidos90d, movimentacoesProduto,
   );
   const diasComEstoque = contarDiasComEstoqueAtivo(saldoPorDia);
 
-  if (!vendas.teveVenda || diasComEstoque === 0) {
+  if (!vendas.teveVenda) {
+    return {
+      mediaDia: 0,
+      diasComEstoque,
+      diasJanela: janelaDias,
+      ...vendas,
+      teveMedia: false,
+    };
+  }
+
+  if (diasComEstoque === 0 && mediaFallbackDiasJanela) {
+    const mediaDia = vendas.quantidadeLimpa / janelaDias;
+    return {
+      mediaDia,
+      diasComEstoque: 0,
+      diasJanela: janelaDias,
+      ...vendas,
+      teveMedia: mediaDia > 0,
+      media_fallback_janela: true,
+    };
+  }
+
+  if (diasComEstoque === 0) {
     return {
       mediaDia: 0,
       diasComEstoque,
@@ -173,13 +196,17 @@ export function calcularMetasEstoqueParaProduto(produto, pedidos90d, options = {
   const janelaDias = options.janelaDias ?? METAS_ESTOQUE_JANELA_DIAS;
   const leadTimePadrao = options.leadTimePadrao ?? METAS_ESTOQUE_LEAD_TIME_PADRAO;
   const movimentacoes = options.movimentacoes ?? [];
+  const mediaFallbackDiasJanela = options.mediaFallbackDiasJanela === true;
 
   const leadTime = Math.max(
     1,
     Number(produto?.tempo_reposicao_dias) || leadTimePadrao,
   );
 
-  const media = calcularMediaVendaDia(produto, pedidos90d, movimentacoes, { janelaDias });
+  const media = calcularMediaVendaDia(produto, pedidos90d, movimentacoes, {
+    janelaDias,
+    mediaFallbackDiasJanela,
+  });
   if (!media.teveMedia) {
     return {
       atualizar: false,

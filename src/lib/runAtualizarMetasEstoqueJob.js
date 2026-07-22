@@ -65,6 +65,7 @@ function resolveJobExecution(prep) {
  * Por defeito usa o browser (não depende da função Base44).
  * @param {{
  *   somenteMetasVazias?: boolean,
+ *   sobrescrever?: boolean,
  *   batchSize?: number,
  *   useServerJob?: boolean,
  *   onProgress?: (progress: {
@@ -81,13 +82,14 @@ function resolveJobExecution(prep) {
 export async function runAtualizarMetasEstoqueJob(options = {}) {
   const {
     somenteMetasVazias = false,
+    sobrescrever = false,
     batchSize = METAS_ESTOQUE_BATCH_SIZE,
     useServerJob = false,
     onProgress,
     shouldAbort,
   } = options;
 
-  const localOptions = { somenteMetasVazias, batchSize, onProgress, shouldAbort };
+  const localOptions = { somenteMetasVazias, sobrescrever, batchSize, onProgress, shouldAbort };
 
   if (!useServerJob) {
     return runAtualizarMetasEstoqueJobLocal(localOptions);
