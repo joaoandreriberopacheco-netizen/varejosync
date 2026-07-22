@@ -5,8 +5,8 @@
  * - Outliers: linhas com quantidade > Q3 descartadas
  * - m = qty vendida / dias com estoque ≠ 0 (negativo conta)
  * - Lead time: tempo_reposicao_dias ou 20 dias
- * - Ponto de pedido (mínimo): m × 1,5 × lead time
- * - Ideal / pedido: m × lead time
+ * - Ponto de pedido (mínimo): m × lead time — cobertura mínima enquanto a reposição chega
+ * - Ideal / pedido: m × lead time — quantidade sugerida por ciclo de reposição
  * - Arredondamento: lote_compra_vitrine ou fator da unidade de vitrine
  */
 
@@ -22,6 +22,18 @@ import {
 
 export const METAS_ESTOQUE_JANELA_DIAS = 90;
 export const METAS_ESTOQUE_LEAD_TIME_PADRAO = 20;
+
+/** Ponto de pedido em unidade base: média diária × dias de reposição. */
+export function calcularPontoPedidoBase(mediaDia, leadTimeDias) {
+  const m = Number(mediaDia) || 0;
+  const lt = Math.max(1, Number(leadTimeDias) || METAS_ESTOQUE_LEAD_TIME_PADRAO);
+  return m * lt;
+}
+
+/** Quantidade sugerida por ciclo de reposição (mesma base do ponto de pedido). */
+export function calcularQuantidadeReposicaoBase(mediaDia, leadTimeDias) {
+  return calcularPontoPedidoBase(mediaDia, leadTimeDias);
+}
 
 function q3(values) {
   if (!values || values.length === 0) return Infinity;
@@ -179,16 +191,12 @@ export function calcularMetasEstoqueParaProduto(produto, pedidos90d, options = {
   }
 
   const m = media.mediaDia;
-  const idealBase = m * leadTime;
-  const minimoBase = m * 1.5 * leadTime;
+  const idealBase = calcularQuantidadeReposicaoBase(m, leadTime);
+  const minimoBase = calcularPontoPedidoBase(m, leadTime);
 
   const { unidade, fator } = resolveFatorUnidadeVitrineCompra(produto);
   const estoqueIdeal = arredondarQuantidadeSugestao(idealBase, produto, 'up');
-  let estoqueMinimo = arredondarQuantidadeSugestao(minimoBase, produto, 'up');
-
-  if (estoqueMinimo < estoqueIdeal) {
-    estoqueMinimo = estoqueIdeal;
-  }
+  const estoqueMinimo = arredondarQuantidadeSugestao(minimoBase, produto, 'up');
 
   return {
     atualizar: true,
@@ -205,7 +213,7 @@ export function calcularMetasEstoqueParaProduto(produto, pedidos90d, options = {
     outliers_descartados: media.outliersDescartados,
     linhas_venda_total: media.linhasTotal,
     metas_estoque_atualizado_em: new Date().toISOString(),
-    metas_estoque_versao: 'v2-media-dias-estoque-lote-vitrine',
+    metas_estoque_versao: 'v3-ponto-pedido-media-lead-time',
   };
 }
 

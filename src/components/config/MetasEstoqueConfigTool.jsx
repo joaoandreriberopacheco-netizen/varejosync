@@ -15,35 +15,18 @@ import {
   Package,
   RefreshCw,
 } from 'lucide-react';
-import { atualizarMetasEstoque } from '@/functions/atualizarMetasEstoque';
+import {
+  extractAtualizarMetasEstoqueError,
+  METAS_ESTOQUE_BATCH_SIZE,
+  runAtualizarMetasEstoqueJob,
+} from '@/lib/runAtualizarMetasEstoqueJob';
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = METAS_ESTOQUE_BATCH_SIZE;
 
 /** @typedef {'idle' | 'preparing' | 'writing' | 'success' | 'empty' | 'error'} DialogPhase */
 
-function normalizeJobResponse(resp) {
-  const data = resp?.data ?? resp;
-  if (typeof data === 'string') {
-    try {
-      return JSON.parse(data);
-    } catch {
-      return { mensagem: data };
-    }
-  }
-  return data && typeof data === 'object' ? data : {};
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function extractInvokeError(error) {
-  const msg = error?.message || String(error);
-  const match = msg.match(/HTTP (\d+)/);
-  if (match) {
-    return msg.replace(/^.*?:\s*/, '').trim() || `Erro HTTP ${match[1]}`;
-  }
-  return msg;
+  return extractAtualizarMetasEstoqueError(error);
 }
 
 export default function MetasEstoqueConfigTool() {
@@ -88,95 +71,35 @@ export default function MetasEstoqueConfigTool() {
     }));
 
     try {
-      const prepResp = await atualizarMetasEstoque({
-        fase: 'preparar',
-        somente_metas_vazias: somenteMetasVazias,
-        modo: 'manual',
-        batch_size: BATCH_SIZE,
+      const finalResult = await runAtualizarMetasEstoqueJob({
+        somenteMetasVazias,
+        batchSize: BATCH_SIZE,
+        shouldAbort: () => abortRef.current,
+        onProgress: (p) => {
+          if (p.phase === 'preparing') {
+            setPhase('preparing');
+            setProgress((prev) => ({ ...prev, etapa: p.etapa || prev.etapa }));
+            return;
+          }
+          setPhase('writing');
+          setProgress({
+            bloco: p.bloco ?? 0,
+            totalBlocos: p.totalBlocos ?? 0,
+            atualizados: p.atualizados ?? 0,
+            totalPendentes: p.totalPendentes ?? 0,
+            etapa: p.etapa || 'Gravando ponto de pedido e estoque ideal nos produtos…',
+          });
+        },
       });
-      const prep = normalizeJobResponse(prepResp);
 
-      if (prep.error) {
-        throw new Error(prep.error);
-      }
-      if (prep.status === 'erro') {
-        throw new Error(prep.error || 'Falha ao preparar o job.');
-      }
-
-      if (prep.status === 'sem_alteracao' || prep.concluido) {
+      if (finalResult.status === 'sem_alteracao') {
         setPhase('empty');
         setResult({
-          mensagem: prep.mensagem || 'Nenhum produto pendente de atualização.',
+          mensagem: finalResult.mensagem,
           somente_metas_vazias: somenteMetasVazias,
         });
         return;
       }
-
-      const jobCache = prep.job_cache;
-      if (!jobCache?.run_id || !Array.isArray(jobCache.produto_ids)) {
-        throw new Error(
-          'Resposta incompleta do servidor. Atualize a função atualizarMetasEstoque no Base44.',
-        );
-      }
-
-      const runId = prep.run_id || jobCache.run_id;
-      const totalPendentes = prep.total_pendentes ?? jobCache.produto_ids.length;
-      const totalBlocos = prep.total_blocos ?? Math.ceil(totalPendentes / BATCH_SIZE);
-      let offset = 0;
-      let totalAtualizados = 0;
-
-      setPhase('writing');
-      setProgress({
-        bloco: 0,
-        totalBlocos,
-        atualizados: 0,
-        totalPendentes,
-        etapa: 'Gravando estoque mínimo e ideal nos produtos…',
-      });
-
-      while (offset < totalPendentes) {
-        if (abortRef.current) {
-          throw new Error('Operação cancelada.');
-        }
-
-        const gravarResp = await atualizarMetasEstoque({
-          fase: 'gravar',
-          run_id: runId,
-          job_cache: jobCache,
-          offset,
-          batch_size: BATCH_SIZE,
-          modo: 'manual',
-        });
-        const bloco = normalizeJobResponse(gravarResp);
-
-        if (bloco.error || bloco.status === 'erro') {
-          throw new Error(bloco.error || 'Falha ao gravar um bloco de produtos.');
-        }
-
-        totalAtualizados += bloco.atualizados ?? 0;
-        offset = bloco.proximo_offset ?? offset + BATCH_SIZE;
-
-        setProgress({
-          bloco: bloco.bloco_atual ?? Math.ceil(offset / BATCH_SIZE),
-          totalBlocos: bloco.total_blocos ?? totalBlocos,
-          atualizados: totalAtualizados,
-          totalPendentes,
-          etapa: 'Gravando estoque mínimo e ideal nos produtos…',
-        });
-
-        if (bloco.concluido) break;
-        await sleep(150);
-      }
-
-      const finalResult = {
-        status: 'sucesso',
-        atualizados: totalAtualizados,
-        total_pendentes: totalPendentes,
-        total_blocos: totalBlocos,
-        somente_metas_vazias: somenteMetasVazias,
-        ignorados_sem_venda: prep.ignorados_sem_venda,
-        timestamp: new Date().toISOString(),
-      };
 
       setResult(finalResult);
       setPhase('success');
@@ -205,8 +128,9 @@ export default function MetasEstoqueConfigTool() {
             <p className="text-xs text-muted-foreground leading-relaxed">
               Calcula a partir das vendas dos últimos 90 dias (dias com estoque, sem outliers) e grava no
               cadastro: <strong className="font-medium text-foreground/80">estoque mínimo</strong> = ponto de
-              pedido (m × 1,5 × lead time) e <strong className="font-medium text-foreground/80">estoque ideal</strong>{' '}
-              = quantidade a repor (lead time × m). Produtos com trava manual são ignorados.
+              pedido (média diária × lead time, padrão 20 dias) e{' '}
+              <strong className="font-medium text-foreground/80">estoque ideal</strong> = quantidade a repor no
+              ciclo. Produtos com trava manual são ignorados.
             </p>
           </div>
         </div>
@@ -337,8 +261,8 @@ export default function MetasEstoqueConfigTool() {
                 {result.total_pendentes != null ? ` de ${result.total_pendentes}` : ''}.
               </p>
               <p className="text-xs text-muted-foreground">
-                Estoque mínimo (ponto de pedido) e estoque ideal (qtd a repor) gravados. A tela de
-                Sugestões de Compra usa esses valores quando não recalcula em tempo real.
+                Ponto de pedido (estoque mínimo) e quantidade de reposição (estoque ideal) gravados no cadastro.
+                A tela de Sugestões de Compra usa a mesma regra em tempo real.
               </p>
               {result.total_blocos != null && (
                 <p className="text-xs text-muted-foreground">

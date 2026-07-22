@@ -241,12 +241,11 @@ function calcularMetas(
 
   const m = vendas.quantidadeLimpa / diasComEstoque;
   const idealBase = m * leadTime;
-  const minimoBase = m * 1.5 * leadTime;
+  const minimoBase = m * leadTime;
   const { unidade, fator } = resolveFatorVitrine(produto);
 
   let estoqueIdeal = arredondarQuantidadeSugestao(idealBase, produto);
-  let estoqueMinimo = arredondarQuantidadeSugestao(minimoBase, produto);
-  if (estoqueMinimo < estoqueIdeal) estoqueMinimo = estoqueIdeal;
+  const estoqueMinimo = arredondarQuantidadeSugestao(minimoBase, produto);
 
   return {
     atualizar: true,
@@ -262,7 +261,7 @@ function calcularMetas(
     outliers_descartados: vendas.outliersDescartados,
     linhas_venda_total: vendas.linhasTotal,
     metas_estoque_atualizado_em: new Date().toISOString(),
-    metas_estoque_versao: 'v2-media-dias-estoque-lote-vitrine',
+    metas_estoque_versao: 'v3-ponto-pedido-media-lead-time',
   };
 }
 
@@ -437,7 +436,7 @@ function regrasResposta(somenteMetasVazias: boolean) {
     janela_dias: JANELA_DIAS,
     lead_time_padrao: LEAD_TIME_PADRAO,
     media: 'qty_vendida / dias_com_estoque_diferente_de_zero',
-    estoque_minimo: 'ponto de pedido = m × 1,5 × lead time',
+    estoque_minimo: 'ponto de pedido = m × lead time',
     estoque_ideal: 'quantidade a repor = m × lead time',
     outliers: 'qty_linha > Q3 descartada',
     arredondamento: 'lote_compra_vitrine ou fator_vitrine',

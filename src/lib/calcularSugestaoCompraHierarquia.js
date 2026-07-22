@@ -8,6 +8,8 @@ import {
   METAS_ESTOQUE_JANELA_DIAS,
   METAS_ESTOQUE_LEAD_TIME_PADRAO,
   arredondarQuantidadeSugestao,
+  calcularPontoPedidoBase,
+  calcularQuantidadeReposicaoBase,
   calcularVendasSemOutliersQuantidade,
   resolveFatorUnidadeVitrineCompra,
 } from '@/lib/calcularMetasEstoqueVendas';
@@ -198,8 +200,8 @@ export function calcularSugestaoCompraGrupo(
   }
 
   const m = vendas.quantidadeLimpa / diasComEstoque;
-  const pontoPedido = m * 1.5 * leadTime;
-  const quantidadeBruta = m * leadTime;
+  const pontoPedido = calcularPontoPedidoBase(m, leadTime);
+  const quantidadeBruta = calcularQuantidadeReposicaoBase(m, leadTime);
   const quantidadeSugeridaBase = arredondarQuantidadeSugestao(
     quantidadeBruta,
     representativo,
@@ -227,7 +229,7 @@ export function calcularSugestaoCompraGrupo(
     linhas_venda_total: vendas.linhasTotal,
     skus_no_grupo: lista.length,
     agrupado: true,
-    versao: 'v2-grupo-hierarquia',
+    versao: 'v3-grupo-ponto-pedido-media-lead-time',
   };
 }
 

@@ -8,6 +8,8 @@ import {
   METAS_ESTOQUE_LEAD_TIME_PADRAO,
   arredondarQuantidadeSugestao,
   calcularMediaVendaDia,
+  calcularPontoPedidoBase,
+  calcularQuantidadeReposicaoBase,
   resolveFatorUnidadeVitrineCompra,
   resolveLoteCompraBase,
   resolveLoteCompraVitrine,
@@ -51,8 +53,8 @@ export function calcularSugestaoCompraProduto(
   }
 
   const m = media.mediaDia;
-  const pontoPedido = m * 1.5 * leadTime;
-  const quantidadeBruta = m * leadTime;
+  const pontoPedido = calcularPontoPedidoBase(m, leadTime);
+  const quantidadeBruta = calcularQuantidadeReposicaoBase(m, leadTime);
   const quantidadeSugeridaBase = arredondarQuantidadeSugestao(
     quantidadeBruta,
     produto,
@@ -83,6 +85,6 @@ export function calcularSugestaoCompraProduto(
     quantidade_limpa_90d: media.quantidadeLimpa,
     outliers_descartados: media.outliersDescartados,
     linhas_venda_total: media.linhasTotal,
-    versao: 'v2-media-dias-estoque-lote-vitrine',
+    versao: 'v3-ponto-pedido-media-lead-time',
   };
 }
