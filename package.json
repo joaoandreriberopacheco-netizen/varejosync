@@ -30,6 +30,7 @@
     "estoque:atualizar-metas": "node scripts/invoke-atualizar-metas-estoque.mjs",
     "abcd:limpar": "node scripts/limpar-abcd-job-produtos.mjs",
     "abcd:limpar-console": "node scripts/limpar-abcd-job-console.mjs",
+    "abcd:executar-console": "node scripts/executar-abcd-job-console.mjs",
     "produto:codigo:backfill": "node scripts/backfill-produto-codigo.mjs",
     "produto:codigo:aplicar": "node scripts/backfill-produto-codigo.mjs --apply",
     "git:ship": "node scripts/git-ship.mjs",
