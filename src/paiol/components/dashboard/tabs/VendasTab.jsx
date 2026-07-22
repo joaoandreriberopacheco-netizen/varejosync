@@ -23,6 +23,7 @@ import {
   normalizeDashboardKpiConfig,
 } from '@/lib/dashboardKpiConfig';
 import {
+  AcumuladoKpiChart,
   DualDonutKpiModule,
   formatDashboardCurrency,
   LucroAcumuladoChart,
@@ -34,8 +35,6 @@ import {
   Bar,
   CartesianGrid,
   Cell,
-  LineChart,
-  Line,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -275,6 +274,15 @@ export default function VendasTab() {
           return row;
         });
 
+        const kpiConfig = normalizeDashboardKpiConfig(configVendaRaw?.[0] || {});
+        const referenceDate = new Date();
+        const elapsedWorkingDays = countElapsedWorkingDaysInMonth(referenceDate);
+        const workingDaysInMonth = countWorkingDaysInMonth(referenceDate);
+        const breakEvenDaily = Number(kpiConfig.kpi_lucro_break_even_diario || 0);
+        const metaLucroDaily = getDailyMetaFromMonthly(kpiConfig.kpi_lucro_meta_mensal, referenceDate);
+        const vendaMinimaDaily = Number(kpiConfig.kpi_venda_minima_diaria || 0);
+        const metaVendaDaily = getDailyMetaFromMonthly(kpiConfig.kpi_venda_meta_mensal, referenceDate);
+
         const currentMonthKey = monthBuckets6[monthBuckets6.length - 1]?.key;
         const currentMonthDays = monthBuckets6[monthBuckets6.length - 1]?.daysInMonth || 31;
         let runningSales = 0;
@@ -284,6 +292,8 @@ export default function VendasTab() {
           return {
             dia: `D${day}`,
             valor: runningSales,
+            breakEven: vendaMinimaDaily * day,
+            meta: metaVendaDaily * day,
           };
         });
 
@@ -298,12 +308,6 @@ export default function VendasTab() {
         const ratioPercent = previousProfit > 0 ? (currentProfit / previousProfit) * 100 : currentProfit > 0 ? 100 : 0;
         const ringFill = Math.min(Math.max(ratioPercent, 0), 100);
         const ringOverflow = Math.min(Math.max(ratioPercent - 100, 0), 100);
-        const kpiConfig = normalizeDashboardKpiConfig(configVendaRaw?.[0] || {});
-        const referenceDate = new Date();
-        const elapsedWorkingDays = countElapsedWorkingDaysInMonth(referenceDate);
-        const workingDaysInMonth = countWorkingDaysInMonth(referenceDate);
-        const breakEvenDaily = Number(kpiConfig.kpi_lucro_break_even_diario || 0);
-        const metaLucroDaily = getDailyMetaFromMonthly(kpiConfig.kpi_lucro_meta_mensal, referenceDate);
         let runningProfit = 0;
         const accumulatedProfitData = Array.from({ length: currentMonthDays }, (_, idx) => {
           const day = idx + 1;
@@ -315,8 +319,6 @@ export default function VendasTab() {
             meta: metaLucroDaily * day,
           };
         });
-        const vendaMinimaDaily = Number(kpiConfig.kpi_venda_minima_diaria || 0);
-        const metaVendaDaily = getDailyMetaFromMonthly(kpiConfig.kpi_venda_meta_mensal, referenceDate);
         const avgDailyProfit = elapsedWorkingDays > 0 ? currentProfit / elapsedWorkingDays : 0;
         const avgDailySales = elapsedWorkingDays > 0 ? Number(monthlyTotals[currentMonthKey]?.salesNet || 0) / elapsedWorkingDays : 0;
         const lucroDonutKpis = {
@@ -560,29 +562,30 @@ export default function VendasTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-1">
-            <div className={`h-[230px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={metrics.currentAccumulatedData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.14)" vertical={false} />
-                  <XAxis dataKey="dia" tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={(value) => formatShort(value)} tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    formatter={(value) => BRL.format(Number(value || 0))}
-                    contentStyle={{
-                      backgroundColor: '#1e2532',
-                      border: '1px solid rgba(148,163,184,0.28)',
-                      borderRadius: 12,
-                      color: '#edf2f7',
-                      boxShadow: '0 10px 24px rgba(0,0,0,0.28)',
-                    }}
-                  />
-                  <Line type="monotone" dataKey="valor" stroke="#abc85a" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+            <AcumuladoKpiChart
+              data={metrics.currentAccumulatedData}
+              xKey="dia"
+              valueKey="valor"
+              innerSurfaceClassName={`h-[230px] rounded-xl px-2 py-2 ${INNER_SURFACE}`}
+              seriesLabels={{
+                valor: 'Venda acumulada',
+                breakEven: 'Mínimo acumulado',
+                meta: 'Meta acumulada',
+              }}
+            />
+            <div className="flex flex-wrap gap-3 mt-2 text-[10px] text-slate-300/80">
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-[2px] w-4 rounded-full bg-[#ef4444]" />
+                Mínima/dia: <strong className="text-slate-100">{formatShort(metrics.vendaMinimaDaily)}</strong>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block h-[2px] w-4 rounded-full bg-[#22c55e]" />
+                Meta/dia: <strong className="text-slate-100">{formatShort(metrics.metaVendaDaily)}</strong>
+              </span>
+              <span>
+                Último acumulado: <strong className="text-slate-100">{formatShort(metrics.currentAccumulatedData.at(-1)?.valor || 0)}</strong>
+              </span>
             </div>
-            <p className="text-[10px] text-slate-300/80 mt-2">
-              Último acumulado: <span className="font-semibold text-slate-100">{formatShort(metrics.currentAccumulatedData.at(-1)?.valor || 0)}</span>
-            </p>
           </CardContent>
         </Card>
       </div>

@@ -33,13 +33,20 @@ const TOOLTIP_STYLE = {
   boxShadow: '0 12px 26px rgba(0,0,0,0.45)',
 };
 
-const SERIES_LABELS = {
+const DEFAULT_SERIES_LABELS = {
   lucro: 'Lucro acumulado',
+  valor: 'Venda acumulada',
   breakEven: 'Break-even acumulado',
   meta: 'Meta acumulada',
 };
 
-export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
+export function AcumuladoKpiChart({
+  data,
+  xKey = 'diaLabel',
+  valueKey = 'lucro',
+  innerSurfaceClassName,
+  seriesLabels = DEFAULT_SERIES_LABELS,
+}) {
   const hasBreakEven = data.some((point) => Number(point.breakEven) > 0);
   const hasMeta = data.some((point) => Number(point.meta) > 0);
 
@@ -49,7 +56,7 @@ export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.14)" vertical={false} />
           <XAxis
-            dataKey="diaLabel"
+            dataKey={xKey}
             tick={{ fontSize: 11, fill: '#d7deea', fontWeight: 600 }}
             axisLine={false}
             tickLine={false}
@@ -61,7 +68,7 @@ export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
             tickLine={false}
           />
           <Tooltip
-            formatter={(value, name) => [BRL.format(Number(value || 0)), SERIES_LABELS[name] || name]}
+            formatter={(value, name) => [BRL.format(Number(value || 0)), seriesLabels[name] || name]}
             contentStyle={TOOLTIP_STYLE}
             labelStyle={{ color: '#e2e8f0', fontWeight: 700 }}
             itemStyle={{ color: '#cbd5e1' }}
@@ -92,8 +99,8 @@ export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
           ) : null}
           <Line
             type="monotone"
-            dataKey="lucro"
-            name="lucro"
+            dataKey={valueKey}
+            name={valueKey}
             stroke="#abc85a"
             strokeWidth={3}
             dot={false}
@@ -102,6 +109,17 @@ export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
         </LineChart>
       </ResponsiveContainer>
     </div>
+  );
+}
+
+export function LucroAcumuladoChart({ data, innerSurfaceClassName }) {
+  return (
+    <AcumuladoKpiChart
+      data={data}
+      xKey="diaLabel"
+      valueKey="lucro"
+      innerSurfaceClassName={innerSurfaceClassName}
+    />
   );
 }
 
