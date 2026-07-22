@@ -1,5 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { calcularMetasEstoqueParaProduto } from '@/lib/calcularMetasEstoqueVendas';
+import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
 import {
   fetchMovimentacoesEstoque90d,
@@ -35,32 +36,6 @@ function buildUpdatePayload(metas) {
     metas_estoque_atualizado_em: metas.metas_estoque_atualizado_em,
     metas_estoque_versao: metas.metas_estoque_versao,
   };
-}
-
-async function fetchProdutosAtivos(provided) {
-  if (Array.isArray(provided) && provided.length > 0) {
-    return provided;
-  }
-
-  const todos = [];
-  let skip = 0;
-  const pageSize = 500;
-
-  while (true) {
-    const batch = await base44.entities.Produto.filter(
-      { tipo: 'Produto', ativo: true },
-      '-created_date',
-      pageSize,
-      skip,
-    );
-    const rows = Array.isArray(batch) ? batch : [];
-    if (!rows.length) break;
-    todos.push(...rows);
-    if (rows.length < pageSize) break;
-    skip += pageSize;
-  }
-
-  return todos;
 }
 
 function computeLocalUpdates(produtos, pedidos90d, movsPorProduto, options = {}) {
@@ -140,7 +115,7 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
       : 'Calculando pontos de pedido localmente (vendas 90d e lead time)…',
   });
 
-  const produtos = await fetchProdutosAtivos(produtosFornecidos);
+  const produtos = await fetchProdutosAtivos({ provided: produtosFornecidos });
   await sleep(300);
   const pedidos90d = await withRateLimitRetry(() => fetchPedidosVenda90d(), {
     maxAttempts: 5,

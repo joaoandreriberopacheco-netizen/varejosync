@@ -21,6 +21,8 @@ import {
   distribuirQuantidadeGrupo,
 } from '@/lib/calcularSugestaoCompraHierarquia';
 import { fetchPedidosVenda90d } from '@/lib/fetchPedidosVenda90d';
+import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
+import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import {
   collectSugestaoTags,
@@ -53,6 +55,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     totalAtivos: 0,
     elegiveis: 0,
     semPontoPedido: 0,
+    abaixoPontoPedido: 0,
     linhasGrupo: 0,
   });
 
@@ -92,15 +95,24 @@ export default function SugestaoCompra({ onStatsChange }) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [prods, forn, cats, pedidos, pedidosCompra] = await Promise.all([
-        base44.entities.Produto.filter({ tipo: 'Produto', ativo: true }),
+      const [prods, forn, cats, pedidosCompra] = await Promise.all([
+        fetchProdutosAtivos(),
         base44.entities.Terceiro.list(),
         base44.entities.Categoria.list(),
-        fetchPedidosVenda90d(),
         base44.entities.PedidoCompra.filter({
           status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'],
         }),
       ]);
+
+      let pedidos = [];
+      try {
+        pedidos = await withRateLimitRetry(() => fetchPedidosVenda90d(), {
+          maxAttempts: 3,
+          baseDelayMs: 800,
+        });
+      } catch {
+        // Vendas 90d só são necessárias ao gerar pedido com distribuição por SKU.
+      }
 
       const pending = {};
       pedidosCompra.forEach((p) => {
@@ -113,9 +125,11 @@ export default function SugestaoCompra({ onStatsChange }) {
       calcContextRef.current = { pedidos, movsPorProduto, prods, pending };
 
       let semPontoPedido = 0;
+      let abaixoPontoPedido = 0;
       prods.forEach((p) => {
         const s = calcularSugestaoCompraProdutoCatalogo(p, { roundingMode });
         if (s.motivo === 'sem_ponto_pedido') semPontoPedido += 1;
+        if (s.elegivel) abaixoPontoPedido += 1;
       });
 
       const novasLinhas = recomputarLinhas(prods, pedidos, movsPorProduto, pending);
@@ -124,6 +138,7 @@ export default function SugestaoCompra({ onStatsChange }) {
         totalAtivos: prods.length,
         elegiveis: novasLinhas.length,
         semPontoPedido,
+        abaixoPontoPedido,
         linhasGrupo: novasLinhas.filter((l) => l.tipo === 'grupo').length,
       });
       setLinhas(novasLinhas);
@@ -447,16 +462,16 @@ export default function SugestaoCompra({ onStatsChange }) {
           <p className="text-xs text-muted-foreground leading-relaxed">
             {loadStats.totalAtivos > 0 ? (
               <>
-                {loadStats.totalAtivos} produto(s) no catálogo.
+                {loadStats.totalAtivos} produto(s) lidos do catálogo.
                 {loadStats.semPontoPedido > 0 ? (
-                  <> {loadStats.semPontoPedido} ainda sem ponto de pedido (estoque mínimo) gravado.</>
+                  <> {loadStats.semPontoPedido} sem ponto de pedido (estoque mínimo) — atualize no Catálogo.</>
                 ) : null}
-                {loadStats.elegiveis === 0 ? (
+                {loadStats.abaixoPontoPedido === 0 && loadStats.semPontoPedido < loadStats.totalAtivos ? (
                   <> Nenhum está com estoque abaixo do ponto de pedido cadastrado.</>
                 ) : null}
               </>
             ) : (
-              <>Não foi possível carregar produtos ou o catálogo está vazio.</>
+              <>Não foi possível carregar produtos do catálogo. Tente atualizar a página.</>
             )}
           </p>
           <Button
