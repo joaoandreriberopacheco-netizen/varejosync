@@ -80,9 +80,10 @@
         "A",
         "B",
         "C",
-        "D"
+        "D",
+        "E"
       ],
-      "description": "Classifica\u00e7\u00e3o ABC/D de relev\u00e2ncia no faturamento e margem."
+      "description": "Classifica\u00e7\u00e3o ABCDE de relev\u00e2ncia no lucro (A\u2013D) e sem venda (E)."
     },
     "preco_livre": {
       "type": "boolean",

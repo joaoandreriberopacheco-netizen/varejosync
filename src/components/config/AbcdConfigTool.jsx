@@ -116,7 +116,7 @@ export default function AbcdConfigTool() {
 
       setProgress((p) => ({
         ...p,
-        etapa: 'Etapa 2–3: ordenando por lucro e aplicando A / B / C / D…',
+        etapa: 'Etapa 2–3: ordenando por lucro e aplicando A / B / C / D / E…',
       }));
 
       const classificarResp = await calcularIEP({

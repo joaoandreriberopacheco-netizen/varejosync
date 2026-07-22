@@ -286,7 +286,7 @@ export const COLUNAS_CONFIG = [
 
   // --- Classificação ---
 
-  { key: 'abcd',                    label: 'Curva ABCD',             editavel: true,  width: 14, tipo: 'string', enum: ['A','B','C','D'] },
+  { key: 'abcd',                    label: 'Curva ABCD',             editavel: true,  width: 14, tipo: 'string', enum: ['A','B','C','D','E'] },
 
 
 

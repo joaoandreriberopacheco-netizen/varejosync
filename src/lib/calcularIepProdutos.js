@@ -411,7 +411,7 @@ export function calcularMetricasIepParaCatalogo(produtos, pedidos90d, itensPorPr
   const movimentoContextoGlobal = buildMovimentoContextoGlobal(movimentoBySku);
 
   function classeAbcdProduto(produto) {
-    return abcdClasseParaProduto(produto, mapaAbcdGrupo);
+    return abcdClasseParaProduto(produto, mapaAbcdGrupo, metricasPorSku[produto.id]);
   }
 
   const skusPorChaveNivel = (nivel) => {

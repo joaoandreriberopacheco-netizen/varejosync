@@ -24,13 +24,14 @@ export const CATALOG_SOMENTE_POSITIVOS_QUANTIDADE = {
   quantidadeValorAte: '',
 };
 
-export const ABCD_FILTER_VALUES = ['A', 'B', 'C', 'D'];
+export const ABCD_FILTER_VALUES = ['A', 'B', 'C', 'D', 'E'];
 
 export const ABCD_FILTER_LABELS = {
   A: 'Classe A',
   B: 'Classe B',
   C: 'Classe C',
   D: 'Classe D',
+  E: 'Classe E (sem venda)',
 };
 
 export const DEFAULT_PRODUTO_FILTERS = {

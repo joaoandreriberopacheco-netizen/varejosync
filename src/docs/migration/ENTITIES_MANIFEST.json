@@ -115,7 +115,7 @@
         { "name": "imagem_url", "type": "string", "pg_type": "TEXT" },
         { "name": "tags", "type": "array<string>", "pg_type": "TEXT[]" },
         { "name": "tipo", "type": "enum", "values": ["Produto","Serviço"], "default": "Produto", "pg_type": "TEXT NOT NULL DEFAULT 'Produto'" },
-        { "name": "abcd", "type": "enum", "values": ["A","B","C","D"], "pg_type": "TEXT" },
+        { "name": "abcd", "type": "enum", "values": ["A","B","C","D","E"], "pg_type": "TEXT" },
         { "name": "preco_livre", "type": "boolean", "default": false, "pg_type": "BOOLEAN DEFAULT FALSE" },
         { "name": "casas_decimais", "type": "number", "default": 0, "pg_type": "INT DEFAULT 0" },
         { "name": "valor_compra", "type": "number", "default": 0, "pg_type": "NUMERIC(15,4) DEFAULT 0" },

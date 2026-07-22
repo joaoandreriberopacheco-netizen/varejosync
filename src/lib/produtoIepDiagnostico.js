@@ -6,7 +6,8 @@ const CLASSE_LABEL = {
   A: 'Classe A — entre os que mais geram lucro no subtipo (nível 2)',
   B: 'Classe B — relevância intermediária-alta',
   C: 'Classe C — relevância intermediária-baixa',
-  D: 'Classe D — menor contribuição de lucro no período',
+  D: 'Classe D — menor contribuição de lucro no período (últimos 5%)',
+  E: 'Classe E — sem venda no período (candidato a descontinuação)',
 };
 
 const PERFIL_LABEL = {
@@ -52,6 +53,14 @@ export function gerarDiagnosticoProdutoIep(produto) {
 
   const classeEfetiva = classe || 'D';
 
+  if (classeEfetiva === 'E') {
+    return {
+      temDados: true,
+      titulo: 'Sem venda no período',
+      texto:
+        'Este item não registrou vendas nos últimos 90 dias. É candidato a descontinuação: avalie queima de estoque, promoção final ou retirada do mix para liberar capital e espaço.',
+    };
+  }
   if (classeEfetiva === 'A' && iep >= 70) {
     return {
       temDados: true,
@@ -114,6 +123,7 @@ export function tonalidadeClasseAbcd(classe) {
   if (c === 'A') return 'success';
   if (c === 'B') return 'info';
   if (c === 'C') return 'warning';
+  if (c === 'E') return 'destructive';
   return 'muted';
 }
 

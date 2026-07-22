@@ -7,7 +7,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 const DEFAULT_BATCH_SIZE = 50;
 const UPDATE_CONCURRENCY = 5;
 const CACHE_KEY = 'iep_job_run';
-const VERSAO = 'V16-grupo-h2-pareto-7095105';
+const VERSAO = 'V17-grupo-h2-pareto-7095105-e-sem-venda';
 const JOB_ABCD_NOTURNO_ATIVO = Deno.env.get('ABCD_JOB_NOTURNO') === 'true';
 
 /** Q3 — limite superior do miolo (exclui 4.º quartil). */
@@ -179,11 +179,11 @@ function etapa2_ordenarDistribuicao(lista) {
   return { ranking: rankingOrdenado, totalLucroPositivo };
 }
 
-/** Etapa 3 — classifica: A até 70%, B até 85%, C até 95%; o restante (e sem lucro) é D. */
+/** Etapa 3 — classifica: A até 70%, B até 85%, C até 95%, D até 100%; sem receita → E. */
 function etapa3_classificarAbcd(ranking, totalLucroPositivo) {
   const mapa = {};
   for (const entry of ranking) {
-    mapa[entry.id] = 'D';
+    mapa[entry.id] = (entry.receita || 0) <= 0 ? 'E' : 'D';
   }
   if (totalLucroPositivo <= 0) return mapa;
 
@@ -193,6 +193,7 @@ function etapa3_classificarAbcd(ranking, totalLucroPositivo) {
     if (pct <= 70) mapa[entry.id] = 'A';
     else if (pct <= 85) mapa[entry.id] = 'B';
     else if (pct <= 95) mapa[entry.id] = 'C';
+    else mapa[entry.id] = 'D';
   }
   return mapa;
 }
@@ -216,7 +217,9 @@ function classificarGruposAbcdPareto(lista) {
   }
 
   const mapa = {};
-  for (const entry of lista || []) mapa[entry.id] = 'D';
+  for (const entry of lista || []) {
+    mapa[entry.id] = (entry.receita || 0) <= 0 ? 'E' : 'D';
+  }
   return mapa;
 }
 
@@ -232,6 +235,7 @@ function buildJobCacheSlim(fields) {
     somente_abcd_vazio: fields.somente_abcd_vazio,
     batch_size: fields.batch_size,
     mapaAbcdGrupo: fields.mapaAbcdGrupo,
+    skus_sem_venda: fields.skus_sem_venda,
     produto_ids: fields.produto_ids,
     grupos_nivel_2: fields.grupos_nivel_2,
     total_produtos: fields.total_produtos,
@@ -445,7 +449,8 @@ async function persistirCacheJob(db, cache) {
   return false;
 }
 
-function buildUpdateData(produto, mapaAbcdGrupo) {
+function buildUpdateData(produto, mapaAbcdGrupo, skusSemVenda) {
+  if (skusSemVenda?.has(String(produto.id))) return { abcd: 'E' };
   const grupoKey = grupoAbcdKey(produto);
   return { abcd: mapaAbcdGrupo[grupoKey] || 'D' };
 }
@@ -464,12 +469,13 @@ async function gravarBloco(db, cache, offset, batchSize) {
   }
 
   const mapa = cache.mapaAbcdGrupo || {};
+  const skusSemVenda = new Set((cache.skus_sem_venda || []).map(String));
   const updates = [];
 
   for (const id of ids) {
     const produto = snapshotById.get(String(id));
     if (!produto) continue;
-    updates.push({ id, data: buildUpdateData(produto, mapa) });
+    updates.push({ id, data: buildUpdateData(produto, mapa, skusSemVenda) });
   }
 
   for (let i = 0; i < updates.length; i += UPDATE_CONCURRENCY) {
@@ -493,7 +499,7 @@ function regrasResposta(somenteAbcdVazio) {
     custo: 'preco_custo_calculado',
     preco: 'media_venda_sem_4_quartil_por_sku',
     abcd_nivel: 'campo_hierarquico_2 (ou campo_hierarquico_1 se h2 vazio)',
-    pareto: '70/15/10/5 lucro acumulado (A até 70%, B até 85%, C até 95%, D restante)',
+    pareto: '70/15/10/5 lucro acumulado (A até 70%, B até 85%, C até 95%, D até 100%, E sem venda)',
     iqr: 'por_sku_exclui_q4',
     somente_abcd_vazio: somenteAbcdVazio,
     batch_size: DEFAULT_BATCH_SIZE,
@@ -547,6 +553,12 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
   const etapa1 = etapa1_listar(produtos, itensPorProdutoMap);
   const mapaAbcdGrupo = classificarGruposAbcdPareto(etapa1.lista);
 
+  const skusSemVenda = [];
+  for (const produto of produtos) {
+    const { teveVenda } = calcularLucroSkuComQ4(produto, itensPorProdutoMap);
+    if (!teveVenda) skusSemVenda.push(String(produto.id));
+  }
+
   const produtoIds = produtos
     .filter((p) => !somenteAbcdVazio || produtoAbcdVazio(p))
     .map((p) => p.id);
@@ -559,6 +571,7 @@ async function runPreparar(db, body, modo, somenteAbcdVazio, batchSize) {
     somente_abcd_vazio: somenteAbcdVazio,
     batch_size: batchSize,
     mapaAbcdGrupo,
+    skus_sem_venda: skusSemVenda,
     grupos_nivel_2: etapa1.grupos_nivel_2,
     total_produtos: etapa1.total_produtos,
     produto_ids: produtoIds,

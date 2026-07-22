@@ -84,7 +84,7 @@ export default function AbcdLimparCadastroTool() {
           {preview.abcd_por_letra && (
             <p>
               No cadastro hoje: A {preview.abcd_por_letra.A} · B {preview.abcd_por_letra.B} · C{' '}
-              {preview.abcd_por_letra.C} · D {preview.abcd_por_letra.D}
+              {preview.abcd_por_letra.C} · D {preview.abcd_por_letra.D} · E {preview.abcd_por_letra.E}
             </p>
           )}
         </div>

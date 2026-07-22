@@ -87,10 +87,10 @@ Deno.serve(async (req) => {
     const lote = elegiveis.slice(offset, offset + limit);
 
     if (dryRun) {
-      const porLetra: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, vazio: 0 };
+      const porLetra: Record<string, number> = { A: 0, B: 0, C: 0, D: 0, E: 0, vazio: 0 };
       for (const p of elegiveis) {
         const letra = String(p.abcd || '').toUpperCase();
-        if (letra === 'A' || letra === 'B' || letra === 'C' || letra === 'D') {
+        if (letra === 'A' || letra === 'B' || letra === 'C' || letra === 'D' || letra === 'E') {
           porLetra[letra] += 1;
         } else {
           porLetra.vazio += 1;

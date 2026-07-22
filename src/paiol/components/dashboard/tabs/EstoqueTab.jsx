@@ -45,7 +45,7 @@ const PERCENT = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 1,
 });
 
-const QUALITY_ORDER = ['A', 'B', 'C', 'D'];
+const QUALITY_ORDER = ['A', 'B', 'C', 'D', 'E'];
 const QUALITY_LABELS = {
   A: 'Curva A',
   B: 'Curva B',

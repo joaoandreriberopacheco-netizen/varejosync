@@ -1,22 +1,23 @@
 /**
- * Curva ABCD — regra de negócio canónica (catálogo + job calcularIEP).
+ * Curva ABCDE — regra de negócio canónica (catálogo + job calcularIEP).
  *
  * Etapas:
  * 1. Agrupar lucro 90d por subtipo (campo_hierarquico_1 + campo_hierarquico_2;
  *    se faltar h2, agrupa só na família h1).
  * 2. Ordenar grupos do maior lucro para o menor e calcular % acumulado.
- * 3. Classificar Pareto: A ≤70%, B ≤85%, C ≤95%, D restante (e sem lucro).
+ * 3. Classificar Pareto: A ≤70%, B ≤85%, C ≤95%, D restante (5%).
+ * 4. Classe E — SKU sem venda no período (candidato a descontinuação).
  *
  * Se nenhum grupo tiver lucro positivo, usa receita agregada como fallback.
  */
 
-export const ABCD_CURVA_VERSAO = 'V16-grupo-h2-pareto-7095105';
+export const ABCD_CURVA_VERSAO = 'V17-grupo-h2-pareto-7095105-e-sem-venda';
 
 export const ABCD_REGRAS = {
   janela_dias: 90,
   abcd_nivel: 'campo_hierarquico_2 (ou campo_hierarquico_1 se h2 vazio)',
-  pareto: 'A até 70% · B até 85% · C até 95% · D restante',
-  agrupamento: 'lucro agregado por grupo; mesma letra para todos os SKUs do grupo',
+  pareto: 'A até 70% · B até 85% · C até 95% · D até 100% · E sem venda',
+  agrupamento: 'lucro agregado por grupo; mesma letra A–D para todos os SKUs do grupo; E por SKU sem venda',
 };
 
 function hierarchyKey(parts) {
@@ -67,11 +68,15 @@ export function etapa2_ordenarDistribuicao(lista) {
   return { ranking: rankingOrdenado, totalLucroPositivo };
 }
 
-/** Etapa 3 — A/B/C/D a partir do % acumulado; sem lucro positivo → D. */
+function classeGrupoSemLucroPositivo(entry) {
+  return (entry.receita || 0) <= 0 ? 'E' : 'D';
+}
+
+/** Etapa 3 — A/B/C/D a partir do % acumulado; grupos sem receita → E; com venda e sem lucro → D. */
 export function etapa3_classificarAbcd(ranking, totalLucroPositivo) {
   const mapa = {};
   for (const entry of ranking || []) {
-    mapa[entry.id] = 'D';
+    mapa[entry.id] = classeGrupoSemLucroPositivo(entry);
   }
   if (totalLucroPositivo <= 0) return mapa;
 
@@ -81,6 +86,7 @@ export function etapa3_classificarAbcd(ranking, totalLucroPositivo) {
     if (pct <= 70) mapa[entry.id] = 'A';
     else if (pct <= 85) mapa[entry.id] = 'B';
     else if (pct <= 95) mapa[entry.id] = 'C';
+    else mapa[entry.id] = 'D';
   }
   return mapa;
 }
@@ -122,7 +128,7 @@ export function classificarGruposAbcdPareto(entradasGrupo) {
 
   const mapaAbcdGrupo = {};
   for (const entry of etapa1.lista) {
-    mapaAbcdGrupo[entry.id] = 'D';
+    mapaAbcdGrupo[entry.id] = classeGrupoSemLucroPositivo(entry);
   }
   return {
     mapaAbcdGrupo,
@@ -153,6 +159,8 @@ export function agregarLucroPorGrupoAbcd(produtos, metricasPorProdutoId) {
   }));
 }
 
-export function abcdClasseParaProduto(produto, mapaAbcdGrupo) {
+/** SKU sem venda no período → E; caso contrário, letra do grupo (A–D). */
+export function abcdClasseParaProduto(produto, mapaAbcdGrupo, metricaSku) {
+  if (metricaSku && metricaSku.teveVenda === false) return 'E';
   return mapaAbcdGrupo?.[grupoAbcdKey(produto)] || 'D';
 }

@@ -2,7 +2,7 @@
 
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 
-export const ABCD_RANK = { A: 4, B: 3, C: 2, D: 1 };
+export const ABCD_RANK = { A: 5, B: 4, C: 3, D: 2, E: 1 };
 
 function confiancaSymbolFromIndex(indice) {
   const value = Number(indice);
@@ -16,7 +16,7 @@ export const CATALOG_SORT_OPTIONS = [
   { id: 'az', label: 'Nome A → Z' },
   { id: 'za', label: 'Nome Z → A' },
   { id: 'abcd_desc', label: 'Classe ABCD (A primeiro)' },
-  { id: 'abcd_asc', label: 'Classe ABCD (D primeiro)' },
+  { id: 'abcd_asc', label: 'Classe ABCD (E primeiro)' },
 ];
 
 export function getAbcdRank(letter) {
