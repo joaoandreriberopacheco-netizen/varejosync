@@ -131,7 +131,7 @@ export default function MetasEstoqueConfigTool() {
               cadastro: <strong className="font-medium text-foreground/80">estoque mínimo</strong> = ponto de
               pedido (média diária × lead time, padrão 20 dias) e{' '}
               <strong className="font-medium text-foreground/80">estoque ideal</strong> = quantidade a repor no
-              ciclo. Produtos com trava manual são ignorados.
+              ciclo.
             </p>
           </div>
         </div>

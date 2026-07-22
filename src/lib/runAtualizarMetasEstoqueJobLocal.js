@@ -164,7 +164,7 @@ export async function runAtualizarMetasEstoqueJobLocal(options = {}) {
       ? 'Não foi possível carregar produtos do catálogo.'
       : somenteMetasVazias
         ? 'Nenhum produto sem metas de estoque para preencher.'
-        : `Nenhum produto com venda nos últimos 90 dias para recalcular (${total_produtos} analisado(s); ${ignorados_sem_venda} sem venda; ${ignorados_trava_manual} com trava manual).`;
+        : `Nenhum produto com venda nos últimos 90 dias para recalcular (${total_produtos} analisado(s); ${ignorados_sem_venda} sem venda).`;
 
     return {
       status: 'sem_alteracao',
