@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
+import { produtoMatchesAbcdMultiFilter } from '@/lib/catalogAbcdEnrichment';
 import { calcularSugestaoCompraProduto } from '@/lib/calcularSugestaoCompra';
 import {
   buildLinhasSugestaoCompra,
@@ -49,6 +50,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [supplierFilter, setSupplierFilter] = useState('all');
   const [selectedTags, setSelectedTags] = useState([]);
+  const [selectedAbcd, setSelectedAbcd] = useState([]);
   const [tagSearch, setTagSearch] = useState('');
   const [hidePending, setHidePending] = useState(false);
   const [roundingMode, setRoundingMode] = useState('auto');
@@ -184,9 +186,15 @@ export default function SugestaoCompra({ onStatsChange }) {
       ) {
         return false;
       }
+      if (
+        selectedAbcd.length > 0 &&
+        !linha.skus.some((p) => produtoMatchesAbcdMultiFilter(p, selectedAbcd))
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [linhas, searchTerm, categoryFilter, supplierFilter, selectedTags, hidePending]);
+  }, [linhas, searchTerm, categoryFilter, supplierFilter, selectedTags, selectedAbcd, hidePending]);
 
   const selectedCount = Object.keys(selectedItems).length;
 
@@ -215,6 +223,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     setCategoryFilter('all');
     setSupplierFilter('all');
     setSelectedTags([]);
+    setSelectedAbcd([]);
     setTagSearch('');
     setHidePending(false);
     setRoundingMode('auto');
@@ -437,6 +446,8 @@ export default function SugestaoCompra({ onStatsChange }) {
         fornecedores={fornecedores}
         selectedTags={selectedTags}
         onSelectedTags={setSelectedTags}
+        selectedAbcd={selectedAbcd}
+        onSelectedAbcd={setSelectedAbcd}
         allTags={allTags}
         tagSearch={tagSearch}
         onTagSearch={setTagSearch}

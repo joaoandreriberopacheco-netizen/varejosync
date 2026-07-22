@@ -18,3 +18,12 @@ export function produtoMatchesAbcdFilter(produto, abcdFilter) {
   if (!letter) return false;
   return letter === String(abcdFilter).toUpperCase();
 }
+
+/** Filtro multi-seleção (ex.: A e B ao mesmo tempo). Array vazio = todas as classes. */
+export function produtoMatchesAbcdMultiFilter(produto, selectedLetters) {
+  if (!Array.isArray(selectedLetters) || selectedLetters.length === 0) return true;
+  const letter = resolveProdutoAbcdClasse(produto);
+  if (!letter) return false;
+  const allowed = new Set(selectedLetters.map((v) => String(v).toUpperCase()));
+  return allowed.has(letter);
+}
