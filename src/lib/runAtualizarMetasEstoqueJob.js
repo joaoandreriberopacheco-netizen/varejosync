@@ -107,7 +107,7 @@ async function runAtualizarMetasEstoqueServerJob(options = {}) {
     shouldAbort,
   } = options;
 
-  onProgress?.({ phase: 'preparing', etapa: 'Analisando vendas 90d, dias com estoque e lead time…' });
+  onProgress?.({ phase: 'preparing', etapa: 'Calculando metas (vendas 60d)…' });
 
   let prep;
   try {
