@@ -18,10 +18,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
 import { fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
+import { fetchAllProdutosCatalogo } from '@/lib/fetchProdutosAtivos';
 import {
-  parseSaleDateForMargem,
   pedidoElegivelMargem,
   resolverTotalLinhaVenda,
+  resolveMargemProdutoKey,
+  resolveCustoUnitarioMargem,
+  vendaNoIntervaloConsulta,
 } from '@/lib/relatorioMargemCalculos';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import {
@@ -613,7 +616,7 @@ export default function RelatorioMargemVendas() {
     setLoading(true);
     try {
       // Load all products to get CURRENT costs
-      const prods = await base44.entities.Produto.list();
+      const prods = await fetchAllProdutosCatalogo();
       setProducts(prods);
 
       const allSales = await fetchPedidosVendaParaMargem();
@@ -638,34 +641,31 @@ export default function RelatorioMargemVendas() {
 
     sales.forEach(sale => {
        if (!pedidoElegivelMargem(sale)) return;
-       const saleDate = parseSaleDateForMargem(sale);
-       if (!saleDate) return;
-       if (dateRange?.from && saleDate < dateRange.from) return;
-       if (dateRange?.to && saleDate > new Date(dateRange.to.getTime() + 86400000)) return;
+       if (!vendaNoIntervaloConsulta(sale, dateRange?.from, dateRange?.to)) return;
 
        const itens = Array.isArray(sale.itens) ? sale.itens : [];
        const descontoPorItem = (sale.valor_desconto || 0) / (itens.length || 1);
 
        itens.forEach(item => {
+         const prodKey = resolveMargemProdutoKey(item);
          const prodId = item.produto_id;
-         const product = prodMap[prodId];
-         if (!product) return;
+         const product = prodId ? prodMap[prodId] : null;
+         const custoCalculado = resolveCustoUnitarioMargem(item, product);
 
-         // IMPORTANTE: Usar SEMPRE o custo ATUAL do produto (fator-1), nunca do momento da venda
-         const custoCalculado = resolveCustoTotalUnitBaseProduto(product);
-
-         if (!reportMap[prodId]) {
-          const unidadeInicial = resolveCommercialDisplay(product, 0, item.unidade_medida || product?.unidade_principal || 'UN');
-           reportMap[prodId] = {
-             produto_id: prodId,
-             codigo_interno: product.codigo_interno,
-             nome: product.nome,
-             categoria: product.categoria_nome,
-             tags: product.tags,
-             campo_hierarquico_1: product.campo_hierarquico_1,
-             campo_hierarquico_2: product.campo_hierarquico_2,
-             campo_hierarquico_3: product.campo_hierarquico_3,
-             campo_hierarquico_4: product.campo_hierarquico_4,
+         if (!reportMap[prodKey]) {
+          const unidadeInicial = product
+            ? resolveCommercialDisplay(product, 0, item.unidade_medida || product?.unidade_principal || 'UN')
+            : { unidade: item.unidade_medida || 'UN', quantidade: 0 };
+           reportMap[prodKey] = {
+             produto_id: prodId || null,
+             codigo_interno: product?.codigo_interno || '—',
+             nome: product?.nome || item.produto_nome || 'Produto sem cadastro',
+             categoria: product?.categoria_nome || 'Sem cadastro',
+             tags: product?.tags || [],
+             campo_hierarquico_1: product?.campo_hierarquico_1 || 'Outros',
+             campo_hierarquico_2: product?.campo_hierarquico_2,
+             campo_hierarquico_3: product?.campo_hierarquico_3,
+             campo_hierarquico_4: product?.campo_hierarquico_4,
             unidade_exibicao: unidadeInicial.unidade || 'UN',
              vendas_count: 0,
              quantidade_vendida: 0,
@@ -676,9 +676,11 @@ export default function RelatorioMargemVendas() {
            };
          }
 
-         const entry = reportMap[prodId];
+         const entry = reportMap[prodKey];
         const quantidadeBase = Number(item.quantidade_base ?? (item.quantidade * (item.fator_conversao || 1)) ?? item.quantidade ?? 0) || 0;
-        const quantidadeResolvida = resolveCommercialDisplay(product, quantidadeBase, item.unidade_medida || product?.unidade_principal || 'UN');
+        const quantidadeResolvida = product
+          ? resolveCommercialDisplay(product, quantidadeBase, item.unidade_medida || product?.unidade_principal || 'UN')
+          : { quantidade: Number(item.quantidade) || quantidadeBase, unidade: item.unidade_medida || 'UN' };
          entry.vendas_count += 1;
         entry.quantidade_base_vendida += quantidadeBase;
         entry.quantidade_vendida += quantidadeResolvida.quantidade;

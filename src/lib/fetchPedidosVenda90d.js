@@ -5,6 +5,7 @@ import {
   pedidoDentroJanela90d,
   pedidoElegivelIep,
 } from '@/lib/calcularIepProdutos';
+import { STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA } from '@/lib/pdvCaixaTurnoVendas';
 
 const PEDIDO_IDS_CHUNK = 40;
 const PEDIDO_GET_CHUNK = 10;
@@ -358,49 +359,48 @@ export async function fetchDadosVendaAbcd90d() {
 }
 
 /**
- * Carrega vendas elegíveis para o Relatório de Margem (todos os tipos PDV + hidratação de itens).
+ * Mesmo recorte da aba Consulta em VendasGestao (sem filtro de tipo).
+ */
+export function pedidoElegivelMargemConsulta(pedido) {
+  if (!pedido) return false;
+  if (String(pedido.status) === 'Cancelado') return false;
+  return STATUS_PEDIDO_CONTA_NO_TURNO_CAIXA.includes(pedido.status);
+}
+
+async function fetchAllPedidosVendaList() {
+  const byId = new Map();
+  let skip = 0;
+  const pageSize = 500;
+  const maxPages = 80;
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const batch = await base44.entities.PedidoVenda.list('-created_date', pageSize, skip);
+    const rows = rowsFromApi(batch);
+    if (!rows.length) break;
+
+    let novos = 0;
+    for (const pedido of rows) {
+      const id = pedido?.id;
+      if (!id || byId.has(String(id))) continue;
+      byId.set(String(id), pedido);
+      novos += 1;
+    }
+
+    if (rows.length < pageSize) break;
+    if (novos === 0) break;
+    skip += pageSize;
+  }
+
+  return [...byId.values()];
+}
+
+/**
+ * Carrega vendas elegíveis para o Relatório de Margem (mesma base da Consulta de Vendas + hidratação de itens).
  */
 export async function fetchPedidosVendaParaMargem() {
-  const porId = new Map();
+  const pedidos = (await fetchAllPedidosVendaList()).filter(pedidoElegivelMargemConsulta);
   const dataKey = isoDiasAtrasDateKey(365);
-
-  for (const tipo of TIPOS_VENDA_PDV) {
-    try {
-      const rows = await fetchPedidosPaginados({
-        tipo,
-        status: { $ne: 'Cancelado' },
-      });
-      for (const pedido of rows) {
-        if (pedido?.id != null && pedidoElegivelIep(pedido)) {
-          porId.set(String(pedido.id), pedido);
-        }
-      }
-    } catch {
-      /* tenta próximo tipo */
-    }
-  }
-
-  if (porId.size === 0) {
-    const fallbacks = [
-      { status: { $ne: 'Cancelado' } },
-      { tipo: 'PDV', status: { $ne: 'Cancelado' } },
-    ];
-    for (const query of fallbacks) {
-      try {
-        const rows = await fetchPedidosPaginados(query);
-        for (const pedido of rows) {
-          if (pedido?.id != null && pedidoElegivelIep(pedido)) {
-            porId.set(String(pedido.id), pedido);
-          }
-        }
-        if (porId.size > 0) break;
-      } catch {
-        /* próximo fallback */
-      }
-    }
-  }
-
-  return hidratarPedidosSemItens([...porId.values()], dataKey);
+  return hidratarPedidosSemItens(pedidos, dataKey);
 }
 
 export { countLinhasItens };
