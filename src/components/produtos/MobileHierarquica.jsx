@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, catalogProdutosStructureSig } from './treegrid/useTreeGrid';
+import { useCatalogTreeGrid, flattenTree, buildExpandedForLevel, mergeAdjacentDuplicateGroupHeaders, catalogProdutosStructureSig, resolveExpandedKeysForMasterLevel } from './treegrid/useTreeGrid';
 import {
   buildPurchaseUnitOptions,
   buildSaleUnitOptions,
@@ -671,9 +671,7 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
 
   // Reinicia expansão só quando filtros/hierarquia mudam — não a cada rebuild por ABCD/IEP ou preços.
   useEffect(() => {
-    setExpandedKeys(
-      masterLevel === 1 ? new Set() : buildExpandedForLevel(tree, masterLevel - 1)
-    );
+    setExpandedKeys(resolveExpandedKeysForMasterLevel(tree, masterLevel, groupByCategory));
     const scrollEl = scrollRef?.current;
     if (scrollEl) scrollEl.scrollTop = 0;
   }, [produtosStructureSig, groupByCategory, masterLevel, scrollRef]);
@@ -683,9 +681,11 @@ export default function MobileHierarquica({ produtos, onEdit, groupByCategory = 
   }, [expandedKeys, onExpandedKeysChange]);
 
   const rows = useMemo(() => {
-    const all = mergeAdjacentDuplicateGroupHeaders(flattenTree(tree, expandedKeys));
+    const all = mergeAdjacentDuplicateGroupHeaders(
+      flattenTree(tree, expandedKeys, '', 0, 'az', { groupByCategory }),
+    );
     return all.filter(r => !(r.type === 'group' && r.count === 0));
-  }, [tree, expandedKeys]);
+  }, [tree, expandedKeys, groupByCategory]);
 
   const shouldVirtualizeRows = rows.length >= CATALOGO_VIRTUALIZE_MIN_ROWS;
 

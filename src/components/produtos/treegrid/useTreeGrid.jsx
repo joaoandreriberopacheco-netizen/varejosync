@@ -397,20 +397,54 @@ function flattenGroupBranch(key, node, expandedKeys, parentKey, visualLevel, sor
   return rows;
 }
 
+function flattenCategoryBand(key, node, expandedKeys, sortOrder, options = {}) {
+  const rows = [];
+  const rawKey = key;
+  const { label: collapsedLabel, node: finalNode } = deepCollapse(node);
+  const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
+  const branchSkus = collectSkus(finalNode);
+  const agg = finalNode._agg || aggregateSkus(branchSkus);
+
+  rows.push({
+    type: 'group',
+    key: nodeKey,
+    label: collapsedLabel,
+    level: 0,
+    isCategoryBand: true,
+    node: finalNode,
+    isLeafGroup: false,
+    ...agg,
+  });
+
+  if (expandedKeys.has(nodeKey)) {
+    const innerOpts = { ...options, groupByCategory: false };
+    const innerTree = { ...(finalNode.children || {}) };
+    if (finalNode.skus?.length) innerTree._rootSkus = finalNode.skus;
+    if (Object.keys(innerTree).length > 0) {
+      rows.push(...flattenTree(innerTree, expandedKeys, nodeKey, 0, sortOrder, innerOpts));
+    }
+  }
+
+  return rows;
+}
+
 export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel = 0, sortOrder = 'az', options = {}) {
   const rows = [];
   const parsed = parseCatalogSortOrder(sortOrder);
+  const { groupByCategory = false } = options;
 
   if (visualLevel === 0) {
     const rootEntries = [];
-    for (const sku of sortSkus(treeNode._rootSkus, sortOrder)) {
-      rootEntries.push({ sortLabel: sku.nome || '', kind: 'orphan', sku });
+    if (!groupByCategory) {
+      for (const sku of sortSkus(treeNode._rootSkus, sortOrder)) {
+        rootEntries.push({ sortLabel: sku.nome || '', kind: 'orphan', sku });
+      }
     }
     for (const [key, node] of sortTreeChildEntries(treeNode, sortOrder)) {
       const agg = node?._agg || aggregateSkus(collectSkus(node));
       rootEntries.push({
         sortLabel: parsed.mode === 'name' ? key : getGroupPerformanceSortValue(agg, sortOrder),
-        kind: 'group',
+        kind: groupByCategory ? 'category' : 'group',
         key,
         node,
       });
@@ -433,6 +467,8 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
     for (const entry of rootEntries) {
       if (entry.kind === 'orphan') {
         rows.push(makeSkuRow(entry.sku, 1));
+      } else if (entry.kind === 'category') {
+        rows.push(...flattenCategoryBand(entry.key, entry.node, expandedKeys, sortOrder, options));
       } else {
         rows.push(...flattenGroupBranch(entry.key, entry.node, expandedKeys, parentKey, visualLevel, sortOrder, options));
       }
@@ -447,9 +483,48 @@ export function flattenTree(treeNode, expandedKeys, parentKey = '', visualLevel 
   return rows;
 }
 
-export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', visualLevel = 0) {
+function resolveExpandedKeysForMasterLevel(tree, masterLevel, groupByCategory) {
+  if (!tree || typeof tree !== 'object') return new Set();
+  if (!groupByCategory && masterLevel === 1) return new Set();
+
+  const targetLevel = groupByCategory
+    ? (masterLevel >= TREE_GRID_EXPAND_ALL_LEVEL ? 50 : masterLevel)
+    : (masterLevel <= 1 ? 0 : masterLevel - 1);
+
+  return buildExpandedForLevel(tree, targetLevel, '', 0, { groupByCategory });
+}
+
+export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', visualLevel = 0, options = {}) {
   const keys = new Set();
-  if (!treeNode || typeof treeNode !== 'object' || visualLevel >= targetLevel) return keys;
+  const { groupByCategory = false } = options;
+  if (!treeNode || typeof treeNode !== 'object') return keys;
+
+  if (groupByCategory && visualLevel === 0 && !parentKey) {
+    for (const [key, node] of sortedTreeChildEntries(treeNode)) {
+      if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
+
+      const rawKey = key;
+      const { node: finalNode } = deepCollapse(node);
+      const nodeKey = resolveCollapsedKey(rawKey, node, finalNode);
+      keys.add(nodeKey);
+
+      if (targetLevel > 0) {
+        const innerTree = { ...(finalNode.children || {}) };
+        if (finalNode.skus?.length) innerTree._rootSkus = finalNode.skus;
+        const innerKeys = buildExpandedForLevel(
+          innerTree,
+          targetLevel,
+          nodeKey,
+          0,
+          { groupByCategory: false },
+        );
+        innerKeys.forEach((k) => keys.add(k));
+      }
+    }
+    return keys;
+  }
+
+  if (visualLevel >= targetLevel) return keys;
 
   for (const [key, node] of sortedTreeChildEntries(treeNode)) {
     if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
@@ -472,6 +547,8 @@ export function buildExpandedForLevel(treeNode, targetLevel, parentKey = '', vis
   }
   return keys;
 }
+
+export { resolveExpandedKeysForMasterLevel };
 
 /**
  * Assinatura só da estrutura (filtros / hierarquia) — não inclui preços nem ABCD/IEP.
