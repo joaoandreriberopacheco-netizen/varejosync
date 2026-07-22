@@ -17,6 +17,12 @@ import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CalendarPopup from '@/components/relatorios/CalendarPopup';
 import { resolveCommercialDisplay, resolveCustoTotalUnitBaseProduto, formatCommercialQuantity } from '@/lib/productUnits';
+import { fetchPedidosVendaParaMargem } from '@/lib/fetchPedidosVenda90d';
+import {
+  parseSaleDateForMargem,
+  pedidoElegivelMargem,
+  resolverTotalLinhaVenda,
+} from '@/lib/relatorioMargemCalculos';
 import { registerJsPdfDin1451Fonts, normalizePdfText } from '@/lib/jspdfNotoFont';
 import {
   p38Table,
@@ -610,7 +616,7 @@ export default function RelatorioMargemVendas() {
       const prods = await base44.entities.Produto.list();
       setProducts(prods);
 
-      const allSales = await base44.entities.PedidoVenda.filter({ tipo: 'PDV' });
+      const allSales = await fetchPedidosVendaParaMargem();
       setSales(allSales);
 
     } catch (error) {
@@ -631,11 +637,16 @@ export default function RelatorioMargemVendas() {
     const reportMap = {};
 
     sales.forEach(sale => {
-       const saleDate = new Date(sale.created_date);
+       if (!pedidoElegivelMargem(sale)) return;
+       const saleDate = parseSaleDateForMargem(sale);
+       if (!saleDate) return;
        if (dateRange?.from && saleDate < dateRange.from) return;
        if (dateRange?.to && saleDate > new Date(dateRange.to.getTime() + 86400000)) return;
 
-       sale.itens?.forEach(item => {
+       const itens = Array.isArray(sale.itens) ? sale.itens : [];
+       const descontoPorItem = (sale.valor_desconto || 0) / (itens.length || 1);
+
+       itens.forEach(item => {
          const prodId = item.produto_id;
          const product = prodMap[prodId];
          if (!product) return;
@@ -672,9 +683,8 @@ export default function RelatorioMargemVendas() {
         entry.quantidade_base_vendida += quantidadeBase;
         entry.quantidade_vendida += quantidadeResolvida.quantidade;
         entry.unidade_exibicao = quantidadeResolvida.unidade || entry.unidade_exibicao || 'UN';
-         entry.total_recebido += item.total;
-         // Registrar o desconto do pedido (para cada venda, não proporcional por item neste cálculo)
-         entry.total_desconto_venda += (sale.valor_desconto || 0) / (sale.itens?.length || 1);
+         entry.total_recebido += resolverTotalLinhaVenda(item);
+         entry.total_desconto_venda += descontoPorItem;
        });
      });
 

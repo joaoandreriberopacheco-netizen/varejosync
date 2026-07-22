@@ -3,7 +3,9 @@
  * Mesma lógica de RelatorioMargem: custo atual do cadastro × qtd vendida no período.
  */
 
+import { parseISO, parse, isValid } from 'date-fns';
 import { resolveCustoTotalUnitBaseProduto } from '@/lib/productUnits';
+import { pedidoElegivelIep } from '@/lib/calcularIepProdutos';
 
 export function competenciaParaIntervalo(competencia) {
   const [y, m] = String(competencia).slice(0, 7).split('-').map(Number);
@@ -14,9 +16,70 @@ export function competenciaParaIntervalo(competencia) {
   };
 }
 
+/** Mesma prioridade de datas do dashboard Paiol (VendasTab). */
+export function parseSaleDateForMargem(sale = {}) {
+  const candidates = [
+    sale.data_venda,
+    sale.data_emissao,
+    sale.data_fechamento,
+    sale.created_date,
+    sale.updated_date,
+  ];
+
+  for (const value of candidates) {
+    if (!value) continue;
+    if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+
+    if (typeof value === 'string') {
+      const isoParsed = parseISO(value);
+      if (isValid(isoParsed)) return isoParsed;
+
+      const ptBrParsed = parse(value, 'dd/MM/yyyy', new Date());
+      if (isValid(ptBrParsed)) return ptBrParsed;
+    }
+
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  return null;
+}
+
+export function pedidoElegivelMargem(pedido) {
+  return pedidoElegivelIep(pedido);
+}
+
+/** Total da linha com fallbacks (espelho do dashboard de vendas). */
+export function resolverTotalLinhaVenda(item = {}) {
+  const direto = Number(
+    item.total ?? item.valor_total ?? item.valor_total_item ?? item.subtotal ?? 0,
+  );
+  if (direto > 0) return direto;
+
+  const quantidadeBase =
+    Number(
+      item.quantidade_base ??
+        (Number(item.quantidade || 0) * Number(item.fator_conversao || 1)) ??
+        item.quantidade ??
+        0,
+    ) || 0;
+  const precoUnitario = Number(
+    item.preco_unitario_praticado ??
+      item.preco_final_unitario_fator1 ??
+      item.preco_unitario_fator1 ??
+      0,
+  );
+
+  if (quantidadeBase > 0 && precoUnitario > 0) {
+    return quantidadeBase * precoUnitario;
+  }
+
+  return 0;
+}
+
 function vendaNoIntervalo(sale, from, to) {
-  const saleDate = new Date(sale?.created_date);
-  if (Number.isNaN(saleDate.getTime())) return false;
+  const saleDate = parseSaleDateForMargem(sale);
+  if (!saleDate) return false;
   if (from && saleDate < from) return false;
   if (to && saleDate > new Date(to.getTime() + 86400000)) return false;
   return true;
@@ -35,14 +98,19 @@ export function calcularLinhasMargemVendas(sales = [], products = [], intervalo 
   const { from, to } = intervalo || {};
 
   for (const sale of sales || []) {
+    if (!pedidoElegivelMargem(sale)) continue;
     if (!vendaNoIntervalo(sale, from, to)) continue;
 
-    for (const item of sale.itens || []) {
+    const itens = Array.isArray(sale.itens) ? sale.itens : [];
+    const descontoPorItem = (Number(sale.valor_desconto) || 0) / (itens.length || 1);
+
+    for (const item of itens) {
       const prodId = item.produto_id;
       const product = prodMap[prodId];
       if (!product) continue;
 
       const custoCalculado = resolveCustoTotalUnitBaseProduto(product);
+      const lineTotal = resolverTotalLinhaVenda(item);
 
       if (!reportMap[prodId]) {
         reportMap[prodId] = {
@@ -56,11 +124,15 @@ export function calcularLinhasMargemVendas(sales = [], products = [], intervalo 
 
       const entry = reportMap[prodId];
       const quantidadeBase =
-        Number(item.quantidade_base ?? (item.quantidade * (item.fator_conversao || 1)) ?? item.quantidade ?? 0) ||
-        0;
+        Number(
+          item.quantidade_base ??
+            (item.quantidade * (item.fator_conversao || 1)) ??
+            item.quantidade ??
+            0,
+        ) || 0;
       entry.quantidade_base_vendida += quantidadeBase;
-      entry.total_recebido += Number(item.total) || 0;
-      entry.total_desconto_venda += (Number(sale.valor_desconto) || 0) / (sale.itens?.length || 1);
+      entry.total_recebido += lineTotal;
+      entry.total_desconto_venda += descontoPorItem;
     }
   }
 
