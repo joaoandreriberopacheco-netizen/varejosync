@@ -9,10 +9,13 @@ import FiltrosSugestaoCompra, {
   DEFAULT_SUGESTAO_COMPRA_FILTERS,
 } from '@/components/compras/FiltrosSugestaoCompra';
 import SugestaoCompraTreeGrid, { LevelControl, TREE_GRID_EXPAND_ALL_LEVEL } from '@/components/compras/SugestaoCompraTreeGrid';
+import SugestaoCompraMobileList from '@/components/compras/SugestaoCompraMobileList';
 import { ShoppingCart, RefreshCw, CheckCircle, FileText, TrendingUp } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
+import { cn } from '@/components/utils';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
 import { calcularSugestaoCompraProdutoVelocidade } from '@/lib/calcularSugestaoCompraVelocidade';
 import {
@@ -30,6 +33,7 @@ import {
   buildSugestaoCompraLinhaLookup,
   enrichSugestaoLinhasComAbcd,
   extractProdutosFromSugestaoLinhas,
+  sortSugestaoCompraLinhas,
 } from '@/lib/sugestaoCompraTree';
 import {
   collectSugestaoTags,
@@ -103,6 +107,7 @@ export default function SugestaoCompra({ onStatsChange }) {
 
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useCompactShell();
   const calcContextRef = useRef({
     pedidos: [],
     movsPorProduto: {},
@@ -297,6 +302,11 @@ export default function SugestaoCompra({ onStatsChange }) {
   const filteredLinhas = useMemo(
     () => filterSugestaoCompraLinhas(linhas, filters),
     [linhas, filters],
+  );
+
+  const mobileLinhas = useMemo(
+    () => sortSugestaoCompraLinhas(filteredLinhas, sortOrder),
+    [filteredLinhas, sortOrder],
   );
 
   const treeProdutos = useMemo(
@@ -569,7 +579,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   }
 
   return (
-    <div className="space-y-4 min-w-0">
+    <div className={cn('space-y-4 min-w-0', isMobile && 'pb-28')}>
       <FiltrosSugestaoCompra
         filters={filters}
         onFiltersChange={setFilters}
@@ -601,27 +611,31 @@ export default function SugestaoCompra({ onStatsChange }) {
           >
             <RefreshCw className={`h-4 w-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-11 rounded-2xl gap-1.5"
-            disabled={selectedCount === 0}
-            onClick={handleQuote}
-          >
-            <FileText className="w-4 h-4" />
-            Cotação
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="h-11 rounded-2xl gap-1.5"
-            disabled={selectedCount === 0}
-            onClick={handleGenerate}
-          >
-            <ShoppingCart className="w-4 h-4" />
-            Gerar pedido{selectedCount > 0 ? ` (${selectedCount})` : ''}
-          </Button>
+          {!isMobile ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-11 rounded-2xl gap-1.5"
+                disabled={selectedCount === 0}
+                onClick={handleQuote}
+              >
+                <FileText className="w-4 h-4" />
+                Cotação
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="h-11 rounded-2xl gap-1.5"
+                disabled={selectedCount === 0}
+                onClick={handleGenerate}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                Gerar pedido{selectedCount > 0 ? ` (${selectedCount})` : ''}
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -667,7 +681,7 @@ export default function SugestaoCompra({ onStatsChange }) {
         </div>
       ) : (
         <div className="min-w-0 w-full space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
             <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
               <Checkbox
                 checked={
@@ -699,39 +713,85 @@ export default function SugestaoCompra({ onStatsChange }) {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <ProdutosTreeByCategoryToggle
-                checked={groupByCategory}
-                onChange={handleGroupByCategoryChange}
-                className="h-8"
-              />
-              <div className="flex items-center gap-1 rounded-xl bg-muted px-2 h-8">
-                <span className="text-[10px] text-muted-foreground">nível</span>
-                <LevelControl level={treeLevel} onChange={handleTreeLevelChange} />
-              </div>
+              {!isMobile ? (
+                <>
+                  <ProdutosTreeByCategoryToggle
+                    checked={groupByCategory}
+                    onChange={handleGroupByCategoryChange}
+                    className="h-8"
+                  />
+                  <div className="flex items-center gap-1 rounded-xl bg-muted px-2 h-8">
+                    <span className="text-[10px] text-muted-foreground">nível</span>
+                    <LevelControl level={treeLevel} onChange={handleTreeLevelChange} />
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
-          <SugestaoCompraTreeGrid
-            produtos={treeProdutos}
-            linhaLookup={linhaLookup}
-            agruparHierarquia={agruparHierarquia}
-            sortOrder={sortOrder}
-            groupByCategory={groupByCategory}
-            masterLevel={treeLevel === TREE_GRID_EXPAND_ALL_LEVEL ? TREE_GRID_EXPAND_ALL_LEVEL : treeLevel}
-            selectedItems={selectedItems}
-            onToggleSelected={(id, checked) =>
-              setSelectedItems((prev) =>
-                checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
-              )
-            }
-            sugestaoDisplayLinha={sugestaoDisplayLinha}
-            calcQuantityLinha={calcQuantityLinha}
-            onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
-            renderFornecedorSelect={(linha) =>
-              renderFornecedorSelect(linha, 'h-8 w-full max-w-[14rem] rounded-md border-0 bg-muted/30 text-xs')
-            }
-          />
+          {isMobile ? (
+            <SugestaoCompraMobileList
+              linhas={mobileLinhas}
+              selectedItems={selectedItems}
+              onToggleSelected={(id, checked) =>
+                setSelectedItems((prev) =>
+                  checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+                )
+              }
+              sugestaoDisplayLinha={sugestaoDisplayLinha}
+              onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
+              renderFornecedorSelect={(linha) =>
+                renderFornecedorSelect(linha, 'h-10 w-full rounded-xl border-0 bg-muted/40 text-xs')
+              }
+            />
+          ) : (
+            <SugestaoCompraTreeGrid
+              produtos={treeProdutos}
+              linhaLookup={linhaLookup}
+              agruparHierarquia={agruparHierarquia}
+              sortOrder={sortOrder}
+              groupByCategory={groupByCategory}
+              masterLevel={treeLevel === TREE_GRID_EXPAND_ALL_LEVEL ? TREE_GRID_EXPAND_ALL_LEVEL : treeLevel}
+              selectedItems={selectedItems}
+              onToggleSelected={(id, checked) =>
+                setSelectedItems((prev) =>
+                  checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+                )
+              }
+              sugestaoDisplayLinha={sugestaoDisplayLinha}
+              onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
+              renderFornecedorSelect={(linha) =>
+                renderFornecedorSelect(linha, 'h-8 w-full max-w-[14rem] rounded-md border-0 bg-muted/30 text-xs')
+              }
+            />
+          )}
         </div>
       )}
+
+      {isMobile ? (
+        <div className="fixed inset-x-0 bottom-[var(--p38-bottom-nav-total,0px)] z-40 border-t border-border/40 bg-card/95 backdrop-blur-sm px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="flex gap-2 max-w-7xl mx-auto">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 flex-1 rounded-2xl gap-1.5"
+              disabled={selectedCount === 0}
+              onClick={handleQuote}
+            >
+              <FileText className="w-4 h-4 shrink-0" />
+              Cotação
+            </Button>
+            <Button
+              type="button"
+              className="h-11 flex-1 rounded-2xl gap-1.5"
+              disabled={selectedCount === 0}
+              onClick={handleGenerate}
+            >
+              <ShoppingCart className="w-4 h-4 shrink-0" />
+              Pedido{selectedCount > 0 ? ` (${selectedCount})` : ''}
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

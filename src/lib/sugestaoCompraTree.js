@@ -2,6 +2,14 @@ import { collectSkus } from '@/components/produtos/treegrid/useTreeGrid';
 import { grupoCompraHierarquiaKey } from '@/lib/calcularSugestaoCompraHierarquia';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
+import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
+
+/** Ordena linhas de sugestão (representante = produto da linha). */
+export function sortSugestaoCompraLinhas(linhas = [], sortOrder = 'abcd_desc') {
+  return [...linhas].sort((a, b) =>
+    compareProdutosForCatalogSort(a?.produto, b?.produto, sortOrder),
+  );
+}
 
 /** Produtos únicos das linhas de sugestão (para montar a árvore). */
 export function extractProdutosFromSugestaoLinhas(linhas = []) {
