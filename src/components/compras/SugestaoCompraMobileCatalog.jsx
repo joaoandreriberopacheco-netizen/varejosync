@@ -87,18 +87,9 @@ function EstoqueUnCol({ quantidade, unidade, stockTone = 'success' }) {
   );
 }
 
-function SugestaoCompraMobileColumnHeader({ className = '', invisible = false, pinStyle = null }) {
+function SugestaoCompraMobileColumnHeader({ className = '' }) {
   return (
-    <div
-      className={cn(
-        p38Table.catalogMobileHeader,
-        'relative',
-        invisible && 'invisible pointer-events-none',
-        pinStyle && 'fixed z-[60]',
-        className,
-      )}
-      style={pinStyle || undefined}
-    >
+    <div className={cn(p38Table.catalogMobileHeader, 'relative', className)}>
       <SacredAxis />
       <div className={cn('relative flex min-w-0 py-3.5 pr-10', ROW_PL)}>
         <AxisColShell className="!py-2">
@@ -303,52 +294,8 @@ function SugestaoCatalogRow({
   );
 }
 
-function useColumnHeaderPin(scrollRef) {
-  const sentinelRef = useRef(null);
-  const [pinned, setPinned] = useState(false);
-  const [pinFrame, setPinFrame] = useState({ top: 0, left: 0, width: 0 });
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return undefined;
-
-    const sync = () => {
-      const scrollEl = scrollRef.current;
-      const sentinelRect = sentinel.getBoundingClientRect();
-      const usesInnerScroll = Boolean(scrollEl && scrollEl.scrollHeight > scrollEl.clientHeight + 1);
-      const scrollRect = scrollEl?.getBoundingClientRect();
-      const anchorTop = usesInnerScroll && scrollRect ? scrollRect.top : 48;
-      const anchorLeft = scrollRect?.left ?? 0;
-      const anchorWidth = scrollRect?.width ?? window.innerWidth;
-
-      setPinned(sentinelRect.top < anchorTop + 0.5);
-      setPinFrame({ top: anchorTop, left: anchorLeft, width: anchorWidth });
-    };
-
-    const scrollEl = scrollRef.current;
-    scrollEl?.addEventListener('scroll', sync, { passive: true });
-    window.addEventListener('resize', sync);
-    window.addEventListener('orientationchange', sync);
-    const ro = new ResizeObserver(sync);
-    if (scrollEl) ro.observe(scrollEl);
-    ro.observe(sentinel);
-    sync();
-
-    return () => {
-      scrollEl?.removeEventListener('scroll', sync);
-      window.removeEventListener('resize', sync);
-      window.removeEventListener('orientationchange', sync);
-      ro.disconnect();
-    };
-  }, [scrollRef]);
-
-  return { sentinelRef, pinned, pinFrame };
-}
-
 export function SugestaoCompraMobileScrollShell({ chrome, children }) {
   const scrollRef = useRef(null);
-  const { sentinelRef, pinned, pinFrame } = useColumnHeaderPin(scrollRef);
-  const pinStyle = pinned ? { top: pinFrame.top, left: pinFrame.left, width: pinFrame.width } : null;
 
   return (
     <div
@@ -357,17 +304,7 @@ export function SugestaoCompraMobileScrollShell({ chrome, children }) {
       style={{ WebkitOverflowScrolling: 'touch' }}
     >
       {chrome}
-      <div ref={sentinelRef} className="h-px w-full shrink-0" aria-hidden />
-      <SugestaoCompraMobileColumnHeader
-        className="border-x border-border/40 dark:border-white/10"
-        invisible={pinned}
-      />
-      {pinned ? (
-        <SugestaoCompraMobileColumnHeader
-          className="border-x border-border/40 dark:border-white/10"
-          pinStyle={pinStyle}
-        />
-      ) : null}
+      <SugestaoCompraMobileColumnHeader className="sticky top-0 z-30 border-x border-border/40 dark:border-white/10 shadow-sm" />
       {children}
     </div>
   );
