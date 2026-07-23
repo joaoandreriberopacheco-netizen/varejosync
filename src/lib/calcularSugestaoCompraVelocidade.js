@@ -36,13 +36,48 @@ function formatGapReposicao(produto, gapBase) {
   return formatCatalogSalesQuantity(ap.quantidade, ap.sigla, { dashIfZero: false });
 }
 
-/** Déficit até o ponto de pedido — usado na qtd sugerida, não na coluna «Ponto futuro». */
+/** Déficit até o ponto de pedido — usado no filtro «abaixo do ponto», não na qtd sugerida. */
 function buildGapReposicao(produto, pontoPedidoBase, estoqueAtual) {
   const gapBase = Math.max(0, (Number(pontoPedidoBase) || 0) - (Number(estoqueAtual) || 0));
   return {
     gap_ponto_futuro_base: gapBase,
     gap_ponto_futuro_texto: formatGapReposicao(produto, gapBase),
   };
+}
+
+/**
+ * Quantidade sugerida = déficit até o ponto de pedido + um ciclo de reposição (média × LT).
+ * Se a projeção em 30d já for negativa, sugere pelo menos um ciclo mesmo acima do ponto.
+ */
+export function calcularQuantidadeSugeridaNovoCiclo(
+  estoqueAtual,
+  pontoPedido,
+  estoqueIdeal,
+  projecaoEstoque30d,
+) {
+  const estoque = Number(estoqueAtual) || 0;
+  const ponto = Number(pontoPedido) || 0;
+  const ideal = Number(estoqueIdeal) || 0;
+  const projecao = Number(projecaoEstoque30d);
+  const ciclo = ideal > 0 ? ideal : ponto > 0 ? ponto : 0;
+  if (ciclo <= 0) return 0;
+
+  const gapPonto = ponto > 0 ? Math.max(0, ponto - estoque) : 0;
+  const rupturaEm30d = Number.isFinite(projecao) && projecao < 0;
+  const abaixoPonto = ponto > 0 && estoque < ponto;
+
+  if (!abaixoPonto && !rupturaEm30d) return 0;
+  return gapPonto + ciclo;
+}
+
+export function sugestaoPrecisaReposicao(sugestao) {
+  if (!sugestao) return false;
+  if ((Number(sugestao.quantidade_sugerida_base) || 0) > 0) return true;
+  if ((Number(sugestao.gap_ponto_futuro_base) || 0) > 0) return true;
+  if ((Number(sugestao.projecao_estoque_30d_base) || 0) < 0) return true;
+  const ponto = Number(sugestao.ponto_pedido) || 0;
+  const estoque = Number(sugestao.estoque_atual) || 0;
+  return ponto > 0 && estoque < ponto;
 }
 
 function formatProjecaoEstoque30d(produto, projecaoBase) {
@@ -210,10 +245,20 @@ export function calcularSugestaoCompraProdutoVelocidade(
   const { pontoPedido, estoqueIdeal } = metricas;
   const gap = buildGapReposicao(produto, pontoPedido, estoqueAtual);
   const projecao = buildProjecaoEstoque30d(produto, estoqueAtual, metricas.mediaDia);
-  const elegivel = catalogoCompleto ? gap.gap_ponto_futuro_base > 0 : estoqueAtual < pontoPedido;
+  const qtdNovoCiclo = catalogoCompleto
+    ? calcularQuantidadeSugeridaNovoCiclo(
+        estoqueAtual,
+        pontoPedido,
+        estoqueIdeal,
+        projecao.projecao_estoque_30d_base,
+      )
+    : 0;
+  const elegivel = catalogoCompleto
+    ? qtdNovoCiclo > 0
+    : estoqueAtual < pontoPedido;
   const quantidadeSugeridaBase = catalogoCompleto
-    ? gap.gap_ponto_futuro_base > 0
-      ? arredondarQuantidadeSugestao(gap.gap_ponto_futuro_base, produto, roundingMode)
+    ? qtdNovoCiclo > 0
+      ? arredondarQuantidadeSugestao(qtdNovoCiclo, produto, roundingMode)
       : 0
     : elegivel
       ? arredondarQuantidadeSugestao(estoqueIdeal, produto, roundingMode)
@@ -222,8 +267,8 @@ export function calcularSugestaoCompraProdutoVelocidade(
   return {
     elegivel: catalogoCompleto ? true : elegivel,
     motivo: catalogoCompleto
-      ? gap.gap_ponto_futuro_base > 0
-        ? 'abaixo_ponto_futuro'
+      ? qtdNovoCiclo > 0
+        ? 'reposicao_novo_ciclo'
         : 'estoque_suficiente'
       : elegivel
         ? 'abaixo_ponto_futuro'
@@ -247,7 +292,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
     fonte: 'velocidade',
     catalogo_completo: catalogoCompleto || undefined,
     versao: catalogoCompleto
-      ? 'v3-catalogo-completo-projecao-30d'
+      ? 'v4-catalogo-completo-novo-ciclo'
       : 'v1-velocidade-60d-ponto-futuro',
   };
 }
@@ -356,10 +401,20 @@ export function calcularSugestaoCompraGrupoVelocidade(
     0,
   );
   const projecao = buildProjecaoEstoque30d(representativo, estoqueAtual, mediaDiaGrupo);
-  const elegivel = catalogoCompleto ? gap.gap_ponto_futuro_base > 0 : estoqueAtual < pontoPedido;
+  const qtdNovoCiclo = catalogoCompleto
+    ? calcularQuantidadeSugeridaNovoCiclo(
+        estoqueAtual,
+        pontoPedido,
+        estoqueIdeal,
+        projecao.projecao_estoque_30d_base,
+      )
+    : 0;
+  const elegivel = catalogoCompleto
+    ? qtdNovoCiclo > 0
+    : estoqueAtual < pontoPedido;
   const quantidadeSugeridaBase = catalogoCompleto
-    ? gap.gap_ponto_futuro_base > 0
-      ? arredondarQuantidadeSugestao(gap.gap_ponto_futuro_base, representativo, roundingMode)
+    ? qtdNovoCiclo > 0
+      ? arredondarQuantidadeSugestao(qtdNovoCiclo, representativo, roundingMode)
       : 0
     : elegivel
       ? arredondarQuantidadeSugestao(estoqueIdeal, representativo, roundingMode)
@@ -396,8 +451,8 @@ export function calcularSugestaoCompraGrupoVelocidade(
   return {
     elegivel: catalogoCompleto ? true : elegivel,
     motivo: catalogoCompleto
-      ? gap.gap_ponto_futuro_base > 0
-        ? 'abaixo_ponto_futuro'
+      ? qtdNovoCiclo > 0
+        ? 'reposicao_novo_ciclo'
         : 'estoque_suficiente'
       : elegivel
         ? 'abaixo_ponto_futuro'
@@ -423,7 +478,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
     fonte: 'velocidade',
     catalogo_completo: catalogoCompleto || undefined,
     versao: catalogoCompleto
-      ? 'v3-grupo-catalogo-completo-projecao-30d'
+      ? 'v4-grupo-catalogo-completo-novo-ciclo'
       : 'v1-grupo-velocidade-60d-ponto-futuro',
   };
 }

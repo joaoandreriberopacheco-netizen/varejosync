@@ -10,6 +10,7 @@ import {
 } from '@/lib/filterProdutos';
 import { getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import {
+  sugestaoPrecisaReposicao,
   sugestaoTemGiroVelocidade,
 } from '@/lib/calcularSugestaoCompraVelocidade';
 
@@ -97,8 +98,7 @@ function linhaPontoPedido(linha) {
 }
 
 export function linhaAbaixoPontoFuturo(linha) {
-  const gap = Number(linha?.sugestao?.gap_ponto_futuro_base);
-  if (Number.isFinite(gap)) return gap > 0;
+  if (sugestaoPrecisaReposicao(linha?.sugestao)) return true;
   const ponto = linhaPontoPedido(linha);
   if (ponto <= 0) return false;
   return linhaEstoqueAtual(linha) < ponto;
