@@ -288,3 +288,46 @@ export function collectSugestaoTags(linhas = []) {
 export function formatSugestaoVitrineLabel(sigla) {
   return getUnidadeExibicaoSigla({ unidade_vitrine: sigla }) || sigla;
 }
+
+/** Texto legível para cabeçalho de relatório / exportação. */
+export function describeSugestaoCompraFilters(
+  filters = DEFAULT_SUGESTAO_COMPRA_FILTERS,
+  { categorias = [], fornecedores = [] } = {},
+) {
+  const parts = [];
+  const term = String(filters?.searchTerm || '').trim();
+  if (term) {
+    parts.push(filters.searchStartsWith ? `busca começa com "${term}"` : `busca "${term}"`);
+  }
+  if (filters.categoriaId !== 'all') {
+    const cat = categorias.find((c) => c.id === filters.categoriaId);
+    parts.push(`categoria: ${cat?.nome || filters.categoriaId}`);
+  }
+  if (filters.hierarquiaNivel !== 'all') {
+    const nivel = SUGESTAO_HIERARQUIA_NIVEL_OPTIONS.find((o) => o.value === filters.hierarquiaNivel);
+    parts.push(nivel?.label || `nível ${filters.hierarquiaNivel}`);
+  }
+  if (filters.fornecedorId !== 'all') {
+    const f = fornecedores.find((x) => x.id === filters.fornecedorId);
+    parts.push(`fornecedor: ${f?.nome || filters.fornecedorId}`);
+  }
+  if (filters.unidadeVitrine !== 'all') parts.push(`vitrine: ${filters.unidadeVitrine}`);
+  if (filters.statusEstoque !== 'all') {
+    const status = SUGESTAO_STATUS_ESTOQUE_OPTIONS.find((o) => o.value === filters.statusEstoque);
+    parts.push(`estoque: ${status?.label || filters.statusEstoque}`);
+  }
+  if (Array.isArray(filters.selectedAbcd) && filters.selectedAbcd.length > 0) {
+    parts.push(`curvas ${filters.selectedAbcd.join(', ')}`);
+  }
+  if (Array.isArray(filters.selectedTags) && filters.selectedTags.length > 0) {
+    parts.push(`tags: ${filters.selectedTags.join(', ')}`);
+  }
+  if (filters.somenteAbaixoPontoFuturo === true) parts.push('com sugestão');
+  if (filters.considerarPedidosAprovadosEstoque === true) parts.push('incluir pedidos');
+  if (filters.hidePending) parts.push('sem em trânsito');
+  if (filters.roundingMode !== 'auto') parts.push(`arredondamento: ${filters.roundingMode}`);
+  if (filters.agruparHierarquia === false) parts.push('por SKU');
+  if (hasActiveQuantityFilter(filters)) parts.push('filtro qtd estoque');
+  if (hasActiveSugestaoQuantityFilter(filters)) parts.push('filtro qtd sugerida');
+  return parts.length ? parts.join(' · ') : 'nenhum';
+}

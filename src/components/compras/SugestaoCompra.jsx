@@ -11,11 +11,12 @@ import SugestaoCompraTreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components
 import SugestaoCompraMobileCatalog, { SugestaoCompraMobileScrollShell } from '@/components/compras/SugestaoCompraMobileCatalog';
 import SugestaoCompraMobileToolbar from '@/components/compras/SugestaoCompraMobileToolbar';
 import SugestaoCompraDesktopToolbar from '@/components/compras/SugestaoCompraDesktopToolbar';
-import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
+import { ShoppingCart, RefreshCw, CheckCircle, FileText, FileSpreadsheet } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { cn } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
+import { downloadBlob } from '@/lib/mobilePrintAndShare';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
 import {
@@ -42,6 +43,7 @@ import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
   countActiveSugestaoCompraFilters,
+  describeSugestaoCompraFilters,
   filterSugestaoCompraLinhas,
   linhaAbaixoPontoFuturo,
 } from '@/lib/filterSugestaoCompraLinhas';
@@ -122,6 +124,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [treeLevel, setTreeLevel] = useState(readSugestaoTreeLevel);
   const [groupByCategory, setGroupByCategory] = useState(readSugestaoGroupByCategory);
   const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
+  const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
   const [loadStats, setLoadStats] = useState({
     totalAtivos: 0,
     elegiveis: 0,
@@ -493,6 +496,71 @@ export default function SugestaoCompra({ onStatsChange }) {
     }));
   }, []);
 
+  const handleGerarRelatorio = useCallback(async () => {
+    if (!filteredLinhas.length) {
+      toast({
+        title: 'Nada para exportar',
+        description: 'Ajuste os filtros ou aguarde o carregamento da lista.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setGerandoRelatorio(true);
+    toast({ title: 'Gerando planilha da sugestão de compra...' });
+    try {
+      const filtersSummary = describeSugestaoCompraFilters(filters, { categorias, fornecedores });
+      const fornecedorNomeById = Object.fromEntries(
+        fornecedores.map((f) => [f.id, f.nome]),
+      );
+
+      const { generateRelatorioSugestaoCompraXlsx } = await import(
+        '@/lib/relatorioSugestaoCompraXlsx/generateRelatorioSugestaoCompraXlsx.js'
+      );
+
+      const resposta = await generateRelatorioSugestaoCompraXlsx({
+        linhas: sortedLinhas,
+        filters_summary: filtersSummary,
+        ctx: {
+          incluirPedidosAprovados: filters.considerarPedidosAprovadosEstoque === true,
+          quantidadeBaseLinha: calcQuantityLinha,
+          resolveFornecedorId: resolveFornecedorIdLinha,
+          fornecedorNomeById,
+          fornecedores,
+        },
+      });
+
+      const blob = new Blob([resposta.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      downloadBlob(blob, `SugestaoCompra_ABCD_${dataHoje()}.xlsx`);
+
+      toast({
+        title: 'Planilha gerada',
+        description: `${resposta.rowCount} item(ns) em abas por curva ABCD${resposta?.version ? ` · ${resposta.version}` : ''}`,
+      });
+    } catch (error) {
+      const msg = error?.message || String(error);
+      toast({
+        title: 'Erro ao gerar relatório',
+        description: msg.length > 300 ? `${msg.slice(0, 300)}…` : msg,
+        variant: 'destructive',
+      });
+      console.error(error);
+    } finally {
+      setGerandoRelatorio(false);
+    }
+  }, [
+    filteredLinhas.length,
+    sortedLinhas,
+    filters,
+    categorias,
+    fornecedores,
+    calcQuantityLinha,
+    resolveFornecedorIdLinha,
+    toast,
+  ]);
+
   const handleColumnSort = useCallback((column) => {
     setColumnSort((prev) => {
       const next = prev?.column === column
@@ -814,6 +882,8 @@ export default function SugestaoCompra({ onStatsChange }) {
                   onToggleSomenteAbaixo={handleToggleSomenteAbaixo}
                   considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
                   onToggleConsiderarPedidos={handleToggleConsiderarPedidos}
+                  onGerarRelatorio={handleGerarRelatorio}
+                  gerandoRelatorio={gerandoRelatorio}
                   onRefresh={loadData}
                   isLoading={isLoading}
                 />
@@ -900,6 +970,17 @@ export default function SugestaoCompra({ onStatsChange }) {
             title="Atualizar lista"
           >
             <RefreshCw className={`h-4 w-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-11 rounded-2xl gap-1.5"
+            disabled={filteredLinhas.length === 0 || gerandoRelatorio}
+            onClick={handleGerarRelatorio}
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            {gerandoRelatorio ? 'Gerando...' : 'Relatório'}
           </Button>
           <Button
             type="button"

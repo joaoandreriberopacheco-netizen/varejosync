@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDown, ArrowUp, RefreshCw, SlidersHorizontal, TrendingUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, RefreshCw, SlidersHorizontal, TrendingUp, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -24,6 +24,8 @@ export default function SugestaoCompraMobileToolbar({
   onOpenFilters,
   somenteAbaixoPontoFuturo,
   onToggleSomenteAbaixo,
+  onGerarRelatorio,
+  gerandoRelatorio,
   considerarPedidosAprovadosEstoque,
   onToggleConsiderarPedidos,
   onRefresh,
@@ -88,6 +90,20 @@ export default function SugestaoCompraMobileToolbar({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        <button
+          type="button"
+          onClick={onGerarRelatorio}
+          disabled={gerandoRelatorio || filteredCount === 0}
+          className={cn(
+            'inline-flex items-center gap-1 h-8 px-2.5 rounded-full text-[11px] font-medium border border-border/30',
+            gerandoRelatorio || filteredCount === 0
+              ? 'bg-muted/30 text-muted-foreground/60'
+              : 'bg-muted/50 text-muted-foreground',
+          )}
+        >
+          <FileSpreadsheet className="w-3.5 h-3.5" />
+          {gerandoRelatorio ? 'Gerando...' : 'Relatório'}
+        </button>
         <button
           type="button"
           onClick={onOpenFilters}
