@@ -428,9 +428,7 @@ function FiltrosPainel({
         )}
       >
         <Package className="h-4 w-4" />
-        {filters.considerarPedidosAprovadosEstoque === true
-          ? 'Estoque inclui pedidos aprovados'
-          : 'Somar pedidos aprovados ao estoque'}
+        INCLUIR PEDIDOS
       </button>
       <p className="text-[11px] text-muted-foreground leading-snug font-mono">
         Pedidos aprovados financeiramente e não concluídos entram no estoque (média, ponto futuro e qtd sugerida).
@@ -571,7 +569,7 @@ export default function FiltrosSugestaoCompra({
     if (filters.considerarPedidosAprovadosEstoque === true) {
       chips.push({
         key: 'pedidos-aprovados-estoque',
-        label: 'Estoque + pedidos aprovados',
+        label: 'INCLUIR PEDIDOS',
         onRemove: () => patchFilters({ considerarPedidosAprovadosEstoque: false }),
       });
     }
