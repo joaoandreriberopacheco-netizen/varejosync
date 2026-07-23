@@ -3,6 +3,7 @@ import { ArrowRight, Package, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PrecoVendaTabelaLinhas } from './quickBudgetUtils';
+import { formatEstoqueDisponivelLabel } from '@/lib/productUnits';
 
 export default function QuickBudgetFlowItemEditor({
   selectedProduct,
@@ -54,7 +55,7 @@ export default function QuickBudgetFlowItemEditor({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground break-words">{selectedProduct.nome}</p>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span>Estoque: {Number(selectedProduct.estoque_atual || 0)}</span>
+            <span>Estoque: {formatEstoqueDisponivelLabel(selectedProduct)}</span>
             {selectedProduct.codigo_interno && (
               <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80">
                 #{selectedProduct.codigo_interno}

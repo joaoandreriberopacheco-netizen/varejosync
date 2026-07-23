@@ -1101,6 +1101,21 @@ export function formatQuantidadeCatalogoApresentacao(produto, quantidadeBase) {
   return { sigla: un, quantidade: qty, rotulo: null };
 }
 
+/** Estoque disponível na unidade de vitrine (ou base quando vitrine inativa). */
+export function formatEstoqueDisponivelApresentacao(produto) {
+  return formatQuantidadeCatalogoApresentacao(produto, produto?.estoque_atual ?? 0);
+}
+
+/** Texto curto para PDV/orçamentos: ex. "12,5 CX". */
+export function formatEstoqueDisponivelLabel(produto, localeOptions = {}) {
+  const { sigla, quantidade } = formatEstoqueDisponivelApresentacao(produto);
+  const q = quantidade.toLocaleString('pt-BR', {
+    maximumFractionDigits: 2,
+    ...localeOptions,
+  });
+  return `${q} ${sigla}`;
+}
+
 /**
  * Resolve quantidade/unidade a partir da **unidade de compra** escolhida (PDF, modal, catálogo).
  * Não substitui pela vitrine comercial do produto (ex.: manter M² quando o fornecedor faturou em M²).

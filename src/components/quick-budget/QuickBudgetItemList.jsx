@@ -2,6 +2,7 @@ import React from 'react';
 import { Minus, Percent, Plus, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from './quickBudgetUtils';
+import { formatEstoqueDisponivelLabel } from '@/lib/productUnits';
 
 export default function QuickBudgetItemList({ items, onUpdateItem, onRemoveItem }) {
   if (items.length === 0) {
@@ -20,7 +21,9 @@ export default function QuickBudgetItemList({ items, onUpdateItem, onRemoveItem 
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground break-words">{item.produto_nome}</p>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span>Estoque: {item.estoque_atual}</span>
+                <span>Estoque: {item.estoque_exibicao_sigla
+                  ? `${Number(item.estoque_exibicao_qtd ?? item.estoque_atual).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${item.estoque_exibicao_sigla}`
+                  : formatEstoqueDisponivelLabel({ estoque_atual: item.estoque_atual, unidade_principal: item.unidade })}</span>
                 {item.codigo_interno && (
                   <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80">
                     #{item.codigo_interno}

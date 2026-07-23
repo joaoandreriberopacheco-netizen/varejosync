@@ -1,6 +1,6 @@
 import React from 'react';
 import { getPrecoPisoCustoUnidade, getPrecoUnitarioNaUnidade, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
-import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey } from '@/lib/productUnits';
+import { buildSaleUnitOptions, calculateBaseQuantity, formatEstoqueDisponivelApresentacao, getItemUnitKey } from '@/lib/productUnits';
 import { normalizeProductCodeForSearch } from '@/lib/productCode';
 
 export function formatCurrency(value) {
@@ -107,11 +107,14 @@ export function buildQuickBudgetItem(produto, tabelaPreco, unitOption = null) {
   const temAjusteTabela = !!(tabelaPreco && tabelaPreco.fator_ajuste !== 1);
   const fator = Number(unitPick.fator_conversao) || 1;
   const quantidadeBase = calculateBaseQuantity(quantidade, fator);
+  const estoqueDisp = formatEstoqueDisponivelApresentacao(produto);
   return {
     produto_id: produto.id,
     produto_nome: produto.nome,
     codigo_interno: produto.codigo_interno || '',
     estoque_atual: Number(produto.estoque_atual || 0),
+    estoque_exibicao_qtd: estoqueDisp.quantidade,
+    estoque_exibicao_sigla: estoqueDisp.sigla,
     item_key: getItemUnitKey(produto.id, sigla),
     preco_cheio: precoTabela,
     preco_minimo: precoPisoCusto,
