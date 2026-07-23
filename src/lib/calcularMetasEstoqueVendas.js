@@ -36,6 +36,11 @@ export function calcularQuantidadeReposicaoBase(mediaDia, leadTimeDias) {
   return m * lt;
 }
 
+/** Pedido por ciclo com fator 1,5 × lead time (mesma base do ponto de pedido). */
+export function calcularQuantidadePedido15LtBase(mediaDia, leadTimeDias) {
+  return calcularPontoPedidoBase(mediaDia, leadTimeDias);
+}
+
 function q3(values) {
   if (!values || values.length === 0) return Infinity;
   const sorted = [...values].sort((a, b) => a - b);
