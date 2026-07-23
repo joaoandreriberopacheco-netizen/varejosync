@@ -7,7 +7,7 @@ import {
 
 const safe = (text) => normalizePdfText(text);
 
-export const SUGESTAO_COMPRA_PDF_BUILD = 'sugestao_compra_abcd_pdf_v3';
+export const SUGESTAO_COMPRA_PDF_BUILD = 'sugestao_compra_abcd_pdf_v4';
 
 const PDF_FONT_BOLD = 'bold';
 const PDF_FONT_NORMAL = 'normal';
@@ -36,7 +36,21 @@ const FONT = {
   footer: 8.5,
 };
 
-function buildColumnLayout(pageW) {
+function buildGroupedColumnLayout(pageW) {
+  const tableRight = pageW - M;
+  return {
+    grupo: M,
+    grupoW: 88,
+    estoque: M + 92,
+    media: M + 122,
+    proj: M + 148,
+    qtd: tableRight,
+    tableRight,
+  };
+}
+
+function buildColumnLayout(pageW, { grouped = false } = {}) {
+  if (grouped) return buildGroupedColumnLayout(pageW);
   const tableRight = pageW - M;
   return {
     produto: M,
@@ -57,7 +71,14 @@ function splitLines(doc, text, width, fontSize) {
   return doc.splitTextToSize(safe(String(text)), width);
 }
 
-function measureRowHeight(doc, row, fontFamily, col) {
+function measureGroupedRowHeight(doc, row, fontFamily, col) {
+  doc.setFont(fontFamily, PDF_FONT_NORMAL);
+  const nameLines = splitLines(doc, row.produto, col.grupoW - 2, FONT.row);
+  return 3.6 + Math.max(nameLines.length, 1) * LINE_H;
+}
+
+function measureRowHeight(doc, row, fontFamily, col, { grouped = false } = {}) {
+  if (grouped) return measureGroupedRowHeight(doc, row, fontFamily, col);
   doc.setFont(fontFamily, PDF_FONT_NORMAL);
   const blocks = [
     splitLines(doc, row.produto, col.produtoW - 2, FONT.row),
@@ -68,7 +89,24 @@ function measureRowHeight(doc, row, fontFamily, col) {
   return 3.6 + lines * LINE_H;
 }
 
-function drawTableHeader(doc, fontFamily, y, col) {
+function drawGroupedTableHeader(doc, fontFamily, y, col) {
+  doc.setFont(fontFamily, PDF_FONT_BOLD);
+  doc.setFontSize(FONT.colHdr);
+  doc.setTextColor(...ENXUTO.muted);
+  doc.text('TIPO', col.grupo, y);
+  doc.text('ESTOQUE', col.estoque, y, { align: 'right' });
+  doc.text('MÉD. 30D', col.media, y, { align: 'right' });
+  doc.text('P.FUT.', col.proj, y, { align: 'right' });
+  doc.text('QTD SUG.', col.qtd, y, { align: 'right' });
+  const lineY = y + 2;
+  doc.setDrawColor(...ENXUTO.line);
+  doc.setLineWidth(0.12);
+  doc.line(M, lineY, col.tableRight, lineY);
+  return lineY + 4.8;
+}
+
+function drawTableHeader(doc, fontFamily, y, col, { grouped = false } = {}) {
+  if (grouped) return drawGroupedTableHeader(doc, fontFamily, y, col);
   doc.setFont(fontFamily, PDF_FONT_BOLD);
   doc.setFontSize(FONT.colHdr);
   doc.setTextColor(...ENXUTO.muted);
@@ -93,7 +131,31 @@ function drawTextBlock(doc, lines, x, y, align = 'left') {
   return lines.length;
 }
 
-function drawDataRow(doc, fontFamily, row, y, col) {
+function drawGroupedDataRow(doc, fontFamily, row, y, col) {
+  const rowH = measureGroupedRowHeight(doc, row, fontFamily, col);
+  const baseline = y + 3.6;
+
+  doc.setFont(fontFamily, PDF_FONT_NORMAL);
+  doc.setFontSize(FONT.row);
+  doc.setTextColor(...ENXUTO.black);
+
+  const nameLines = splitLines(doc, row.produto, col.grupoW - 2, FONT.row);
+  drawTextBlock(doc, nameLines, col.grupo, baseline);
+
+  doc.text(row.estoque_total || '—', col.estoque, baseline, { align: 'right' });
+  doc.text(row.media_30d || '—', col.media, baseline, { align: 'right' });
+  doc.text(row.projecao || '—', col.proj, baseline, { align: 'right' });
+  doc.text(row.qtd_sugerida || '—', col.qtd, baseline, { align: 'right' });
+
+  const bottom = y + rowH;
+  doc.setDrawColor(...ENXUTO.rowRule);
+  doc.setLineWidth(0.06);
+  doc.line(M, bottom, col.tableRight, bottom);
+  return bottom + 1;
+}
+
+function drawDataRow(doc, fontFamily, row, y, col, { grouped = false } = {}) {
+  if (grouped) return drawGroupedDataRow(doc, fontFamily, row, y, col);
   const rowH = measureRowHeight(doc, row, fontFamily, col);
   const baseline = y + 3.6;
 
@@ -165,7 +227,7 @@ export async function generateRelatorioSugestaoCompraPdf(payload = {}) {
 
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const col = buildColumnLayout(pageW);
+  const col = buildColumnLayout(pageW, { grouped });
 
   let y = TOP_Y;
   let activeTableHeader = null;
@@ -182,7 +244,7 @@ export async function generateRelatorioSugestaoCompraPdf(payload = {}) {
   };
 
   const startTable = () => {
-    activeTableHeader = () => drawTableHeader(doc, pdfFontFamily, y, col);
+    activeTableHeader = () => drawTableHeader(doc, pdfFontFamily, y, col, { grouped });
     y = activeTableHeader();
   };
 
@@ -255,9 +317,9 @@ export async function generateRelatorioSugestaoCompraPdf(payload = {}) {
 
     for (const block of section.blocks) {
       for (const row of block.rows) {
-        const rowH = measureRowHeight(doc, row, pdfFontFamily, col) + 1;
+        const rowH = measureRowHeight(doc, row, pdfFontFamily, col, { grouped }) + 1;
         ensureSpace(rowH);
-        y = drawDataRow(doc, pdfFontFamily, row, y, col);
+        y = drawDataRow(doc, pdfFontFamily, row, y, col, { grouped });
       }
     }
 

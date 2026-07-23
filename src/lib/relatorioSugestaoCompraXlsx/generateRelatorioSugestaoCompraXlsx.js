@@ -7,7 +7,7 @@ import {
 
 const safe = (text) => normalizePdfText(text);
 
-export const SUGESTAO_COMPRA_XLSX_BUILD = 'sugestao_compra_abcd_xlsx_v2';
+export const SUGESTAO_COMPRA_XLSX_BUILD = 'sugestao_compra_abcd_xlsx_v3';
 
 const DATA_COLUMNS = [
   { header: 'PRODUTO', key: 'produto', width: 40 },
@@ -21,6 +21,14 @@ const DATA_COLUMNS = [
   { header: 'FORNECEDOR', key: 'fornecedor', width: 26 },
 ];
 
+const GROUPED_DATA_COLUMNS = [
+  { header: 'TIPO', key: 'produto', width: 42 },
+  { header: 'ESTOQUE', key: 'estoque_total', width: 14 },
+  { header: 'MÉDIA 30D', key: 'media_30d', width: 14 },
+  { header: 'P.FUT.', key: 'projecao', width: 14 },
+  { header: 'QTD SUG.', key: 'qtd_sugerida', width: 14 },
+];
+
 function styleHeaderRow(row) {
   row.eachCell((cell) => {
     cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -29,16 +37,28 @@ function styleHeaderRow(row) {
   });
 }
 
-function addDataSheet(ws, { title, subtitle, sections }) {
-  ws.columns = DATA_COLUMNS;
+function addDataSheet(ws, { title, subtitle, sections, grouped = false }) {
+  const columns = grouped ? GROUPED_DATA_COLUMNS : DATA_COLUMNS;
+  ws.columns = columns;
   ws.addRow([safe(title)]);
   ws.addRow([safe(subtitle)]);
 
-  const headerRow = ws.addRow(DATA_COLUMNS.map((col) => col.header));
+  const headerRow = ws.addRow(columns.map((col) => col.header));
   styleHeaderRow(headerRow);
 
   for (const block of sections) {
     for (const row of block.rows) {
+      if (grouped) {
+        ws.addRow({
+          produto: row.produto,
+          estoque_total: row.estoque_total,
+          media_30d: row.media_30d,
+          projecao: row.projecao,
+          qtd_sugerida: row.qtd_sugerida,
+        });
+        continue;
+      }
+
       ws.addRow({
         produto: row.produto,
         tipo: row.tipo,
@@ -106,6 +126,7 @@ export async function generateRelatorioSugestaoCompraXlsx(payload = {}) {
         `${nivel ? `Agrupado nível ${nivel} · somente totais por grupo` : 'Estoque separado de físico+pedidos'}${filtersSummary ? ` · ${filtersSummary}` : ''}`,
       ),
       sections: section.blocks,
+      grouped: Boolean(nivel),
     });
   }
 

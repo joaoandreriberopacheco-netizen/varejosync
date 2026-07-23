@@ -61,7 +61,11 @@ export function getHierarquiaGroupLabel(produto = {}, nivel = 0) {
     .filter(Boolean);
   if (!parts.length) return '(sem hierarquia)';
   const depth = Math.min(n, parts.length);
-  return parts.slice(0, depth).join(' › ');
+  return parts.slice(0, depth).join(' > ');
+}
+
+export function formatReportGroupLabel(label = '') {
+  return safe(String(label || '(sem hierarquia)').replace(/\s*›\s*/g, ' > '));
 }
 
 function formatMediaGrupo(produto, mediaDiaTotal) {
@@ -105,8 +109,8 @@ export function buildAggregatedGroupReportRow(label, groupRows = [], ctx = {}) {
   const qtdDisp = resolveSugestaoQuantidadeVitrine(representativo, metrics.qtd_sugerida_base);
 
   return {
-    produto: safe(label),
-    tipo: safe(`Grupo · ${metrics.itens} item(ns)`),
+    produto: formatReportGroupLabel(label),
+    tipo: '',
     estoque_total: metrics.estoque_total,
     estoque_pedidos: '',
     estoque: metrics.estoque_total,
