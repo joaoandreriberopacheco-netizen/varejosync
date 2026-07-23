@@ -12,7 +12,7 @@ import {
   sugestaoProjecaoEstoque30dNegativa,
   sugestaoProjecaoEstoque30dTexto,
 } from '@/lib/calcularSugestaoCompraVelocidade';
-import { cn } from '@/components/utils';
+import { formatSugestaoQuantidadeVitrine } from '@/lib/sugestaoCompraVitrineDisplay';
 
 function AbcdBadge({ letter }) {
   const value = String(letter || '').toUpperCase();
@@ -42,7 +42,6 @@ function rowAccent(linha, selecionado) {
   return 'muted';
 }
 
-const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 export default function SugestaoCompraLinhaMobile({
   linha,
@@ -56,7 +55,8 @@ export default function SugestaoCompraLinhaMobile({
   const sugestao = linha.sugestao;
   const isGrupo = linha.tipo === 'grupo';
   const produto = linha.produto;
-  const estoque = sugestao?.estoque_atual ?? produto?.estoque_atual ?? 0;
+  const estoqueBase = sugestao?.estoque_atual ?? produto?.estoque_atual ?? 0;
+  const estoqueTexto = formatSugestaoQuantidadeVitrine(produto, estoqueBase) || '—';
   const media30d = sugestao?.media_30d_texto || '—';
   const pontoFuturoProjecao = sugestaoProjecaoEstoque30dTexto(sugestao);
   const projecaoNegativa = sugestaoProjecaoEstoque30dNegativa(sugestao);
@@ -124,7 +124,7 @@ export default function SugestaoCompraLinhaMobile({
           {linha.quantidade_pendente > 0 ? (
             <p className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
               <Truck className="w-3.5 h-3.5 shrink-0" />
-              {linha.quantidade_pendente} em trânsito
+              {formatSugestaoQuantidadeVitrine(produto, linha.quantidade_pendente) || `${linha.quantidade_pendente}`} em trânsito
             </p>
           ) : null}
         </div>
@@ -134,7 +134,7 @@ export default function SugestaoCompraLinhaMobile({
         className="grid grid-cols-3 gap-2 rounded-xl bg-muted/35 dark:bg-muted/25 p-2.5"
         onClick={(e) => e.stopPropagation()}
       >
-        <P38MobileMetric label="Estoque" value={fmtN(estoque)} className="min-w-0 max-w-none" />
+        <P38MobileMetric label="Estoque" value={estoqueTexto} className="min-w-0 max-w-none" />
         <P38MobileMetric label="Méd. 30d" value={media30d} className="min-w-0 max-w-none" />
         <P38MobileMetric
           label="P. futuro"

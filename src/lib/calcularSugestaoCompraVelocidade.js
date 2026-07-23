@@ -21,7 +21,7 @@ import {
   resolveLoteCompraVitrine,
 } from '@/lib/calcularMetasEstoqueVendas';
 import { formatCatalogSalesQuantity } from '@/lib/catalogSalesVelocity';
-import { formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
+import { buildSnapshotExibicaoComercial, formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 
 function resolveLeadTime(produto, leadTimePadrao = 20) {
   return getCatalogLeadTimeDias(produto, leadTimePadrao);
@@ -52,10 +52,14 @@ function estoqueMetaGrupo(skus) {
 
 const DIAS_PROJECAO_PONTO_FUTURO = 30;
 
+function produtoExibicaoVitrine(produto) {
+  return buildSnapshotExibicaoComercial(produto);
+}
+
 function formatGapReposicao(produto, gapBase) {
   const qty = Number(gapBase) || 0;
   if (qty <= 0) return null;
-  const ap = formatQuantidadeCatalogoApresentacao(produto, qty);
+  const ap = formatQuantidadeCatalogoApresentacao(produtoExibicaoVitrine(produto), qty);
   return formatCatalogSalesQuantity(ap.quantidade, ap.sigla, { dashIfZero: false });
 }
 
@@ -104,7 +108,7 @@ export function sugestaoPrecisaReposicao(sugestao) {
 function formatProjecaoEstoque30d(produto, projecaoBase) {
   const qty = Number(projecaoBase);
   if (!Number.isFinite(qty)) return null;
-  const ap = formatQuantidadeCatalogoApresentacao(produto, Math.abs(qty));
+  const ap = formatQuantidadeCatalogoApresentacao(produtoExibicaoVitrine(produto), Math.abs(qty));
   const formatted = formatCatalogSalesQuantity(ap.quantidade, ap.sigla, { dashIfZero: false });
   if (qty < 0) return `−${formatted}`;
   return formatted;

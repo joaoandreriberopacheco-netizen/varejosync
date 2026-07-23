@@ -18,10 +18,13 @@ import { p38Table } from '@/lib/p38TableSurfaces';
 import {
   aggregateSugestaoTreeGroupMetrics,
   countDescendantSugestaoLinhas,
-  formatSugestaoAggregateEstoque,
   getLinhaAbcdLetter,
   resolveSugestaoLinhaForTreeRow,
 } from '@/lib/sugestaoCompraTree';
+import {
+  formatSugestaoAggregateEstoqueVitrine,
+  formatSugestaoQuantidadeVitrine,
+} from '@/lib/sugestaoCompraVitrineDisplay';
 import {
   compareSugestaoCompraLinhas,
   columnSortToCatalogTreeOrder,
@@ -277,9 +280,12 @@ function SugestaoDataCells({
       );
     }
 
-    const estoqueFmt = formatSugestaoAggregateEstoque(agg.estoqueDisp, fmtN);
+    const estoqueFmt = formatSugestaoAggregateEstoqueVitrine(agg.estoqueDisp);
     const pontoFuturoProjecao = sugestaoProjecaoEstoque30dTexto(agg.projecao);
     const projecaoNegativa = sugestaoProjecaoEstoque30dNegativa(agg.projecao);
+    const qtdSugeridaTexto = agg.representativo && agg.qtdSugeridaBase > 0
+      ? formatSugestaoQuantidadeVitrine(agg.representativo, agg.qtdSugeridaBase, { tilde: true })
+      : null;
 
     return (
       <>
@@ -315,7 +321,7 @@ function SugestaoDataCells({
         </td>
         <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
           <span className="text-xs text-muted-foreground tabular-nums">
-            {agg.qtdSugeridaBase > 0 ? `~${fmtN(agg.qtdSugeridaBase)}` : '—'}
+            {qtdSugeridaTexto || '—'}
           </span>
         </td>
         <td className="py-2 px-2 overflow-hidden">
@@ -326,7 +332,9 @@ function SugestaoDataCells({
   }
 
   const sugestao = linha.sugestao;
-  const estoque = sugestao?.estoque_atual ?? linha.produto?.estoque_atual ?? 0;
+  const produto = linha.produto;
+  const estoqueBase = sugestao?.estoque_atual ?? produto?.estoque_atual ?? 0;
+  const estoqueTexto = formatSugestaoQuantidadeVitrine(produto, estoqueBase) || '—';
   const media30d = sugestao?.media_30d_texto;
   const pontoFuturoProjecao = pontoFuturoProjecaoTexto(sugestao);
   const abcd = getLinhaAbcdLetter(linha, row?.abcdDominante);
@@ -337,7 +345,7 @@ function SugestaoDataCells({
         <AbcdBadge letter={abcd} />
       </td>
       <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
-        <span className="text-xs text-muted-foreground tabular-nums">{fmtN(estoque)}</span>
+        <span className="text-xs text-muted-foreground tabular-nums">{estoqueTexto}</span>
       </td>
       <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
         <span className="text-xs text-muted-foreground tabular-nums">
