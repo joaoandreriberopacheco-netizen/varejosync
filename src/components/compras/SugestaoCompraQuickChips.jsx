@@ -23,7 +23,7 @@ export default function SugestaoCompraQuickChips({
   onToggleConsiderarPedidos,
   columnSort,
   onSortColumn,
-  onGerarRelatorio,
+  onOpenRelatorio,
   gerandoRelatorio,
   filteredCount = 0,
   activeFilterCount = 0,
@@ -87,34 +87,21 @@ export default function SugestaoCompraQuickChips({
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            disabled={gerandoRelatorio || filteredCount === 0}
-            className={cn(
-              'inline-flex items-center gap-1 font-medium border border-border/30',
-              chipClass,
-              gerandoRelatorio || filteredCount === 0
-                ? 'bg-muted/30 text-muted-foreground/60'
-                : 'bg-muted/50 text-muted-foreground',
-            )}
-          >
-            <FileSpreadsheet className={size === 'md' ? 'w-4 h-4' : 'w-3.5 h-3.5'} />
-            {gerandoRelatorio ? 'Gerando...' : 'Relatório'}
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuLabel className="text-xs">Exportar visíveis</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => onGerarRelatorio?.('pdf')}>
-            PDF (A4)
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onGerarRelatorio?.('xlsx')}>
-            Excel (.xlsx)
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <button
+        type="button"
+        onClick={onOpenRelatorio}
+        disabled={gerandoRelatorio || filteredCount === 0}
+        className={cn(
+          'inline-flex items-center gap-1 font-medium border border-border/30',
+          chipClass,
+          gerandoRelatorio || filteredCount === 0
+            ? 'bg-muted/30 text-muted-foreground/60'
+            : 'bg-muted/50 text-muted-foreground',
+        )}
+      >
+        <FileSpreadsheet className={size === 'md' ? 'w-4 h-4' : 'w-3.5 h-3.5'} />
+        {gerandoRelatorio ? 'Gerando...' : 'Relatório'}
+      </button>
       {onOpenFilters ? (
         <button
           type="button"

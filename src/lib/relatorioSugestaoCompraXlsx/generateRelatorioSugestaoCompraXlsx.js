@@ -2,23 +2,23 @@ import ExcelJS from 'exceljs';
 import { normalizePdfText } from '@/lib/jspdfNotoFont';
 import {
   CURVA_LABELS,
-  prepareSugestaoCompraReportGroups,
-  summarizeSugestaoCompraReportGroups,
+  prepareSugestaoCompraReportSections,
 } from '@/lib/relatorioSugestaoCompra/reportData';
 
 const safe = (text) => normalizePdfText(text);
 
-export const SUGESTAO_COMPRA_XLSX_BUILD = 'sugestao_compra_abcd_xlsx_v1';
+export const SUGESTAO_COMPRA_XLSX_BUILD = 'sugestao_compra_abcd_xlsx_v2';
 
 const DATA_COLUMNS = [
-  { header: 'PRODUTO', key: 'produto', width: 42 },
+  { header: 'PRODUTO', key: 'produto', width: 40 },
   { header: 'TIPO', key: 'tipo', width: 10 },
-  { header: 'ESTOQUE', key: 'estoque', width: 16 },
-  { header: 'MÉDIA 30D', key: 'media_30d', width: 14 },
-  { header: 'P.FUT.', key: 'projecao', width: 14 },
+  { header: 'ESTOQUE', key: 'estoque_total', width: 12 },
+  { header: 'FÍS.+PED.', key: 'estoque_pedidos', width: 18 },
+  { header: 'MÉDIA 30D', key: 'media_30d', width: 12 },
+  { header: 'P.FUT.', key: 'projecao', width: 12 },
   { header: 'QTD SUG.', key: 'qtd_sugerida', width: 12 },
   { header: 'UN', key: 'unidade', width: 8 },
-  { header: 'FORNECEDOR', key: 'fornecedor', width: 28 },
+  { header: 'FORNECEDOR', key: 'fornecedor', width: 26 },
 ];
 
 function styleHeaderRow(row) {
@@ -26,16 +26,17 @@ function styleHeaderRow(row) {
     cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F2937' } };
     cell.alignment = { vertical: 'middle', horizontal: 'center' };
-    cell.border = {
-      top: { style: 'thin', color: { argb: 'FF374151' } },
-      left: { style: 'thin', color: { argb: 'FF374151' } },
-      bottom: { style: 'thin', color: { argb: 'FF374151' } },
-      right: { style: 'thin', color: { argb: 'FF374151' } },
-    };
   });
 }
 
-function addDataSheet(ws, { title, subtitle, rows }) {
+function styleGroupRow(row) {
+  row.eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FF1F2937' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
+  });
+}
+
+function addDataSheet(ws, { title, subtitle, sections }) {
   ws.columns = DATA_COLUMNS;
   ws.addRow([safe(title)]);
   ws.addRow([safe(subtitle)]);
@@ -43,29 +44,27 @@ function addDataSheet(ws, { title, subtitle, rows }) {
   const headerRow = ws.addRow(DATA_COLUMNS.map((col) => col.header));
   styleHeaderRow(headerRow);
 
-  for (const row of rows) {
-    ws.addRow({
-      produto: row.produto,
-      tipo: row.tipo,
-      estoque: row.estoque,
-      media_30d: row.media_30d,
-      projecao: row.projecao,
-      qtd_sugerida: row.qtd_sugerida,
-      unidade: row.unidade,
-      fornecedor: row.fornecedor,
-    });
-  }
+  for (const block of sections) {
+    if (block.label && block.metrics) {
+      const groupRow = ws.addRow({
+        produto: safe(`${block.label} · méd. ${block.metrics.media_30d} · P.fut. ${block.metrics.projecao} · qtd ${block.metrics.qtd_sugerida}`),
+      });
+      styleGroupRow(groupRow);
+    }
 
-  for (let i = 4; i <= ws.rowCount; i += 1) {
-    const row = ws.getRow(i);
-    row.getCell('produto').alignment = { vertical: 'middle', horizontal: 'left' };
-    row.getCell('tipo').alignment = { vertical: 'middle', horizontal: 'center' };
-    row.getCell('estoque').alignment = { vertical: 'middle', horizontal: 'right' };
-    row.getCell('media_30d').alignment = { vertical: 'middle', horizontal: 'right' };
-    row.getCell('projecao').alignment = { vertical: 'middle', horizontal: 'right' };
-    row.getCell('qtd_sugerida').alignment = { vertical: 'middle', horizontal: 'right' };
-    row.getCell('unidade').alignment = { vertical: 'middle', horizontal: 'center' };
-    row.getCell('fornecedor').alignment = { vertical: 'middle', horizontal: 'left' };
+    for (const row of block.rows) {
+      ws.addRow({
+        produto: row.produto,
+        tipo: row.tipo,
+        estoque_total: row.estoque_total,
+        estoque_pedidos: row.estoque_pedidos,
+        media_30d: row.media_30d,
+        projecao: row.projecao,
+        qtd_sugerida: row.qtd_sugerida,
+        unidade: row.unidade,
+        fornecedor: row.fornecedor,
+      });
+    }
   }
 
   ws.views = [{ state: 'frozen', ySplit: 3 }];
@@ -76,14 +75,15 @@ export async function generateRelatorioSugestaoCompraXlsx(payload = {}) {
     linhas = [],
     ctx = {},
     filters_summary: filtersSummary = '',
+    agrupar_nivel: agruparNivel = 0,
     generated_at: generatedAt = new Date().toLocaleString('pt-BR', {
       dateStyle: 'short',
       timeStyle: 'short',
     }),
   } = payload;
 
-  const groups = prepareSugestaoCompraReportGroups(linhas, ctx);
-  const { totalRows, totalQtdBase, byCurve } = summarizeSugestaoCompraReportGroups(groups);
+  const { totalRows, totalQtdBase, sections, agruparNivel: nivel } =
+    prepareSugestaoCompraReportSections(linhas, ctx, { agruparNivel });
 
   const wb = new ExcelJS.Workbook();
   wb.creator = 'VarejoSync';
@@ -97,25 +97,27 @@ export async function generateRelatorioSugestaoCompraXlsx(payload = {}) {
   resumo.addRow([safe(`Sugestão de compra por curva ABCD · ${generatedAt}`)]);
   resumo.addRow([
     safe(
-      `${totalRows} item(ns) visíveis na tela${filtersSummary ? ` · Filtros: ${filtersSummary}` : ''}`,
+      `${totalRows} item(ns)${nivel ? ` · agrupado nível ${nivel}` : ''}${filtersSummary ? ` · Filtros: ${filtersSummary}` : ''}`,
     ),
   ]);
   const resumoHeader = resumo.addRow(['CURVA', 'ITENS', 'QTD SUG. (BASE)']);
   styleHeaderRow(resumoHeader);
 
-  for (const { letter, rows, qtdBase } of byCurve) {
-    resumo.addRow({ curva: letter, itens: rows.length, qtd_base: qtdBase });
+  for (const section of sections) {
+    const count = section.blocks.reduce((n, b) => n + b.rows.length, 0);
+    resumo.addRow({ curva: section.letter, itens: count, qtd_base: section.qtdBase });
   }
   resumo.addRow({ curva: 'TOTAL', itens: totalRows, qtd_base: totalQtdBase });
 
-  for (const { letter, rows } of byCurve) {
-    const ws = wb.addWorksheet(`Curva_${letter}`, { views: [{ state: 'frozen', ySplit: 3 }] });
+  for (const section of sections) {
+    const count = section.blocks.reduce((n, b) => n + b.rows.length, 0);
+    const ws = wb.addWorksheet(`Curva_${section.letter}`, { views: [{ state: 'frozen', ySplit: 3 }] });
     addDataSheet(ws, {
-      title: `${CURVA_LABELS[letter] || `Curva ${letter}`} · ${rows.length} item(ns)`,
+      title: `${CURVA_LABELS[section.letter] || `Curva ${section.letter}`} · ${count} item(ns)`,
       subtitle: safe(
-        `Estoque, média 30d, ponto futuro e quantidade sugerida (vitrine)${filtersSummary ? ` · ${filtersSummary}` : ''}`,
+        `Estoque separado de físico+pedidos${filtersSummary ? ` · ${filtersSummary}` : ''}`,
       ),
-      rows,
+      sections: section.blocks,
     });
   }
 
@@ -130,4 +132,5 @@ export async function generateRelatorioSugestaoCompraXlsx(payload = {}) {
 export {
   mapSugestaoCompraLinhaToReportRow,
   prepareSugestaoCompraReportGroups,
+  prepareSugestaoCompraReportSections,
 } from '@/lib/relatorioSugestaoCompra/reportData';

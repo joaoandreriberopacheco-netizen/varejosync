@@ -13,7 +13,7 @@ export default function SugestaoCompraMobileToolbar({
   onOpenFilters,
   somenteAbaixoPontoFuturo,
   onToggleSomenteAbaixo,
-  onGerarRelatorio,
+  onOpenRelatorio,
   gerandoRelatorio,
   considerarPedidosAprovadosEstoque,
   onToggleConsiderarPedidos,
@@ -29,7 +29,7 @@ export default function SugestaoCompraMobileToolbar({
         onToggleConsiderarPedidos={onToggleConsiderarPedidos}
         columnSort={columnSort}
         onSortColumn={onSortColumn}
-        onGerarRelatorio={onGerarRelatorio}
+        onOpenRelatorio={onOpenRelatorio}
         gerandoRelatorio={gerandoRelatorio}
         filteredCount={filteredCount}
         activeFilterCount={activeFilterCount}

@@ -21,7 +21,7 @@ export default function SugestaoCompraDesktopToolbar({
   onToggleSomenteAbaixo,
   considerarPedidosAprovadosEstoque,
   onToggleConsiderarPedidos,
-  onGerarRelatorio,
+  onOpenRelatorio,
   gerandoRelatorio,
   activeFilterCount,
   onOpenFilters,
@@ -40,7 +40,7 @@ export default function SugestaoCompraDesktopToolbar({
           onToggleConsiderarPedidos={onToggleConsiderarPedidos}
           columnSort={columnSort}
           onSortColumn={onSortColumn}
-          onGerarRelatorio={onGerarRelatorio}
+          onOpenRelatorio={onOpenRelatorio}
           gerandoRelatorio={gerandoRelatorio}
           filteredCount={filteredCount}
           activeFilterCount={activeFilterCount}

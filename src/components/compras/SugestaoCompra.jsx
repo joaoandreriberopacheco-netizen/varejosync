@@ -11,6 +11,7 @@ import SugestaoCompraTreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components
 import SugestaoCompraMobileCatalog, { SugestaoCompraMobileScrollShell } from '@/components/compras/SugestaoCompraMobileCatalog';
 import SugestaoCompraMobileToolbar from '@/components/compras/SugestaoCompraMobileToolbar';
 import SugestaoCompraDesktopToolbar from '@/components/compras/SugestaoCompraDesktopToolbar';
+import SugestaoCompraRelatorioDialog from '@/components/compras/SugestaoCompraRelatorioDialog';
 import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
@@ -125,6 +126,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [groupByCategory, setGroupByCategory] = useState(readSugestaoGroupByCategory);
   const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
+  const [relatorioDialogOpen, setRelatorioDialogOpen] = useState(false);
   const [loadStats, setLoadStats] = useState({
     totalAtivos: 0,
     elegiveis: 0,
@@ -496,7 +498,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     }));
   }, []);
 
-  const handleGerarRelatorio = useCallback(async (format = 'xlsx') => {
+  const handleGerarRelatorio = useCallback(async ({ format = 'pdf', agruparNivel = 0 } = {}) => {
     if (!filteredLinhas.length) {
       toast({
         title: 'Nada para exportar',
@@ -521,6 +523,7 @@ export default function SugestaoCompra({ onStatsChange }) {
       const reportPayload = {
         linhas: sortedLinhas,
         filters_summary: filtersSummary,
+        agrupar_nivel: agruparNivel,
         ctx: {
           incluirPedidosAprovados: filters.considerarPedidosAprovadosEstoque === true,
           quantidadeBaseLinha: calcQuantityLinha,
@@ -539,7 +542,7 @@ export default function SugestaoCompra({ onStatsChange }) {
         downloadBlob(blob, `SugestaoCompra_ABCD_${dataHoje()}.pdf`);
         toast({
           title: 'PDF gerado',
-          description: `${resposta.rowCount} item(ns) em páginas A4${resposta?.version ? ` · ${resposta.version}` : ''}`,
+          description: `${resposta.rowCount} item(ns) · A4 retrato${agruparNivel ? ` · nível ${agruparNivel}` : ''}${resposta?.version ? ` · ${resposta.version}` : ''}`,
         });
       } else {
         const { generateRelatorioSugestaoCompraXlsx } = await import(
@@ -552,9 +555,10 @@ export default function SugestaoCompra({ onStatsChange }) {
         downloadBlob(blob, `SugestaoCompra_ABCD_${dataHoje()}.xlsx`);
         toast({
           title: 'Planilha gerada',
-          description: `${resposta.rowCount} item(ns) em abas por curva ABCD${resposta?.version ? ` · ${resposta.version}` : ''}`,
+          description: `${resposta.rowCount} item(ns) em abas por curva ABCD${agruparNivel ? ` · nível ${agruparNivel}` : ''}${resposta?.version ? ` · ${resposta.version}` : ''}`,
         });
       }
+      setRelatorioDialogOpen(false);
     } catch (error) {
       const msg = error?.message || String(error);
       toast({
@@ -861,6 +865,16 @@ export default function SugestaoCompra({ onStatsChange }) {
     </div>
   );
 
+  const relatorioDialog = (
+    <SugestaoCompraRelatorioDialog
+      open={relatorioDialogOpen}
+      onOpenChange={setRelatorioDialogOpen}
+      filteredCount={filteredLinhas.length}
+      isGenerating={gerandoRelatorio}
+      onConfirm={handleGerarRelatorio}
+    />
+  );
+
   if (isMobile) {
     return (
       <div className="flex flex-col h-full min-h-0 overflow-hidden w-full max-w-full bg-background">
@@ -898,7 +912,7 @@ export default function SugestaoCompra({ onStatsChange }) {
                   onToggleSomenteAbaixo={handleToggleSomenteAbaixo}
                   considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
                   onToggleConsiderarPedidos={handleToggleConsiderarPedidos}
-                  onGerarRelatorio={handleGerarRelatorio}
+                  onOpenRelatorio={() => setRelatorioDialogOpen(true)}
                   gerandoRelatorio={gerandoRelatorio}
                   onRefresh={loadData}
                   isLoading={isLoading}
@@ -951,6 +965,7 @@ export default function SugestaoCompra({ onStatsChange }) {
             </Button>
           </div>
         </div>
+        {relatorioDialog}
       </div>
     );
   }
@@ -1022,7 +1037,7 @@ export default function SugestaoCompra({ onStatsChange }) {
             onToggleSomenteAbaixo={handleToggleSomenteAbaixo}
             considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
             onToggleConsiderarPedidos={handleToggleConsiderarPedidos}
-            onGerarRelatorio={handleGerarRelatorio}
+            onOpenRelatorio={() => setRelatorioDialogOpen(true)}
             gerandoRelatorio={gerandoRelatorio}
             activeFilterCount={activeFilterCount}
             onOpenFilters={() => setFiltersDrawerOpen(true)}
@@ -1059,6 +1074,7 @@ export default function SugestaoCompra({ onStatsChange }) {
           />
         </div>
       )}
+      {relatorioDialog}
     </div>
   );
 }
