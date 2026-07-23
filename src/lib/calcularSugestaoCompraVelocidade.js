@@ -20,9 +20,26 @@ import {
   resolveFatorUnidadeVitrineCompra,
   resolveLoteCompraVitrine,
 } from '@/lib/calcularMetasEstoqueVendas';
+import { formatCatalogSalesQuantity } from '@/lib/catalogSalesVelocity';
+import { formatQuantidadeCatalogoApresentacao } from '@/lib/productUnits';
 
 function resolveLeadTime(produto, leadTimePadrao = 20) {
   return getCatalogLeadTimeDias(produto, leadTimePadrao);
+}
+
+function formatGapPontoFuturo(produto, gapBase) {
+  const qty = Number(gapBase) || 0;
+  if (qty <= 0) return null;
+  const ap = formatQuantidadeCatalogoApresentacao(produto, qty);
+  return formatCatalogSalesQuantity(ap.quantidade, ap.sigla, { dashIfZero: false });
+}
+
+function buildGapPontoFuturo(produto, pontoPedidoBase, estoqueAtual) {
+  const gapBase = Math.max(0, (Number(pontoPedidoBase) || 0) - (Number(estoqueAtual) || 0));
+  return {
+    gap_ponto_futuro_base: gapBase,
+    gap_ponto_futuro_texto: formatGapPontoFuturo(produto, gapBase),
+  };
 }
 
 function buildMetricasVelocidade(produto, pedidos90d, salesVelocityMap, leadTime) {
@@ -60,10 +77,12 @@ export function calcularSugestaoCompraProdutoVelocidade(
   const roundingMode = options.roundingMode ?? 'auto';
   const leadTimePadrao = options.leadTimePadrao ?? 20;
   const fallbackCatalogo = options.fallbackCatalogo === true;
+  const catalogoCompleto = options.catalogoCompleto === true;
 
   const estoqueAtual = Number(produto?.estoque_atual) || 0;
   const leadTime = resolveLeadTime(produto, leadTimePadrao);
   const metricas = buildMetricasVelocidade(produto, pedidos90d, salesVelocityMap, leadTime);
+  const { unidade, fator } = resolveFatorUnidadeVitrineCompra(produto);
 
   if (!metricas.media.teveMedia) {
     if (fallbackCatalogo) {
@@ -106,6 +125,26 @@ export function calcularSugestaoCompraProdutoVelocidade(
       };
     }
 
+    if (catalogoCompleto) {
+      return {
+        elegivel: true,
+        motivo: 'sem_venda',
+        lead_time_dias: leadTime,
+        estoque_atual: estoqueAtual,
+        media_30d_texto: metricas.media_30d_texto,
+        ponto_futuro_texto: null,
+        gap_ponto_futuro_base: 0,
+        gap_ponto_futuro_texto: null,
+        quantidade_sugerida_base: 0,
+        ponto_pedido: 0,
+        unidade_vitrine_compra: unidade,
+        fator_vitrine: fator,
+        lote_compra_vitrine: resolveLoteCompraVitrine(produto) || null,
+        fonte: 'velocidade',
+        catalogo_completo: true,
+      };
+    }
+
     return {
       elegivel: false,
       motivo: 'sem_venda',
@@ -118,16 +157,25 @@ export function calcularSugestaoCompraProdutoVelocidade(
   }
 
   const { pontoPedido, estoqueIdeal } = metricas;
-  const elegivel = estoqueAtual < pontoPedido;
-  const quantidadeSugeridaBase = elegivel
-    ? arredondarQuantidadeSugestao(estoqueIdeal, produto, roundingMode)
-    : 0;
-
-  const { unidade, fator } = resolveFatorUnidadeVitrineCompra(produto);
+  const gap = buildGapPontoFuturo(produto, pontoPedido, estoqueAtual);
+  const elegivel = catalogoCompleto ? gap.gap_ponto_futuro_base > 0 : estoqueAtual < pontoPedido;
+  const quantidadeSugeridaBase = catalogoCompleto
+    ? gap.gap_ponto_futuro_base > 0
+      ? arredondarQuantidadeSugestao(gap.gap_ponto_futuro_base, produto, roundingMode)
+      : 0
+    : elegivel
+      ? arredondarQuantidadeSugestao(estoqueIdeal, produto, roundingMode)
+      : 0;
 
   return {
-    elegivel,
-    motivo: elegivel ? 'abaixo_ponto_futuro' : 'estoque_suficiente',
+    elegivel: catalogoCompleto ? true : elegivel,
+    motivo: catalogoCompleto
+      ? gap.gap_ponto_futuro_base > 0
+        ? 'abaixo_ponto_futuro'
+        : 'estoque_suficiente'
+      : elegivel
+        ? 'abaixo_ponto_futuro'
+        : 'estoque_suficiente',
     media_dia: metricas.mediaDia,
     ponto_pedido: pontoPedido,
     estoque_ideal: estoqueIdeal,
@@ -138,12 +186,16 @@ export function calcularSugestaoCompraProdutoVelocidade(
     media_30d_texto: metricas.media_30d_texto,
     ponto_futuro_comercial: metricas.ponto_futuro_comercial,
     ponto_futuro_texto: metricas.ponto_futuro_texto,
+    ...gap,
     quantidade_limpa_60d: metricas.media.quantidade_limpa_60d,
     unidade_vitrine_compra: unidade,
     fator_vitrine: fator,
     lote_compra_vitrine: resolveLoteCompraVitrine(produto) || null,
     fonte: 'velocidade',
-    versao: 'v1-velocidade-60d-ponto-futuro',
+    catalogo_completo: catalogoCompleto || undefined,
+    versao: catalogoCompleto
+      ? 'v2-catalogo-completo-gap'
+      : 'v1-velocidade-60d-ponto-futuro',
   };
 }
 
@@ -163,11 +215,13 @@ export function calcularSugestaoCompraGrupoVelocidade(
 
   const roundingMode = options.roundingMode ?? 'auto';
   const leadTimePadrao = options.leadTimePadrao ?? 20;
+  const catalogoCompleto = options.catalogoCompleto === true;
 
   const sugestoes = lista.map((p) =>
     calcularSugestaoCompraProdutoVelocidade(p, pedidos90d, salesVelocityMap, {
       ...options,
       fallbackCatalogo: false,
+      catalogoCompleto,
     }),
   );
 
@@ -231,7 +285,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
     lista.find((p) => (Number(p.estoque_atual) || 0) > 0) ||
     lista[0];
 
-  if (pontoPedido <= 0) {
+  if (pontoPedido <= 0 && !catalogoCompleto) {
     return {
       elegivel: false,
       motivo: 'sem_venda',
@@ -243,18 +297,51 @@ export function calcularSugestaoCompraGrupoVelocidade(
     };
   }
 
-  const elegivel = estoqueAtual < pontoPedido;
-  const quantidadeSugeridaBase = elegivel
-    ? arredondarQuantidadeSugestao(estoqueIdeal, representativo, roundingMode)
-    : 0;
+  const gap = buildGapPontoFuturo(representativo, pontoPedido, estoqueAtual);
+  const elegivel = catalogoCompleto ? gap.gap_ponto_futuro_base > 0 : estoqueAtual < pontoPedido;
+  const quantidadeSugeridaBase = catalogoCompleto
+    ? gap.gap_ponto_futuro_base > 0
+      ? arredondarQuantidadeSugestao(gap.gap_ponto_futuro_base, representativo, roundingMode)
+      : 0
+    : elegivel
+      ? arredondarQuantidadeSugestao(estoqueIdeal, representativo, roundingMode)
+      : 0;
 
   const velocityAgg = aggregateCatalogSalesVelocity(lista, salesVelocityMap);
   const pontoAgg = aggregateCatalogPontoEsperadoLt(lista, salesVelocityMap, leadTimePadrao);
   const { unidade, fator } = resolveFatorUnidadeVitrineCompra(representativo);
 
+  if (catalogoCompleto && pontoPedido <= 0) {
+    return {
+      elegivel: true,
+      motivo: 'sem_venda',
+      lead_time_dias: leadTime,
+      estoque_atual: estoqueAtual,
+      media_30d_texto: formatCatalogMedia30d(velocityAgg, { tilde: true }) || null,
+      ponto_futuro_texto: null,
+      gap_ponto_futuro_base: 0,
+      gap_ponto_futuro_texto: null,
+      quantidade_sugerida_base: 0,
+      ponto_pedido: 0,
+      produto_representativo_id: representativo.id,
+      unidade_vitrine_compra: unidade,
+      fator_vitrine: fator,
+      skus_no_grupo: lista.length,
+      agrupado: true,
+      fonte: 'velocidade',
+      catalogo_completo: true,
+    };
+  }
+
   return {
-    elegivel,
-    motivo: elegivel ? 'abaixo_ponto_futuro' : 'estoque_suficiente',
+    elegivel: catalogoCompleto ? true : elegivel,
+    motivo: catalogoCompleto
+      ? gap.gap_ponto_futuro_base > 0
+        ? 'abaixo_ponto_futuro'
+        : 'estoque_suficiente'
+      : elegivel
+        ? 'abaixo_ponto_futuro'
+        : 'estoque_suficiente',
     ponto_pedido: pontoPedido,
     estoque_ideal: estoqueIdeal,
     quantidade_sugerida_base: quantidadeSugeridaBase,
@@ -266,12 +353,16 @@ export function calcularSugestaoCompraGrupoVelocidade(
     ponto_futuro_texto: pontoAgg.quantidade > 0 && pontoAgg.unidade
       ? `${pontoAgg.quantidade.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${pontoAgg.unidade}`
       : null,
+    ...gap,
     produto_representativo_id: representativo.id,
     unidade_vitrine_compra: unidade,
     fator_vitrine: fator,
     skus_no_grupo: lista.length,
     agrupado: true,
     fonte: 'velocidade',
-    versao: 'v1-grupo-velocidade-60d-ponto-futuro',
+    catalogo_completo: catalogoCompleto || undefined,
+    versao: catalogoCompleto
+      ? 'v2-grupo-catalogo-completo-gap'
+      : 'v1-grupo-velocidade-60d-ponto-futuro',
   };
 }

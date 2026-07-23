@@ -4,7 +4,7 @@ import { toast as sonnerToast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import FornecedorLinhaSelect from '@/components/compras/FornecedorLinhaSelect';
 import FiltrosSugestaoCompra, {
   DEFAULT_SUGESTAO_COMPRA_FILTERS,
 } from '@/components/compras/FiltrosSugestaoCompra';
@@ -17,7 +17,6 @@ import { dataHoje } from '@/components/utils/dateUtils';
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
 import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
-import { calcularSugestaoCompraProdutoVelocidade } from '@/lib/calcularSugestaoCompraVelocidade';
 import {
   buildLinhasSugestaoCompra,
   distribuirQuantidadeGrupo,
@@ -35,13 +34,13 @@ import {
   extractProdutosFromSugestaoLinhas,
   sortSugestaoCompraLinhas,
 } from '@/lib/sugestaoCompraTree';
+import { buildUltimoFornecedorPorProduto } from '@/lib/buildUltimoFornecedorPorProduto';
 import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
   filterSugestaoCompraLinhas,
   linhaAbaixoPontoFuturo,
 } from '@/lib/filterSugestaoCompraLinhas';
-const FORNECEDOR_VAZIO = '__none__';
 const SUGESTAO_TREE_LEVEL_KEY = 'sugestaoCompra.treeLevel';
 const SUGESTAO_GROUP_CATEGORY_KEY = 'sugestaoCompra.groupByCategory';
 const SUGESTAO_SORT_KEY = 'sugestaoCompra.sortOrder';
@@ -73,7 +72,11 @@ function readSugestaoSortOrder() {
   }
 }
 
-function fornecedorPadraoLinha(linha) {
+function fornecedorPadraoLinha(linha, ultimoFornecedorPorProduto = {}) {
+  for (const produto of linha.skus || []) {
+    const ultimo = ultimoFornecedorPorProduto[produto.id];
+    if (ultimo) return ultimo;
+  }
   const ids = linha.skus.map((p) => p.fornecedor_padrao_id).filter(Boolean);
   if (!ids.length) return '';
   const freq = {};
@@ -81,6 +84,15 @@ function fornecedorPadraoLinha(linha) {
     freq[id] = (freq[id] || 0) + 1;
   });
   return Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function buildFornecedorInicialPorLinha(linhas, ultimoFornecedorPorProduto = {}) {
+  const map = {};
+  linhas.forEach((linha) => {
+    const id = fornecedorPadraoLinha(linha, ultimoFornecedorPorProduto);
+    if (id) map[linha.id] = id;
+  });
+  return map;
 }
 
 export default function SugestaoCompra({ onStatsChange }) {
@@ -115,6 +127,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     pending: {},
     vendasDados: null,
     salesVelocityMap: {},
+    ultimoFornecedorPorProduto: {},
   });
   const abcdLoadRef = useRef(0);
 
@@ -167,13 +180,33 @@ export default function SugestaoCompra({ onStatsChange }) {
         roundingMode: round,
         fonte: 'velocidade',
         salesVelocityMap,
+        incluirTodoCatalogo: true,
+        catalogoCompleto: true,
       });
     },
     [agruparHierarquia, roundingMode],
   );
 
+  const aplicarLinhas = useCallback((prods, pedidos, movsPorProduto, pending, opts = {}) => {
+    const novasLinhas = recomputarLinhas(prods, pedidos, movsPorProduto, pending, opts);
+    const abaixoPonto = novasLinhas.filter(linhaAbaixoPontoFuturo).length;
+    const semVenda = novasLinhas.filter((l) => !l.sugestao?.media_30d_texto).length;
+
+    setLoadStats({
+      totalAtivos: prods.length,
+      elegiveis: abaixoPonto,
+      comGiro: novasLinhas.filter((l) => l.sugestao?.media_dia > 0 || l.sugestao?.media_30d_texto).length,
+      semVenda,
+      abaixoPontoFuturo: abaixoPonto,
+      linhasGrupo: novasLinhas.filter((l) => l.tipo === 'grupo').length,
+    });
+    setLinhas(novasLinhas);
+    return novasLinhas;
+  }, [recomputarLinhas]);
+
   const loadData = async () => {
     setIsLoading(true);
+    const abcdLoadId = ++abcdLoadRef.current;
     try {
       const [prods, forn, cats] = await Promise.all([
         fetchProdutosAtivos(),
@@ -181,104 +214,142 @@ export default function SugestaoCompra({ onStatsChange }) {
         base44.entities.Categoria.list(),
       ]);
 
-      let pedidosCompra = [];
-      try {
-        pedidosCompra = await base44.entities.PedidoCompra.filter({
-          status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'],
-        });
-      } catch {
-        // Pendências em pedidos abertos são opcionais para montar a lista.
-      }
-
-      let pedidos = [];
-      try {
-        pedidos = await withRateLimitRetry(() => fetchPedidosVenda90d(), {
-          maxAttempts: 3,
-          baseDelayMs: 800,
-        });
-      } catch {
-        toast({
-          title: 'Vendas não carregadas',
-          description: 'A sugestão usa o giro dos últimos 60 dias. Tente atualizar a página.',
-          variant: 'destructive',
-        });
-      }
-
-      if (!pedidos.length) {
-        toast({
-          title: 'Sem histórico de vendas',
-          description: 'Não foi possível calcular o ponto futuro. Verifique a conexão e atualize.',
-          variant: 'destructive',
-        });
-      }
-
-      const pending = {};
-      pedidosCompra.forEach((p) => {
-        p.itens?.forEach((i) => {
-          pending[i.produto_id] = (pending[i.produto_id] || 0) + (i.quantidade || 0);
-        });
-      });
-
-      const movsPorProduto = {};
-      const salesVelocityMap = buildCatalogSalesVelocityMap(prods, pedidos);
-      calcContextRef.current = { pedidos, movsPorProduto, prods, pending, salesVelocityMap };
-
-      let semVenda = 0;
-      prods.forEach((p) => {
-        const s = calcularSugestaoCompraProdutoVelocidade(p, pedidos, salesVelocityMap, {
-          roundingMode,
-          fallbackCatalogo: false,
-        });
-        if (s.motivo === 'sem_venda') semVenda += 1;
-      });
-
-      const novasLinhas = recomputarLinhas(prods, pedidos, movsPorProduto, pending, {
-        salesVelocityMap,
-      });
-      const abaixoPonto = novasLinhas.filter(linhaAbaixoPontoFuturo).length;
-
-      setLoadStats({
-        totalAtivos: prods.length,
-        elegiveis: abaixoPonto,
-        comGiro: novasLinhas.length,
-        semVenda,
-        abaixoPontoFuturo: abaixoPonto,
-        linhasGrupo: novasLinhas.filter((l) => l.tipo === 'grupo').length,
-      });
-      setLinhas(novasLinhas);
-      setQuantidadeOverrideBase({});
       setFornecedores(forn);
       setCategorias(cats);
 
-      const abcdLoadId = ++abcdLoadRef.current;
-      withRateLimitRetry(() => fetchDadosVendaAbcd90d(), {
-        maxAttempts: 3,
-        baseDelayMs: 800,
-      })
-        .then((vendasDados) => {
-          if (abcdLoadId !== abcdLoadRef.current) return;
-          calcContextRef.current = {
-            ...calcContextRef.current,
-            pedidos: vendasDados.pedidos90d,
-            vendasDados,
-            salesVelocityMap: buildCatalogSalesVelocityMap(prods, vendasDados.pedidos90d),
-          };
-          const velocityMap = calcContextRef.current.salesVelocityMap;
-          setLinhas(() => {
-            const next = recomputarLinhas(prods, vendasDados.pedidos90d, movsPorProduto, pending, {
-              salesVelocityMap: velocityMap,
-            });
-            return enrichSugestaoLinhasComAbcd(next, prods, vendasDados);
-          });
-        })
-        .catch(() => {
-          /* ABCD ao vivo é opcional; a lista já está visível */
-        });
+      const movsPorProduto = {};
+      const pending = {};
+      const salesVelocityMapVazio = buildCatalogSalesVelocityMap(prods, []);
+      calcContextRef.current = {
+        pedidos: [],
+        movsPorProduto,
+        prods,
+        pending,
+        salesVelocityMap: salesVelocityMapVazio,
+        ultimoFornecedorPorProduto: {},
+      };
+
+      const linhasIniciais = aplicarLinhas(prods, [], movsPorProduto, pending, {
+        salesVelocityMap: salesVelocityMapVazio,
+      });
+      setQuantidadeOverrideBase({});
+      setFornecedorPorLinha(buildFornecedorInicialPorLinha(linhasIniciais));
     } catch (error) {
       toast({ title: 'Erro ao carregar', description: error.message, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
+
+    const ctx = calcContextRef.current;
+    if (!ctx.prods?.length) return;
+
+    const atualizarComPedidos = (pedidos, extra = {}) => {
+      const salesVelocityMap = buildCatalogSalesVelocityMap(ctx.prods, pedidos);
+      calcContextRef.current = {
+        ...calcContextRef.current,
+        pedidos,
+        salesVelocityMap,
+        ...extra,
+      };
+      const next = aplicarLinhas(
+        ctx.prods,
+        pedidos,
+        ctx.movsPorProduto,
+        ctx.pending,
+        { salesVelocityMap },
+      );
+      if (calcContextRef.current.vendasDados) {
+        setLinhas(enrichSugestaoLinhasComAbcd(next, ctx.prods, calcContextRef.current.vendasDados));
+      }
+    };
+
+    Promise.all([
+      base44.entities.PedidoCompra.filter({
+        status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'],
+      }).catch(() => []),
+      base44.entities.PedidoCompra.list('-created_date', 250).catch(() => []),
+    ]).then(([pedidosAbertos, pedidosRecentes]) => {
+      const pendingMap = {};
+      pedidosAbertos.forEach((p) => {
+        p.itens?.forEach((i) => {
+          pendingMap[i.produto_id] = (pendingMap[i.produto_id] || 0) + (i.quantidade || 0);
+        });
+      });
+      const ultimoFornecedorPorProduto = buildUltimoFornecedorPorProduto(pedidosRecentes);
+      calcContextRef.current = {
+        ...calcContextRef.current,
+        pending: pendingMap,
+        ultimoFornecedorPorProduto,
+      };
+      setFornecedorPorLinha((prev) => {
+        const merged = { ...prev };
+        setLinhas((currentLinhas) => {
+          currentLinhas.forEach((l) => {
+            if (!merged[l.id]) {
+              const id = fornecedorPadraoLinha(l, ultimoFornecedorPorProduto);
+              if (id) merged[l.id] = id;
+            }
+          });
+          return currentLinhas;
+        });
+        return merged;
+      });
+      if (calcContextRef.current.pedidos?.length) {
+        atualizarComPedidos(calcContextRef.current.pedidos, { pending: pendingMap, ultimoFornecedorPorProduto });
+      } else {
+        aplicarLinhas(
+          ctx.prods,
+          [],
+          calcContextRef.current.movsPorProduto,
+          pendingMap,
+          { salesVelocityMap: calcContextRef.current.salesVelocityMap },
+        );
+      }
+    });
+
+    withRateLimitRetry(() => fetchPedidosVenda90d(), {
+      maxAttempts: 3,
+      baseDelayMs: 800,
+    })
+      .then((pedidos) => {
+        atualizarComPedidos(pedidos);
+      })
+      .catch(() => {
+        toast({
+          title: 'Vendas ainda não carregadas',
+          description: 'O catálogo já está visível. Média 30d e ponto futuro atualizam ao reconectar.',
+          variant: 'destructive',
+        });
+      });
+
+    withRateLimitRetry(() => fetchDadosVendaAbcd90d(), {
+      maxAttempts: 3,
+      baseDelayMs: 800,
+    })
+      .then((vendasDados) => {
+        if (abcdLoadId !== abcdLoadRef.current) return;
+        const pedidos = vendasDados.pedidos90d?.length
+          ? vendasDados.pedidos90d
+          : calcContextRef.current.pedidos;
+        const salesVelocityMap = buildCatalogSalesVelocityMap(ctx.prods, pedidos);
+        calcContextRef.current = {
+          ...calcContextRef.current,
+          pedidos,
+          vendasDados,
+          salesVelocityMap,
+        };
+        const next = recomputarLinhas(
+          ctx.prods,
+          pedidos,
+          calcContextRef.current.movsPorProduto,
+          calcContextRef.current.pending,
+          { salesVelocityMap },
+        );
+        setLinhas(enrichSugestaoLinhasComAbcd(next, ctx.prods, vendasDados));
+      })
+      .catch(() => {
+        /* ABCD ao vivo é opcional */
+      });
   };
 
   useEffect(() => {
@@ -396,7 +467,8 @@ export default function SugestaoCompra({ onStatsChange }) {
   };
 
   const fornecedorLinha = (linha) =>
-    fornecedorPorLinha[linha.id] || fornecedorPadraoLinha(linha);
+    fornecedorPorLinha[linha.id]
+    || fornecedorPadraoLinha(linha, calcContextRef.current.ultimoFornecedorPorProduto);
 
   const handleGenerate = async () => {
     const selected = filteredLinhas.filter((l) => selectedItems[l.id]);
@@ -543,32 +615,19 @@ export default function SugestaoCompra({ onStatsChange }) {
     }
   };
 
-  const renderFornecedorSelect = (linha, className = '') => {
-    const value = fornecedorLinha(linha) || FORNECEDOR_VAZIO;
-    return (
-      <Select
-        value={value}
-        onValueChange={(v) =>
-          setFornecedorPorLinha({
-            ...fornecedorPorLinha,
-            [linha.id]: v === FORNECEDOR_VAZIO ? '' : v,
-          })
-        }
-      >
-        <SelectTrigger className={className || 'h-8 w-full max-w-[14rem] rounded-lg border-0 bg-muted/40 text-xs'}>
-          <SelectValue placeholder="Fornecedor..." />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={FORNECEDOR_VAZIO}>Selecione...</SelectItem>
-          {fornecedores.map((f) => (
-            <SelectItem key={f.id} value={f.id}>
-              {f.nome}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
-  };
+  const renderFornecedorSelect = (linha, className = '') => (
+    <FornecedorLinhaSelect
+      value={fornecedorLinha(linha)}
+      onChange={(v) =>
+        setFornecedorPorLinha({
+          ...fornecedorPorLinha,
+          [linha.id]: v,
+        })
+      }
+      fornecedores={fornecedores}
+      className={className || 'h-8 max-w-[14rem] rounded-lg text-xs'}
+    />
+  );
 
   if (isLoading) {
     return (
@@ -592,10 +651,9 @@ export default function SugestaoCompra({ onStatsChange }) {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-foreground/85">
-          {filteredLinhas.length} sugestão(ões)
-          {loadStats.comGiro > filteredLinhas.length
-            ? ` · ${loadStats.comGiro} com giro (filtro ponto futuro ativo)`
-            : ''}
+          {filteredLinhas.length} item(ns)
+          {loadStats.totalAtivos > 0 ? ` · ${loadStats.totalAtivos} no catálogo` : ''}
+          {loadStats.abaixoPontoFuturo > 0 ? ` · ${loadStats.abaixoPontoFuturo} abaixo do ponto futuro` : ''}
           {loadStats.linhasGrupo > 0 ? ` · ${loadStats.linhasGrupo} família(s)` : ''}
           {selectedCount > 0 ? ` · ${selectedCount} selecionada(s)` : ''}
         </p>
@@ -647,17 +705,9 @@ export default function SugestaoCompra({ onStatsChange }) {
             {loadStats.totalAtivos > 0 ? (
               <>
                 {loadStats.totalAtivos} produto(s) no catálogo.
-                {loadStats.comGiro > 0 ? (
-                  <>
-                    {' '}
-                    {loadStats.comGiro} com giro nos últimos 60 dias
-                    {loadStats.abaixoPontoFuturo === 0
-                      ? ', mas nenhum está abaixo do ponto futuro calculado.'
-                      : '.'}
-                  </>
-                ) : (
-                  <> Nenhum com vendas nos últimos 60 dias para calcular o ponto futuro.</>
-                )}
+                {loadStats.comGiro === 0
+                  ? ' Aguardando histórico de vendas para calcular média 30d e ponto futuro.'
+                  : ` ${loadStats.comGiro} com giro nos últimos 60 dias.`}
               </>
             ) : (
               <>Não foi possível carregar produtos do catálogo. Tente atualizar a página.</>

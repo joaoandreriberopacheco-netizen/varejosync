@@ -31,7 +31,7 @@ export const DEFAULT_SUGESTAO_COMPRA_FILTERS = {
   quantidadeValor: '',
   quantidadeValorAte: '',
   hidePending: false,
-  somenteAbaixoPontoFuturo: true,
+  somenteAbaixoPontoFuturo: false,
   roundingMode: 'auto',
   agruparHierarquia: true,
 };
@@ -54,6 +54,8 @@ function linhaPontoPedido(linha) {
 }
 
 export function linhaAbaixoPontoFuturo(linha) {
+  const gap = Number(linha?.sugestao?.gap_ponto_futuro_base);
+  if (Number.isFinite(gap)) return gap > 0;
   const ponto = linhaPontoPedido(linha);
   if (ponto <= 0) return false;
   return linhaEstoqueAtual(linha) < ponto;
@@ -185,7 +187,7 @@ export function countActiveSugestaoCompraFilters(filters = DEFAULT_SUGESTAO_COMP
     filters.statusEstoque !== 'all',
     hasActiveQuantityFilter(filters),
     filters.hidePending,
-    filters.somenteAbaixoPontoFuturo === false,
+    filters.somenteAbaixoPontoFuturo === true,
     filters.roundingMode !== 'auto',
     filters.agruparHierarquia === false,
   ].filter(Boolean).length;

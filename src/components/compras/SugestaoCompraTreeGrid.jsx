@@ -31,6 +31,24 @@ const PRODUTO_STICKY_SHADOW = 'shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:sh
 
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
+function StackedHead({ top, bottom, align = 'right' }) {
+  return (
+    <span className={cn('inline-flex flex-col leading-tight', align === 'center' && 'items-center', align === 'left' && 'items-start', align === 'right' && 'items-end')}>
+      <span>{top}</span>
+      {bottom ? <span className="text-[9px] font-normal opacity-75">{bottom}</span> : null}
+    </span>
+  );
+}
+
+function pontoFuturoGapTexto(sugestao) {
+  if (!sugestao) return '—';
+  if (sugestao.gap_ponto_futuro_texto) return sugestao.gap_ponto_futuro_texto;
+  if ((Number(sugestao.gap_ponto_futuro_base) || 0) > 0) {
+    return fmtN(sugestao.gap_ponto_futuro_base);
+  }
+  return '—';
+}
+
 function AbcdBadge({ letter }) {
   const value = String(letter || '').toUpperCase();
   if (!value) return <span className="text-xs text-muted-foreground">—</span>;
@@ -190,7 +208,7 @@ function SugestaoDataCells({
   const sugestao = linha.sugestao;
   const estoque = sugestao?.estoque_atual ?? linha.produto?.estoque_atual ?? 0;
   const media30d = sugestao?.media_30d_texto;
-  const pontoFuturo = sugestao?.ponto_futuro_texto;
+  const pontoFuturoGap = pontoFuturoGapTexto(sugestao);
   const abcd = getLinhaAbcdLetter(linha, row?.abcdDominante);
 
   return (
@@ -209,9 +227,11 @@ function SugestaoDataCells({
       <td className="text-right py-2 px-2 whitespace-nowrap">
         <span className={cn(
           'text-xs tabular-nums',
-          sugestao?.fallback_cadastro ? 'text-muted-foreground italic' : 'text-amber-700 dark:text-amber-400 font-medium',
+          (Number(sugestao?.gap_ponto_futuro_base) || 0) > 0
+            ? 'text-amber-700 dark:text-amber-400 font-medium'
+            : 'text-muted-foreground',
         )}>
-          {pontoFuturo || (sugestao?.fallback_cadastro ? fmtN(sugestao?.ponto_pedido) : '—')}
+          {pontoFuturoGap}
         </span>
       </td>
       <td className="text-right py-2 px-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
@@ -315,12 +335,24 @@ export default function SugestaoCompraTreeGrid({
               >
                 Produto
               </th>
-              <th className={cn(p38Table.head, 'text-center py-2 w-14')}>ABCD</th>
-              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-20')}>Estoque</th>
-              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-24')}>Média 30d</th>
-              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-24')}>Ponto futuro</th>
-              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-32')}>Qtd sugerida</th>
-              <th className={cn(p38Table.head, 'text-left py-2 min-w-[10rem]')}>Fornecedor</th>
+              <th className={cn(p38Table.head, 'text-center py-2 w-14')}>
+                <StackedHead top="ABCD" align="center" />
+              </th>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-16')}>
+                <StackedHead top="Est." bottom="atual" />
+              </th>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-20')}>
+                <StackedHead top="Média" bottom="30d" />
+              </th>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-20')}>
+                <StackedHead top="Ponto" bottom="futuro" />
+              </th>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-28')}>
+                <StackedHead top="Qtd" bottom="sug." />
+              </th>
+              <th className={cn(p38Table.head, 'text-left py-2 min-w-[9rem]')}>
+                <StackedHead top="Forn." bottom="edor" align="left" />
+              </th>
             </tr>
           </thead>
           <tbody>

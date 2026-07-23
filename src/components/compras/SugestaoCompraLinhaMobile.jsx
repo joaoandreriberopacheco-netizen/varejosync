@@ -24,9 +24,11 @@ function AbcdBadge({ letter }) {
 
 function rowAccent(linha, selecionado) {
   if (selecionado) return 'info';
+  const gap = Number(linha?.sugestao?.gap_ponto_futuro_base);
   const estoque = linha?.sugestao?.estoque_atual ?? linha?.produto?.estoque_atual ?? 0;
-  const ponto = linha?.sugestao?.ponto_pedido ?? 0;
   if (estoque <= 0) return 'danger';
+  if (Number.isFinite(gap) && gap > 0) return 'warning';
+  const ponto = linha?.sugestao?.ponto_pedido ?? 0;
   if (ponto > 0 && estoque < ponto) return 'warning';
   return 'muted';
 }
@@ -44,7 +46,8 @@ export default function SugestaoCompraLinhaMobile({
   const isGrupo = linha.tipo === 'grupo';
   const estoque = sugestao?.estoque_atual ?? linha.produto?.estoque_atual ?? 0;
   const media30d = sugestao?.media_30d_texto;
-  const pontoFuturo = sugestao?.ponto_futuro_texto;
+  const pontoFuturoGap = sugestao?.gap_ponto_futuro_texto
+    || ((Number(sugestao?.gap_ponto_futuro_base) || 0) > 0 ? String(sugestao.gap_ponto_futuro_base) : null);
   const abcd = getLinhaAbcdLetter(linha);
   const qty = disp?.quantidade ?? 0;
   const unidade = disp?.unidade || '';
@@ -93,20 +96,22 @@ export default function SugestaoCompraLinhaMobile({
           </div>
           <div className="mt-1 space-y-0.5 text-[11px] text-muted-foreground leading-snug">
             <p>
-              <span className="text-foreground/70">Estoque</span>{' '}
+              <span className="text-foreground/70">Est.</span>{' '}
               <span className="tabular-nums font-medium text-foreground/85">{estoque}</span>
             </p>
             <p>
-              <span className="text-foreground/70">Média 30d</span>{' '}
+              <span className="text-foreground/70">Méd. 30d</span>{' '}
               {media30d || '—'}
             </p>
             <p>
-              <span className="text-foreground/70">Ponto futuro</span>{' '}
+              <span className="text-foreground/70">P. futuro</span>{' '}
               <span className={cn(
                 'font-medium',
-                sugestao?.fallback_cadastro ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-400',
+                (Number(sugestao?.gap_ponto_futuro_base) || 0) > 0
+                  ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-muted-foreground',
               )}>
-                {pontoFuturo || '—'}
+                {pontoFuturoGap || '—'}
               </span>
             </p>
           </div>
@@ -124,7 +129,7 @@ export default function SugestaoCompraLinhaMobile({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] text-muted-foreground whitespace-nowrap">Qtd sugerida</span>
+          <span className="text-[10px] text-muted-foreground whitespace-nowrap">Qtd sug.</span>
           <Input
             type="text"
             inputMode="decimal"

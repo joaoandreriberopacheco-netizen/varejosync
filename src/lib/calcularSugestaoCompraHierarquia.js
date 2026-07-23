@@ -296,11 +296,20 @@ export function buildLinhasSugestaoCompra(
   const usarCatalogo = options.fonte === 'catalogo';
   const usarVelocidade = options.fonte === 'velocidade';
   const salesVelocityMap = options.salesVelocityMap || {};
+  const incluirTodoCatalogo = options.incluirTodoCatalogo === true;
+  const catalogoCompleto = options.catalogoCompleto === true;
   const { map, soltos } = agruparSkusPorHierarquiaCompra(produtosAtivos);
 
   const incluirLinha = (sugestao) => {
+    if (incluirTodoCatalogo) return true;
     if (usarVelocidade) return sugestaoTemGiroVelocidade(sugestao);
     return sugestao.elegivel;
+  };
+
+  const velocityOpts = {
+    roundingMode,
+    fallbackCatalogo: false,
+    catalogoCompleto,
   };
 
   const linhas = [];
@@ -317,10 +326,7 @@ export function buildLinhasSugestaoCompra(
       const sugestao = usarCatalogo
         ? calcularSugestaoCompraGrupoCatalogo(skus, { roundingMode })
         : usarVelocidade
-          ? calcularSugestaoCompraGrupoVelocidade(skus, pedidos90d, salesVelocityMap, {
-              roundingMode,
-              fallbackCatalogo: false,
-            })
+          ? calcularSugestaoCompraGrupoVelocidade(skus, pedidos90d, salesVelocityMap, velocityOpts)
           : calcularSugestaoCompraGrupo(skus, pedidos90d, movsPorProduto, {
               roundingMode,
             });
@@ -351,11 +357,8 @@ export function buildLinhasSugestaoCompra(
     if (agrupar && skusEmGrupo.has(p.id)) continue;
     const sugestao = usarCatalogo
       ? calcularSugestaoCompraProdutoCatalogo(p, { roundingMode })
-      : usarVelocidade
-        ? calcularSugestaoCompraProdutoVelocidade(p, pedidos90d, salesVelocityMap, {
-            roundingMode,
-            fallbackCatalogo: false,
-          })
+        : usarVelocidade
+        ? calcularSugestaoCompraProdutoVelocidade(p, pedidos90d, salesVelocityMap, velocityOpts)
         : calcularSugestaoCompraProduto(p, pedidos90d, movsPorProduto[p.id] || [], {
             roundingMode,
           });
