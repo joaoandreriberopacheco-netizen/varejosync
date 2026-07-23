@@ -18,11 +18,21 @@ export const SUGESTAO_STATUS_ESTOQUE_OPTIONS = [
   { value: 'critico', label: 'Crítico' },
 ];
 
+export const SUGESTAO_HIERARQUIA_NIVEL_OPTIONS = [
+  { value: 'all', label: 'Todos os níveis' },
+  { value: '1', label: 'Nível 1 — grupo' },
+  { value: '2', label: 'Nível 2 — tipo' },
+  { value: '3', label: 'Nível 3' },
+  { value: '4', label: 'Nível 4' },
+  { value: '5', label: 'Nível 5 — modelo' },
+];
+
 export const DEFAULT_SUGESTAO_COMPRA_FILTERS = {
   searchTerm: '',
   searchStartsWith: false,
   categoriaId: 'all',
   fornecedorId: 'all',
+  hierarquiaNivel: 'all',
   selectedAbcd: [],
   selectedTags: [],
   unidadeVitrine: 'all',
@@ -30,18 +40,50 @@ export const DEFAULT_SUGESTAO_COMPRA_FILTERS = {
   quantidadeOperador: 'all',
   quantidadeValor: '',
   quantidadeValorAte: '',
+  sugestaoQuantidadeOperador: 'all',
+  sugestaoQuantidadeValor: '',
+  sugestaoQuantidadeValorAte: '',
   hidePending: false,
   somenteAbaixoPontoFuturo: false,
   roundingMode: 'auto',
   agruparHierarquia: true,
 };
 
-function hasActiveQuantityFilter(filters) {
+function hasActiveSugestaoQuantityFilter(filters) {
   return hasActiveNumericComparison(
-    filters?.quantidadeOperador,
-    filters?.quantidadeValor,
-    filters?.quantidadeValorAte,
+    filters?.sugestaoQuantidadeOperador,
+    filters?.sugestaoQuantidadeValor,
+    filters?.sugestaoQuantidadeValorAte,
   );
+}
+
+function produtoHierarquiaNivelPreenchido(produto, nivel) {
+  const n = Number(nivel);
+  if (!Number.isFinite(n) || n < 1 || n > 5) return true;
+  const campos = [
+    produto?.campo_hierarquico_1,
+    produto?.campo_hierarquico_2,
+    produto?.campo_hierarquico_3,
+    produto?.campo_hierarquico_4,
+    produto?.campo_hierarquico_5,
+  ];
+  return Boolean(String(campos[n - 1] || '').trim());
+}
+
+function linhaQuantidadeSugerida(linha, options = {}) {
+  if (typeof options.quantidadeBaseLinha === 'function') {
+    return Number(options.quantidadeBaseLinha(linha)) || 0;
+  }
+  return Number(linha?.sugestao?.quantidade_sugerida_base) || 0;
+}
+
+function linhaFornecedorId(linha, options = {}) {
+  if (typeof options.resolveFornecedorId === 'function') {
+    const resolved = options.resolveFornecedorId(linha);
+    if (resolved) return resolved;
+  }
+  const sku = linha?.produto || linha?.skus?.[0];
+  return sku?.fornecedor_padrao_id || '';
 }
 
 function linhaEstoqueAtual(linha) {
@@ -106,11 +148,15 @@ export function collectSugestaoVitrineUnits(linhas = []) {
   return collectCatalogVitrineUnits(produtos);
 }
 
-export function filterSugestaoCompraLinhas(linhas, filters = DEFAULT_SUGESTAO_COMPRA_FILTERS) {
+export function filterSugestaoCompraLinhas(
+  linhas,
+  filters = DEFAULT_SUGESTAO_COMPRA_FILTERS,
+  options = {},
+) {
   if (!Array.isArray(linhas)) return [];
 
   return linhas.filter((linha) => {
-    if (filters.somenteAbaixoPontoFuturo !== false && !linhaAbaixoPontoFuturo(linha)) return false;
+    if (filters.somenteAbaixoPontoFuturo === true && !linhaAbaixoPontoFuturo(linha)) return false;
     if (filters.hidePending && linha.quantidade_pendente > 0) return false;
     if (!linhaMatchesSearch(linha, filters)) return false;
 
@@ -122,10 +168,18 @@ export function filterSugestaoCompraLinhas(linhas, filters = DEFAULT_SUGESTAO_CO
     }
 
     if (
-      filters.fornecedorId !== 'all' &&
-      !linhaMatchesSkuPredicate(linha, (p) => p.fornecedor_padrao_id === filters.fornecedorId)
+      filters.hierarquiaNivel &&
+      filters.hierarquiaNivel !== 'all' &&
+      !linhaMatchesSkuPredicate(linha, (p) =>
+        produtoHierarquiaNivelPreenchido(p, filters.hierarquiaNivel),
+      )
     ) {
       return false;
+    }
+
+    if (filters.fornecedorId !== 'all') {
+      const fid = filters.fornecedorId;
+      if (linhaFornecedorId(linha, options) !== fid) return false;
     }
 
     if (
@@ -171,8 +225,30 @@ export function filterSugestaoCompraLinhas(linhas, filters = DEFAULT_SUGESTAO_CO
       }
     }
 
+    if (hasActiveSugestaoQuantityFilter(filters)) {
+      const qtd = linhaQuantidadeSugerida(linha, options);
+      if (
+        !matchesNumericComparison(
+          qtd,
+          filters.sugestaoQuantidadeOperador,
+          filters.sugestaoQuantidadeValor,
+          filters.sugestaoQuantidadeValorAte,
+        )
+      ) {
+        return false;
+      }
+    }
+
     return true;
   });
+}
+
+function hasActiveQuantityFilter(filters) {
+  return hasActiveNumericComparison(
+    filters?.quantidadeOperador,
+    filters?.quantidadeValor,
+    filters?.quantidadeValorAte,
+  );
 }
 
 export function countActiveSugestaoCompraFilters(filters = DEFAULT_SUGESTAO_COMPRA_FILTERS) {
@@ -181,11 +257,13 @@ export function countActiveSugestaoCompraFilters(filters = DEFAULT_SUGESTAO_COMP
     filters.searchStartsWith,
     filters.categoriaId !== 'all',
     filters.fornecedorId !== 'all',
+    filters.hierarquiaNivel !== 'all',
     filters.selectedAbcd?.length > 0,
     filters.selectedTags?.length > 0,
     filters.unidadeVitrine !== 'all',
     filters.statusEstoque !== 'all',
     hasActiveQuantityFilter(filters),
+    hasActiveSugestaoQuantityFilter(filters),
     filters.hidePending,
     filters.somenteAbaixoPontoFuturo === true,
     filters.roundingMode !== 'auto',

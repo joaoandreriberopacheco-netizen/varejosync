@@ -20,6 +20,7 @@ import { ABCD_FILTER_VALUES, ABCD_FILTER_LABELS } from '@/lib/filterProdutos';
 import {
   DEFAULT_SUGESTAO_COMPRA_FILTERS,
   SUGESTAO_STATUS_ESTOQUE_OPTIONS,
+  SUGESTAO_HIERARQUIA_NIVEL_OPTIONS,
   countActiveSugestaoCompraFilters,
 } from '@/lib/filterSugestaoCompraLinhas';
 import { cn } from '@/lib/utils';
@@ -164,6 +165,18 @@ function FiltrosPainel({
         />
       </FilterSection>
 
+      <FilterSection title="Nível hierárquico" icon={Layers}>
+        <ChipGrid
+          options={SUGESTAO_HIERARQUIA_NIVEL_OPTIONS}
+          value={filters.hierarquiaNivel || 'all'}
+          onChange={(hierarquiaNivel) => patchFilters({ hierarquiaNivel })}
+          columns={2}
+        />
+        <p className="text-[11px] text-muted-foreground leading-snug">
+          Filtra itens com o nível escolhido preenchido no cadastro (h1 a h5).
+        </p>
+      </FilterSection>
+
       <FilterSection title="Fornecedor" icon={Building2}>
         <SearchableFilterSelect
           value={filters.fornecedorId}
@@ -265,6 +278,50 @@ function FiltrosPainel({
               className="bg-card border border-border/30 h-11 rounded-xl"
               value={filters.quantidadeValorAte || ''}
               onChange={(e) => patchFilters({ quantidadeValorAte: e.target.value })}
+            />
+          ) : null}
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Quantidade sugerida" icon={Boxes}>
+        <div className="grid grid-cols-2 gap-2">
+          <Select
+            value={filters.sugestaoQuantidadeOperador || 'all'}
+            onValueChange={(sugestaoQuantidadeOperador) =>
+              patchFilters({
+                sugestaoQuantidadeOperador,
+                sugestaoQuantidadeValorAte:
+                  sugestaoQuantidadeOperador === 'between' ? filters.sugestaoQuantidadeValorAte : '',
+              })
+            }
+          >
+            <SelectTrigger className="h-11 bg-card border border-border/30 rounded-xl col-span-2">
+              <SelectValue placeholder="Qualquer sugestão" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Qualquer sugestão</SelectItem>
+              <SelectItem value="gt">Maior que</SelectItem>
+              <SelectItem value="gte">Maior ou igual a</SelectItem>
+              <SelectItem value="lt">Menor que</SelectItem>
+              <SelectItem value="lte">Menor ou igual a</SelectItem>
+              <SelectItem value="between">Entre</SelectItem>
+            </SelectContent>
+          </Select>
+          <Input
+            inputMode="decimal"
+            placeholder={filters.sugestaoQuantidadeOperador === 'between' ? 'De' : 'Qtd.'}
+            disabled={(filters.sugestaoQuantidadeOperador || 'all') === 'all'}
+            className="bg-card border border-border/30 h-11 rounded-xl disabled:opacity-50"
+            value={filters.sugestaoQuantidadeValor || ''}
+            onChange={(e) => patchFilters({ sugestaoQuantidadeValor: e.target.value })}
+          />
+          {filters.sugestaoQuantidadeOperador === 'between' ? (
+            <Input
+              inputMode="decimal"
+              placeholder="Até"
+              className="bg-card border border-border/30 h-11 rounded-xl"
+              value={filters.sugestaoQuantidadeValorAte || ''}
+              onChange={(e) => patchFilters({ sugestaoQuantidadeValorAte: e.target.value })}
             />
           ) : null}
         </div>
@@ -406,6 +463,14 @@ export default function FiltrosSugestaoCompra({
         onRemove: () => patchFilters({ categoriaId: 'all' }),
       });
     }
+    if (filters.hierarquiaNivel !== 'all') {
+      const nivel = SUGESTAO_HIERARQUIA_NIVEL_OPTIONS.find((o) => o.value === filters.hierarquiaNivel);
+      chips.push({
+        key: 'nivel',
+        label: nivel?.label || `Nível ${filters.hierarquiaNivel}`,
+        onRemove: () => patchFilters({ hierarquiaNivel: 'all' }),
+      });
+    }
     if (filters.fornecedorId !== 'all') {
       const f = fornecedores.find((x) => x.id === filters.fornecedorId);
       chips.push({
@@ -432,9 +497,21 @@ export default function FiltrosSugestaoCompra({
     if (filters.quantidadeOperador !== 'all') {
       chips.push({
         key: 'qty',
-        label: `Qtd. ${filters.quantidadeOperador}`,
+        label: `Estoque ${filters.quantidadeOperador}`,
         onRemove: () =>
           patchFilters({ quantidadeOperador: 'all', quantidadeValor: '', quantidadeValorAte: '' }),
+      });
+    }
+    if (filters.sugestaoQuantidadeOperador !== 'all') {
+      chips.push({
+        key: 'sug-qty',
+        label: `Sugestão ${filters.sugestaoQuantidadeOperador}`,
+        onRemove: () =>
+          patchFilters({
+            sugestaoQuantidadeOperador: 'all',
+            sugestaoQuantidadeValor: '',
+            sugestaoQuantidadeValorAte: '',
+          }),
       });
     }
     (filters.selectedAbcd || []).forEach((letter) => {

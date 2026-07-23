@@ -27,13 +27,16 @@ import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
-import { CATALOG_SORT_OPTIONS } from '@/lib/catalogProdutoPerformance';
 import {
   buildSugestaoCompraLinhaLookup,
   enrichSugestaoLinhasComAbcd,
   extractProdutosFromSugestaoLinhas,
-  sortSugestaoCompraLinhas,
 } from '@/lib/sugestaoCompraTree';
+import {
+  DEFAULT_SUGESTAO_COLUMN_SORT,
+  SUGESTAO_COMPRA_SORT_COLUMNS,
+  sortSugestaoCompraLinhasByColumn,
+} from '@/lib/sugestaoCompraColumnSort';
 import { buildUltimoFornecedorPorProduto } from '@/lib/buildUltimoFornecedorPorProduto';
 import {
   collectSugestaoTags,
@@ -43,7 +46,24 @@ import {
 } from '@/lib/filterSugestaoCompraLinhas';
 const SUGESTAO_TREE_LEVEL_KEY = 'sugestaoCompra.treeLevel';
 const SUGESTAO_GROUP_CATEGORY_KEY = 'sugestaoCompra.groupByCategory';
-const SUGESTAO_SORT_KEY = 'sugestaoCompra.sortOrder';
+const SUGESTAO_COLUMN_SORT_KEY = 'sugestaoCompra.columnSort';
+
+function readColumnSort() {
+  try {
+    const raw = localStorage.getItem(SUGESTAO_COLUMN_SORT_KEY);
+    if (!raw) return { ...DEFAULT_SUGESTAO_COLUMN_SORT };
+    const parsed = JSON.parse(raw);
+    if (!SUGESTAO_COMPRA_SORT_COLUMNS.some((c) => c.id === parsed?.column)) {
+      return { ...DEFAULT_SUGESTAO_COLUMN_SORT };
+    }
+    return {
+      column: parsed.column,
+      direction: parsed.direction === 'desc' ? 'desc' : 'asc',
+    };
+  } catch {
+    return { ...DEFAULT_SUGESTAO_COLUMN_SORT };
+  }
+}
 
 function readSugestaoTreeLevel() {
   try {
@@ -60,15 +80,6 @@ function readSugestaoGroupByCategory() {
     return localStorage.getItem(SUGESTAO_GROUP_CATEGORY_KEY) === '1';
   } catch {
     return false;
-  }
-}
-
-function readSugestaoSortOrder() {
-  try {
-    const raw = localStorage.getItem(SUGESTAO_SORT_KEY);
-    return CATALOG_SORT_OPTIONS.some((o) => o.id === raw) ? raw : 'abcd_desc';
-  } catch {
-    return 'abcd_desc';
   }
 }
 
@@ -106,7 +117,7 @@ export default function SugestaoCompra({ onStatsChange }) {
 
   const [filters, setFilters] = useState(() => ({ ...DEFAULT_SUGESTAO_COMPRA_FILTERS }));
   const { roundingMode, agruparHierarquia } = filters;
-  const [sortOrder, setSortOrder] = useState(readSugestaoSortOrder);
+  const [columnSort, setColumnSort] = useState(readColumnSort);
   const [treeLevel, setTreeLevel] = useState(readSugestaoTreeLevel);
   const [groupByCategory, setGroupByCategory] = useState(readSugestaoGroupByCategory);
   const [loadStats, setLoadStats] = useState({
@@ -136,12 +147,36 @@ export default function SugestaoCompra({ onStatsChange }) {
 
   const produtoParaCompra = (produto) => buildSnapshotExibicaoComercial(produto);
 
-  const calcQuantityLinha = (linha) => {
+  const calcQuantityLinha = useCallback((linha) => {
     if (quantidadeOverrideBase[linha.id] != null) {
       return quantidadeOverrideBase[linha.id];
     }
     return linha.sugestao?.quantidade_sugerida_base || 0;
-  };
+  }, [quantidadeOverrideBase]);
+
+  const resolveFornecedorIdLinha = useCallback((linha) => {
+    return fornecedorPorLinha[linha.id]
+      || fornecedorPadraoLinha(linha, calcContextRef.current.ultimoFornecedorPorProduto);
+  }, [fornecedorPorLinha]);
+
+  const filterOptions = useMemo(
+    () => ({
+      resolveFornecedorId: resolveFornecedorIdLinha,
+      quantidadeBaseLinha: calcQuantityLinha,
+    }),
+    [resolveFornecedorIdLinha, calcQuantityLinha],
+  );
+
+  const sortCtx = useMemo(
+    () => ({
+      quantidadeBase: calcQuantityLinha,
+      fornecedorNome: (linha) => {
+        const id = resolveFornecedorIdLinha(linha);
+        return fornecedores.find((f) => f.id === id)?.nome || '';
+      },
+    }),
+    [calcQuantityLinha, resolveFornecedorIdLinha, fornecedores],
+  );
 
   const handleQuantidadeLinhaChange = useCallback((linha, qtyComercial) => {
     const snap = produtoParaCompra(linha.produto);
@@ -371,14 +406,16 @@ export default function SugestaoCompra({ onStatsChange }) {
   }, [roundingMode, agruparHierarquia, recomputarLinhas]);
 
   const filteredLinhas = useMemo(
-    () => filterSugestaoCompraLinhas(linhas, filters),
-    [linhas, filters],
+    () => filterSugestaoCompraLinhas(linhas, filters, filterOptions),
+    [linhas, filters, filterOptions],
   );
 
-  const mobileLinhas = useMemo(
-    () => sortSugestaoCompraLinhas(filteredLinhas, sortOrder),
-    [filteredLinhas, sortOrder],
+  const sortedLinhas = useMemo(
+    () => sortSugestaoCompraLinhasByColumn(filteredLinhas, columnSort, sortCtx),
+    [filteredLinhas, columnSort, sortCtx],
   );
+
+  const mobileLinhas = sortedLinhas;
 
   const treeProdutos = useMemo(
     () => extractProdutosFromSugestaoLinhas(filteredLinhas),
@@ -389,16 +426,35 @@ export default function SugestaoCompra({ onStatsChange }) {
     [filteredLinhas],
   );
 
-  const currentSort = CATALOG_SORT_OPTIONS.find((opt) => opt.id === sortOrder)
-    || CATALOG_SORT_OPTIONS.find((o) => o.id === 'abcd_desc');
+  const currentSortColumn = SUGESTAO_COMPRA_SORT_COLUMNS.find((c) => c.id === columnSort.column)
+    || SUGESTAO_COMPRA_SORT_COLUMNS[0];
 
-  const handleSortOrderChange = useCallback((next) => {
-    setSortOrder(next);
-    try {
-      localStorage.setItem(SUGESTAO_SORT_KEY, next);
-    } catch {
-      /* ignore */
-    }
+  const handleColumnSort = useCallback((column) => {
+    setColumnSort((prev) => {
+      const next = prev?.column === column
+        ? { column, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+        : { column, direction: 'asc' };
+      try {
+        localStorage.setItem(SUGESTAO_COLUMN_SORT_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
+  const handleMobileSortColumn = useCallback((column) => {
+    setColumnSort((prev) => {
+      const next = prev?.column === column
+        ? { column, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+        : { column, direction: 'asc' };
+      try {
+        localStorage.setItem(SUGESTAO_COLUMN_SORT_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   }, []);
 
   const handleTreeLevelChange = useCallback((next) => {
@@ -466,9 +522,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     }));
   };
 
-  const fornecedorLinha = (linha) =>
-    fornecedorPorLinha[linha.id]
-    || fornecedorPadraoLinha(linha, calcContextRef.current.ultimoFornecedorPorProduto);
+  const fornecedorLinha = (linha) => resolveFornecedorIdLinha(linha);
 
   const handleGenerate = async () => {
     const selected = filteredLinhas.filter((l) => selectedItems[l.id]);
@@ -746,19 +800,25 @@ export default function SugestaoCompra({ onStatsChange }) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1">
                     <TrendingUp className="w-3.5 h-3.5 rotate-90" />
-                    <span className="max-w-[160px] truncate">{currentSort?.label || 'Ordenar'}</span>
+                    <span className="max-w-[160px] truncate">
+                      {currentSortColumn.label}
+                      {columnSort.direction === 'desc' ? ' ↓' : ' ↑'}
+                    </span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="max-h-[70vh] overflow-y-auto">
-                  <DropdownMenuLabel className="text-xs">Ordenar sugestões</DropdownMenuLabel>
+                  <DropdownMenuLabel className="text-xs">Ordenar por coluna</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {CATALOG_SORT_OPTIONS.map((opt) => (
+                  {SUGESTAO_COMPRA_SORT_COLUMNS.map((col) => (
                     <DropdownMenuItem
-                      key={opt.id}
-                      onClick={() => handleSortOrderChange(opt.id)}
-                      className={sortOrder === opt.id ? 'font-semibold' : ''}
+                      key={col.id}
+                      onClick={() => handleMobileSortColumn(col.id)}
+                      className={columnSort.column === col.id ? 'font-semibold' : ''}
                     >
-                      {opt.label}
+                      {col.label}
+                      {columnSort.column === col.id
+                        ? (columnSort.direction === 'desc' ? ' (maior primeiro)' : ' (menor primeiro)')
+                        : ''}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -798,7 +858,9 @@ export default function SugestaoCompra({ onStatsChange }) {
               produtos={treeProdutos}
               linhaLookup={linhaLookup}
               agruparHierarquia={agruparHierarquia}
-              sortOrder={sortOrder}
+              columnSort={columnSort}
+              onColumnSort={handleColumnSort}
+              sortCtx={sortCtx}
               groupByCategory={groupByCategory}
               masterLevel={treeLevel === TREE_GRID_EXPAND_ALL_LEVEL ? TREE_GRID_EXPAND_ALL_LEVEL : treeLevel}
               selectedItems={selectedItems}

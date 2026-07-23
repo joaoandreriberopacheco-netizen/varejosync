@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef, useLayoutEffect } from 'react';
-import { ChevronRight, Layers } from 'lucide-react';
+import { ChevronRight, Layers, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,11 @@ import {
   getLinhaAbcdLetter,
   resolveSugestaoLinhaForTreeRow,
 } from '@/lib/sugestaoCompraTree';
+import {
+  compareSugestaoCompraLinhas,
+  columnSortToCatalogTreeOrder,
+  DEFAULT_SUGESTAO_COLUMN_SORT,
+} from '@/lib/sugestaoCompraColumnSort';
 
 /** Listas típicas de sugestão (<250 linhas): render completo evita tela vazia da virtualização. */
 const SUGESTAO_VIRTUALIZE_MIN_ROWS = 250;
@@ -37,6 +42,39 @@ function StackedHead({ top, bottom, align = 'right' }) {
       <span>{top}</span>
       {bottom ? <span className="text-[9px] font-normal opacity-75">{bottom}</span> : null}
     </span>
+  );
+}
+
+function SortableHead({
+  column,
+  columnSort,
+  onColumnSort,
+  top,
+  bottom,
+  align = 'right',
+  className,
+}) {
+  const active = columnSort?.column === column;
+  const direction = active ? columnSort.direction : null;
+  const Icon = direction === 'asc' ? ArrowUp : direction === 'desc' ? ArrowDown : ArrowUpDown;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onColumnSort?.(column)}
+      className={cn(
+        'inline-flex items-center gap-1 hover:text-foreground transition-colors',
+        active ? 'text-foreground' : 'text-muted-foreground',
+        align === 'center' && 'justify-center w-full',
+        align === 'left' && 'justify-start',
+        align === 'right' && 'justify-end w-full',
+        className,
+      )}
+      title="Ordenar coluna"
+    >
+      <StackedHead top={top} bottom={bottom} align={align} />
+      <Icon className={cn('w-3 h-3 shrink-0 opacity-70', active && 'opacity-100')} />
+    </button>
   );
 }
 
@@ -252,7 +290,10 @@ export default function SugestaoCompraTreeGrid({
   produtos,
   linhaLookup,
   agruparHierarquia = true,
-  sortOrder = 'abcd_desc',
+  sortOrder = 'az',
+  columnSort = DEFAULT_SUGESTAO_COLUMN_SORT,
+  onColumnSort,
+  sortCtx,
   groupByCategory = false,
   masterLevel = 1,
   selectedItems = {},
@@ -277,17 +318,38 @@ export default function SugestaoCompraTreeGrid({
     setExpandedKeys(resolveExpandedKeysForMasterLevel(treeRef.current, masterLevel, groupByCategory));
   }, [produtosStructureSig, groupByCategory, masterLevel]);
 
+  const treeSortOrder = useMemo(
+    () => columnSortToCatalogTreeOrder(columnSort) || sortOrder,
+    [columnSort, sortOrder],
+  );
+
   useLayoutEffect(() => {
     const el = scrollContainerRef.current;
     if (el) el.scrollTop = 0;
-  }, [produtosStructureSig, groupByCategory, masterLevel, sortOrder]);
+  }, [produtosStructureSig, groupByCategory, masterLevel, treeSortOrder, columnSort]);
 
   const rows = useMemo(
     () => mergeAdjacentDuplicateGroupHeaders(
-      flattenTree(tree, expandedKeys, '', 0, sortOrder, { groupByCategory }),
+      flattenTree(tree, expandedKeys, '', 0, treeSortOrder, { groupByCategory }),
     ),
-    [tree, expandedKeys, sortOrder, groupByCategory],
+    [tree, expandedKeys, treeSortOrder, groupByCategory],
   );
+
+  const displayRows = useMemo(() => {
+    const column = columnSort?.column || 'produto';
+    if (column === 'produto' || column === 'abcd') return rows;
+
+    return [...rows].sort((rowA, rowB) => {
+      const linhaA = resolveSugestaoLinhaForTreeRow(rowA, linhaLookup, { agruparHierarquia });
+      const linhaB = resolveSugestaoLinhaForTreeRow(rowB, linhaLookup, { agruparHierarquia });
+      if (!linhaA && !linhaB) {
+        return String(rowA?.label || '').localeCompare(String(rowB?.label || ''), 'pt-BR');
+      }
+      if (!linhaA) return 1;
+      if (!linhaB) return -1;
+      return compareSugestaoCompraLinhas(linhaA, linhaB, columnSort, sortCtx);
+    });
+  }, [rows, columnSort, linhaLookup, agruparHierarquia, sortCtx]);
 
   const handleToggle = useCallback((key) => {
     setExpandedKeys((prev) => {
@@ -299,19 +361,19 @@ export default function SugestaoCompraTreeGrid({
   }, []);
 
   const estimateRowSize = useCallback(
-    (index) => (rows[index]?.type === 'group' ? 40 : 48),
-    [rows],
+    (index) => (displayRows[index]?.type === 'group' ? 40 : 48),
+    [displayRows],
   );
   const virtualRows = useVirtualRows({
-    itemCount: rows.length,
+    itemCount: displayRows.length,
     estimateSize: estimateRowSize,
     overscan: 12,
     scrollElementRef: scrollContainerRef,
   });
-  const shouldVirtualizeRows = rows.length >= SUGESTAO_VIRTUALIZE_MIN_ROWS;
+  const shouldVirtualizeRows = displayRows.length >= SUGESTAO_VIRTUALIZE_MIN_ROWS;
   const visibleRows = useMemo(
-    () => (shouldVirtualizeRows ? rows.slice(virtualRows.startIndex, virtualRows.endIndex) : rows),
-    [rows, shouldVirtualizeRows, virtualRows.endIndex, virtualRows.startIndex],
+    () => (shouldVirtualizeRows ? displayRows.slice(virtualRows.startIndex, virtualRows.endIndex) : displayRows),
+    [displayRows, shouldVirtualizeRows, virtualRows.endIndex, virtualRows.startIndex],
   );
   const paddingTop = shouldVirtualizeRows ? virtualRows.paddingTop : 0;
   const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
@@ -333,30 +395,73 @@ export default function SugestaoCompraTreeGrid({
                 className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, 'text-left py-2')}
                 style={{ left: 40, minWidth: produtoWidth }}
               >
-                Produto
+                <SortableHead
+                  column="produto"
+                  columnSort={columnSort}
+                  onColumnSort={onColumnSort}
+                  top="Produto"
+                  align="left"
+                />
               </th>
               <th className={cn(p38Table.head, 'text-center py-2 w-14')}>
-                <StackedHead top="ABCD" align="center" />
+                <SortableHead
+                  column="abcd"
+                  columnSort={columnSort}
+                  onColumnSort={onColumnSort}
+                  top="ABCD"
+                  align="center"
+                />
               </th>
               <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-16')}>
-                <StackedHead top="Est." bottom="atual" />
+                <SortableHead
+                  column="estoque"
+                  columnSort={columnSort}
+                  onColumnSort={onColumnSort}
+                  top="Est."
+                  bottom="atual"
+                />
               </th>
               <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-20')}>
-                <StackedHead top="Média" bottom="30d" />
+                <SortableHead
+                  column="media30d"
+                  columnSort={columnSort}
+                  onColumnSort={onColumnSort}
+                  top="Média"
+                  bottom="30d"
+                />
               </th>
               <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-20')}>
-                <StackedHead top="Ponto" bottom="futuro" />
+                <SortableHead
+                  column="pontoFuturo"
+                  columnSort={columnSort}
+                  onColumnSort={onColumnSort}
+                  top="Ponto"
+                  bottom="futuro"
+                />
               </th>
               <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-28')}>
-                <StackedHead top="Qtd" bottom="sug." />
+                <SortableHead
+                  column="qtdSugerida"
+                  columnSort={columnSort}
+                  onColumnSort={onColumnSort}
+                  top="Qtd"
+                  bottom="sug."
+                />
               </th>
               <th className={cn(p38Table.head, 'text-left py-2 min-w-[9rem]')}>
-                <StackedHead top="Forn." bottom="edor" align="left" />
+                <SortableHead
+                  column="fornecedor"
+                  columnSort={columnSort}
+                  onColumnSort={onColumnSort}
+                  top="Forn."
+                  bottom="edor"
+                  align="left"
+                />
               </th>
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {displayRows.length === 0 ? (
               <tr>
                 <td colSpan={colSpan} className="py-10 text-center text-sm text-muted-foreground">
                   Nenhum item na árvore.
