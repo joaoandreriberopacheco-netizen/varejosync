@@ -539,7 +539,7 @@ export default function SugestaoCompra({ onStatsChange }) {
         downloadBlob(blob, `SugestaoCompra_ABCD_${dataHoje()}.pdf`);
         toast({
           title: 'PDF gerado',
-          description: `${resposta.rowCount} item(ns) · página contínua${resposta?.version ? ` · ${resposta.version}` : ''}`,
+          description: `${resposta.rowCount} item(ns) em páginas A4${resposta?.version ? ` · ${resposta.version}` : ''}`,
         });
       } else {
         const { generateRelatorioSugestaoCompraXlsx } = await import(

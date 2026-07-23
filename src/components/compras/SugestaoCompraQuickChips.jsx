@@ -108,7 +108,7 @@ export default function SugestaoCompraQuickChips({
           <DropdownMenuLabel className="text-xs">Exportar visíveis</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onGerarRelatorio?.('pdf')}>
-            PDF (página contínua)
+            PDF (A4)
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onGerarRelatorio?.('xlsx')}>
             Excel (.xlsx)
