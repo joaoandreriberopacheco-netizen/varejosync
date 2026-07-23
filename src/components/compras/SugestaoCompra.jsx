@@ -3,15 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast as sonnerToast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import FornecedorLinhaSelect from '@/components/compras/FornecedorLinhaSelect';
 import FiltrosSugestaoCompra, {
   DEFAULT_SUGESTAO_COMPRA_FILTERS,
 } from '@/components/compras/FiltrosSugestaoCompra';
-import SugestaoCompraTreeGrid, { LevelControl, TREE_GRID_EXPAND_ALL_LEVEL } from '@/components/compras/SugestaoCompraTreeGrid';
+import SugestaoCompraTreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components/compras/SugestaoCompraTreeGrid';
 import SugestaoCompraMobileList from '@/components/compras/SugestaoCompraMobileList';
 import SugestaoCompraMobileToolbar from '@/components/compras/SugestaoCompraMobileToolbar';
-import { ShoppingCart, RefreshCw, CheckCircle, FileText, TrendingUp } from 'lucide-react';
+import SugestaoCompraDesktopToolbar from '@/components/compras/SugestaoCompraDesktopToolbar';
+import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
@@ -26,8 +26,6 @@ import { fetchPedidosVenda90d, fetchDadosVendaAbcd90d } from '@/lib/fetchPedidos
 import { buildCatalogSalesVelocityMap } from '@/lib/catalogSalesVelocity';
 import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
 import {
   buildSugestaoCompraLinhaLookup,
   enrichSugestaoLinhasComAbcd,
@@ -456,9 +454,6 @@ export default function SugestaoCompra({ onStatsChange }) {
     [filters],
   );
 
-  const currentSortColumn = SUGESTAO_COMPRA_SORT_COLUMNS.find((c) => c.id === columnSort.column)
-    || SUGESTAO_COMPRA_SORT_COLUMNS[0];
-
   const handleToggleSomenteAbaixo = useCallback(() => {
     setFilters((prev) => ({
       ...prev,
@@ -501,6 +496,9 @@ export default function SugestaoCompra({ onStatsChange }) {
   }, []);
 
   const selectedCount = Object.keys(selectedItems).length;
+  const allVisibleSelected =
+    filteredLinhas.length > 0 && filteredLinhas.every((l) => selectedItems[l.id]);
+  const someVisibleSelected = filteredLinhas.some((l) => selectedItems[l.id]);
 
   useEffect(() => {
     onStatsChange?.({
@@ -835,55 +833,19 @@ export default function SugestaoCompra({ onStatsChange }) {
               isLoading={isLoading}
             />
           ) : (
-            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-            <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-              <Checkbox
-                checked={
-                  filteredLinhas.length > 0 && filteredLinhas.every((l) => selectedItems[l.id])
-                }
-                onCheckedChange={handleSelectAll}
-              />
-              Selecionar visíveis ({filteredLinhas.length})
-            </label>
-            <div className="flex flex-wrap items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 px-2 text-xs gap-1">
-                    <TrendingUp className="w-3.5 h-3.5 rotate-90" />
-                    <span className="max-w-[160px] truncate">
-                      {currentSortColumn.label}
-                      {columnSort.direction === 'desc' ? ' ↓' : ' ↑'}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="max-h-[70vh] overflow-y-auto">
-                  <DropdownMenuLabel className="text-xs">Ordenar por coluna</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {SUGESTAO_COMPRA_SORT_COLUMNS.map((col) => (
-                    <DropdownMenuItem
-                      key={col.id}
-                      onClick={() => handleMobileSortColumn(col.id)}
-                      className={columnSort.column === col.id ? 'font-semibold' : ''}
-                    >
-                      {col.label}
-                      {columnSort.column === col.id
-                        ? (columnSort.direction === 'desc' ? ' (maior primeiro)' : ' (menor primeiro)')
-                        : ''}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <ProdutosTreeByCategoryToggle
-                checked={groupByCategory}
-                onChange={handleGroupByCategoryChange}
-                className="h-8"
-              />
-              <div className="flex items-center gap-1 rounded-xl bg-muted px-2 h-8">
-                <span className="text-[10px] text-muted-foreground">nível</span>
-                <LevelControl level={treeLevel} onChange={handleTreeLevelChange} />
-              </div>
-            </div>
-          </div>
+            <SugestaoCompraDesktopToolbar
+              filteredCount={filteredLinhas.length}
+              selectedCount={selectedCount}
+              allSelected={allVisibleSelected}
+              someSelected={someVisibleSelected}
+              onSelectAllVisible={handleSelectAll}
+              columnSort={columnSort}
+              onSortColumn={handleMobileSortColumn}
+              groupByCategory={groupByCategory}
+              onGroupByCategoryChange={handleGroupByCategoryChange}
+              treeLevel={treeLevel}
+              onTreeLevelChange={handleTreeLevelChange}
+            />
           )}
           {isMobile ? (
             <SugestaoCompraMobileList
@@ -916,6 +878,9 @@ export default function SugestaoCompra({ onStatsChange }) {
                   checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
                 )
               }
+              allVisibleSelected={allVisibleSelected}
+              someVisibleSelected={someVisibleSelected}
+              onSelectAllVisible={handleSelectAll}
               sugestaoDisplayLinha={sugestaoDisplayLinha}
               onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
               renderFornecedorSelect={(linha) =>

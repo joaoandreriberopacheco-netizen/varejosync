@@ -29,6 +29,7 @@ import {
   sugestaoProjecaoEstoque30dNegativa,
   sugestaoProjecaoEstoque30dTexto,
 } from '@/lib/calcularSugestaoCompraVelocidade';
+import { SugestaoCompraDesktopSelectHeader } from '@/components/compras/SugestaoCompraDesktopToolbar';
 
 /** Listas típicas de sugestão (<250 linhas): render completo evita tela vazia da virtualização. */
 const SUGESTAO_VIRTUALIZE_MIN_ROWS = 250;
@@ -36,7 +37,7 @@ const SUGESTAO_VIRTUALIZE_MIN_ROWS = 250;
 const HIER_STEP = 20;
 const CELL_PAD = 4;
 /** Largura fixa da coluna produto — evita “empurrar” as colunas de valores. */
-const CHECKBOX_COL_WIDTH = 40;
+const CHECKBOX_COL_WIDTH = 48;
 const PRODUTO_COL_WIDTH = 248;
 const COL_WIDTHS = {
   abcd: 56,
@@ -318,6 +319,9 @@ export default function SugestaoCompraTreeGrid({
   masterLevel = 1,
   selectedItems = {},
   onToggleSelected,
+  allVisibleSelected = false,
+  someVisibleSelected = false,
+  onSelectAllVisible,
   sugestaoDisplayLinha,
   onQuantidadeLinhaChange,
   renderFornecedorSelect,
@@ -435,9 +439,17 @@ export default function SugestaoCompraTreeGrid({
           <thead className={p38Table.headerSolid}>
             <tr className="border-b border-border/40">
               <th
-                className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, 'text-left py-2')}
+                className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, 'text-center py-2')}
                 style={{ left: 0, width: CHECKBOX_COL_WIDTH }}
-              />
+              >
+                <div className="flex items-center justify-center">
+                  <SugestaoCompraDesktopSelectHeader
+                    allSelected={allVisibleSelected}
+                    someSelected={someVisibleSelected}
+                    onSelectAllVisible={onSelectAllVisible}
+                  />
+                </div>
+              </th>
               <th
                 className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, 'text-left py-2')}
                 style={produtoColStyle}
@@ -525,6 +537,7 @@ export default function SugestaoCompraTreeGrid({
                   const sugestaoCount = row.type === 'group' && !linha
                     ? countDescendantSugestaoLinhas(row, linhaLookup, { agruparHierarquia })
                     : 0;
+                  const isSelected = linha ? !!selectedItems[linha.id] : false;
 
                   return (
                     <tr
@@ -532,18 +545,25 @@ export default function SugestaoCompraTreeGrid({
                       className={cn(
                         p38Table.row,
                         row.isCategoryBand && 'bg-teal-50/40 dark:bg-teal-950/20',
-                        linha && 'hover:bg-muted/30',
+                        linha && 'hover:bg-muted/30 cursor-pointer',
+                        isSelected && 'bg-teal-50/70 dark:bg-teal-950/30 ring-1 ring-inset ring-teal-500/25',
                       )}
+                      onClick={() => {
+                        if (!linha) return;
+                        onToggleSelected?.(linha.id, !isSelected);
+                      }}
                     >
                       <td
                         className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2 text-center')}
                         style={{ left: 0, width: CHECKBOX_COL_WIDTH }}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {linha ? (
                           <Checkbox
-                            checked={!!selectedItems[linha.id]}
+                            checked={isSelected}
                             onCheckedChange={(c) => onToggleSelected?.(linha.id, !!c)}
-                            onClick={(e) => e.stopPropagation()}
+                            className="h-5 w-5 border-2 data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
+                            aria-label={`Selecionar ${linha.label}`}
                           />
                         ) : sugestaoCount > 0 ? (
                           <span className="text-[10px] text-muted-foreground tabular-nums">{sugestaoCount}</span>
