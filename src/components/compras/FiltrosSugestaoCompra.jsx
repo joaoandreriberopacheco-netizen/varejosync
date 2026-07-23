@@ -204,17 +204,17 @@ function FiltrosPainel({
           }
           className={cn(
             'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
-            filters.somenteAbaixoPontoFuturo !== false
+            filters.somenteAbaixoPontoFuturo === true
               ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
               : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
           )}
         >
-          {filters.somenteAbaixoPontoFuturo !== false
+          {filters.somenteAbaixoPontoFuturo === true
             ? 'Somente abaixo do ponto futuro'
-            : 'Mostrar todos com giro'}
+            : 'Catálogo completo'}
         </button>
         <p className="text-[11px] text-muted-foreground leading-snug font-mono">
-          Ponto futuro = vendas 60d ÷ 60 × 1,5 × lead time
+          Ponto futuro = meta (média 30d × 1,5 × LT) − estoque atual
         </p>
       </FilterSection>
 
@@ -457,11 +457,11 @@ export default function FiltrosSugestaoCompra({
           }),
       });
     });
-    if (filters.somenteAbaixoPontoFuturo === false) {
+    if (filters.somenteAbaixoPontoFuturo === true) {
       chips.push({
         key: 'ponto',
-        label: 'Todos com giro',
-        onRemove: () => patchFilters({ somenteAbaixoPontoFuturo: true }),
+        label: 'Abaixo do ponto futuro',
+        onRemove: () => patchFilters({ somenteAbaixoPontoFuturo: false }),
       });
     }
     if (filters.hidePending) {
