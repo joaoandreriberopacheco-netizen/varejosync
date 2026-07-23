@@ -11,7 +11,7 @@ export default function SugestaoCompraMobileList({
   renderFornecedorSelect,
 }) {
   return (
-    <P38MobileLineList allViewports className="rounded-lg border border-border/40 overflow-hidden bg-card">
+    <P38MobileLineList allViewports className="rounded-2xl border border-border/40 overflow-hidden bg-card divide-y divide-border/40">
       {linhas.map((linha, index) => (
         <SugestaoCompraLinhaMobile
           key={linha.id}

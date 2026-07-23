@@ -10,6 +10,7 @@ import FiltrosSugestaoCompra, {
 } from '@/components/compras/FiltrosSugestaoCompra';
 import SugestaoCompraTreeGrid, { LevelControl, TREE_GRID_EXPAND_ALL_LEVEL } from '@/components/compras/SugestaoCompraTreeGrid';
 import SugestaoCompraMobileList from '@/components/compras/SugestaoCompraMobileList';
+import SugestaoCompraMobileToolbar from '@/components/compras/SugestaoCompraMobileToolbar';
 import { ShoppingCart, RefreshCw, CheckCircle, FileText, TrendingUp } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
@@ -41,6 +42,7 @@ import { buildUltimoFornecedorPorProduto } from '@/lib/buildUltimoFornecedorPorP
 import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
+  countActiveSugestaoCompraFilters,
   filterSugestaoCompraLinhas,
   linhaAbaixoPontoFuturo,
 } from '@/lib/filterSugestaoCompraLinhas';
@@ -120,6 +122,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [columnSort, setColumnSort] = useState(readColumnSort);
   const [treeLevel, setTreeLevel] = useState(readSugestaoTreeLevel);
   const [groupByCategory, setGroupByCategory] = useState(readSugestaoGroupByCategory);
+  const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
   const [loadStats, setLoadStats] = useState({
     totalAtivos: 0,
     elegiveis: 0,
@@ -426,8 +429,20 @@ export default function SugestaoCompra({ onStatsChange }) {
     [filteredLinhas],
   );
 
+  const activeFilterCount = useMemo(
+    () => countActiveSugestaoCompraFilters(filters),
+    [filters],
+  );
+
   const currentSortColumn = SUGESTAO_COMPRA_SORT_COLUMNS.find((c) => c.id === columnSort.column)
     || SUGESTAO_COMPRA_SORT_COLUMNS[0];
+
+  const handleToggleSomenteAbaixo = useCallback(() => {
+    setFilters((prev) => ({
+      ...prev,
+      somenteAbaixoPontoFuturo: !prev.somenteAbaixoPontoFuturo,
+    }));
+  }, []);
 
   const handleColumnSort = useCallback((column) => {
     setColumnSort((prev) => {
@@ -443,19 +458,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     });
   }, []);
 
-  const handleMobileSortColumn = useCallback((column) => {
-    setColumnSort((prev) => {
-      const next = prev?.column === column
-        ? { column, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
-        : { column, direction: 'asc' };
-      try {
-        localStorage.setItem(SUGESTAO_COLUMN_SORT_KEY, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  }, []);
+  const handleMobileSortColumn = handleColumnSort;
 
   const handleTreeLevelChange = useCallback((next) => {
     setTreeLevel(next);
@@ -701,16 +704,28 @@ export default function SugestaoCompra({ onStatsChange }) {
         allTags={allTags}
         unidadesVitrine={unidadesVitrine}
         onLimparFiltros={limparFiltros}
+        drawerOpen={isMobile ? filtersDrawerOpen : undefined}
+        onDrawerOpenChange={isMobile ? setFiltersDrawerOpen : undefined}
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-foreground/85">
-          {filteredLinhas.length} item(ns)
-          {loadStats.totalAtivos > 0 ? ` · ${loadStats.totalAtivos} no catálogo` : ''}
-          {loadStats.abaixoPontoFuturo > 0 ? ` · ${loadStats.abaixoPontoFuturo} abaixo do ponto futuro` : ''}
-          {loadStats.linhasGrupo > 0 ? ` · ${loadStats.linhasGrupo} família(s)` : ''}
-          {selectedCount > 0 ? ` · ${selectedCount} selecionada(s)` : ''}
+      <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between', isMobile && 'gap-2')}>
+        <p className={cn('text-sm text-foreground/85', isMobile && 'text-xs leading-relaxed')}>
+          {isMobile ? (
+            <>
+              <span className="font-medium text-foreground">{filteredLinhas.length}</span> itens
+              {selectedCount > 0 ? ` · ${selectedCount} selecionados` : ''}
+            </>
+          ) : (
+            <>
+              {filteredLinhas.length} item(ns)
+              {loadStats.totalAtivos > 0 ? ` · ${loadStats.totalAtivos} no catálogo` : ''}
+              {loadStats.abaixoPontoFuturo > 0 ? ` · ${loadStats.abaixoPontoFuturo} abaixo do ponto futuro` : ''}
+              {loadStats.linhasGrupo > 0 ? ` · ${loadStats.linhasGrupo} família(s)` : ''}
+              {selectedCount > 0 ? ` · ${selectedCount} selecionada(s)` : ''}
+            </>
+          )}
         </p>
+        {!isMobile ? (
         <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
@@ -723,8 +738,6 @@ export default function SugestaoCompra({ onStatsChange }) {
           >
             <RefreshCw className={`h-4 w-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
-          {!isMobile ? (
-            <>
               <Button
                 type="button"
                 variant="outline"
@@ -746,9 +759,8 @@ export default function SugestaoCompra({ onStatsChange }) {
                 <ShoppingCart className="w-4 h-4" />
                 Gerar pedido{selectedCount > 0 ? ` (${selectedCount})` : ''}
               </Button>
-            </>
-          ) : null}
         </div>
+        ) : null}
       </div>
 
       {linhas.length === 0 ? (
@@ -785,6 +797,22 @@ export default function SugestaoCompra({ onStatsChange }) {
         </div>
       ) : (
         <div className="min-w-0 w-full space-y-3">
+          {isMobile ? (
+            <SugestaoCompraMobileToolbar
+              filteredCount={filteredLinhas.length}
+              selectedCount={selectedCount}
+              allSelected={filteredLinhas.length > 0 && filteredLinhas.every((l) => selectedItems[l.id])}
+              onSelectAll={handleSelectAll}
+              columnSort={columnSort}
+              onSortColumn={handleMobileSortColumn}
+              activeFilterCount={activeFilterCount}
+              onOpenFilters={() => setFiltersDrawerOpen(true)}
+              somenteAbaixoPontoFuturo={filters.somenteAbaixoPontoFuturo === true}
+              onToggleSomenteAbaixo={handleToggleSomenteAbaixo}
+              onRefresh={loadData}
+              isLoading={isLoading}
+            />
+          ) : (
             <div className="flex flex-wrap items-center justify-between gap-2 px-1">
             <label className="inline-flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
               <Checkbox
@@ -823,21 +851,18 @@ export default function SugestaoCompra({ onStatsChange }) {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              {!isMobile ? (
-                <>
-                  <ProdutosTreeByCategoryToggle
-                    checked={groupByCategory}
-                    onChange={handleGroupByCategoryChange}
-                    className="h-8"
-                  />
-                  <div className="flex items-center gap-1 rounded-xl bg-muted px-2 h-8">
-                    <span className="text-[10px] text-muted-foreground">nível</span>
-                    <LevelControl level={treeLevel} onChange={handleTreeLevelChange} />
-                  </div>
-                </>
-              ) : null}
+              <ProdutosTreeByCategoryToggle
+                checked={groupByCategory}
+                onChange={handleGroupByCategoryChange}
+                className="h-8"
+              />
+              <div className="flex items-center gap-1 rounded-xl bg-muted px-2 h-8">
+                <span className="text-[10px] text-muted-foreground">nível</span>
+                <LevelControl level={treeLevel} onChange={handleTreeLevelChange} />
+              </div>
             </div>
           </div>
+          )}
           {isMobile ? (
             <SugestaoCompraMobileList
               linhas={mobileLinhas}
@@ -850,7 +875,7 @@ export default function SugestaoCompra({ onStatsChange }) {
               sugestaoDisplayLinha={sugestaoDisplayLinha}
               onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
               renderFornecedorSelect={(linha) =>
-                renderFornecedorSelect(linha, 'h-10 w-full rounded-xl border-0 bg-muted/40 text-xs')
+                renderFornecedorSelect(linha, 'h-11 w-full rounded-xl border-0 bg-muted/60 text-sm')
               }
             />
           ) : (
@@ -880,12 +905,12 @@ export default function SugestaoCompra({ onStatsChange }) {
       )}
 
       {isMobile ? (
-        <div className="fixed inset-x-0 bottom-[var(--p38-bottom-nav-total,0px)] z-40 border-t border-border/40 bg-card/95 backdrop-blur-sm px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="fixed inset-x-0 bottom-[var(--p38-bottom-nav-total,0px)] z-40 border-t border-border/40 bg-card/95 backdrop-blur-sm px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)]">
           <div className="flex gap-2 max-w-7xl mx-auto">
             <Button
               type="button"
               variant="outline"
-              className="h-11 flex-1 rounded-2xl gap-1.5"
+              className="h-12 flex-1 rounded-2xl gap-2 text-sm font-medium"
               disabled={selectedCount === 0}
               onClick={handleQuote}
             >
@@ -894,7 +919,7 @@ export default function SugestaoCompra({ onStatsChange }) {
             </Button>
             <Button
               type="button"
-              className="h-11 flex-1 rounded-2xl gap-1.5"
+              className="h-12 flex-1 rounded-2xl gap-2 text-sm font-medium"
               disabled={selectedCount === 0}
               onClick={handleGenerate}
             >

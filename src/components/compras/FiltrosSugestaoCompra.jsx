@@ -439,8 +439,12 @@ export default function FiltrosSugestaoCompra({
   allTags,
   unidadesVitrine = [],
   onLimparFiltros,
+  drawerOpen,
+  onDrawerOpenChange,
 }) {
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFiltersInternal, setShowFiltersInternal] = useState(false);
+  const showFilters = drawerOpen ?? showFiltersInternal;
+  const setShowFilters = onDrawerOpenChange ?? setShowFiltersInternal;
   const [tagSearch, setTagSearch] = useState('');
 
   const patchFilters = (patch) => onFiltersChange({ ...filters, ...patch });
