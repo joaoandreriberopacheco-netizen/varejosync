@@ -54,3 +54,45 @@ export function formatSugestaoAggregateEstoqueVitrine(agg) {
   const formatted = formatCatalogSalesQuantity(agg.quantidade, agg.sigla, { dashIfZero: false });
   return { primary: formatted || '—', secondary: null };
 }
+
+/**
+ * Estoque efetivo para exibição/cálculo quando o toggle «Incluir pedidos» está ligado.
+ * Usa metadados da sugestão ou, em fallback, quantidade_pendente da linha.
+ */
+export function resolveSugestaoEstoqueEfetivoBase(produto = {}, sugestao = null, options = {}) {
+  const incluir = options.incluirPedidosAprovados === true;
+  const pendenteLinha = Number(options.quantidadePendente) || 0;
+  const pedidosMeta = Number(sugestao?.estoque_pedidos_aprovados ?? produto?.estoque_pedidos_aprovados) || 0;
+  const pedidos = pedidosMeta > 0 ? pedidosMeta : (incluir ? pendenteLinha : 0);
+  const fisicoRaw = sugestao?.estoque_fisico ?? produto?.estoque_fisico;
+  let fisico = Number.isFinite(Number(fisicoRaw)) ? Number(fisicoRaw) : null;
+  let estoqueBase = Number(sugestao?.estoque_atual ?? produto?.estoque_atual) || 0;
+
+  if (fisico == null && pedidos > 0) {
+    fisico = estoqueBase;
+  }
+
+  if (incluir && pedidos > 0 && fisico != null) {
+    const total = fisico + pedidos;
+    if (estoqueBase < total - 1e-6) estoqueBase = total;
+  }
+
+  return { estoqueBase, fisico, pedidos };
+}
+
+/** Estoque na linha: total e, quando houver pedidos aprovados, detalhe físico + pedido. */
+export function formatSugestaoEstoqueLinha(produto = {}, sugestao = null, options = {}) {
+  const { estoqueBase, fisico, pedidos } = resolveSugestaoEstoqueEfetivoBase(produto, sugestao, options);
+  const primary = formatSugestaoQuantidadeVitrine(produto, estoqueBase) || '—';
+
+  if (pedidos > 0 && fisico != null) {
+    const fisicoFmt = formatSugestaoQuantidadeVitrine(produto, fisico) || '0';
+    const pedFmt = formatSugestaoQuantidadeVitrine(produto, pedidos) || '0';
+    return {
+      primary,
+      secondary: `${fisicoFmt} + ${pedFmt} ped.`,
+    };
+  }
+
+  return { primary, secondary: null };
+}

@@ -9,6 +9,7 @@ export default function SugestaoCompraMobileList({
   sugestaoDisplayLinha,
   onQuantidadeLinhaChange,
   renderFornecedorSelect,
+  incluirPedidosAprovados = false,
 }) {
   return (
     <P38MobileLineList allViewports className="rounded-2xl border border-border/40 overflow-hidden bg-card divide-y divide-border/40">
@@ -22,6 +23,7 @@ export default function SugestaoCompraMobileList({
           onQuantidadeLinhaChange={onQuantidadeLinhaChange}
           fornecedorSelect={renderFornecedorSelect?.(linha)}
           striped={index % 2 === 1}
+          incluirPedidosAprovados={incluirPedidosAprovados}
         />
       ))}
     </P38MobileLineList>

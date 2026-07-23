@@ -23,11 +23,20 @@ export function pedidoAguardandoAprovacaoFinanceira(pedido = {}) {
 
 export function pedidoAprovadoFinanceiramente(pedido = {}) {
   const saf = pedido.status_aprovacao_financeira || '';
-  return (
-    saf === 'Aprovado Financeiramente' ||
-    saf === 'Aprovado' ||
-    ['Aprovado', 'Aguardando Recepção', 'Despachado', 'Em Recepção', 'Concluído'].includes(pedido.status || '')
-  );
+  if (saf === 'Aprovado Financeiramente' || saf === 'Aprovado') return true;
+  return [
+    'Aprovado',
+    'Aguardando Recepção',
+    'Aguardando Embarque',
+    'Enviado',
+    'Despachado',
+    'Em Recepção',
+    'Em Trânsito',
+    'Recebido Parcialmente',
+    'Recebido Parcial',
+    'Pendência',
+    'Concluído',
+  ].includes(pedido.status || '');
 }
 
 /** Financeiro liberou compra/logística, mas embarque ainda sem despacho (card = Aprovado). */

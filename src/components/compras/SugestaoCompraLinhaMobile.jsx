@@ -13,7 +13,7 @@ import {
   sugestaoProjecaoEstoque30dNegativa,
   sugestaoProjecaoEstoque30dTexto,
 } from '@/lib/calcularSugestaoCompraVelocidade';
-import { formatSugestaoQuantidadeVitrine } from '@/lib/sugestaoCompraVitrineDisplay';
+import { formatSugestaoEstoqueLinha, formatSugestaoQuantidadeVitrine } from '@/lib/sugestaoCompraVitrineDisplay';
 
 function AbcdBadge({ letter }) {
   const value = String(letter || '').toUpperCase();
@@ -52,12 +52,16 @@ export default function SugestaoCompraLinhaMobile({
   onQuantidadeLinhaChange,
   fornecedorSelect,
   striped,
+  incluirPedidosAprovados = false,
 }) {
   const sugestao = linha.sugestao;
   const isGrupo = linha.tipo === 'grupo';
   const produto = linha.produto;
-  const estoqueBase = sugestao?.estoque_atual ?? produto?.estoque_atual ?? 0;
-  const estoqueTexto = formatSugestaoQuantidadeVitrine(produto, estoqueBase) || '—';
+  const estoqueFmt = formatSugestaoEstoqueLinha(produto, sugestao, {
+    incluirPedidosAprovados,
+    quantidadePendente: linha.quantidade_pendente,
+  });
+  const estoqueTexto = estoqueFmt.primary;
   const media30d = sugestao?.media_30d_texto || '—';
   const pontoFuturoProjecao = sugestaoProjecaoEstoque30dTexto(sugestao);
   const projecaoNegativa = sugestaoProjecaoEstoque30dNegativa(sugestao);

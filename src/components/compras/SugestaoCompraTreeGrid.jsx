@@ -23,6 +23,7 @@ import {
 } from '@/lib/sugestaoCompraTree';
 import {
   formatSugestaoAggregateEstoqueVitrine,
+  formatSugestaoEstoqueLinha,
   formatSugestaoQuantidadeVitrine,
 } from '@/lib/sugestaoCompraVitrineDisplay';
 import {
@@ -251,6 +252,7 @@ function SugestaoDataCells({
   row,
   linhaLookup,
   agruparHierarquia,
+  incluirPedidosAprovados,
   salesVelocityMap,
   disp,
   onQuantidadeLinhaChange,
@@ -262,6 +264,7 @@ function SugestaoDataCells({
       ? aggregateSugestaoTreeGroupMetrics(row, linhaLookup, {
         agruparHierarquia,
         salesVelocityMap,
+        incluirPedidosAprovados,
       })
       : null;
 
@@ -333,8 +336,10 @@ function SugestaoDataCells({
 
   const sugestao = linha.sugestao;
   const produto = linha.produto;
-  const estoqueBase = sugestao?.estoque_atual ?? produto?.estoque_atual ?? 0;
-  const estoqueTexto = formatSugestaoQuantidadeVitrine(produto, estoqueBase) || '—';
+  const estoqueFmt = formatSugestaoEstoqueLinha(produto, sugestao, {
+    incluirPedidosAprovados,
+    quantidadePendente: linha?.quantidade_pendente,
+  });
   const media30d = sugestao?.media_30d_texto;
   const pontoFuturoProjecao = pontoFuturoProjecaoTexto(sugestao);
   const abcd = getLinhaAbcdLetter(linha, row?.abcdDominante);
@@ -345,7 +350,12 @@ function SugestaoDataCells({
         <AbcdBadge letter={abcd} />
       </td>
       <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
-        <span className="text-xs text-muted-foreground tabular-nums">{estoqueTexto}</span>
+        <span className="inline-flex flex-col items-end text-xs text-muted-foreground tabular-nums">
+          <span>{estoqueFmt.primary}</span>
+          {estoqueFmt.secondary ? (
+            <span className="text-[10px] text-muted-foreground">{estoqueFmt.secondary}</span>
+          ) : null}
+        </span>
       </td>
       <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
         <span className="text-xs text-muted-foreground tabular-nums">
@@ -380,6 +390,7 @@ export default function SugestaoCompraTreeGrid({
   produtos,
   linhaLookup,
   agruparHierarquia = true,
+  incluirPedidosAprovados = false,
   sortOrder = 'az',
   columnSort = DEFAULT_SUGESTAO_COLUMN_SORT,
   onColumnSort,
@@ -650,6 +661,7 @@ export default function SugestaoCompraTreeGrid({
                         row={row}
                         linhaLookup={linhaLookup}
                         agruparHierarquia={agruparHierarquia}
+                        incluirPedidosAprovados={incluirPedidosAprovados}
                         salesVelocityMap={salesVelocityMap}
                         disp={linha ? sugestaoDisplayLinha?.(linha) : null}
                         onQuantidadeLinhaChange={onQuantidadeLinhaChange}

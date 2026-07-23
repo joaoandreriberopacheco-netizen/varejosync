@@ -143,6 +143,16 @@ export default function SugestaoCompra({ onStatsChange }) {
     ultimoFornecedorPorProduto: {},
   });
   const abcdLoadRef = useRef(0);
+  const filtersRef = useRef(filters);
+
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
+
+  const incluirPedidosAprovadosAtual = useCallback(
+    () => filtersRef.current.considerarPedidosAprovadosEstoque === true,
+    [],
+  );
 
   const allTags = useMemo(() => collectSugestaoTags(linhas), [linhas]);
   const unidadesVitrine = useMemo(() => collectSugestaoVitrineUnits(linhas), [linhas]);
@@ -242,6 +252,24 @@ export default function SugestaoCompra({ onStatsChange }) {
     return novasLinhas;
   }, [recomputarLinhas]);
 
+  const aplicarLinhasComContexto = useCallback((overrides = {}) => {
+    const ctx = calcContextRef.current;
+    if (!ctx.prods?.length) return null;
+    const filtros = filtersRef.current;
+    const incluir = overrides.considerarPedidosAprovadosEstoque ?? incluirPedidosAprovadosAtual();
+    let next = recomputarLinhas(ctx.prods, ctx.pedidos, ctx.movsPorProduto, ctx.pending, {
+      agruparHierarquia: overrides.agruparHierarquia ?? filtros.agruparHierarquia,
+      roundingMode: overrides.roundingMode ?? filtros.roundingMode,
+      salesVelocityMap: overrides.salesVelocityMap ?? ctx.salesVelocityMap,
+      considerarPedidosAprovadosEstoque: incluir,
+    });
+    if (ctx.vendasDados) {
+      next = enrichSugestaoLinhasComAbcd(next, ctx.prods, ctx.vendasDados);
+    }
+    setLinhas(next);
+    return next;
+  }, [recomputarLinhas, incluirPedidosAprovadosAtual]);
+
   const loadData = async () => {
     setIsLoading(true);
     const abcdLoadId = ++abcdLoadRef.current;
@@ -296,7 +324,8 @@ export default function SugestaoCompra({ onStatsChange }) {
         extra.pending ?? ctx.pending,
         {
           salesVelocityMap,
-          considerarPedidosAprovadosEstoque: extra.considerarPedidosAprovadosEstoque === true,
+          considerarPedidosAprovadosEstoque:
+            extra.considerarPedidosAprovadosEstoque ?? incluirPedidosAprovadosAtual(),
         },
       );
       if (calcContextRef.current.vendasDados) {
@@ -345,7 +374,7 @@ export default function SugestaoCompra({ onStatsChange }) {
         atualizarComPedidos(calcContextRef.current.pedidos, {
           pending: pendingMap,
           ultimoFornecedorPorProduto,
-          considerarPedidosAprovadosEstoque: filters.considerarPedidosAprovadosEstoque === true,
+          considerarPedidosAprovadosEstoque: incluirPedidosAprovadosAtual(),
         });
       } else {
         aplicarLinhas(
@@ -355,7 +384,7 @@ export default function SugestaoCompra({ onStatsChange }) {
           pendingMap,
           {
             salesVelocityMap: calcContextRef.current.salesVelocityMap,
-            considerarPedidosAprovadosEstoque: filters.considerarPedidosAprovadosEstoque === true,
+            considerarPedidosAprovadosEstoque: incluirPedidosAprovadosAtual(),
           },
         );
       }
@@ -399,7 +428,7 @@ export default function SugestaoCompra({ onStatsChange }) {
           calcContextRef.current.pending,
           {
             salesVelocityMap,
-            considerarPedidosAprovadosEstoque: filters.considerarPedidosAprovadosEstoque === true,
+            considerarPedidosAprovadosEstoque: incluirPedidosAprovadosAtual(),
           },
         );
         setLinhas(enrichSugestaoLinhasComAbcd(next, ctx.prods, vendasDados));
@@ -416,17 +445,8 @@ export default function SugestaoCompra({ onStatsChange }) {
   useEffect(() => {
     const ctx = calcContextRef.current;
     if (!ctx.prods?.length) return;
-    let next = recomputarLinhas(ctx.prods, ctx.pedidos, ctx.movsPorProduto, ctx.pending, {
-      agruparHierarquia,
-      roundingMode,
-      salesVelocityMap: ctx.salesVelocityMap,
-      considerarPedidosAprovadosEstoque: filters.considerarPedidosAprovadosEstoque === true,
-    });
-    if (ctx.vendasDados) {
-      next = enrichSugestaoLinhasComAbcd(next, ctx.prods, ctx.vendasDados);
-    }
-    setLinhas(next);
-  }, [roundingMode, agruparHierarquia, filters.considerarPedidosAprovadosEstoque, recomputarLinhas]);
+    aplicarLinhasComContexto();
+  }, [roundingMode, agruparHierarquia, filters.considerarPedidosAprovadosEstoque, aplicarLinhasComContexto]);
 
   const filteredLinhas = useMemo(
     () => filterSugestaoCompraLinhas(linhas, filters, filterOptions),
@@ -866,6 +886,7 @@ export default function SugestaoCompra({ onStatsChange }) {
           {isMobile ? (
             <SugestaoCompraMobileList
               linhas={mobileLinhas}
+              incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
               selectedItems={selectedItems}
               onToggleSelected={(id, checked) =>
                 setSelectedItems((prev) =>
@@ -883,6 +904,7 @@ export default function SugestaoCompra({ onStatsChange }) {
               produtos={treeProdutos}
               linhaLookup={linhaLookup}
               agruparHierarquia={agruparHierarquia}
+              incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
               columnSort={columnSort}
               onColumnSort={handleColumnSort}
               sortCtx={sortCtx}

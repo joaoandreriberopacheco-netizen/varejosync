@@ -5,13 +5,48 @@ const PEDIDO_COMPRA_APPROVED_STATUSES = new Set([
   'aprovado',
 ]);
 
+const PEDIDO_STATUS_LOGISTICA_EM_ABERTO = new Set([
+  'aprovado',
+  'aguardando recepção',
+  'aguardando recepcao',
+  'aguardando embarque',
+  'enviado',
+  'despachado',
+  'em recepção',
+  'em recepcao',
+  'em trânsito',
+  'em transito',
+  'recebido parcialmente',
+  'recebido parcial',
+  'pendência',
+  'pendencia',
+]);
+
+const PEDIDO_STATUS_EXCLUIDOS_ESTOQUE = new Set([
+  'rascunho',
+  'cancelado',
+  'rejeitado financeiramente',
+  'rejeitado',
+]);
+
 function normalizeStatus(value) {
   return String(value || '').trim().toLowerCase();
+}
+
+function resolveQuantidadeBaseItemPedido(item = {}) {
+  const base = Number(item.quantidade_base);
+  if (Number.isFinite(base) && base > 0) return base;
+  const qtd = Number(item.quantidade) || 0;
+  const fator = Number(item.fator_conversao) || 1;
+  return qtd * fator;
 }
 
 /** Mesma regra do dashboard de estoque: aprovado financeiramente e ainda não concluído. */
 export function pedidoCompraAprovadoNaoConcluido(pedido = {}) {
   const statusDisplay = String(pedido.status || '').trim();
+  const statusPedido = normalizeStatus(statusDisplay);
+  if (PEDIDO_STATUS_EXCLUIDOS_ESTOQUE.has(statusPedido)) return false;
+
   const ehAguardandoPagamento = [
     'Aguardando Aprovação Financeira',
     'Aguardando Liberação Financeira',
@@ -20,13 +55,15 @@ export function pedidoCompraAprovadoNaoConcluido(pedido = {}) {
   ].includes(statusDisplay);
   if (ehAguardandoPagamento) return false;
 
-  const statusAprovacao = normalizeStatus(pedido.status_aprovacao_financeira || pedido.status);
+  const statusAprovacao = normalizeStatus(pedido.status_aprovacao_financeira || '');
   const aprovadoViaStatus = pedidoLiberadoParaLogistica(pedido);
-  const aprovado = PEDIDO_COMPRA_APPROVED_STATUSES.has(statusAprovacao);
+  const aprovado =
+    PEDIDO_COMPRA_APPROVED_STATUSES.has(statusAprovacao) ||
+    PEDIDO_STATUS_LOGISTICA_EM_ABERTO.has(statusAprovacao) ||
+    PEDIDO_STATUS_LOGISTICA_EM_ABERTO.has(statusPedido);
   if (!aprovado && !aprovadoViaStatus) return false;
 
   const statusRecebimento = normalizeStatus(pedido.status_recebimento_geral);
-  const statusPedido = normalizeStatus(pedido.status);
   const concluidoRecebimento =
     statusRecebimento.startsWith('concluído') || statusRecebimento.startsWith('concluido');
   const concluidoPedido = statusPedido === 'concluído' || statusPedido === 'concluido';
@@ -82,7 +119,7 @@ function recebidosPorProdutoDoPedido(pedido = {}, recebidosPorPedidoProduto = {}
 export function quantidadePendenteItemPedidoCompra(item = {}, recebidosPorProduto = {}) {
   const produtoId = item?.produto_id;
   const produtoKey = produtoId ? String(produtoId) : '';
-  const quantidadeItem = Number(item.quantidade_base || item.quantidade) || 0;
+  const quantidadeItem = resolveQuantidadeBaseItemPedido(item);
   const quantidadeRecebida = produtoKey ? Number(recebidosPorProduto[produtoKey] || 0) : 0;
   return Math.max(0, quantidadeItem - quantidadeRecebida);
 }

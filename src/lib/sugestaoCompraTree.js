@@ -107,17 +107,28 @@ export function countDescendantSugestaoLinhas(row, lookup, options = {}) {
   return collectDescendantSugestaoLinhas(row, lookup, options).length;
 }
 
-function skusComEstoqueSugestao(linhas = []) {
+function skusComEstoqueSugestao(linhas = [], incluirPedidosAprovados = false) {
   const out = [];
   const seen = new Set();
   for (const linha of linhas) {
     for (const sku of linha?.skus || []) {
       if (!sku?.id || seen.has(sku.id)) continue;
       seen.add(sku.id);
-      const estoque = Number(linha?.sugestao?.estoque_atual);
+      const sugestao = linha?.sugestao;
+      const estoqueSugestao = Number(sugestao?.estoque_atual);
+      let estoque = Number.isFinite(estoqueSugestao) ? estoqueSugestao : Number(sku.estoque_atual) || 0;
+      if (incluirPedidosAprovados) {
+        const pedidos = Number(sugestao?.estoque_pedidos_aprovados ?? sku?.estoque_pedidos_aprovados)
+          || Number(linha?.quantidade_pendente) || 0;
+        const fisicoRaw = sugestao?.estoque_fisico ?? sku?.estoque_fisico;
+        const fisico = Number.isFinite(Number(fisicoRaw)) ? Number(fisicoRaw) : estoque;
+        if (pedidos > 0 && estoque < fisico + pedidos - 1e-6) {
+          estoque = fisico + pedidos;
+        }
+      }
       out.push({
         ...sku,
-        estoque_atual: Number.isFinite(estoque) ? estoque : Number(sku.estoque_atual) || 0,
+        estoque_atual: estoque,
       });
     }
   }
@@ -129,14 +140,14 @@ export function aggregateSugestaoTreeGroupMetrics(row, lookup, options = {}) {
   const linhas = collectDescendantSugestaoLinhas(row, lookup, options);
   if (!linhas.length) return null;
 
-  const skusEstoque = skusComEstoqueSugestao(linhas);
+  const skusEstoque = skusComEstoqueSugestao(linhas, options.incluirPedidosAprovados === true);
   const estoqueDisp = aggregateSugestaoEstoqueVitrine(skusEstoque);
   const skus = skusEstoque;
   const velocityAgg = aggregateCatalogSalesVelocity(skus, options.salesVelocityMap || {});
   const media30dTexto = formatCatalogMedia30d(velocityAgg, { tilde: true });
 
-  const estoqueTotal = linhas.reduce(
-    (sum, linha) => sum + (Number(linha?.sugestao?.estoque_atual) || 0),
+  const estoqueTotal = skusEstoque.reduce(
+    (sum, sku) => sum + (Number(sku?.estoque_atual) || 0),
     0,
   );
   const mediaDiaTotal = linhas.reduce(
@@ -167,12 +178,29 @@ export function getLinhaAbcdLetter(linha, fallback = '') {
   return resolveProdutoAbcdClasse(sku) || fallback;
 }
 
+const ESTOQUE_OVERLAY_KEYS = ['estoque_atual', 'estoque_fisico', 'estoque_pedidos_aprovados'];
+
+function mergeProdutoComOverlayEstoque(overlay, enriched) {
+  if (!overlay) return enriched ?? null;
+  if (!enriched) return overlay;
+  const patch = {};
+  for (const key of ESTOQUE_OVERLAY_KEYS) {
+    if (overlay[key] != null) patch[key] = overlay[key];
+  }
+  return Object.keys(patch).length ? { ...enriched, ...patch } : enriched;
+}
+
 function applyAbcdMapToLinhas(linhas, enrichedMap) {
   if (!enrichedMap?.size) return linhas;
   return linhas.map((linha) => ({
     ...linha,
-    produto: enrichedMap.get(linha.produto?.id) ?? linha.produto,
-    skus: (linha.skus || []).map((s) => enrichedMap.get(s.id) ?? s),
+    produto: mergeProdutoComOverlayEstoque(
+      linha.produto,
+      enrichedMap.get(linha.produto?.id),
+    ),
+    skus: (linha.skus || []).map((s) =>
+      mergeProdutoComOverlayEstoque(s, enrichedMap.get(s.id)),
+    ),
   }));
 }
 
