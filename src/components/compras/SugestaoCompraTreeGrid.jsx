@@ -31,7 +31,26 @@ const SUGESTAO_VIRTUALIZE_MIN_ROWS = 250;
 
 const HIER_STEP = 20;
 const CELL_PAD = 4;
-const PRODUTO_MIN_WIDTH = 220;
+/** Largura fixa da coluna produto — evita “empurrar” as colunas de valores. */
+const CHECKBOX_COL_WIDTH = 40;
+const PRODUTO_COL_WIDTH = 248;
+const COL_WIDTHS = {
+  abcd: 56,
+  estoque: 72,
+  media30d: 84,
+  pontoFuturo: 84,
+  qtdSugerida: 116,
+  fornecedor: 148,
+};
+const TABLE_MIN_WIDTH =
+  CHECKBOX_COL_WIDTH
+  + PRODUTO_COL_WIDTH
+  + COL_WIDTHS.abcd
+  + COL_WIDTHS.estoque
+  + COL_WIDTHS.media30d
+  + COL_WIDTHS.pontoFuturo
+  + COL_WIDTHS.qtdSugerida
+  + COL_WIDTHS.fornecedor;
 const PRODUTO_STICKY_SHADOW = 'shadow-[4px_0_12px_-4px_rgba(0,0,0,0.12)] dark:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.45)]';
 
 const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
@@ -115,23 +134,23 @@ function ProdutoCell({ row, isExpanded, onToggle }) {
 
   return (
     <div
-      className="flex items-center w-max max-w-none"
+      className="flex min-w-0 w-full max-w-full"
       style={{ paddingLeft: CELL_PAD + hierDepth * HIER_STEP }}
     >
       {isGroup ? (
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onToggle(row.key); }}
-          className="flex items-center gap-1.5 min-w-0 text-left"
+          className="flex items-start gap-1.5 min-w-0 w-full text-left"
         >
           <ChevronRight
             className={cn(
-              'w-3.5 h-3.5 text-muted-foreground transition-transform flex-shrink-0',
+              'w-3.5 h-3.5 text-muted-foreground transition-transform flex-shrink-0 mt-0.5',
               isExpanded && 'rotate-90',
             )}
           />
           <span className={cn(
-            'text-xs whitespace-nowrap uppercase tracking-wide truncate',
+            'flex-1 min-w-0 text-xs uppercase tracking-wide break-words leading-snug',
             isCategoryBand
               ? 'font-bold text-teal-800 dark:text-teal-300'
               : isPrimeiroNivel
@@ -144,7 +163,7 @@ function ProdutoCell({ row, isExpanded, onToggle }) {
             <Badge
               variant="outline"
               className={cn(
-                'h-5 px-1.5 text-[10px] font-medium flex-shrink-0',
+                'h-5 px-1.5 text-[10px] font-medium flex-shrink-0 mt-0.5',
                 isCategoryBand
                   ? 'border-teal-200/60 text-teal-700 dark:border-teal-800 dark:text-teal-300'
                   : 'border-border/40 text-muted-foreground',
@@ -155,15 +174,17 @@ function ProdutoCell({ row, isExpanded, onToggle }) {
           ) : null}
         </button>
       ) : (
-        <div className="flex items-center gap-1.5 min-w-0 ml-5">
+        <div className="flex flex-col min-w-0 w-full ml-5 gap-0.5">
           <span className={cn(
-            'text-xs uppercase truncate',
+            'text-xs uppercase break-words leading-snug',
             isPrimeiroNivel ? 'font-semibold text-foreground/90' : 'text-muted-foreground',
           )}>
             {label}
           </span>
           {p?.codigo_interno ? (
-            <span className="text-[10px] font-mono text-muted-foreground flex-shrink-0">{p.codigo_interno}</span>
+            <span className="text-[10px] font-mono text-muted-foreground break-all leading-tight">
+              {p.codigo_interno}
+            </span>
           ) : null}
         </div>
       )}
@@ -231,14 +252,14 @@ function SugestaoDataCells({
     const groupAbcd = row?.abcdDominante || '';
     return (
       <>
-        <td className="text-center py-2 px-2 whitespace-nowrap">
+        <td className="text-center py-2 px-2 whitespace-nowrap overflow-hidden">
           {groupAbcd ? <AbcdBadge letter={groupAbcd} /> : <span className="text-xs text-muted-foreground">—</span>}
         </td>
-        <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
-        <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
-        <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
-        <td className="text-right py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
-        <td className="py-2 px-2"><span className="text-xs text-muted-foreground">—</span></td>
+        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
+        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
+        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
+        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
+        <td className="py-2 px-2 overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
       </>
     );
   }
@@ -251,18 +272,18 @@ function SugestaoDataCells({
 
   return (
     <>
-      <td className="text-center py-2 px-2 whitespace-nowrap">
+      <td className="text-center py-2 px-2 whitespace-nowrap overflow-hidden">
         <AbcdBadge letter={abcd} />
       </td>
-      <td className="text-right py-2 px-2 whitespace-nowrap">
+      <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
         <span className="text-xs text-muted-foreground tabular-nums">{fmtN(estoque)}</span>
       </td>
-      <td className="text-right py-2 px-2 whitespace-nowrap">
+      <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
         <span className="text-xs text-muted-foreground tabular-nums">
           {media30d || '—'}
         </span>
       </td>
-      <td className="text-right py-2 px-2 whitespace-nowrap">
+      <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
         <span className={cn(
           'text-xs tabular-nums',
           (Number(sugestao?.gap_ponto_futuro_base) || 0) > 0
@@ -272,14 +293,14 @@ function SugestaoDataCells({
           {pontoFuturoGap}
         </span>
       </td>
-      <td className="text-right py-2 px-2 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+      <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <QtdSugeridaInput
           linha={linha}
           disp={disp}
           onQuantidadeLinhaChange={onQuantidadeLinhaChange}
         />
       </td>
-      <td className="py-2 px-2 min-w-[10rem]" onClick={(e) => e.stopPropagation()}>
+      <td className="py-2 px-2 overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {renderFornecedorSelect?.(linha)}
       </td>
     </>
@@ -361,7 +382,7 @@ export default function SugestaoCompraTreeGrid({
   }, []);
 
   const estimateRowSize = useCallback(
-    (index) => (displayRows[index]?.type === 'group' ? 40 : 48),
+    (index) => (displayRows[index]?.type === 'group' ? 44 : 56),
     [displayRows],
   );
   const virtualRows = useVirtualRows({
@@ -378,8 +399,13 @@ export default function SugestaoCompraTreeGrid({
   const paddingTop = shouldVirtualizeRows ? virtualRows.paddingTop : 0;
   const paddingBottom = shouldVirtualizeRows ? virtualRows.paddingBottom : 0;
 
-  const produtoWidth = PRODUTO_MIN_WIDTH;
   const colSpan = 8;
+  const produtoColStyle = {
+    left: CHECKBOX_COL_WIDTH,
+    width: PRODUTO_COL_WIDTH,
+    minWidth: PRODUTO_COL_WIDTH,
+    maxWidth: PRODUTO_COL_WIDTH,
+  };
 
   return (
     <div className="flex flex-col min-h-0 w-full border border-border/40 rounded-lg overflow-hidden bg-card">
@@ -387,13 +413,35 @@ export default function SugestaoCompraTreeGrid({
         ref={scrollContainerRef}
         className="flex-1 overflow-auto overscroll-contain max-h-[min(70vh,720px)] [overflow-anchor:none]"
       >
-        <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: 0, minWidth: 900 }}>
+        <table
+          className="w-full"
+          style={{
+            borderCollapse: 'separate',
+            borderSpacing: 0,
+            tableLayout: 'fixed',
+            width: '100%',
+            minWidth: TABLE_MIN_WIDTH,
+          }}
+        >
+          <colgroup>
+            <col style={{ width: CHECKBOX_COL_WIDTH }} />
+            <col style={{ width: PRODUTO_COL_WIDTH }} />
+            <col style={{ width: COL_WIDTHS.abcd }} />
+            <col style={{ width: COL_WIDTHS.estoque }} />
+            <col style={{ width: COL_WIDTHS.media30d }} />
+            <col style={{ width: COL_WIDTHS.pontoFuturo }} />
+            <col style={{ width: COL_WIDTHS.qtdSugerida }} />
+            <col style={{ width: COL_WIDTHS.fornecedor }} />
+          </colgroup>
           <thead className={p38Table.headerSolid}>
             <tr className="border-b border-border/40">
-              <th className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, 'text-left py-2 w-10')} style={{ left: 0 }} />
               <th
                 className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, 'text-left py-2')}
-                style={{ left: 40, minWidth: produtoWidth }}
+                style={{ left: 0, width: CHECKBOX_COL_WIDTH }}
+              />
+              <th
+                className={cn(p38Table.stickyHeadLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, p38Table.head, 'text-left py-2')}
+                style={produtoColStyle}
               >
                 <SortableHead
                   column="produto"
@@ -403,7 +451,7 @@ export default function SugestaoCompraTreeGrid({
                   align="left"
                 />
               </th>
-              <th className={cn(p38Table.head, 'text-center py-2 w-14')}>
+              <th className={cn(p38Table.head, 'text-center py-2')}>
                 <SortableHead
                   column="abcd"
                   columnSort={columnSort}
@@ -412,7 +460,7 @@ export default function SugestaoCompraTreeGrid({
                   align="center"
                 />
               </th>
-              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-16')}>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2')}>
                 <SortableHead
                   column="estoque"
                   columnSort={columnSort}
@@ -421,7 +469,7 @@ export default function SugestaoCompraTreeGrid({
                   bottom="atual"
                 />
               </th>
-              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-20')}>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2')}>
                 <SortableHead
                   column="media30d"
                   columnSort={columnSort}
@@ -430,7 +478,7 @@ export default function SugestaoCompraTreeGrid({
                   bottom="30d"
                 />
               </th>
-              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-20')}>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2')}>
                 <SortableHead
                   column="pontoFuturo"
                   columnSort={columnSort}
@@ -439,7 +487,7 @@ export default function SugestaoCompraTreeGrid({
                   bottom="futuro"
                 />
               </th>
-              <th className={cn(p38Table.head, p38Table.headRight, 'py-2 w-28')}>
+              <th className={cn(p38Table.head, p38Table.headRight, 'py-2')}>
                 <SortableHead
                   column="qtdSugerida"
                   columnSort={columnSort}
@@ -448,7 +496,7 @@ export default function SugestaoCompraTreeGrid({
                   bottom="sug."
                 />
               </th>
-              <th className={cn(p38Table.head, 'text-left py-2 min-w-[9rem]')}>
+              <th className={cn(p38Table.head, 'text-left py-2')}>
                 <SortableHead
                   column="fornecedor"
                   columnSort={columnSort}
@@ -489,8 +537,8 @@ export default function SugestaoCompraTreeGrid({
                       )}
                     >
                       <td
-                        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2 w-10 text-center')}
-                        style={{ left: 0 }}
+                        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2 text-center')}
+                        style={{ left: 0, width: CHECKBOX_COL_WIDTH }}
                       >
                         {linha ? (
                           <Checkbox
@@ -503,8 +551,8 @@ export default function SugestaoCompraTreeGrid({
                         ) : null}
                       </td>
                       <td
-                        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2')}
-                        style={{ left: 40, minWidth: produtoWidth }}
+                        className={cn(p38Table.stickyCellLeft, p38Table.stickyCell, PRODUTO_STICKY_SHADOW, 'py-2 align-top')}
+                        style={produtoColStyle}
                       >
                         <ProdutoCell row={row} isExpanded={isExpanded} onToggle={handleToggle} />
                       </td>
