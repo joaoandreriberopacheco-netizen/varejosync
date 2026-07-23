@@ -18,6 +18,8 @@ import CotacoesManager from '../components/compras/CotacoesManager';
 import ImportadorNotaFiscal from '../components/compras/ImportadorNotaFiscal';
 import GestaoCodigosConferencia from '../components/logistica/GestaoCodigosConferencia';
 import PainelConferencias from '../components/compras/PainelConferencias';
+import { cn } from '@/components/utils';
+import { useCompactShell } from '@/hooks/use-breakpoint';
 
 const getStatusBadge = (status) => {
   const variants = {
@@ -363,6 +365,8 @@ const PedidosCompraTab = () => {
 export default function ComprasPage() {
   const [sugestaoKey, setSugestaoKey] = useState(0);
   const [activeTab, setActiveTab] = useState('sugestoes');
+  const isMobile = useCompactShell();
+  const sugestoesFullHeight = isMobile && activeTab === 'sugestoes';
 
   const handleTabChange = (value) => {
     setActiveTab(value);
@@ -379,15 +383,21 @@ export default function ComprasPage() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-0 px-0 md:px-2 py-2 md:py-4">
+    <div
+      className={cn(
+        sugestoesFullHeight
+          ? 'flex flex-col h-full min-h-0 overflow-hidden w-full max-w-full bg-background'
+          : 'max-w-7xl mx-auto space-y-0 px-0 md:px-2 py-2 md:py-4',
+      )}
+    >
       {/* Header */}
-      <div className="px-4 md:px-0 pb-4">
+      <div className={cn('shrink-0', sugestoesFullHeight ? 'px-4 pb-2 pt-0' : 'px-4 md:px-0 pb-4')}>
         <h1 className="text-xl md:text-2xl font-semibold text-foreground font-glacial">Compras</h1>
         <p className="text-xs text-muted-foreground mt-0.5">Gestão completa do ciclo de suprimentos</p>
       </div>
 
       {/* Tab Bar - PDV Style pill tabs */}
-      <div className="px-4 md:px-0">
+      <div className={cn('shrink-0', sugestoesFullHeight ? 'px-4' : 'px-4 md:px-0')}>
         <div className="flex gap-1 bg-muted rounded-2xl p-1 w-full overflow-x-auto no-scrollbar">
           {tabs.map(tab => {
             const Icon = tab.icon;
@@ -411,7 +421,13 @@ export default function ComprasPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="px-4 md:px-0 pt-4 min-w-0 max-w-full overflow-x-clip">
+      <div
+        className={cn(
+          sugestoesFullHeight
+            ? 'flex-1 min-h-0 overflow-hidden'
+            : 'px-4 md:px-0 pt-4 min-w-0 max-w-full overflow-x-clip',
+        )}
+      >
         {activeTab === 'sugestoes' && <SugestaoCompra key={sugestaoKey} />}
         {activeTab === 'cotacoes' && <CotacoesManager />}
         {activeTab === 'pedidos' && <PedidosCompraTab />}

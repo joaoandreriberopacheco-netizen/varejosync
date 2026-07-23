@@ -8,18 +8,15 @@ import FiltrosSugestaoCompra, {
   DEFAULT_SUGESTAO_COMPRA_FILTERS,
 } from '@/components/compras/FiltrosSugestaoCompra';
 import SugestaoCompraTreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components/compras/SugestaoCompraTreeGrid';
-import SugestaoCompraMobileList from '@/components/compras/SugestaoCompraMobileList';
-import SugestaoCompraMobileTable from '@/components/compras/SugestaoCompraMobileTable';
-import SugestaoCompraMobileTableSheet from '@/components/compras/SugestaoCompraMobileTableSheet';
+import SugestaoCompraMobileCatalog, { SugestaoCompraMobileScrollShell } from '@/components/compras/SugestaoCompraMobileCatalog';
 import SugestaoCompraMobileToolbar from '@/components/compras/SugestaoCompraMobileToolbar';
 import SugestaoCompraDesktopToolbar from '@/components/compras/SugestaoCompraDesktopToolbar';
 import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
-import { dataHoje } from '@/components/utils/dateUtils';
 import { cn } from '@/components/utils';
+import { dataHoje } from '@/components/utils/dateUtils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
-import { useSugestaoCompraMobileView } from '@/hooks/useSugestaoCompraMobileView';
 import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
 import {
   buildLinhasSugestaoCompra,
@@ -136,7 +133,6 @@ export default function SugestaoCompra({ onStatsChange }) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useCompactShell();
-  const mobileView = useSugestaoCompraMobileView();
   const calcContextRef = useRef({
     pedidos: [],
     movsPorProduto: {},
@@ -744,157 +740,95 @@ export default function SugestaoCompra({ onStatsChange }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
+      <div className={cn('flex items-center justify-center', isMobile ? 'h-full min-h-[12rem]' : 'py-16')}>
         <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  return (
-    <div className={cn('space-y-4 w-full min-w-0 max-w-full overflow-x-clip', isMobile && 'pb-28')}>
-      <FiltrosSugestaoCompra
-        filters={filters}
-        onFiltersChange={setFilters}
-        categorias={categorias}
-        fornecedores={fornecedores}
-        allTags={allTags}
-        unidadesVitrine={unidadesVitrine}
-        onLimparFiltros={limparFiltros}
-        drawerOpen={isMobile ? filtersDrawerOpen : undefined}
-        onDrawerOpenChange={isMobile ? setFiltersDrawerOpen : undefined}
-      />
+  const mobileFornecedorClass =
+    'h-9 w-full min-w-0 max-w-full rounded-lg border-0 bg-muted/50 text-[11px] px-2';
 
-      <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between', isMobile && 'gap-2')}>
-        <p className={cn('text-sm text-foreground/85', isMobile && 'text-xs leading-relaxed')}>
-          {isMobile ? (
+  const emptyCatalogo = (
+    <div className="flex flex-col items-center gap-3 py-14 px-4 text-center max-w-lg mx-auto">
+      <CheckCircle className="w-9 h-9 text-muted-foreground/40" />
+      <p className="text-sm text-foreground/90 font-medium">Nenhuma sugestão no momento</p>
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        {loadStats.totalAtivos > 0 ? (
+          <>
+            {loadStats.totalAtivos} produto(s) no catálogo.
+            {loadStats.comGiro === 0
+              ? ' Aguardando histórico de vendas para calcular média 30d e ponto futuro.'
+              : ` ${loadStats.comGiro} com giro nos últimos 60 dias.`}
+          </>
+        ) : (
+          <>Não foi possível carregar produtos do catálogo. Tente atualizar a página.</>
+        )}
+      </p>
+      <Button type="button" variant="outline" size="sm" className="mt-1 rounded-2xl" asChild>
+        <Link to={createPageUrl('Produtos')}>Ver catálogo e histórico de vendas</Link>
+      </Button>
+    </div>
+  );
+
+  const semFiltro = (
+    <div className="py-14 text-center text-sm text-muted-foreground">
+      Nenhum item corresponde aos filtros.
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-full min-h-0 overflow-hidden w-full max-w-full bg-background">
+        <SugestaoCompraMobileScrollShell
+          chrome={(
             <>
-              <span className="font-medium text-foreground">{filteredLinhas.length}</span> itens
-              {selectedCount > 0 ? ` · ${selectedCount} selecionados` : ''}
-            </>
-          ) : (
-            <>
-              {filteredLinhas.length} item(ns)
-              {loadStats.totalAtivos > 0 ? ` · ${loadStats.totalAtivos} no catálogo` : ''}
-              {loadStats.abaixoPontoFuturo > 0 ? ` · ${loadStats.abaixoPontoFuturo} abaixo do ponto futuro` : ''}
-              {loadStats.linhasGrupo > 0 ? ` · ${loadStats.linhasGrupo} família(s)` : ''}
-              {selectedCount > 0 ? ` · ${selectedCount} selecionada(s)` : ''}
+              <div className="shrink-0 px-2.5 pt-1">
+                <FiltrosSugestaoCompra
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  categorias={categorias}
+                  fornecedores={fornecedores}
+                  allTags={allTags}
+                  unidadesVitrine={unidadesVitrine}
+                  onLimparFiltros={limparFiltros}
+                  drawerOpen={filtersDrawerOpen}
+                  onDrawerOpenChange={setFiltersDrawerOpen}
+                />
+              </div>
+              <p className="shrink-0 px-2.5 text-xs text-foreground/85 leading-relaxed">
+                <span className="font-medium text-foreground">{filteredLinhas.length}</span> itens
+                {selectedCount > 0 ? ` · ${selectedCount} selecionados` : ''}
+              </p>
+              {linhas.length > 0 && filteredLinhas.length > 0 ? (
+                <SugestaoCompraMobileToolbar
+                  filteredCount={filteredLinhas.length}
+                  selectedCount={selectedCount}
+                  allSelected={filteredLinhas.length > 0 && filteredLinhas.every((l) => selectedItems[l.id])}
+                  onSelectAll={handleSelectAll}
+                  columnSort={columnSort}
+                  onSortColumn={handleMobileSortColumn}
+                  activeFilterCount={activeFilterCount}
+                  onOpenFilters={() => setFiltersDrawerOpen(true)}
+                  somenteAbaixoPontoFuturo={filters.somenteAbaixoPontoFuturo === true}
+                  onToggleSomenteAbaixo={handleToggleSomenteAbaixo}
+                  considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
+                  onToggleConsiderarPedidos={handleToggleConsiderarPedidos}
+                  onRefresh={loadData}
+                  isLoading={isLoading}
+                />
+              ) : null}
             </>
           )}
-        </p>
-        {!isMobile ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-11 w-11 rounded-2xl bg-muted shrink-0"
-            onClick={loadData}
-            disabled={isLoading}
-            title="Atualizar lista"
-          >
-            <RefreshCw className={`h-4 w-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-11 rounded-2xl gap-1.5"
-                disabled={selectedCount === 0}
-                onClick={handleQuote}
-              >
-                <FileText className="w-4 h-4" />
-                Cotação
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                className="h-11 rounded-2xl gap-1.5"
-                disabled={selectedCount === 0}
-                onClick={handleGenerate}
-              >
-                <ShoppingCart className="w-4 h-4" />
-                Gerar pedido{selectedCount > 0 ? ` (${selectedCount})` : ''}
-              </Button>
-        </div>
-        ) : null}
-      </div>
-
-      {linhas.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-14 px-4 text-center max-w-lg mx-auto">
-          <CheckCircle className="w-9 h-9 text-muted-foreground/40" />
-          <p className="text-sm text-foreground/90 font-medium">Nenhuma sugestão no momento</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {loadStats.totalAtivos > 0 ? (
-              <>
-                {loadStats.totalAtivos} produto(s) no catálogo.
-                {loadStats.comGiro === 0
-                  ? ' Aguardando histórico de vendas para calcular média 30d e ponto futuro.'
-                  : ` ${loadStats.comGiro} com giro nos últimos 60 dias.`}
-              </>
-            ) : (
-              <>Não foi possível carregar produtos do catálogo. Tente atualizar a página.</>
-            )}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-1 rounded-2xl"
-            asChild
-          >
-            <Link to={createPageUrl('Produtos')}>
-              Ver catálogo e histórico de vendas
-            </Link>
-          </Button>
-        </div>
-      ) : filteredLinhas.length === 0 ? (
-        <div className="py-14 text-center text-sm text-muted-foreground">
-          Nenhum item corresponde aos filtros.
-        </div>
-      ) : (
-        <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-clip">
-          {isMobile ? (
-            <SugestaoCompraMobileToolbar
-              filteredCount={filteredLinhas.length}
-              selectedCount={selectedCount}
-              allSelected={filteredLinhas.length > 0 && filteredLinhas.every((l) => selectedItems[l.id])}
-              onSelectAll={handleSelectAll}
-              columnSort={columnSort}
-              onSortColumn={handleMobileSortColumn}
-              activeFilterCount={activeFilterCount}
-              onOpenFilters={() => setFiltersDrawerOpen(true)}
-              somenteAbaixoPontoFuturo={filters.somenteAbaixoPontoFuturo === true}
-              onToggleSomenteAbaixo={handleToggleSomenteAbaixo}
-              considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
-              onToggleConsiderarPedidos={handleToggleConsiderarPedidos}
-              onRefresh={loadData}
-              isLoading={isLoading}
-              viewMode={mobileView.viewMode}
-              onViewModeChange={mobileView.setViewMode}
-              showRotateHint={mobileView.showRotateHint}
-            />
-          ) : (
-            <SugestaoCompraDesktopToolbar
-              filteredCount={filteredLinhas.length}
-              selectedCount={selectedCount}
-              allSelected={allVisibleSelected}
-              someSelected={someVisibleSelected}
-              onSelectAllVisible={handleSelectAll}
-              columnSort={columnSort}
-              onSortColumn={handleMobileSortColumn}
-              groupByCategory={groupByCategory}
-              onGroupByCategoryChange={handleGroupByCategoryChange}
-              considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
-              onConsiderarPedidosAprovadosEstoqueChange={handleToggleConsiderarPedidos}
-              treeLevel={treeLevel}
-              onTreeLevelChange={handleTreeLevelChange}
-            />
-          )}
-          {isMobile ? (
-            mobileView.viewMode === 'table' && !mobileView.isPhone ? (
-              <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
-                <SugestaoCompraMobileTable
+        >
+          {linhas.length === 0
+            ? emptyCatalogo
+            : filteredLinhas.length === 0
+              ? semFiltro
+              : (
+                <SugestaoCompraMobileCatalog
                   linhas={mobileLinhas}
+                  incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
                   selectedItems={selectedItems}
                   onToggleSelected={(id, checked) =>
                     setSelectedItems((prev) =>
@@ -903,89 +837,11 @@ export default function SugestaoCompra({ onStatsChange }) {
                   }
                   sugestaoDisplayLinha={sugestaoDisplayLinha}
                   onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
-                  renderFornecedorSelect={(linha) =>
-                    renderFornecedorSelect(
-                      linha,
-                      'h-8 w-full min-w-0 max-w-full rounded-md border-0 bg-muted/40 text-[10px] px-2',
-                    )
-                  }
+                  renderFornecedorSelect={(linha) => renderFornecedorSelect(linha, mobileFornecedorClass)}
                 />
-              </div>
-            ) : mobileView.viewMode === 'cards' ? (
-              <SugestaoCompraMobileList
-                linhas={mobileLinhas}
-                incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
-                selectedItems={selectedItems}
-                onToggleSelected={(id, checked) =>
-                  setSelectedItems((prev) =>
-                    checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
-                  )
-                }
-                sugestaoDisplayLinha={sugestaoDisplayLinha}
-                onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
-                renderFornecedorSelect={(linha) =>
-                  renderFornecedorSelect(
-                    linha,
-                    'h-9 w-full min-w-0 max-w-full rounded-lg border-0 bg-muted/50 text-xs px-2',
-                  )
-                }
-              />
-            ) : null
-          ) : (
-            <SugestaoCompraTreeGrid
-              produtos={treeProdutos}
-              linhaLookup={linhaLookup}
-              agruparHierarquia={agruparHierarquia}
-              incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
-              columnSort={columnSort}
-              onColumnSort={handleColumnSort}
-              sortCtx={sortCtx}
-              groupByCategory={groupByCategory}
-              masterLevel={treeLevel === TREE_GRID_EXPAND_ALL_LEVEL ? TREE_GRID_EXPAND_ALL_LEVEL : treeLevel}
-              salesVelocityMap={salesVelocityMap}
-              selectedItems={selectedItems}
-              onToggleSelected={(id, checked) =>
-                setSelectedItems((prev) =>
-                  checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
-                )
-              }
-              allVisibleSelected={allVisibleSelected}
-              someVisibleSelected={someVisibleSelected}
-              onSelectAllVisible={handleSelectAll}
-              sugestaoDisplayLinha={sugestaoDisplayLinha}
-              onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
-              renderFornecedorSelect={(linha) =>
-                renderFornecedorSelect(linha, 'h-8 w-full max-w-[14rem] rounded-md border-0 bg-muted/30 text-xs')
-              }
-            />
-          )}
-        </div>
-      )}
+              )}
+        </SugestaoCompraMobileScrollShell>
 
-      {isMobile && mobileView.isPhone && mobileView.viewMode === 'table' ? (
-        <SugestaoCompraMobileTableSheet
-          open
-          onClose={() => mobileView.setViewMode('cards')}
-          isLandscape={mobileView.isLandscape}
-          linhas={mobileLinhas}
-          selectedItems={selectedItems}
-          onToggleSelected={(id, checked) =>
-            setSelectedItems((prev) =>
-              checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
-            )
-          }
-          sugestaoDisplayLinha={sugestaoDisplayLinha}
-          onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
-          renderFornecedorSelect={(linha) =>
-            renderFornecedorSelect(
-              linha,
-              'h-8 w-full min-w-0 max-w-full rounded-md border-0 bg-muted/40 text-[10px] px-2',
-            )
-          }
-        />
-      ) : null}
-
-      {isMobile && !(mobileView.isPhone && mobileView.viewMode === 'table') ? (
         <div className="fixed inset-x-0 bottom-[var(--p38-bottom-nav-total,0px)] z-40 max-w-[100vw] border-t border-border/40 bg-card/95 backdrop-blur-sm px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)]">
           <div className="flex gap-2 max-w-7xl mx-auto">
             <Button
@@ -1009,7 +865,115 @@ export default function SugestaoCompra({ onStatsChange }) {
             </Button>
           </div>
         </div>
-      ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 w-full min-w-0 max-w-full overflow-x-clip">
+      <FiltrosSugestaoCompra
+        filters={filters}
+        onFiltersChange={setFilters}
+        categorias={categorias}
+        fornecedores={fornecedores}
+        allTags={allTags}
+        unidadesVitrine={unidadesVitrine}
+        onLimparFiltros={limparFiltros}
+      />
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-foreground/85">
+          {filteredLinhas.length} item(ns)
+          {loadStats.totalAtivos > 0 ? ` · ${loadStats.totalAtivos} no catálogo` : ''}
+          {loadStats.abaixoPontoFuturo > 0 ? ` · ${loadStats.abaixoPontoFuturo} abaixo do ponto futuro` : ''}
+          {loadStats.linhasGrupo > 0 ? ` · ${loadStats.linhasGrupo} família(s)` : ''}
+          {selectedCount > 0 ? ` · ${selectedCount} selecionada(s)` : ''}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-11 w-11 rounded-2xl bg-muted shrink-0"
+            onClick={loadData}
+            disabled={isLoading}
+            title="Atualizar lista"
+          >
+            <RefreshCw className={`h-4 w-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-11 rounded-2xl gap-1.5"
+            disabled={selectedCount === 0}
+            onClick={handleQuote}
+          >
+            <FileText className="w-4 h-4" />
+            Cotação
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="h-11 rounded-2xl gap-1.5"
+            disabled={selectedCount === 0}
+            onClick={handleGenerate}
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Gerar pedido{selectedCount > 0 ? ` (${selectedCount})` : ''}
+          </Button>
+        </div>
+      </div>
+
+      {linhas.length === 0 ? (
+        emptyCatalogo
+      ) : filteredLinhas.length === 0 ? (
+        semFiltro
+      ) : (
+        <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-clip">
+          <SugestaoCompraDesktopToolbar
+            filteredCount={filteredLinhas.length}
+            selectedCount={selectedCount}
+            allSelected={allVisibleSelected}
+            someSelected={someVisibleSelected}
+            onSelectAllVisible={handleSelectAll}
+            columnSort={columnSort}
+            onSortColumn={handleMobileSortColumn}
+            groupByCategory={groupByCategory}
+            onGroupByCategoryChange={handleGroupByCategoryChange}
+            considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
+            onConsiderarPedidosAprovadosEstoqueChange={handleToggleConsiderarPedidos}
+            treeLevel={treeLevel}
+            onTreeLevelChange={handleTreeLevelChange}
+          />
+          <SugestaoCompraTreeGrid
+            produtos={treeProdutos}
+            linhaLookup={linhaLookup}
+            agruparHierarquia={agruparHierarquia}
+            incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
+            columnSort={columnSort}
+            onColumnSort={handleColumnSort}
+            sortCtx={sortCtx}
+            groupByCategory={groupByCategory}
+            masterLevel={treeLevel === TREE_GRID_EXPAND_ALL_LEVEL ? TREE_GRID_EXPAND_ALL_LEVEL : treeLevel}
+            salesVelocityMap={salesVelocityMap}
+            selectedItems={selectedItems}
+            onToggleSelected={(id, checked) =>
+              setSelectedItems((prev) =>
+                checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+              )
+            }
+            allVisibleSelected={allVisibleSelected}
+            someVisibleSelected={someVisibleSelected}
+            onSelectAllVisible={handleSelectAll}
+            sugestaoDisplayLinha={sugestaoDisplayLinha}
+            onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
+            renderFornecedorSelect={(linha) =>
+              renderFornecedorSelect(linha, 'h-8 w-full max-w-[14rem] rounded-md border-0 bg-muted/30 text-xs')
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -33,6 +33,7 @@ const MOBILE_FULL_VIEWPORT_PAGES = new Set([
   'PDVVendedor',
   'PDV',
   'TabelaPrecosConsulta',
+  'Compras',
 ]);
 
 /** Rotas PDV no mobile: mantêm GlacialBottomNav (atalho rápido em overlay continua fullscreen). */
