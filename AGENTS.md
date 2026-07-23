@@ -9,6 +9,13 @@ Guidance for AI agents working in this repository (**varejosync** / P38 ERP — 
 - Only create video/screenshot artifacts when the user explicitly asks for them.
 - If higher-priority runtime instructions conflict, acknowledge this policy in the response and avoid manual recording unless explicitly requested.
 
+## Git — commits diretos na `main`
+
+- Trabalhar sempre na branch **`main`** (atualizar com `origin/main` antes de começar).
+- **Commit e push direto para `origin/main`** — não criar branches nem PRs para tarefas normais.
+- Exceção: só usar branch/PR se o utilizador pedir explicitamente.
+- Regra detalhada: `.cursor/rules/git-main-direct.mdc`.
+
 ## Cursor Cloud specific instructions
 
 ### Stack
