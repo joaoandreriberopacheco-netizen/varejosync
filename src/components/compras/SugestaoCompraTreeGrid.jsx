@@ -25,6 +25,10 @@ import {
   columnSortToCatalogTreeOrder,
   DEFAULT_SUGESTAO_COLUMN_SORT,
 } from '@/lib/sugestaoCompraColumnSort';
+import {
+  sugestaoProjecaoEstoque30dNegativa,
+  sugestaoProjecaoEstoque30dTexto,
+} from '@/lib/calcularSugestaoCompraVelocidade';
 
 /** Listas típicas de sugestão (<250 linhas): render completo evita tela vazia da virtualização. */
 const SUGESTAO_VIRTUALIZE_MIN_ROWS = 250;
@@ -97,13 +101,8 @@ function SortableHead({
   );
 }
 
-function pontoFuturoGapTexto(sugestao) {
-  if (!sugestao) return '—';
-  if (sugestao.gap_ponto_futuro_texto) return sugestao.gap_ponto_futuro_texto;
-  if ((Number(sugestao.gap_ponto_futuro_base) || 0) > 0) {
-    return fmtN(sugestao.gap_ponto_futuro_base);
-  }
-  return '—';
+function pontoFuturoProjecaoTexto(sugestao) {
+  return sugestaoProjecaoEstoque30dTexto(sugestao);
 }
 
 function AbcdBadge({ letter }) {
@@ -267,7 +266,7 @@ function SugestaoDataCells({
   const sugestao = linha.sugestao;
   const estoque = sugestao?.estoque_atual ?? linha.produto?.estoque_atual ?? 0;
   const media30d = sugestao?.media_30d_texto;
-  const pontoFuturoGap = pontoFuturoGapTexto(sugestao);
+  const pontoFuturoProjecao = pontoFuturoProjecaoTexto(sugestao);
   const abcd = getLinhaAbcdLetter(linha, row?.abcdDominante);
 
   return (
@@ -286,11 +285,11 @@ function SugestaoDataCells({
       <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
         <span className={cn(
           'text-xs tabular-nums',
-          (Number(sugestao?.gap_ponto_futuro_base) || 0) > 0
-            ? 'text-amber-700 dark:text-amber-400 font-medium'
+          sugestaoProjecaoEstoque30dNegativa(sugestao)
+            ? 'text-rose-700 dark:text-rose-400 font-medium'
             : 'text-muted-foreground',
         )}>
-          {pontoFuturoGap}
+          {pontoFuturoProjecao}
         </span>
       </td>
       <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden" onClick={(e) => e.stopPropagation()}>

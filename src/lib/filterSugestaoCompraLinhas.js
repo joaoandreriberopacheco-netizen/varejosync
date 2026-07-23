@@ -9,7 +9,9 @@ import {
   produtoMatchesVitrineFilter,
 } from '@/lib/filterProdutos';
 import { getUnidadeExibicaoSigla } from '@/lib/productUnits';
-import { sugestaoTemGiroVelocidade } from '@/lib/calcularSugestaoCompraVelocidade';
+import {
+  sugestaoTemGiroVelocidade,
+} from '@/lib/calcularSugestaoCompraVelocidade';
 
 export const SUGESTAO_STATUS_ESTOQUE_OPTIONS = [
   { value: 'all', label: 'Todos' },
@@ -90,7 +92,6 @@ function linhaEstoqueAtual(linha) {
   return Number(linha?.sugestao?.estoque_atual ?? linha?.produto?.estoque_atual) || 0;
 }
 
-/** Ponto de pedido da sugestão (velocidade ao vivo) — nunca usa cadastro. */
 function linhaPontoPedido(linha) {
   return Number(linha?.sugestao?.ponto_pedido) || 0;
 }

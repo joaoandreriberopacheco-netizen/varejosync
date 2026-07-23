@@ -8,6 +8,10 @@ import {
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
 import { getLinhaAbcdLetter } from '@/lib/sugestaoCompraTree';
+import {
+  sugestaoProjecaoEstoque30dNegativa,
+  sugestaoProjecaoEstoque30dTexto,
+} from '@/lib/calcularSugestaoCompraVelocidade';
 import { cn } from '@/components/utils';
 
 function AbcdBadge({ letter }) {
@@ -28,9 +32,10 @@ function AbcdBadge({ letter }) {
 
 function rowAccent(linha, selecionado) {
   if (selecionado) return 'info';
-  const gap = Number(linha?.sugestao?.gap_ponto_futuro_base);
   const estoque = linha?.sugestao?.estoque_atual ?? linha?.produto?.estoque_atual ?? 0;
   if (estoque <= 0) return 'danger';
+  if (sugestaoProjecaoEstoque30dNegativa(linha?.sugestao)) return 'warning';
+  const gap = Number(linha?.sugestao?.gap_ponto_futuro_base);
   if (Number.isFinite(gap) && gap > 0) return 'warning';
   const ponto = linha?.sugestao?.ponto_pedido ?? 0;
   if (ponto > 0 && estoque < ponto) return 'warning';
@@ -53,8 +58,8 @@ export default function SugestaoCompraLinhaMobile({
   const produto = linha.produto;
   const estoque = sugestao?.estoque_atual ?? produto?.estoque_atual ?? 0;
   const media30d = sugestao?.media_30d_texto || '—';
-  const gapBase = Number(sugestao?.gap_ponto_futuro_base) || 0;
-  const pontoFuturoGap = sugestao?.gap_ponto_futuro_texto || (gapBase > 0 ? fmtN(gapBase) : '—');
+  const pontoFuturoProjecao = sugestaoProjecaoEstoque30dTexto(sugestao);
+  const projecaoNegativa = sugestaoProjecaoEstoque30dNegativa(sugestao);
   const abcd = getLinhaAbcdLetter(linha);
   const qty = disp?.quantidade ?? 0;
   const unidade = disp?.unidade || '';
@@ -133,8 +138,8 @@ export default function SugestaoCompraLinhaMobile({
         <P38MobileMetric label="Méd. 30d" value={media30d} className="min-w-0 max-w-none" />
         <P38MobileMetric
           label="P. futuro"
-          value={pontoFuturoGap}
-          tone={gapBase > 0 ? 'danger' : 'muted'}
+          value={pontoFuturoProjecao}
+          tone={projecaoNegativa ? 'danger' : 'muted'}
           className="min-w-0 max-w-none"
         />
       </div>

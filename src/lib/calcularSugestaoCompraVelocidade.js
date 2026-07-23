@@ -1,6 +1,6 @@
 /**
- * Sugestão de compra pela velocidade de giro (vendas 60d) e ponto futuro.
- * Alinha com a coluna «Média 30d» e «Ponto LT» do catálogo (média × 1,5 × lead time).
+ * Sugestão de compra pela velocidade de giro (vendas 60d).
+ * Coluna «Ponto futuro» = projeção de estoque em 30 dias (estoque − média_dia × 30).
  */
 
 import {
@@ -27,19 +27,66 @@ function resolveLeadTime(produto, leadTimePadrao = 20) {
   return getCatalogLeadTimeDias(produto, leadTimePadrao);
 }
 
-function formatGapPontoFuturo(produto, gapBase) {
+const DIAS_PROJECAO_PONTO_FUTURO = 30;
+
+function formatGapReposicao(produto, gapBase) {
   const qty = Number(gapBase) || 0;
   if (qty <= 0) return null;
   const ap = formatQuantidadeCatalogoApresentacao(produto, qty);
   return formatCatalogSalesQuantity(ap.quantidade, ap.sigla, { dashIfZero: false });
 }
 
-function buildGapPontoFuturo(produto, pontoPedidoBase, estoqueAtual) {
+/** Déficit até o ponto de pedido — usado na qtd sugerida, não na coluna «Ponto futuro». */
+function buildGapReposicao(produto, pontoPedidoBase, estoqueAtual) {
   const gapBase = Math.max(0, (Number(pontoPedidoBase) || 0) - (Number(estoqueAtual) || 0));
   return {
     gap_ponto_futuro_base: gapBase,
-    gap_ponto_futuro_texto: formatGapPontoFuturo(produto, gapBase),
+    gap_ponto_futuro_texto: formatGapReposicao(produto, gapBase),
   };
+}
+
+function formatProjecaoEstoque30d(produto, projecaoBase) {
+  const qty = Number(projecaoBase);
+  if (!Number.isFinite(qty)) return null;
+  const ap = formatQuantidadeCatalogoApresentacao(produto, Math.abs(qty));
+  const formatted = formatCatalogSalesQuantity(ap.quantidade, ap.sigla, { dashIfZero: false });
+  if (qty < 0) return `−${formatted}`;
+  return formatted;
+}
+
+/**
+ * Ponto futuro = estoque projetado daqui a 30 dias à velocidade atual.
+ * estoque_atual − (média_dia × 30); velocidade 0 mantém o estoque atual.
+ */
+export function buildProjecaoEstoque30d(produto, estoqueAtual, mediaDia) {
+  const estoque = Number(estoqueAtual) || 0;
+  const media = Number(mediaDia) || 0;
+  const projecaoBase = estoque - media * DIAS_PROJECAO_PONTO_FUTURO;
+  const texto =
+    estoque > 0 || projecaoBase !== 0
+      ? formatProjecaoEstoque30d(produto, projecaoBase)
+      : null;
+  return {
+    projecao_estoque_30d_base: projecaoBase,
+    projecao_estoque_30d_texto: texto,
+  };
+}
+
+export function sugestaoProjecaoEstoque30dTexto(sugestao) {
+  if (!sugestao) return '—';
+  if (sugestao.projecao_estoque_30d_texto) return sugestao.projecao_estoque_30d_texto;
+  const base = Number(sugestao.projecao_estoque_30d_base);
+  if (Number.isFinite(base)) {
+    const estoque = Number(sugestao.estoque_atual) || 0;
+    if (estoque > 0 || base !== 0) {
+      return base.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+    }
+  }
+  return '—';
+}
+
+export function sugestaoProjecaoEstoque30dNegativa(sugestao) {
+  return (Number(sugestao?.projecao_estoque_30d_base) || 0) < 0;
 }
 
 function buildMetricasVelocidade(produto, pedidos90d, salesVelocityMap, leadTime) {
@@ -106,6 +153,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
           )
         : 0;
       const { unidade, fator } = resolveFatorUnidadeVitrineCompra(produto);
+      const projecao = buildProjecaoEstoque30d(produto, estoqueAtual, 0);
       return {
         elegivel,
         motivo: elegivel ? 'abaixo_ponto_cadastro' : 'estoque_suficiente',
@@ -116,6 +164,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
         estoque_atual: estoqueAtual,
         media_30d_texto: null,
         ponto_futuro_texto: null,
+        ...projecao,
         unidade_vitrine_compra: unidade,
         fator_vitrine: fator,
         lote_compra_vitrine: resolveLoteCompraVitrine(produto) || null,
@@ -126,6 +175,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
     }
 
     if (catalogoCompleto) {
+      const projecao = buildProjecaoEstoque30d(produto, estoqueAtual, 0);
       return {
         elegivel: true,
         motivo: 'sem_venda',
@@ -133,6 +183,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
         estoque_atual: estoqueAtual,
         media_30d_texto: metricas.media_30d_texto,
         ponto_futuro_texto: null,
+        ...projecao,
         gap_ponto_futuro_base: 0,
         gap_ponto_futuro_texto: null,
         quantidade_sugerida_base: 0,
@@ -157,7 +208,8 @@ export function calcularSugestaoCompraProdutoVelocidade(
   }
 
   const { pontoPedido, estoqueIdeal } = metricas;
-  const gap = buildGapPontoFuturo(produto, pontoPedido, estoqueAtual);
+  const gap = buildGapReposicao(produto, pontoPedido, estoqueAtual);
+  const projecao = buildProjecaoEstoque30d(produto, estoqueAtual, metricas.mediaDia);
   const elegivel = catalogoCompleto ? gap.gap_ponto_futuro_base > 0 : estoqueAtual < pontoPedido;
   const quantidadeSugeridaBase = catalogoCompleto
     ? gap.gap_ponto_futuro_base > 0
@@ -186,6 +238,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
     media_30d_texto: metricas.media_30d_texto,
     ponto_futuro_comercial: metricas.ponto_futuro_comercial,
     ponto_futuro_texto: metricas.ponto_futuro_texto,
+    ...projecao,
     ...gap,
     quantidade_limpa_60d: metricas.media.quantidade_limpa_60d,
     unidade_vitrine_compra: unidade,
@@ -194,7 +247,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
     fonte: 'velocidade',
     catalogo_completo: catalogoCompleto || undefined,
     versao: catalogoCompleto
-      ? 'v2-catalogo-completo-gap'
+      ? 'v3-catalogo-completo-projecao-30d'
       : 'v1-velocidade-60d-ponto-futuro',
   };
 }
@@ -297,7 +350,12 @@ export function calcularSugestaoCompraGrupoVelocidade(
     };
   }
 
-  const gap = buildGapPontoFuturo(representativo, pontoPedido, estoqueAtual);
+  const gap = buildGapReposicao(representativo, pontoPedido, estoqueAtual);
+  const mediaDiaGrupo = lista.reduce(
+    (s, _, idx) => s + (Number(sugestoes[idx]?.media_dia) || 0),
+    0,
+  );
+  const projecao = buildProjecaoEstoque30d(representativo, estoqueAtual, mediaDiaGrupo);
   const elegivel = catalogoCompleto ? gap.gap_ponto_futuro_base > 0 : estoqueAtual < pontoPedido;
   const quantidadeSugeridaBase = catalogoCompleto
     ? gap.gap_ponto_futuro_base > 0
@@ -312,6 +370,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
   const { unidade, fator } = resolveFatorUnidadeVitrineCompra(representativo);
 
   if (catalogoCompleto && pontoPedido <= 0) {
+    const projecaoSemVenda = buildProjecaoEstoque30d(representativo, estoqueAtual, 0);
     return {
       elegivel: true,
       motivo: 'sem_venda',
@@ -319,6 +378,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
       estoque_atual: estoqueAtual,
       media_30d_texto: formatCatalogMedia30d(velocityAgg, { tilde: true }) || null,
       ponto_futuro_texto: null,
+      ...projecaoSemVenda,
       gap_ponto_futuro_base: 0,
       gap_ponto_futuro_texto: null,
       quantidade_sugerida_base: 0,
@@ -353,6 +413,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
     ponto_futuro_texto: pontoAgg.quantidade > 0 && pontoAgg.unidade
       ? `${pontoAgg.quantidade.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${pontoAgg.unidade}`
       : null,
+    ...projecao,
     ...gap,
     produto_representativo_id: representativo.id,
     unidade_vitrine_compra: unidade,
@@ -362,7 +423,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
     fonte: 'velocidade',
     catalogo_completo: catalogoCompleto || undefined,
     versao: catalogoCompleto
-      ? 'v2-grupo-catalogo-completo-gap'
+      ? 'v3-grupo-catalogo-completo-projecao-30d'
       : 'v1-grupo-velocidade-60d-ponto-futuro',
   };
 }

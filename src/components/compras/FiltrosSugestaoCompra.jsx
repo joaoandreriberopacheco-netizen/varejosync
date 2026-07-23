@@ -227,7 +227,7 @@ function FiltrosPainel({
             : 'Catálogo completo'}
         </button>
         <p className="text-[11px] text-muted-foreground leading-snug font-mono">
-          Ponto futuro = meta (média 30d × 1,5 × LT) − estoque atual
+          Ponto futuro = estoque projetado daqui a 30 dias (estoque atual − média 30d × 30)
         </p>
       </FilterSection>
 

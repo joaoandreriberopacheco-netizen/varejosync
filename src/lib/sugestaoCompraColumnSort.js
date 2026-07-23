@@ -28,8 +28,8 @@ function linhaMedia30d(linha) {
   return Number(linha?.sugestao?.media_30d_comercial) || 0;
 }
 
-function linhaGapPontoFuturo(linha) {
-  return Number(linha?.sugestao?.gap_ponto_futuro_base) || 0;
+function linhaProjecaoPontoFuturo(linha) {
+  return Number(linha?.sugestao?.projecao_estoque_30d_base);
 }
 
 function linhaQtdSugerida(linha, ctx = {}) {
@@ -92,7 +92,7 @@ export function compareSugestaoCompraLinhas(a, b, sort = DEFAULT_SUGESTAO_COLUMN
   }
 
   if (column === 'pontoFuturo') {
-    return compareNumbers(linhaGapPontoFuturo(a), linhaGapPontoFuturo(b), direction) || tie;
+    return compareNumbers(linhaProjecaoPontoFuturo(a), linhaProjecaoPontoFuturo(b), direction) || tie;
   }
 
   if (column === 'qtdSugerida') {
@@ -125,7 +125,7 @@ export function enrichProdutoSugestaoSortFields(produto, linha, ctx = {}) {
     ...produto,
     sugestao_estoque: linhaEstoque(linha),
     sugestao_media_30d: linhaMedia30d(linha),
-    sugestao_gap: linhaGapPontoFuturo(linha),
+    sugestao_projecao_30d: linhaProjecaoPontoFuturo(linha),
     sugestao_qtd: linhaQtdSugerida(linha, ctx),
     sugestao_abcd: getAbcdRank(getLinhaAbcdLetter(linha)),
     sugestao_fornecedor: linhaFornecedorNome(linha, ctx),
