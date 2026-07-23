@@ -27,6 +27,29 @@ function resolveLeadTime(produto, leadTimePadrao = 20) {
   return getCatalogLeadTimeDias(produto, leadTimePadrao);
 }
 
+function estoqueMetaProduto(produto, estoqueAtual) {
+  const pedidos = Number(produto?.estoque_pedidos_aprovados) || 0;
+  if (pedidos <= 0) return {};
+  const fisico = Number(produto?.estoque_fisico);
+  return {
+    estoque_fisico: Number.isFinite(fisico) ? fisico : estoqueAtual,
+    estoque_pedidos_aprovados: pedidos,
+  };
+}
+
+function estoqueMetaGrupo(skus) {
+  const pedidos = (skus || []).reduce(
+    (s, p) => s + (Number(p?.estoque_pedidos_aprovados) || 0),
+    0,
+  );
+  if (pedidos <= 0) return {};
+  const fisico = (skus || []).reduce((s, p) => {
+    const f = Number(p?.estoque_fisico);
+    return s + (Number.isFinite(f) ? f : Number(p?.estoque_atual) || 0);
+  }, 0);
+  return { estoque_fisico: fisico, estoque_pedidos_aprovados: pedidos };
+}
+
 const DIAS_PROJECAO_PONTO_FUTURO = 30;
 
 function formatGapReposicao(produto, gapBase) {
@@ -160,6 +183,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
   const catalogoCompleto = options.catalogoCompleto === true;
 
   const estoqueAtual = Number(produto?.estoque_atual) || 0;
+  const estoqueMeta = estoqueMetaProduto(produto, estoqueAtual);
   const leadTime = resolveLeadTime(produto, leadTimePadrao);
   const metricas = buildMetricasVelocidade(produto, pedidos90d, salesVelocityMap, leadTime);
   const { unidade, fator } = resolveFatorUnidadeVitrineCompra(produto);
@@ -195,6 +219,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
         quantidade_sugerida_base: quantidadeSugeridaBase,
         lead_time_dias: leadTime,
         estoque_atual: estoqueAtual,
+        ...estoqueMeta,
         media_30d_texto: null,
         ponto_futuro_texto: null,
         ...projecao,
@@ -214,6 +239,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
         motivo: 'sem_venda',
         lead_time_dias: leadTime,
         estoque_atual: estoqueAtual,
+        ...estoqueMeta,
         media_30d_texto: metricas.media_30d_texto,
         ponto_futuro_texto: null,
         ...projecao,
@@ -276,6 +302,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
     quantidade_sugerida_base: quantidadeSugeridaBase,
     lead_time_dias: leadTime,
     estoque_atual: estoqueAtual,
+    ...estoqueMeta,
     media_30d_comercial: metricas.media_30d_comercial,
     media_30d_texto: metricas.media_30d_texto,
     ponto_futuro_comercial: metricas.ponto_futuro_comercial,
@@ -325,6 +352,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
 
   if (usarFallbackGrupo) {
     const estoqueAtual = lista.reduce((s, p) => s + (Number(p.estoque_atual) || 0), 0);
+    const estoqueMeta = estoqueMetaGrupo(lista);
     const pontoPedido = lista.reduce((s, p) => s + (Number(p.estoque_minimo) || 0), 0);
     const estoqueIdeal = lista.reduce((s, p) => s + (Number(p.estoque_ideal) || 0), 0);
     const leadTime = Math.max(...lista.map((p) => resolveLeadTime(p, leadTimePadrao)));
@@ -360,6 +388,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
       quantidade_sugerida_base: quantidadeSugeridaBase,
       lead_time_dias: leadTime,
       estoque_atual: estoqueAtual,
+      ...estoqueMeta,
       produto_representativo_id: representativo.id,
       unidade_vitrine_compra: unidade,
       fator_vitrine: fator,
@@ -372,6 +401,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
   }
 
   const estoqueAtual = lista.reduce((s, p) => s + (Number(p.estoque_atual) || 0), 0);
+  const estoqueMeta = estoqueMetaGrupo(lista);
   const pontoPedido = comVenda.reduce((s, sg) => s + (Number(sg.ponto_pedido) || 0), 0);
   const estoqueIdeal = comVenda.reduce((s, sg) => s + (Number(sg.estoque_ideal) || 0), 0);
   const leadTime = Math.max(...lista.map((p) => resolveLeadTime(p, leadTimePadrao)));

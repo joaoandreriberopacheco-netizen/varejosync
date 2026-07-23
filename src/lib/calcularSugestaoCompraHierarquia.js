@@ -23,6 +23,7 @@ import {
   calcularSugestaoCompraProdutoVelocidade,
   sugestaoTemGiroVelocidade,
 } from '@/lib/calcularSugestaoCompraVelocidade';
+import { aplicarPendenteAprovadoNoEstoqueProdutos } from '@/lib/sugestaoCompraEstoquePendente';
 import {
   buildMapaSaldoFimDia,
   contarDiasComEstoqueAtivo,
@@ -298,7 +299,11 @@ export function buildLinhasSugestaoCompra(
   const salesVelocityMap = options.salesVelocityMap || {};
   const incluirTodoCatalogo = options.incluirTodoCatalogo === true;
   const catalogoCompleto = options.catalogoCompleto === true;
-  const { map, soltos } = agruparSkusPorHierarquiaCompra(produtosAtivos);
+  const considerarPedidosAprovadosEstoque = options.considerarPedidosAprovadosEstoque === true;
+  const produtosCalculo = considerarPedidosAprovadosEstoque
+    ? aplicarPendenteAprovadoNoEstoqueProdutos(produtosAtivos, pendingPorProduto)
+    : produtosAtivos;
+  const { map, soltos } = agruparSkusPorHierarquiaCompra(produtosCalculo);
 
   const incluirLinha = (sugestao) => {
     if (incluirTodoCatalogo) return true;

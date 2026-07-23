@@ -415,6 +415,29 @@ function FiltrosPainel({
 
       <button
         type="button"
+        onClick={() =>
+          patchFilters({
+            considerarPedidosAprovadosEstoque: !filters.considerarPedidosAprovadosEstoque,
+          })
+        }
+        className={cn(
+          'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
+          filters.considerarPedidosAprovadosEstoque === true
+            ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
+            : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
+        )}
+      >
+        <Package className="h-4 w-4" />
+        {filters.considerarPedidosAprovadosEstoque === true
+          ? 'Estoque inclui pedidos aprovados'
+          : 'Somar pedidos aprovados ao estoque'}
+      </button>
+      <p className="text-[11px] text-muted-foreground leading-snug font-mono">
+        Pedidos aprovados financeiramente e não concluídos entram no estoque (média, ponto futuro e qtd sugerida).
+      </p>
+
+      <button
+        type="button"
         onClick={() => patchFilters({ hidePending: !filters.hidePending })}
         className={cn(
           'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
@@ -543,6 +566,13 @@ export default function FiltrosSugestaoCompra({
         key: 'ponto',
         label: 'Abaixo do ponto futuro',
         onRemove: () => patchFilters({ somenteAbaixoPontoFuturo: false }),
+      });
+    }
+    if (filters.considerarPedidosAprovadosEstoque === true) {
+      chips.push({
+        key: 'pedidos-aprovados-estoque',
+        label: 'Estoque + pedidos aprovados',
+        onRemove: () => patchFilters({ considerarPedidosAprovadosEstoque: false }),
       });
     }
     if (filters.hidePending) {
