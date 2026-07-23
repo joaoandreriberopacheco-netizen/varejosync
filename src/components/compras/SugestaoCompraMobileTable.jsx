@@ -69,11 +69,22 @@ export default function SugestaoCompraMobileTable({
   sugestaoDisplayLinha,
   onQuantidadeLinhaChange,
   renderFornecedorSelect,
+  embedded = false,
 }) {
   return (
-    <div className="rounded-xl border border-border/40 bg-card overflow-hidden max-w-full">
-      <div className="overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
-        <table className="w-full min-w-[640px] text-[11px] border-collapse">
+    <div
+      className={cn(
+        'rounded-xl border border-border/40 bg-card max-w-full min-w-0',
+        embedded ? 'h-full flex flex-col overflow-hidden' : 'overflow-hidden',
+      )}
+    >
+      <div
+        className={cn(
+          'overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch] min-w-0 max-w-full',
+          embedded && 'flex-1 min-h-0 overflow-y-auto',
+        )}
+      >
+        <table className={cn('w-full text-[11px] border-collapse', embedded ? 'min-w-[560px]' : 'min-w-[640px]')}>
           <thead>
             <tr className="bg-muted/40 text-muted-foreground border-b border-border/40">
               <th className="sticky left-0 z-20 bg-muted/95 backdrop-blur-sm w-9 px-1 py-2" />

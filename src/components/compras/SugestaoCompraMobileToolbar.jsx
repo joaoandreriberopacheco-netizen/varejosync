@@ -46,7 +46,7 @@ export default function SugestaoCompraMobileToolbar({
   const SortIcon = columnSort.direction === 'desc' ? ArrowDown : ArrowUp;
 
   return (
-    <div className="sticky top-0 z-30 -mx-0.5 px-0.5 py-2 space-y-2 bg-background/95 backdrop-blur-sm border-b border-border/30">
+    <div className="sticky top-0 z-30 -mx-0.5 px-0.5 py-2 space-y-2 bg-background/95 backdrop-blur-sm border-b border-border/30 w-full min-w-0 max-w-full overflow-hidden">
       {showRotateHint ? (
         <button
           type="button"
@@ -57,12 +57,12 @@ export default function SugestaoCompraMobileToolbar({
           <span className="text-[11px] leading-snug text-teal-900 dark:text-teal-100">
             <span className="font-medium">Compare colunas:</span>
             {' '}
-            gire o celular na horizontal ou toque aqui para ver em tabela.
+            gire o celular na horizontal ou toque aqui para abrir a tabela em tela cheia.
           </span>
         </button>
       ) : null}
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+      <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none max-w-full min-w-0">
         <div className="shrink-0 inline-flex rounded-full border border-border/30 bg-muted/40 p-0.5">
           <button
             type="button"

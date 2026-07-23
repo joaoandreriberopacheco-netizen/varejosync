@@ -32,7 +32,7 @@ export default function SearchableFilterSelect({
         variant="ghost"
         onClick={() => setOpen(true)}
         className={cn(
-          'w-full h-12 px-4 rounded-xl justify-between bg-muted dark:bg-muted text-foreground/90 dark:text-foreground hover:bg-muted dark:hover:bg-muted border-0 shadow-none',
+          'w-full min-w-0 max-w-full justify-between bg-muted dark:bg-muted text-foreground/90 dark:text-foreground hover:bg-muted dark:hover:bg-muted border-0 shadow-none',
           className
         )}
       >

@@ -9,6 +9,8 @@ import FiltrosSugestaoCompra, {
 } from '@/components/compras/FiltrosSugestaoCompra';
 import SugestaoCompraTreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components/compras/SugestaoCompraTreeGrid';
 import SugestaoCompraMobileList from '@/components/compras/SugestaoCompraMobileList';
+import SugestaoCompraMobileTable from '@/components/compras/SugestaoCompraMobileTable';
+import SugestaoCompraMobileTableSheet from '@/components/compras/SugestaoCompraMobileTableSheet';
 import SugestaoCompraMobileToolbar from '@/components/compras/SugestaoCompraMobileToolbar';
 import SugestaoCompraDesktopToolbar from '@/components/compras/SugestaoCompraDesktopToolbar';
 import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
@@ -749,7 +751,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   }
 
   return (
-    <div className={cn('space-y-4 min-w-0 max-w-full overflow-x-hidden', isMobile && 'pb-28')}>
+    <div className={cn('space-y-4 w-full min-w-0 max-w-full overflow-x-clip', isMobile && 'pb-28')}>
       <FiltrosSugestaoCompra
         filters={filters}
         onFiltersChange={setFilters}
@@ -850,7 +852,7 @@ export default function SugestaoCompra({ onStatsChange }) {
           Nenhum item corresponde aos filtros.
         </div>
       ) : (
-        <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-hidden">
+        <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-clip">
           {isMobile ? (
             <SugestaoCompraMobileToolbar
               filteredCount={filteredLinhas.length}
@@ -889,27 +891,46 @@ export default function SugestaoCompra({ onStatsChange }) {
             />
           )}
           {isMobile ? (
-            <SugestaoCompraMobileList
-              linhas={mobileLinhas}
-              viewMode={mobileView.viewMode}
-              incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
-              selectedItems={selectedItems}
-              onToggleSelected={(id, checked) =>
-                setSelectedItems((prev) =>
-                  checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
-                )
-              }
-              sugestaoDisplayLinha={sugestaoDisplayLinha}
-              onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
-              renderFornecedorSelect={(linha) =>
-                renderFornecedorSelect(
-                  linha,
-                  mobileView.viewMode === 'table'
-                    ? 'h-8 w-full min-w-[96px] rounded-md border-0 bg-muted/40 text-[10px]'
-                    : 'h-9 w-full rounded-lg border-0 bg-muted/50 text-xs',
-                )
-              }
-            />
+            mobileView.viewMode === 'table' && !mobileView.isPhone ? (
+              <div className="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
+                <SugestaoCompraMobileTable
+                  linhas={mobileLinhas}
+                  selectedItems={selectedItems}
+                  onToggleSelected={(id, checked) =>
+                    setSelectedItems((prev) =>
+                      checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+                    )
+                  }
+                  sugestaoDisplayLinha={sugestaoDisplayLinha}
+                  onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
+                  renderFornecedorSelect={(linha) =>
+                    renderFornecedorSelect(
+                      linha,
+                      'h-8 w-full min-w-0 max-w-full rounded-md border-0 bg-muted/40 text-[10px] px-2',
+                    )
+                  }
+                />
+              </div>
+            ) : mobileView.viewMode === 'cards' ? (
+              <SugestaoCompraMobileList
+                linhas={mobileLinhas}
+                incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
+                selectedItems={selectedItems}
+                onToggleSelected={(id, checked) =>
+                  setSelectedItems((prev) =>
+                    checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+                  )
+                }
+                sugestaoDisplayLinha={sugestaoDisplayLinha}
+                onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
+                renderFornecedorSelect={(linha) =>
+                  renderFornecedorSelect(
+                    linha,
+                    'h-9 w-full min-w-0 max-w-full rounded-lg border-0 bg-muted/50 text-xs px-2',
+                  )
+                }
+              />
+            ) : null
           ) : (
             <SugestaoCompraTreeGrid
               produtos={treeProdutos}
@@ -941,8 +962,31 @@ export default function SugestaoCompra({ onStatsChange }) {
         </div>
       )}
 
-      {isMobile ? (
-        <div className="fixed inset-x-0 bottom-[var(--p38-bottom-nav-total,0px)] z-40 border-t border-border/40 bg-card/95 backdrop-blur-sm px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)]">
+      {isMobile && mobileView.isPhone && mobileView.viewMode === 'table' ? (
+        <SugestaoCompraMobileTableSheet
+          open
+          onClose={() => mobileView.setViewMode('cards')}
+          isLandscape={mobileView.isLandscape}
+          linhas={mobileLinhas}
+          selectedItems={selectedItems}
+          onToggleSelected={(id, checked) =>
+            setSelectedItems((prev) =>
+              checked ? { ...prev, [id]: true } : { ...prev, [id]: undefined },
+            )
+          }
+          sugestaoDisplayLinha={sugestaoDisplayLinha}
+          onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
+          renderFornecedorSelect={(linha) =>
+            renderFornecedorSelect(
+              linha,
+              'h-8 w-full min-w-0 max-w-full rounded-md border-0 bg-muted/40 text-[10px] px-2',
+            )
+          }
+        />
+      ) : null}
+
+      {isMobile && !(mobileView.isPhone && mobileView.viewMode === 'table') ? (
+        <div className="fixed inset-x-0 bottom-[var(--p38-bottom-nav-total,0px)] z-40 max-w-[100vw] border-t border-border/40 bg-card/95 backdrop-blur-sm px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)]">
           <div className="flex gap-2 max-w-7xl mx-auto">
             <Button
               type="button"

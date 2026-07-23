@@ -411,7 +411,7 @@ export default function ComprasPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="px-4 md:px-0 pt-4">
+      <div className="px-4 md:px-0 pt-4 min-w-0 max-w-full overflow-x-clip">
         {activeTab === 'sugestoes' && <SugestaoCompra key={sugestaoKey} />}
         {activeTab === 'cotacoes' && <CotacoesManager />}
         {activeTab === 'pedidos' && <PedidosCompraTab />}

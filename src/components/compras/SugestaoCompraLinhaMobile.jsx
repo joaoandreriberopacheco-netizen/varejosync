@@ -89,7 +89,7 @@ export default function SugestaoCompraLinhaMobile({
       striped={striped}
       accent={p38AccentKeyFromTone(rowAccent(linha, selecionado))}
       className={cn(
-        '!flex-col !items-stretch gap-2 !py-2.5 !min-h-0',
+        '!flex-col !items-stretch gap-2 !py-2.5 !min-h-0 !pl-2.5 !pr-2.5 overflow-hidden max-w-full',
         selecionado && 'bg-teal-50/50 dark:bg-teal-950/20',
       )}
       onClick={() => onToggleSelecionado?.(!selecionado)}
@@ -135,21 +135,21 @@ export default function SugestaoCompraLinhaMobile({
       </div>
 
       <div
-        className="grid grid-cols-3 gap-1.5 rounded-lg bg-muted/30 dark:bg-muted/20 px-2 py-1.5"
+        className="grid grid-cols-3 gap-1 min-w-0 overflow-hidden rounded-lg bg-muted/30 dark:bg-muted/20 px-1.5 py-1.5"
         onClick={(e) => e.stopPropagation()}
       >
-        <P38MobileMetric label="Est." value={estoqueTexto} className="min-w-0 max-w-none !gap-0" />
-        <P38MobileMetric label="Méd." value={media30d} className="min-w-0 max-w-none !gap-0" />
+        <P38MobileMetric label="Est." value={estoqueTexto} className="!min-w-0 !max-w-none w-full shrink overflow-hidden" />
+        <P38MobileMetric label="Méd." value={media30d} className="!min-w-0 !max-w-none w-full shrink overflow-hidden" />
         <P38MobileMetric
           label="P.fut."
           value={pontoFuturoProjecao}
           tone={projecaoNegativa ? 'danger' : 'muted'}
-          className="min-w-0 max-w-none !gap-0"
+          className="!min-w-0 !max-w-none w-full shrink overflow-hidden"
         />
       </div>
 
       <div
-        className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-2 items-end"
+        className="grid grid-cols-2 gap-2 items-end min-w-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="min-w-0">
@@ -177,11 +177,13 @@ export default function SugestaoCompraLinhaMobile({
             ) : null}
           </div>
         </div>
-        <div className="min-w-0">
-          <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+        <div className="min-w-0 overflow-hidden">
+          <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground mb-1 truncate">
             Forn.
           </p>
-          {fornecedorSelect}
+          <div className="min-w-0 max-w-full overflow-hidden">
+            {fornecedorSelect}
+          </div>
         </div>
       </div>
     </P38MobileLine>
