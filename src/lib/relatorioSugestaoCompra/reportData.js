@@ -90,6 +90,38 @@ export function aggregateReportRowMetrics(rows = [], ctx = {}) {
     projecao: formatProjecaoGrupo(representativo, estoqueBaseTotal, mediaDiaTotal),
     qtd_sugerida: safe(formatSugestaoQuantidadeVitrine(representativo, qtdBase) || '—'),
     estoque_total: safe(formatSugestaoQuantidadeVitrine(representativo, estoqueBaseTotal) || '—'),
+    qtd_sugerida_base: qtdBase,
+    media_dia: mediaDiaTotal,
+    estoque_base: estoqueBaseTotal,
+    _produto: representativo,
+  };
+}
+
+export function buildAggregatedGroupReportRow(label, groupRows = [], ctx = {}) {
+  const metrics = aggregateReportRowMetrics(groupRows, ctx);
+  if (!metrics) return null;
+
+  const representativo = metrics._produto || {};
+  const qtdDisp = resolveSugestaoQuantidadeVitrine(representativo, metrics.qtd_sugerida_base);
+
+  return {
+    produto: safe(label),
+    tipo: safe(`Grupo · ${metrics.itens} item(ns)`),
+    estoque_total: metrics.estoque_total,
+    estoque_pedidos: '',
+    estoque: metrics.estoque_total,
+    media_30d: metrics.media_30d,
+    media_dia: metrics.media_dia,
+    estoque_base: metrics.estoque_base,
+    projecao: metrics.projecao,
+    qtd_sugerida: metrics.qtd_sugerida,
+    qtd_sugerida_base: metrics.qtd_sugerida_base,
+    unidade: safe(qtdDisp?.unidade || '—'),
+    fornecedor: '—',
+    abcd: String(groupRows[0]?.abcd || 'E').toUpperCase(),
+    grupo_hierarquia: safe(label),
+    _produto: representativo,
+    _isGroupAggregate: true,
   };
 }
 
@@ -185,11 +217,16 @@ function groupRowsByHierarquia(rows = [], ctx = {}) {
 
   return [...byGrupo.entries()]
     .sort(([a], [b]) => a.localeCompare(b, 'pt-BR'))
-    .map(([label, groupRows]) => ({
-      label,
-      metrics: aggregateReportRowMetrics(groupRows, ctx),
-      rows: groupRows,
-    }));
+    .map(([label, groupRows]) => {
+      const metrics = aggregateReportRowMetrics(groupRows, ctx);
+      const aggregatedRow = buildAggregatedGroupReportRow(label, groupRows, ctx);
+      return {
+        label,
+        metrics,
+        skuCount: groupRows.length,
+        rows: aggregatedRow ? [aggregatedRow] : [],
+      };
+    });
 }
 
 export function prepareSugestaoCompraReportSections(linhas = [], ctx = {}, options = {}) {
@@ -203,13 +240,15 @@ export function prepareSugestaoCompraReportSections(linhas = [], ctx = {}, optio
       return {
         letter,
         qtdBase,
-        blocks: [{ label: null, metrics: null, rows }],
+        skuCount: rows.length,
+        blocks: [{ label: null, metrics: null, skuCount: rows.length, rows }],
       };
     }
 
     return {
       letter,
       qtdBase,
+      skuCount: rows.length,
       blocks: groupRowsByHierarquia(rows, reportCtx),
     };
   });

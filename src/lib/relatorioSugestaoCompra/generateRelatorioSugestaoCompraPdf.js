@@ -129,33 +129,19 @@ function drawDataRow(doc, fontFamily, row, y, col) {
   return bottom + 1;
 }
 
-function drawSectionTitle(doc, fontFamily, letter, rowCount, y, col) {
+function drawSectionTitle(doc, fontFamily, letter, rowCount, y, col, { grouped = false } = {}) {
   doc.setFillColor(...ENXUTO.section);
   doc.rect(M, y - 4, col.tableRight - M, 8, 'F');
   doc.setFont(fontFamily, PDF_FONT_BOLD);
   doc.setFontSize(FONT.section);
   doc.setTextColor(...ENXUTO.black);
+  const unitLabel = grouped ? 'grupo(s)' : 'item(ns)';
   doc.text(
-    safe(`${CURVA_LABELS[letter] || `Curva ${letter}`} · ${rowCount} item(ns)`),
+    safe(`${CURVA_LABELS[letter] || `Curva ${letter}`} · ${rowCount} ${unitLabel}`),
     M + 2,
     y + 1.4,
   );
   return y + 9;
-}
-
-function drawGroupHeader(doc, fontFamily, block, y, col) {
-  doc.setFillColor(...ENXUTO.group);
-  doc.rect(M, y - 3.5, col.tableRight - M, 7.5, 'F');
-  doc.setFont(fontFamily, PDF_FONT_BOLD);
-  doc.setFontSize(FONT.group);
-  doc.setTextColor(...ENXUTO.black);
-  const metrics = block.metrics;
-  const summary = metrics
-    ? ` · méd. ${metrics.media_30d} · P.fut. ${metrics.projecao} · qtd ${metrics.qtd_sugerida}`
-    : '';
-  const labelLines = splitLines(doc, `${block.label}${summary}`, col.tableRight - M - 4, FONT.group);
-  drawTextBlock(doc, labelLines.slice(0, 2), M + 2, y + 1.2);
-  return y + 7 + (labelLines.length > 1 ? 3 : 0);
 }
 
 export async function generateRelatorioSugestaoCompraPdf(payload = {}) {
@@ -170,11 +156,9 @@ export async function generateRelatorioSugestaoCompraPdf(payload = {}) {
     }),
   } = payload;
 
-  const { totalRows, totalQtdBase, sections } = prepareSugestaoCompraReportSections(
-    linhas,
-    ctx,
-    { agruparNivel },
-  );
+  const { totalRows, totalQtdBase, sections, agruparNivel: nivelAgrupamento } =
+    prepareSugestaoCompraReportSections(linhas, ctx, { agruparNivel });
+  const grouped = Number(nivelAgrupamento) > 0;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pdfFontFamily = await registerJsPdfDin1451Fonts(doc);
@@ -219,7 +203,7 @@ export async function generateRelatorioSugestaoCompraPdf(payload = {}) {
   y += 5.5;
 
   if (Number(agruparNivel) > 0) {
-    doc.text(safe(`Agrupado por nível hierárquico ${agruparNivel} (com médias por grupo)`), M, y);
+    doc.text(safe(`Agrupado por nível hierárquico ${agruparNivel} (somente totais por grupo)`), M, y);
     y += 5.5;
   }
 
@@ -250,7 +234,7 @@ export async function generateRelatorioSugestaoCompraPdf(payload = {}) {
   for (const section of sections) {
     ensureSpace(5.5);
     doc.text(section.letter, M, y);
-    doc.text(String(section.blocks.reduce((n, b) => n + b.rows.length, 0)), M + 22, y);
+    doc.text(String(section.skuCount ?? section.blocks.reduce((n, b) => n + (b.skuCount || b.rows.length), 0)), M + 22, y);
     doc.text(String(Math.round(section.qtdBase)), M + 42, y);
     y += 4.8;
   }
@@ -262,19 +246,14 @@ export async function generateRelatorioSugestaoCompraPdf(payload = {}) {
   y += 9;
 
   for (const section of sections) {
-    const rowCount = section.blocks.reduce((n, b) => n + b.rows.length, 0);
+    const rowCount = grouped
+      ? section.blocks.length
+      : (section.skuCount ?? section.blocks.reduce((n, b) => n + b.rows.length, 0));
     ensureSpace(20);
-    y = drawSectionTitle(doc, pdfFontFamily, section.letter, rowCount, y, col);
+    y = drawSectionTitle(doc, pdfFontFamily, section.letter, rowCount, y, col, { grouped });
     startTable();
 
     for (const block of section.blocks) {
-      if (block.label) {
-        stopTable();
-        ensureSpace(16);
-        y = drawGroupHeader(doc, pdfFontFamily, block, y, col);
-        startTable();
-      }
-
       for (const row of block.rows) {
         const rowH = measureRowHeight(doc, row, pdfFontFamily, col) + 1;
         ensureSpace(rowH);

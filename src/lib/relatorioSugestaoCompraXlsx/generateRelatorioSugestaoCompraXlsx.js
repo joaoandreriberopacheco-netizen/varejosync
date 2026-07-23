@@ -29,13 +29,6 @@ function styleHeaderRow(row) {
   });
 }
 
-function styleGroupRow(row) {
-  row.eachCell((cell) => {
-    cell.font = { bold: true, color: { argb: 'FF1F2937' } };
-    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3F4F6' } };
-  });
-}
-
 function addDataSheet(ws, { title, subtitle, sections }) {
   ws.columns = DATA_COLUMNS;
   ws.addRow([safe(title)]);
@@ -45,13 +38,6 @@ function addDataSheet(ws, { title, subtitle, sections }) {
   styleHeaderRow(headerRow);
 
   for (const block of sections) {
-    if (block.label && block.metrics) {
-      const groupRow = ws.addRow({
-        produto: safe(`${block.label} · méd. ${block.metrics.media_30d} · P.fut. ${block.metrics.projecao} · qtd ${block.metrics.qtd_sugerida}`),
-      });
-      styleGroupRow(groupRow);
-    }
-
     for (const row of block.rows) {
       ws.addRow({
         produto: row.produto,
@@ -104,18 +90,20 @@ export async function generateRelatorioSugestaoCompraXlsx(payload = {}) {
   styleHeaderRow(resumoHeader);
 
   for (const section of sections) {
-    const count = section.blocks.reduce((n, b) => n + b.rows.length, 0);
+    const count = section.skuCount ?? section.blocks.reduce((n, b) => n + (b.skuCount || b.rows.length), 0);
     resumo.addRow({ curva: section.letter, itens: count, qtd_base: section.qtdBase });
   }
   resumo.addRow({ curva: 'TOTAL', itens: totalRows, qtd_base: totalQtdBase });
 
   for (const section of sections) {
-    const count = section.blocks.reduce((n, b) => n + b.rows.length, 0);
+    const skuCount = section.skuCount ?? section.blocks.reduce((n, b) => n + (b.skuCount || b.rows.length), 0);
+    const detailCount = nivel ? section.blocks.length : skuCount;
+    const unitLabel = nivel ? 'grupo(s)' : 'item(ns)';
     const ws = wb.addWorksheet(`Curva_${section.letter}`, { views: [{ state: 'frozen', ySplit: 3 }] });
     addDataSheet(ws, {
-      title: `${CURVA_LABELS[section.letter] || `Curva ${section.letter}`} · ${count} item(ns)`,
+      title: `${CURVA_LABELS[section.letter] || `Curva ${section.letter}`} · ${detailCount} ${unitLabel}`,
       subtitle: safe(
-        `Estoque separado de físico+pedidos${filtersSummary ? ` · ${filtersSummary}` : ''}`,
+        `${nivel ? `Agrupado nível ${nivel} · somente totais por grupo` : 'Estoque separado de físico+pedidos'}${filtersSummary ? ` · ${filtersSummary}` : ''}`,
       ),
       sections: section.blocks,
     });
