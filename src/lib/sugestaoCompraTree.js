@@ -1,8 +1,15 @@
-import { collectSkus } from '@/components/produtos/treegrid/useTreeGrid';
+import { collectSkus, aggregateEstoqueDisplay } from '@/components/produtos/treegrid/useTreeGrid';
 import { grupoCompraHierarquiaKey } from '@/lib/calcularSugestaoCompraHierarquia';
 import { resolveProdutoAbcdClasse } from '@/lib/catalogAbcdEnrichment';
 import { enrichProdutosComIep } from '@/lib/calcularIepProdutos';
 import { compareProdutosForCatalogSort } from '@/lib/catalogProdutoPerformance';
+import {
+  aggregateCatalogSalesVelocity,
+  formatCatalogMedia30d,
+} from '@/lib/catalogSalesVelocity';
+import {
+  buildProjecaoEstoque30d,
+} from '@/lib/calcularSugestaoCompraVelocidade';
 
 /** Ordena linhas de sugestão (representante = produto da linha). */
 export function sortSugestaoCompraLinhas(linhas = [], sortOrder = 'abcd_desc') {
@@ -69,11 +76,12 @@ export function resolveSugestaoLinhaForTreeRow(row, lookup, { agruparHierarquia 
   return null;
 }
 
-export function countDescendantSugestaoLinhas(row, lookup, { agruparHierarquia = true } = {}) {
-  if (!row?.node || !lookup) return 0;
+/** Linhas de sugestão únicas abaixo de um nó de grupo (sem duplicar membros de família). */
+export function collectDescendantSugestaoLinhas(row, lookup, { agruparHierarquia = true } = {}) {
+  if (!row?.node || !lookup) return [];
   const skus = collectSkus(row.node);
   const seen = new Set();
-  let count = 0;
+  const linhas = [];
 
   for (const sku of skus) {
     const entry = lookup.bySkuId.get(sku.id);
@@ -83,15 +91,85 @@ export function countDescendantSugestaoLinhas(row, lookup, { agruparHierarquia =
       const grupo = key ? lookup.byGrupoKey.get(key) : null;
       if (grupo && !seen.has(grupo.id)) {
         seen.add(grupo.id);
-        count += 1;
+        linhas.push(grupo);
       }
       continue;
     }
     seen.add(entry.linha.id);
-    count += 1;
+    linhas.push(entry.linha);
   }
 
-  return count;
+  return linhas;
+}
+
+export function countDescendantSugestaoLinhas(row, lookup, options = {}) {
+  return collectDescendantSugestaoLinhas(row, lookup, options).length;
+}
+
+function skusComEstoqueSugestao(linhas = []) {
+  const out = [];
+  const seen = new Set();
+  for (const linha of linhas) {
+    for (const sku of linha?.skus || []) {
+      if (!sku?.id || seen.has(sku.id)) continue;
+      seen.add(sku.id);
+      const estoque = Number(linha?.sugestao?.estoque_atual);
+      out.push({
+        ...sku,
+        estoque_atual: Number.isFinite(estoque) ? estoque : Number(sku.estoque_atual) || 0,
+      });
+    }
+  }
+  return out;
+}
+
+/** Totais agregados para linhas de grupo da árvore (mesma ideia do catálogo). */
+export function aggregateSugestaoTreeGroupMetrics(row, lookup, options = {}) {
+  const linhas = collectDescendantSugestaoLinhas(row, lookup, options);
+  if (!linhas.length) return null;
+
+  const skusEstoque = skusComEstoqueSugestao(linhas);
+  const estoqueDisp = aggregateEstoqueDisplay(skusEstoque);
+  const skus = skusEstoque;
+  const velocityAgg = aggregateCatalogSalesVelocity(skus, options.salesVelocityMap || {});
+  const media30dTexto = formatCatalogMedia30d(velocityAgg, { tilde: true });
+
+  const estoqueTotal = linhas.reduce(
+    (sum, linha) => sum + (Number(linha?.sugestao?.estoque_atual) || 0),
+    0,
+  );
+  const mediaDiaTotal = linhas.reduce(
+    (sum, linha) => sum + (Number(linha?.sugestao?.media_dia) || 0),
+    0,
+  );
+  const representativo = linhas[0]?.produto || skus[0];
+  const projecao = representativo
+    ? buildProjecaoEstoque30d(representativo, estoqueTotal, mediaDiaTotal)
+    : { projecao_estoque_30d_base: estoqueTotal - mediaDiaTotal * 30 };
+
+  const qtdSugeridaBase = linhas.reduce(
+    (sum, linha) => sum + (Number(linha?.sugestao?.quantidade_sugerida_base) || 0),
+    0,
+  );
+
+  return {
+    estoqueDisp,
+    media30dTexto,
+    projecao,
+    qtdSugeridaBase,
+  };
+}
+
+export function formatSugestaoAggregateEstoque(disp, fmtN) {
+  if (!disp || disp.mode === 'empty') return null;
+  if (disp.mode === 'mixed') {
+    return {
+      primary: fmtN(disp.quantidade),
+      secondary: 'mistura',
+    };
+  }
+  const suffix = disp.sigla ? ` ${disp.sigla}` : '';
+  return { primary: `${fmtN(disp.quantidade)}${suffix}`, secondary: null };
 }
 
 export function getLinhaAbcdLetter(linha, fallback = '') {

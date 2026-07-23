@@ -449,6 +449,11 @@ export default function SugestaoCompra({ onStatsChange }) {
     [filteredLinhas],
   );
 
+  const salesVelocityMap = useMemo(
+    () => calcContextRef.current.salesVelocityMap || {},
+    [linhas],
+  );
+
   const activeFilterCount = useMemo(
     () => countActiveSugestaoCompraFilters(filters),
     [filters],
@@ -872,6 +877,7 @@ export default function SugestaoCompra({ onStatsChange }) {
               sortCtx={sortCtx}
               groupByCategory={groupByCategory}
               masterLevel={treeLevel === TREE_GRID_EXPAND_ALL_LEVEL ? TREE_GRID_EXPAND_ALL_LEVEL : treeLevel}
+              salesVelocityMap={salesVelocityMap}
               selectedItems={selectedItems}
               onToggleSelected={(id, checked) =>
                 setSelectedItems((prev) =>

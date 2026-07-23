@@ -16,7 +16,9 @@ import { useVirtualRows } from '@/hooks/useVirtualRows';
 import { cn } from '@/components/utils';
 import { p38Table } from '@/lib/p38TableSurfaces';
 import {
+  aggregateSugestaoTreeGroupMetrics,
   countDescendantSugestaoLinhas,
+  formatSugestaoAggregateEstoque,
   getLinhaAbcdLetter,
   resolveSugestaoLinhaForTreeRow,
 } from '@/lib/sugestaoCompraTree';
@@ -244,22 +246,81 @@ function QtdSugeridaInput({ linha, disp, onQuantidadeLinhaChange }) {
 function SugestaoDataCells({
   linha,
   row,
+  linhaLookup,
+  agruparHierarquia,
+  salesVelocityMap,
   disp,
   onQuantidadeLinhaChange,
   renderFornecedorSelect,
 }) {
   if (!linha) {
     const groupAbcd = row?.abcdDominante || '';
+    const agg = row?.type === 'group' && row?.node
+      ? aggregateSugestaoTreeGroupMetrics(row, linhaLookup, {
+        agruparHierarquia,
+        salesVelocityMap,
+      })
+      : null;
+
+    if (!agg) {
+      return (
+        <>
+          <td className="text-center py-2 px-2 whitespace-nowrap overflow-hidden">
+            {groupAbcd ? <AbcdBadge letter={groupAbcd} /> : <span className="text-xs text-muted-foreground">—</span>}
+          </td>
+          <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
+          <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
+          <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
+          <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
+          <td className="py-2 px-2 overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
+        </>
+      );
+    }
+
+    const estoqueFmt = formatSugestaoAggregateEstoque(agg.estoqueDisp, fmtN);
+    const pontoFuturoProjecao = sugestaoProjecaoEstoque30dTexto(agg.projecao);
+    const projecaoNegativa = sugestaoProjecaoEstoque30dNegativa(agg.projecao);
+
     return (
       <>
         <td className="text-center py-2 px-2 whitespace-nowrap overflow-hidden">
           {groupAbcd ? <AbcdBadge letter={groupAbcd} /> : <span className="text-xs text-muted-foreground">—</span>}
         </td>
-        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
-        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
-        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
-        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
-        <td className="py-2 px-2 overflow-hidden"><span className="text-xs text-muted-foreground">—</span></td>
+        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
+          {estoqueFmt ? (
+            <span className="text-xs text-muted-foreground tabular-nums inline-flex flex-col items-end leading-tight">
+              <span>{estoqueFmt.primary}</span>
+              {estoqueFmt.secondary ? (
+                <span className="text-[10px] text-muted-foreground">{estoqueFmt.secondary}</span>
+              ) : null}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )}
+        </td>
+        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {agg.media30dTexto || '—'}
+          </span>
+        </td>
+        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
+          <span className={cn(
+            'text-xs tabular-nums',
+            projecaoNegativa
+              ? 'text-rose-700 dark:text-rose-400 font-medium'
+              : 'text-muted-foreground',
+          )}>
+            {pontoFuturoProjecao}
+          </span>
+        </td>
+        <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {agg.qtdSugeridaBase > 0 ? `~${fmtN(agg.qtdSugeridaBase)}` : '—'}
+          </span>
+        </td>
+        <td className="py-2 px-2 overflow-hidden">
+          <span className="text-xs text-muted-foreground">—</span>
+        </td>
       </>
     );
   }
@@ -317,6 +378,7 @@ export default function SugestaoCompraTreeGrid({
   sortCtx,
   groupByCategory = false,
   masterLevel = 1,
+  salesVelocityMap = {},
   selectedItems = {},
   onToggleSelected,
   allVisibleSelected = false,
@@ -578,6 +640,9 @@ export default function SugestaoCompraTreeGrid({
                       <SugestaoDataCells
                         linha={linha}
                         row={row}
+                        linhaLookup={linhaLookup}
+                        agruparHierarquia={agruparHierarquia}
+                        salesVelocityMap={salesVelocityMap}
                         disp={linha ? sugestaoDisplayLinha?.(linha) : null}
                         onQuantidadeLinhaChange={onQuantidadeLinhaChange}
                         renderFornecedorSelect={renderFornecedorSelect}
