@@ -11,7 +11,7 @@ import SugestaoCompraTreeGrid, { TREE_GRID_EXPAND_ALL_LEVEL } from '@/components
 import SugestaoCompraMobileCatalog, { SugestaoCompraMobileScrollShell } from '@/components/compras/SugestaoCompraMobileCatalog';
 import SugestaoCompraMobileToolbar from '@/components/compras/SugestaoCompraMobileToolbar';
 import SugestaoCompraDesktopToolbar from '@/components/compras/SugestaoCompraDesktopToolbar';
-import { ShoppingCart, RefreshCw, CheckCircle, FileText, FileSpreadsheet } from 'lucide-react';
+import { ShoppingCart, RefreshCw, CheckCircle, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { createPageUrl } from '@/components/utils';
 import { cn } from '@/components/utils';
@@ -949,6 +949,8 @@ export default function SugestaoCompra({ onStatsChange }) {
         allTags={allTags}
         unidadesVitrine={unidadesVitrine}
         onLimparFiltros={limparFiltros}
+        drawerOpen={filtersDrawerOpen}
+        onDrawerOpenChange={setFiltersDrawerOpen}
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -960,28 +962,6 @@ export default function SugestaoCompra({ onStatsChange }) {
           {selectedCount > 0 ? ` · ${selectedCount} selecionada(s)` : ''}
         </p>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-11 w-11 rounded-2xl bg-muted shrink-0"
-            onClick={loadData}
-            disabled={isLoading}
-            title="Atualizar lista"
-          >
-            <RefreshCw className={`h-4 w-4 text-muted-foreground ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-11 rounded-2xl gap-1.5"
-            disabled={filteredLinhas.length === 0 || gerandoRelatorio}
-            onClick={handleGerarRelatorio}
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            {gerandoRelatorio ? 'Gerando...' : 'Relatório'}
-          </Button>
           <Button
             type="button"
             variant="outline"
@@ -1022,8 +1002,16 @@ export default function SugestaoCompra({ onStatsChange }) {
             onSortColumn={handleMobileSortColumn}
             groupByCategory={groupByCategory}
             onGroupByCategoryChange={handleGroupByCategoryChange}
+            somenteAbaixoPontoFuturo={filters.somenteAbaixoPontoFuturo === true}
+            onToggleSomenteAbaixo={handleToggleSomenteAbaixo}
             considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
-            onConsiderarPedidosAprovadosEstoqueChange={handleToggleConsiderarPedidos}
+            onToggleConsiderarPedidos={handleToggleConsiderarPedidos}
+            onGerarRelatorio={handleGerarRelatorio}
+            gerandoRelatorio={gerandoRelatorio}
+            activeFilterCount={activeFilterCount}
+            onOpenFilters={() => setFiltersDrawerOpen(true)}
+            onRefresh={loadData}
+            isLoading={isLoading}
             treeLevel={treeLevel}
             onTreeLevelChange={handleTreeLevelChange}
           />
