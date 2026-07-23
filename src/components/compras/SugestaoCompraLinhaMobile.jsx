@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Layers, Truck } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/components/utils';
 import {
   P38MobileLine,
   P38MobileMetric,
@@ -24,7 +25,7 @@ function AbcdBadge({ letter }) {
     : value === 'E' ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300'
     : 'bg-muted text-muted-foreground';
   return (
-    <span className={cn('inline-flex h-6 min-w-6 items-center justify-center rounded px-1.5 text-[10px] font-bold shrink-0', tone)}>
+    <span className={cn('inline-flex h-5 min-w-5 items-center justify-center rounded px-1 text-[9px] font-bold shrink-0', tone)}>
       {value}
     </span>
   );
@@ -41,7 +42,6 @@ function rowAccent(linha, selecionado) {
   if (ponto > 0 && estoque < ponto) return 'warning';
   return 'muted';
 }
-
 
 export default function SugestaoCompraLinhaMobile({
   linha,
@@ -85,45 +85,45 @@ export default function SugestaoCompraLinhaMobile({
       striped={striped}
       accent={p38AccentKeyFromTone(rowAccent(linha, selecionado))}
       className={cn(
-        '!flex-col !items-stretch gap-3 !py-4 !min-h-0',
+        '!flex-col !items-stretch gap-2 !py-2.5 !min-h-0',
         selecionado && 'bg-teal-50/50 dark:bg-teal-950/20',
       )}
       onClick={() => onToggleSelecionado?.(!selecionado)}
     >
-      <div className="flex items-start gap-3 w-full min-w-0">
+      <div className="flex items-start gap-2 w-full min-w-0">
         <div
-          className="flex items-center justify-center shrink-0 min-h-[44px] min-w-[44px] -ml-2"
+          className="flex items-center justify-center shrink-0 min-h-[40px] min-w-[40px] -ml-1.5"
           onClick={(e) => e.stopPropagation()}
         >
           <Checkbox
             checked={selecionado}
             onCheckedChange={(c) => onToggleSelecionado?.(!!c)}
-            className="h-5 w-5"
+            className="h-4 w-4"
           />
         </div>
-        <div className="flex-1 min-w-0 pt-0.5">
-          <div className="flex flex-wrap items-start gap-2 min-w-0">
-            <h3 className="flex-1 min-w-0 text-sm font-semibold uppercase leading-snug break-words text-foreground/90">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start gap-1.5 min-w-0">
+            <h3 className="flex-1 min-w-0 text-xs font-semibold uppercase leading-snug line-clamp-2 text-foreground/90">
               {linha.label}
             </h3>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0 pt-0.5">
               <AbcdBadge letter={abcd} />
               {isGrupo ? (
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  <Layers className="w-3 h-3" />
+                <span className="inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-muted-foreground">
+                  <Layers className="w-2.5 h-2.5" />
                   {linha.skus?.length ?? 0}
                 </span>
               ) : null}
             </div>
           </div>
           {!isGrupo && produto?.codigo_interno ? (
-            <p className="mt-1 text-[11px] font-mono text-muted-foreground break-all leading-tight">
+            <p className="mt-0.5 text-[10px] font-mono text-muted-foreground truncate">
               {produto.codigo_interno}
             </p>
           ) : null}
           {linha.quantidade_pendente > 0 ? (
-            <p className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Truck className="w-3.5 h-3.5 shrink-0" />
+            <p className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Truck className="w-3 h-3 shrink-0" />
               {formatSugestaoQuantidadeVitrine(produto, linha.quantidade_pendente) || `${linha.quantidade_pendente}`} em trânsito
             </p>
           ) : null}
@@ -131,25 +131,28 @@ export default function SugestaoCompraLinhaMobile({
       </div>
 
       <div
-        className="grid grid-cols-3 gap-2 rounded-xl bg-muted/35 dark:bg-muted/25 p-2.5"
+        className="grid grid-cols-3 gap-1.5 rounded-lg bg-muted/30 dark:bg-muted/20 px-2 py-1.5"
         onClick={(e) => e.stopPropagation()}
       >
-        <P38MobileMetric label="Estoque" value={estoqueTexto} className="min-w-0 max-w-none" />
-        <P38MobileMetric label="Méd. 30d" value={media30d} className="min-w-0 max-w-none" />
+        <P38MobileMetric label="Est." value={estoqueTexto} className="min-w-0 max-w-none !gap-0" />
+        <P38MobileMetric label="Méd." value={media30d} className="min-w-0 max-w-none !gap-0" />
         <P38MobileMetric
-          label="P. futuro"
+          label="P.fut."
           value={pontoFuturoProjecao}
           tone={projecaoNegativa ? 'danger' : 'muted'}
-          className="min-w-0 max-w-none"
+          className="min-w-0 max-w-none !gap-0"
         />
       </div>
 
-      <div className="space-y-2.5" onClick={(e) => e.stopPropagation()}>
-        <div className="rounded-xl border border-border/30 bg-card/80 dark:bg-card/40 px-3 py-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-            Quantidade sugerida
+      <div
+        className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-2 items-end"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="min-w-0">
+          <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+            Qtd
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Input
               type="text"
               inputMode="decimal"
@@ -163,17 +166,16 @@ export default function SugestaoCompraLinhaMobile({
                   e.currentTarget.blur();
                 }
               }}
-              className="h-11 flex-1 min-w-0 px-3 text-right text-base tabular-nums font-medium"
+              className="h-9 flex-1 min-w-0 px-2 text-right text-sm tabular-nums font-medium"
             />
             {unidade ? (
-              <span className="text-sm text-muted-foreground shrink-0 min-w-[2rem]">{unidade}</span>
+              <span className="text-[10px] text-muted-foreground shrink-0 w-7 truncate">{unidade}</span>
             ) : null}
           </div>
         </div>
-
-        <div className="rounded-xl border border-border/30 bg-card/80 dark:bg-card/40 px-3 py-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-            Fornecedor
+        <div className="min-w-0">
+          <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+            Forn.
           </p>
           {fornecedorSelect}
         </div>

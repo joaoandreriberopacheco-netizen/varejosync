@@ -1,6 +1,7 @@
 import React from 'react';
 import { P38MobileLineList } from '@/components/ui/p38-mobile-line';
 import SugestaoCompraLinhaMobile from '@/components/compras/SugestaoCompraLinhaMobile';
+import SugestaoCompraMobileTable from '@/components/compras/SugestaoCompraMobileTable';
 
 export default function SugestaoCompraMobileList({
   linhas = [],
@@ -9,9 +10,23 @@ export default function SugestaoCompraMobileList({
   sugestaoDisplayLinha,
   onQuantidadeLinhaChange,
   renderFornecedorSelect,
+  viewMode = 'cards',
 }) {
+  if (viewMode === 'table') {
+    return (
+      <SugestaoCompraMobileTable
+        linhas={linhas}
+        selectedItems={selectedItems}
+        onToggleSelected={onToggleSelected}
+        sugestaoDisplayLinha={sugestaoDisplayLinha}
+        onQuantidadeLinhaChange={onQuantidadeLinhaChange}
+        renderFornecedorSelect={renderFornecedorSelect}
+      />
+    );
+  }
+
   return (
-    <P38MobileLineList allViewports className="rounded-2xl border border-border/40 overflow-hidden bg-card divide-y divide-border/40">
+    <P38MobileLineList allViewports className="rounded-xl border border-border/40 overflow-hidden bg-card divide-y divide-border/40 max-w-full">
       {linhas.map((linha, index) => (
         <SugestaoCompraLinhaMobile
           key={linha.id}

@@ -17,6 +17,7 @@ import { createPageUrl } from '@/components/utils';
 import { dataHoje } from '@/components/utils/dateUtils';
 import { cn } from '@/components/utils';
 import { useCompactShell } from '@/hooks/use-breakpoint';
+import { useSugestaoCompraMobileView } from '@/hooks/useSugestaoCompraMobileView';
 import { buildSnapshotExibicaoComercial, resolveCommercialDisplay } from '@/lib/productUnits';
 import {
   buildLinhasSugestaoCompra,
@@ -133,6 +134,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useCompactShell();
+  const mobileView = useSugestaoCompraMobileView();
   const calcContextRef = useRef({
     pedidos: [],
     movsPorProduto: {},
@@ -720,7 +722,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   }
 
   return (
-    <div className={cn('space-y-4 min-w-0', isMobile && 'pb-28')}>
+    <div className={cn('space-y-4 min-w-0 max-w-full overflow-x-hidden', isMobile && 'pb-28')}>
       <FiltrosSugestaoCompra
         filters={filters}
         onFiltersChange={setFilters}
@@ -821,7 +823,7 @@ export default function SugestaoCompra({ onStatsChange }) {
           Nenhum item corresponde aos filtros.
         </div>
       ) : (
-        <div className="min-w-0 w-full space-y-3">
+        <div className="min-w-0 w-full max-w-full space-y-2 overflow-x-hidden">
           {isMobile ? (
             <SugestaoCompraMobileToolbar
               filteredCount={filteredLinhas.length}
@@ -836,6 +838,9 @@ export default function SugestaoCompra({ onStatsChange }) {
               onToggleSomenteAbaixo={handleToggleSomenteAbaixo}
               onRefresh={loadData}
               isLoading={isLoading}
+              viewMode={mobileView.viewMode}
+              onViewModeChange={mobileView.setViewMode}
+              showRotateHint={mobileView.showRotateHint}
             />
           ) : (
             <SugestaoCompraDesktopToolbar
@@ -855,6 +860,7 @@ export default function SugestaoCompra({ onStatsChange }) {
           {isMobile ? (
             <SugestaoCompraMobileList
               linhas={mobileLinhas}
+              viewMode={mobileView.viewMode}
               selectedItems={selectedItems}
               onToggleSelected={(id, checked) =>
                 setSelectedItems((prev) =>
@@ -864,7 +870,12 @@ export default function SugestaoCompra({ onStatsChange }) {
               sugestaoDisplayLinha={sugestaoDisplayLinha}
               onQuantidadeLinhaChange={handleQuantidadeLinhaChange}
               renderFornecedorSelect={(linha) =>
-                renderFornecedorSelect(linha, 'h-11 w-full rounded-xl border-0 bg-muted/60 text-sm')
+                renderFornecedorSelect(
+                  linha,
+                  mobileView.viewMode === 'table'
+                    ? 'h-8 w-full min-w-[96px] rounded-md border-0 bg-muted/40 text-[10px]'
+                    : 'h-9 w-full rounded-lg border-0 bg-muted/50 text-xs',
+                )
               }
             />
           ) : (
