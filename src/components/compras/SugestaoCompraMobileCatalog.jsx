@@ -117,8 +117,13 @@ function SugestaoCompraMobileColumnHeader({ className = '', invisible = false, p
   );
 }
 
+function stopRowToggle(e) {
+  e.stopPropagation();
+}
+
 function QtdInput({ linha, disp, onQuantidadeLinhaChange }) {
   const qty = disp?.quantidade ?? 0;
+  const unidade = disp?.unidade || '';
   const [localQty, setLocalQty] = useState(() => String(qty));
 
   useEffect(() => {
@@ -135,23 +140,35 @@ function QtdInput({ linha, disp, onQuantidadeLinhaChange }) {
   };
 
   return (
-    <Input
-      type="text"
-      inputMode="decimal"
-      value={localQty}
-      onChange={(e) => setLocalQty(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          commit();
-          e.currentTarget.blur();
-        }
-      }}
-      onClick={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-      className="h-auto min-h-0 w-full border-0 bg-transparent p-0 text-right shadow-none focus-visible:ring-0 font-din-1451 text-base font-light tabular-nums leading-none text-foreground"
-    />
+    <div
+      className="flex items-center justify-end gap-0.5 min-w-0"
+      onClick={stopRowToggle}
+      onPointerDown={stopRowToggle}
+      onTouchStart={stopRowToggle}
+    >
+      <Input
+        type="text"
+        inputMode="decimal"
+        aria-label={`Quantidade sugerida para ${linha.label}`}
+        value={localQty}
+        onChange={(e) => setLocalQty(e.target.value)}
+        onBlur={commit}
+        onFocus={stopRowToggle}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+            e.currentTarget.blur();
+          }
+        }}
+        className="h-9 min-w-[3rem] w-full max-w-[4.75rem] px-1.5 text-right text-base tabular-nums font-medium rounded-md border border-border/50 bg-muted/60 dark:bg-muted/40 shadow-none focus-visible:ring-2 focus-visible:ring-teal-400/80"
+      />
+      {unidade ? (
+        <span className="text-[9px] uppercase text-muted-foreground shrink-0 w-6 truncate text-right">
+          {unidade}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
@@ -192,7 +209,7 @@ function SugestaoCatalogRow({
       tabIndex={0}
       className={cn(
         p38Table.catalogMobileRow,
-        'relative flex min-w-0 max-w-full touch-pan-y select-none py-4 active:bg-secondary/20',
+        'relative flex min-w-0 max-w-full touch-pan-y py-4 active:bg-secondary/20',
         selecionado && 'bg-teal-50/40 dark:bg-teal-950/20',
       )}
       onClick={() => onToggleSelecionado?.(!selecionado)}
@@ -250,7 +267,7 @@ function SugestaoCatalogRow({
             >
               {pontoFuturo}
             </p>
-            <div className="min-w-0 overflow-hidden" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+            <div className="min-w-0 overflow-hidden">
               <QtdInput
                 linha={linha}
                 disp={disp}
@@ -261,8 +278,9 @@ function SugestaoCatalogRow({
 
           <div
             className="mt-2 min-w-0 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
+            onClick={stopRowToggle}
+            onPointerDown={stopRowToggle}
+            onTouchStart={stopRowToggle}
           >
             {fornecedorSelect}
           </div>
@@ -271,8 +289,9 @@ function SugestaoCatalogRow({
 
       <div
         className="flex w-10 shrink-0 items-start justify-center pt-4 pr-2"
-        onClick={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
+        onClick={stopRowToggle}
+        onPointerDown={stopRowToggle}
+        onTouchStart={stopRowToggle}
       >
         <Checkbox
           checked={selecionado}
