@@ -430,9 +430,6 @@ function FiltrosPainel({
         <Package className="h-4 w-4" />
         INCLUIR PEDIDOS
       </button>
-      <p className="text-[11px] text-muted-foreground leading-snug font-mono">
-        Pedidos aprovados financeiramente e não concluídos entram no estoque (média, ponto futuro e qtd sugerida).
-      </p>
 
       <button
         type="button"

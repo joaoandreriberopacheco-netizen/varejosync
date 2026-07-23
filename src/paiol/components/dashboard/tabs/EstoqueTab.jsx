@@ -51,6 +51,7 @@ const QUALITY_LABELS = {
   B: 'Curva B',
   C: 'Curva C',
   D: 'Curva D',
+  E: 'Curva E',
 };
 
 const QUALITY_COLORS = {
@@ -58,6 +59,7 @@ const QUALITY_COLORS = {
   B: '#7f9850',
   C: '#6f82a1',
   D: '#8f6f63',
+  E: '#64748b',
 };
 
 const SUPPLY_RING_COLORS = {
@@ -516,12 +518,14 @@ export default function EstoqueTab() {
           B: 0,
           C: 0,
           D: 0,
+          E: 0,
         };
         const qualityTransitRawAccumulator = {
           A: 0,
           B: 0,
           C: 0,
           D: 0,
+          E: 0,
         };
 
         let estoqueFisico = 0;

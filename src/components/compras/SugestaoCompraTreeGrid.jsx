@@ -265,8 +265,6 @@ function SugestaoDataCells({
 
   const sugestao = linha.sugestao;
   const estoque = sugestao?.estoque_atual ?? linha.produto?.estoque_atual ?? 0;
-  const estoquePedidosAprovados = Number(sugestao?.estoque_pedidos_aprovados) || 0;
-  const estoqueFisico = sugestao?.estoque_fisico;
   const media30d = sugestao?.media_30d_texto;
   const pontoFuturoProjecao = pontoFuturoProjecaoTexto(sugestao);
   const abcd = getLinhaAbcdLetter(linha, row?.abcdDominante);
@@ -277,17 +275,7 @@ function SugestaoDataCells({
         <AbcdBadge letter={abcd} />
       </td>
       <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
-        {estoquePedidosAprovados > 0 && Number.isFinite(estoqueFisico) ? (
-          <span
-            className="text-xs text-muted-foreground tabular-nums"
-            title={`${fmtN(estoqueFisico)} físico + ${fmtN(estoquePedidosAprovados)} em pedido aprovado`}
-          >
-            {fmtN(estoque)}
-            <span className="text-[10px] text-teal-700 dark:text-teal-400 ml-0.5">+PC</span>
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground tabular-nums">{fmtN(estoque)}</span>
-        )}
+        <span className="text-xs text-muted-foreground tabular-nums">{fmtN(estoque)}</span>
       </td>
       <td className="text-right py-2 px-2 whitespace-nowrap overflow-hidden">
         <span className="text-xs text-muted-foreground tabular-nums">

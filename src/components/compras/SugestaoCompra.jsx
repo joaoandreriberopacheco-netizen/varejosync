@@ -39,7 +39,7 @@ import {
   sortSugestaoCompraLinhasByColumn,
 } from '@/lib/sugestaoCompraColumnSort';
 import { buildUltimoFornecedorPorProduto } from '@/lib/buildUltimoFornecedorPorProduto';
-import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
+import { buildPendenteAprovadoFinanceiroPorProduto, buildRecebidosPorPedidoProdutoFromEmbarques } from '@/lib/sugestaoCompraEstoquePendente';
 import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
@@ -311,13 +311,18 @@ export default function SugestaoCompra({ onStatsChange }) {
         status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente', 'Aprovado', 'Despachado', 'Em Recepção'],
       }).catch(() => []),
       base44.entities.PedidoCompra.list('-created_date', 250).catch(() => []),
-    ]).then(([pedidosAbertos, pedidosRecentes]) => {
+      base44.entities.Embarque.list('-created_date', 600).catch(() => []),
+    ]).then(([pedidosAbertos, pedidosRecentes, embarquesCompra]) => {
       const pedidosPorId = new Map();
       [...pedidosAbertos, ...pedidosRecentes].forEach((p) => {
         if (p?.id) pedidosPorId.set(p.id, p);
       });
       const pedidosCompra = [...pedidosPorId.values()];
-      const pendingMap = buildPendenteAprovadoFinanceiroPorProduto(pedidosCompra);
+      const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(embarquesCompra);
+      const pendingMap = buildPendenteAprovadoFinanceiroPorProduto(
+        pedidosCompra,
+        recebidosPorPedidoProduto,
+      );
       const ultimoFornecedorPorProduto = buildUltimoFornecedorPorProduto(pedidosRecentes);
       calcContextRef.current = {
         ...calcContextRef.current,
