@@ -1,17 +1,14 @@
 import ExcelJS from 'exceljs';
 import { normalizePdfText } from '@/lib/jspdfNotoFont';
-import { getLinhaAbcdLetter } from '@/lib/sugestaoCompraTree';
 import {
-  formatSugestaoEstoqueLinha,
-  formatSugestaoQuantidadeVitrine,
-  resolveSugestaoQuantidadeVitrine,
-} from '@/lib/sugestaoCompraVitrineDisplay';
+  CURVA_LABELS,
+  prepareSugestaoCompraReportGroups,
+  summarizeSugestaoCompraReportGroups,
+} from '@/lib/relatorioSugestaoCompra/reportData';
 
 const safe = (text) => normalizePdfText(text);
 
 export const SUGESTAO_COMPRA_XLSX_BUILD = 'sugestao_compra_abcd_xlsx_v1';
-
-const CURVA_ORDER = ['A', 'B', 'C', 'D', 'E'];
 
 const DATA_COLUMNS = [
   { header: 'PRODUTO', key: 'produto', width: 42 },
@@ -23,70 +20,6 @@ const DATA_COLUMNS = [
   { header: 'UN', key: 'unidade', width: 8 },
   { header: 'FORNECEDOR', key: 'fornecedor', width: 28 },
 ];
-
-function resolveFornecedorNome(linha, ctx = {}) {
-  const id = typeof ctx.resolveFornecedorId === 'function' ? ctx.resolveFornecedorId(linha) : '';
-  if (!id) return '—';
-  const fromMap = ctx.fornecedorNomeById?.[id];
-  if (fromMap) return fromMap;
-  const fromList = (ctx.fornecedores || []).find((f) => f.id === id);
-  return fromList?.nome || id;
-}
-
-function resolveQuantidadeBase(linha, ctx = {}) {
-  if (typeof ctx.quantidadeBaseLinha === 'function') {
-    return Number(ctx.quantidadeBaseLinha(linha)) || 0;
-  }
-  return Number(linha?.sugestao?.quantidade_sugerida_base) || 0;
-}
-
-export function mapSugestaoCompraLinhaToReportRow(linha, ctx = {}) {
-  const produto = linha?.produto || linha?.skus?.[0] || {};
-  const sugestao = linha?.sugestao || {};
-  const incluirPedidos = ctx.incluirPedidosAprovados === true;
-
-  const estoqueFmt = formatSugestaoEstoqueLinha(produto, sugestao, {
-    incluirPedidosAprovados: incluirPedidos,
-    quantidadePendente: linha?.quantidade_pendente,
-  });
-
-  const qtdBase = resolveQuantidadeBase(linha, ctx);
-  const qtdDisp = resolveSugestaoQuantidadeVitrine(produto, qtdBase);
-  const qtdFmt = formatSugestaoQuantidadeVitrine(produto, qtdBase);
-
-  const estoqueTexto = estoqueFmt.secondary
-    ? `${estoqueFmt.primary} (${estoqueFmt.secondary})`
-    : estoqueFmt.primary;
-
-  return {
-    produto: safe(linha?.label || produto?.nome || '—'),
-    tipo: linha?.tipo === 'grupo' ? 'Família' : 'SKU',
-    estoque: safe(estoqueTexto || '—'),
-    media_30d: safe(sugestao.media_30d_texto || '—'),
-    projecao: safe(sugestao.projecao_estoque_30d_texto || '—'),
-    qtd_sugerida: safe(qtdFmt || '—'),
-    qtd_sugerida_base: qtdBase,
-    unidade: safe(qtdDisp?.unidade || '—'),
-    fornecedor: safe(resolveFornecedorNome(linha, ctx)),
-    abcd: String(getLinhaAbcdLetter(linha) || 'E').toUpperCase(),
-  };
-}
-
-export function prepareSugestaoCompraReportGroups(linhas = [], ctx = {}) {
-  const groups = new Map(CURVA_ORDER.map((letter) => [letter, []]));
-
-  for (const linha of linhas || []) {
-    const row = mapSugestaoCompraLinhaToReportRow(linha, ctx);
-    const letter = CURVA_ORDER.includes(row.abcd) ? row.abcd : 'E';
-    groups.get(letter).push(row);
-  }
-
-  for (const letter of CURVA_ORDER) {
-    groups.get(letter).sort((a, b) => a.produto.localeCompare(b.produto, 'pt-BR'));
-  }
-
-  return groups;
-}
 
 function styleHeaderRow(row) {
   row.eachCell((cell) => {
@@ -138,14 +71,6 @@ function addDataSheet(ws, { title, subtitle, rows }) {
   ws.views = [{ state: 'frozen', ySplit: 3 }];
 }
 
-const CURVA_LABELS = {
-  A: 'Curva A — alta relevância',
-  B: 'Curva B',
-  C: 'Curva C',
-  D: 'Curva D',
-  E: 'Curva E / sem venda',
-};
-
 export async function generateRelatorioSugestaoCompraXlsx(payload = {}) {
   const {
     linhas = [],
@@ -158,7 +83,7 @@ export async function generateRelatorioSugestaoCompraXlsx(payload = {}) {
   } = payload;
 
   const groups = prepareSugestaoCompraReportGroups(linhas, ctx);
-  const totalRows = [...groups.values()].reduce((sum, rows) => sum + rows.length, 0);
+  const { totalRows, totalQtdBase, byCurve } = summarizeSugestaoCompraReportGroups(groups);
 
   const wb = new ExcelJS.Workbook();
   wb.creator = 'VarejoSync';
@@ -178,19 +103,12 @@ export async function generateRelatorioSugestaoCompraXlsx(payload = {}) {
   const resumoHeader = resumo.addRow(['CURVA', 'ITENS', 'QTD SUG. (BASE)']);
   styleHeaderRow(resumoHeader);
 
-  let totalQtdBase = 0;
-  for (const letter of CURVA_ORDER) {
-    const rows = groups.get(letter) || [];
-    if (!rows.length) continue;
-    const qtdBase = rows.reduce((sum, row) => sum + (Number(row.qtd_sugerida_base) || 0), 0);
-    totalQtdBase += qtdBase;
+  for (const { letter, rows, qtdBase } of byCurve) {
     resumo.addRow({ curva: letter, itens: rows.length, qtd_base: qtdBase });
   }
   resumo.addRow({ curva: 'TOTAL', itens: totalRows, qtd_base: totalQtdBase });
 
-  for (const letter of CURVA_ORDER) {
-    const rows = groups.get(letter) || [];
-    if (!rows.length) continue;
+  for (const { letter, rows } of byCurve) {
     const ws = wb.addWorksheet(`Curva_${letter}`, { views: [{ state: 'frozen', ySplit: 3 }] });
     addDataSheet(ws, {
       title: `${CURVA_LABELS[letter] || `Curva ${letter}`} · ${rows.length} item(ns)`,
@@ -208,3 +126,8 @@ export async function generateRelatorioSugestaoCompraXlsx(payload = {}) {
     rowCount: totalRows,
   };
 }
+
+export {
+  mapSugestaoCompraLinhaToReportRow,
+  prepareSugestaoCompraReportGroups,
+} from '@/lib/relatorioSugestaoCompra/reportData';

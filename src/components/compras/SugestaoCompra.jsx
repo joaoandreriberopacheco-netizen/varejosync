@@ -496,7 +496,7 @@ export default function SugestaoCompra({ onStatsChange }) {
     }));
   }, []);
 
-  const handleGerarRelatorio = useCallback(async () => {
+  const handleGerarRelatorio = useCallback(async (format = 'xlsx') => {
     if (!filteredLinhas.length) {
       toast({
         title: 'Nada para exportar',
@@ -506,19 +506,19 @@ export default function SugestaoCompra({ onStatsChange }) {
       return;
     }
 
+    const isPdf = format === 'pdf';
     setGerandoRelatorio(true);
-    toast({ title: 'Gerando planilha da sugestão de compra...' });
+    toast({
+      title: isPdf
+        ? 'Gerando PDF da sugestão de compra...'
+        : 'Gerando planilha da sugestão de compra...',
+    });
     try {
       const filtersSummary = describeSugestaoCompraFilters(filters, { categorias, fornecedores });
       const fornecedorNomeById = Object.fromEntries(
         fornecedores.map((f) => [f.id, f.nome]),
       );
-
-      const { generateRelatorioSugestaoCompraXlsx } = await import(
-        '@/lib/relatorioSugestaoCompraXlsx/generateRelatorioSugestaoCompraXlsx.js'
-      );
-
-      const resposta = await generateRelatorioSugestaoCompraXlsx({
+      const reportPayload = {
         linhas: sortedLinhas,
         filters_summary: filtersSummary,
         ctx: {
@@ -528,17 +528,33 @@ export default function SugestaoCompra({ onStatsChange }) {
           fornecedorNomeById,
           fornecedores,
         },
-      });
+      };
 
-      const blob = new Blob([resposta.data], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-      downloadBlob(blob, `SugestaoCompra_ABCD_${dataHoje()}.xlsx`);
-
-      toast({
-        title: 'Planilha gerada',
-        description: `${resposta.rowCount} item(ns) em abas por curva ABCD${resposta?.version ? ` · ${resposta.version}` : ''}`,
-      });
+      if (isPdf) {
+        const { generateRelatorioSugestaoCompraPdf } = await import(
+          '@/lib/relatorioSugestaoCompra/generateRelatorioSugestaoCompraPdf.js'
+        );
+        const resposta = await generateRelatorioSugestaoCompraPdf(reportPayload);
+        const blob = new Blob([resposta.data], { type: 'application/pdf' });
+        downloadBlob(blob, `SugestaoCompra_ABCD_${dataHoje()}.pdf`);
+        toast({
+          title: 'PDF gerado',
+          description: `${resposta.rowCount} item(ns) · página contínua${resposta?.version ? ` · ${resposta.version}` : ''}`,
+        });
+      } else {
+        const { generateRelatorioSugestaoCompraXlsx } = await import(
+          '@/lib/relatorioSugestaoCompraXlsx/generateRelatorioSugestaoCompraXlsx.js'
+        );
+        const resposta = await generateRelatorioSugestaoCompraXlsx(reportPayload);
+        const blob = new Blob([resposta.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        downloadBlob(blob, `SugestaoCompra_ABCD_${dataHoje()}.xlsx`);
+        toast({
+          title: 'Planilha gerada',
+          description: `${resposta.rowCount} item(ns) em abas por curva ABCD${resposta?.version ? ` · ${resposta.version}` : ''}`,
+        });
+      }
     } catch (error) {
       const msg = error?.message || String(error);
       toast({

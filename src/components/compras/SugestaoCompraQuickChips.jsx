@@ -87,21 +87,34 @@ export default function SugestaoCompraQuickChips({
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
-      <button
-        type="button"
-        onClick={onGerarRelatorio}
-        disabled={gerandoRelatorio || filteredCount === 0}
-        className={cn(
-          'inline-flex items-center gap-1 font-medium border border-border/30',
-          chipClass,
-          gerandoRelatorio || filteredCount === 0
-            ? 'bg-muted/30 text-muted-foreground/60'
-            : 'bg-muted/50 text-muted-foreground',
-        )}
-      >
-        <FileSpreadsheet className={size === 'md' ? 'w-4 h-4' : 'w-3.5 h-3.5'} />
-        {gerandoRelatorio ? 'Gerando...' : 'Relatório'}
-      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            disabled={gerandoRelatorio || filteredCount === 0}
+            className={cn(
+              'inline-flex items-center gap-1 font-medium border border-border/30',
+              chipClass,
+              gerandoRelatorio || filteredCount === 0
+                ? 'bg-muted/30 text-muted-foreground/60'
+                : 'bg-muted/50 text-muted-foreground',
+            )}
+          >
+            <FileSpreadsheet className={size === 'md' ? 'w-4 h-4' : 'w-3.5 h-3.5'} />
+            {gerandoRelatorio ? 'Gerando...' : 'Relatório'}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuLabel className="text-xs">Exportar visíveis</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onGerarRelatorio?.('pdf')}>
+            PDF (página contínua)
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onGerarRelatorio?.('xlsx')}>
+            Excel (.xlsx)
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       {onOpenFilters ? (
         <button
           type="button"
