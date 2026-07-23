@@ -23,6 +23,7 @@ import {
   calcularSugestaoCompraProdutoVelocidade,
   sugestaoTemGiroVelocidade,
 } from '@/lib/calcularSugestaoCompraVelocidade';
+import { aplicarPendenteAprovadoNoEstoqueProdutos, resolvePendentePorProduto } from '@/lib/sugestaoCompraEstoquePendente';
 import {
   buildMapaSaldoFimDia,
   contarDiasComEstoqueAtivo,
@@ -298,7 +299,11 @@ export function buildLinhasSugestaoCompra(
   const salesVelocityMap = options.salesVelocityMap || {};
   const incluirTodoCatalogo = options.incluirTodoCatalogo === true;
   const catalogoCompleto = options.catalogoCompleto === true;
-  const { map, soltos } = agruparSkusPorHierarquiaCompra(produtosAtivos);
+  const considerarPedidosAprovadosEstoque = options.considerarPedidosAprovadosEstoque === true;
+  const produtosCalculo = considerarPedidosAprovadosEstoque
+    ? aplicarPendenteAprovadoNoEstoqueProdutos(produtosAtivos, pendingPorProduto)
+    : produtosAtivos;
+  const { map, soltos } = agruparSkusPorHierarquiaCompra(produtosCalculo);
 
   const incluirLinha = (sugestao) => {
     if (incluirTodoCatalogo) return true;
@@ -334,7 +339,7 @@ export function buildLinhasSugestaoCompra(
 
       const representativo =
         skus.find((p) => p.id === sugestao.produto_representativo_id) || skus[0];
-      const pendente = skus.reduce((s, p) => s + (pendingPorProduto[p.id] || 0), 0);
+      const pendente = skus.reduce((s, p) => s + resolvePendentePorProduto(pendingPorProduto, p.id), 0);
 
       linhas.push({
         tipo: 'grupo',
@@ -371,7 +376,7 @@ export function buildLinhasSugestaoCompra(
       skus: [p],
       produto: p,
       sugestao,
-      quantidade_pendente: pendingPorProduto[p.id] || 0,
+      quantidade_pendente: resolvePendentePorProduto(pendingPorProduto, p.id),
       searchText: (p.nome || '').toLowerCase(),
     });
   }

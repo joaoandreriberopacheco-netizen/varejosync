@@ -10,6 +10,7 @@ import {
 } from '@/lib/filterProdutos';
 import { getUnidadeExibicaoSigla } from '@/lib/productUnits';
 import {
+  sugestaoPrecisaReposicao,
   sugestaoTemGiroVelocidade,
 } from '@/lib/calcularSugestaoCompraVelocidade';
 
@@ -46,6 +47,7 @@ export const DEFAULT_SUGESTAO_COMPRA_FILTERS = {
   sugestaoQuantidadeValor: '',
   sugestaoQuantidadeValorAte: '',
   hidePending: false,
+  considerarPedidosAprovadosEstoque: false,
   somenteAbaixoPontoFuturo: false,
   roundingMode: 'auto',
   agruparHierarquia: true,
@@ -97,8 +99,7 @@ function linhaPontoPedido(linha) {
 }
 
 export function linhaAbaixoPontoFuturo(linha) {
-  const gap = Number(linha?.sugestao?.gap_ponto_futuro_base);
-  if (Number.isFinite(gap)) return gap > 0;
+  if (sugestaoPrecisaReposicao(linha?.sugestao)) return true;
   const ponto = linhaPontoPedido(linha);
   if (ponto <= 0) return false;
   return linhaEstoqueAtual(linha) < ponto;
@@ -266,6 +267,7 @@ export function countActiveSugestaoCompraFilters(filters = DEFAULT_SUGESTAO_COMP
     hasActiveQuantityFilter(filters),
     hasActiveSugestaoQuantityFilter(filters),
     filters.hidePending,
+    filters.considerarPedidosAprovadosEstoque === true,
     filters.somenteAbaixoPontoFuturo === true,
     filters.roundingMode !== 'auto',
     filters.agruparHierarquia === false,

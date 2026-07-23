@@ -39,6 +39,7 @@ import {
   sortSugestaoCompraLinhasByColumn,
 } from '@/lib/sugestaoCompraColumnSort';
 import { buildUltimoFornecedorPorProduto } from '@/lib/buildUltimoFornecedorPorProduto';
+import { buildPendenteAprovadoFinanceiroPorProduto, buildRecebidosPorPedidoProdutoFromEmbarques } from '@/lib/sugestaoCompraEstoquePendente';
 import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
@@ -220,6 +221,7 @@ export default function SugestaoCompra({ onStatsChange }) {
         salesVelocityMap,
         incluirTodoCatalogo: true,
         catalogoCompleto: true,
+        considerarPedidosAprovadosEstoque: opts.considerarPedidosAprovadosEstoque === true,
       });
     },
     [agruparHierarquia, roundingMode],
@@ -293,8 +295,11 @@ export default function SugestaoCompra({ onStatsChange }) {
         ctx.prods,
         pedidos,
         ctx.movsPorProduto,
-        ctx.pending,
-        { salesVelocityMap },
+        extra.pending ?? ctx.pending,
+        {
+          salesVelocityMap,
+          considerarPedidosAprovadosEstoque: extra.considerarPedidosAprovadosEstoque === true,
+        },
       );
       if (calcContextRef.current.vendasDados) {
         setLinhas(enrichSugestaoLinhasComAbcd(next, ctx.prods, calcContextRef.current.vendasDados));
@@ -303,19 +308,25 @@ export default function SugestaoCompra({ onStatsChange }) {
 
     Promise.all([
       base44.entities.PedidoCompra.filter({
-        status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente'],
+        status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente', 'Aprovado', 'Despachado', 'Em Recepção'],
       }).catch(() => []),
       base44.entities.PedidoCompra.list('-created_date', 250).catch(() => []),
-    ]).then(([pedidosAbertos, pedidosRecentes]) => {
-      const pendingMap = {};
-      pedidosAbertos.forEach((p) => {
-        p.itens?.forEach((i) => {
-          pendingMap[i.produto_id] = (pendingMap[i.produto_id] || 0) + (i.quantidade || 0);
-        });
+      base44.entities.Embarque.list('-created_date', 600).catch(() => []),
+    ]).then(([pedidosAbertos, pedidosRecentes, embarquesCompra]) => {
+      const pedidosPorId = new Map();
+      [...pedidosAbertos, ...pedidosRecentes].forEach((p) => {
+        if (p?.id) pedidosPorId.set(p.id, p);
       });
+      const pedidosCompra = [...pedidosPorId.values()];
+      const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(embarquesCompra);
+      const pendingMap = buildPendenteAprovadoFinanceiroPorProduto(
+        pedidosCompra,
+        recebidosPorPedidoProduto,
+      );
       const ultimoFornecedorPorProduto = buildUltimoFornecedorPorProduto(pedidosRecentes);
       calcContextRef.current = {
         ...calcContextRef.current,
+        pedidosCompra,
         pending: pendingMap,
         ultimoFornecedorPorProduto,
       };
@@ -333,14 +344,21 @@ export default function SugestaoCompra({ onStatsChange }) {
         return merged;
       });
       if (calcContextRef.current.pedidos?.length) {
-        atualizarComPedidos(calcContextRef.current.pedidos, { pending: pendingMap, ultimoFornecedorPorProduto });
+        atualizarComPedidos(calcContextRef.current.pedidos, {
+          pending: pendingMap,
+          ultimoFornecedorPorProduto,
+          considerarPedidosAprovadosEstoque: filters.considerarPedidosAprovadosEstoque === true,
+        });
       } else {
         aplicarLinhas(
           ctx.prods,
           [],
           calcContextRef.current.movsPorProduto,
           pendingMap,
-          { salesVelocityMap: calcContextRef.current.salesVelocityMap },
+          {
+            salesVelocityMap: calcContextRef.current.salesVelocityMap,
+            considerarPedidosAprovadosEstoque: filters.considerarPedidosAprovadosEstoque === true,
+          },
         );
       }
     });
@@ -381,7 +399,10 @@ export default function SugestaoCompra({ onStatsChange }) {
           pedidos,
           calcContextRef.current.movsPorProduto,
           calcContextRef.current.pending,
-          { salesVelocityMap },
+          {
+            salesVelocityMap,
+            considerarPedidosAprovadosEstoque: filters.considerarPedidosAprovadosEstoque === true,
+          },
         );
         setLinhas(enrichSugestaoLinhasComAbcd(next, ctx.prods, vendasDados));
       })
@@ -401,12 +422,13 @@ export default function SugestaoCompra({ onStatsChange }) {
       agruparHierarquia,
       roundingMode,
       salesVelocityMap: ctx.salesVelocityMap,
+      considerarPedidosAprovadosEstoque: filters.considerarPedidosAprovadosEstoque === true,
     });
     if (ctx.vendasDados) {
       next = enrichSugestaoLinhasComAbcd(next, ctx.prods, ctx.vendasDados);
     }
     setLinhas(next);
-  }, [roundingMode, agruparHierarquia, recomputarLinhas]);
+  }, [roundingMode, agruparHierarquia, filters.considerarPedidosAprovadosEstoque, recomputarLinhas]);
 
   const filteredLinhas = useMemo(
     () => filterSugestaoCompraLinhas(linhas, filters, filterOptions),

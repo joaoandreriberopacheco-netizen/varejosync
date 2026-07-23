@@ -27,6 +27,29 @@ function resolveLeadTime(produto, leadTimePadrao = 20) {
   return getCatalogLeadTimeDias(produto, leadTimePadrao);
 }
 
+function estoqueMetaProduto(produto, estoqueAtual) {
+  const pedidos = Number(produto?.estoque_pedidos_aprovados) || 0;
+  if (pedidos <= 0) return {};
+  const fisico = Number(produto?.estoque_fisico);
+  return {
+    estoque_fisico: Number.isFinite(fisico) ? fisico : estoqueAtual,
+    estoque_pedidos_aprovados: pedidos,
+  };
+}
+
+function estoqueMetaGrupo(skus) {
+  const pedidos = (skus || []).reduce(
+    (s, p) => s + (Number(p?.estoque_pedidos_aprovados) || 0),
+    0,
+  );
+  if (pedidos <= 0) return {};
+  const fisico = (skus || []).reduce((s, p) => {
+    const f = Number(p?.estoque_fisico);
+    return s + (Number.isFinite(f) ? f : Number(p?.estoque_atual) || 0);
+  }, 0);
+  return { estoque_fisico: fisico, estoque_pedidos_aprovados: pedidos };
+}
+
 const DIAS_PROJECAO_PONTO_FUTURO = 30;
 
 function formatGapReposicao(produto, gapBase) {
@@ -36,13 +59,46 @@ function formatGapReposicao(produto, gapBase) {
   return formatCatalogSalesQuantity(ap.quantidade, ap.sigla, { dashIfZero: false });
 }
 
-/** Déficit até o ponto de pedido — usado na qtd sugerida, não na coluna «Ponto futuro». */
+/** Déficit até o ponto de pedido — usado no filtro «abaixo do ponto», não na qtd sugerida. */
 function buildGapReposicao(produto, pontoPedidoBase, estoqueAtual) {
   const gapBase = Math.max(0, (Number(pontoPedidoBase) || 0) - (Number(estoqueAtual) || 0));
   return {
     gap_ponto_futuro_base: gapBase,
     gap_ponto_futuro_texto: formatGapReposicao(produto, gapBase),
   };
+}
+
+/**
+ * Quantidade sugerida = déficit até o ponto de pedido + um ciclo de 1,5 × lead time.
+ * O ciclo usa a mesma base do ponto de pedido (média × 1,5 × LT).
+ */
+export function calcularQuantidadeSugeridaNovoCiclo(
+  estoqueAtual,
+  pontoPedido,
+  projecaoEstoque30d,
+) {
+  const estoque = Number(estoqueAtual) || 0;
+  const ponto = Number(pontoPedido) || 0;
+  const projecao = Number(projecaoEstoque30d);
+  const ciclo15Lt = ponto;
+  if (ciclo15Lt <= 0) return 0;
+
+  const gapPonto = ponto > 0 ? Math.max(0, ponto - estoque) : 0;
+  const rupturaEm30d = Number.isFinite(projecao) && projecao < 0;
+  const abaixoPonto = ponto > 0 && estoque < ponto;
+
+  if (!abaixoPonto && !rupturaEm30d) return 0;
+  return gapPonto + ciclo15Lt;
+}
+
+export function sugestaoPrecisaReposicao(sugestao) {
+  if (!sugestao) return false;
+  if ((Number(sugestao.quantidade_sugerida_base) || 0) > 0) return true;
+  if ((Number(sugestao.gap_ponto_futuro_base) || 0) > 0) return true;
+  if ((Number(sugestao.projecao_estoque_30d_base) || 0) < 0) return true;
+  const ponto = Number(sugestao.ponto_pedido) || 0;
+  const estoque = Number(sugestao.estoque_atual) || 0;
+  return ponto > 0 && estoque < ponto;
 }
 
 function formatProjecaoEstoque30d(produto, projecaoBase) {
@@ -127,6 +183,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
   const catalogoCompleto = options.catalogoCompleto === true;
 
   const estoqueAtual = Number(produto?.estoque_atual) || 0;
+  const estoqueMeta = estoqueMetaProduto(produto, estoqueAtual);
   const leadTime = resolveLeadTime(produto, leadTimePadrao);
   const metricas = buildMetricasVelocidade(produto, pedidos90d, salesVelocityMap, leadTime);
   const { unidade, fator } = resolveFatorUnidadeVitrineCompra(produto);
@@ -162,6 +219,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
         quantidade_sugerida_base: quantidadeSugeridaBase,
         lead_time_dias: leadTime,
         estoque_atual: estoqueAtual,
+        ...estoqueMeta,
         media_30d_texto: null,
         ponto_futuro_texto: null,
         ...projecao,
@@ -181,6 +239,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
         motivo: 'sem_venda',
         lead_time_dias: leadTime,
         estoque_atual: estoqueAtual,
+        ...estoqueMeta,
         media_30d_texto: metricas.media_30d_texto,
         ponto_futuro_texto: null,
         ...projecao,
@@ -210,20 +269,29 @@ export function calcularSugestaoCompraProdutoVelocidade(
   const { pontoPedido, estoqueIdeal } = metricas;
   const gap = buildGapReposicao(produto, pontoPedido, estoqueAtual);
   const projecao = buildProjecaoEstoque30d(produto, estoqueAtual, metricas.mediaDia);
-  const elegivel = catalogoCompleto ? gap.gap_ponto_futuro_base > 0 : estoqueAtual < pontoPedido;
+  const qtdNovoCiclo = catalogoCompleto
+    ? calcularQuantidadeSugeridaNovoCiclo(
+        estoqueAtual,
+        pontoPedido,
+        projecao.projecao_estoque_30d_base,
+      )
+    : 0;
+  const elegivel = catalogoCompleto
+    ? qtdNovoCiclo > 0
+    : estoqueAtual < pontoPedido;
   const quantidadeSugeridaBase = catalogoCompleto
-    ? gap.gap_ponto_futuro_base > 0
-      ? arredondarQuantidadeSugestao(gap.gap_ponto_futuro_base, produto, roundingMode)
+    ? qtdNovoCiclo > 0
+      ? arredondarQuantidadeSugestao(qtdNovoCiclo, produto, roundingMode)
       : 0
     : elegivel
-      ? arredondarQuantidadeSugestao(estoqueIdeal, produto, roundingMode)
+      ? arredondarQuantidadeSugestao(pontoPedido, produto, roundingMode)
       : 0;
 
   return {
     elegivel: catalogoCompleto ? true : elegivel,
     motivo: catalogoCompleto
-      ? gap.gap_ponto_futuro_base > 0
-        ? 'abaixo_ponto_futuro'
+      ? qtdNovoCiclo > 0
+        ? 'reposicao_novo_ciclo'
         : 'estoque_suficiente'
       : elegivel
         ? 'abaixo_ponto_futuro'
@@ -234,6 +302,7 @@ export function calcularSugestaoCompraProdutoVelocidade(
     quantidade_sugerida_base: quantidadeSugeridaBase,
     lead_time_dias: leadTime,
     estoque_atual: estoqueAtual,
+    ...estoqueMeta,
     media_30d_comercial: metricas.media_30d_comercial,
     media_30d_texto: metricas.media_30d_texto,
     ponto_futuro_comercial: metricas.ponto_futuro_comercial,
@@ -247,8 +316,8 @@ export function calcularSugestaoCompraProdutoVelocidade(
     fonte: 'velocidade',
     catalogo_completo: catalogoCompleto || undefined,
     versao: catalogoCompleto
-      ? 'v3-catalogo-completo-projecao-30d'
-      : 'v1-velocidade-60d-ponto-futuro',
+      ? 'v5-catalogo-completo-ciclo-15lt'
+      : 'v2-velocidade-ciclo-15lt',
   };
 }
 
@@ -283,6 +352,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
 
   if (usarFallbackGrupo) {
     const estoqueAtual = lista.reduce((s, p) => s + (Number(p.estoque_atual) || 0), 0);
+    const estoqueMeta = estoqueMetaGrupo(lista);
     const pontoPedido = lista.reduce((s, p) => s + (Number(p.estoque_minimo) || 0), 0);
     const estoqueIdeal = lista.reduce((s, p) => s + (Number(p.estoque_ideal) || 0), 0);
     const leadTime = Math.max(...lista.map((p) => resolveLeadTime(p, leadTimePadrao)));
@@ -318,6 +388,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
       quantidade_sugerida_base: quantidadeSugeridaBase,
       lead_time_dias: leadTime,
       estoque_atual: estoqueAtual,
+      ...estoqueMeta,
       produto_representativo_id: representativo.id,
       unidade_vitrine_compra: unidade,
       fator_vitrine: fator,
@@ -330,6 +401,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
   }
 
   const estoqueAtual = lista.reduce((s, p) => s + (Number(p.estoque_atual) || 0), 0);
+  const estoqueMeta = estoqueMetaGrupo(lista);
   const pontoPedido = comVenda.reduce((s, sg) => s + (Number(sg.ponto_pedido) || 0), 0);
   const estoqueIdeal = comVenda.reduce((s, sg) => s + (Number(sg.estoque_ideal) || 0), 0);
   const leadTime = Math.max(...lista.map((p) => resolveLeadTime(p, leadTimePadrao)));
@@ -356,13 +428,22 @@ export function calcularSugestaoCompraGrupoVelocidade(
     0,
   );
   const projecao = buildProjecaoEstoque30d(representativo, estoqueAtual, mediaDiaGrupo);
-  const elegivel = catalogoCompleto ? gap.gap_ponto_futuro_base > 0 : estoqueAtual < pontoPedido;
+  const qtdNovoCiclo = catalogoCompleto
+    ? calcularQuantidadeSugeridaNovoCiclo(
+        estoqueAtual,
+        pontoPedido,
+        projecao.projecao_estoque_30d_base,
+      )
+    : 0;
+  const elegivel = catalogoCompleto
+    ? qtdNovoCiclo > 0
+    : estoqueAtual < pontoPedido;
   const quantidadeSugeridaBase = catalogoCompleto
-    ? gap.gap_ponto_futuro_base > 0
-      ? arredondarQuantidadeSugestao(gap.gap_ponto_futuro_base, representativo, roundingMode)
+    ? qtdNovoCiclo > 0
+      ? arredondarQuantidadeSugestao(qtdNovoCiclo, representativo, roundingMode)
       : 0
     : elegivel
-      ? arredondarQuantidadeSugestao(estoqueIdeal, representativo, roundingMode)
+      ? arredondarQuantidadeSugestao(pontoPedido, representativo, roundingMode)
       : 0;
 
   const velocityAgg = aggregateCatalogSalesVelocity(lista, salesVelocityMap);
@@ -376,6 +457,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
       motivo: 'sem_venda',
       lead_time_dias: leadTime,
       estoque_atual: estoqueAtual,
+      ...estoqueMeta,
       media_30d_texto: formatCatalogMedia30d(velocityAgg, { tilde: true }) || null,
       ponto_futuro_texto: null,
       ...projecaoSemVenda,
@@ -396,8 +478,8 @@ export function calcularSugestaoCompraGrupoVelocidade(
   return {
     elegivel: catalogoCompleto ? true : elegivel,
     motivo: catalogoCompleto
-      ? gap.gap_ponto_futuro_base > 0
-        ? 'abaixo_ponto_futuro'
+      ? qtdNovoCiclo > 0
+        ? 'reposicao_novo_ciclo'
         : 'estoque_suficiente'
       : elegivel
         ? 'abaixo_ponto_futuro'
@@ -407,6 +489,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
     quantidade_sugerida_base: quantidadeSugeridaBase,
     lead_time_dias: leadTime,
     estoque_atual: estoqueAtual,
+    ...estoqueMeta,
     media_30d_comercial: getCatalogMedia30dFrom60d(velocityAgg),
     media_30d_texto: formatCatalogMedia30d(velocityAgg, { tilde: true }) || null,
     ponto_futuro_comercial: pontoAgg.quantidade,
@@ -423,7 +506,7 @@ export function calcularSugestaoCompraGrupoVelocidade(
     fonte: 'velocidade',
     catalogo_completo: catalogoCompleto || undefined,
     versao: catalogoCompleto
-      ? 'v3-grupo-catalogo-completo-projecao-30d'
-      : 'v1-grupo-velocidade-60d-ponto-futuro',
+      ? 'v5-grupo-catalogo-completo-ciclo-15lt'
+      : 'v2-grupo-velocidade-ciclo-15lt',
   };
 }
