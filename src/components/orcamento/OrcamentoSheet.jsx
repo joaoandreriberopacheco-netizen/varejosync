@@ -8,7 +8,7 @@ import OrcamentoCupom from './OrcamentoCupom';
 import LostSalesForm from '@/components/vendas/LostSalesForm';
 import ProdutoQuantidadeDialog from './ProdutoQuantidadeDialog';
 import { filterAndSortProducts } from '@/components/compras/productMatchingUtils';
-import { buildSaleUnitOptions, formatEstoqueApresentacao, pickDefaultSaleUnit } from '@/lib/productUnits';
+import { buildSaleUnitOptions, formatEstoqueDisponivelApresentacao, pickDefaultSaleUnit } from '@/lib/productUnits';
 import { getPrecoPisoCustoUnidade, parsePrecoDigitado } from '@/lib/orcamentoPrecoTabela';
 
 const fmtR = (n) => (n ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -22,7 +22,7 @@ function ProdutoLinha({ produto, preco, unidadeSelecionada, unitOptions, qtdNoCa
     : e <= m ? 'bg-orange-400'
     : 'bg-green-500';
 
-  const apresent = formatEstoqueApresentacao(produto);
+  const estoqueDisp = formatEstoqueDisponivelApresentacao(produto);
 
   return (
     <div
@@ -34,8 +34,7 @@ function ProdutoLinha({ produto, preco, unidadeSelecionada, unitOptions, qtdNoCa
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-medium text-foreground leading-snug line-clamp-2">{produto.nome}</p>
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          R$ {fmtR(preco)} / {unidadeSelecionada?.unidade || produto.unidade_principal || 'UN'} · {e.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {produto.unidade_principal || 'UN'} em estoque
-          {apresent ? ` · ~${apresent.quantidade.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ${apresent.sigla}` : ''}
+          R$ {fmtR(preco)} / {unidadeSelecionada?.unidade || produto.unidade_principal || 'UN'} · {estoqueDisp.quantidade.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} {estoqueDisp.sigla} em estoque
           {unitOptions?.length > 1 ? ` · ${unitOptions.length} unidades` : ''}
         </p>
       </div>

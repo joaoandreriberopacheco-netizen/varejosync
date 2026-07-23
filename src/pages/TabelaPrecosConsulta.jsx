@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import OrcamentoSheet from '@/components/orcamento/OrcamentoSheet';
 import { calcularPrecoVendaTabela, getSaleUnitContextForTabela } from '@/lib/orcamentoPrecoTabela';
-import { formatEstoqueApresentacao, getUnidadeExibicaoSigla, hasAlternativeUnits } from '@/lib/productUnits';
+import { formatEstoqueDisponivelApresentacao, getUnidadeExibicaoSigla, hasAlternativeUnits } from '@/lib/productUnits';
 import { p38Mobile } from '@/lib/p38MobileSurfaces';
 import { P38MobileLineList, P38StatusDot } from '@/components/ui/p38-mobile-line';
 import { p38Table } from '@/lib/p38TableSurfaces';
@@ -27,9 +27,9 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
   const listaUnit = listaOpts.find((o) => o.unidade === siglaVitrine) || listaOpts[0];
   const precoOriginal = Number(listaUnit?.valor_unitario ?? p.preco_venda_padrao ?? 0);
   const temAjuste = tabelaSelecionada && tabelaSelecionada.fator_ajuste !== 1;
-  const apresentEstoque = formatEstoqueApresentacao(p);
-  const estoqueExibicao = apresentEstoque ? apresentEstoque.quantidade : e;
-  const unidadeExibicao = apresentEstoque ? apresentEstoque.sigla : siglaVitrine;
+  const estoqueDisp = formatEstoqueDisponivelApresentacao(p);
+  const estoqueExibicao = estoqueDisp.quantidade;
+  const unidadeExibicao = estoqueDisp.sigla;
 
   return (
     <div
@@ -59,7 +59,6 @@ function SkuCard({ row, calcularPreco, tabelaSelecionada }) {
             <P38StatusDot tone={!p.ativo ? 'muted' : e <= 0 ? 'danger' : e <= m ? 'warning' : 'success'} />
             <span className="text-xs text-muted-foreground whitespace-nowrap">
               {fmtN(estoqueExibicao)} {unidadeExibicao}
-              {apresentEstoque && <span className="text-[10px] text-muted-foreground ml-1">(show comercial)</span>}
             </span>
           </div>
           {/* Código */}

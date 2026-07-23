@@ -37,7 +37,7 @@ import { createPageUrl } from '@/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductUnitSelectorDialog from '@/components/produtos/ProductUnitSelectorDialog';
-import { buildSaleUnitOptions, calculateBaseQuantity, getItemUnitKey, pickDefaultSaleUnit } from '@/lib/productUnits';
+import { buildSaleUnitOptions, calculateBaseQuantity, formatEstoqueDisponivelLabel, getItemUnitKey, pickDefaultSaleUnit } from '@/lib/productUnits';
 import { filterAndSortProducts, sortProductsAlphabetically } from '@/components/compras/productMatchingUtils';
 import { productCodesMatch } from '@/lib/productCode';
 
@@ -564,7 +564,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
     console.log('Verificando estoque - Config:', configVenda, 'Vender sem estoque:', configVenda?.vender_sem_estoque, 'Estoque:', produtoSelecionado.estoque_atual, 'Quantidade base:', quantidadeBase);
 
     if (configVenda?.vender_sem_estoque !== true && produtoSelecionado.estoque_atual < quantidadeBase) {
-      showFeedback('error', `Estoque insuficiente: ${produtoSelecionado.estoque_atual} ${produtoSelecionado.unidade_principal || 'UN'} disponível`, 3000);
+      showFeedback('error', `Estoque insuficiente: ${formatEstoqueDisponivelLabel(produtoSelecionado)} disponível`, 3000);
       return;
     }
 
@@ -1175,7 +1175,7 @@ export default function PDVVendedor({ overlayMode = false, onClose } = {}) {
                           </span>
                         )}
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${estoqueColor}`}>
-                          {produto.estoque_atual} un
+                          {formatEstoqueDisponivelLabel(produto)}
                         </span>
                         {variasUnidades && (
                           <button
