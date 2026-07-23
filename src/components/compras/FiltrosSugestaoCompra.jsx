@@ -26,6 +26,9 @@ import {
 import { cn } from '@/lib/utils';
 
 const SECTION_CARD = 'rounded-2xl border border-border/40 bg-muted/20 dark:bg-muted/10 p-3.5 space-y-3';
+const SECTION_CARD_COMPACT = 'rounded-xl border border-border/40 bg-muted/20 dark:bg-muted/10 p-2.5 space-y-2';
+const CONTROL_H = 'h-11';
+const CONTROL_H_COMPACT = 'h-10';
 
 const CHIP_BASE =
   'h-9 min-w-[2.25rem] px-2.5 rounded-xl text-xs font-semibold transition-colors border';
@@ -34,12 +37,18 @@ const CHIP_ACTIVE =
 const CHIP_IDLE =
   'bg-card text-muted-foreground border-border/30 hover:bg-muted/50';
 
-function FilterSection({ title, icon: Icon, children }) {
+function FilterSection({ title, icon: Icon, children, compact = false }) {
   return (
-    <section className={SECTION_CARD}>
+    <section className={compact ? SECTION_CARD_COMPACT : SECTION_CARD}>
       <div className="flex items-center gap-2">
         {Icon ? <Icon className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400 shrink-0" /> : null}
-        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+        <h3 className={cn(
+          'font-semibold uppercase tracking-wide text-muted-foreground',
+          compact ? 'text-[10px]' : 'text-[11px]',
+        )}
+        >
+          {title}
+        </h3>
       </div>
       {children}
     </section>
@@ -83,7 +92,7 @@ function ChipGrid({ options, value, onChange, columns = 3 }) {
   );
 }
 
-function AbcdMultiSelect({ selectedAbcd, onSelectedAbcd }) {
+function AbcdMultiSelect({ selectedAbcd, onSelectedAbcd, compact = false }) {
   const toggle = (letter) => {
     if (selectedAbcd.includes(letter)) {
       onSelectedAbcd(selectedAbcd.filter((v) => v !== letter));
@@ -111,11 +120,13 @@ function AbcdMultiSelect({ selectedAbcd, onSelectedAbcd }) {
           );
         })}
       </div>
-      <p className="text-[11px] text-muted-foreground leading-snug">
-        {selectedAbcd.length === 0
-          ? 'Nenhuma selecionada — mostra todas as curvas.'
-          : `Mostrando curvas ${selectedAbcd.join(', ')}.`}
-      </p>
+      {!compact ? (
+        <p className="text-[11px] text-muted-foreground leading-snug">
+          {selectedAbcd.length === 0
+            ? 'Nenhuma selecionada — mostra todas as curvas.'
+            : `Mostrando curvas ${selectedAbcd.join(', ')}.`}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -129,30 +140,35 @@ function FiltrosPainel({
   unidadesVitrine,
   tagSearch,
   onTagSearch,
+  compact = false,
 }) {
   const quantidadeOperador = filters.quantidadeOperador || 'all';
+  const controlH = compact ? CONTROL_H_COMPACT : CONTROL_H;
 
   return (
-    <div className="space-y-3">
-      <FilterSection title="Busca" icon={Search}>
+    <div className={compact ? 'space-y-2' : 'space-y-3'}>
+      <FilterSection title="Busca" icon={Search} compact={compact}>
         <ProdutosSearchStartsWithToggle
           checked={!!filters.searchStartsWith}
           onChange={(checked) => patchFilters({ searchStartsWith: checked })}
-          className="w-full justify-between px-3"
+          className={cn('w-full justify-between px-3', compact && 'h-10')}
         />
-        <p className="text-[11px] text-muted-foreground leading-snug">
-          Igual ao catálogo: termos com prefixo XX filtram área/categoria de cadastro na busca.
-        </p>
+        {!compact ? (
+          <p className="text-[11px] text-muted-foreground leading-snug">
+            Igual ao catálogo: termos com prefixo XX filtram área/categoria de cadastro na busca.
+          </p>
+        ) : null}
       </FilterSection>
 
-      <FilterSection title="Curva ABCDE" icon={BarChart3}>
+      <FilterSection title="Curva ABCDE" icon={BarChart3} compact={compact}>
         <AbcdMultiSelect
           selectedAbcd={filters.selectedAbcd || []}
           onSelectedAbcd={(selectedAbcd) => patchFilters({ selectedAbcd })}
+          compact={compact}
         />
       </FilterSection>
 
-      <FilterSection title="Categoria" icon={Layers}>
+      <FilterSection title="Categoria" icon={Layers} compact={compact}>
         <SearchableFilterSelect
           value={filters.categoriaId}
           onChange={(categoriaId) => patchFilters({ categoriaId })}
@@ -165,19 +181,21 @@ function FiltrosPainel({
         />
       </FilterSection>
 
-      <FilterSection title="Nível hierárquico" icon={Layers}>
+      <FilterSection title="Nível hierárquico" icon={Layers} compact={compact}>
         <ChipGrid
           options={SUGESTAO_HIERARQUIA_NIVEL_OPTIONS}
           value={filters.hierarquiaNivel || 'all'}
           onChange={(hierarquiaNivel) => patchFilters({ hierarquiaNivel })}
           columns={2}
         />
-        <p className="text-[11px] text-muted-foreground leading-snug">
-          Filtra itens com o nível escolhido preenchido no cadastro (h1 a h5).
-        </p>
+        {!compact ? (
+          <p className="text-[11px] text-muted-foreground leading-snug">
+            Filtra itens com o nível escolhido preenchido no cadastro (h1 a h5).
+          </p>
+        ) : null}
       </FilterSection>
 
-      <FilterSection title="Fornecedor" icon={Building2}>
+      <FilterSection title="Fornecedor" icon={Building2} compact={compact}>
         <SearchableFilterSelect
           value={filters.fornecedorId}
           onChange={(fornecedorId) => patchFilters({ fornecedorId })}
@@ -190,12 +208,12 @@ function FiltrosPainel({
         />
       </FilterSection>
 
-      <FilterSection title="Unidade vitrine" icon={Boxes}>
+      <FilterSection title="Unidade vitrine" icon={Boxes} compact={compact}>
         <Select
           value={filters.unidadeVitrine || 'all'}
           onValueChange={(unidadeVitrine) => patchFilters({ unidadeVitrine })}
         >
-          <SelectTrigger className="h-11 bg-card border border-border/30 rounded-xl">
+          <SelectTrigger className={cn('bg-card border border-border/30 rounded-xl', controlH)}>
             <SelectValue placeholder="Todas as unidades" />
           </SelectTrigger>
           <SelectContent>
@@ -209,14 +227,15 @@ function FiltrosPainel({
         </Select>
       </FilterSection>
 
-      <FilterSection title="Ponto futuro (giro)" icon={Boxes}>
+      <FilterSection title="Ponto futuro (giro)" icon={Boxes} compact={compact}>
         <button
           type="button"
           onClick={() =>
             patchFilters({ somenteAbaixoPontoFuturo: !filters.somenteAbaixoPontoFuturo })
           }
           className={cn(
-            'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
+            'w-full rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
+            controlH,
             filters.somenteAbaixoPontoFuturo === true
               ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
               : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
@@ -226,12 +245,14 @@ function FiltrosPainel({
             ? 'Somente abaixo do ponto futuro'
             : 'Catálogo completo'}
         </button>
-        <p className="text-[11px] text-muted-foreground leading-snug font-mono">
-          Ponto futuro = estoque projetado daqui a 30 dias (estoque atual − média 30d × 30)
-        </p>
+        {!compact ? (
+          <p className="text-[11px] text-muted-foreground leading-snug font-mono">
+            Ponto futuro = estoque projetado daqui a 30 dias (estoque atual − média 30d × 30)
+          </p>
+        ) : null}
       </FilterSection>
 
-      <FilterSection title="Status de estoque" icon={Boxes}>
+      <FilterSection title="Status de estoque" icon={Boxes} compact={compact}>
         <ChipGrid
           options={SUGESTAO_STATUS_ESTOQUE_OPTIONS}
           value={filters.statusEstoque || 'all'}
@@ -240,7 +261,7 @@ function FiltrosPainel({
         />
       </FilterSection>
 
-      <FilterSection title="Quantidade em estoque" icon={Boxes}>
+      <FilterSection title="Quantidade em estoque" icon={Boxes} compact={compact}>
         <div className="grid grid-cols-2 gap-2">
           <Select
             value={quantidadeOperador}
@@ -251,7 +272,7 @@ function FiltrosPainel({
               })
             }
           >
-            <SelectTrigger className="h-11 bg-card border border-border/30 rounded-xl col-span-2">
+            <SelectTrigger className={cn('bg-card border border-border/30 rounded-xl col-span-2', controlH)}>
               <SelectValue placeholder="Qualquer quantidade" />
             </SelectTrigger>
             <SelectContent>
@@ -267,7 +288,7 @@ function FiltrosPainel({
             inputMode="decimal"
             placeholder={quantidadeOperador === 'between' ? 'De' : 'Qtd.'}
             disabled={quantidadeOperador === 'all'}
-            className="bg-card border border-border/30 h-11 rounded-xl disabled:opacity-50"
+            className={cn('bg-card border border-border/30 rounded-xl disabled:opacity-50', controlH)}
             value={filters.quantidadeValor || ''}
             onChange={(e) => patchFilters({ quantidadeValor: e.target.value })}
           />
@@ -275,7 +296,7 @@ function FiltrosPainel({
             <Input
               inputMode="decimal"
               placeholder="Até"
-              className="bg-card border border-border/30 h-11 rounded-xl"
+              className={cn('bg-card border border-border/30 rounded-xl', controlH)}
               value={filters.quantidadeValorAte || ''}
               onChange={(e) => patchFilters({ quantidadeValorAte: e.target.value })}
             />
@@ -283,7 +304,7 @@ function FiltrosPainel({
         </div>
       </FilterSection>
 
-      <FilterSection title="Quantidade sugerida" icon={Boxes}>
+      <FilterSection title="Quantidade sugerida" icon={Boxes} compact={compact}>
         <div className="grid grid-cols-2 gap-2">
           <Select
             value={filters.sugestaoQuantidadeOperador || 'all'}
@@ -295,7 +316,7 @@ function FiltrosPainel({
               })
             }
           >
-            <SelectTrigger className="h-11 bg-card border border-border/30 rounded-xl col-span-2">
+            <SelectTrigger className={cn('bg-card border border-border/30 rounded-xl col-span-2', controlH)}>
               <SelectValue placeholder="Qualquer sugestão" />
             </SelectTrigger>
             <SelectContent>
@@ -311,7 +332,7 @@ function FiltrosPainel({
             inputMode="decimal"
             placeholder={filters.sugestaoQuantidadeOperador === 'between' ? 'De' : 'Qtd.'}
             disabled={(filters.sugestaoQuantidadeOperador || 'all') === 'all'}
-            className="bg-card border border-border/30 h-11 rounded-xl disabled:opacity-50"
+            className={cn('bg-card border border-border/30 rounded-xl disabled:opacity-50', controlH)}
             value={filters.sugestaoQuantidadeValor || ''}
             onChange={(e) => patchFilters({ sugestaoQuantidadeValor: e.target.value })}
           />
@@ -319,7 +340,7 @@ function FiltrosPainel({
             <Input
               inputMode="decimal"
               placeholder="Até"
-              className="bg-card border border-border/30 h-11 rounded-xl"
+              className={cn('bg-card border border-border/30 rounded-xl', controlH)}
               value={filters.sugestaoQuantidadeValorAte || ''}
               onChange={(e) => patchFilters({ sugestaoQuantidadeValorAte: e.target.value })}
             />
@@ -327,7 +348,7 @@ function FiltrosPainel({
         </div>
       </FilterSection>
 
-      <FilterSection title="Tags" icon={Tag}>
+      <FilterSection title="Tags" icon={Tag} compact={compact}>
         {(filters.selectedTags || []).length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {filters.selectedTags.map((tag) => (
@@ -348,7 +369,7 @@ function FiltrosPainel({
             placeholder="Buscar tag..."
             value={tagSearch}
             onChange={(e) => onTagSearch(e.target.value)}
-            className="bg-card border border-border/30 h-11 rounded-xl"
+            className={cn('bg-card border border-border/30 rounded-xl', controlH)}
           />
           {tagSearch && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-card rounded-xl shadow-lg border border-border/40 max-h-40 overflow-y-auto z-10">
@@ -377,12 +398,12 @@ function FiltrosPainel({
         </div>
       </FilterSection>
 
-      <FilterSection title="Embalagem" icon={Package}>
+      <FilterSection title="Embalagem" icon={Package} compact={compact}>
         <Select
           value={filters.roundingMode}
           onValueChange={(roundingMode) => patchFilters({ roundingMode })}
         >
-          <SelectTrigger className="h-11 bg-card border border-border/30 rounded-xl">
+          <SelectTrigger className={cn('bg-card border border-border/30 rounded-xl', controlH)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -394,12 +415,13 @@ function FiltrosPainel({
         </Select>
       </FilterSection>
 
-      <FilterSection title="Hierarquia" icon={Layers}>
+      <FilterSection title="Hierarquia" icon={Layers} compact={compact}>
         <button
           type="button"
           onClick={() => patchFilters({ agruparHierarquia: !filters.agruparHierarquia })}
           className={cn(
-            'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
+            'w-full rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
+            controlH,
             filters.agruparHierarquia
               ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
               : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
@@ -408,16 +430,19 @@ function FiltrosPainel({
           <Layers className="h-4 w-4" />
           {filters.agruparHierarquia ? 'Agrupar famílias (h1–h4)' : 'Listar por SKU'}
         </button>
-        <p className="text-[11px] text-muted-foreground leading-snug">
-          Famílias com 2+ modelos aparecem numa linha (ex.: piso 45×45 sem escolher marca).
-        </p>
+        {!compact ? (
+          <p className="text-[11px] text-muted-foreground leading-snug">
+            Famílias com 2+ modelos aparecem numa linha (ex.: piso 45×45 sem escolher marca).
+          </p>
+        ) : null}
       </FilterSection>
 
       <button
         type="button"
         onClick={() => patchFilters({ hidePending: !filters.hidePending })}
         className={cn(
-          'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
+          'w-full rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
+          controlH,
           filters.hidePending
             ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
             : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
@@ -652,29 +677,29 @@ export default function FiltrosSugestaoCompra({
       )}
 
       <Drawer open={showFilters} onOpenChange={setShowFilters}>
-        <DrawerContent className="max-h-[92vh] border-0 rounded-t-[28px] bg-card px-4 pb-0 dark:bg-card md:mx-auto md:max-w-lg">
-          <DrawerHeader className="px-0 pb-1 text-left shrink-0">
-            <DrawerTitle className="font-glacial text-foreground">Filtros</DrawerTitle>
+        <DrawerContent className="max-h-[88dvh] flex flex-col border-0 rounded-t-[28px] bg-card px-4 pb-0 dark:bg-card md:mx-auto md:max-w-lg [&>div:first-child]:mt-2">
+          <DrawerHeader className="shrink-0 px-0 pt-0 pb-1 text-left">
+            <DrawerTitle className="font-glacial text-base text-foreground">Filtros</DrawerTitle>
             {activeFilterCount > 0 ? (
               <p className="text-xs text-muted-foreground">{activeFilterCount} filtro(s) ativo(s)</p>
             ) : null}
           </DrawerHeader>
-          <div className="overflow-y-auto pb-4 -mx-1 px-1 max-h-[calc(92vh-9rem)]">
-            <FiltrosPainel {...painelProps} />
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain pb-2 -mx-1 px-1">
+            <FiltrosPainel {...painelProps} compact />
           </div>
-          <div className="sticky bottom-0 -mx-4 border-t border-border/40 bg-card/95 px-4 py-3 backdrop-blur-sm dark:bg-card/95">
+          <div className="shrink-0 -mx-4 border-t border-border/40 bg-card px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:bg-card">
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={limpar}
-                className="h-11 flex-1 rounded-2xl bg-muted text-sm text-muted-foreground"
+                className="h-10 flex-1 rounded-2xl bg-muted text-sm text-muted-foreground"
               >
                 Limpar
               </button>
               <button
                 type="button"
                 onClick={() => setShowFilters(false)}
-                className="h-11 flex-1 rounded-2xl bg-teal-600 text-sm text-white dark:bg-teal-500"
+                className="h-10 flex-1 rounded-2xl bg-teal-600 text-sm text-white dark:bg-teal-500"
               >
                 Aplicar
               </button>
