@@ -10,17 +10,22 @@ import {
   sugestaoProjecaoEstoque30dNegativa,
   sugestaoProjecaoEstoque30dTexto,
 } from '@/lib/calcularSugestaoCompraVelocidade';
-import { formatSugestaoEstoqueLinha } from '@/lib/sugestaoCompraVitrineDisplay';
+import {
+  resolveSugestaoEstoqueEfetivoBase,
+  resolveSugestaoQuantidadeVitrine,
+} from '@/lib/sugestaoCompraVitrineDisplay';
 
 const VALUES_GRID = 'grid grid-cols-3 gap-x-1.5 min-w-0';
 const BODY_TEXT = 'font-din-1451 text-base tablet-landscape:text-lg font-light leading-none';
 const HEADER_LABEL = `${BODY_TEXT} uppercase tracking-tight text-right text-muted-foreground min-w-0 truncate`;
-const QTD_COL_W = '3.25rem';
+const AXIS_COL_W = '3.25rem';
 const ROW_PL = 'pl-2.5';
 const AXIS_LEFT = 'calc(0.625rem + 3.25rem)';
 const DESC_PL_AFTER_LINE = 12;
 const NOME_TYPO =
   'text-[12px] font-light leading-relaxed uppercase break-words [overflow-wrap:anywhere]';
+
+const fmtN = (n) => (n ?? 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 function SacredAxis() {
   return (
@@ -32,32 +37,32 @@ function SacredAxis() {
   );
 }
 
-function QtdColShell({ children, className = '' }) {
+function AxisColShell({ children, className = '' }) {
   return (
     <div
       className={cn('relative shrink-0 pr-1.5 pt-3 pb-3 text-right self-stretch', className)}
-      style={{ width: QTD_COL_W }}
+      style={{ width: AXIS_COL_W }}
     >
       {children}
     </div>
   );
 }
 
-function rowAccentKey(linha, selecionado) {
-  if (selecionado) return 'info';
+function stockToneFromLinha(linha) {
   const estoque = linha?.sugestao?.estoque_atual ?? linha?.produto?.estoque_atual ?? 0;
   if (estoque <= 0) return 'danger';
   if (sugestaoProjecaoEstoque30dNegativa(linha?.sugestao)) return 'warning';
   const gap = Number(linha?.sugestao?.gap_ponto_futuro_base);
   if (Number.isFinite(gap) && gap > 0) return 'warning';
-  return 'muted';
+  const ponto = linha?.sugestao?.ponto_pedido ?? 0;
+  if (ponto > 0 && estoque < ponto) return 'warning';
+  return 'success';
 }
 
-function accentDotClass(key) {
-  if (key === 'danger') return p38Accent.danger.dot;
-  if (key === 'warning') return p38Accent.warning.dot;
-  if (key === 'info') return p38Accent.info.dot;
-  if (key === 'muted') return p38Accent.muted.dot;
+function accentDotClass(tone) {
+  if (tone === 'danger') return p38Accent.danger.dot;
+  if (tone === 'warning') return p38Accent.warning.dot;
+  if (tone === 'muted') return p38Accent.muted.dot;
   return p38Accent.success.dot;
 }
 
@@ -68,6 +73,17 @@ function AbcdBadge({ letter }) {
     <span className="inline-flex h-4 min-w-4 items-center justify-center rounded px-1 text-[8px] font-bold bg-muted text-muted-foreground shrink-0">
       {value}
     </span>
+  );
+}
+
+/** Coluna esquerda: estoque + UN (igual catálogo). */
+function EstoqueUnCol({ quantidade, unidade, stockTone = 'success' }) {
+  return (
+    <AxisColShell>
+      <span className={cn('absolute left-0 top-3.5 h-1.5 w-1.5 rounded-full', accentDotClass(stockTone))} aria-hidden />
+      <p className={cn(BODY_TEXT, 'tabular-nums leading-none text-foreground')}>{fmtN(quantidade)}</p>
+      <p className={cn(BODY_TEXT, 'mt-1.5 uppercase text-muted-foreground leading-none truncate')}>{unidade}</p>
+    </AxisColShell>
   );
 }
 
@@ -85,15 +101,15 @@ function SugestaoCompraMobileColumnHeader({ className = '', invisible = false, p
     >
       <SacredAxis />
       <div className={cn('relative flex min-w-0 py-3.5 pr-10', ROW_PL)}>
-        <QtdColShell className="!py-2">
-          <p className={HEADER_LABEL}>QTD</p>
+        <AxisColShell className="!py-2">
+          <p className={HEADER_LABEL}>EST.</p>
           <p className={cn(HEADER_LABEL, 'mt-1.5')}>UN</p>
-        </QtdColShell>
+        </AxisColShell>
         <div className="flex-1 min-w-0 overflow-hidden" style={{ paddingLeft: DESC_PL_AFTER_LINE }}>
           <div className={VALUES_GRID}>
-            <p className={HEADER_LABEL}>EST.</p>
             <p className={HEADER_LABEL}>MÉD.</p>
             <p className={HEADER_LABEL}>P.FUT.</p>
+            <p className={HEADER_LABEL}>QTD</p>
           </div>
         </div>
       </div>
@@ -133,9 +149,22 @@ function QtdInput({ linha, disp, onQuantidadeLinhaChange }) {
         }
       }}
       onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
       className="h-auto min-h-0 w-full border-0 bg-transparent p-0 text-right shadow-none focus-visible:ring-0 font-din-1451 text-base font-light tabular-nums leading-none text-foreground"
     />
   );
+}
+
+function resolveEstoqueVitrineColuna(linha, sugestao, produto, incluirPedidosAprovados) {
+  const { estoqueBase } = resolveSugestaoEstoqueEfetivoBase(produto, sugestao, {
+    incluirPedidosAprovados,
+    quantidadePendente: linha.quantidade_pendente,
+  });
+  const disp = resolveSugestaoQuantidadeVitrine(produto, estoqueBase);
+  return {
+    quantidade: disp.quantidade ?? 0,
+    unidade: disp.unidade || produto?.unidade_principal || 'UN',
+  };
 }
 
 function SugestaoCatalogRow({
@@ -150,96 +179,100 @@ function SugestaoCatalogRow({
   const sugestao = linha.sugestao;
   const produto = linha.produto;
   const isGrupo = linha.tipo === 'grupo';
-  const estoqueFmt = formatSugestaoEstoqueLinha(produto, sugestao, {
-    incluirPedidosAprovados,
-    quantidadePendente: linha.quantidade_pendente,
-  });
+  const estoqueCol = resolveEstoqueVitrineColuna(linha, sugestao, produto, incluirPedidosAprovados);
   const media30d = sugestao?.media_30d_texto || '—';
   const pontoFuturo = sugestaoProjecaoEstoque30dTexto(sugestao);
   const projNeg = sugestaoProjecaoEstoque30dNegativa(sugestao);
-  const unidade = disp?.unidade || produto?.unidade_principal || 'UN';
   const abcd = getLinhaAbcdLetter(linha);
-  const accent = rowAccentKey(linha, selecionado);
+  const stockTone = stockToneFromLinha(linha);
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className={cn(
         p38Table.catalogMobileRow,
-        'relative flex min-w-0 max-w-full py-4',
+        'relative flex min-w-0 max-w-full touch-pan-y select-none py-4 active:bg-secondary/20',
         selecionado && 'bg-teal-50/40 dark:bg-teal-950/20',
       )}
+      onClick={() => onToggleSelecionado?.(!selecionado)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onToggleSelecionado?.(!selecionado);
+        }
+      }}
     >
       <SacredAxis />
-      <button
-        type="button"
-        className="flex flex-1 min-w-0 text-left active:bg-secondary/20"
-        onClick={() => onToggleSelecionado?.(!selecionado)}
-      >
-        <div className={cn('flex flex-1 min-w-0 items-stretch', ROW_PL)}>
-          <QtdColShell>
-            <span className={cn('absolute left-0 top-3.5 h-1.5 w-1.5 rounded-full', accentDotClass(accent))} aria-hidden />
-            <QtdInput
-              linha={linha}
-              disp={disp}
-              onQuantidadeLinhaChange={onQuantidadeLinhaChange}
-            />
-            <p className={cn(BODY_TEXT, 'mt-1.5 uppercase text-muted-foreground truncate')}>{unidade}</p>
-          </QtdColShell>
+      <div className={cn('flex flex-1 min-w-0 items-stretch', ROW_PL)}>
+        <EstoqueUnCol
+          quantidade={estoqueCol.quantidade}
+          unidade={estoqueCol.unidade}
+          stockTone={stockTone}
+        />
 
-          <div
-            className="flex-1 min-w-0 overflow-hidden py-1 pr-1"
-            style={{ paddingLeft: DESC_PL_AFTER_LINE }}
-          >
-            <div className="min-h-[3rem] mb-2 min-w-0 overflow-hidden">
-              <div className="flex items-start gap-1 min-w-0">
-                <p lang="pt-BR" className={cn('line-clamp-3 flex-1 min-w-0', NOME_TYPO, 'text-foreground/90')}>
-                  {linha.label}
-                </p>
-                <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
-                  <AbcdBadge letter={abcd} />
-                  {isGrupo ? (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] text-muted-foreground">
-                      <Layers className="w-2.5 h-2.5" />
-                      {linha.skus?.length ?? 0}
-                    </span>
-                  ) : null}
-                </div>
+        <div
+          className="flex-1 min-w-0 overflow-hidden py-1 pr-1"
+          style={{ paddingLeft: DESC_PL_AFTER_LINE }}
+        >
+          <div className="min-h-[3rem] mb-2 min-w-0 overflow-hidden">
+            <div className="flex items-start gap-1 min-w-0">
+              <p lang="pt-BR" className={cn('line-clamp-3 flex-1 min-w-0', NOME_TYPO, 'text-foreground/90')}>
+                {linha.label}
+              </p>
+              <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
+                <AbcdBadge letter={abcd} />
+                {isGrupo ? (
+                  <span className="inline-flex items-center gap-0.5 text-[9px] text-muted-foreground">
+                    <Layers className="w-2.5 h-2.5" />
+                    {linha.skus?.length ?? 0}
+                  </span>
+                ) : null}
               </div>
-              {!isGrupo && produto?.codigo_interno ? (
-                <p className="mt-0.5 text-[10px] font-mono truncate text-muted-foreground">
-                  #{produto.codigo_interno}
-                </p>
-              ) : null}
             </div>
+            {!isGrupo && produto?.codigo_interno ? (
+              <p className="mt-0.5 text-[10px] font-mono truncate text-muted-foreground">
+                #{produto.codigo_interno}
+              </p>
+            ) : null}
+          </div>
 
-            <div className={VALUES_GRID}>
-              <p className={cn(BODY_TEXT, 'tabular-nums text-right truncate text-muted-foreground')}>
-                {estoqueFmt.primary}
-              </p>
-              <p className={cn(BODY_TEXT, 'tabular-nums text-right truncate text-muted-foreground')}>
-                {media30d}
-              </p>
-              <p
-                className={cn(
-                  BODY_TEXT,
-                  'tabular-nums text-right truncate',
-                  projNeg ? 'text-rose-600 dark:text-rose-400 font-normal' : 'text-muted-foreground',
-                )}
-              >
-                {pontoFuturo}
-              </p>
-            </div>
-
-            <div className="mt-2 min-w-0 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-              {fornecedorSelect}
+          <div className={VALUES_GRID}>
+            <p className={cn(BODY_TEXT, 'tabular-nums text-right truncate text-muted-foreground')}>
+              {media30d}
+            </p>
+            <p
+              className={cn(
+                BODY_TEXT,
+                'tabular-nums text-right truncate',
+                projNeg ? 'text-rose-600 dark:text-rose-400 font-normal' : 'text-muted-foreground',
+              )}
+            >
+              {pontoFuturo}
+            </p>
+            <div className="min-w-0 overflow-hidden" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+              <QtdInput
+                linha={linha}
+                disp={disp}
+                onQuantidadeLinhaChange={onQuantidadeLinhaChange}
+              />
             </div>
           </div>
+
+          <div
+            className="mt-2 min-w-0 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            {fornecedorSelect}
+          </div>
         </div>
-      </button>
+      </div>
 
       <div
         className="flex w-10 shrink-0 items-start justify-center pt-4 pr-2"
         onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
       >
         <Checkbox
           checked={selecionado}
@@ -316,7 +349,7 @@ export function SugestaoCompraMobileScrollShell({ chrome, children }) {
           pinStyle={pinStyle}
         />
       ) : null}
-      <div className="min-w-0 max-w-full overflow-x-hidden">{children}</div>
+      {children}
     </div>
   );
 }

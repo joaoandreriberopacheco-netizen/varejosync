@@ -842,8 +842,8 @@ export default function SugestaoCompra({ onStatsChange }) {
               )}
         </SugestaoCompraMobileScrollShell>
 
-        <div className="fixed inset-x-0 bottom-[var(--p38-bottom-nav-total,0px)] z-40 max-w-[100vw] border-t border-border/40 bg-card/95 backdrop-blur-sm px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)]">
-          <div className="flex gap-2 max-w-7xl mx-auto">
+        <div className="fixed inset-x-0 bottom-[var(--p38-bottom-nav-total,0px)] z-40 max-w-[100vw] border-t border-border/40 bg-card/95 backdrop-blur-sm px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)] pointer-events-none">
+          <div className="flex gap-2 max-w-7xl mx-auto pointer-events-auto">
             <Button
               type="button"
               variant="outline"
