@@ -24,6 +24,8 @@ export default function SugestaoCompraMobileToolbar({
   onOpenFilters,
   somenteAbaixoPontoFuturo,
   onToggleSomenteAbaixo,
+  considerarPedidosAprovadosEstoque,
+  onToggleConsiderarPedidos,
   onRefresh,
   isLoading,
 }) {
@@ -45,6 +47,18 @@ export default function SugestaoCompraMobileToolbar({
           )}
         >
           Com sugestão
+        </button>
+        <button
+          type="button"
+          onClick={onToggleConsiderarPedidos}
+          className={cn(
+            'shrink-0 h-9 px-3 rounded-full text-xs font-medium border transition-colors',
+            considerarPedidosAprovadosEstoque
+              ? 'bg-teal-600 text-white border-teal-600 dark:bg-teal-500 dark:border-teal-500'
+              : 'bg-muted/50 text-muted-foreground border-border/30',
+          )}
+        >
+          Incluir pedidos
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

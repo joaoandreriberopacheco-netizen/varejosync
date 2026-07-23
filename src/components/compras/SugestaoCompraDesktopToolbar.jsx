@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SUGESTAO_COMPRA_SORT_COLUMNS } from '@/lib/sugestaoCompraColumnSort';
 import ProdutosTreeByCategoryToggle from '@/components/produtos/ProdutosTreeByCategoryToggle';
+import SugestaoCompraIncluirPedidosToggle from '@/components/compras/SugestaoCompraIncluirPedidosToggle';
 import { LevelControl } from '@/components/produtos/treegrid/TreeGrid';
 import { cn } from '@/components/utils';
 
@@ -25,6 +26,8 @@ export default function SugestaoCompraDesktopToolbar({
   onSortColumn,
   groupByCategory,
   onGroupByCategoryChange,
+  considerarPedidosAprovadosEstoque,
+  onConsiderarPedidosAprovadosEstoqueChange,
   treeLevel,
   onTreeLevelChange,
 }) {
@@ -101,6 +104,10 @@ export default function SugestaoCompraDesktopToolbar({
           checked={groupByCategory}
           onChange={onGroupByCategoryChange}
           className="h-9"
+        />
+        <SugestaoCompraIncluirPedidosToggle
+          checked={considerarPedidosAprovadosEstoque === true}
+          onChange={onConsiderarPedidosAprovadosEstoqueChange}
         />
         <div className="flex items-center gap-1 rounded-xl bg-card/80 dark:bg-card/40 border border-border/30 px-2 h-9">
           <span className="text-[10px] text-muted-foreground">nível</span>

@@ -7,6 +7,7 @@ import {
   P38MobileMetric,
   p38AccentKeyFromTone,
 } from '@/components/ui/p38-mobile-line';
+import { cn } from '@/components/utils';
 import { getLinhaAbcdLetter } from '@/lib/sugestaoCompraTree';
 import {
   sugestaoProjecaoEstoque30dNegativa,

@@ -466,6 +466,13 @@ export default function SugestaoCompra({ onStatsChange }) {
     }));
   }, []);
 
+  const handleToggleConsiderarPedidos = useCallback(() => {
+    setFilters((prev) => ({
+      ...prev,
+      considerarPedidosAprovadosEstoque: !prev.considerarPedidosAprovadosEstoque,
+    }));
+  }, []);
+
   const handleColumnSort = useCallback((column) => {
     setColumnSort((prev) => {
       const next = prev?.column === column
@@ -834,6 +841,8 @@ export default function SugestaoCompra({ onStatsChange }) {
               onOpenFilters={() => setFiltersDrawerOpen(true)}
               somenteAbaixoPontoFuturo={filters.somenteAbaixoPontoFuturo === true}
               onToggleSomenteAbaixo={handleToggleSomenteAbaixo}
+              considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
+              onToggleConsiderarPedidos={handleToggleConsiderarPedidos}
               onRefresh={loadData}
               isLoading={isLoading}
             />
@@ -848,6 +857,8 @@ export default function SugestaoCompra({ onStatsChange }) {
               onSortColumn={handleMobileSortColumn}
               groupByCategory={groupByCategory}
               onGroupByCategoryChange={handleGroupByCategoryChange}
+              considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
+              onConsiderarPedidosAprovadosEstoqueChange={handleToggleConsiderarPedidos}
               treeLevel={treeLevel}
               onTreeLevelChange={handleTreeLevelChange}
             />

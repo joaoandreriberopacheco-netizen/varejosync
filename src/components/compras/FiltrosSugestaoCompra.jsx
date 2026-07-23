@@ -415,24 +415,6 @@ function FiltrosPainel({
 
       <button
         type="button"
-        onClick={() =>
-          patchFilters({
-            considerarPedidosAprovadosEstoque: !filters.considerarPedidosAprovadosEstoque,
-          })
-        }
-        className={cn(
-          'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
-          filters.considerarPedidosAprovadosEstoque === true
-            ? 'bg-teal-600/12 text-teal-800 dark:bg-teal-500/20 dark:text-teal-200'
-            : 'bg-muted/50 text-muted-foreground hover:bg-muted/80',
-        )}
-      >
-        <Package className="h-4 w-4" />
-        INCLUIR PEDIDOS
-      </button>
-
-      <button
-        type="button"
         onClick={() => patchFilters({ hidePending: !filters.hidePending })}
         className={cn(
           'w-full h-11 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors',
