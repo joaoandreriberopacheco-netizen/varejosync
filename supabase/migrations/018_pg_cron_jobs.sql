@@ -73,20 +73,20 @@ grant execute on function public.job_liquidar_cartao_credito() to authenticated,
 --   13:05 UTC → status de lançamentos (08:05 America/Rio_Branco)
 --   13:10 UTC → liquidação de cartão   (08:10 America/Rio_Branco)
 -- =====================================================================
-do $$
+do $do$
 begin
   if not exists (select 1 from cron.job where jobname = 'job-status-lancamentos') then
     perform cron.schedule(
       'job-status-lancamentos',
       '5 13 * * *',
-      $$select public.job_atualizar_status_lancamentos();$$
+      $cmd$select public.job_atualizar_status_lancamentos();$cmd$
     );
   end if;
   if not exists (select 1 from cron.job where jobname = 'job-liquidar-cartao') then
     perform cron.schedule(
       'job-liquidar-cartao',
       '10 13 * * *',
-      $$select public.job_liquidar_cartao_credito();$$
+      $cmd$select public.job_liquidar_cartao_credito();$cmd$
     );
   end if;
-end$$;
+end$do$;
