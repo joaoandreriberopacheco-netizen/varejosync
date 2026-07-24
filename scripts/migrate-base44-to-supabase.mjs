@@ -351,9 +351,7 @@ async function resolveMigrationBase44Client({ appId, serverUrl, token, apiKey })
       try {
         const rows = await api.list('-created_date', 1, 0);
         const n = Array.isArray(rows) ? rows.length : 0;
-        if (n >= 0) {
-          return { client, mode, probeEntity: entity, probeCount: n };
-        }
+        return { client, mode, probeEntity: entity, probeCount: n };
       } catch (e) {
         lastError = e;
         const msg = String(e?.message || e);
@@ -528,6 +526,7 @@ function finalizeJsonbForPostgres(val) {
 }
 
 async function upsertBatch(client, table, rows, allowedCols, jsonbMeta) {
+  let skipped = 0;
   for (const row of rows) {
     const rowCoerced = coerceReferenceObjectsForPg(row, allowedCols, jsonbMeta);
     const clean = {};
@@ -543,12 +542,24 @@ async function upsertBatch(client, table, rows, allowedCols, jsonbMeta) {
     }
     if (!clean.id) {
       console.warn(`[migrate] Linha sem id na tabela ${table}, ignorada.`);
+      skipped += 1;
       continue;
     }
     const keys = Object.keys(clean);
     const colList = keys.map((k) => `"${k.replace(/"/g, '""')}"`).join(', ');
-    const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
-    const values = keys.map((k) => serializeCell(clean[k]));
+    const placeholders = keys
+      .map((k, i) => {
+        const cast = jsonbMeta?.has(k) ? `::${jsonbMeta.get(k).udtName || 'jsonb'}` : '';
+        return `$${i + 1}${cast}`;
+      })
+      .join(', ');
+    const values = keys.map((k) => {
+      const v = clean[k];
+      if (jsonbMeta?.has(k) && v !== null && typeof v === 'object') {
+        return JSON.stringify(v);
+      }
+      return serializeCell(v);
+    });
     const updateSet = keys
       .filter((k) => k !== 'id')
       .map((k) => `"${k.replace(/"/g, '""')}" = EXCLUDED."${k.replace(/"/g, '""')}"`)
@@ -583,18 +594,25 @@ async function upsertBatch(client, table, rows, allowedCols, jsonbMeta) {
           console.error(`[migrate]   coluna jsonb "${col}": ${preview}`);
         }
       }
+      if (/22P02|invalid input syntax for type json/i.test(String(e?.message || e))) {
+        console.warn(`[migrate] Linha ignorada (${table}/${clean.id}) — JSON inválido; continuar…`);
+        skipped += 1;
+        continue;
+      }
       throw e;
     }
   }
+  return skipped;
 }
 
 async function upsertInReplicaSession(client, table, rows, allowedCols, jsonbMeta) {
   await client.query('BEGIN');
   try {
     await client.query("SET LOCAL session_replication_role = 'replica'");
-    await upsertBatch(client, table, rows, allowedCols, jsonbMeta);
+    const skipped = await upsertBatch(client, table, rows, allowedCols, jsonbMeta);
     await client.query("SET LOCAL session_replication_role = 'origin'");
     await client.query('COMMIT');
+    return skipped;
   } catch (e) {
     await client.query('ROLLBACK').catch(() => {});
     throw e;
@@ -609,10 +627,10 @@ async function loadTableColumns(client, table) {
   return new Set(r.rows.map((x) => x.column_name));
 }
 
-/** Metadados de colunas jsonb para normalizar strings vazias / JSON inválido antes do INSERT. */
+/** Metadados de colunas jsonb/json para normalizar strings vazias / JSON inválido antes do INSERT. */
 async function loadJsonbColumnMeta(client, table) {
   const r = await client.query(
-    `select column_name, is_nullable, coalesce(column_default::text, '') as def
+    `select column_name, is_nullable, coalesce(column_default::text, '') as def, udt_name
      from information_schema.columns
      where table_schema = 'public' and table_name = $1 and udt_name in ('jsonb', 'json')`,
     [table]
@@ -623,6 +641,7 @@ async function loadJsonbColumnMeta(client, table) {
     meta.set(row.column_name, {
       notNull: row.is_nullable === 'NO',
       defaultIsArray: def.includes('[]'),
+      udtName: row.udt_name === 'json' ? 'json' : 'jsonb',
     });
   }
   return meta;
@@ -781,20 +800,29 @@ async function main() {
       console.log(`[migrate] ${table} ← ${sourceEntity}: ${prepared.length} linhas…`);
 
       if (atomic) {
-        await upsertBatch(client, table, prepared, allowedCols, jsonbMeta);
+        const skipped = await upsertBatch(client, table, prepared, allowedCols, jsonbMeta);
+        if (skipped) console.warn(`[migrate] ${table}: ${skipped} linha(s) ignorada(s) no lote.`);
       } else {
         const chunks = chunkArray(prepared, rowsPerCommit);
         let partNum = 0;
+        let skippedTotal = 0;
         for (const part of chunks) {
           partNum += 1;
-          await upsertInReplicaSession(client, table, part, allowedCols, jsonbMeta);
+          const skipped = await upsertInReplicaSession(client, table, part, allowedCols, jsonbMeta);
+          skippedTotal += skipped;
           if (chunks.length > 1) {
             console.log(`[migrate]   … commit parcial ${partNum}/${chunks.length} (${part.length} linhas)`);
           }
         }
+        if (skippedTotal) {
+          console.warn(`[migrate] ${table}: ${skippedTotal} linha(s) ignorada(s) (JSON inválido).`);
+        }
+        totalRowsWritten += prepared.length - skippedTotal;
       }
 
-      totalRowsWritten += prepared.length;
+      if (atomic) {
+        totalRowsWritten += prepared.length;
+      }
 
       migratedTables.add(table);
       if (delayMs) await sleep(delayMs);
