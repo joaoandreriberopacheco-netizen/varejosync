@@ -59,6 +59,8 @@ jobs:
 
       - name: Aplicar migrações SQL
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.migrations != false && inputs.dry_run != true) }}
+        continue-on-error: true
+        id: migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
@@ -81,7 +83,9 @@ jobs:
           npm run db:apply-migrations -- --dry-run
 
       - name: Deploy Edge Functions
-        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.functions != false && inputs.dry_run != true) }}
+        if: ${{ always() && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.functions != false && inputs.dry_run != true)) }}
+        continue-on-error: true
+        id: functions
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
@@ -119,3 +123,9 @@ jobs:
           echo "DATABASE_URL: $([ -n "${DATABASE_URL:-}" ] && echo presente || echo EM FALTA)"
           echo "SUPABASE_ACCESS_TOKEN: $([ -n "${SUPABASE_ACCESS_TOKEN:-}" ] && echo presente || echo EM FALTA)"
           echo "PROJECT_REF: $([ -n "${SUPABASE_PROJECT_REF:-}${VITE_SUPABASE_URL:-}" ] && echo presente || echo EM FALTA)"
+          echo "migrações: ${{ steps.migrations.outcome || 'skipped' }}"
+          echo "functions: ${{ steps.functions.outcome || 'skipped' }}"
+          if [ "${{ steps.migrations.outcome }}" = "failure" ] || [ "${{ steps.functions.outcome }}" = "failure" ]; then
+            echo "::warning::Deploy incompleto — ver npm run supabase:deploy:check e docs/migration/SUPABASE_DEPLOY_TRIGGER.md"
+            exit 1
+          fi
