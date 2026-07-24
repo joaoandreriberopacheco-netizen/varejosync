@@ -7,7 +7,7 @@ import { FLARE_AND_INSPECTION_UI_ENABLED } from '@/config/devToolsFlags';
 import VisualEditAgent from '@/lib/VisualEditAgent'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { NavigationTransitionProvider } from '@/lib/NavigationTransitionContext';
@@ -26,14 +26,8 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   : <>{children}</>;
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
   const location = useLocation();
-
-  React.useEffect(() => {
-    if (authError?.type === 'auth_required' && location.pathname !== '/login') {
-      navigateToLogin();
-    }
-  }, [authError, location.pathname, navigateToLogin]);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -43,17 +37,17 @@ const AuthenticatedApp = () => {
     );
   }
 
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    }
-    if (authError.type === 'auth_required') {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground text-sm">
-          A redirecionar para o login…
-        </div>
-      );
-    }
+  if (authError?.type === 'user_not_registered') {
+    return <UserNotRegisteredError />;
+  }
+
+  if (authError?.type === 'auth_required' && location.pathname !== '/login') {
+    const returnPath = `${location.pathname}${location.search}`;
+    const loginTo =
+      returnPath && returnPath !== '/'
+        ? `/login?returnUrl=${encodeURIComponent(returnPath)}`
+        : '/login';
+    return <Navigate to={loginTo} replace />;
   }
 
   return (

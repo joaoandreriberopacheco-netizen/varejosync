@@ -54,3 +54,15 @@ export function isSupabaseBrowserConfigured() {
   const key = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
   return Boolean(url && key);
 }
+
+/** Aguarda sessão Supabase Auth após signIn (evita race antes do localStorage). */
+export async function waitForSupabaseSession(supabase, { timeoutMs = 8000 } = {}) {
+  if (!supabase) return null;
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.user) return data.session;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  return null;
+}

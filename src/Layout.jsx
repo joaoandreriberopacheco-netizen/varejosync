@@ -4,7 +4,6 @@ import { useLocation } from 'react-router-dom';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
 import { base44, p38 } from '@/api/base44Client';
-import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
 import { WifiOff } from 'lucide-react';
@@ -118,14 +117,6 @@ export default function Layout({ children, currentPageName }) {
       }
     } catch (error) {
       console.error('Erro ao carregar usuário:', error);
-      const msg = String(error?.message || '');
-      if (
-        isSupabaseAuthEnabled() &&
-        (error?.status === 401 || error?.status === 403 || /sess[aã]o supabase/i.test(msg))
-      ) {
-        window.location.href = '/login';
-        return;
-      }
       const cached = getCachedUserSession();
       if (cached?.user) {
         setCurrentUser(cached.user);

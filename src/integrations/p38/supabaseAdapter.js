@@ -90,16 +90,36 @@ function flattenUsuarioRow(row) {
  * Liga auth.users à linha `public.usuario`: (1) email case-insensitive; (2) nickname nos metadados.
  * O `id` da linha operacional é o que o P38 usa em FKs (vendedor_id, caixas, etc.).
  */
+async function queryUsuarioRows(supabase, column, op, value, limit = 5) {
+  let q = supabase.from('usuario').select('*').limit(limit);
+  if (op === 'ilike') q = q.ilike(column, value);
+  else if (op === 'eq') q = q.eq(column, value);
+  return q;
+}
+
 async function fetchUsuarioOperacional(supabase, authUser) {
+  const authId = authUser?.id;
+  if (authId) {
+    const { data: byId, error: byIdErr } = await supabase.from('usuario').select('*').eq('id', authId).maybeSingle();
+    if (byIdErr) {
+      console.warn('[P38][supabaseAdapter] usuario por id:', byIdErr.message);
+    } else if (byId) {
+      return flattenUsuarioRow(byId);
+    }
+  }
+
   const norm = normalizeEmail(authUser?.email);
   if (norm) {
-    const { data: rows, error } = await supabase.from('usuario').select('*').ilike('email', norm).limit(5);
+    let { data: rows, error } = await queryUsuarioRows(supabase, 'email', 'ilike', norm);
+    if (error && /column.*\.email.*does not exist/i.test(error.message)) {
+      ({ data: rows, error } = await queryUsuarioRows(supabase, 'dados->>email', 'ilike', norm));
+    }
     if (error) {
       console.warn('[P38][supabaseAdapter] usuario por email:', error.message);
-    } else if (rows?.length === 1) {
-      return flattenUsuarioRow(rows[0]);
-    } else if (rows?.length > 1) {
-      console.warn('[P38][supabaseAdapter] várias linhas em usuario para o mesmo email; usando a primeira.');
+    } else if (rows?.length >= 1) {
+      if (rows.length > 1) {
+        console.warn('[P38][supabaseAdapter] várias linhas em usuario para o mesmo email; usando a primeira.');
+      }
       return flattenUsuarioRow(rows[0]);
     }
   }
@@ -110,14 +130,18 @@ async function fetchUsuarioOperacional(supabase, authUser) {
     authUser.user_metadata?.user_name;
   const nickTrim = nickRaw != null ? String(nickRaw).trim() : '';
   if (nickTrim) {
-    const { data: rows2, error: err2 } = await supabase.from('usuario').select('*').eq('nickname', nickTrim).limit(5);
+    let { data: rows2, error: err2 } = await queryUsuarioRows(supabase, 'nickname', 'eq', nickTrim);
+    if (err2 && /column.*\.nickname.*does not exist/i.test(err2.message)) {
+      ({ data: rows2, error: err2 } = await queryUsuarioRows(supabase, 'dados->>nickname', 'eq', nickTrim));
+    }
     if (err2) {
       console.warn('[P38][supabaseAdapter] usuario por nickname:', err2.message);
       return null;
     }
-    if (rows2?.length === 1) return flattenUsuarioRow(rows2[0]);
-    if (rows2?.length > 1) {
-      console.warn('[P38][supabaseAdapter] várias linhas em usuario para o mesmo nickname; usando a primeira.');
+    if (rows2?.length >= 1) {
+      if (rows2.length > 1) {
+        console.warn('[P38][supabaseAdapter] várias linhas em usuario para o mesmo nickname; usando a primeira.');
+      }
       return flattenUsuarioRow(rows2[0]);
     }
   }
@@ -192,6 +216,7 @@ function buildAuth(supabase) {
     async login(payload = {}) {
       if (useSupabaseAuth) {
         const { email, password } = payload;
+        persistUser(null);
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         return data;
@@ -222,13 +247,16 @@ function buildAuth(supabase) {
     },
     redirectToLogin(returnUrl) {
       if (typeof window === 'undefined') return;
-      if (useSupabaseAuth) {
-        // Evita loop de reload: AuthContext + App chamam isto ao estar já em /login.
-        if (window.location.pathname === '/login') return;
-        window.location.href = '/login';
-        return;
+      if (window.location.pathname === '/login') return;
+      const params = new URLSearchParams();
+      if (returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//')) {
+        params.set('returnUrl', returnUrl);
+      } else if (returnUrl && returnUrl.startsWith(window.location.origin)) {
+        const path = returnUrl.slice(window.location.origin.length) || '/';
+        params.set('returnUrl', path);
       }
-      window.location.href = returnUrl || '/';
+      const qs = params.toString();
+      window.location.href = qs ? `/login?${qs}` : '/login';
     },
     /**
      * Compat com `User.loginWithRedirect(returnUrl)` do Base44 SDK.
