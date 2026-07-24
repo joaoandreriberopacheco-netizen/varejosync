@@ -23,6 +23,7 @@
  *   --dry-run        só conta linhas por tabela (não escreve)
  *   --limit=N        máximo de registos a puxar por entidade (default 10000; API permite 10k por pedido, pedidos em páginas)
  *   --only=Ent1,Ent2 só migra essas entidades (nomes PascalCase do Base44, como no mapa). Alternativa: env MIGRATE_ONLY_ENTITIES=Ent1,Ent2
+ *   --force-entity=Ent   força uma entidade (ex.: Usuario) em vez da ordem de candidatos User/Usuario
  *   --delay-ms=N     pausa entre tabelas (rate limit / carga na API)
  *   --atomic         uma única transação para toda a migração (modo antigo; falhou = rollback total)
  *   --rows-per-commit=N em modo escalonado (default 250): grava em blocos de N linhas com COMMIT entre blocos.
@@ -219,7 +220,8 @@ const TABLE_PRIORITY = [
 ];
 
 const ENTITY_CANDIDATES_BY_TABLE = {
-  usuario: ['User', 'Usuario'],
+  // `Usuario` = operadores P38 (email, perfil). `User` = metadados auth da plataforma Base44 — só fallback.
+  usuario: ['Usuario', 'User'],
   categoria_produto: ['CategoriaProduto', 'Categoria'],
 };
 
@@ -231,6 +233,7 @@ function parseArgs(argv) {
   const atomic = argv.includes('--atomic');
   let limit = DEFAULT_LIST_LIMIT;
   let onlyEntities = null;
+  let forceEntity = null;
   let delayMs = 0;
   let rowsPerCommit = DEFAULT_ROWS_PER_COMMIT;
 
@@ -257,6 +260,9 @@ function parseArgs(argv) {
         .filter(Boolean);
       onlyEntities = list.length ? list : null;
     }
+    if (a.startsWith('--force-entity=')) {
+      forceEntity = a.slice('--force-entity='.length).trim() || null;
+    }
     if (a.startsWith('--delay-ms=')) {
       delayMs = Math.max(0, Number(a.slice('--delay-ms='.length)) || 0);
     }
@@ -264,7 +270,7 @@ function parseArgs(argv) {
       rowsPerCommit = Math.max(0, Number(a.slice('--rows-per-commit='.length)) || 0);
     }
   }
-  return { dryRun, limit, onlyEntities, delayMs, atomic, rowsPerCommit };
+  return { dryRun, limit, onlyEntities, forceEntity, delayMs, atomic, rowsPerCommit };
 }
 
 function collectTables(onlyEntities) {
@@ -699,7 +705,7 @@ function normalizeJsonbForPg(val, meta, colName, rowId) {
 }
 
 async function main() {
-  const { dryRun, limit, onlyEntities, delayMs, atomic, rowsPerCommit } = parseArgs(
+  const { dryRun, limit, onlyEntities, forceEntity, delayMs, atomic, rowsPerCommit } = parseArgs(
     process.argv.slice(2)
   );
   const { appId, serverUrl, token, apiKey, databaseUrl } = requireEnv();
@@ -720,6 +726,9 @@ async function main() {
   console.log(`[migrate] Tabelas: ${tables.length} (dry-run=${dryRun})`);
   if (onlyEntities?.length) {
     console.log(`[migrate] Filtro --only: ${onlyEntities.length} nome(s) de entidade → ${tables.length} tabela(s)`);
+  }
+  if (forceEntity) {
+    console.log(`[migrate] Forçar entidade: ${forceEntity} (ignora ordem de candidatos)`);
   }
   console.log(`[migrate] Limite listagem Base44: ${limit} / entidade`);
   if (delayMs) console.log(`[migrate] Pausa entre tabelas: ${delayMs} ms`);
@@ -762,7 +771,7 @@ async function main() {
     for (const table of tables) {
       if (migratedTables.has(table)) continue;
 
-      const candidates = entityCandidatesForTable(table);
+      const candidates = forceEntity ? [forceEntity] : entityCandidatesForTable(table);
       let sourceEntity = null;
       let rawRows = [];
 
@@ -775,6 +784,12 @@ async function main() {
           rawRows = rows;
           break;
         }
+      }
+
+      if (forceEntity && !rawRows.length) {
+        console.error(`[migrate] --force-entity=${forceEntity}: nenhuma linha devolvida pelo Base44.`);
+        process.exitCode = 1;
+        return;
       }
 
       if (!rawRows.length) {
