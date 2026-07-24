@@ -102,8 +102,12 @@ const activeAdapter = shouldUseSupabase
   : shouldUseSubpayze
     ? subpayzeAdapter
     : base44Adapter;
+// Com provider=supabase, o linkedLegacyClient já tem bypass auth ou cliente Supabase real.
+// Não usar o stub Base44 quando shouldUseSupabase=false por env em falta no build.
 const activeLegacyClient = wrapLegacyClientLancamentoFinanceiro(
-  activeAdapter.legacyClient || linkedLegacyClient,
+  providerName === providers.SUPABASE
+    ? linkedLegacyClient
+    : activeAdapter.legacyClient || linkedLegacyClient,
 );
 
 function withSafeFallback(sectionName, candidateSection, fallbackSection) {
