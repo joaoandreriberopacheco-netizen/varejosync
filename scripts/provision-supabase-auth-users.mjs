@@ -20,10 +20,21 @@ import { resolveSupabaseDeployEnv } from './supabase-env.mjs';
 loadDotEnvFiles();
 
 function parseArgs(argv) {
+  let onlyEmails = null;
+  for (const a of argv) {
+    if (a.startsWith('--only=')) {
+      onlyEmails = a
+        .slice('--only='.length)
+        .split(',')
+        .map((s) => normalizeEmail(s))
+        .filter(Boolean);
+    }
+  }
   return {
     dryRun: argv.includes('--dry-run'),
     createMode: argv.includes('--create'),
     resendInvite: argv.includes('--resend-invite'),
+    onlyEmails: onlyEmails?.length ? onlyEmails : null,
   };
 }
 

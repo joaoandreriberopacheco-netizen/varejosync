@@ -147,7 +147,15 @@ jobs:
                 echo "::error::SUPABASE_SERVICE_ROLE_KEY em falta — necessário para convites Auth."
                 exit 1
               fi
-              npm run usuario:provision-auth -- --resend-invite
+              ONLY=""
+              if [ -f .github/trigger-provision-auth ]; then
+                ONLY=$(grep '^only=' .github/trigger-provision-auth | head -1 | cut -d= -f2- | tr -d ' ' || true)
+              fi
+              if [ -n "$ONLY" ]; then
+                npm run usuario:provision-auth -- --resend-invite --only="$ONLY"
+              else
+                npm run usuario:provision-auth -- --resend-invite
+              fi
               ;;
             resync_dry_run)
               npm run usuario:resync -- --dry-run
