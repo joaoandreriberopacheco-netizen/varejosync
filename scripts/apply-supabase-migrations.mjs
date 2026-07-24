@@ -17,6 +17,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
+import { loadDotEnvFiles } from './base44-env.mjs';
+
+loadDotEnvFiles();
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const migrationsDir = path.join(root, 'supabase', 'migrations');
