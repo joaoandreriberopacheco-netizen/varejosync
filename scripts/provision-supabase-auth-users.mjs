@@ -7,7 +7,7 @@
  * Uso:
  *   VITE_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... DATABASE_URL=... npm run usuario:provision-auth
  *   npm run usuario:provision-auth -- --dry-run
- *   npm run usuario:provision-auth -- --resend-invite   (reenvia convite se ainda não confirmou email)
+ *   npm run usuario:provision-auth -- --only=casaisraelcl@gmail.com
  *
  * Por defeito envia convite por email (`inviteUserByEmail`) para cada utilizador sem conta auth.
  */
@@ -146,7 +146,7 @@ function buildMetadata(row) {
 }
 
 async function main() {
-  const { dryRun, createMode, resendInvite } = parseArgs(process.argv.slice(2));
+  const { dryRun, createMode, resendInvite, onlyEmails } = parseArgs(process.argv.slice(2));
   const supabaseUrl = resolveSupabaseUrl();
   const serviceKey = resolveServiceRoleKey();
   const { databaseUrl } = resolveSupabaseDeployEnv();
@@ -169,7 +169,12 @@ async function main() {
   });
 
   try {
-    const operacionais = await loadOperacionalUsers(client);
+    let operacionais = await loadOperacionalUsers(client);
+    if (onlyEmails?.length) {
+      const allow = new Set(onlyEmails);
+      operacionais = operacionais.filter((r) => allow.has(r.email));
+      console.log(`[usuario:provision-auth] filtro --only: ${onlyEmails.join(', ')}`);
+    }
     if (!operacionais.length) {
       console.error(
         '[usuario:provision-auth] Nenhum utilizador com email em public.usuario. ' +
