@@ -50,7 +50,7 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
         run: |
           set -e
           missing=0
@@ -59,9 +59,17 @@ jobs:
             if [ -z "$val" ]; then
               echo "::error::Secret $name em falta (GitHub → Settings → Secrets → Actions)."
               missing=1
+            else
+              echo "$name: presente"
             fi
           done
-          if [ "$missing" -ne 0 ]; then exit 1; fi
+          if [ "$missing" -ne 0 ]; then
+            echo ""
+            echo "Vercel: VERCEL_TOKEN em https://vercel.com/account/tokens"
+            echo "        VERCEL_ORG_ID / VERCEL_PROJECT_ID no painel do projecto → Settings → General"
+            echo "Supabase: VITE_SUPABASE_ANON_KEY (ou SUPABASE_ANON_KEY) na API do projecto P38"
+            exit 1
+          fi
           echo "OK: secrets presentes."
 
       - name: Install dependencies
@@ -79,7 +87,7 @@ jobs:
           VITE_P38_PROVIDER: supabase
           VITE_P38_BYPASS_BASE44: 'true'
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
           VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH }}
 
       - name: Vercel deploy (production)
