@@ -21,6 +21,7 @@ import { shouldOpenGlobalSearchFromKeyboard } from '@/lib/globalSearchShortcut';
 import { armGlobalSearchOpenGuard, registerOpenSearchOverlaySync } from '@/lib/openGlobalSearch';
 import FinanceiroAccessGuard from '@/components/guard/FinanceiroAccessGuard';
 import { isFinanceiroProtectedPage } from '@/config/financeiroGate';
+import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
 
 /** Páginas com scroll interno no mobile (evita body + nested scroll e zoom por overflow). */
 const MOBILE_FULL_VIEWPORT_PAGES = new Set([
@@ -121,6 +122,17 @@ export default function Layout({ children, currentPageName }) {
       if (cached?.user) {
         setCurrentUser(cached.user);
         if (cached.perfilDeAcesso) setPerfilDeAcesso(cached.perfilDeAcesso);
+      } else if (
+        isSupabaseAuthEnabled() &&
+        typeof window !== 'undefined' &&
+        window.location.pathname !== '/login'
+      ) {
+        // Sem sessão Supabase → login (não mostrar "Erro de Conexão" genérico).
+        try {
+          base44.auth.redirectToLogin(window.location.href);
+        } catch {
+          window.location.href = '/login';
+        }
       } else {
         setLoadError(error);
       }

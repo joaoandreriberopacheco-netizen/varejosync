@@ -125,6 +125,23 @@ jobs:
           fi
           echo "OK: bundle contém referência Supabase ($ref)."
 
+      - name: Verificar login Supabase activo no bundle
+        run: |
+          set -e
+          found=0
+          for f in dist/assets/*.js .vercel/output/static/assets/*.js; do
+            [ -f "$f" ] || continue
+            if grep -qE 'VITE_P38_USE_SUPABASE_AUTH.{0,6}true|USE_SUPABASE_AUTH.{0,6}true' "$f" 2>/dev/null; then
+              found=1
+              break
+            fi
+          done
+          if [ "$found" -ne 1 ]; then
+            echo "::warning::Bundle sem VITE_P38_USE_SUPABASE_AUTH=true explícito — runtime usa default true com provider=supabase."
+          else
+            echo "OK: VITE_P38_USE_SUPABASE_AUTH=true no bundle."
+          fi
+
       - name: Vercel deploy (production)
         id: deploy
         run: |

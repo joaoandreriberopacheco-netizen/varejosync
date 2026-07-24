@@ -124,15 +124,14 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      if (error.status === 401 || error.status === 403) {
-        if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-          return;
-        }
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
+      if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+        return;
       }
+
+      setAuthError({
+        type: 'auth_required',
+        message: 'Authentication required'
+      });
     }
   };
 

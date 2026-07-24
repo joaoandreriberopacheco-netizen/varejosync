@@ -102,7 +102,14 @@ export function isBase44BypassEnabled() {
 
 /**
  * Quando ativo, `auth.me()` tenta `supabase.auth.getUser()` em vez de devolver o mockUser.
+ * Com `VITE_P38_PROVIDER=supabase`, o default é **true** (login real) — evita bypass admin em produção
+ * quando `VITE_P38_USE_SUPABASE_AUTH` não entrou no bundle do Vercel.
  */
 export function isSupabaseAuthEnabled() {
-  return parseBooleanEnv(import.meta.env.VITE_P38_USE_SUPABASE_AUTH, false);
+  const env = import.meta.env || {};
+  const explicit = env.VITE_P38_USE_SUPABASE_AUTH;
+  if (explicit !== undefined && explicit !== null && explicit !== '') {
+    return parseBooleanEnv(explicit, false);
+  }
+  return resolveP38ProviderName() === PROVIDERS.SUPABASE;
 }
