@@ -46,29 +46,52 @@ function pgConfig(databaseUrl) {
   return cfg;
 }
 
-/** Linhas migradas por engano a partir de `User` (sem email operacional). */
-const PLATFORM_USER_WHERE = `
-  coalesce(nullif(trim(u.email), ''), nullif(trim(u.dados->>'email'), '')) is null
-  and (
-    u.dados ? '_app_role'
-    or u.dados ? 'app_id'
-    or lower(coalesce(u.dados->>'is_service', 'false')) in ('true', 't', '1')
-  )
-`;
+async function loadUsuarioColumns(client) {
+  const { rows } = await client.query(
+    `select column_name from information_schema.columns where table_schema = 'public' and table_name = 'usuario'`
+  );
+  return new Set(rows.map((r) => r.column_name));
+}
 
-const CLEANUP_PLATFORM_USERS_SQL = `delete from public.usuario u where ${PLATFORM_USER_WHERE}`;
+function emailExpr(cols, alias = 'u') {
+  const p = alias ? `${alias}.` : '';
+  if (cols.has('email')) {
+    return `coalesce(nullif(trim(${p}email), ''), nullif(trim(${p}dados->>'email'), ''))`;
+  }
+  return `nullif(trim(${p}dados->>'email'), '')`;
+}
 
-const BACKFILL_COLUMNS_SQL = `
-  update public.usuario set
-    email = coalesce(nullif(trim(email), ''), nullif(trim(dados->>'email'), '')),
-    full_name = coalesce(nullif(trim(full_name), ''), nullif(trim(dados->>'full_name'), '')),
-    role = coalesce(nullif(trim(role), ''), nullif(trim(dados->>'role'), ''), 'user'),
-    nickname = coalesce(nickname, dados->>'nickname'),
-    perfil = coalesce(perfil, dados->>'perfil'),
-    perfil_acesso_id = coalesce(perfil_acesso_id, dados->>'perfil_acesso_id'),
-    perfil_acesso_nome = coalesce(perfil_acesso_nome, dados->>'perfil_acesso_nome')
-  where dados is not null and dados <> '{}'::jsonb
-`;
+function fullNameExpr(cols, alias = 'u') {
+  const p = alias ? `${alias}.` : '';
+  if (cols.has('full_name')) {
+    return `coalesce(nullif(trim(${p}full_name), ''), nullif(trim(${p}dados->>'full_name'), ''))`;
+  }
+  return `nullif(trim(${p}dados->>'full_name'), '')`;
+}
+
+function buildPlatformUserWhere(cols) {
+  return `
+    ${emailExpr(cols, 'u')} is null
+    and (
+      u.dados ? '_app_role'
+      or u.dados ? 'app_id'
+      or lower(coalesce(u.dados->>'is_service', 'false')) in ('true', 't', '1')
+    )
+  `;
+}
+
+function buildBackfillSql(cols) {
+  const sets = [];
+  if (cols.has('email')) sets.push(`email = coalesce(nullif(trim(email), ''), nullif(trim(dados->>'email'), ''))`);
+  if (cols.has('full_name')) sets.push(`full_name = coalesce(nullif(trim(full_name), ''), nullif(trim(dados->>'full_name'), ''))`);
+  if (cols.has('role')) sets.push(`role = coalesce(nullif(trim(role), ''), nullif(trim(dados->>'role'), ''), 'user')`);
+  if (cols.has('nickname')) sets.push(`nickname = coalesce(nickname, dados->>'nickname')`);
+  if (cols.has('perfil')) sets.push(`perfil = coalesce(perfil, dados->>'perfil')`);
+  if (cols.has('perfil_acesso_id')) sets.push(`perfil_acesso_id = coalesce(perfil_acesso_id, dados->>'perfil_acesso_id')`);
+  if (cols.has('perfil_acesso_nome')) sets.push(`perfil_acesso_nome = coalesce(perfil_acesso_nome, dados->>'perfil_acesso_nome')`);
+  if (!sets.length) return null;
+  return `update public.usuario set ${sets.join(', ')} where dados is not null and dados <> '{}'::jsonb`;
+}
 
 function runMigrate() {
   return new Promise((resolve, reject) => {
@@ -89,22 +112,26 @@ function runMigrate() {
   });
 }
 
-async function summarize(client) {
+async function summarize(client, cols) {
+  const email = emailExpr(cols, '');
+  const fullName = fullNameExpr(cols, '');
+  const perfilExpr = cols.has('perfil_acesso_nome')
+    ? `coalesce(nullif(trim(perfil_acesso_nome), ''), dados->>'perfil_acesso_nome')`
+    : `dados->>'perfil_acesso_nome'`;
+
   const { rows } = await client.query(`
     select
       count(*)::int as total,
-      count(*) filter (
-        where coalesce(nullif(trim(email), ''), nullif(trim(dados->>'email'), '')) is not null
-      )::int as com_email
+      count(*) filter (where ${email} is not null)::int as com_email
     from public.usuario
   `);
   const sample = await client.query(`
     select id,
-      coalesce(nullif(trim(email), ''), dados->>'email') as email,
-      coalesce(nullif(trim(full_name), ''), dados->>'full_name') as full_name,
-      coalesce(nullif(trim(perfil_acesso_nome), ''), dados->>'perfil_acesso_nome') as perfil
+      ${email} as email,
+      ${fullName} as full_name,
+      ${perfilExpr} as perfil
     from public.usuario
-    order by coalesce(full_name, dados->>'full_name', email, id)
+    order by coalesce(${fullName}, ${email}, id)
     limit 12
   `);
   console.log(`[usuario:resync] total=${rows[0].total} com_email=${rows[0].com_email}`);
@@ -125,14 +152,18 @@ async function main() {
   const client = await pool.connect();
 
   try {
+    const cols = await loadUsuarioColumns(client);
+    const platformWhere = buildPlatformUserWhere(cols);
+    const backfillSql = buildBackfillSql(cols);
+
     if (!skipCleanup) {
       if (dryRun) {
         const { rows } = await client.query(
-          `select count(*)::int as n from public.usuario u where ${PLATFORM_USER_WHERE}`
+          `select count(*)::int as n from public.usuario u where ${platformWhere}`
         );
         console.log(`[usuario:resync] dry-run: apagaria ${rows[0].n} linha(s) de plataforma (User auth).`);
       } else {
-        const del = await client.query(CLEANUP_PLATFORM_USERS_SQL);
+        const del = await client.query(`delete from public.usuario u where ${platformWhere}`);
         console.log(`[usuario:resync] cleanup: ${del.rowCount} linha(s) de plataforma removida(s).`);
       }
     }
@@ -146,12 +177,12 @@ async function main() {
       }
     }
 
-    if (!dryRun) {
-      await client.query(BACKFILL_COLUMNS_SQL);
-      console.log('[usuario:resync] colunas email/full_name/perfil preenchidas a partir de dados jsonb.');
+    if (!dryRun && backfillSql) {
+      await client.query(backfillSql);
+      console.log('[usuario:resync] colunas promovidas preenchidas a partir de dados jsonb.');
     }
 
-    await summarize(client);
+    await summarize(client, cols);
 
     if (!dryRun) {
       console.log(

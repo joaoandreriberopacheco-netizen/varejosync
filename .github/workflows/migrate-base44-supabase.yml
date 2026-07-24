@@ -111,7 +111,7 @@ jobs:
 
       # Só quando não é dry-run (`!inputs.dry_run` é o padrão GitHub para boolean no dispatch).
       - name: Aplicar migrações SQL (schema Supabase)
-        if: ${{ steps.mode.outputs.kind == 'full' }}
+        if: ${{ steps.mode.outputs.kind == 'full' || steps.mode.outputs.kind == 'resync_usuarios' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npm run db:apply-migrations

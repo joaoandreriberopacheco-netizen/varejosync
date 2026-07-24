@@ -57,18 +57,41 @@ function resolveServiceRoleKey() {
 }
 
 async function loadOperacionalUsers(client) {
+  const { rows: colRows } = await client.query(
+    `select column_name from information_schema.columns where table_schema = 'public' and table_name = 'usuario'`
+  );
+  const cols = new Set(colRows.map((r) => r.column_name));
+  const emailSql = cols.has('email')
+    ? `coalesce(nullif(trim(email), ''), nullif(trim(dados->>'email'), ''))`
+    : `nullif(trim(dados->>'email'), '')`;
+  const fullNameSql = cols.has('full_name')
+    ? `coalesce(nullif(trim(full_name), ''), nullif(trim(dados->>'full_name'), ''))`
+    : `nullif(trim(dados->>'full_name'), '')`;
+  const roleSql = cols.has('role')
+    ? `coalesce(nullif(trim(role), ''), nullif(trim(dados->>'role'), ''), 'user')`
+    : `coalesce(nullif(trim(dados->>'role'), ''), 'user')`;
+  const perfilIdSql = cols.has('perfil_acesso_id')
+    ? `coalesce(perfil_acesso_id, dados->>'perfil_acesso_id')`
+    : `dados->>'perfil_acesso_id'`;
+  const perfilNomeSql = cols.has('perfil_acesso_nome')
+    ? `coalesce(perfil_acesso_nome, dados->>'perfil_acesso_nome')`
+    : `dados->>'perfil_acesso_nome'`;
+  const nicknameSql = cols.has('nickname')
+    ? `coalesce(nickname, dados->>'nickname')`
+    : `dados->>'nickname'`;
+
   const { rows } = await client.query(`
     select
       id,
-      coalesce(nullif(trim(email), ''), nullif(trim(dados->>'email'), '')) as email,
-      coalesce(nullif(trim(full_name), ''), nullif(trim(dados->>'full_name'), '')) as full_name,
-      coalesce(nullif(trim(role), ''), nullif(trim(dados->>'role'), ''), 'user') as role,
-      coalesce(perfil_acesso_id, dados->>'perfil_acesso_id') as perfil_acesso_id,
-      coalesce(perfil_acesso_nome, dados->>'perfil_acesso_nome') as perfil_acesso_nome,
-      coalesce(nickname, dados->>'nickname') as nickname
+      ${emailSql} as email,
+      ${fullNameSql} as full_name,
+      ${roleSql} as role,
+      ${perfilIdSql} as perfil_acesso_id,
+      ${perfilNomeSql} as perfil_acesso_nome,
+      ${nicknameSql} as nickname
     from public.usuario
-    where coalesce(nullif(trim(email), ''), nullif(trim(dados->>'email'), '')) is not null
-    order by email
+    where ${emailSql} is not null
+    order by ${emailSql}
   `);
   const seen = new Set();
   const out = [];
