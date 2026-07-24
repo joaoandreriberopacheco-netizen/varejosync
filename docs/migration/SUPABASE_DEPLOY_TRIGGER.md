@@ -91,12 +91,24 @@ O deploy publica o código; no **Supabase Dashboard → Edge Functions → Secre
 ## Verificação rápida
 
 ```bash
+npm run supabase:deploy:check   # diagnóstico (não altera nada)
+```
+
+```bash
 # Listar migrações pendentes (sem alterar)
 DATABASE_URL="..." npm run db:apply-migrations -- --dry-run
 
 # Deploy completo
 DATABASE_URL="..." SUPABASE_ACCESS_TOKEN="..." npm run supabase:deploy
 ```
+
+### Erros comuns
+
+| Sintoma | Solução |
+|---------|---------|
+| `SUPABASE_ACCESS_TOKEN em falta` | Criar PAT em [Account → Access Tokens](https://supabase.com/dashboard/account/tokens) e gravar em **Cursor Cloud Secrets** + **GitHub Actions** |
+| `password authentication failed` | Copiar de novo a connection string em **Project Settings → Database** (a password pode ter sido resetada) |
+| `PROJECT_REF` em falta | Adicionar `VITE_SUPABASE_URL=https://[ref].supabase.co` nos secrets |
 
 Após deploy, no SQL Editor:
 
