@@ -32,6 +32,10 @@ on:
         description: 'Apenas contar linhas (não escreve no Postgres)'
         type: boolean
         default: true
+  push:
+    branches: [main]
+    paths:
+      - '.github/trigger-migrate-base44-supabase'
 
 jobs:
   migrate:
@@ -73,7 +77,7 @@ jobs:
 
       # Só quando não é dry-run (`!inputs.dry_run` é o padrão GitHub para boolean no dispatch).
       - name: Aplicar migrações SQL (schema Supabase)
-        if: ${{ !inputs.dry_run }}
+        if: ${{ github.event_name == 'push' || !inputs.dry_run }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npm run db:apply-migrations
@@ -92,7 +96,7 @@ jobs:
           MIGRATE_ROWS_PER_COMMIT: ${{ secrets.MIGRATE_ROWS_PER_COMMIT }}
         run: |
           set -e
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
             npm run migrate:base44-to-supabase -- --dry-run
           else
             npm run migrate:base44-to-supabase
