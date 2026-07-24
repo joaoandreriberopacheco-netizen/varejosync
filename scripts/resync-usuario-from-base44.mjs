@@ -193,11 +193,6 @@ async function main() {
       }
     }
 
-    if (!dryRun && backfillSql) {
-      await client.query(backfillSql);
-      console.log('[usuario:resync] colunas promovidas preenchidas a partir de dados jsonb.');
-    }
-
     await summarize(client, cols);
 
     if (!dryRun) {
