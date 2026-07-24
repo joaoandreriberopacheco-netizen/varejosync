@@ -323,24 +323,48 @@ function buildFunctions(supabase) {
   };
 }
 
-function buildIntegrations() {
-  const stub = (label) => async () => {
-    throw new Error(
-      `[P38][supabase] Integração "${label}" ainda não foi migrada do Base44. ` +
-        'Implemente uma Edge Function ou um adapter dedicado.'
-    );
-  };
+function buildIntegrations(supabase) {
+  const bucket = 'anexos';
+
+  async function invokeCore(op, payload) {
+    if (!supabase) throw new Error('Supabase não configurado para integrações Core');
+    const { data, error } = await supabase.functions.invoke('p38-core', { body: { op, ...payload } });
+    if (error) throw new Error(error.message || `p38-core.${op} falhou`);
+    if (data?.error) throw new Error(data.error);
+    return data;
+  }
 
   return {
     Core: {
-      InvokeLLM: stub('Core.InvokeLLM'),
-      SendEmail: stub('Core.SendEmail'),
-      UploadFile: stub('Core.UploadFile'),
-      UploadPrivateFile: stub('Core.UploadPrivateFile'),
-      CreateFileSignedUrl: stub('Core.CreateFileSignedUrl'),
-      GenerateImage: stub('Core.GenerateImage'),
-      ExtractDataFromUploadedFile: stub('Core.ExtractDataFromUploadedFile')
-    }
+      async InvokeLLM(payload) {
+        return invokeCore('InvokeLLM', payload);
+      },
+      async SendEmail(payload) {
+        return invokeCore('SendEmail', payload);
+      },
+      async GenerateImage(payload) {
+        return invokeCore('GenerateImage', payload);
+      },
+      async CreateFileSignedUrl(payload) {
+        return invokeCore('CreateFileSignedUrl', payload);
+      },
+      async UploadPrivateFile({ file, path }) {
+        if (!supabase) throw new Error('Supabase não configurado');
+        const name = path || `uploads/${crypto.randomUUID()}_${file.name || 'file'}`;
+        const { error } = await supabase.storage.from(bucket).upload(name, file, { upsert: true });
+        if (error) throw new Error(error.message);
+        const { data } = supabase.storage.from(bucket).getPublicUrl(name);
+        return { file_url: data.publicUrl };
+      },
+      async UploadFile({ file, path }) {
+        return buildIntegrations(supabase).Core.UploadPrivateFile({ file, path });
+      },
+      async ExtractDataFromUploadedFile(payload) {
+        const { data, error } = await supabase.functions.invoke('extract-data-file', { body: payload });
+        if (error) throw new Error(error.message || 'ExtractDataFromUploadedFile falhou');
+        return data;
+      },
+    },
   };
 }
 
@@ -390,7 +414,7 @@ export function createLegacyClientWithoutSupabaseEnv() {
     auth: buildAuth(null),
     entities: createMissingSupabaseEnvEntitiesProxy(),
     functions: buildFunctions(null),
-    integrations: buildIntegrations(),
+    integrations: buildIntegrations(null),
     appLogs: buildAppLogs()
   };
 }
@@ -404,7 +428,7 @@ export function createSupabaseLegacyClient() {
   const entities = createSupabaseEntityLayer(null, supabase);
   const auth = buildAuth(supabase);
   const functions = buildFunctions(supabase);
-  const integrations = buildIntegrations();
+  const integrations = buildIntegrations(supabase);
   const appLogs = buildAppLogs();
 
   return {
@@ -429,6 +453,6 @@ export function createSupabaseAdapter() {
     auth: buildAuth(supabase),
     entities: createSupabaseEntityLayer(null, supabase),
     functions: buildFunctions(supabase),
-    integrations: buildIntegrations()
+    integrations: buildIntegrations(supabase)
   };
 }

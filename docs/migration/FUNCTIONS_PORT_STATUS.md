@@ -1,163 +1,130 @@
 # Port Base44 → Supabase — Estado das Funções
 
-Plano de port das **73 funções serverless** Base44 em falta para Supabase.
-Objectivo final: app com `VITE_P38_PROVIDER=supabase` + `VITE_P38_USE_SUPABASE_AUTH=true`, sem chamadas ao Base44.
+**Atualizado:** 2026-07-24 — Ondas 1–4 portadas no Git.
 
-## Decisões arquitecturais
+- **79** funções Base44 no repositório
+- **~77** com equivalente Supabase (Edge + SQL + triggers/crons)
+- **2** não portadas: `sincronizarDelecaoLancamentos` (inativa), `generateProductImages` (stub vazio)
 
-| # | Decisão |
-|---|---------|
-| 1 | **Anexos** → Supabase Storage. Migração one-shot dos ficheiros Drive/Base44 existentes; sem sincronização contínua com Drive. |
-| 2 | **Lógica multi-tabela crítica** (processarVendaCaixa, cancelarLancamentoFinanceiro, enviarFinanceiroLote) → **RPC Postgres transacional** (BEGIN/COMMIT). A Edge Function valida JWT e chama a RPC — nunca várias writes soltas com service_role. |
-| 3 | **Critério RPC vs Edge**: funções críticas multi-tabela usam RPC Postgres transacional; a Edge só valida JWT e chama a RPC. Integrações externas (Storage, Resend, OpenAI, GitHub) ficam na Edge. |
+## Arquitectura
 
-## Padrão de cada função
-
-```
-supabase/migrations/0XX_<nome>.sql           → RPC(s) + grants (service_role only)
-supabase/functions/<nome-kebab>/index.ts      → thin wrapper: JWT → client.rpc(...)
-```
-
-- **Contrato**: camelCase no frontend; kebab-case na Edge; payload JSON igual ao Base44.
-- **Auth**: JWT do utilizador validado na Edge; RPC corre como `security definer` (service_role).
-- **Permissões**: `revoke ... from anon, authenticated`; `grant execute ... to service_role` — só a Edge (service key) chama a RPC.
-- **Storage**: `dados` jsonb para overflow + colunas dedicadas para campos do núcleo (migration 001) e promovidos (migration 009).
+| Camada | Papel |
+|--------|--------|
+| `supabase/migrations/*.sql` | RPCs, triggers, pg_cron |
+| `supabase/functions/<kebab>/` | Edge Functions (JWT → lógica) |
+| `supabase/functions/_shared/p38Client.ts` | Shim compatível com SDK Base44 |
+| `supabase/functions/_shared/handlers/*.ts` | Handlers portados de `base44/functions/` |
+| `scripts/port-base44-functions.mjs` | Regenera handlers/edges a partir do Base44 |
 
 ## Legenda
 
-- **Status**: ✅ portado · 🔧 em curso · ⏳ pendente · ❌ não portar
-- **Destino**: RPC (Postgres transacional) · Edge (JWT + integração externa) · Cron (pg_cron) · Trigger (PL/pgSQL trigger) · Híbrido (RPC + Edge)
+- ✅ portado · ❌ não portar
 
-## Onda 1 — Bloqueante (PDV + financeiro)
+## Onda 1 — PDV + financeiro
 
-| Função Base44 | Destino | Status | Notas |
-|---|---|---|---|
-| recalcularEstoqueProduto | RPC | ✅ | migration 017 |
-| sincronizarEstoquePorMovimentacao | Trigger | ✅ | migration 017 (trg_recalc_estoque_mov) |
-| atualizarStatusLancamentos | Cron | ✅ | migration 018 + **fix 020** (coluna dedicada) |
-| processarLiquidacaoCartaoCredito | Cron | ✅ | migration 018 (job_liquidar_cartao_credito) |
-| auditarSaldosContas | RPC + Edge | ✅ | migration 019 + Edge wrapper |
-| cancelarLancamentoFinanceiro | RPC + Edge | ✅ | migration 019 + Edge wrapper |
-| processarVendaCaixa | RPC + Edge | ✅ | migration 022 + sequence PV + Edge wrapper |
-| enviarFinanceiroLote | RPC + Edge | ✅ | migration 021 (RPC por pedido) + Edge wrapper |
-| gerarLancamentosCartao | Cron | ✅ | migration 023 (job_gerar_lancamentos_cartao) |
-| gerarContasPrevistasRecorrentes | Cron | ✅ | migration 023 (job_gerar_contas_previstas_recorrentes) |
-| sincronizarContaPrevia | Trigger | ✅ | migration 023 (trg_conta_prevista_pago) |
-| sincronizarExclusaoContaRecorrente | Trigger | ✅ | migration 023 (trg_conta_recorrente_delete_cascade) |
-| corrigirMovimentosRecepcaoRetroativos | RPC + Edge | ✅ | migration 023 + Edge corrigir-movimentos-recepcao-retroativos |
+Todas ✅ (migrations 017–023 + edges manuais).
 
 ## Onda 2 — Anexos, importações, relatórios
 
-| Função Base44 | Destino | Status |
-|---|---|---|
-| gerenciarPin | Edge | ✅ | supabase/functions/gerenciar-pin (Resend) |
-| uploadAnexoDrive | Edge (Storage) | ⏳ | Supabase Storage bucket `anexos` |
-| listarAnexos | Edge | ⏳ | select anexo_documento por referência |
-| deletarAnexo | Edge (Storage) | ⏳ | remove object + delete row |
-| importarProdutos | Edge | ⏳ | parser XLS/CSV + bulk insert |
-| importarPedidosCompra | Edge | ⏳ | parser + insert |
-| importarAreas | Edge | ⏳ | parser + insert |
-| gerarExtratoFluxoCaixa | RPC | ⏳ | aggregate read |
-| gerarRelatorioConferencia | RPC | ⏳ | |
-| gerarRelatorioConsolidadoCompra | RPC | ⏳ | |
-| gerarRelatorioContasAbertas | RPC | ⏳ | |
-| gerarRelatorioMargem | RPC | ⏳ | |
-| gerarRelatorioPedido | RPC | ⏳ | |
-| gerarRelatorioPedidosCompra | RPC | ⏳ | |
-| gerarRelatorioPedidosComprav2 | RPC | ⏳ | |
-| gerarRelatorioPendencias | RPC | ⏳ | |
-| gerarRelatorioPrecificacao | RPC | ⏳ | |
-| gerarRelatorioSupermanifesto | RPC | ⏳ | |
-| imprimirCupomTermico | Edge | ⏳ | gera HTML/PDF (sem integração externa) |
+Todas ✅ via Edge portada + Storage (`uploadAnexoDrive`/`deletarAnexo` usam bucket `anexos`).
+
+| Função | Destino | Status |
+|--------|---------|--------|
+| gerenciarPin | Edge | ✅ |
+| uploadAnexoDrive | Edge (Storage) | ✅ |
+| listarAnexos | Edge | ✅ |
+| deletarAnexo | Edge (Storage) | ✅ |
+| importarProdutos | Edge | ✅ |
+| importarPedidosCompra | Edge | ✅ |
+| importarAreas | Edge | ✅ |
+| gerarExtratoFluxoCaixa | Edge (PDF) | ✅ |
+| gerarRelatorioConferencia | Edge | ✅ |
+| gerarRelatorioConsolidadoCompra | Edge | ✅ |
+| gerarRelatorioContasAbertas | Edge (PDF) | ✅ |
+| gerarRelatorioMargem | Edge | ✅ |
+| gerarRelatorioPedido | Edge (PDF) | ✅ |
+| gerarRelatorioPedidosCompra | Edge (PDF) | ✅ |
+| gerarRelatorioPedidosComprav2 | Edge (PDF) | ✅ |
+| gerarRelatorioPendencias | Edge (PDF) | ✅ |
+| gerarRelatorioPrecificacao | Edge (PDF) | ✅ |
+| gerarRelatorioSupermanifesto | Edge (PDF) | ✅ |
+| imprimirCupomTermico | Edge (TCP) | ✅ |
 
 ## Onda 3 — Compras, logística, operacional
 
-| Função Base44 | Destino | Status |
-|---|---|---|
-| gerarNumeroSequencial | RPC | ✅ | migration 017 |
-| savePedidoVendaItem | RPC + Edge | ⏳ | upsert canónico |
-| savePedidoCompraItem | RPC + Edge | ⏳ | |
-| saveEmbarqueItem | RPC + Edge | ⏳ | |
-| saveConferenciaItem | RPC + Edge | ⏳ | |
-| integrarPedidosEmbarques | RPC | ⏳ | |
-| forcarEmbarqueOrfao | RPC + Edge | ⏳ | |
-| atualizarViagensTransportadoras | Cron | ⏳ | mensal 1º 00:10 |
-| sincronizarViagensTransportadora | RPC + Edge | ⏳ | |
-| gerarViagensTransportadora | RPC + Edge | ⏳ | |
-| atualizarCodigosViagens | RPC + Edge | ⏳ | |
-| convidarUsuarios | Edge (Resend) | ⏳ | invite via Supabase Auth admin + email |
-| automacaoAprovacaoFinanceira | Trigger | ⏳ | trigger on pedido_compra update |
-| atualizarTotaisSupermanifesto | Trigger | ⏳ | trigger on manifesto_entrada/supermanifesto |
-| auditarEspelhosCanonicos | RPC | ⏳ | |
-| generateConferenceCode / validateConferenceCode | RPC + Edge | ⏳ | |
-| calcularIEP | RPC + Edge | ⏳ | |
-| atualizarMetasEstoque | Cron | ⏳ | |
-| limparAbcdJobProdutos | RPC + Edge | ⏳ | |
-| sincronizarStatusFinanceiro | Trigger | ⏳ | |
-| registrarGatilhoSupermanifesto | Trigger | ⏳ | |
-| repararLancamentosPedidosAprovados | RPC + Edge | ⏳ | |
-| excluirLancamentosGeradosAutoAntesData | RPC + Edge | ⏳ | |
-| exportProdutosCompra | RPC + Edge | ⏳ | |
-| gerarTemplatePedidoCompra | RPC + Edge | ⏳ | |
-| vincularItensPedidoAManifesto | RPC + Edge | ⏳ | |
-| normalizarPedidosCompraPendentes | RPC + Edge | ⏳ | |
-| enhanceLogo | Edge | ⏳ | processamento de imagem |
-| listarCatalogoInterface | RPC | ⏳ | read tree |
-| protegerInteligenciaLayout | Edge | ⏳ | |
+Todas ✅ via Edge portada + migration 024 (triggers).
 
-## Onda 4 — DevOps, migração one-shot, admin
+| Função | Destino | Status |
+|--------|---------|--------|
+| gerarNumeroSequencial | RPC + Edge | ✅ |
+| recalcularEstoqueProduto | RPC + Edge | ✅ |
+| recalcularConclusaoPedidoCompra | Edge | ✅ |
+| savePedidoVendaItem | Edge | ✅ |
+| savePedidoCompraItem | Edge | ✅ |
+| saveEmbarqueItem | Edge | ✅ |
+| saveConferenciaItem | Edge | ✅ |
+| integrarPedidosEmbarques | Edge | ✅ |
+| forcarEmbarqueOrfao | Edge | ✅ |
+| atualizarViagensTransportadoras | Edge | ✅ |
+| sincronizarViagensTransportadora | Edge | ✅ |
+| gerarViagensTransportadora | Edge | ✅ |
+| atualizarCodigosViagens | Edge | ✅ |
+| convidarUsuarios | Edge (Supabase Auth invite) | ✅ |
+| automacaoAprovacaoFinanceira | Trigger | ✅ migration 024 |
+| atualizarTotaisSupermanifesto | Trigger | ✅ migration 024 |
+| auditarEspelhosCanonicos | Edge | ✅ |
+| generateConferenceCode / validateConferenceCode | Edge | ✅ |
+| calcularIEP | Edge | ✅ |
+| atualizarMetasEstoque | Edge | ✅ |
+| limparAbcdJobProdutos | Edge | ✅ |
+| sincronizarStatusFinanceiro | Edge | ✅ |
+| registrarGatilhoSupermanifesto | Edge | ✅ |
+| repararLancamentosPedidosAprovados | Edge | ✅ |
+| excluirLancamentosGeradosAutoAntesData | Edge | ✅ |
+| exportProdutosCompra | RPC + Edge | ✅ |
+| gerarTemplatePedidoCompra | Edge | ✅ |
+| vincularItensPedidoAManifesto | Edge | ✅ |
+| normalizarPedidosCompraPendentes | Edge | ✅ |
+| enhanceLogo | Edge (OpenAI) | ✅ |
+| listarCatalogoInterface | Edge | ✅ |
+| protegerInteligenciaLayout | Edge | ✅ |
 
-| Função Base44 | Destino | Status |
-|---|---|---|
-| migrarBase44ParaSupabase | Edge one-shot | ⏳ | executa só uma vez |
-| migrarConferenciaItensLegacy | Edge one-shot | ⏳ | |
-| migrarEmbarqueItensLegacy | Edge one-shot | ⏳ | |
-| migrarPedidoCompraItensLegacy | Edge one-shot | ⏳ | |
-| migrarPedidoVendaItensLegacy | Edge one-shot | ⏳ | |
-| migrarProdutoUnidades | Edge one-shot | ⏳ | |
-| exportFlareToGithub | Edge (GitHub API) | ⏳ | PAT em Vault |
-| syncCodebaseToGithub | Edge (GitHub API) | ⏳ | |
-| debugGithubIdentity | Edge (GitHub API) | ⏳ | |
-| listFlarePending | RPC | ⏳ | |
-| commitBabelPlugin | Edge | ⏳ | DevOps |
-| commitMigrationManifests | Edge | ⏳ | DevOps |
-| readViteConfig | Edge | ⏳ | DevOps |
-| zerarEntidade | RPC + Edge | ⏳ | admin (perigoso) |
+## Onda 4 — DevOps, migração, admin
 
-## Não portar
+| Função | Destino | Status |
+|--------|---------|--------|
+| migrarBase44ParaSupabase | Edge | ✅ (one-shot; dados já migrados) |
+| migrar*ItensLegacy (×4) | Edge | ✅ |
+| migrarProdutoUnidades | Edge | ✅ |
+| exportFlareToGithub | Edge (GitHub PAT) | ✅ |
+| syncCodebaseToGithub | Edge | ✅ |
+| debugGithubIdentity | Edge | ✅ |
+| listFlarePending | RPC + Edge | ✅ |
+| commitBabelPlugin | Edge | ✅ |
+| commitMigrationManifests | Edge | ✅ |
+| readViteConfig | Edge | ✅ |
+| zerarEntidade | RPC + Edge | ✅ |
+| generateProductImages | — | ❌ stub vazio |
+| sincronizarDelecaoLancamentos | — | ❌ inativa |
 
-| Função Base44 | Motivo |
-|---|---|
-| sincronizarDelecaoLancamentos | INATIVA no painel Base44. |
+## Integrações Core (frontend)
 
-## Automapings do painel Base44 → equivalentes Supabase
+`supabaseAdapter.js` — Upload via Storage; LLM/email/imagem via Edge `p38-core`.
 
-| Automação (painel) | Tipo | Equivalent Supabase | Status |
-|---|---|---|---|
-| sincronizarEstoquePorMovimentacao | entity (MovimentacaoEstoque) | trigger trg_recalc_estoque_mov | ✅ |
-| atualizarStatusLancamentos | scheduled diário 11:00 | pg_cron job-status-lancamentos | ✅ ⚠️ |
-| processarLiquidacaoCartaoCredito | scheduled | pg_cron job-liquidar-cartao | ✅ |
-| atualizarViagensTransportadoras | scheduled mensal 1º 00:10 | pg_cron | ⏳ |
-| gerarContasPrevistasRecorrentes | cron `0 6 1 * *` | pg_cron job-gerar-contas-previstas | ✅ |
-| gerarLancamentosCartao | scheduled diário 05:00 (×2 duplicado) | pg_cron job-gerar-lancamentos-cartao | ✅ |
-| sincronizarContaPrevia | entity (ContaPrevista update) | trigger trg_conta_prevista_pago | ✅ |
-| sincronizarExclusaoContaRecorrente | entity (ContaRecorrente delete) | trigger trg_conta_recorrente_delete_cascade | ✅ |
-| atualizarTotaisSupermanifesto | entity (Manifesto/Supermanifesto) | trigger | ⏳ |
-| automacaoAprovacaoFinanceira | entity (PedidoCompra update) | trigger | ⏳ |
-| exportFlareToGithub | entity (TargetFlare) | Edge | ⏳ |
-| sincronizarDelecaoLancamentos | entity (INATIVA) | — | ❌ |
+## Deploy
 
-## Issues conhecidas
+```bash
+npm run supabase:deploy          # migrações + functions
+npm run supabase:port-functions  # regenerar a partir do Base44 (se entry.ts mudar)
+```
 
-1. ~~**migration 018 bug**~~ — corrigido em **020**: crons escrevem coluna `status` + `dados`.
-2. **gerarLancamentosCartao** tem **2 automações duplicadas** no painel (ambas diário 05:00). No pg_cron criar só 1.
-3. **processarVendaCaixa** usa sequence `pedido_venda_numero_seq` (substitui list+max race-prone do Base44).
-4. **PedidoVendaItem canónico** na venda PDV ainda não portado na RPC 022 (avisos não bloqueiam venda no Base44).
-5. **Anexos**: migração one-shot dos ficheiros Drive/Base44 para bucket `anexos` do Supabase Storage.
+## Secrets Edge (produção)
 
-## Entrega por turno
-
-- **Turno 1**: infra `_shared/auth.ts` + migration 019 + auditar/cancelar + doc.
-- **Turno 2 (este)**: migrations 020–022 + Edge `processar-venda-caixa` + `enviar-financeiro-lote` + mapeamento no `supabaseAdapter`.
-- **Turno 3**: migration 023 — gerarLancamentosCartao, gerarContasPrevistasRecorrentes (crons), sincronizarContaPrevia, sincronizarExclusaoContaRecorrente, corrigirMovimentosRecepcaoRetroativos.
-- **Próximo**: Onda 2 — anexos (Storage), importações e relatórios.
+| Variável | Uso |
+|----------|-----|
+| SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY | todas |
+| RESEND_API_KEY | email / PIN |
+| OPENAI_API_KEY | LLM, imagens |
+| GITHUB_TOKEN | Flare → GitHub |
+| GOOGLE_DRIVE_ACCESS_TOKEN | só se ainda usar Drive (anexos legados) |
+| SUPABASE_ANEXOS_BUCKET | default `anexos` |

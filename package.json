@@ -23,6 +23,7 @@
     "db:apply-migrations": "node scripts/apply-supabase-migrations.mjs",
     "supabase:deploy": "node scripts/deploy-supabase.mjs",
     "supabase:deploy:functions": "node scripts/deploy-supabase-functions.mjs",
+    "supabase:port-functions": "node scripts/port-base44-functions.mjs",
     "db:cold-start-keep-produto": "node scripts/cold-start-keep-produto.mjs",
     "migrate:base44-to-supabase": "node scripts/migrate-base44-to-supabase.mjs",
     "retificar:5r8b3": "node scripts/retificar-embarque-5r8b3-once.mjs",
