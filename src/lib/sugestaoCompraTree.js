@@ -107,6 +107,29 @@ export function countDescendantSugestaoLinhas(row, lookup, options = {}) {
   return collectDescendantSugestaoLinhas(row, lookup, options).length;
 }
 
+function resolveEstoqueSkuParaAgregacao(sku = {}, linha = {}, incluirPedidosAprovados = false) {
+  const pendenteSku = Number(sku?.estoque_pedidos_aprovados) || 0;
+  const pendenteLinha =
+    linha?.tipo === 'sku' ? Number(linha?.quantidade_pendente) || 0 : 0;
+  const pedidos = pendenteSku > 0 ? pendenteSku : pendenteLinha;
+
+  const fisicoRaw = sku?.estoque_fisico;
+  const fisico = Number.isFinite(Number(fisicoRaw)) ? Number(fisicoRaw) : null;
+  let estoque = Number(sku?.estoque_atual) || 0;
+
+  if (incluirPedidosAprovados) {
+    if (pedidos > 0) {
+      const baseFisico = fisico != null ? fisico : Math.max(0, estoque - pedidos);
+      return baseFisico + pedidos;
+    }
+    return estoque;
+  }
+
+  if (fisico != null) return fisico;
+  if (pedidos > 0) return Math.max(0, estoque - pedidos);
+  return estoque;
+}
+
 function skusComEstoqueSugestao(linhas = [], incluirPedidosAprovados = false) {
   const out = [];
   const seen = new Set();
@@ -114,17 +137,7 @@ function skusComEstoqueSugestao(linhas = [], incluirPedidosAprovados = false) {
     for (const sku of linha?.skus || []) {
       if (!sku?.id || seen.has(sku.id)) continue;
       seen.add(sku.id);
-      const sugestao = linha?.sugestao;
-      const estoqueSugestao = Number(sugestao?.estoque_atual);
-      let estoque = Number.isFinite(estoqueSugestao) ? estoqueSugestao : Number(sku.estoque_atual) || 0;
-      if (incluirPedidosAprovados) {
-        const pedidos = Number(sugestao?.estoque_pedidos_aprovados ?? sku?.estoque_pedidos_aprovados) || 0;
-        const fisicoRaw = sugestao?.estoque_fisico ?? sku?.estoque_fisico;
-        const fisico = Number.isFinite(Number(fisicoRaw)) ? Number(fisicoRaw) : estoque;
-        if (pedidos > 0 && estoque < fisico + pedidos - 1e-6) {
-          estoque = fisico + pedidos;
-        }
-      }
+      const estoque = resolveEstoqueSkuParaAgregacao(sku, linha, incluirPedidosAprovados);
       out.push({
         ...sku,
         estoque_atual: estoque,
