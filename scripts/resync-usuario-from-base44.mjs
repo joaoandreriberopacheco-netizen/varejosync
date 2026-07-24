@@ -169,15 +169,27 @@ async function main() {
       }
     }
 
+    if (!dryRun && backfillSql) {
+      await client.query(backfillSql);
+      console.log('[usuario:resync] colunas promovidas preenchidas a partir de dados jsonb.');
+    }
+
     if (!skipCleanup) {
       if (dryRun) {
         const { rows } = await client.query(
           `select count(*)::int as n from public.usuario u where ${platformWhere}`
         );
-        console.log(`[usuario:resync] dry-run: apagaria ${rows[0].n} linha(s) de plataforma (User auth).`);
+        console.log(`[usuario:resync] dry-run: apagaria ${rows[0].n} linha(s) órfãs de plataforma (sem email).`);
       } else {
-        const del = await client.query(`delete from public.usuario u where ${platformWhere}`);
-        console.log(`[usuario:resync] cleanup: ${del.rowCount} linha(s) de plataforma removida(s).`);
+        const { rows: before } = await client.query(
+          `select count(*)::int as n from public.usuario where ${emailExpr(cols, '')} is not null`
+        );
+        if (before[0].n > 0) {
+          const del = await client.query(`delete from public.usuario u where ${platformWhere}`);
+          console.log(`[usuario:resync] cleanup: ${del.rowCount} linha(s) órfãs de plataforma removida(s).`);
+        } else {
+          console.log('[usuario:resync] cleanup: ignorado (nenhum utilizador com email — evita apagar importação).');
+        }
       }
     }
 
@@ -190,7 +202,7 @@ async function main() {
 
     if (!dryRun) {
       console.log(
-        '[usuario:resync] Próximo passo: npm run usuario:provision-auth (cria convites em auth.users).'
+        '[usuario:resync] Próximo passo: npm run usuario:provision-auth (requer SUPABASE_SERVICE_ROLE_KEY).'
       );
     }
   } finally {
