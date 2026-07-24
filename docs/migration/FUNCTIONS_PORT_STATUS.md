@@ -34,12 +34,12 @@ supabase/functions/<nome-kebab>/index.ts      → thin wrapper: JWT → client.r
 |---|---|---|---|
 | recalcularEstoqueProduto | RPC | ✅ | migration 017 |
 | sincronizarEstoquePorMovimentacao | Trigger | ✅ | migration 017 (trg_recalc_estoque_mov) |
-| atualizarStatusLancamentos | Cron | ✅ | migration 018 (job_atualizar_status_lancamentos) — ⚠️ bug: escreve `status` no `dados` mas a leitura vem da coluna dedicada |
+| atualizarStatusLancamentos | Cron | ✅ | migration 018 + **fix 020** (coluna dedicada) |
 | processarLiquidacaoCartaoCredito | Cron | ✅ | migration 018 (job_liquidar_cartao_credito) |
-| auditarSaldosContas | RPC | ✅ | migration 019 — read-only aggregate |
+| auditarSaldosContas | RPC + Edge | ✅ | migration 019 + Edge wrapper |
 | cancelarLancamentoFinanceiro | RPC + Edge | ✅ | migration 019 + Edge wrapper |
-| processarVendaCaixa | RPC + Edge | 🔧 | **12 tabelas** — próxima migration 020; número via sequence (substitui list+max race-prone) |
-| enviarFinanceiroLote | RPC + Edge | 🔧 | RPC por-pedido (transação cada); Edge itera e colecta erros — migration 020 |
+| processarVendaCaixa | RPC + Edge | ✅ | migration 022 + sequence PV + Edge wrapper |
+| enviarFinanceiroLote | RPC + Edge | ✅ | migration 021 (RPC por pedido) + Edge wrapper |
 | gerarLancamentosCartao | Cron | ⏳ | pg_cron diário 05:00 (2 instâncias duplicadas no painel) — migration 021 |
 | gerarContasPrevistasRecorrentes | Cron | ⏳ | pg_cron `0 6 1 * *` — migration 021 |
 | sincronizarContaPrevia | Trigger | ⏳ | trigger AFTER UPDATE on conta_prevista — migration 021 |
@@ -149,13 +149,14 @@ supabase/functions/<nome-kebab>/index.ts      → thin wrapper: JWT → client.r
 
 ## Issues conhecidas
 
-1. **migration 018 bug**: `job_atualizar_status_lancamentos` e `job_liquidar_cartao_credito` escrevem `status` em `dados` jsonb, mas o `supabaseEntityLayer` lê `status` da **coluna dedicada** (migration 001). Corrigir nas próximas migrations 020/021 para escrever na coluna `status`.
+1. ~~**migration 018 bug**~~ — corrigido em **020**: crons escrevem coluna `status` + `dados`.
 2. **gerarLancamentosCartao** tem **2 automações duplicadas** no painel (ambas diário 05:00). No pg_cron criar só 1.
-3. **processarVendaCaixa** gera número via `list() + max` (race-prone). Port usar uma **sequence** `pedido_venda_numero_seq` (setval = max actual).
-4. **Anexos**: migração one-shot dos ficheiros Drive/Base44 para bucket `anexos` do Supabase Storage; mapear `url_drive` → `url_storage` na tabela `anexo_documento`.
+3. **processarVendaCaixa** usa sequence `pedido_venda_numero_seq` (substitui list+max race-prone do Base44).
+4. **PedidoVendaItem canónico** na venda PDV ainda não portado na RPC 022 (avisos não bloqueiam venda no Base44).
+5. **Anexos**: migração one-shot dos ficheiros Drive/Base44 para bucket `anexos` do Supabase Storage.
 
 ## Entrega por turno
 
-- **Este turno**: infra partilhada (`_shared/auth.ts`) + migration 019 (auditarSaldosContas, cancelarLancamentoFinanceiro) + 2 Edge wrappers + este doc.
-- **Próximo turno**: migration 020 — processarVendaCaixa (RPC 12 tabelas + sequence) + enviarFinanceiroLote (RPC por-pedido + Edge itera).
-- **Seguinte**: migration 021 — gerarLancamentosCartao, gerarContasPrevistasRecorrentes (crons), sincronizarContaPrevia, sincronizarExclusaoContaRecorrente (triggers), corrigirMovimentosRecepcaoRetroativos. + fix do bug migration 018.
+- **Turno 1**: infra `_shared/auth.ts` + migration 019 + auditar/cancelar + doc.
+- **Turno 2 (este)**: migrations 020–022 + Edge `processar-venda-caixa` + `enviar-financeiro-lote` + mapeamento no `supabaseAdapter`.
+- **Próximo**: migration 023 — gerarLancamentosCartao, gerarContasPrevistasRecorrentes (crons), sincronizarContaPrevia, sincronizarExclusaoContaRecorrente, corrigirMovimentosRecepcaoRetroativos.

@@ -277,6 +277,20 @@ function buildAuth(supabase) {
   };
 }
 
+/** Mapeia nomes camelCase do Base44 para pastas kebab-case das Edge Functions Supabase. */
+const EDGE_FUNCTION_ALIASES = {
+  gerenciarPin: 'gerenciar-pin',
+  processarVendaCaixa: 'processar-venda-caixa',
+  cancelarLancamentoFinanceiro: 'cancelar-lancamento-financeiro',
+  auditarSaldosContas: 'auditar-saldos-contas',
+  enviarFinanceiroLote: 'enviar-financeiro-lote',
+};
+
+function toSupabaseEdgeFunctionName(name) {
+  if (EDGE_FUNCTION_ALIASES[name]) return EDGE_FUNCTION_ALIASES[name];
+  return String(name).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+}
+
 function buildFunctions(supabase) {
   return {
     async invoke(name, body, _requestContext = {}) {
@@ -290,7 +304,8 @@ function buildFunctions(supabase) {
         err.code = 'P38_SUPABASE_NOT_CONFIGURED';
         throw err;
       }
-      const { data, error } = await supabase.functions.invoke(name, { body });
+      const edgeName = toSupabaseEdgeFunctionName(name);
+      const { data, error } = await supabase.functions.invoke(edgeName, { body });
       if (error) {
         const message = error.message || `Falha ao invocar Edge Function "${name}".`;
         const enhanced = new Error(
