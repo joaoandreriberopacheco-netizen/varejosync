@@ -253,8 +253,17 @@ async function main() {
       console.log(`  ${r.email}: ${r.status || r.acao}${r.erro ? ` (${r.erro})` : ''}`);
     }
 
-    const erros = resultados.filter((r) => r.status === 'erro').length;
-    if (erros) process.exitCode = 1;
+    const erros = resultados.filter((r) => r.status === 'erro');
+    const rateLimited = erros.filter((r) => /rate limit/i.test(r.erro || ''));
+    const fatal = erros.filter((r) => !/rate limit/i.test(r.erro || ''));
+
+    if (rateLimited.length) {
+      console.warn(
+        `[usuario:provision-auth] ${rateLimited.length} email(s) bloqueados por rate limit do Supabase. ` +
+          'Aguarde ~1h e volte a correr, ou convide manualmente no Dashboard → Authentication → Users.'
+      );
+    }
+    if (fatal.length) process.exitCode = 1;
   } finally {
     client.release();
     await pool.end();
