@@ -100,9 +100,10 @@ jobs:
           EOF
           echo "OK: .env.production.local criado (sem imprimir valores)."
 
-      - name: Build production bundle (Vite)
-        run: npm run build
+      - name: Vercel build (production, prebuilt)
+        run: npx --yes vercel@latest build --prod --token "$VERCEL_TOKEN"
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VITE_P38_PROVIDER: supabase
           VITE_P38_BYPASS_BASE44: 'true'
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -115,8 +116,13 @@ jobs:
         run: |
           set -e
           ref=$(echo "$VITE_SUPABASE_URL" | sed -E 's#https?://([^.]+)\.supabase\.co.*#\1#')
-          if ! grep -rq "$ref" dist/assets/*.js 2>/dev/null; then
-            echo "::error::Build sem VITE_SUPABASE_URL no bundle (ref esperada: $ref). Ver .env.production.local e secrets."
+          found=0
+          for f in dist/assets/*.js .vercel/output/static/assets/*.js; do
+            [ -f "$f" ] || continue
+            if grep -q "$ref" "$f"; then found=1; break; fi
+          done
+          if [ "$found" -ne 1 ]; then
+            echo "::error::Build sem VITE_SUPABASE_URL no bundle (ref esperada: $ref)."
             exit 1
           fi
           echo "OK: bundle contém referência Supabase ($ref)."
@@ -124,7 +130,7 @@ jobs:
       - name: Vercel deploy (production)
         id: deploy
         run: |
-          url=$(npx --yes vercel@latest deploy dist --prod --yes --token "$VERCEL_TOKEN")
+          url=$(npx --yes vercel@latest deploy --prebuilt --prod --yes --token "$VERCEL_TOKEN")
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deploy URL: $url"
         env:
