@@ -35,6 +35,11 @@ import {
   sugestaoProjecaoEstoque30dNegativa,
   sugestaoProjecaoEstoque30dTexto,
 } from '@/lib/calcularSugestaoCompraVelocidade';
+import {
+  SUGESTAO_OPERATIONAL_MODES,
+  linhaExigeAcaoCompra,
+  treeGroupExigeAcaoRadar,
+} from '@/lib/sugestaoCompraOperationalMode';
 import { SugestaoCompraDesktopSelectHeader } from '@/components/compras/SugestaoCompraDesktopToolbar';
 
 /** Listas típicas de sugestão (<250 linhas): render completo evita tela vazia da virtualização. */
@@ -390,6 +395,7 @@ export default function SugestaoCompraTreeGrid({
   produtos,
   linhaLookup,
   agruparHierarquia = true,
+  operationalMode = SUGESTAO_OPERATIONAL_MODES.livre,
   incluirPedidosAprovados = false,
   sortOrder = 'az',
   columnSort = DEFAULT_SUGESTAO_COLUMN_SORT,
@@ -440,7 +446,7 @@ export default function SugestaoCompraTreeGrid({
     [tree, expandedKeys, treeSortOrder, groupByCategory],
   );
 
-  const displayRows = useMemo(() => {
+  const sortedRows = useMemo(() => {
     const column = columnSort?.column || 'produto';
     if (column === 'produto' || column === 'abcd') return rows;
 
@@ -455,6 +461,38 @@ export default function SugestaoCompraTreeGrid({
       return compareSugestaoCompraLinhas(linhaA, linhaB, columnSort, sortCtx);
     });
   }, [rows, columnSort, linhaLookup, agruparHierarquia, sortCtx]);
+
+  const displayRows = useMemo(() => {
+    const baseRows = sortedRows;
+
+    if (operationalMode !== SUGESTAO_OPERATIONAL_MODES.radar) {
+      return baseRows;
+    }
+
+    const radarOpts = {
+      agruparHierarquia,
+      salesVelocityMap,
+      incluirPedidosAprovados,
+    };
+
+    return baseRows.filter((row) => {
+      if (row.type === 'sku') return true;
+      if (row.type !== 'group' || !row.node) return true;
+      if (row.isCategoryBand) {
+        return treeGroupExigeAcaoRadar(row, linhaLookup, radarOpts);
+      }
+      const linha = resolveSugestaoLinhaForTreeRow(row, linhaLookup, { agruparHierarquia });
+      if (linha) return linhaExigeAcaoCompra(linha);
+      return treeGroupExigeAcaoRadar(row, linhaLookup, radarOpts);
+    });
+  }, [
+    sortedRows,
+    operationalMode,
+    agruparHierarquia,
+    salesVelocityMap,
+    incluirPedidosAprovados,
+    linhaLookup,
+  ]);
 
   const handleToggle = useCallback((key) => {
     setExpandedKeys((prev) => {

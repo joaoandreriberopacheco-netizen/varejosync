@@ -26,6 +26,10 @@ import {
 } from '@/lib/calcularSugestaoCompraHierarquia';
 import { fetchPedidosVenda90d, fetchDadosVendaAbcd90d } from '@/lib/fetchPedidosVenda90d';
 import { buildCatalogSalesVelocityMap } from '@/lib/catalogSalesVelocity';
+import {
+  applySugestaoOperationalMode,
+  SUGESTAO_OPERATIONAL_MODES,
+} from '@/lib/sugestaoCompraOperationalMode';
 import { fetchProdutosAtivos } from '@/lib/fetchProdutosAtivos';
 import { withRateLimitRetry } from '@/lib/p38ApiErrors';
 import {
@@ -51,6 +55,7 @@ import {
 } from '@/lib/filterSugestaoCompraLinhas';
 const SUGESTAO_TREE_LEVEL_KEY = 'sugestaoCompra.treeLevel';
 const SUGESTAO_GROUP_CATEGORY_KEY = 'sugestaoCompra.groupByCategory';
+const SUGESTAO_OPERATIONAL_MODE_KEY = 'sugestaoCompra.operationalMode';
 const SUGESTAO_COLUMN_SORT_KEY = 'sugestaoCompra.columnSort';
 
 function readColumnSort() {
@@ -85,6 +90,18 @@ function readSugestaoGroupByCategory() {
     return localStorage.getItem(SUGESTAO_GROUP_CATEGORY_KEY) === '1';
   } catch {
     return false;
+  }
+}
+
+function readSugestaoOperationalMode() {
+  try {
+    const raw = localStorage.getItem(SUGESTAO_OPERATIONAL_MODE_KEY);
+    if (raw === SUGESTAO_OPERATIONAL_MODES.radar || raw === SUGESTAO_OPERATIONAL_MODES.bisturi) {
+      return raw;
+    }
+    return SUGESTAO_OPERATIONAL_MODES.livre;
+  } catch {
+    return SUGESTAO_OPERATIONAL_MODES.livre;
   }
 }
 
@@ -125,6 +142,7 @@ export default function SugestaoCompra({ onStatsChange }) {
   const [columnSort, setColumnSort] = useState(readColumnSort);
   const [treeLevel, setTreeLevel] = useState(readSugestaoTreeLevel);
   const [groupByCategory, setGroupByCategory] = useState(readSugestaoGroupByCategory);
+  const [operationalMode, setOperationalMode] = useState(readSugestaoOperationalMode);
   const [filtersDrawerOpen, setFiltersDrawerOpen] = useState(false);
   const [gerandoRelatorio, setGerandoRelatorio] = useState(false);
   const [relatorioDialogOpen, setRelatorioDialogOpen] = useState(false);
@@ -340,11 +358,12 @@ export default function SugestaoCompra({ onStatsChange }) {
     };
 
     fetchPedidosCompraParaSugestaoEstoque(base44)
-      .then(({ pedidosTodos, recebidosPorPedidoProduto }) => {
+      .then(({ pedidosTodos, pedidosAbertos, embarques, recebidosPorPedidoProduto }) => {
         const pedidosCompra = pedidosTodos;
         const pendingMap = buildPendenteAprovadoFinanceiroPorProduto(
-          pedidosCompra,
+          pedidosAbertos,
           recebidosPorPedidoProduto,
+          { embarques, pedidosParaEmbarque: pedidosTodos },
         );
         const ultimoFornecedorPorProduto = buildUltimoFornecedorPorProduto(pedidosCompra);
         calcContextRef.current = {
@@ -495,6 +514,46 @@ export default function SugestaoCompra({ onStatsChange }) {
       considerarPedidosAprovadosEstoque: !prev.considerarPedidosAprovadosEstoque,
     }));
   }, []);
+
+  const applyOperationalMode = useCallback((mode) => {
+    const preset = applySugestaoOperationalMode(mode, {
+      treeLevel,
+      groupByCategory,
+      columnSort,
+      considerarPedidosAprovadosEstoque: filters.considerarPedidosAprovadosEstoque,
+    });
+    setOperationalMode(mode);
+    try {
+      localStorage.setItem(SUGESTAO_OPERATIONAL_MODE_KEY, mode);
+    } catch {
+      // ignore
+    }
+    if (preset.treeLevel != null) setTreeLevel(preset.treeLevel);
+    if (preset.groupByCategory != null) {
+      setGroupByCategory(preset.groupByCategory);
+      try {
+        localStorage.setItem(SUGESTAO_GROUP_CATEGORY_KEY, preset.groupByCategory ? '1' : '0');
+      } catch {
+        // ignore
+      }
+    }
+    if (preset.columnSort) {
+      setColumnSort(preset.columnSort);
+      try {
+        localStorage.setItem(SUGESTAO_COLUMN_SORT_KEY, JSON.stringify(preset.columnSort));
+      } catch {
+        // ignore
+      }
+    }
+    if (preset.filtersPatch && Object.keys(preset.filtersPatch).length) {
+      setFilters((prev) => ({ ...prev, ...preset.filtersPatch }));
+    }
+    try {
+      localStorage.setItem(SUGESTAO_TREE_LEVEL_KEY, String(preset.treeLevel ?? treeLevel));
+    } catch {
+      // ignore
+    }
+  }, [columnSort, filters.considerarPedidosAprovadosEstoque, groupByCategory, treeLevel]);
 
   const handleGerarRelatorio = useCallback(async ({ format = 'pdf', agruparNivel = 0 } = {}) => {
     if (!filteredLinhas.length) {
@@ -1035,6 +1094,8 @@ export default function SugestaoCompra({ onStatsChange }) {
             onToggleSomenteAbaixo={handleToggleSomenteAbaixo}
             considerarPedidosAprovadosEstoque={filters.considerarPedidosAprovadosEstoque === true}
             onToggleConsiderarPedidos={handleToggleConsiderarPedidos}
+            operationalMode={operationalMode}
+            onOperationalModeChange={applyOperationalMode}
             onOpenRelatorio={() => setRelatorioDialogOpen(true)}
             gerandoRelatorio={gerandoRelatorio}
             activeFilterCount={activeFilterCount}
@@ -1048,6 +1109,7 @@ export default function SugestaoCompra({ onStatsChange }) {
             produtos={treeProdutos}
             linhaLookup={linhaLookup}
             agruparHierarquia={agruparHierarquia}
+            operationalMode={operationalMode}
             incluirPedidosAprovados={filters.considerarPedidosAprovadosEstoque === true}
             columnSort={columnSort}
             onColumnSort={handleColumnSort}
