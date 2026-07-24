@@ -4,6 +4,72 @@
 alter table public.pedido_compra add column if not exists dados jsonb not null default '{}'::jsonb;
 alter table public.embarque add column if not exists dados jsonb not null default '{}'::jsonb;
 alter table public.movimentacao_estoque add column if not exists dados jsonb not null default '{}'::jsonb;
+
+-- Tabelas criadas em 000_bootstrap_jsonb_all podem existir só com (id, dados).
+-- Promove colunas usadas por jobs/triggers abaixo (IF NOT EXISTS — seguro em re-run).
+alter table public.conta_recorrente add column if not exists nome_despesa text;
+alter table public.conta_recorrente add column if not exists terceiro_id text;
+alter table public.conta_recorrente add column if not exists terceiro_nome text;
+alter table public.conta_recorrente add column if not exists categoria_financeira_id text;
+alter table public.conta_recorrente add column if not exists categoria_nome text;
+alter table public.conta_recorrente add column if not exists valor_previsto numeric(15, 2);
+alter table public.conta_recorrente add column if not exists frequencia text;
+alter table public.conta_recorrente add column if not exists dia_vencimento int;
+alter table public.conta_recorrente add column if not exists ativa boolean default true;
+
+alter table public.conta_prevista add column if not exists descricao text;
+alter table public.conta_prevista add column if not exists terceiro_id text;
+alter table public.conta_prevista add column if not exists terceiro_nome text;
+alter table public.conta_prevista add column if not exists categoria_financeira_id text;
+alter table public.conta_prevista add column if not exists categoria_nome text;
+alter table public.conta_prevista add column if not exists valor numeric(15, 2);
+alter table public.conta_prevista add column if not exists data_vencimento date;
+alter table public.conta_prevista add column if not exists natureza text;
+alter table public.conta_prevista add column if not exists conta_recorrente_id text;
+alter table public.conta_prevista add column if not exists periodo_referencia date;
+alter table public.conta_prevista add column if not exists tem_anexo boolean default false;
+alter table public.conta_prevista add column if not exists tem_boleto boolean default false;
+alter table public.conta_prevista add column if not exists tem_comprovante boolean default false;
+alter table public.conta_prevista add column if not exists status_visual text default 'pendente';
+alter table public.conta_prevista add column if not exists status text default 'Pendente';
+
+alter table public.lancamento_financeiro add column if not exists referencia_tipo text;
+alter table public.lancamento_financeiro add column if not exists referencia_id text;
+alter table public.lancamento_financeiro add column if not exists status text;
+
+alter table public.contas_financeiras add column if not exists nome text;
+alter table public.categoria_financeira add column if not exists nome text;
+
+alter table public.pedido_compra add column if not exists numero text;
+alter table public.pedido_compra add column if not exists itens jsonb default '[]'::jsonb;
+alter table public.pedido_compra add column if not exists historico text;
+
+alter table public.embarque add column if not exists pedido_compra_id text;
+alter table public.embarque add column if not exists status_recebimento text;
+alter table public.embarque add column if not exists itens jsonb default '[]'::jsonb;
+
+alter table public.movimentacao_estoque add column if not exists unidade_medida text;
+alter table public.movimentacao_estoque add column if not exists unidade_sigla text;
+alter table public.movimentacao_estoque add column if not exists fator_conversao numeric;
+alter table public.movimentacao_estoque add column if not exists quantidade_base numeric;
+
+drop index if exists public.idx_conta_prevista_recorrente_competencia_lookup;
+drop index if exists public.uq_conta_prevista_recorrente_competencia_mes;
+
+create index if not exists idx_conta_prevista_recorrente_competencia_lookup
+  on public.conta_prevista (
+    conta_recorrente_id,
+    (date_trunc('month', coalesce(periodo_referencia, data_vencimento)::timestamp))
+  )
+  where conta_recorrente_id is not null;
+
+create unique index if not exists uq_conta_prevista_recorrente_competencia_mes
+  on public.conta_prevista (
+    conta_recorrente_id,
+    (date_trunc('month', coalesce(periodo_referencia, data_vencimento)::timestamp))
+  )
+  where conta_recorrente_id is not null;
+
 -- Port de:
 --   • gerarLancamentosCartao          → job_gerar_lancamentos_cartao + pg_cron
 --   • gerarContasPrevistasRecorrentes → job_gerar_contas_previstas_recorrentes + pg_cron
@@ -123,8 +189,8 @@ begin
       if v_valor_taxa > 0 then
         select * into v_cat
         from public.categoria_financeira c
-        where lower(c.nome) like '%maquininha%'
-           or lower(c.nome) like '%adquirente%'
+        where lower(coalesce(c.nome, c.dados->>'nome', '')) like '%maquininha%'
+           or lower(coalesce(c.nome, c.dados->>'nome', '')) like '%adquirente%'
         limit 1;
 
         perform public._p38_insert_lancamento(jsonb_build_object(
@@ -280,7 +346,7 @@ begin
 
   select c.id into v_conta_id
   from public.contas_financeiras c
-  where c.id = 'caixa_geral' or lower(c.nome) like '%caixa%geral%'
+  where c.id = 'caixa_geral' or lower(coalesce(c.nome, c.dados->>'nome', '')) like '%caixa%geral%'
   order by case when c.id = 'caixa_geral' then 0 else 1 end
   limit 1;
 
