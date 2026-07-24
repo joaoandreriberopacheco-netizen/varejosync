@@ -17,6 +17,7 @@
 
 import { applySupabaseMigrations } from './apply-supabase-migrations.mjs';
 import { deploySupabaseFunctions } from './deploy-supabase-functions.mjs';
+import { resolveSupabaseDeployEnv } from './supabase-env.mjs';
 
 function parseArgs(argv) {
   return {
@@ -34,7 +35,7 @@ async function main() {
   console.log('[supabase:deploy] Início', dryRun ? '(dry-run)' : '');
 
   if (runMigrations) {
-    const databaseUrl = process.env.DATABASE_URL?.trim();
+    const { databaseUrl } = resolveSupabaseDeployEnv();
     if (!databaseUrl) {
       console.error('[supabase:deploy] DATABASE_URL em falta — não é possível aplicar migrações.');
       process.exit(1);

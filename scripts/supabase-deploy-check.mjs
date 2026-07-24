@@ -4,25 +4,11 @@
  * Não imprime valores de secrets — só presença e testes de ligação.
  */
 import pg from 'pg';
-import { loadDotEnvFiles } from './base44-env.mjs';
 import { listMigrationFiles } from './apply-supabase-migrations.mjs';
-
-loadDotEnvFiles();
+import { resolveSupabaseDeployEnv } from './supabase-env.mjs';
 
 function mask(name, value) {
   return value ? `${name}=ok` : `${name}=EM FALTA`;
-}
-
-function resolveProjectRef() {
-  const explicit = process.env.SUPABASE_PROJECT_REF?.trim();
-  if (explicit) return explicit;
-  const url = process.env.VITE_SUPABASE_URL?.trim() || process.env.SUPABASE_URL?.trim();
-  if (!url) return null;
-  try {
-    return new URL(url).hostname.split('.')[0] || null;
-  } catch {
-    return null;
-  }
 }
 
 async function testDatabase(url) {
@@ -55,14 +41,13 @@ async function testDatabase(url) {
 }
 
 async function main() {
-  const databaseUrl = process.env.DATABASE_URL?.trim();
-  const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
-  const projectRef = resolveProjectRef();
+  const { databaseUrl, accessToken, projectRef } = resolveSupabaseDeployEnv();
+  const secretNames = process.env.CLOUD_AGENT_ALL_SECRET_NAMES || '(n/d)';
 
-  console.log('[supabase:deploy:check] Secrets');
+  console.log('[supabase:deploy:check] Secrets carregados:', secretNames);
   console.log(' ', mask('DATABASE_URL', databaseUrl));
-  console.log(' ', mask('SUPABASE_ACCESS_TOKEN', token));
-  console.log(' ', mask('VITE_SUPABASE_URL / PROJECT_REF', projectRef || process.env.VITE_SUPABASE_URL));
+  console.log(' ', mask('SUPABASE_ACCESS_TOKEN', accessToken));
+  console.log(' ', mask('PROJECT_REF', projectRef));
 
   const migrations = listMigrationFiles();
   console.log(`\n[supabase:deploy:check] Migrações no repo: ${migrations.length}`);
@@ -83,17 +68,17 @@ async function main() {
   }
 
   const readyMigrations = Boolean(databaseUrl);
-  const readyFunctions = Boolean(token && projectRef);
+  const readyFunctions = Boolean(accessToken && projectRef);
 
   console.log('\n[supabase:deploy:check] Pronto para deploy?');
-  console.log('  migrações:', readyMigrations ? (databaseUrl ? 'sim (se ligação OK)' : 'não') : 'não');
+  console.log('  migrações:', readyMigrations ? 'sim (se ligação OK)' : 'não');
   console.log('  functions:', readyFunctions ? 'sim' : 'não');
 
   if (!readyFunctions) {
-    console.log('\nPara Edge Functions, adiciona nos Secrets (Cursor Cloud + GitHub Actions):');
+    console.log('\nPara Edge Functions (nome exacto do secret):');
     console.log('  SUPABASE_ACCESS_TOKEN  — https://supabase.com/dashboard/account/tokens');
     if (!projectRef) {
-      console.log('  VITE_SUPABASE_URL      — https://[PROJECT_REF].supabase.co');
+      console.log('  VITE_SUPABASE_URL ou DATABASE_URL com host Supabase');
     }
   }
 

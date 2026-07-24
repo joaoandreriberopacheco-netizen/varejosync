@@ -14,25 +14,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { resolveSupabaseDeployEnv } from './supabase-env.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const functionsDir = path.join(root, 'supabase', 'functions');
 
 function resolveProjectRef() {
-  const explicit = process.env.SUPABASE_PROJECT_REF?.trim();
-  if (explicit) return explicit;
-
-  const url = process.env.VITE_SUPABASE_URL?.trim() || process.env.SUPABASE_URL?.trim();
-  if (!url) return null;
-
-  try {
-    const host = new URL(url).hostname;
-    const ref = host.split('.')[0];
-    return ref || null;
-  } catch {
-    return null;
-  }
+  return resolveSupabaseDeployEnv().projectRef || null;
 }
 
 function listFunctionNames() {
@@ -45,15 +34,16 @@ function listFunctionNames() {
 }
 
 export async function deploySupabaseFunctions({ dryRun = false } = {}) {
-  const token = process.env.SUPABASE_ACCESS_TOKEN?.trim();
-  const projectRef = resolveProjectRef();
+  const { accessToken: token, projectRef } = resolveSupabaseDeployEnv();
 
   if (!token) {
-    throw new Error('SUPABASE_ACCESS_TOKEN é obrigatório (Dashboard → Account → Access Tokens).');
+    throw new Error(
+      'SUPABASE_ACCESS_TOKEN é obrigatório (Dashboard → Account → Access Tokens). Aceita também SUPABASE_TOKEN ou secret "supabase" com valor sbp_…'
+    );
   }
   if (!projectRef) {
     throw new Error(
-      'SUPABASE_PROJECT_REF ou VITE_SUPABASE_URL é obrigatório para identificar o projecto.'
+      'PROJECT_REF em falta — define VITE_SUPABASE_URL, SUPABASE_PROJECT_REF ou DATABASE_URL com host Supabase.'
     );
   }
 
