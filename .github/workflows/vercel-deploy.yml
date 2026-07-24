@@ -129,3 +129,21 @@ jobs:
           echo "Deploy URL: $url"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Verificar produção expõe Supabase no bundle
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        run: |
+          set -e
+          ref=$(echo "$VITE_SUPABASE_URL" | sed -E 's#https?://([^.]+)\.supabase\.co.*#\1#')
+          html=$(curl -fsSL "https://p-38erp.vercel.app/")
+          js=$(echo "$html" | rg -o '/assets/index-[^"]+\.js' | head -1)
+          if [ -z "$js" ]; then
+            echo "::error::Não encontrou bundle JS em p-38erp.vercel.app"
+            exit 1
+          fi
+          if ! curl -fsSL "https://p-38erp.vercel.app$js" | rg -q "$ref"; then
+            echo "::error::Produção sem ref Supabase ($ref) no bundle. Desactiva deploy Git nativo do Vercel OU define VITE_SUPABASE_URL/ANON_KEY nas env vars do projecto Vercel."
+            exit 1
+          fi
+          echo "OK: produção contém ref Supabase ($ref)."
