@@ -2,4 +2,4 @@
 # Pedido: 2026-07-24 — encher Supabase P38 para o Vercel deixar de abrir vazio.
 
 triggeredAt=2026-07-24T21:05:00Z
-retry=3
+retry=4
