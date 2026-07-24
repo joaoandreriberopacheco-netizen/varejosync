@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { P38MobileLineList, P38MobileLine } from '@/components/ui/p38-mobile-line';
 import { AlertCircle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function ResumoPrevisualizacao({ data }) {

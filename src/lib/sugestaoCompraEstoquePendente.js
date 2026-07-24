@@ -27,85 +27,10 @@ const PEDIDO_STATUS_EXCLUIDOS_ESTOQUE = new Set([
   'cancelado',
   'rejeitado financeiramente',
   'rejeitado',
-  'concluido',
-  'devolvido',
 ]);
 
 function normalizeStatus(value) {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '');
-}
-
-function resolveQuantidadeRecebidaItemEmbarque(item = {}, embarque = {}) {
-  const recebida = Number(item.quantidade_recebida) || 0;
-  if (recebida > 0) return recebida;
-
-  const statusReceb = normalizeStatus(embarque?.status_recebimento);
-  const statusEmbarque = normalizeStatus(embarque?.status);
-  const embarqueConcluido =
-    statusReceb === 'recebido ok' ||
-    statusReceb === 'com divergencia' ||
-    statusEmbarque === 'concluido';
-
-  if (!embarqueConcluido) return 0;
-
-  return (
-    Number(item.quantidade_embarcada) ||
-    Number(item.quantidade_pedida) ||
-    Number(item.quantidade) ||
-    0
-  );
-}
-
-function somarRecebidosItensEmbarque(acc, embarque = {}) {
-  const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
-    ? embarque.itens_embarcados
-    : Array.isArray(embarque.itens)
-      ? embarque.itens
-      : [];
-  itensEmbarcados.forEach((item) => {
-    const produtoId = item?.produto_id;
-    if (!produtoId) return;
-    const produtoKey = String(produtoId);
-    const qty = resolveQuantidadeRecebidaItemEmbarque(item, embarque);
-    if (qty > 0) {
-      acc[produtoKey] = (acc[produtoKey] || 0) + qty;
-    }
-  });
-  return acc;
-}
-
-/** Pedido encerrado para efeito de estoque projetado (não soma pendente). */
-export function pedidoCompraEstaConcluido(pedido = {}) {
-  const statusDisplay = String(pedido.status || '').trim();
-  const statusPedido = normalizeStatus(statusDisplay);
-  if (PEDIDO_STATUS_EXCLUIDOS_ESTOQUE.has(statusPedido)) return true;
-
-  const statusRecebDisplay = String(pedido.status_recebimento_geral || '').trim();
-  const statusRecebimento = normalizeStatus(statusRecebDisplay);
-  if (
-    statusRecebDisplay.startsWith('Concluído') ||
-    statusRecebDisplay.startsWith('Concluido') ||
-    statusRecebimento.startsWith('concluido') ||
-    statusRecebimento === 'recebido ok' ||
-    statusRecebimento === 'concluido ok' ||
-    statusRecebimento.includes('concluido com divergencia')
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-export function pedidoCompraTotalmenteRecebido(pedido = {}, recebidosPorProduto = {}) {
-  const itens = Array.isArray(pedido?.itens) ? pedido.itens : [];
-  if (!itens.length) return false;
-  return itens.every(
-    (item) => quantidadePendenteItemPedidoCompra(item, recebidosPorProduto) <= 0,
-  );
+  return String(value || '').trim().toLowerCase();
 }
 
 function resolveQuantidadeBaseItemPedido(item = {}) {
@@ -118,8 +43,6 @@ function resolveQuantidadeBaseItemPedido(item = {}) {
 
 /** Mesma regra do dashboard de estoque: aprovado financeiramente e ainda não concluído. */
 export function pedidoCompraAprovadoNaoConcluido(pedido = {}) {
-  if (pedidoCompraEstaConcluido(pedido)) return false;
-
   const statusDisplay = String(pedido.status || '').trim();
   const statusPedido = normalizeStatus(statusDisplay);
   if (PEDIDO_STATUS_EXCLUIDOS_ESTOQUE.has(statusPedido)) return false;
@@ -140,7 +63,12 @@ export function pedidoCompraAprovadoNaoConcluido(pedido = {}) {
     PEDIDO_STATUS_LOGISTICA_EM_ABERTO.has(statusPedido);
   if (!aprovado && !aprovadoViaStatus) return false;
 
-  return true;
+  const statusRecebimento = normalizeStatus(pedido.status_recebimento_geral);
+  const concluidoRecebimento =
+    statusRecebimento.startsWith('concluído') || statusRecebimento.startsWith('concluido');
+  const concluidoPedido = statusPedido === 'concluído' || statusPedido === 'concluido';
+
+  return !concluidoRecebimento && !concluidoPedido;
 }
 
 /** @deprecated use pedidoCompraAprovadoNaoConcluido */
@@ -154,14 +82,35 @@ export function buildRecebidosPorPedidoProdutoFromEmbarques(embarques = []) {
     if (!pedidoId) return acc;
     const pedidoKey = String(pedidoId);
     if (!acc[pedidoKey]) acc[pedidoKey] = {};
-    somarRecebidosItensEmbarque(acc[pedidoKey], embarque);
+    const itensEmbarcados = Array.isArray(embarque.itens_embarcados)
+      ? embarque.itens_embarcados
+      : Array.isArray(embarque.itens)
+        ? embarque.itens
+        : [];
+    itensEmbarcados.forEach((item) => {
+      const produtoId = item?.produto_id;
+      if (!produtoId) return;
+      const produtoKey = String(produtoId);
+      acc[pedidoKey][produtoKey] =
+        (acc[pedidoKey][produtoKey] || 0) + (Number(item.quantidade_recebida) || 0);
+    });
     return acc;
   }, {});
 }
 
 function recebidosEmbeddedNoPedido(pedido = {}) {
   const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
-  return embarques.reduce((acc, embarque) => somarRecebidosItensEmbarque(acc, embarque), {});
+  return embarques.reduce((acc, embarque) => {
+    const itens = embarque?.itens_embarcados || embarque?.itens || [];
+    itens.forEach((item) => {
+      const produtoId = item?.produto_id;
+      if (!produtoId) return;
+      const produtoKey = String(produtoId);
+      acc[produtoKey] =
+        (acc[produtoKey] || 0) + (Number(item.quantidade_recebida) || 0);
+    });
+    return acc;
+  }, {});
 }
 
 function mergeRecebidosPorProduto(externo = {}, interno = {}) {
@@ -196,7 +145,6 @@ export function buildPendenteAprovadoFinanceiroPorProduto(
   (pedidos || []).forEach((pedido) => {
     if (!pedidoCompraAprovadoNaoConcluido(pedido)) return;
     const recebidos = recebidosPorProdutoDoPedido(pedido, recebidosPorPedidoProduto);
-    if (pedidoCompraTotalmenteRecebido(pedido, recebidos)) return;
     (pedido.itens || []).forEach((item) => {
       const produtoId = item?.produto_id;
       if (!produtoId) return;

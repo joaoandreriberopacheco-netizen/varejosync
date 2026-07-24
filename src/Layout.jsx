@@ -271,7 +271,7 @@ export default function Layout({ children, currentPageName }) {
 
   if (loadError) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 font-body p38-app">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 font-din-1451 p38-app">
         <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-full mb-4">
           <WifiOff className="w-8 h-8 text-red-500 dark:text-red-400" />
         </div>
@@ -321,7 +321,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className={darkMode ? 'dark' : ''}>
       <FontScaleInitializer />
-      <div className="min-h-screen flex font-body p38-app bg-background">
+      <div className="min-h-screen flex font-din-1451 p38-app bg-background">
 
 
         {/* Sidebar Desktop */}
