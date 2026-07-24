@@ -1,5 +1,6 @@
 # Apagar ou alterar este ficheiro e fazer push na main dispara migração Base44 → Supabase (dry_run=false).
 # Pedido: 2026-07-24 — encher Supabase P38 para o Vercel deixar de abrir vazio.
 
-triggeredAt=2026-07-24T21:05:00Z
-retry=4
+triggeredAt=2026-07-24T22:02:00Z
+retry=5
+note=DATABASE_URL password updated by user — revalidar ligação e contagens
