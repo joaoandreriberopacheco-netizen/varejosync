@@ -118,8 +118,7 @@ function skusComEstoqueSugestao(linhas = [], incluirPedidosAprovados = false) {
       const estoqueSugestao = Number(sugestao?.estoque_atual);
       let estoque = Number.isFinite(estoqueSugestao) ? estoqueSugestao : Number(sku.estoque_atual) || 0;
       if (incluirPedidosAprovados) {
-        const pedidos = Number(sugestao?.estoque_pedidos_aprovados ?? sku?.estoque_pedidos_aprovados)
-          || Number(linha?.quantidade_pendente) || 0;
+        const pedidos = Number(sugestao?.estoque_pedidos_aprovados ?? sku?.estoque_pedidos_aprovados) || 0;
         const fisicoRaw = sugestao?.estoque_fisico ?? sku?.estoque_fisico;
         const fisico = Number.isFinite(Number(fisicoRaw)) ? Number(fisicoRaw) : estoque;
         if (pedidos > 0 && estoque < fisico + pedidos - 1e-6) {

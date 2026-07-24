@@ -39,7 +39,8 @@ import {
   sortSugestaoCompraLinhasByColumn,
 } from '@/lib/sugestaoCompraColumnSort';
 import { buildUltimoFornecedorPorProduto } from '@/lib/buildUltimoFornecedorPorProduto';
-import { buildPendenteAprovadoFinanceiroPorProduto, buildRecebidosPorPedidoProdutoFromEmbarques } from '@/lib/sugestaoCompraEstoquePendente';
+import { buildPendenteAprovadoFinanceiroPorProduto } from '@/lib/sugestaoCompraEstoquePendente';
+import { fetchPedidosCompraParaSugestaoEstoque } from '@/lib/fetchPedidosCompraParaSugestaoEstoque';
 import {
   collectSugestaoTags,
   collectSugestaoVitrineUnits,
@@ -338,62 +339,59 @@ export default function SugestaoCompra({ onStatsChange }) {
       }
     };
 
-    Promise.all([
-      base44.entities.PedidoCompra.filter({
-        status: ['Enviado', 'Aguardando Recepção', 'Aguardando Embarque', 'Recebido Parcialmente', 'Aprovado', 'Despachado', 'Em Recepção'],
-      }).catch(() => []),
-      base44.entities.PedidoCompra.list('-created_date', 250).catch(() => []),
-      base44.entities.Embarque.list('-created_date', 600).catch(() => []),
-    ]).then(([pedidosAbertos, pedidosRecentes, embarquesCompra]) => {
-      const pedidosPorId = new Map();
-      [...pedidosAbertos, ...pedidosRecentes].forEach((p) => {
-        if (p?.id) pedidosPorId.set(p.id, p);
-      });
-      const pedidosCompra = [...pedidosPorId.values()];
-      const recebidosPorPedidoProduto = buildRecebidosPorPedidoProdutoFromEmbarques(embarquesCompra);
-      const pendingMap = buildPendenteAprovadoFinanceiroPorProduto(
-        pedidosCompra,
-        recebidosPorPedidoProduto,
-      );
-      const ultimoFornecedorPorProduto = buildUltimoFornecedorPorProduto(pedidosRecentes);
-      calcContextRef.current = {
-        ...calcContextRef.current,
-        pedidosCompra,
-        pending: pendingMap,
-        ultimoFornecedorPorProduto,
-      };
-      setFornecedorPorLinha((prev) => {
-        const merged = { ...prev };
-        setLinhas((currentLinhas) => {
-          currentLinhas.forEach((l) => {
-            if (!merged[l.id]) {
-              const id = fornecedorPadraoLinha(l, ultimoFornecedorPorProduto);
-              if (id) merged[l.id] = id;
-            }
-          });
-          return currentLinhas;
-        });
-        return merged;
-      });
-      if (calcContextRef.current.pedidos?.length) {
-        atualizarComPedidos(calcContextRef.current.pedidos, {
+    fetchPedidosCompraParaSugestaoEstoque(base44)
+      .then(({ pedidosTodos, recebidosPorPedidoProduto }) => {
+        const pedidosCompra = pedidosTodos;
+        const pendingMap = buildPendenteAprovadoFinanceiroPorProduto(
+          pedidosCompra,
+          recebidosPorPedidoProduto,
+        );
+        const ultimoFornecedorPorProduto = buildUltimoFornecedorPorProduto(pedidosCompra);
+        calcContextRef.current = {
+          ...calcContextRef.current,
+          pedidosCompra,
           pending: pendingMap,
           ultimoFornecedorPorProduto,
-          considerarPedidosAprovadosEstoque: incluirPedidosAprovadosAtual(),
+        };
+        setFornecedorPorLinha((prev) => {
+          const merged = { ...prev };
+          setLinhas((currentLinhas) => {
+            currentLinhas.forEach((l) => {
+              if (!merged[l.id]) {
+                const id = fornecedorPadraoLinha(l, ultimoFornecedorPorProduto);
+                if (id) merged[l.id] = id;
+              }
+            });
+            return currentLinhas;
+          });
+          return merged;
         });
-      } else {
-        aplicarLinhas(
-          ctx.prods,
-          [],
-          calcContextRef.current.movsPorProduto,
-          pendingMap,
-          {
-            salesVelocityMap: calcContextRef.current.salesVelocityMap,
+        if (calcContextRef.current.pedidos?.length) {
+          atualizarComPedidos(calcContextRef.current.pedidos, {
+            pending: pendingMap,
+            ultimoFornecedorPorProduto,
             considerarPedidosAprovadosEstoque: incluirPedidosAprovadosAtual(),
-          },
-        );
-      }
-    });
+          });
+        } else {
+          aplicarLinhas(
+            ctx.prods,
+            [],
+            calcContextRef.current.movsPorProduto,
+            pendingMap,
+            {
+              salesVelocityMap: calcContextRef.current.salesVelocityMap,
+              considerarPedidosAprovadosEstoque: incluirPedidosAprovadosAtual(),
+            },
+          );
+        }
+      })
+      .catch(() => {
+        toast({
+          title: 'Pedidos de compra não carregados',
+          description: 'Estoque com pedidos em trânsito pode estar incompleto até reconectar.',
+          variant: 'destructive',
+        });
+      });
 
     withRateLimitRetry(() => fetchPedidosVenda90d(), {
       maxAttempts: 3,

@@ -47,7 +47,7 @@ export const DEFAULT_SUGESTAO_COMPRA_FILTERS = {
   sugestaoQuantidadeValor: '',
   sugestaoQuantidadeValorAte: '',
   hidePending: false,
-  considerarPedidosAprovadosEstoque: false,
+  considerarPedidosAprovadosEstoque: true,
   somenteAbaixoPontoFuturo: false,
   roundingMode: 'auto',
   agruparHierarquia: true,

@@ -98,11 +98,7 @@ export function buildRecebidosPorPedidoProdutoFromEmbarques(embarques = []) {
   }, {});
 }
 
-function recebidosPorProdutoDoPedido(pedido = {}, recebidosPorPedidoProduto = {}) {
-  const pedidoKey = String(pedido?.id || '');
-  const externo = recebidosPorPedidoProduto[pedidoKey];
-  if (externo && Object.keys(externo).length > 0) return externo;
-
+function recebidosEmbeddedNoPedido(pedido = {}) {
   const embarques = Array.isArray(pedido.embarques_registrados) ? pedido.embarques_registrados : [];
   return embarques.reduce((acc, embarque) => {
     const itens = embarque?.itens_embarcados || embarque?.itens || [];
@@ -110,10 +106,26 @@ function recebidosPorProdutoDoPedido(pedido = {}, recebidosPorPedidoProduto = {}
       const produtoId = item?.produto_id;
       if (!produtoId) return;
       const produtoKey = String(produtoId);
-      acc[produtoKey] = (acc[produtoKey] || 0) + (Number(item.quantidade_recebida) || 0);
+      acc[produtoKey] =
+        (acc[produtoKey] || 0) + (Number(item.quantidade_recebida) || 0);
     });
     return acc;
   }, {});
+}
+
+function mergeRecebidosPorProduto(externo = {}, interno = {}) {
+  const out = { ...interno };
+  for (const [key, qty] of Object.entries(externo)) {
+    out[key] = Math.max(Number(out[key] || 0), Number(qty) || 0);
+  }
+  return out;
+}
+
+function recebidosPorProdutoDoPedido(pedido = {}, recebidosPorPedidoProduto = {}) {
+  const pedidoKey = String(pedido?.id || '');
+  const externo = recebidosPorPedidoProduto[pedidoKey] || {};
+  const interno = recebidosEmbeddedNoPedido(pedido);
+  return mergeRecebidosPorProduto(externo, interno);
 }
 
 export function quantidadePendenteItemPedidoCompra(item = {}, recebidosPorProduto = {}) {
