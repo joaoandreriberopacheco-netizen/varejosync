@@ -7,8 +7,29 @@ import { FLARE_AND_INSPECTION_UI_ENABLED } from './src/config/devToolsFlags.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+/** Falha o build em produção se provider=supabase sem credenciais (evita bundle quebrado no Vercel). */
+function requireSupabaseEnvForProduction() {
+  return {
+    name: 'p38-require-supabase-env',
+    config(_config, { mode }) {
+      if (mode !== 'production') return
+      const provider = String(process.env.VITE_P38_PROVIDER || '').toLowerCase().trim()
+      if (provider !== 'supabase') return
+      const url = String(process.env.VITE_SUPABASE_URL || '').trim()
+      const key = String(process.env.VITE_SUPABASE_ANON_KEY || '').trim()
+      if (!url || !key) {
+        throw new Error(
+          '[P38] Build de produção com VITE_P38_PROVIDER=supabase exige VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY. ' +
+            'Use o workflow GitHub Actions "Vercel Deploy" (não deploy Git nativo da Vercel).'
+        )
+      }
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
+    requireSupabaseEnvForProduction(),
     react(),
     base44({
       legacySDKImports: false,
