@@ -76,7 +76,7 @@ export async function deploySupabaseFunctions({ dryRun = false } = {}) {
 
     const result = spawnSync(
       'npx',
-      ['--yes', 'supabase@2.23.4', 'functions', 'deploy', name, '--project-ref', projectRef],
+      ['--yes', 'supabase@latest', 'functions', 'deploy', name, '--project-ref', projectRef, '--use-api'],
       {
         cwd: root,
         env: { ...process.env, SUPABASE_ACCESS_TOKEN: token },
