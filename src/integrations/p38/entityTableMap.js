@@ -33,6 +33,7 @@ export const ENTITY_TO_TABLE = {
   MovimentosCaixa: { table: 'movimentos_caixa', mode: 'columns' },
   TargetFlare: { table: 'target_flare', mode: 'columns' },
   CatalogoInterface: { table: 'catalogo_interface', mode: 'columns' },
+  PagamentoCartaoDetalhe: { table: 'pagamento_cartao_detalhe', mode: 'jsonb' },
 
   // Alias para código antigo: `base44.entities.Categoria` → categoria_produto.
   Categoria: { table: 'categoria_produto', mode: 'columns' },

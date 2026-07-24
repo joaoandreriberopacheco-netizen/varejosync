@@ -62,3 +62,27 @@ export function jsonResponse(data: unknown, status = 200): Response {
 export function badRequest(message: string): Response {
   return jsonResponse({ error: message }, 400);
 }
+
+/** Exige utilizador autenticado com role admin (usuario.dados.role). */
+export async function requireAdmin(req: Request): Promise<AuthContext | Response> {
+  const auth = await requireUser(req);
+  if (auth instanceof Response) return auth;
+  const { user, client } = auth;
+
+  const { data, error } = await client
+    .from('usuario')
+    .select('dados')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    return jsonResponse({ error: error.message }, 500);
+  }
+
+  const role = String((data as { dados?: Record<string, unknown> } | null)?.dados?.role || '');
+  if (role !== 'admin') {
+    return jsonResponse({ error: 'Acesso restrito a administradores.' }, 403);
+  }
+
+  return auth;
+}

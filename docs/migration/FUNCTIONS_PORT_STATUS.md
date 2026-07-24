@@ -40,11 +40,11 @@ supabase/functions/<nome-kebab>/index.ts      → thin wrapper: JWT → client.r
 | cancelarLancamentoFinanceiro | RPC + Edge | ✅ | migration 019 + Edge wrapper |
 | processarVendaCaixa | RPC + Edge | ✅ | migration 022 + sequence PV + Edge wrapper |
 | enviarFinanceiroLote | RPC + Edge | ✅ | migration 021 (RPC por pedido) + Edge wrapper |
-| gerarLancamentosCartao | Cron | ⏳ | pg_cron diário 05:00 (2 instâncias duplicadas no painel) — migration 021 |
-| gerarContasPrevistasRecorrentes | Cron | ⏳ | pg_cron `0 6 1 * *` — migration 021 |
-| sincronizarContaPrevia | Trigger | ⏳ | trigger AFTER UPDATE on conta_prevista — migration 021 |
-| sincronizarExclusaoContaRecorrente | Trigger | ⏳ | trigger AFTER DELETE on conta_recorrente — migration 021 |
-| corrigirMovimentosRecepcaoRetroativos | RPC + Edge | ⏳ | migração corretiva one-shot — migration 021 |
+| gerarLancamentosCartao | Cron | ✅ | migration 023 (job_gerar_lancamentos_cartao) |
+| gerarContasPrevistasRecorrentes | Cron | ✅ | migration 023 (job_gerar_contas_previstas_recorrentes) |
+| sincronizarContaPrevia | Trigger | ✅ | migration 023 (trg_conta_prevista_pago) |
+| sincronizarExclusaoContaRecorrente | Trigger | ✅ | migration 023 (trg_conta_recorrente_delete_cascade) |
+| corrigirMovimentosRecepcaoRetroativos | RPC + Edge | ✅ | migration 023 + Edge corrigir-movimentos-recepcao-retroativos |
 
 ## Onda 2 — Anexos, importações, relatórios
 
@@ -138,10 +138,10 @@ supabase/functions/<nome-kebab>/index.ts      → thin wrapper: JWT → client.r
 | atualizarStatusLancamentos | scheduled diário 11:00 | pg_cron job-status-lancamentos | ✅ ⚠️ |
 | processarLiquidacaoCartaoCredito | scheduled | pg_cron job-liquidar-cartao | ✅ |
 | atualizarViagensTransportadoras | scheduled mensal 1º 00:10 | pg_cron | ⏳ |
-| gerarContasPrevistasRecorrentes | cron `0 6 1 * *` | pg_cron | ⏳ |
-| gerarLancamentosCartao | scheduled diário 05:00 (×2 duplicado) | pg_cron | ⏳ |
-| sincronizarContaPrevia | entity (ContaPrevista update) | trigger | ⏳ |
-| sincronizarExclusaoContaRecorrente | entity (ContaRecorrente delete) | trigger | ⏳ |
+| gerarContasPrevistasRecorrentes | cron `0 6 1 * *` | pg_cron job-gerar-contas-previstas | ✅ |
+| gerarLancamentosCartao | scheduled diário 05:00 (×2 duplicado) | pg_cron job-gerar-lancamentos-cartao | ✅ |
+| sincronizarContaPrevia | entity (ContaPrevista update) | trigger trg_conta_prevista_pago | ✅ |
+| sincronizarExclusaoContaRecorrente | entity (ContaRecorrente delete) | trigger trg_conta_recorrente_delete_cascade | ✅ |
 | atualizarTotaisSupermanifesto | entity (Manifesto/Supermanifesto) | trigger | ⏳ |
 | automacaoAprovacaoFinanceira | entity (PedidoCompra update) | trigger | ⏳ |
 | exportFlareToGithub | entity (TargetFlare) | Edge | ⏳ |
@@ -159,4 +159,5 @@ supabase/functions/<nome-kebab>/index.ts      → thin wrapper: JWT → client.r
 
 - **Turno 1**: infra `_shared/auth.ts` + migration 019 + auditar/cancelar + doc.
 - **Turno 2 (este)**: migrations 020–022 + Edge `processar-venda-caixa` + `enviar-financeiro-lote` + mapeamento no `supabaseAdapter`.
-- **Próximo**: migration 023 — gerarLancamentosCartao, gerarContasPrevistasRecorrentes (crons), sincronizarContaPrevia, sincronizarExclusaoContaRecorrente, corrigirMovimentosRecepcaoRetroativos.
+- **Turno 3**: migration 023 — gerarLancamentosCartao, gerarContasPrevistasRecorrentes (crons), sincronizarContaPrevia, sincronizarExclusaoContaRecorrente, corrigirMovimentosRecepcaoRetroativos.
+- **Próximo**: Onda 2 — anexos (Storage), importações e relatórios.

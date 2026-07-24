@@ -284,6 +284,7 @@ const EDGE_FUNCTION_ALIASES = {
   cancelarLancamentoFinanceiro: 'cancelar-lancamento-financeiro',
   auditarSaldosContas: 'auditar-saldos-contas',
   enviarFinanceiroLote: 'enviar-financeiro-lote',
+  corrigirMovimentosRecepcaoRetroativos: 'corrigir-movimentos-recepcao-retroativos',
 };
 
 function toSupabaseEdgeFunctionName(name) {
