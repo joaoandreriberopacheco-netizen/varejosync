@@ -97,3 +97,4 @@ Para o agente consultar **dados reais** (lançamentos, auditoria de fluxo, flare
 
 - `npm run flare:api` — local Flare helper (needs Base44 creds).
 - `supabase start` — only for migration/parity work, not required for default Base44-backed dev.
+- **Supabase deploy (migrações + Edge Functions):** `npm run supabase:deploy` — requires `DATABASE_URL` + `SUPABASE_ACCESS_TOKEN` in Cloud Agent secrets. See `docs/migration/SUPABASE_DEPLOY_TRIGGER.md`. GitHub Actions workflow: **Supabase Deploy** (auto on push to `main` when `supabase/**` changes).
