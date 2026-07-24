@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
+import { getSupabaseBrowserClient, waitForSupabaseSession } from '@/lib/supabaseBrowserClient';
+import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -12,7 +14,7 @@ import { Input } from '@/components/ui/input';
 export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { checkAppState } = useAuth();
+  const { checkAppState, isAuthenticated, isLoadingAuth } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,12 +26,25 @@ export default function LoginPage() {
     return raw;
   };
 
+  useEffect(() => {
+    if (!isLoadingAuth && isAuthenticated) {
+      navigate(safeReturnPath(), { replace: true });
+    }
+  }, [isAuthenticated, isLoadingAuth, navigate, searchParams]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSubmitting(true);
     try {
       await base44.auth.login({ email: email.trim(), password });
+      if (isSupabaseAuthEnabled()) {
+        const supabase = getSupabaseBrowserClient();
+        const session = await waitForSupabaseSession(supabase);
+        if (!session) {
+          throw new Error('Sessão não ficou disponível após o login. Tente novamente.');
+        }
+      }
       await checkAppState();
       navigate(safeReturnPath(), { replace: true });
     } catch (err) {

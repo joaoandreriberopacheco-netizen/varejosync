@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { base44, p38 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
+import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
 
 const AuthContext = React.createContext();
 
@@ -104,20 +105,26 @@ export const AuthProvider = ({ children }) => {
 
   const checkUserAuth = async () => {
     try {
-      // Now check if the user is authenticated
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
+      const currentUser = await p38.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
+      setAuthError(null);
       setIsLoadingAuth(false);
     } catch (error) {
       console.error('User auth check failed:', error);
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
-      
-      // If user auth fails, it might be an expired token
+
+      const needsSupabaseSession =
+        isSupabaseAuthEnabled() &&
+        (p38?.providerName === p38?.providers?.SUPABASE || p38?.bypassBase44);
+
+      if (!needsSupabaseSession) {
+        return;
+      }
+
       if (error.status === 401 || error.status === 403) {
-        // Visitante na página de login: não marcar erro global (evita redirect / overlay em loop).
         if (typeof window !== 'undefined' && window.location.pathname === '/login') {
           return;
         }

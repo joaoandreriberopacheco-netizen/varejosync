@@ -60,6 +60,7 @@ jobs:
       - name: Validar secrets obrigatórios
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_BASE44_APP_ID: ${{ secrets.VITE_BASE44_APP_ID }}
           BASE44_ACCESS_TOKEN: ${{ secrets.BASE44_ACCESS_TOKEN }}
           BASE44_API_KEY: ${{ secrets.BASE44_API_KEY }}
@@ -67,6 +68,7 @@ jobs:
           set -e
           ok=1
           if [ -z "${DATABASE_URL:-}" ]; then echo "::error::Secret DATABASE_URL vazio ou não definido. Copia a URI do Transaction pooler em Supabase → Database."; ok=0; fi
+          if [ -z "${VITE_SUPABASE_URL:-}" ]; then echo "::error::Secret VITE_SUPABASE_URL vazio — deve ser o mesmo projecto que DATABASE_URL."; ok=0; fi
           if [ -z "${VITE_BASE44_APP_ID:-}" ]; then echo "::error::Secret VITE_BASE44_APP_ID vazio ou não definido."; ok=0; fi
           if [ -z "${BASE44_API_KEY:-}" ] && [ -z "${BASE44_ACCESS_TOKEN:-}" ]; then
             echo "::error::Define BASE44_API_KEY ou BASE44_ACCESS_TOKEN (pelo menos um)."
@@ -74,6 +76,13 @@ jobs:
           fi
           if [ "$ok" != 1 ]; then exit 1; fi
           echo "OK: secrets obrigatórios presentes (valores não listados)."
+
+      - name: Alinhar DATABASE_URL com VITE_SUPABASE_URL
+        if: ${{ github.event_name == 'push' || !inputs.dry_run }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        run: node scripts/verify-supabase-project-alignment.mjs
 
       # Só quando não é dry-run (`!inputs.dry_run` é o padrão GitHub para boolean no dispatch).
       - name: Aplicar migrações SQL (schema Supabase)
@@ -85,6 +94,7 @@ jobs:
       - name: Run migration
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           BASE44_ACCESS_TOKEN: ${{ secrets.BASE44_ACCESS_TOKEN }}
           BASE44_API_KEY: ${{ secrets.BASE44_API_KEY }}
           VITE_BASE44_APP_ID: ${{ secrets.VITE_BASE44_APP_ID }}
@@ -100,4 +110,5 @@ jobs:
             npm run migrate:base44-to-supabase -- --dry-run
           else
             npm run migrate:base44-to-supabase
+            node scripts/verify-supabase-project-alignment.mjs --require-data
           fi
