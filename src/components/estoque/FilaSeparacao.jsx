@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, P38TableShell } from '@/components/ui/table';
 import { Package, CheckCircle, Clock, Play, X, Camera, Barcode } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
+import { P38MobileLineList, P38MobileLine, P38StatusLabel, p38StatusTone, p38AccentKeyFromTone } from '@/components/ui/p38-mobile-line';
 
 export default function FilaSeparacao() {
   const [ordens, setOrdens] = useState([]);
@@ -186,6 +187,38 @@ export default function FilaSeparacao() {
 
   const itemAtual = ordemSelecionada?.itens?.[itemAtualIndex];
   const progresso = ordemSelecionada ? `Item ${itemAtualIndex + 1}/${ordemSelecionada.itens.length}` : '';
+
+  const renderOrdemTrailing = (ordem) => {
+    if (ordem.status === 'Pendente') {
+      return (
+        <Button
+          size="sm"
+          onClick={() => handleIniciarSeparacao(ordem)}
+          variant="outline"
+          className="bg-card border-border/40 text-foreground/90 hover:bg-muted/40 font-medium rounded-lg shadow-sm shrink-0"
+        >
+          Iniciar
+        </Button>
+      );
+    }
+    if (ordem.status === 'Em Separação' && ordem.estoquista_id === currentUser?.id) {
+      return (
+        <Button
+          size="sm"
+          onClick={() => {
+            setOrdemSelecionada(ordem);
+            setItemAtualIndex(0);
+            setIsDialogOpen(true);
+          }}
+          variant="outline"
+          className="border-border/40 text-foreground/90 hover:bg-muted/40 font-medium rounded-lg shrink-0"
+        >
+          Continuar
+        </Button>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-4">

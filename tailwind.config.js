@@ -15,7 +15,10 @@ module.exports = {
   	},
   	extend: {
   		fontFamily: {
-  			sans: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
+  			sans: ['Roboto', 'system-ui', 'sans-serif'],
+  			heading: ['"Bebas Neue"', 'Roboto', 'sans-serif'],
+  			body: ['Roboto', 'system-ui', 'sans-serif'],
+  			display: ['"Bebas Neue"', 'Roboto', 'sans-serif'],
   			'din-1451': ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
   			din1451: ['"DIN 1451"', 'DINish', 'Barlow Condensed', 'system-ui', 'sans-serif'],
   		},

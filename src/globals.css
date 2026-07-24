@@ -8,7 +8,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap');
 
 .font-glacial {
-  font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+  font-family: 'Bebas Neue', 'Roboto', sans-serif;
 }
 
 /* DIN 1451 (DINish OFL) — relatório de margem e PDF */
@@ -94,9 +94,13 @@ nav,
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Fonte padrão do sistema */
+/* Fonte padrão do sistema — corpo em Roboto */
 * {
-  font-family: 'DIN 1451', 'DINish', 'Barlow Condensed', system-ui, sans-serif;
+  font-family: 'Roboto', system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Bebas Neue', 'Roboto', sans-serif;
 }
 
 :root {
