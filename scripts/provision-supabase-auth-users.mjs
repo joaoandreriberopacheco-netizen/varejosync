@@ -7,7 +7,7 @@
  * Uso:
  *   VITE_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... DATABASE_URL=... npm run usuario:provision-auth
  *   npm run usuario:provision-auth -- --dry-run
- *   npm run usuario:provision-auth -- --create   (createUser confirmado, sem email de convite)
+ *   npm run usuario:provision-auth -- --resend-invite   (reenvia convite se ainda não confirmou email)
  *
  * Por defeito envia convite por email (`inviteUserByEmail`) para cada utilizador sem conta auth.
  */
@@ -23,6 +23,7 @@ function parseArgs(argv) {
   return {
     dryRun: argv.includes('--dry-run'),
     createMode: argv.includes('--create'),
+    resendInvite: argv.includes('--resend-invite'),
   };
 }
 
@@ -134,7 +135,7 @@ function buildMetadata(row) {
 }
 
 async function main() {
-  const { dryRun, createMode } = parseArgs(process.argv.slice(2));
+  const { dryRun, createMode, resendInvite } = parseArgs(process.argv.slice(2));
   const supabaseUrl = resolveSupabaseUrl();
   const serviceKey = resolveServiceRoleKey();
   const { databaseUrl } = resolveSupabaseDeployEnv();
@@ -183,13 +184,44 @@ async function main() {
       }
 
       if (existing) {
+        const confirmed = Boolean(existing.email_confirmed_at);
+        if (resendInvite && !confirmed && !createMode) {
+          if (dryRun) {
+            resultados.push({ email: row.email, acao: 'reenviaria convite' });
+            continue;
+          }
+          const { error } = await supabase.auth.admin.generateLink({
+            type: 'invite',
+            email: row.email,
+            options: { data: meta },
+          });
+          if (error) {
+            resultados.push({ email: row.email, status: 'erro', erro: error.message });
+          } else {
+            resultados.push({ email: row.email, status: 'convite_reenviado' });
+          }
+          continue;
+        }
+
+        if (dryRun) {
+          resultados.push({
+            email: row.email,
+            acao: confirmed ? 'atualizaria metadata' : 'já existe (use --resend-invite)',
+          });
+          continue;
+        }
+
         const { error } = await supabase.auth.admin.updateUserById(existing.id, {
           user_metadata: { ...(existing.user_metadata || {}), ...meta },
         });
         if (error) {
           resultados.push({ email: row.email, status: 'erro', erro: error.message });
         } else {
-          resultados.push({ email: row.email, status: 'metadata_atualizada', auth_id: existing.id });
+          resultados.push({
+            email: row.email,
+            status: confirmed ? 'metadata_atualizada' : 'ja_existia_sem_reenvio',
+            auth_id: existing.id,
+          });
         }
         continue;
       }

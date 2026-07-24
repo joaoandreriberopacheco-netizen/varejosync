@@ -36,11 +36,16 @@ on:
         description: 'Re-sincronizar utilizadores (Usuario + auth) em vez da migração completa'
         type: boolean
         default: false
+      provision_auth_only:
+        description: 'Só enviar convites Supabase Auth (public.usuario → auth.users)'
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
       - '.github/trigger-migrate-base44-supabase'
       - '.github/trigger-resync-usuarios'
+      - '.github/trigger-provision-auth'
 
 jobs:
   migrate:
@@ -85,7 +90,9 @@ jobs:
       - name: Resolver modo de execução
         id: mode
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.resync_usuarios }}" = "true" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.provision_auth_only }}" = "true" ]; then
+            echo "kind=provision_auth" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.resync_usuarios }}" = "true" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "kind=resync_dry_run" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.resync_usuarios }}" = "true" ]; then
             echo "kind=resync_usuarios" >> "$GITHUB_OUTPUT"
@@ -93,7 +100,9 @@ jobs:
             echo "kind=dry_run" >> "$GITHUB_OUTPUT"
           elif [ "${{ github.event_name }}" = "push" ]; then
             files=$(git show --name-only --pretty=format: "${{ github.sha }}" || true)
-            if echo "$files" | grep -q 'trigger-resync-usuarios'; then
+            if echo "$files" | grep -q 'trigger-provision-auth'; then
+              echo "kind=provision_auth" >> "$GITHUB_OUTPUT"
+            elif echo "$files" | grep -q 'trigger-resync-usuarios'; then
               echo "kind=resync_usuarios" >> "$GITHUB_OUTPUT"
             else
               echo "kind=full" >> "$GITHUB_OUTPUT"
@@ -103,7 +112,7 @@ jobs:
           fi
 
       - name: Alinhar DATABASE_URL com VITE_SUPABASE_URL
-        if: ${{ steps.mode.outputs.kind != 'dry_run' && steps.mode.outputs.kind != 'resync_dry_run' }}
+        if: ${{ steps.mode.outputs.kind != 'dry_run' && steps.mode.outputs.kind != 'resync_dry_run' && steps.mode.outputs.kind != 'provision_auth' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -133,13 +142,20 @@ jobs:
         run: |
           set -e
           case "${{ steps.mode.outputs.kind }}" in
+            provision_auth)
+              if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+                echo "::error::SUPABASE_SERVICE_ROLE_KEY em falta — necessário para convites Auth."
+                exit 1
+              fi
+              npm run usuario:provision-auth -- --resend-invite
+              ;;
             resync_dry_run)
               npm run usuario:resync -- --dry-run
               ;;
             resync_usuarios)
               npm run usuario:resync
               if [ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
-                npm run usuario:provision-auth
+                npm run usuario:provision-auth -- --resend-invite
               else
                 echo "::warning::SUPABASE_SERVICE_ROLE_KEY ausente — auth.users não provisionado."
               fi

@@ -1,0 +1,3 @@
+# Bump para enviar convites Supabase Auth aos utilizadores em public.usuario.
+# Requer SUPABASE_SERVICE_ROLE_KEY nos GitHub Secrets.
+triggered-at=2026-07-24T22:42:00Z
