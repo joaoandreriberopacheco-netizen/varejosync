@@ -145,6 +145,13 @@ function withSafeFallback(sectionName, candidateSection, fallbackSection) {
   });
 }
 
+// Com provider=supabase, auth deve vir sempre do cliente Supabase (ou bypass local),
+// nunca do stub Base44 — caso contrário auth.me() dispara "Base44 indisponível".
+const p38Auth =
+  providerName === providers.SUPABASE
+    ? linkedLegacyClient.auth
+    : withSafeFallback('auth', activeAdapter.auth, base44Adapter?.auth || activeLegacyClient?.auth);
+
 export const p38 = {
   providerName: activeAdapter.name,
   providers,
@@ -165,7 +172,7 @@ export const p38 = {
   createRequestContext,
   // Mantemos acesso ao client legado durante a fase de compatibilidade.
   legacyClient: activeLegacyClient,
-  auth: withSafeFallback('auth', activeAdapter.auth, base44Adapter?.auth || activeLegacyClient?.auth),
+  auth: p38Auth,
   entities: withSafeFallback('entities', activeAdapter.entities, base44Adapter?.entities || activeLegacyClient?.entities),
   functions: withSafeFallback('functions', activeAdapter.functions, base44Adapter?.functions || activeLegacyClient?.functions),
   integrations: withSafeFallback(

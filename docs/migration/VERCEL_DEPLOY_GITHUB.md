@@ -17,15 +17,13 @@ Opcional: `VITE_P38_USE_SUPABASE_AUTH` = `true` quando login Supabase estiver ac
 
 ## Disparar
 
-- **Automático:** push na `main` (ficheiros da app)
+- **Automático:** qualquer push na `main` (workflow corre sempre)
 - **Manual:** Actions → **Vercel Deploy** → Run workflow
 
-## O que o build embute
+## Porque não usar só o deploy Git da Vercel
 
-- `VITE_P38_PROVIDER=supabase`
-- `VITE_P38_BYPASS_BASE44=true`
-- URL e anon key do Supabase (dos secrets)
+O `vercel.json` desactiva deploys automáticos do Git (`git.deploymentEnabled: false`) e inclui `ignoreCommand` como rede de segurança. O deploy canónico é **só** via GitHub Actions, que embute URL e anon key no bundle.
 
-## Nota
+Se um build nativo Vercel correr sem env vars, o Vite **falha** em produção (plugin `p38-require-supabase-env`) em vez de publicar um bundle quebrado.
 
-Se o projecto Vercel já tiver integração Git ligada ao mesmo repo, pode haver dois deploys por push. Preferir **um** método: ou só este workflow, ou só a integração nativa (com env vars no painel Vercel).
+Se precisares de build nativo Vercel (raro): mensagem de commit com `[vercel-native-build]` e env vars definidas no painel Vercel → Settings → Environment Variables.
