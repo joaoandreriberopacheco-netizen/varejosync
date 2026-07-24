@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Deploy completo Supabase: migrações SQL pendentes + Edge Functions.
+ * Disparo CI: alterações em scripts/deploy-supabase*.mjs ou supabase/**.
  *
  * Secrets (Cloud Agent / .env.local / GitHub Actions):
  *   DATABASE_URL            — Postgres connection string
