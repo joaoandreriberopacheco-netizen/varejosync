@@ -340,11 +340,12 @@ export default function SugestaoCompra({ onStatsChange }) {
     };
 
     fetchPedidosCompraParaSugestaoEstoque(base44)
-      .then(({ pedidosTodos, recebidosPorPedidoProduto }) => {
+      .then(({ pedidosTodos, pedidosAbertos, embarques, recebidosPorPedidoProduto }) => {
         const pedidosCompra = pedidosTodos;
         const pendingMap = buildPendenteAprovadoFinanceiroPorProduto(
-          pedidosCompra,
+          pedidosAbertos,
           recebidosPorPedidoProduto,
+          { embarques, pedidosParaEmbarque: pedidosTodos },
         );
         const ultimoFornecedorPorProduto = buildUltimoFornecedorPorProduto(pedidosCompra);
         calcContextRef.current = {
