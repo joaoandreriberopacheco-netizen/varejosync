@@ -152,7 +152,7 @@ jobs:
                 ONLY=$(grep '^only=' .github/trigger-provision-auth | head -1 | cut -d= -f2- | tr -d ' ' || true)
               fi
               if [ -n "$ONLY" ]; then
-                npm run usuario:provision-auth -- --resend-invite --only="$ONLY"
+                npm run usuario:provision-auth -- --resend-invite --only="$ONLY" --create
               else
                 npm run usuario:provision-auth -- --resend-invite
               fi

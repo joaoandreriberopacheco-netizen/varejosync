@@ -254,10 +254,26 @@ async function main() {
           resultados.push({ email: row.email, status: 'criado', auth_id: data.user?.id });
         }
       } else {
-        const { data, error } = await supabase.auth.admin.inviteUserByEmail(row.email, {
+        let { data, error } = await supabase.auth.admin.inviteUserByEmail(row.email, {
           data: meta,
         });
-        if (error) {
+        if (error && /rate limit/i.test(error.message)) {
+          console.warn(`[usuario:provision-auth] rate limit em ${row.email} — a criar conta sem email (usar "Esqueci a senha").`);
+          ({ data, error } = await supabase.auth.admin.createUser({
+            email: row.email,
+            email_confirm: true,
+            user_metadata: meta,
+          }));
+          if (error) {
+            resultados.push({ email: row.email, status: 'erro', erro: error.message });
+          } else {
+            resultados.push({
+              email: row.email,
+              status: 'criado_use_esqueci_senha',
+              auth_id: data.user?.id,
+            });
+          }
+        } else if (error) {
           resultados.push({ email: row.email, status: 'erro', erro: error.message });
         } else {
           resultados.push({ email: row.email, status: 'convidado', auth_id: data.user?.id });
