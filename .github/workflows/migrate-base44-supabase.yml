@@ -40,6 +40,7 @@ on:
     branches: [main]
     paths:
       - '.github/trigger-migrate-base44-supabase'
+      - '.github/trigger-resync-usuarios'
 
 jobs:
   migrate:
@@ -81,8 +82,28 @@ jobs:
           if [ "$ok" != 1 ]; then exit 1; fi
           echo "OK: secrets obrigatórios presentes (valores não listados)."
 
+      - name: Resolver modo de execução
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.resync_usuarios }}" = "true" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "kind=resync_dry_run" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.resync_usuarios }}" = "true" ]; then
+            echo "kind=resync_usuarios" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "kind=dry_run" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            files=$(git show --name-only --pretty=format: "${{ github.sha }}" || true)
+            if echo "$files" | grep -q 'trigger-resync-usuarios'; then
+              echo "kind=resync_usuarios" >> "$GITHUB_OUTPUT"
+            else
+              echo "kind=full" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "kind=full" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Alinhar DATABASE_URL com VITE_SUPABASE_URL
-        if: ${{ github.event_name == 'push' || !inputs.dry_run }}
+        if: ${{ steps.mode.outputs.kind != 'dry_run' && steps.mode.outputs.kind != 'resync_dry_run' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -90,7 +111,7 @@ jobs:
 
       # Só quando não é dry-run (`!inputs.dry_run` é o padrão GitHub para boolean no dispatch).
       - name: Aplicar migrações SQL (schema Supabase)
-        if: ${{ github.event_name == 'push' || !inputs.dry_run }}
+        if: ${{ steps.mode.outputs.kind == 'full' }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npm run db:apply-migrations
@@ -111,20 +132,23 @@ jobs:
           MIGRATE_ROWS_PER_COMMIT: ${{ secrets.MIGRATE_ROWS_PER_COMMIT }}
         run: |
           set -e
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
-            if [ "${{ inputs.resync_usuarios }}" = "true" ]; then
+          case "${{ steps.mode.outputs.kind }}" in
+            resync_dry_run)
               npm run usuario:resync -- --dry-run
-            else
+              ;;
+            resync_usuarios)
+              npm run usuario:resync
+              if [ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+                npm run usuario:provision-auth
+              else
+                echo "::warning::SUPABASE_SERVICE_ROLE_KEY ausente — auth.users não provisionado."
+              fi
+              ;;
+            dry_run)
               npm run migrate:base44-to-supabase -- --dry-run
-            fi
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.resync_usuarios }}" = "true" ]; then
-            npm run usuario:resync
-            if [ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
-              npm run usuario:provision-auth
-            else
-              echo "::warning::SUPABASE_SERVICE_ROLE_KEY ausente — auth.users não provisionado. Corra npm run usuario:provision-auth depois."
-            fi
-          else
-            npm run migrate:base44-to-supabase
-            node scripts/verify-supabase-project-alignment.mjs --require-data
-          fi
+              ;;
+            *)
+              npm run migrate:base44-to-supabase
+              node scripts/verify-supabase-project-alignment.mjs --require-data
+              ;;
+          esac
