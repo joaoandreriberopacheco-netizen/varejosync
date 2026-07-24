@@ -58,6 +58,19 @@ O mesmo comando / workflow **corre outra vez** quando quiseres: cada registo vin
 npm run migrate:base44-to-supabase
 ```
 
+### Utilizadores (entidade `Usuario` + login Supabase)
+
+A tabela `public.usuario` deve vir da entidade **`Usuario`** do Base44 (email, nome, perfil de acesso) — **não** da entidade `User` (metadados de auth da plataforma Base44, sem email operacional).
+
+| Comando | O que faz |
+|---------|-----------|
+| `npm run usuario:resync` | Apaga linhas erradas de plataforma, migra `Usuario` do Base44, preenche colunas `email`/`full_name` |
+| `npm run usuario:provision-auth` | Cria convites em `auth.users` (ou actualiza metadata) a partir dos emails em `public.usuario` |
+
+**GitHub Actions:** **Migrate Base44 to Supabase** → marcar **resync_usuarios: true** e **dry_run: false**. Requer `SUPABASE_SERVICE_ROLE_KEY` nos secrets para provisionar auth.
+
+Secrets adicionais para auth: `SUPABASE_SERVICE_ROLE_KEY` (Dashboard → API → service_role).
+
 ### Notas
 
 - Este fluxo **não** mete `SUPABASE_SERVICE_KEY` no GitHub: a escrita é **direta no Postgres**, não pela API REST do Supabase.

@@ -32,6 +32,10 @@ on:
         description: 'Apenas contar linhas (não escreve no Postgres)'
         type: boolean
         default: true
+      resync_usuarios:
+        description: 'Re-sincronizar utilizadores (Usuario + auth) em vez da migração completa'
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
@@ -95,6 +99,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           BASE44_ACCESS_TOKEN: ${{ secrets.BASE44_ACCESS_TOKEN }}
           BASE44_API_KEY: ${{ secrets.BASE44_API_KEY }}
           VITE_BASE44_APP_ID: ${{ secrets.VITE_BASE44_APP_ID }}
@@ -107,7 +112,18 @@ jobs:
         run: |
           set -e
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
-            npm run migrate:base44-to-supabase -- --dry-run
+            if [ "${{ inputs.resync_usuarios }}" = "true" ]; then
+              npm run usuario:resync -- --dry-run
+            else
+              npm run migrate:base44-to-supabase -- --dry-run
+            fi
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.resync_usuarios }}" = "true" ]; then
+            npm run usuario:resync
+            if [ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+              npm run usuario:provision-auth
+            else
+              echo "::warning::SUPABASE_SERVICE_ROLE_KEY ausente — auth.users não provisionado. Corra npm run usuario:provision-auth depois."
+            fi
           else
             npm run migrate:base44-to-supabase
             node scripts/verify-supabase-project-alignment.mjs --require-data
