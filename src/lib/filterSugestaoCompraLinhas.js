@@ -13,6 +13,7 @@ import {
   sugestaoPrecisaReposicao,
   sugestaoTemGiroVelocidade,
 } from '@/lib/calcularSugestaoCompraVelocidade';
+import { linhaExigeAcaoCompra } from '@/lib/sugestaoCompraOperationalMode';
 
 export const SUGESTAO_STATUS_ESTOQUE_OPTIONS = [
   { value: 'all', label: 'Todos' },
@@ -99,10 +100,7 @@ function linhaPontoPedido(linha) {
 }
 
 export function linhaAbaixoPontoFuturo(linha) {
-  if (sugestaoPrecisaReposicao(linha?.sugestao)) return true;
-  const ponto = linhaPontoPedido(linha);
-  if (ponto <= 0) return false;
-  return linhaEstoqueAtual(linha) < ponto;
+  return linhaExigeAcaoCompra(linha);
 }
 
 export function linhaTemGiroVelocidade(linha) {

@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SUGESTAO_COMPRA_SORT_COLUMNS } from '@/lib/sugestaoCompraColumnSort';
+import { SUGESTAO_OPERATIONAL_MODES } from '@/lib/sugestaoCompraOperationalMode';
 import { cn } from '@/components/utils';
 
 const CHIP_ACTIVE =
@@ -21,6 +22,8 @@ export default function SugestaoCompraQuickChips({
   onToggleSomenteAbaixo,
   considerarPedidosAprovadosEstoque,
   onToggleConsiderarPedidos,
+  operationalMode = 'livre',
+  onOperationalModeChange,
   columnSort,
   onSortColumn,
   onOpenRelatorio,
@@ -46,7 +49,37 @@ export default function SugestaoCompraQuickChips({
         onClick={onToggleSomenteAbaixo}
         className={cn(chipClass, somenteAbaixoPontoFuturo ? CHIP_ACTIVE : CHIP_IDLE)}
       >
-        Com sugestão
+        Com ação
+      </button>
+      <button
+        type="button"
+        onClick={() => onOperationalModeChange?.(
+          operationalMode === SUGESTAO_OPERATIONAL_MODES.radar
+            ? SUGESTAO_OPERATIONAL_MODES.livre
+            : SUGESTAO_OPERATIONAL_MODES.radar,
+        )}
+        className={cn(
+          chipClass,
+          operationalMode === SUGESTAO_OPERATIONAL_MODES.radar ? CHIP_ACTIVE : CHIP_IDLE,
+        )}
+        title="Macro: hierarquia nível 2 recolhida, scan P.FUT negativo"
+      >
+        Radar
+      </button>
+      <button
+        type="button"
+        onClick={() => onOperationalModeChange?.(
+          operationalMode === SUGESTAO_OPERATIONAL_MODES.bisturi
+            ? SUGESTAO_OPERATIONAL_MODES.livre
+            : SUGESTAO_OPERATIONAL_MODES.bisturi,
+        )}
+        className={cn(
+          chipClass,
+          operationalMode === SUGESTAO_OPERATIONAL_MODES.bisturi ? CHIP_ACTIVE : CHIP_IDLE,
+        )}
+        title="Micro: expandir categorias sinalizadas e caçar P.FUT por SKU"
+      >
+        Bisturi
       </button>
       <button
         type="button"
