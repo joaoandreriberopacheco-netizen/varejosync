@@ -3,7 +3,8 @@ import { flushSync } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { getCachedUserSession, setCachedUserSession } from '@/lib/userSessionCache';
 
-import { base44 } from '@/api/base44Client';
+import { base44, p38 } from '@/api/base44Client';
+import { isSupabaseAuthEnabled } from '@/integrations/p38/providers';
 import FontScaleInitializer from '@/components/accessibility/FontScaleInitializer';
 import { buildMenuItems } from '@/components/config/usePermissoesResolvidas';
 import { WifiOff } from 'lucide-react';
@@ -100,7 +101,7 @@ export default function Layout({ children, currentPageName }) {
 
   const loadUser = async () => {
     try {
-      const user = await base44.auth.me();
+      const user = await p38.auth.me();
       if (user) {
         let perfil = null;
         if (user.perfil_acesso_id) {
@@ -117,6 +118,14 @@ export default function Layout({ children, currentPageName }) {
       }
     } catch (error) {
       console.error('Erro ao carregar usuário:', error);
+      const msg = String(error?.message || '');
+      if (
+        isSupabaseAuthEnabled() &&
+        (error?.status === 401 || error?.status === 403 || /sess[aã]o supabase/i.test(msg))
+      ) {
+        window.location.href = '/login';
+        return;
+      }
       const cached = getCachedUserSession();
       if (cached?.user) {
         setCurrentUser(cached.user);
@@ -270,14 +279,21 @@ export default function Layout({ children, currentPageName }) {
   }
 
   if (loadError) {
+    const errMsg = String(loadError?.message || '');
+    const isConfigError =
+      /base44 indispon|supabase não configurado|VITE_SUPABASE|P38_SUPABASE_NOT_CONFIGURED/i.test(errMsg);
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 font-din-1451 p38-app">
         <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-full mb-4">
           <WifiOff className="w-8 h-8 text-red-500 dark:text-red-400" />
         </div>
-        <h2 className="text-lg font-semibold text-foreground mb-2">Erro de Conexão</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-2">
+          {isConfigError ? 'Configuração em falta' : 'Erro de Conexão'}
+        </h2>
         <p className="text-muted-foreground text-center mb-6 max-w-md">
-          Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.
+          {isConfigError
+            ? 'O servidor não está configurado para ligar ao Supabase. Verifique as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no deploy.'
+            : 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'}
         </p>
         <Button onClick={() => window.location.reload()}>
           Tentar Novamente
