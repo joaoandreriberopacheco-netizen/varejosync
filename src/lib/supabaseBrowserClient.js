@@ -43,7 +43,9 @@ export function getSupabaseBrowserClient() {
   cached = createClient(url, anonKey, {
     auth: {
       persistSession: true,
-      autoRefreshToken: true
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
     }
   });
   return cached;

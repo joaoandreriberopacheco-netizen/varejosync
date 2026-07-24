@@ -128,6 +128,10 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
+      if (typeof window !== 'undefined' && window.location.pathname === '/auth/callback') {
+        return;
+      }
+
       setAuthError({
         type: 'auth_required',
         message: 'Authentication required'

@@ -15,6 +15,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ModoFlareProvider from '@/features/modo-flare/ModoFlareProvider';
 import CatalogOverlay from '@/features/catalog-overlay/CatalogOverlay';
 import LoginPage from '@/components/auth/LoginPage';
+import AuthCallbackPage from '@/components/auth/AuthCallbackPage';
 import GlobalQuickAccessLaunchers from '@/components/global/GlobalQuickAccessLaunchers';
 import { PageLoadFallback, ChunkErrorBoundary } from '@/lib/lazyPage';
 
@@ -41,7 +42,11 @@ const AuthenticatedApp = () => {
     return <UserNotRegisteredError />;
   }
 
-  if (authError?.type === 'auth_required' && location.pathname !== '/login') {
+  if (
+    authError?.type === 'auth_required' &&
+    location.pathname !== '/login' &&
+    location.pathname !== '/auth/callback'
+  ) {
     const returnPath = `${location.pathname}${location.search}`;
     const loginTo =
       returnPath && returnPath !== '/'
@@ -56,6 +61,7 @@ const AuthenticatedApp = () => {
         <Suspense fallback={<PageLoadFallback />}>
           <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route
             path="/"
             element={

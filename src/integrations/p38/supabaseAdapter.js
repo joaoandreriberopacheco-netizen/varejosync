@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient, isSupabaseBrowserConfigured } from '@/lib/supabaseBrowserClient';
+import { buildSupabaseOAuthCallbackUrl } from '@/lib/supabaseAuth';
 import { createSupabaseEntityLayer } from './supabaseEntityLayer';
 import { isSupabaseAuthEnabled } from './providers';
 
@@ -224,6 +225,22 @@ function buildAuth(supabase) {
       const merged = { ...readBypassUserFromEnv(), ...readPersistedUser(), ...payload };
       persistUser(merged);
       return merged;
+    },
+    async loginWithGoogle(returnPath = '/') {
+      if (!useSupabaseAuth || !supabase) {
+        throw new Error('Login com Google indisponível: autenticação Supabase não está activa.');
+      }
+      persistUser(null);
+      const redirectTo = buildSupabaseOAuthCallbackUrl(returnPath);
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo },
+      });
+      if (error) throw error;
+      if (data?.url && typeof window !== 'undefined') {
+        window.location.href = data.url;
+      }
+      return data;
     },
     async logout(returnUrl) {
       if (useSupabaseAuth) {
