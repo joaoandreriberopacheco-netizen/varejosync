@@ -125,7 +125,7 @@ export default function SugestaoCompraLinhaMobile({
               {produto.codigo_interno}
             </p>
           ) : null}
-          {linha.quantidade_pendente > 0 ? (
+          {!incluirPedidosAprovados && linha.quantidade_pendente > 0 ? (
             <p className="mt-0.5 inline-flex items-center gap-1 text-[10px] text-muted-foreground">
               <Truck className="w-3 h-3 shrink-0" />
               {formatSugestaoQuantidadeVitrine(produto, linha.quantidade_pendente) || `${linha.quantidade_pendente}`} em trânsito

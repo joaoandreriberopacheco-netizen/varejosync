@@ -80,12 +80,13 @@ export function resolveSugestaoEstoqueEfetivoBase(produto = {}, sugestao = null,
   return { estoqueBase, fisico, pedidos };
 }
 
-/** Estoque na linha: total e, quando houver pedidos aprovados, detalhe físico + pedido. */
+/** Estoque na linha: com «Incluir pedidos» ligado, um único total (físico + pedidos). */
 export function formatSugestaoEstoqueLinha(produto = {}, sugestao = null, options = {}) {
+  const incluir = options.incluirPedidosAprovados === true;
   const { estoqueBase, fisico, pedidos } = resolveSugestaoEstoqueEfetivoBase(produto, sugestao, options);
   const primary = formatSugestaoQuantidadeVitrine(produto, estoqueBase) || '—';
 
-  if (pedidos > 0 && fisico != null) {
+  if (!incluir && pedidos > 0 && fisico != null) {
     const fisicoFmt = formatSugestaoQuantidadeVitrine(produto, fisico) || '0';
     const pedFmt = formatSugestaoQuantidadeVitrine(produto, pedidos) || '0';
     return {
