@@ -2,8 +2,8 @@
 /**
  * Re-sincroniza utilizadores operacionais P38 (entidade Base44 `Usuario`) para `public.usuario`.
  *
- * Problema que corrige: migração antiga usava `User` (auth da plataforma Base44) em vez de `Usuario`
- * (email, full_name, perfil_acesso_id). A UI UsuariosManager e o login Supabase dependem dos dados certos.
+ * Problema que corrige: migração gravava metadados de plataforma Base44 sem email operacional.
+ * A entidade correcta no Base44 é `User` (não existe `Usuario` na API).
  *
  * Uso:
  *   DATABASE_URL=... VITE_BASE44_APP_ID=... BASE44_API_KEY=... npm run usuario:resync
@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 
 import { loadDotEnvFiles } from './base44-env.mjs';
+import { fetchBase44OperationalUsers } from './fetch-base44-user-rows.mjs';
 import { resolveSupabaseDeployEnv } from './supabase-env.mjs';
 
 loadDotEnvFiles();
@@ -99,8 +100,8 @@ function runMigrate() {
       process.execPath,
       [
         path.join(root, 'scripts/migrate-base44-to-supabase.mjs'),
-        '--only=Usuario',
-        '--force-entity=Usuario',
+        '--only=User',
+        '--force-entity=User',
       ],
       { cwd: root, stdio: 'inherit', env: process.env }
     );
@@ -156,6 +157,18 @@ async function main() {
     const platformWhere = buildPlatformUserWhere(cols);
     const backfillSql = buildBackfillSql(cols);
 
+    if (!skipMigrate) {
+      if (dryRun) {
+        const fetched = await fetchBase44OperationalUsers();
+        console.log(
+          `[usuario:resync] dry-run: Base44 User auth=${fetched.mode} → ${fetched.rows.length} operacional(is), ${fetched.stats.withEmail} com email`
+        );
+      } else {
+        console.log('[usuario:resync] a migrar entidade User do Base44…');
+        await runMigrate();
+      }
+    }
+
     if (!skipCleanup) {
       if (dryRun) {
         const { rows } = await client.query(
@@ -165,15 +178,6 @@ async function main() {
       } else {
         const del = await client.query(`delete from public.usuario u where ${platformWhere}`);
         console.log(`[usuario:resync] cleanup: ${del.rowCount} linha(s) de plataforma removida(s).`);
-      }
-    }
-
-    if (!skipMigrate) {
-      if (dryRun) {
-        console.log('[usuario:resync] dry-run: correria migrate --only=Usuario --force-entity=Usuario');
-      } else {
-        console.log('[usuario:resync] a migrar entidade Usuario do Base44…');
-        await runMigrate();
       }
     }
 

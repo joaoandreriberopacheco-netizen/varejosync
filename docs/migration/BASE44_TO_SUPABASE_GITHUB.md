@@ -58,9 +58,9 @@ O mesmo comando / workflow **corre outra vez** quando quiseres: cada registo vin
 npm run migrate:base44-to-supabase
 ```
 
-### Utilizadores (entidade `Usuario` + login Supabase)
+### Utilizadores (entidade `User` + login Supabase)
 
-A tabela `public.usuario` deve vir da entidade **`Usuario`** do Base44 (email, nome, perfil de acesso) — **não** da entidade `User` (metadados de auth da plataforma Base44, sem email operacional).
+A tabela `public.usuario` deve vir da entidade **`User`** do Base44 (email, nome, perfil de acesso). Registos só com metadados de plataforma (`_app_role`, `app_id`, sem email) são ignorados na migração.
 
 | Comando | O que faz |
 |---------|-----------|

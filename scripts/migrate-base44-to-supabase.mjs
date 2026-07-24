@@ -56,6 +56,7 @@ import pg from 'pg';
 
 import { ENTITY_TO_TABLE, resolveEntityMapping } from '../src/integrations/p38/entityTableMap.js';
 import { prepareWritePayload } from '../src/integrations/p38/supabaseEntityLayer.js';
+import { fetchBase44OperationalUsers, filterOperationalUserRows } from './fetch-base44-user-rows.mjs';
 
 /** Preenche `process.env` a partir de `.env` e depois `.env.local` (ficheiros sobrepõem o shell). */
 function loadDotEnvFiles() {
@@ -220,8 +221,8 @@ const TABLE_PRIORITY = [
 ];
 
 const ENTITY_CANDIDATES_BY_TABLE = {
-  // `Usuario` = operadores P38 (email, perfil). `User` = metadados auth da plataforma Base44 — só fallback.
-  usuario: ['Usuario', 'User'],
+  // Base44 expõe `User` (operadores P38). `Usuario` é só alias local no entityTableMap.
+  usuario: ['User'],
   categoria_produto: ['CategoriaProduto', 'Categoria'],
 };
 
@@ -775,19 +776,33 @@ async function main() {
       let sourceEntity = null;
       let rawRows = [];
 
-      for (const entityName of candidates) {
-        const { rows, skipped, authError } = await listAllForEntity(base44, entityName, limit);
-        if (authError) authErrorCount += 1;
-        if (skipped) continue;
-        if (rows.length) {
-          sourceEntity = entityName;
-          rawRows = rows;
-          break;
+      if (forceEntity === 'User' || forceEntity === 'Usuario') {
+        try {
+          const fetched = await fetchBase44OperationalUsers(limit);
+          sourceEntity = 'User';
+          rawRows = fetched.rows;
+          console.log(
+            `[migrate] User (multi-auth ${fetched.mode}): ${rawRows.length} operacional(is), ${fetched.stats.withEmail} com email`
+          );
+        } catch (e) {
+          console.warn(`[migrate] fetchBase44OperationalUsers: ${e?.message || e}`);
+          rawRows = [];
+        }
+      } else {
+        for (const entityName of candidates) {
+          const { rows, skipped, authError } = await listAllForEntity(base44, entityName, limit);
+          if (authError) authErrorCount += 1;
+          if (skipped) continue;
+          if (rows.length) {
+            sourceEntity = entityName;
+            rawRows = rows;
+            break;
+          }
         }
       }
 
       if (forceEntity && !rawRows.length) {
-        console.error(`[migrate] --force-entity=${forceEntity}: nenhuma linha devolvida pelo Base44.`);
+        console.error(`[migrate] --force-entity=${forceEntity}: nenhuma linha operacional devolvida pelo Base44.`);
         process.exitCode = 1;
         return;
       }
@@ -800,7 +815,41 @@ async function main() {
       }
 
       const mapping = resolveEntityMapping(sourceEntity);
-      const prepared = rawRows.map((r) => prepareWritePayload({ ...r }, sourceEntity, mapping));
+      let operationalRows =
+        table === 'usuario' || sourceEntity === 'User' || sourceEntity === 'Usuario'
+          ? filterOperationalUserRows(rawRows)
+          : rawRows;
+      if (
+        !operationalRows.length &&
+        rawRows.length &&
+        (table === 'usuario' || sourceEntity === 'User' || sourceEntity === 'Usuario')
+      ) {
+        try {
+          const fetched = await fetchBase44OperationalUsers(limit);
+          if (fetched.rows.length) {
+            sourceEntity = 'User';
+            operationalRows = fetched.rows;
+            console.log(
+              `[migrate] fallback multi-auth ${fetched.mode}: ${operationalRows.length} operacional(is)`
+            );
+          }
+        } catch (e) {
+          console.warn(`[migrate] fallback fetchBase44OperationalUsers: ${e?.message || e}`);
+        }
+      }
+      if (operationalRows.length !== rawRows.length && operationalRows.length > 0) {
+        console.log(
+          `[migrate] ${table}: ${rawRows.length - operationalRows.length} linha(s) de plataforma ignorada(s).`
+        );
+      }
+      if (!operationalRows.length) {
+        console.log(`[migrate] ${table}: sem linhas operacionais após filtro`);
+        migratedTables.add(table);
+        if (delayMs) await sleep(delayMs);
+        continue;
+      }
+
+      const prepared = operationalRows.map((r) => prepareWritePayload({ ...r }, sourceEntity, mapping));
 
       const allowedCols = await loadTableColumns(client, table);
       if (!allowedCols.has('id')) {
