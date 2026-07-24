@@ -313,6 +313,68 @@ function getBase44Env() {
   return { appId, serverUrl, token, apiKey };
 }
 
+function buildBase44Client({ appId, serverUrl, token, apiKey, mode }) {
+  const opts = { appId, serverUrl, requiresAuth: false };
+  if (mode === 'api_key' && apiKey) {
+    return createClient({ ...opts, headers: { api_key: apiKey } });
+  }
+  if (mode === 'jwt' && token) {
+    return createClient({ ...opts, token, requiresAuth: true });
+  }
+  if (mode === 'jwt+api_key' && token && apiKey) {
+    return createClient({
+      ...opts,
+      token,
+      headers: { api_key: apiKey },
+      requiresAuth: true,
+    });
+  }
+  return null;
+}
+
+/** Escolhe cliente Base44 que consegue listar dados (JWT expirado é causa frequente). */
+async function resolveMigrationBase44Client({ appId, serverUrl, token, apiKey }) {
+  const modes = [];
+  if (apiKey) modes.push('api_key');
+  if (token) modes.push('jwt');
+  if (token && apiKey) modes.push('jwt+api_key');
+
+  const probes = ['Produto', 'Terceiro', 'LancamentoFinanceiro'];
+  let lastError = null;
+
+  for (const mode of modes) {
+    const client = buildBase44Client({ appId, serverUrl, token, apiKey, mode });
+    if (!client) continue;
+    for (const entity of probes) {
+      const api = client.entities?.[entity];
+      if (!api?.list) continue;
+      try {
+        const rows = await api.list('-created_date', 1, 0);
+        const n = Array.isArray(rows) ? rows.length : 0;
+        if (n >= 0) {
+          return { client, mode, probeEntity: entity, probeCount: n };
+        }
+      } catch (e) {
+        lastError = e;
+        const msg = String(e?.message || e);
+        if (/logged in|unauthorized|401|403/i.test(msg)) {
+          console.warn(`[migrate] auth ${mode} via ${entity}: ${msg}`);
+        } else {
+          console.warn(`[migrate] probe ${mode}/${entity}: ${msg}`);
+        }
+      }
+    }
+  }
+
+  console.error(
+    '[migrate] Não foi possível ler dados do Base44. Atualize no GitHub Secrets:\n' +
+      '  • BASE44_API_KEY (recomendado — não expira como JWT)\n' +
+      '  • ou BASE44_ACCESS_TOKEN novo (browser logado → DevTools → Local Storage → base44_access_token)'
+  );
+  if (lastError) console.error('[migrate] Último erro:', lastError.message || lastError);
+  process.exit(1);
+}
+
 function requireEnv() {
   applyMigrateDnsServers();
   const { appId, serverUrl, token, apiKey } = getBase44Env();
@@ -352,8 +414,10 @@ async function listAllForEntity(base44, entityName, limit) {
     }
     return { rows: all, skipped: false };
   } catch (e) {
-    console.warn(`[migrate] ${entityName}.list() falhou: ${e.message}`);
-    return { rows: [], skipped: false, error: e };
+    const msg = String(e?.message || e);
+    const authError = /logged in|unauthorized|401|403/i.test(msg);
+    console.warn(`[migrate] ${entityName}.list() falhou: ${msg}`);
+    return { rows: [], skipped: false, error: e, authError };
   }
 }
 
@@ -621,20 +685,19 @@ async function main() {
   );
   const { appId, serverUrl, token, apiKey, databaseUrl } = requireEnv();
 
-  const base44 = createClient({
+  const { client: base44, mode: authMode, probeEntity } = await resolveMigrationBase44Client({
     appId,
     serverUrl,
-    ...(token ? { token } : {}),
-    ...(apiKey ? { headers: { api_key: apiKey } } : {}),
-    requiresAuth: Boolean(token || apiKey),
+    token,
+    apiKey,
   });
 
   const tables = orderTables(collectTables(onlyEntities));
   const migratedTables = new Set();
+  let totalRowsWritten = 0;
+  let authErrorCount = 0;
 
-  const authMode =
-    token && apiKey ? 'jwt+api_key' : token ? 'jwt' : apiKey ? 'api_key' : 'none';
-  console.log(`[migrate] Base44: ${serverUrl} (auth: ${authMode})`);
+  console.log(`[migrate] Base44: ${serverUrl} (auth: ${authMode}, probe: ${probeEntity})`);
   console.log(`[migrate] Tabelas: ${tables.length} (dry-run=${dryRun})`);
   if (onlyEntities?.length) {
     console.log(`[migrate] Filtro --only: ${onlyEntities.length} nome(s) de entidade → ${tables.length} tabela(s)`);
@@ -685,7 +748,8 @@ async function main() {
       let rawRows = [];
 
       for (const entityName of candidates) {
-        const { rows, skipped } = await listAllForEntity(base44, entityName, limit);
+        const { rows, skipped, authError } = await listAllForEntity(base44, entityName, limit);
+        if (authError) authErrorCount += 1;
         if (skipped) continue;
         if (rows.length) {
           sourceEntity = entityName;
@@ -730,6 +794,8 @@ async function main() {
         }
       }
 
+      totalRowsWritten += prepared.length;
+
       migratedTables.add(table);
       if (delayMs) await sleep(delayMs);
     }
@@ -738,7 +804,15 @@ async function main() {
       await client.query("SET LOCAL session_replication_role = 'origin'");
       await client.query('COMMIT');
     }
-    console.log('[migrate] Concluído com sucesso.');
+    if (totalRowsWritten === 0) {
+      console.error(
+        `[migrate] Nenhuma linha gravada (${authErrorCount} erros de auth). ` +
+          'Atualize BASE44_API_KEY ou BASE44_ACCESS_TOKEN nos GitHub Secrets.'
+      );
+      process.exitCode = 1;
+      return;
+    }
+    console.log(`[migrate] Concluído com sucesso. ${totalRowsWritten} linha(s) gravada(s).`);
   } catch (e) {
     if (atomic) await client.query('ROLLBACK').catch(() => {});
     logMigrateFatal('Erro Postgres/migração', e);
