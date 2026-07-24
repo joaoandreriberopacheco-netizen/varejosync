@@ -802,6 +802,7 @@ async function main() {
       if (atomic) {
         const skipped = await upsertBatch(client, table, prepared, allowedCols, jsonbMeta);
         if (skipped) console.warn(`[migrate] ${table}: ${skipped} linha(s) ignorada(s) no lote.`);
+        totalRowsWritten += prepared.length - skipped;
       } else {
         const chunks = chunkArray(prepared, rowsPerCommit);
         let partNum = 0;
@@ -818,10 +819,6 @@ async function main() {
           console.warn(`[migrate] ${table}: ${skippedTotal} linha(s) ignorada(s) (JSON inválido).`);
         }
         totalRowsWritten += prepared.length - skippedTotal;
-      }
-
-      if (atomic) {
-        totalRowsWritten += prepared.length;
       }
 
       migratedTables.add(table);
