@@ -1,0 +1,92 @@
+# Deploy produção Vercel — build com env vars dos GitHub Secrets (Supabase P38).
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#   VERCEL_TOKEN            — https://vercel.com/account/tokens
+#   VERCEL_ORG_ID           — Settings → General (Team/Personal ID)
+#   VERCEL_PROJECT_ID       — Project → Settings → General
+#   VITE_SUPABASE_URL       — https://[ref].supabase.co
+#   VITE_SUPABASE_ANON_KEY  — Supabase → Project Settings → API
+#
+# Opcional:
+#   VITE_P38_USE_SUPABASE_AUTH — "true" quando auth Supabase estiver activo
+
+name: Vercel Deploy
+
+concurrency:
+  group: vercel-deploy-production
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.*'
+      - 'vercel.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/vercel-deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Validar secrets Vercel + Supabase
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          set -e
+          missing=0
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY; do
+            eval "val=\${$name:-}"
+            if [ -z "$val" ]; then
+              echo "::error::Secret $name em falta (GitHub → Settings → Secrets → Actions)."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+          echo "OK: secrets presentes."
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Vercel pull (production)
+        run: npx --yes vercel@latest pull --yes --environment=production --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Vercel build (production)
+        run: npx --yes vercel@latest build --prod --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VITE_P38_PROVIDER: supabase
+          VITE_P38_BYPASS_BASE44: 'true'
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_P38_USE_SUPABASE_AUTH: ${{ secrets.VITE_P38_USE_SUPABASE_AUTH }}
+
+      - name: Vercel deploy (production)
+        id: deploy
+        run: |
+          url=$(npx --yes vercel@latest deploy --prebuilt --prod --token "$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deploy URL: $url"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
