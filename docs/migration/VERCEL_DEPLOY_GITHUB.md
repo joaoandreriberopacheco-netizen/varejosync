@@ -11,6 +11,7 @@ O workflow **Vercel Deploy** (`.github/workflows/vercel-deploy.yml`) faz build c
 | `VERCEL_PROJECT_ID` | Projecto → Settings → General → Project ID |
 | `VITE_SUPABASE_URL` | `https://zhonvxkkqabfdyehyxpu.supabase.co` (P38) |
 | `VITE_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → anon public |
+| `SUPABASE_ANON_KEY` | Alias aceite no workflow (mesmo valor que acima) |
 
 Opcional: `VITE_P38_USE_SUPABASE_AUTH` = `true` quando login Supabase estiver activo.
 

@@ -4,6 +4,7 @@
   "buildCommand": "npm run build:raw",
   "outputDirectory": "dist",
   "installCommand": "npm ci",
+  "ignoreCommand": "bash scripts/vercel-ignore-git-build.sh",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
