@@ -17,6 +17,7 @@ import {
   Camera,
   X
 } from 'lucide-react';
+import { P38MobileLineList, P38MobileLine, P38StatusLabel } from '@/components/ui/p38-mobile-line';
 export default function InterfaceSeparador() {
   const queryClient = useQueryClient();
   const [qrInput, setQrInput] = useState('');
