@@ -126,7 +126,6 @@ declare
   v_field text;
   v_existing text;
   v_codigo text;
-  r record;
 begin
   case p_tipo
     when 'PV'  then v_table := 'pedido_venda';      v_field := 'numero';
@@ -156,7 +155,6 @@ end;
 $$;
 
 -- Permissões: qualquer role autenticada pode chamar os RPCs.
--- (RLS fica desativado no esquema single-tenant, conforme migration 008.)
 revoke all on function public.recalcular_estoque_produto(text) from public;
 revoke all on function public.gerar_numero_sequencial(text) from public;
 grant execute on function public.recalcular_estoque_produto(text) to authenticated, anon, service_role;
